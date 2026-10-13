@@ -47,7 +47,7 @@ import Foundation
             self.approval.receive(line+Data([10]));self.scheduleExpiry()
         }
         channel.onEnd={ [weak self] reason in
-            if case .io = reason { self?.onUnavailable?("进程状态或管道读取失败；不能确认所有工作已经停止。") }
+            if case .io = reason { self?.onUnavailable?(WSL10n.text("owned.fail.processUnreadable", zh: "进程状态或管道读取失败；不能确认所有工作已经停止。")) }
             self?.stop()
         }
         channel.onReaped={ [weak self] fact in

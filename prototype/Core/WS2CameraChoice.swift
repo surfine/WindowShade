@@ -151,7 +151,7 @@ enum WS2CameraSimulation {
         let decision = WS2CameraChoice.decide(WS2CameraChoiceInput())
         let unknown = decision.distance == .unknown && decision.centimeters == nil && decision.primary == nil
         return Preview(
-            line: unknown ? "未知" : "这次没有做",
+            line: unknown ? WSL10n.text("say.unknown", zh: "未知") : WSL10n.text("say.notTried", zh: "这次没有做"),
             grantsUnlock: decision.grantsUnlock,
             reportsNoPerson: decision.reportsNoPerson,
             centimeters: decision.centimeters)

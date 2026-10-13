@@ -32,14 +32,16 @@ enum CalendarSettingsPolicy {
 
     static func subtitle(access: CalendarAccess) -> String {
         switch access {
-        case .denied: return "没有权限，点一下去系统设置"
-        case .notAsked: return "快开会时在刘海里倒数；打开时系统会问你一次"
-        case .granted: return "快开会时在刘海里倒数，有会议链接时可以加入"
+        case .denied: return WSL10n.text("calendar.perm.denied", zh: "没有权限，点一下去系统设置")
+        case .notAsked: return WSL10n.text("calendar.perm.notAsked", zh: "快开会时在刘海里倒数；打开时系统会问你一次")
+        case .granted: return WSL10n.text("calendar.perm.granted", zh: "快开会时在刘海里倒数，有会议链接时可以加入")
         }
     }
 
     static let leadChoices: [CalendarActivity.LeadTime] = CalendarActivity.LeadTime.allCases
-    static func leadTitle(_ lead: CalendarActivity.LeadTime) -> String { "提前 \(lead.rawValue) 分钟" }
+    static func leadTitle(_ lead: CalendarActivity.LeadTime) -> String {
+        WSL10n.text("calendar.lead", zh: "提前 %@ 分钟", String(lead.rawValue))
+    }
 }
 
 // MARK: - 两耳
@@ -65,15 +67,15 @@ struct CalendarEar: Equatable, Sendable {
 
 enum CalendarWords {
     /// 日程的名字，所有“不写标题”的地方都写它。
-    static let name = "日程"
-    static let startingSoon = "马上开始"
-    static let joinTitle = "加入"
+    static var name: String { WSL10n.text("settings.shade.calendar.name", zh: "日程") }
+    static var startingSoon: String { WSL10n.text("calendar.startingSoon", zh: "马上开始") }
+    static var joinTitle: String { WSL10n.text("calendar.join", zh: "加入") }
 
     /// 右耳：多于 60 秒写“4 分”（向上取整），最后一分钟写“0:42”。
     static func earText(secondsUntilStart: TimeInterval) -> String {
         let seconds = ceilingSeconds(secondsUntilStart)
         if seconds <= 60 { return clock(seconds) }
-        return "\((seconds + 59) / 60) 分"
+        return WSL10n.text("timer.minutesShort", zh: "%@ 分", String((seconds + 59) / 60))
     }
 
     /// 大卡上的大字：m:ss，向上取整。
@@ -99,10 +101,12 @@ enum CalendarWords {
         let head = sharing ? name : "\(name)，\(title(item.event, sharing: false))"
         if item.secondsUntilStart > 0 {
             let seconds = ceilingSeconds(item.secondsUntilStart)
-            let left = seconds <= 60 ? "\(seconds) 秒" : "\((seconds + 59) / 60) 分钟"
-            return "\(head)，\(left)后开始"
+            let left = seconds <= 60 ? WSL10n.text("timer.seconds", zh: "%@ 秒", String(seconds))
+                                     : WSL10n.text("timer.minutesLong", zh: "%@ 分钟", String((seconds + 59) / 60))
+            return WSL10n.text("calendar.startsIn", zh: "%@，%@后开始", head, left)
         }
-        return "\(head)，已开始" + (item.link != nil ? "，可以加入" : "")
+        return head + WSL10n.text("calendar.started", zh: "，已开始")
+                + (item.link != nil ? WSL10n.text("calendar.canJoin", zh: "，可以加入") : "")
     }
 
     private static func ceilingSeconds(_ interval: TimeInterval) -> Int {
@@ -147,22 +151,24 @@ struct CalendarCardText: Equatable, Sendable {
         let started = until <= 0
         let small: String
         if !started {
-            small = "后开始"
+            small = WSL10n.text("calendar.small.startsIn", zh: "后开始")
         } else {
             let minutes = Int(-until / 60)
-            small = minutes < 1 ? "刚刚开始" : "开始了 \(minutes) 分"
+            small = minutes < 1 ? WSL10n.text("calendar.small.justStarted", zh: "刚刚开始")
+                                : WSL10n.text("calendar.small.startedAgo", zh: "开始了 %@ 分", String(minutes))
         }
         var others: String?
         if let first = selection.others.first {
             let name = sharing ? CalendarWords.name : CalendarWords.title(first.event, sharing: false)
-            others = "还有 \(selection.othersCount) 个：\(name) · \(CalendarWords.hm(first.event.start, calendar))"
+            others = WSL10n.text("calendar.others", zh: "还有 %@ 个：%@ · %@",
+                                 String(selection.othersCount), name, CalendarWords.hm(first.event.start, calendar))
         }
         let location = (e.location ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return CalendarCardText(
             title: CalendarWords.title(e, sharing: sharing),
             time: CalendarWords.timeRange(start: e.start, end: e.end, calendar: calendar),
             location: sharing ? "" : location,
-            big: started ? "已开始" : CalendarWords.bigText(secondsUntilStart: until),
+            big: started ? WSL10n.text("calendar.startedBare", zh: "已开始") : CalendarWords.bigText(secondsUntilStart: until),
             small: small, others: others, showsJoin: item.link != nil, bigIsStarted: started)
     }
 }

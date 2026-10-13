@@ -48,7 +48,7 @@ import Foundation
     private(set) var session:WS2OwnedCodexSession?
     private(set) var store=AgentSessions()
     private(set) var phase:Phase = .idle
-    private(set) var status="尚未启动"
+    private(set) var status=WSL10n.text("owned.status.notStarted", zh: "尚未启动")
     private(set) var notice=""
     private(set) var draft=""
     private(set) var projectURL:URL?
@@ -93,8 +93,8 @@ import Foundation
             projectURL=URL(fileURLWithPath:root.canonicalPath,isDirectory:true)
             if changingProject { draft="";draftOwner=nil;sessionDrafts.removeAll() }
             bumpConductor()
-            status="项目已选择";notice="";changed();return true
-        } catch { notice="无法使用这个项目目录。";changed();return false }
+            status=WSL10n.text("owned.status.projectChosen", zh: "项目已选择");notice="";changed();return true
+        } catch { notice=WSL10n.text("owned.notice.projectUnusable", zh: "无法使用这个项目目录。");changed();return false }
     }
     @discardableResult func selectExecutable(_ url:URL) -> Bool {
         guard !isBusy,mayUse(),url.isFileURL,FileManager.default.isExecutableFile(atPath:url.path) else { return false }
@@ -103,7 +103,7 @@ import Foundation
     @discardableResult func launch(consent:Bool,diagnostics:Bool=false) -> Bool {
         guard consent,canLaunch,let projectURL,let executableURL,let project=scope.project else { return false }
         disconnectReason=nil
-        let request=UUID();launchID=request;status="正在核对 Codex 版本";phase = .checkingVersion
+        let request=UUID();launchID=request;status=WSL10n.text("owned.status.checkingVersion", zh: "正在核对 Codex 版本");phase = .checkingVersion
         output.clear();diagnosticSnapshot="";notice="";model=nil;effort=nil;models=[:]
         do {
             let prepared=try WS2LocalLaunchProfile.prepare(projectURL:projectURL,projectID:project.id,executableURL:executableURL,root:profileRoot)
@@ -111,11 +111,11 @@ import Foundation
             let p=try WS2VersionProbe(profile:prepared,mayContinue:{ [weak self] in self?.launchID==request && self?.mayUse()==true },completion:{ [weak self] ok in
                 guard let self,self.launchID==request else { return }
                 self.probe=nil
-                guard ok,self.mayUse() else { self.fail("需要 codex-cli 0.153.0 的可执行文件；其他版本不会自动升级或继续启动。");return }
+                guard ok,self.mayUse() else { self.fail(WSL10n.text("owned.fail.version", zh: "需要 codex-cli 0.153.0 的可执行文件；其他版本不会自动升级或继续启动。"));return }
                 self.begin(prepared,diagnostics:diagnostics)
             })
             probe=p;try p.start();changed();return true
-        } catch { probe=nil;fail("启动检查未通过。请检查可执行文件、目录权限和项目内的 .codex／.agents 配置。");return false }
+        } catch { probe=nil;fail(WSL10n.text("owned.fail.preflight", zh: "启动检查未通过。请检查可执行文件、目录权限和项目内的 .codex／.agents 配置。"));return false }
     }
     private func begin(_ prepared:WS2LocalLaunchProfile,diagnostics:Bool) {
         do {
@@ -135,14 +135,14 @@ import Foundation
                 guard let self,self.session?.connectionID==id else { return }
                 self.observedReaps += 1;self.diagnosticSnapshot=self.session?.diagnostics?.visibleText() ?? ""
                 self.session=nil;self.phase = .stopped
-                self.status=self.disconnectReason ?? "已断开"
+                self.status=self.disconnectReason ?? WSL10n.text("owned.status.disconnected", zh: "已断开")
                 self.disconnectReason=nil
                 self.changed()
             }
-            phase = .connecting;status="正在连接助手";changed();try s.start()
+            phase = .connecting;status=WSL10n.text("owned.status.connecting", zh: "正在连接助手");changed();try s.start()
         } catch {
             if session?.launched != true { session=nil }
-            fail("助手未能启动。没有发送工作请求。")
+            fail(WSL10n.text("owned.fail.launchFailed", zh: "助手未能启动。没有发送工作请求。"))
         }
     }
     private func currentIsValid() -> Bool {
@@ -151,7 +151,7 @@ import Foundation
         return s.connectionID==t.connection && scope.accepts(t,liveRoot:live)
     }
     private func revalidate() -> Bool {
-        guard currentIsValid(),let profile,(try? profile.revalidate()) != nil else { stop(reason:"项目或配置已改变，已断开。");return false }
+        guard currentIsValid(),let profile,(try? profile.revalidate()) != nil else { stop(reason:WSL10n.text("owned.fail.profileChanged", zh: "项目或配置已改变，已断开。"));return false }
         return true
     }
     @discardableResult func chooseModel(_ value:String) -> Bool {
@@ -161,7 +161,7 @@ import Foundation
     private func setNextModel(_ value:String) -> Bool {
         guard let choices=models[value],!choices.isEmpty else { return false }
         model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first
-        if phase == .ready && canSend { status="已连接" }
+        if phase == .ready && canSend { status=WSL10n.text("owned.status.connected", zh: "已连接") }
         bumpConductor();changed();return true
     }
     @discardableResult func chooseEffort(_ value:String) -> Bool {
@@ -199,11 +199,11 @@ import Foundation
               [.ready,.completed,.failed].contains(phase),let s=session,
               s.approval.wire.pending.isEmpty,s.approval.wire.approvals.isEmpty else { return false }
         do {
-            bumpConductor();phase = .creatingThread;status="正在切换会话";notice=""
+            bumpConductor();phase = .creatingThread;status=WSL10n.text("owned.status.switchingThread", zh: "正在切换会话");notice=""
             try s.resumeThread(key.id)
             guard currentIsValid() else { return false }
             changed();return true
-        } catch { fail("没有切换会话，草稿留着。");return false }
+        } catch { fail(WSL10n.text("owned.fail.switchThread", zh: "没有切换会话，草稿留着。"));return false }
     }
     /// Adopting text creates no RPC. A later explicit send must present this exact snapshot.
     func adoptConductorDraft(_ text:String,hasMarkedText:Bool,target:ConductorTarget) -> ConductorDraft? {
@@ -232,8 +232,8 @@ import Foundation
             try s.steer(text:value.text,expectedTurn:turn)
             guard currentIsValid(),let id=s.approval.wire.pending.first(where:{$0.value.method=="turn/steer"})?.key else { throw CodexWire.Failure.stale }
             pendingDraft=PendingDraft(id:id,text:value.text,revision:value.draftRevision,context:context,expectedTurn:turn)
-            status="正在补进本轮";changed();return true
-        } catch { stop(reason:"补充结果未知，草稿留着。");return false }
+            status=WSL10n.text("owned.status.steering", zh: "正在补进本轮");changed();return true
+        } catch { stop(reason:WSL10n.text("owned.fail.steerUnknown", zh: "补充结果未知，草稿留着。"));return false }
     }
     @discardableResult func interruptConductor(target:ConductorTarget,turn:String) -> Bool {
         guard target==conductorTarget,turn==activeTurn else { return false }
@@ -245,8 +245,8 @@ import Foundation
         guard pending.context==context else { throw CodexWire.Failure.stale }
         if let turn=pending.expectedTurn {
             guard value["turnId"]?.text==turn else { throw CodexWire.Failure.stale }
-            notice="已补进这一轮"
-        } else if notice.isEmpty { notice="助手已接收" }
+            notice=WSL10n.text("owned.notice.steered", zh: "已补进这一轮")
+        } else if notice.isEmpty { notice=WSL10n.text("owned.notice.accepted", zh: "助手已接收") }
         pendingDraft=nil
         // Preserve edits made after sending; acknowledgements only clear their own draft version.
         if draftRevision==pending.revision,draft==pending.text {
@@ -260,16 +260,16 @@ import Foundation
         notice=""
         do {
             if s.approval.wire.threadID == nil {
-                phase = .creatingThread;status="正在建立会话"
+                phase = .creatingThread;status=WSL10n.text("owned.status.creatingThread", zh: "正在建立会话")
                 try s.startThread(cwd:profile.project.root.canonicalPath,model:model)
             } else { try deliverSubmission() }
             guard currentIsValid() else { throw CodexWire.Failure.stale }
             changed();return true
-        } catch { submission=nil;fail("请求未能发送。文字保留在输入框中。");return false }
+        } catch { submission=nil;fail(WSL10n.text("owned.fail.sendFailed", zh: "请求未能发送。文字保留在输入框中。"));return false }
     }
     private func deliverSubmission() throws {
         guard let value=submission,let s=session,let context,revalidate() else { throw CodexWire.Failure.stale }
-        phase = .sending;status="正在发送，等待助手响应"
+        phase = .sending;status=WSL10n.text("owned.status.sending", zh: "正在发送，等待助手响应")
         try s.startTurn(text:value.text,model:value.model,effort:value.effort)
         guard let id=s.approval.wire.pending.first(where:{$0.value.method=="turn/start"})?.key,
               currentIsValid() else { throw CodexWire.Failure.stale }
@@ -278,8 +278,8 @@ import Foundation
     }
     @discardableResult func resumeLast() -> Bool {
         guard canResume,revalidate(),let association=lastAssociation else { return false }
-        do { phase = .creatingThread;status="正在恢复本项目的会话";try session?.resumeThread(association.thread);changed();return true }
-        catch { fail("无法恢复这条会话。可在当前项目新建会话。");return false }
+        do { phase = .creatingThread;status=WSL10n.text("owned.status.resumingThread", zh: "正在恢复本项目的会话");try session?.resumeThread(association.thread);changed();return true }
+        catch { fail(WSL10n.text("owned.fail.resumeThread", zh: "无法恢复这条会话。可在当前项目新建会话。"));return false }
     }
     private var lastAssociation:Association? { guard let project=scope.project else { return nil };return associations.last(where:{$0.project==project}) }
     /// 会话列表的「停止」按钮只停自己那条：上下文对不上（不是当前这条在跑的会话）就不动。
@@ -289,25 +289,25 @@ import Foundation
     }
     @discardableResult func interrupt() -> Bool {
         guard canInterrupt,revalidate() else { return false }
-        do { phase = .interrupting;status="正在请求停止，等待助手确认";notice="";try session?.interrupt();changed();return true }
-        catch { stop(reason:"停止结果未知，已断开连接。");return false }
+        do { phase = .interrupting;status=WSL10n.text("owned.status.stopping", zh: "正在请求停止，等待助手确认");notice="";try session?.interrupt();changed();return true }
+        catch { stop(reason:WSL10n.text("owned.fail.stopUnknown", zh: "停止结果未知，已断开连接。"));return false }
     }
     @discardableResult func login() -> Bool {
         guard canLogin,revalidate(),let s=session else { return false }
-        do { let id=try s.account(.login);queries[id] = .login;status="正在准备登录";changed();return true }
-        catch { fail("无法开始登录。");return false }
+        do { let id=try s.account(.login);queries[id] = .login;status=WSL10n.text("owned.status.loginPreparing", zh: "正在准备登录");changed();return true }
+        catch { fail(WSL10n.text("owned.fail.loginStart", zh: "无法开始登录。"));return false }
     }
     @discardableResult func logout() -> Bool {
         guard canLogout,revalidate(),let s=session else { return false }
-        do { authenticated=false;let id=try s.account(.logout);queries[id] = .logout;status="正在退出登录";changed();return true }
-        catch { stop(reason:"退出登录结果未知；本地连接已关闭。");return false }
+        do { authenticated=false;let id=try s.account(.logout);queries[id] = .logout;status=WSL10n.text("owned.status.loggingOut", zh: "正在退出登录");changed();return true }
+        catch { stop(reason:WSL10n.text("owned.fail.logoutUnknown", zh: "退出登录结果未知；本地连接已关闭。"));return false }
     }
     func cancelLogin() {
         loginDeadline?.cancel();loginDeadline=nil
         if let loginID,let s=session,currentIsValid() {
             if let id=try? s.account(.cancel(loginID)) { queries[id] = .cancelLogin }
         }
-        loginID=nil;status="登录已取消";phase = .signedOut;changed()
+        loginID=nil;status=WSL10n.text("owned.status.loginCancelled", zh: "登录已取消");phase = .signedOut;changed()
     }
     static func browserLoginURL(_ text:String) -> URL? {
         guard text.utf8.count<=8192,let c=URLComponents(string:text),c.scheme=="https",
@@ -324,26 +324,26 @@ import Foundation
                 if let query=queries.removeValue(forKey:id) {
                     switch query {
                     case .config:
-                        guard WS2LocalLaunchProfile.admitsEffectiveConfig(value) else { stop(reason:"助手设置与当前权限不符，已断开。");return }
+                        guard WS2LocalLaunchProfile.admitsEffectiveConfig(value) else { stop(reason:WSL10n.text("owned.fail.settingsMismatch", zh: "助手设置与当前权限不符，已断开。"));return }
                         configured=true;try readAccount()
                     case .account:
                         guard let needed=value["requiresOpenaiAuth"],case .bool = needed else { throw CodexWire.Failure.malformed }
                         authenticated = ["chatgpt","apiKey"].contains(value["account"]?["type"]?.text ?? "")
-                        phase=authenticated ? .ready:.signedOut;status=authenticated ? "已连接，请选择模型":"需要登录 ChatGPT"
+                        phase=authenticated ? .ready:.signedOut;status=authenticated ? WSL10n.text("owned.status.connectedPickModel", zh: "已连接，请选择模型"):WSL10n.text("owned.status.needLogin", zh: "需要登录 ChatGPT")
                     case .login:
                         guard value["type"]?.text=="chatgpt",let login=value["loginId"]?.text,!login.isEmpty,login.utf8.count<=512,
                               let raw=value["authUrl"]?.text,let url=Self.browserLoginURL(raw) else { throw CodexWire.Failure.malformed }
-                        loginID=login;status="请在浏览器中完成登录";onBrowserURL?(url)
+                        loginID=login;status=WSL10n.text("owned.status.browserLogin", zh: "请在浏览器中完成登录");onBrowserURL?(url)
                         loginDeadline?.cancel();loginDeadline=Task { [weak self] in
                             do { try await Task.sleep(nanoseconds:300_000_000_000) } catch { return }
                             guard let self,self.session?.connectionID==connection,self.loginID==login else { return };self.cancelLogin()
                         }
-                    case .cancelLogin:stop(reason:"已结束登录流程；重新连接后可核对账号状态。");return
-                    case .logout:stop(reason:"已退出登录");return
+                    case .cancelLogin:stop(reason:WSL10n.text("owned.fail.loginCancelled", zh: "已结束登录流程；重新连接后可核对账号状态。"));return
+                    case .logout:stop(reason:WSL10n.text("owned.fail.loggedOut", zh: "已退出登录"));return
                     }
                 }
                 if s.approval.wire.state == .ready && phase == .connecting {
-                    models=s.approval.wire.models;phase = .checkingConfig;status="正在核对当前配置"
+                    models=s.approval.wire.models;phase = .checkingConfig;status=WSL10n.text("owned.status.checkingConfig", zh: "正在核对当前配置")
                     let id=try s.account(.config(profile!.project.root.canonicalPath));queries[id] = .config
                 }
                 try synchronizeThreadAndTurn()
@@ -351,10 +351,10 @@ import Foundation
                 if method == "account/login/completed",let expected=loginID,p["loginId"]?.text==expected {
                     loginDeadline?.cancel();loginDeadline=nil;loginID=nil
                     if p["success"] == .bool(true) { try readAccount() }
-                    else { phase = .signedOut;status="登录未完成" }
+                    else { phase = .signedOut;status=WSL10n.text("owned.status.loginIncomplete", zh: "登录未完成") }
                 } else if method == "account/updated",configured,loginID==nil,
                           !queries.values.contains(where:{switch $0 {case .logout,.cancelLogin:return true;default:return false}}) {
-                    if activeTurn != nil || submission != nil { stop(reason:"账号状态变化，已断开。");return }
+                    if activeTurn != nil || submission != nil { stop(reason:WSL10n.text("owned.fail.accountChanged", zh: "账号状态变化，已断开。"));return }
                     authenticated=false;try readAccount()
                 } else if p["threadId"]?.text == context?.session.id,context != nil {
                     if method == "turn/started" { try synchronizeThreadAndTurn() }
@@ -363,9 +363,9 @@ import Foundation
                     if method == "turn/completed",let id=p["turn"]?["id"]?.text,id==activeTurn {
                         let result=p["turn"]?["status"]?.text
                         switch result {
-                        case "completed":emit(.turnFinished(summary:"已完成"),turn:id);phase = .completed;status="助手已完成"
-                        case "interrupted":emit(.failed(summary:"已停止"),turn:id);phase = .ready;status="助手已停止"
-                        case "failed":emit(.failed(summary:"助手执行失败"),turn:id);phase = .failed;status="助手执行失败"
+                        case "completed":emit(.turnFinished(summary:"已完成"),turn:id);phase = .completed;status=WSL10n.text("owned.status.done", zh: "助手已完成")
+                        case "interrupted":emit(.failed(summary:"已停止"),turn:id);phase = .ready;status=WSL10n.text("owned.status.stopped", zh: "助手已停止")
+                        case "failed":emit(.failed(summary:WSL10n.text("owned.status.failed", zh: "助手执行失败")),turn:id);phase = .failed;status=WSL10n.text("owned.status.failed", zh: "助手执行失败")
                         default:throw CodexWire.Failure.malformed
                         }
                         activeTurn=nil;bumpConductor()
@@ -373,17 +373,17 @@ import Foundation
                 }
             case .failed(let id):
                 let query=queries.removeValue(forKey:id)
-                if query != nil { stop(reason:"登录或配置检查失败，已断开。");return }
+                if query != nil { stop(reason:WSL10n.text("owned.fail.loginOrConfig", zh: "登录或配置检查失败，已断开。"));return }
                 submission=nil
                 if pendingDraft?.id==id { pendingDraft=nil }
-                notice="助手拒绝了这次请求。"
-                phase=activeTurn==nil ? .failed:.running;status=activeTurn==nil ? "请求未完成":"助手仍在运行"
-            case .ambiguousCompletion:stop(reason:"请求超时，结果未知；已断开。");return
+                notice=WSL10n.text("owned.notice.refused", zh: "助手拒绝了这次请求。")
+                phase=activeTurn==nil ? .failed:.running;status=activeTurn==nil ? WSL10n.text("owned.status.requestIncomplete", zh: "请求未完成"):WSL10n.text("owned.status.stillRunning", zh: "助手仍在运行")
+            case .ambiguousCompletion:stop(reason:WSL10n.text("owned.fail.timeout", zh: "请求超时，结果未知；已断开。"));return
             case .approval:break // The sole default host already sent decline.
             case .ignoredLateReply:break
             }
             changed()
-        } catch { stop(reason:"助手返回的信息不完整，已断开。");notice="请重新启动助手。";changed() }
+        } catch { stop(reason:WSL10n.text("owned.fail.incomplete", zh: "助手返回的信息不完整，已断开。"));notice=WSL10n.text("owned.notice.restartAssistant", zh: "请重新启动助手。");changed() }
     }
     private func readAccount() throws {
         guard configured,let s=session,!queries.values.contains(where:{if case .account=$0{return true};return false}) else { return }
@@ -407,11 +407,11 @@ import Foundation
             associations.removeAll(where:{$0.thread==thread});associations.append(.init(project:profile.project,thread:thread))
             if associations.count>64 { associations.removeFirst() }
             if submission != nil { try deliverSubmission() }
-            else { phase = .ready;status="会话已恢复" }
+            else { phase = .ready;status=WSL10n.text("owned.status.threadResumed", zh: "会话已恢复") }
         }
         if let turn=s.approval.wire.turnID,activeTurn != turn {
             guard activeTurn == nil else { throw CodexWire.Failure.stale }
-            activeTurn=turn;bumpConductor();emit(.turnStarted(turn),turn:turn);phase = .running;status="助手正在运行"
+            activeTurn=turn;bumpConductor();emit(.turnStarted(turn),turn:turn);phase = .running;status=WSL10n.text("owned.status.running", zh: "助手正在运行")
         }
     }
     private func emit(_ event:AgentSessions.Event,turn:String?=nil) {
@@ -422,10 +422,10 @@ import Foundation
         guard session?.connectionID==connection else { return }
         emit(.processExited);scope.invalidate();ticket=nil;context=nil;activeTurn=nil;submission=nil;pendingDraft=nil;bumpConductor()
         configured=false;authenticated=false;queries=[:];loginID=nil;loginDeadline?.cancel();loginDeadline=nil
-        phase = .stopping;status="正在断开";changed()
+        phase = .stopping;status=WSL10n.text("owned.status.disconnecting", zh: "正在断开");changed()
     }
-    func stop(reason:String="已断开连接",clearPrivate:Bool=false) {
-        let finalReason=reason == "已断开连接" ? "已断开" : reason
+    func stop(reason:String=WSL10n.text("owned.status.disconnect", zh: "已断开连接"),clearPrivate:Bool=false) {
+        let finalReason=reason == WSL10n.text("owned.status.disconnect", zh: "已断开连接") ? WSL10n.text("owned.status.disconnected", zh: "已断开") : reason
         disconnectReason=finalReason
         launchID=nil
         let oldProbe=probe;probe=nil
@@ -446,7 +446,7 @@ import Foundation
     }
     func environmentChanged() {
         guard !mayUse() else { return }
-        stop(reason:"当前不能使用助手，请解锁并重新启动。",clearPrivate:true)
+        stop(reason:WSL10n.text("owned.fail.locked", zh: "当前不能使用助手，请解锁并重新启动。"),clearPrivate:true)
     }
     private func fail(_ message:String) {
         launchID=nil;phase = .failed;status=message;notice=message;changed()

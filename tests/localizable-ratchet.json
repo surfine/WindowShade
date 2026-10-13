@@ -1,4 +1,4 @@
 {
-  "note": "§9.4 防漏网棘轮：prototype/ 中【没走目录的裸中文字面量】行数上限，只许降不许升。口径 2026-10-13 修正（WSL10n 的 zh 身份源句不再计入）。第30批 2180；第31批（通知/欢迎）2150；第32批（§9 剩余用户可见表面：菜单/刘海/窗口浏览/启动台/手势/置顶/计时器媒体/授权/电量）→ 1429。剩余占位：内部诊断与日志串（foldPhase 标签、wlog、MainThreadActivity）、多语言菜单匹配关键词表（WindowBrowserMorePolicy）、QA 探针与设计夹具、Conductor/Owned 会话页等仍未迁移的用户可见串（见交接 §19）。",
-  "han_literal_lines": 1429
+  "note": "§9.4 防漏网棘轮：prototype/ 中【没走目录的裸中文字面量】行数上限，只许降不许升。口径 2026-10-13 修正（WSL10n 的 zh 身份源句不再计入）。第30批 2180；第31批 2150；第32批 1429；第33批（未上线功能：指挥、静音操作/编程会话、遥控与 CarPlay、文件架与拖拽、画中画、日历卡、在场/私人窗口、输入资格）→ 1034。剩余占位：诊断与日志串（ShadeController 的 foldPhase、WindowShade.swift、DeviceBattery 事实表、UsageReading）、QA 探针与设计夹具（*Probe/*Fixture/SettingsDesignPreview）、历史迁移对照表（StandardMenu.legacyLocations）、磁盘目录名（文件架根/收到的/拿来的，改名会动用户已有文件，保持原样）。",
+  "han_literal_lines": 1034
 }

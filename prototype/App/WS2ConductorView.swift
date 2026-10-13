@@ -57,9 +57,9 @@ import Cocoa
         subtitleLabel.lineBreakMode = .byTruncatingTail; subtitleLabel.setContentHuggingPriority(.required, for: .vertical)
         configure(text: draftText, in: draftScroll, editable: true)
         draftText.delegate = self; draftText.allowsUndo = true
-        draftText.setAccessibilityLabel("待发送草稿")
+        draftText.setAccessibilityLabel(WSL10n.text("conductor.view.draftLabel", zh: "待发送草稿"))
         configure(text: summaryText, in: summaryScroll, editable: false)
-        summaryText.setAccessibilityLabel("完成摘要")
+        summaryText.setAccessibilityLabel(WSL10n.text("conductor.view.summaryLabel", zh: "完成摘要"))
         buttonRow.orientation = .horizontal; buttonRow.spacing = 8
         buttonRow.setContentHuggingPriority(.required, for: .vertical)
         dots.setContentHuggingPriority(.required, for: .vertical)
@@ -131,7 +131,7 @@ import Cocoa
         case .hidden: isHidden = true; return true
         case .approval, .voiceChallenge, .authenticating:
             // 安全审批必须进入现有 NotchAuthenticationController；不把它降级成普通详情卡。
-            titleLabel.stringValue = "请在 Mac 上完成确认"; isHidden = false; return false
+            titleLabel.stringValue = WSL10n.text("conductor.view.confirmOnMac", zh: "请在 Mac 上完成确认"); isHidden = false; return false
         case .trajectory(let points, _):
             stack.addArrangedSubview(titleLabel)
             stack.addArrangedSubview(trajectory); fill(trajectory)
@@ -152,7 +152,7 @@ import Cocoa
                 line.textColor = index == p.selectedModel ? .white : .white.withAlphaComponent(0.6)
                 stack.addArrangedSubview(line)
             }
-            addButton("返回", .host(.leave))
+            addButton(WSL10n.text("conductor.view.back", zh: "返回"), .host(.leave))
         case .draft(let text, _, _):
             // 三行：给谁 / 草稿全文（可改）/ 怎么发出去。
             subtitleLabel.stringValue = p.draftFooter ?? ConductorNotch.draftFooter
@@ -161,23 +161,25 @@ import Cocoa
             marksStale = false; applyMarks(p.uncertainRanges, in: text)
             stack.addArrangedSubview(draftScroll); fill(draftScroll)
             stack.addArrangedSubview(subtitleLabel)
-            addButton("发送", .host(.sendDraft(text))); addButton("丢弃", .host(.discardDraft))
+            addButton(WSL10n.text("conductor.send", zh: "发送"), .host(.sendDraft(text)))
+            addButton(WSL10n.text("conductor.view.discard", zh: "丢弃"), .host(.discardDraft))
         case .completed:
             layoutCompleted()
         case .cost:
             stack.addArrangedSubview(titleLabel); stack.addArrangedSubview(subtitleLabel)
-            addButton("确认费用", .host(.confirmCost)); addButton("取消", .host(.leave))
+            addButton(WSL10n.text("conductor.view.confirmCost", zh: "确认费用"), .host(.confirmCost))
+            addButton(WSL10n.text("settings.common.cancel", zh: "取消"), .host(.leave))
         case .running, .steering:
             stack.addArrangedSubview(titleLabel); stack.addArrangedSubview(subtitleLabel)
-            addButton("停止这一轮", .host(.stopTurn))
+            addButton(WSL10n.text("conductor.view.stopTurn", zh: "停止这一轮"), .host(.stopTurn))
         case .discardDraft:
             stack.addArrangedSubview(titleLabel); stack.addArrangedSubview(subtitleLabel)
-            addButton("丢弃草稿", .host(.discardDraft))
+            addButton(WSL10n.text("conductor.view.discardDraft", zh: "丢弃草稿"), .host(.discardDraft))
         case .waitingForAudio, .transcribing, .connected, .staged, .next, .sent, .accepted,
              .steered, .stopping, .stopped, .disconnected, .revoked, .wrappedUp, .muted, .message:
             stack.addArrangedSubview(titleLabel)
             if !p.subtitle.isEmpty { stack.addArrangedSubview(subtitleLabel) }
-            addButton("返回", .host(.leave))
+            addButton(WSL10n.text("conductor.view.back", zh: "返回"), .host(.leave))
         }
         if !buttonRow.arrangedSubviews.isEmpty, buttonRow.superview == nil { stack.addArrangedSubview(buttonRow) }
         isHidden = false; return true
@@ -212,13 +214,13 @@ import Cocoa
             summaryText.string = presentation.summary ?? ""
             summaryText.font = .systemFont(ofSize: 12); summaryText.textColor = .white
             stack.addArrangedSubview(summaryScroll); fill(summaryScroll)
-            if canOpenDiff { addButton("在 Mac 上打开 diff", .host(.openDiff)) }
-            addButton("收起", .toggleSummary)
+            if canOpenDiff { addButton(WSL10n.text("conductor.view.openDiff", zh: "在 Mac 上打开 diff"), .host(.openDiff)) }
+            addButton(WSL10n.text("conductor.view.collapse", zh: "收起"), .toggleSummary)
         } else {
             stack.addArrangedSubview(subtitleLabel)
-            if !(presentation.summary ?? "").isEmpty { addButton("展开", .toggleSummary) }
+            if !(presentation.summary ?? "").isEmpty { addButton(WSL10n.text("conductor.view.expand", zh: "展开"), .toggleSummary) }
         }
-        addButton("返回", .host(.leave))
+        addButton(WSL10n.text("conductor.view.back", zh: "返回"), .host(.leave))
         stack.addArrangedSubview(buttonRow)
     }
 
@@ -251,7 +253,7 @@ import Cocoa
         case .toggleSummary: toggleSummary()
         case .host(.sendDraft):
             guard draftText.string.utf8.count <= ConductorSession.maximumDraftBytes else {
-                subtitleLabel.stringValue = "草稿过长，请缩短后发送"; return
+                subtitleLabel.stringValue = WSL10n.text("conductor.view.draftTooLong", zh: "草稿过长，请缩短后发送"); return
             }
             onAction?(.sendDraft(draftText.string))
         case .host(let host): onAction?(host)
@@ -321,7 +323,7 @@ import Cocoa
     }
     func set(lit new: [Bool], newlyLit: [Int]) {
         lit = new; style()
-        setAccessibilityLabel("已完成 \(new.filter { $0 }.count) 拍")
+        setAccessibilityLabel(WSL10n.text("conductor.view.doneBeats", zh: "已完成 %@ 拍", String(new.filter { $0 }.count)))
         guard !Motion.reduced else { return }
         for index in newlyLit where layers.indices.contains(index) {
             let pop = Motion.spring(.pop, keyPath: "transform.scale")
@@ -359,7 +361,7 @@ import Cocoa
             let bar = CALayer(); bar.backgroundColor = NSColor.white.cgColor; bar.cornerRadius = 2
             bars.append(bar); layer?.addSublayer(bar)
         }
-        setAccessibilityLabel("正在收音")
+        setAccessibilityLabel(WSL10n.text("conductor.view.recording", zh: "正在收音"))
         setContentHuggingPriority(.defaultLow, for: .vertical)
         heightAnchor.constraint(greaterThanOrEqualToConstant: 24).isActive = true
     }

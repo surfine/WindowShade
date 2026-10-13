@@ -1,4 +1,16 @@
 // WindowShade 2 · 原创指挥 reducer。输入来自已验证的本机桥；无联网、授权签发或键鼠合成。
+/// 提示音的内部令牌：给声音播放器认，不是给用户看的文案（zh 字面量仍是历史身份，英文下也一样匹配）。
+enum ConductorSoundToken {
+    static let unrecognized = "未识别"
+    /// 识别成功：带上是哪一拍，声音播放器不用再去解析（中文）标签文本。
+    static func recognized(gesture: ConductorGesture) -> String {
+        switch gesture {
+        case .tone(let n): return "tone\(n)"
+        case .beats(let n): return "beat\(n)"
+        }
+    }
+}
+
 import Foundation
 
 /// D3 逐项绘制，不能只把枚举打印成一个通用字符串。
@@ -16,36 +28,45 @@ enum ConductorNotch: Equatable, Sendable {
     /// `phrase` 是宿主发来的随机短语；还没到时只提示怎么念。
     case approval(String), voiceChallenge(phrase: String?), authenticating, discardDraft
     case disconnected, revoked, wrappedUp(taskRunning: Bool), muted(Bool), message(String)
-    static let draftFooter = "播放键发出去 · 返回收起"
+    static var draftFooter: String { WSL10n.text("conductor.draftFooter", zh: "播放键发出去 · 返回收起") }
     var text: String {
         switch self {
         case .hidden: return ""
         case .connected(let project, let provider, let effort): return "\(project) · \(provider.displayName) · \(effort)"
-        case .trajectory: return "抬手才判定"
+        case .trajectory: return WSL10n.text("conductor.stage.trajectory", zh: "抬手才判定")
         case .staged(let label): return label
-        case .next(let current, let next): return "这一轮 \(current) · 下一轮 \(next)"
-        case .cost(let label): return "\(label)　点一下确认"
-        case .models: return "下一轮用哪个模型"
-        case .waitingForAudio: return "没有收到声音"
-        case .listening(let source): return "\(source) · 松开出草稿"
-        case .transcribing: return "正在转写"
+        case .next(let current, let next):
+            return WSL10n.text("conductor.stage.next", zh: "这一轮 %@ · 下一轮 %@", current, next)
+        case .cost(let label): return WSL10n.text("conductor.stage.cost", zh: "%@　点一下确认", label)
+        case .models: return WSL10n.text("conductor.stage.models", zh: "下一轮用哪个模型")
+        case .waitingForAudio: return WSL10n.text("conductor.stage.noAudio", zh: "没有收到声音")
+        case .listening(let source): return WSL10n.text("conductor.stage.listening", zh: "%@ · 松开出草稿", source)
+        case .transcribing: return WSL10n.text("conductor.stage.transcribing", zh: "正在转写")
         case .draft(let text, let header, _): return "\(header)\n\(text)\n\(Self.draftFooter)"
-        case .sent: return "发出去了"
-        case .accepted(let provider, let effort): return effort.map { "\(provider.displayName) 接受了 · \($0)" } ?? "实际档位还没确认"
-        case .running: return "开始跑了" // turnID 是不透明 ID，不能伪装成“第 4 轮”。
-        case .steering: return "正在补进这一轮"
-        case .steered: return "已补进这一轮"
-        case .stopping: return "正在停止…"
-        case .stopped: return "已停止"
-        case .completed(let summary): return "完成 · \(summary)"
-        case .approval(let summary): return "想执行 \(summary)"
-        case .voiceChallenge(let phrase): return phrase.map { "按住侧边按钮念：\($0)" } ?? "按住侧边按钮念"
-        case .authenticating: return "正在确认"
-        case .discardDraft: return "再按一次返回丢掉草稿"
-        case .disconnected: return "遥控器断开了"
-        case .revoked: return "这台 iPhone 不能再遥控了"
-        case .wrappedUp(let running): return running ? "收工 · 任务还在跑" : "收工"
-        case .muted(let yes): return yes ? "提示音已关" : "提示音已开"
+        case .sent: return WSL10n.text("conductor.stage.sent", zh: "发出去了")
+        case .accepted(let provider, let effort):
+            return effort.map { WSL10n.text("conductor.stage.accepted", zh: "%@ 接受了 · %@", provider.displayName, $0) }
+                ?? WSL10n.text("conductor.stage.effortUnconfirmed", zh: "实际档位还没确认")
+        case .running: return WSL10n.text("conductor.stage.running", zh: "开始跑了") // turnID 是不透明 ID，不能伪装成“第 4 轮”。
+        case .steering: return WSL10n.text("conductor.stage.steering", zh: "正在补进这一轮")
+        case .steered: return WSL10n.text("conductor.stage.steered", zh: "已补进这一轮")
+        case .stopping: return WSL10n.text("conductor.stage.stopping", zh: "正在停止…")
+        case .stopped: return WSL10n.text("conductor.stage.stopped", zh: "已停止")
+        case .completed(let summary): return WSL10n.text("conductor.stage.completed", zh: "完成 · %@", summary)
+        case .approval(let summary): return WSL10n.text("conductor.stage.approval", zh: "想执行 %@", summary)
+        case .voiceChallenge(let phrase):
+            return phrase.map { WSL10n.text("conductor.stage.voiceChallenge", zh: "按住侧边按钮念：%@", $0) }
+                ?? WSL10n.text("conductor.stage.voiceChallengeBare", zh: "按住侧边按钮念")
+        case .authenticating: return WSL10n.text("conductor.stage.authenticating", zh: "正在确认")
+        case .discardDraft: return WSL10n.text("conductor.stage.discardDraft", zh: "再按一次返回丢掉草稿")
+        case .disconnected: return WSL10n.text("conductor.stage.disconnected", zh: "遥控器断开了")
+        case .revoked: return WSL10n.text("conductor.stage.revoked", zh: "这台 iPhone 不能再遥控了")
+        case .wrappedUp(let running):
+            return running ? WSL10n.text("conductor.stage.wrappedRunning", zh: "收工 · 任务还在跑")
+                           : WSL10n.text("conductor.stage.wrapped", zh: "收工")
+        case .muted(let yes):
+            return yes ? WSL10n.text("conductor.stage.muted", zh: "提示音已关")
+                       : WSL10n.text("conductor.stage.unmuted", zh: "提示音已开")
         case .message(let text): return text
         }
     }
@@ -207,7 +228,7 @@ struct ConductorSession: Sendable {
                   initial.model.provider == envelope.context.session.provider,
                   validCapabilities(caps), caps.contains(where: { $0.accepts(initial) }),
                   let slots = ConductorModelSlots(modelSlots), !project.isEmpty, project.utf8.count <= 512 else { return [.fault(.malformedInput)] }
-            if let current = context, current.peerID != envelope.context.peerID { return show(.message("另一台 iPhone 正在遥控")) }
+            if let current = context, current.peerID != envelope.context.peerID { return show(.message(WSL10n.text("conductor.msg.otheriPhone", zh: "另一台 iPhone 正在遥控"))) }
             var effects = clearTransient(at: now)
             context = envelope.context; lastEpoch = envelope.context.epoch; gate = WS2.EventGate()
             guard gate.accept(sequence: envelope.sequence, at: now) else { context = nil; return [.fault(.sequenceReplayed)] }
@@ -234,7 +255,7 @@ struct ConductorSession: Sendable {
         case .capabilities(let caps):
             guard validCapabilities(caps) else { return [.fault(.malformedInput)] }
             capabilities = caps; candidate = nil; costVault.invalidate(); costBinding = nil
-            effects += show(.message("能力信息变了，请重新选择档位"))
+            effects += show(.message(WSL10n.text("conductor.msg.capabilitiesChanged", zh: "能力信息变了，请重新选择档位")))
         case .source(let id, let label):
             guard validID(id), !label.isEmpty, label.utf8.count <= 256, capture == nil else { return [.fault(.malformedInput)] }
             source = (id,label)
@@ -250,12 +271,12 @@ struct ConductorSession: Sendable {
             guard let item = capture, item.id == id, !item.recording, now < item.deadline else { return [] }
             capture = nil
             guard item.challengeID == nil else { return [] }
-            guard item.baseDraftRevision == draftRevision else { return show(.message("草稿已修改，未覆盖")) }
+            guard item.baseDraftRevision == draftRevision else { return show(.message(WSL10n.text("conductor.msg.draftModified", zh: "草稿已修改，未覆盖"))) }
             effects += replaceDraft(text, digest: digest, uncertain: uncertain, sequence: envelope.sequence, now: now)
         case .sourceLost(let id):
             guard let item = capture, item.id == id else { return [] }
             if item.recording { effects.append(.stopCapture(id)) }
-            capture = nil; source = nil; effects += show(.message("麦克风断开了，草稿保留"))
+            capture = nil; source = nil; effects += show(.message(WSL10n.text("conductor.msg.micLost", zh: "麦克风断开了，草稿保留")))
         case .editDraft(let text, let digest):
             effects += replaceDraft(text, digest: digest, sequence: envelope.sequence, now: now)
         case .backendAccepted(let id, let actual):
@@ -273,7 +294,7 @@ struct ConductorSession: Sendable {
             guard let item = command, item.id == id else { return [] }
             command = nil; recoverDraft(item)
             // 草稿已经由 recoverDraft 留着；刘海只说连不上哪一家。
-            effects += show(.message("连不上 \(envelope.context.session.provider.displayName)"))
+            effects += show(.message(WSL10n.text("conductor.msg.cannotReach", zh: "连不上 %@", envelope.context.session.provider.displayName)))
         case .turnStarted(let id, let turn):
             guard let item = command, item.id == id, item.kind == .submit, validID(turn) else { return [] }
             runningTurn = turn; currentConfig = item.actual; currentRequested = item.requested
@@ -283,7 +304,7 @@ struct ConductorSession: Sendable {
             guard turn == runningTurn, config.model.provider == envelope.context.session.provider else { return [] }
             currentConfig = config
             if let requested = currentRequested, requested.effort != config.effort {
-                effects += show(.message("要的 \(requested.effort)，实际 \(config.effort)"))
+                effects += show(.message(WSL10n.text("conductor.msg.effortMismatch", zh: "要的 %@，实际 %@", requested.effort, config.effort)))
             }
         case .steerAccepted(let id, let turn):
             guard let item = command, item.id == id, item.kind == .steer, item.turnID == turn,
@@ -298,7 +319,7 @@ struct ConductorSession: Sendable {
         case .reconciled(let id, let result):
             guard let item = uncertainCommand, item.id == id else { return [] }
             switch result {
-            case .notExecuted: recoverDraft(item); effects += show(.message("这次没有执行，草稿保留"))
+            case .notExecuted: recoverDraft(item); effects += show(.message(WSL10n.text("conductor.msg.notExecuted", zh: "这次没有执行，草稿保留")))
             case .running(let turn, let actual):
                 guard validID(turn), actual.map({ $0.model.provider == envelope.context.session.provider }) ?? true else { return [.fault(.malformedInput)] }
                 runningTurn = turn; currentConfig = actual; clearSubmittedDraft(item); effects += show(.running(turn: turn))
@@ -326,7 +347,7 @@ struct ConductorSession: Sendable {
             effects += show(.voiceChallenge(phrase: phrase))
         case .approvalFinished(let key):
             guard approval?.key == key else { return [] }
-            approval = nil; challenge = nil; approvalBusy = false; effects += show(.message("已处理"))
+            approval = nil; challenge = nil; approvalBusy = false; effects += show(.message(WSL10n.text("conductor.msg.handled", zh: "已处理")))
         case .tick: break
         }
         effects += expire(sequence: envelope.sequence, at: now)
@@ -405,7 +426,8 @@ struct ConductorSession: Sendable {
         }
         guard var s = stroke else { return [] }
         guard s.points.count < Self.maximumStrokePoints, now.elapsed(since: s.beganAt) <= 6 * WS2.Duration.second else {
-            stroke = nil; return show(.message("没认出，保持 \(nextConfig?.effort ?? "原设置")"))
+            stroke = nil; return show(.message(WSL10n.text("conductor.msg.notRecognized", zh: "没认出，保持 %@",
+                                                          nextConfig?.effort ?? WSL10n.text("conductor.currentSetting", zh: "原设置"))))
         }
         s.points.append(sample); stroke = s
         if case .move = phase {
@@ -428,7 +450,8 @@ struct ConductorSession: Sendable {
         if case .failure = result, let down = Self.verticalSwipe(s.points) { return down ? openModels() : back(now: now) }
         candidate = nil; costVault.invalidate(); costBinding = nil
         switch result {
-        case .failure: return show(.message("没认出，保持 \(nextConfig?.effort ?? "原设置")")) + sound("未识别")
+        case .failure: return show(.message(WSL10n.text("conductor.msg.notRecognized", zh: "没认出，保持 %@",
+                                                          nextConfig?.effort ?? WSL10n.text("conductor.currentSetting", zh: "原设置")))) + sound(ConductorSoundToken.unrecognized)
         case .success(let gesture):
             guard let requested = ConductorEffort.requested(by: gesture), let current = nextConfig,
                   let cap = capabilities.first(where: { $0.model == current.model }) else { return [.fault(.missingDependency)] }
@@ -437,13 +460,17 @@ struct ConductorSession: Sendable {
             case .supported(let config, let costly, let label):
                 let gestureName: String
                 switch gesture {
-                case .tone(let n): gestureName = ["一声","二声","三声","四声"][n - 1]
-                case .beats(let n): gestureName = ["一拍","二拍","三拍","四拍","五拍","六拍"][n - 1]
+                case .tone(let n):
+                    gestureName = WSL10n.text("conductor.gesture.tones", zh: "一声,二声,三声,四声")
+                        .split(separator: ",").map(String.init)[n - 1]
+                case .beats(let n):
+                    gestureName = WSL10n.text("conductor.gesture.beats", zh: "一拍,二拍,三拍,四拍,五拍,六拍")
+                        .split(separator: ",").map(String.init)[n - 1]
                 }
                 // 高开销档位：刘海写“五拍 · max　点一下确认”，手势名加实际档位。
                 if costly { return proposeCost(config, label: "\(gestureName) · \(config.effort)", sequence: sequence, now: now) }
                 requiresCost = false; nextConfig = config
-                return [.stageConfig(config)] + show(runningTurn != nil ? .next(current: currentConfig?.effort ?? "实际档位还没确认", next: config.effort) : .staged(label: "\(gestureName) · \(label)　下一轮")) + sound("已识别")
+                return [.stageConfig(config)] + show(runningTurn != nil ? .next(current: currentConfig?.effort ?? WSL10n.text("conductor.stage.effortUnconfirmed", zh: "实际档位还没确认"), next: config.effort) : .staged(label: "\(gestureName) · \(label)　下一轮")) + sound(ConductorSoundToken.recognized(gesture: gesture))
             }
         }
     }
@@ -456,7 +483,7 @@ struct ConductorSession: Sendable {
             guard case .cost = notch else { return [] }
             guard costVault.confirm(c, beganAt: confirmation.beganAt, sequence: confirmation.sequence, now: now) else { return [] }
             candidate = nil; nextConfig = c.binding.config; costBinding = c.binding; requiresCost = true
-            return [.stageConfig(c.binding.config)] + show(.staged(label: "下一轮生效 · 只管一次提交"))
+            return [.stageConfig(c.binding.config)] + show(.staged(label: WSL10n.text("conductor.staged.nextOnly", zh: "下一轮生效 · 只管一次提交")))
         }
         if let request = approval {
             guard !approvalBusy, challenge == nil, confirmation.beganAt >= request.createdAt,
@@ -473,14 +500,14 @@ struct ConductorSession: Sendable {
     }
     private mutating func play(now: WS2.Instant) -> [Effect] {
         guard approval == nil else { return [] }
-        guard backendReady, let context else { return show(.message("正在确认后端状态")) }
-        guard command == nil, uncertainCommand == nil else { return show(.message("等待后端确认，不重复发送")) }
-        guard capture == nil else { return show(.message("先结束录音")) }
+        guard backendReady, let context else { return show(.message(WSL10n.text("conductor.msg.backendPending", zh: "正在确认后端状态"))) }
+        guard command == nil, uncertainCommand == nil else { return show(.message(WSL10n.text("conductor.msg.waitBackend", zh: "等待后端确认，不重复发送"))) }
+        guard capture == nil else { return show(.message(WSL10n.text("conductor.msg.stopRecordingFirst", zh: "先结束录音"))) }
         guard candidate == nil else { return show(.cost(label: candidateLabel)) }
         if let draft {
             guard draft.owner.peerID == context.peerID, draft.owner.projectID == context.projectID,
                   draft.owner.session == context.session else {
-                return show(.message("草稿来自另一个会话，请先修改或丢弃"))
+                return show(.message(WSL10n.text("conductor.msg.draftOtherSession", zh: "草稿来自另一个会话，请先修改或丢弃")))
             }
             if let turn = runningTurn {
                 guard let id = tokens.next() else { return [.fault(.generationExhausted)] }
@@ -488,12 +515,12 @@ struct ConductorSession: Sendable {
                 return [.steer(command: id, context: context, turnID: turn, text: draft.text)] + show(.steering)
             }
             guard let config = nextConfig, config.model.provider == context.session.provider,
-                  capabilities.contains(where: { $0.accepts(config) }) else { return show(.message("能力信息不可用，请重新选择")) }
+                  capabilities.contains(where: { $0.accepts(config) }) else { return show(.message(WSL10n.text("conductor.msg.capabilitiesUnavailable", zh: "能力信息不可用，请重新选择"))) }
             if requiresCost {
                 guard let binding = costBinding, binding.context == context, binding.config == config,
                       binding.draftDigest == draft.digest, costVault.consume(for: binding, now: now) else {
                     costBinding = nil
-                    return proposeCost(config, label: config.workflowID == nil ? config.effort : "ultracode · xhigh · 工作流程开启", sequence: gate.lastSequence, now: now)
+                    return proposeCost(config, label: config.workflowID == nil ? config.effort : WSL10n.text("conductor.workflow.on", zh: "ultracode · xhigh · 工作流程开启"), sequence: gate.lastSequence, now: now)
                 }
                 costBinding = nil
             }
@@ -510,7 +537,7 @@ struct ConductorSession: Sendable {
     }
     private mutating func startCapture(at now: WS2.Instant) -> [Effect] {
         guard capture == nil else { return [] }
-        guard let source else { return show(.message("没有可用的麦克风")) }
+        guard let source else { return show(.message(WSL10n.text("conductor.msg.noMic", zh: "没有可用的麦克风"))) }
         guard let id = tokens.next() else { return [.fault(.generationExhausted)] }
         capture = Capture(id: id, sourceLabel: source.label, baseDraftRevision: draftRevision, challengeID: challenge?.id, deadline: now.adding(Self.captureLimit))
         return [.startCapture(id, sourceID: source.id)] + show(.waitingForAudio)
@@ -531,13 +558,14 @@ struct ConductorSession: Sendable {
         discardAt = nil; costVault.invalidate(); costBinding = nil
         if let c = candidate { return proposeCost(c.binding.config, label: candidateLabel, sequence: sequence, now: now) }
         if requiresCost, let config = nextConfig { return proposeCost(config, label: config.effort, sequence: sequence, now: now) }
-        return show(text.isEmpty ? .message("草稿已清空") : .draft(text, header: draftHeader, uncertain: marks))
+        return show(text.isEmpty ? .message(WSL10n.text("conductor.msg.draftCleared", zh: "草稿已清空"))
+                                   : .draft(text, header: draftHeader, uncertain: marks))
     }
     /// 草稿第一行：给谁（项目 · 助手）和下一轮用的档位。
     private var draftHeader: String {
         let provider = context?.session.provider.displayName ?? ""
         let effort = nextConfig?.effort ?? currentConfig?.effort ?? ""
-        return "草稿 · 给 \(projectLabel) · \(provider) · \(effort)"
+        return WSL10n.text("conductor.draftHeader", zh: "草稿 · 给 %@ · %@ · %@", projectLabel, provider, effort)
     }
     private mutating func proposeCost(_ config: WS2.ExecutionConfig, label: String, sequence: UInt64, now: WS2.Instant) -> [Effect] {
         guard let context, let id = tokens.next() else { return [.fault(.generationExhausted)] }
@@ -549,16 +577,16 @@ struct ConductorSession: Sendable {
     }
     /// 取消眼前这一件；什么都没有就退一层，回到刘海那一排。
     private mutating func back(now: WS2.Instant) -> [Effect] {
-        if modelPicker != nil { modelPicker = nil; return show(.message("已取消")) }
-        if candidate != nil { candidate = nil; costVault.invalidate(); costBinding = nil; return show(.message("已取消")) }
+        if modelPicker != nil { modelPicker = nil; return show(.message(WSL10n.text("conductor.msg.cancelled", zh: "已取消"))) }
+        if candidate != nil { candidate = nil; costVault.invalidate(); costBinding = nil; return show(.message(WSL10n.text("conductor.msg.cancelled", zh: "已取消"))) }
         if let request = approval {
             approval = nil; challenge = nil; approvalBusy = false
-            return [approvalEffect(request, confirmation: Confirmation(beganAt: now, sequence: gate.lastSequence), confirm: false, deny: true, voice: false)] + show(.message("不允许"))
+            return [approvalEffect(request, confirmation: Confirmation(beganAt: now, sequence: gate.lastSequence), confirm: false, deny: true, voice: false)] + show(.message(WSL10n.text("conductor.msg.denied", zh: "不允许")))
         }
         if draft != nil {
             if let first = discardAt, now < first.adding(Self.discardInterval) {
                 draft = nil; discardAt = nil; costVault.invalidate(); costBinding = nil
-                return show(.message("草稿已丢弃"))
+                return show(.message(WSL10n.text("conductor.msg.draftDiscarded", zh: "草稿已丢弃")))
             }
             discardAt = now; return show(.discardDraft)
         }
@@ -588,7 +616,7 @@ struct ConductorSession: Sendable {
     }
     private mutating func showModels() -> [Effect] {
         guard let index = modelPicker, let slots else { return [] }
-        return show(.models(slots.slots.map { $0?.modelID ?? "没有设置" }, selected: index))
+        return show(.models(slots.slots.map { $0?.modelID ?? WSL10n.text("conductor.noModel", zh: "没有设置") }, selected: index))
     }
     private mutating func pickerStroke(_ points: [ConductorPoint], now: WS2.Instant) -> [Effect] {
         guard let first = points.first, let last = points.last else { return [] }
@@ -605,12 +633,12 @@ struct ConductorSession: Sendable {
         case .available(let cap):
             guard cap.model.provider == context?.session.provider else { return [.requestSessionForModel(cap.model)] }
             guard let current = nextConfig, cap.supportedEfforts.contains(current.effort) else {
-                return show(.message("这个模型不支持当前档位，保持原设置"))
+                return show(.message(WSL10n.text("conductor.msg.modelUnsupported", zh: "这个模型不支持当前档位，保持原设置")))
             }
             let config = WS2.ExecutionConfig(model: cap.model, effort: current.effort, workflowID: nil, capabilityRevision: cap.revision)
             // 高开销档位换模型仍需确认，不能借换模型绕过票据。
             if requiresCost { return proposeCost(config, label: current.effort, sequence: sequence, now: now) }
-            nextConfig = config; return [.stageConfig(config)] + show(.staged(label: "下一轮 · \(cap.model.modelID)"))
+            nextConfig = config; return [.stageConfig(config)] + show(.staged(label: WSL10n.text("conductor.staged.nextModel", zh: "下一轮 · %@", cap.model.modelID)))
         }
     }
     /// 竖滑阈值 16%（和 iPhone 触控的 160/1000 一致）。暂定，待真机采样。
@@ -632,7 +660,7 @@ struct ConductorSession: Sendable {
         if let a = approval, now >= a.deadline {
             approval = nil; challenge = nil; approvalBusy = false
             effects.append(approvalEffect(a, confirmation: Confirmation(beganAt: now, sequence: sequence), confirm: false, deny: false, voice: false))
-            effects += show(.message("审批已交回原处"))
+            effects += show(.message(WSL10n.text("conductor.msg.approvalReturned", zh: "审批已交回原处")))
         }
         if let c = challenge, now >= c.deadline, let a = approval {
             challenge = nil; approvalBusy = true
@@ -640,21 +668,22 @@ struct ConductorSession: Sendable {
             effects += show(.authenticating)
         }
         if let c = candidate, now >= c.createdAt.adding(ConductorCostVault.lifetime) {
-            candidate = nil; costVault.invalidate(); costBinding = nil; effects += show(.message("确认已过期"))
+            candidate = nil; costVault.invalidate(); costBinding = nil; effects += show(.message(WSL10n.text("conductor.msg.confirmationExpired", zh: "确认已过期")))
         }
         if let c = capture, now >= c.deadline {
             if c.recording { effects += stopCapture(now: now) }
-            else { capture = nil; effects += show(.message("转写没有完成，草稿保留")) }
+            else { capture = nil; effects += show(.message(WSL10n.text("conductor.msg.transcribeFailed", zh: "转写没有完成，草稿保留"))) }
         }
         if let c = command, now >= c.deadline, let context {
             command = nil; uncertainCommand = c
-            effects.append(.requestCommandStatus(c.id, context)); effects += show(.message("结果还没确认，不重复发送"))
+            effects.append(.requestCommandStatus(c.id, context)); effects += show(.message(WSL10n.text("conductor.msg.resultUnconfirmed", zh: "结果还没确认，不重复发送")))
         }
         if let p = presses[.tv], !p.consumed, now >= p.beganAt.adding(500 * WS2.Duration.millisecond) {
             presses[.tv]?.consumed = true; effects += launchpad(at: now)
         }
         if let s = stroke, now >= s.beganAt.adding(6 * WS2.Duration.second) {
-            stroke = nil; effects += show(.message("没认出，保持 \(nextConfig?.effort ?? "原设置")"))
+            stroke = nil; effects += show(.message(WSL10n.text("conductor.msg.notRecognized", zh: "没认出，保持 %@",
+                                                          nextConfig?.effort ?? WSL10n.text("conductor.currentSetting", zh: "原设置"))))
         }
         return effects
     }
@@ -804,18 +833,20 @@ struct ConductorPresentation: Equatable, Sendable {
             let head = label.components(separatedBy: "\u{3000}").first ?? label
             p.title = head.isEmpty ? label : head; p.subtitle = target?.text ?? ""
         case .cost(let label):
-            p.title = label; p.subtitle = "点一下确认"
+            p.title = label; p.subtitle = WSL10n.text("conductor.propose.tapToConfirm", zh: "点一下确认")
         case .models(let labels, let selected):
             p.modelRows = Array(labels.prefix(4)); p.selectedModel = selected
         case .waitingForAudio:
-            p.title = "没有收到声音" // 没收到声音就不画波形。
+            p.title = WSL10n.text("conductor.stage.noAudio", zh: "没有收到声音") // 没收到声音就不画波形。
         case .listening(let source):
-            p.title = "在听"; p.subtitle = "\(source) · 松开出草稿"; p.showsWaveform = true
+            p.title = WSL10n.text("conductor.propose.listening", zh: "在听");
+                p.subtitle = WSL10n.text("conductor.stage.listening", zh: "%@ · 松开出草稿", source)
+                p.showsWaveform = true
         case .draft(let text, let header, let uncertain):
             p.title = header; p.draftBody = text; p.draftFooter = ConductorNotch.draftFooter
             p.uncertainRanges = ConductorDraftMarks.sanitize(uncertain, in: text)
         case .completed(let summary):
-            p.title = "完成"; p.summary = summary
+            p.title = WSL10n.text("notch.session.done", zh: "完成"); p.summary = summary
             p.subtitle = summary.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
         default: break
         }

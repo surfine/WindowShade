@@ -91,7 +91,7 @@ import Cocoa
                     } else {
                         // Owned app-server has no guaranteed native UI to hand off to. Decline, do not silently allow.
                         try wire.denyApproval(id)
-                        onUnavailable?("这项操作无法在这里完整确认，已拒绝这次请求")
+                        onUnavailable?(WSL10n.text("agent.approval.cannotConfirm", zh: "这项操作无法在这里完整确认，已拒绝这次请求"))
                     }
                 }
                 onEvent?(event)
@@ -366,8 +366,10 @@ import Cocoa
         details.isEditable = false; details.isSelectable = true; details.isRichText = false
         details.drawsBackground = false; details.textColor = .white.withAlphaComponent(0.85)
         details.font = .monospacedSystemFont(ofSize:11, weight:.regular)
-        details.string = "命令\n" + review.visibleCommand + "\n\n工作目录\n" + WS2ApprovalReview.visible(review.cwd) +
-            "\n\n线程 " + WS2ApprovalReview.visible(review.thread) + " · 轮次 " + WS2ApprovalReview.visible(review.turn)
+        let labels = WS2ApprovalLabels()
+        details.string = labels.command + "\n" + review.visibleCommand + "\n\n" + labels.workingDirectory + "\n"
+            + WS2ApprovalReview.visible(review.cwd)
+            + "\n\n" + labels.thread(review.thread) + " · " + labels.turn(review.turn)
         details.textContainer?.widthTracksTextView = true; details.isHorizontallyResizable = false; details.isVerticallyResizable = true
         details.minSize = .zero; details.maxSize = NSSize(width:CGFloat.greatestFiniteMagnitude, height:CGFloat.greatestFiniteMagnitude)
         details.autoresizingMask = [.width]
@@ -455,4 +457,13 @@ extension WS2CodexApprovalHost {
         }
         flush(deadline:clock.now().adding(WS2.Duration.second));return id
     }
+}
+
+
+/// 审批详情里的几行标签（第33批：走目录）。
+struct WS2ApprovalLabels {
+    var command: String { WSL10n.text("agent.approval.command", zh: "命令") }
+    var workingDirectory: String { WSL10n.text("agent.approval.cwd", zh: "工作目录") }
+    func thread(_ value: String) -> String { WSL10n.text("agent.approval.thread", zh: "线程 %@", WS2ApprovalReview.visible(value)) }
+    func turn(_ value: String) -> String { WSL10n.text("agent.approval.turn", zh: "轮次 %@", WS2ApprovalReview.visible(value)) }
 }

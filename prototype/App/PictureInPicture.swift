@@ -29,7 +29,7 @@ final class PictureInPictureController {
 
     var activeIDs: [CGWindowID] { order }
     func isInPictureInPicture(_ id: CGWindowID) -> Bool { sessions[id] != nil || exiting[id] != nil }
-    var menuTitle: String { "画中画当前窗口" }
+    var menuTitle: String { WSL10n.text("pip.currentWindow", zh: "画中画当前窗口") }
 
     // MARK: - 探针用
 
@@ -63,7 +63,7 @@ final class PictureInPictureController {
                 MainActor.assumeIsolated { [weak self] in
                     guard let self else { return }
                     guard let win, let id else {
-                        self.owner.notch.announce("没有可放的窗口", detail: "先点一下要放的窗口", tone: .problem)
+                        self.owner.notch.announce(WSL10n.text("pip.noWindow", zh: "没有可放的窗口"), detail: WSL10n.text("pip.tapFirst", zh: "先点一下要放的窗口"), tone: .problem)
                         return
                     }
                     if self.sessions[id] != nil { self.exit(id, activate: true) } else { self.enter(win, id: id, pid: pid) }
@@ -83,14 +83,14 @@ final class PictureInPictureController {
               (info[kCGWindowOwnerPID as String] as? pid_t) == pid, pid != getpid(),
               let screen = targetScreen ?? screenForAXWindow(pos: frameAX.origin, size: frameAX.size) else { return }
         guard owner.shaded[id] == nil else {
-            owner.notch.announce("先展开这扇窗", detail: "再放进画中画", tone: .problem)
+            owner.notch.announce(WSL10n.text("gesture.note.unrollFirst", zh: "先展开这扇窗"), detail: WSL10n.text("pip.thenPut", zh: "再放进画中画"), tone: .problem)
             return
         }
         var original = home ?? frameAX
         if owner.slideOver.isSlideOver(id) {
             // 收在屏幕边外的侧拉窗口：它现在的位置不是原处，退出侧拉时滑回来的那一段还会和让开抢位置。
             guard !owner.slideOver.isHidden else {
-                owner.notch.announce("先拉出侧拉窗口", detail: "再放进画中画", tone: .problem)
+                owner.notch.announce(WSL10n.text("pip.pullOutSlideOver", zh: "先拉出侧拉窗口"), detail: WSL10n.text("pip.thenPut", zh: "再放进画中画"), tone: .problem)
                 return
             }
             // 靠边那一格就是它的原处（滑到一半时读到的位置不算）。
@@ -98,14 +98,14 @@ final class PictureInPictureController {
         }
         // 让开要推到屏幕左右边外；两边都挨着别的屏幕时，推到哪边都会整扇露在旁边那块屏上。
         guard parkedFrame(CGRect(origin: original.origin, size: frameAX.size), on: screen) != nil else {
-            owner.notch.announce("放不进画中画", detail: "两边都挨着别的屏幕", tone: .problem)
+            owner.notch.announce(WSL10n.text("pip.cannot", zh: "放不进画中画"), detail: WSL10n.text("pip.bothSides", zh: "两边都挨着别的屏幕"), tone: .problem)
             putBackDropped(win, home: home)
             return
         }
         if owner.slideOver.isSlideOver(id) { owner.slideOver.exit(reason: "picture in picture", restoringPosition: false) }
         if owner.pinnedPreviewController.isPreviewing(id: id) { owner.pinnedPreviewController.stopPreviewFromMenu(id: id) }
         guard SlideOverRecovery.record(id: id, pid: pid, frame: original) else {
-            owner.notch.announce("暂时放不进去", detail: "请再试一次", tone: .problem)
+            owner.notch.announce(WSL10n.text("pip.notNow", zh: "暂时放不进去"), detail: WSL10n.text("common.tryAgain", zh: "请再试一次"), tone: .problem)
             putBackDropped(win, home: home)
             return
         }
@@ -265,7 +265,7 @@ final class PictureInPictureController {
         if sessions.isEmpty { maintenance?.invalidate(); maintenance = nil }
         wlog("pip: ended id=\(s.id) reason=\(reason)")
         if reason.hasPrefix("capture") || reason.hasPrefix("no shareable") {
-            owner.notch.announce("放不进画中画", detail: "拿不到它的画面", tone: .problem)
+            owner.notch.announce(WSL10n.text("pip.cannot", zh: "放不进画中画"), detail: WSL10n.text("pip.noPicture", zh: "拿不到它的画面"), tone: .problem)
         }
     }
 

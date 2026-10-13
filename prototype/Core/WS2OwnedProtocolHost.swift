@@ -65,14 +65,14 @@ enum WS2AccountAction { case read, login, cancel(String), logout, config(String)
                 guard !closed else { return }
                 if case .approval(let id,_,_) = event {
                     try wire.denyApproval(id)
-                    onUnavailable?("这次操作需要额外权限，已拒绝。当前入口仅供只读查询。")
+                    onUnavailable?(WSL10n.text("owned.fail.needsPermission", zh: "这次操作需要额外权限，已拒绝。当前入口仅供只读查询。"))
                 }
                 onEvent?(event)
             }
             flush()
             if wire.state == .closed { invalidate() }
         } catch {
-            onUnavailable?("助手消息未通过校验，已断开。")
+            onUnavailable?(WSL10n.text("owned.fail.messageInvalid", zh: "助手消息未通过校验，已断开。"))
             invalidate()
         }
     }

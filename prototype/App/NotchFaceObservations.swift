@@ -46,30 +46,30 @@ import Cocoa
         task = Task { @MainActor [weak self, source] in
             let granted = await source.requestAuthorization()
             guard let self, self.epoch == token, !Task.isCancelled else { return }
-            guard granted else { self.finish(title: "相机未开启", token: token); return }
+            guard granted else { self.finish(title: WSL10n.text("face.cameraOff", zh: "相机未开启"), token: token); return }
             do {
                 let action = try FaceGestureAction.random()
                 self.tracker = FaceGestureTracker(action: action, presentedAt: CACurrentMediaTime())
-                self.view?.update(title: action.instruction, detail: "动作检测 · 可随时取消")
-                self.source.onFailure = { [weak self] _ in self?.finish(title: "相机暂时不可用", token: token) }
+                self.view?.update(title: action.instruction, detail: WSL10n.text("face.detecting.cancelable", zh: "动作检测 · 可随时取消"))
+                self.source.onFailure = { [weak self] _ in self?.finish(title: WSL10n.text("face.cameraUnavailable", zh: "相机暂时不可用"), token: token) }
                 try await self.source.start(deviceID: cameraID) { [weak self] sample in
                     guard let self, self.epoch == token, var tracker = self.tracker else { return }
                     let result = tracker.receive(sample, now: CACurrentMediaTime())
                     self.tracker = tracker
                     switch result {
-                    case .detected: self.finish(title: "已检测到动作", detail: "动作检测完成", token: token)
-                    case .timedOut: self.finish(title: "这次未检测到动作", token: token)
+                    case .detected: self.finish(title: WSL10n.text("face.detected", zh: "已检测到动作"), detail: WSL10n.text("face.done", zh: "动作检测完成"), token: token)
+                    case .timedOut: self.finish(title: WSL10n.text("face.notDetected", zh: "这次未检测到动作"), token: token)
                     case .waiting, .moving: break
                     }
                 }
                 guard self.epoch == token, !Task.isCancelled else { return }
             } catch {
                 guard self.epoch == token, !Task.isCancelled else { return }
-                self.finish(title: "相机暂时不可用", token: token)
+                self.finish(title: WSL10n.text("face.cameraUnavailable", zh: "相机暂时不可用"), token: token)
             }
         }
     }
-    private func finish(title: String, detail: String = "可稍后重试", token: UInt64) {
+    private func finish(title: String, detail: String = WSL10n.text("face.retryLater", zh: "可稍后重试"), token: UInt64) {
         guard epoch == token, view != nil else { return }
         source.stop(); tracker = nil
         timeout?.cancel()
@@ -101,9 +101,9 @@ import Cocoa
 @MainActor final class NotchFaceObservationView: NSView, NotchInteractiveContent {
     var onCancel: (() -> Void)?
     private let icon = NSImageView()
-    private let title = NSTextField(labelWithString: "正在开启相机…")
-    private let detail = NSTextField(labelWithString: "可随时取消")
-    private let cancelButton = NSButton(title: "取消", target: nil, action: nil)
+    private let title = NSTextField(labelWithString: WSL10n.text("face.cameraStarting", zh: "正在开启相机…"))
+    private let detail = NSTextField(labelWithString: WSL10n.text("face.cancelable", zh: "可随时取消"))
+    private let cancelButton = NSButton(title: WSL10n.text("settings.common.cancel", zh: "取消"), target: nil, action: nil)
     init() {
         super.init(frame: .zero)
         wantsLayer = true
@@ -118,7 +118,7 @@ import Cocoa
         cancelButton.target = self; cancelButton.action = #selector(cancelRequest)
         cancelButton.keyEquivalent = "\u{1b}"
         for view in [icon, title, detail, cancelButton] { addSubview(view) }
-        setAccessibilityLabel("面部动作检测")
+        setAccessibilityLabel(WSL10n.text("face.title", zh: "面部动作检测"))
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
     override func layout() {

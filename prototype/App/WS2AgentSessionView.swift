@@ -33,8 +33,8 @@ import Cocoa
         for session in sessions.prefix(64) {
             let row = NSView(); row.translatesAutoresizingMaskIntoConstraints = false
             let status:String
-            switch session.status { case .idle:status="空闲";case .running:status="进行中";case .waiting:status="等你确认";
-                case .completed:status="已完成";case .failed:status="发生错误";case .stale:status="状态待确认";case .disconnected:status="已断开" }
+            switch session.status { case .idle:status=WSL10n.text("agent.status.idle", zh: "空闲");case .running:status=WSL10n.text("agent.status.running", zh: "进行中");case .waiting:status=WSL10n.text("agent.status.waiting", zh: "等你确认");
+                case .completed:status=WSL10n.text("agent.status.done", zh: "已完成");case .failed:status=WSL10n.text("agent.status.failed", zh: "发生错误");case .stale:status=WSL10n.text("agent.status.stale", zh: "状态待确认");case .disconnected:status=WSL10n.text("owned.status.disconnected", zh: "已断开") }
             let provider = NSTextField(labelWithString: session.context.session.provider.displayName)
             provider.font = .systemFont(ofSize: 13, weight: .semibold)
             let state = NSTextField(labelWithString: status)
@@ -59,7 +59,7 @@ import Cocoa
             actions.translatesAutoresizingMaskIntoConstraints = false; row.addSubview(actions)
             let owned: Bool
             if case .owned = session.control { owned = true } else { owned = false }
-            for (text,isStop) in [("打开",false),("停止",true)] {
+            for (text,isStop) in [(WSL10n.text("notch.action.open", zh: "打开"),false),(WSL10n.text("agent.action.stop", zh: "停止"),true)] {
                 if isStop && (!owned || session.status != .running) { continue }
                 let button=NSButton(title:text,target:self,action:#selector(pressed(_:)));button.bezelStyle = .rounded
                 button.controlSize = .small
@@ -77,7 +77,7 @@ import Cocoa
                 actions.trailingAnchor.constraint(equalTo: row.trailingAnchor),
                 actions.centerYAnchor.constraint(equalTo: row.centerYAnchor)])
         }
-        if sessions.isEmpty { rows.addArrangedSubview(NSTextField(labelWithString:"还没有编程会话")) }
+        if sessions.isEmpty { rows.addArrangedSubview(NSTextField(labelWithString:WSL10n.text("agent.sessions.none", zh: "还没有编程会话"))) }
     }
     @objc private func pressed(_ sender:NSButton) {
         guard inputIsCurrent(),let (context,isStop) = bindings[ObjectIdentifier(sender)] else { return }
