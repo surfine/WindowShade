@@ -97,7 +97,9 @@ extension TrackpadGestureController {
         let names = Dictionary(found.map { ($0.window.id, NSRunningApplication(processIdentifier: $0.window.pid)?.localizedName ?? "") },
                                uniquingKeysWith: { first, _ in first })
         var summary = MagicTiling.summary(plan, names: names)
-        if !stripExtras.isEmpty { summary += "，右边还有 \(stripExtras.count) 扇接成卷轴（左右滑过去）" }
+        if !stripExtras.isEmpty {
+            summary += WSL10n.text("magic.stripExtras", zh: "，右边还有 %@ 扇接成卷轴（左右滑过去）", String(stripExtras.count))
+        }
         guard !plan.placements.isEmpty else {
             if announce { hud.announce(.magicTile, note: summary, anchor: cocoaMousePoint(fromAXPoint: CGPoint(x: area.midX, y: area.minY + 60)), screen: screen) }
             wlog("magic-tile: nothing to arrange")
@@ -232,7 +234,8 @@ extension TrackpadGestureController {
             for other in away.tucked where owner.notch.isTucked(other) { owner.notch.release(other, reason: "shake") }
             for other in away.shaded where owner.shaded[other] != nil { _ = owner.unshade(other) }
             wlog("shake: brought back \(away.tucked.count + away.shaded.count) around id=\(id)")
-            owner.notch.announce("放回了 \(away.tucked.count + away.shaded.count) 扇", tone: .done)
+            owner.notch.announce(WSL10n.text("notch.batch.putBack", zh: "放回了 %@ 扇",
+                                             String(away.tucked.count + away.shaded.count)), tone: .done)
             return
         }
         guard let frame = cgWindowInfo(id).flatMap({ cgWindowBounds($0) }),
@@ -240,7 +243,7 @@ extension TrackpadGestureController {
         let others = arrangeableWindows(on: screen, focused: id).filter { $0.window.id != id }
         guard !others.isEmpty else {
             wlog("shake: nothing else on this screen")
-            owner.notch.announce("这块屏上只有它一扇", tone: .info)
+            owner.notch.announce(WSL10n.text("magic.onlyOne", zh: "这块屏上只有它一扇"), tone: .info)
             return
         }
         let toNotch = NotchController.isEnabled && owner.notch.isAvailable
@@ -256,7 +259,10 @@ extension TrackpadGestureController {
         }
         shaken = away
         owner.notch.coachUsed(.shake)
-        owner.notch.announce("别的 \(others.count) 扇\(toNotch ? "收进了刘海" : "收起来了")", detail: "拖着它再晃一下，都放回来", tone: .done)
+        owner.notch.announce(WSL10n.text("magic.othersAway", zh: "别的 %@ 扇%@", String(others.count),
+                                             toNotch ? WSL10n.text("magic.tuckedIntoNotch", zh: "收进了刘海")
+                                                     : WSL10n.text("magic.rolledUp", zh: "收起来了")),
+                                 detail: WSL10n.text("magic.othersHint", zh: "拖着它再晃一下，都放回来"), tone: .done)
         wlog("shake: put away \(others.count) around id=\(id) into \(toNotch ? "the notch" : "strips")")
     }
 }
@@ -268,13 +274,14 @@ extension TrackpadGestureController {
     func moveToNextDisplay(backward: Bool = false) -> Bool {
         let screens = NSScreen.screens
         guard screens.count > 1 else {
-            owner.notch.announce("只有一块屏幕", detail: "接上另一块显示器再用", tone: .info)
+            owner.notch.announce(WSL10n.text("magic.oneDisplay", zh: "只有一块屏幕"),
+                                 detail: WSL10n.text("magic.oneDisplayHint", zh: "接上另一块显示器再用"), tone: .info)
             return false
         }
         let focused = focusedWindow()
         let focusedID = focused.flatMap { windowID(of: $0) }
         if let id = focusedID, let step = awayStep(id) {
-            owner.notch.announce("\(step)，\(backward ? "再移到上一块屏幕" : "再移到另一块屏幕")", tone: .problem)
+            owner.notch.announce(WSL10n.text("gesture.notice.stepThenArrange", zh: "%@，再排", step) , tone: .problem)
             wlog("display-move: refused, id=\(id) is not in its place")
             return false
         }
@@ -282,7 +289,7 @@ extension TrackpadGestureController {
               let pos = axPosition(win), let size = axSize(win),
               let current = screenForAXWindow(pos: pos, size: size),
               let index = screens.firstIndex(of: current) else {
-            owner.notch.announce("没有可以移的窗口", tone: .problem)
+            owner.notch.announce(WSL10n.text("magic.noWindowsToMove", zh: "没有可以移的窗口"), tone: .problem)
             return false
         }
         let next = screens[(index + (backward ? screens.count - 1 : 1)) % screens.count]
@@ -305,7 +312,8 @@ extension TrackpadGestureController {
         let observed = CGRect(origin: axPosition(win) ?? fitted.origin, size: axSize(win) ?? fitted.size)
         noteReplaced(id)
         undoRecords[id] = PlacementUndo(before: frame, after: observed, element: win, layout: nil, area: to)
-        hud.announce(backward ? .toLeftDisplay : .toRightDisplay, note: "移到了\(next.localizedName)",
+        hud.announce(backward ? .toLeftDisplay : .toRightDisplay,
+                     note: WSL10n.text("magic.movedTo", zh: "移到了%@", next.localizedName),
                      anchor: cocoaMousePoint(fromAXPoint: CGPoint(x: observed.midX, y: observed.minY + 60)), screen: next)
         wlog("display-move: id=\(id) \(current.localizedName) → \(next.localizedName)")
         return true

@@ -264,7 +264,7 @@ final class StripOverviewPanel: NSPanel {
 
     init(frame: NSRect) {
         super.init(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        title = "卷轴概览"
+        title = WSL10n.text("silent.window.stripOverview", zh: "卷轴概览")
         // 盖住别的 App 的窗口（包括浮在前面的），菜单栏和程序坞照常在上面。
         level = .modalPanel
         collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary, .moveToActiveSpace]
@@ -378,7 +378,7 @@ final class StripOverviewView: NSView {
         addSubview(content)
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("卷轴概览")
+        setAccessibilityLabel(WSL10n.text("silent.window.stripOverview", zh: "卷轴概览"))
         refreshSelection()
         updateColors()
     }
@@ -718,10 +718,10 @@ final class StripOverviewTile: NSView {
         let id = item.id
         var actions: [NSAccessibilityCustomAction] = []
         let specs: [(String, ScrollStrip.Side, Bool, Selector)] = [
-            ("移到左边一列", .left, false, #selector(axMoveLeft)),
-            ("移到右边一列", .right, false, #selector(axMoveRight)),
-            ("并进左边这一列", .left, true, #selector(axJoinLeft)),
-            ("并进右边这一列", .right, true, #selector(axJoinRight)),
+            (WSL10n.text("strip.moveLeft", zh: "移到左边一列"), .left, false, #selector(axMoveLeft)),
+            (WSL10n.text("strip.moveRight", zh: "移到右边一列"), .right, false, #selector(axMoveRight)),
+            (WSL10n.text("strip.joinLeft", zh: "并进左边这一列"), .left, true, #selector(axJoinLeft)),
+            (WSL10n.text("strip.joinRight", zh: "并进右边这一列"), .right, true, #selector(axJoinRight)),
         ]
         for (name, side, joining, selector) in specs where strip.drop(for: id, toward: side, joining: joining) != nil {
             actions.append(NSAccessibilityCustomAction(name: name, target: self, selector: selector))

@@ -130,7 +130,7 @@ final class SlideOverController {
                 MainActor.assumeIsolated { [weak self] in
                     guard let self, self.generation == request, self.docked == nil else { return }
                     guard let win, let id else {
-                        self.owner.quietNotice("没有可以侧拉的窗口", log: "slide-over: no focused window")
+                        self.owner.quietNotice(WSL10n.text("notice.slideOver.noWindow", zh: "没有可以侧拉的窗口"), kind: .problem, log: "slide-over: no focused window")
                         return
                     }
                     self.enter(win, id: id, pid: pid)
@@ -150,7 +150,7 @@ final class SlideOverController {
         let chosen = preferred.flatMap { Self.neighborFree($0, screen) ? $0 : nil } ?? Self.side(for: current, on: screen)
         guard let side = chosen else {
             if !owner.notch.announce("不能侧拉", detail: "两边都挨着别的屏幕", tone: .problem) {
-                owner.quietNotice("不能侧拉：两边都挨着别的屏幕", log: "slide-over: both sides have displays")
+                owner.quietNotice(WSL10n.text("notice.slideOver.bothSides", zh: "不能侧拉：两边都挨着别的屏幕"), kind: .problem, log: "slide-over: both sides have displays")
             }
             return
         }
@@ -167,7 +167,7 @@ final class SlideOverController {
         generation &+= 1
         let frame = Self.dockedFrame(width: min(size.width, screen.visibleFrame.width * 0.4), height: size.height, side: side, on: screen)
         guard SlideOverRecovery.record(id: id, pid: pid, frame: frame) else {
-            owner.quietNotice("暂时不能侧拉这个窗口，请再试一次", log: "slide-over: no durable recovery record")
+            owner.quietNotice(WSL10n.text("notice.slideOver.retry", zh: "暂时不能侧拉这个窗口，请再试一次"), kind: .problem, log: "slide-over: no durable recovery record")
             return
         }
         docked = Docked(id: id, pid: pid, element: win, side: side, frame: frame, hidden: false, display: displayID(for: screen), restorePin: owner.pinnedPreviewController.isPreviewing(id: id))
@@ -447,7 +447,7 @@ final class SlideOverController {
         let key = "SlideOver.allDesktopsTipShown"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         UserDefaults.standard.set(true, forKey: key)
-        owner.quietNotice("想在每张桌面上直接用它：在 Dock 里按住 Control 点它，选项 → 分配给：所有桌面",
+        owner.quietNotice(WSL10n.text("notice.slideOver.assignAllDesktops", zh: "想在每张桌面上直接用它：在 Dock 里按住 Control 点它，选项 → 分配给：所有桌面"), kind: .info,
                           log: "slide-over: all-desktops tip")
     }
 
@@ -680,7 +680,7 @@ final class SlideOverController {
                 if !current.hidden { current.frame = report.observed }
                 self.docked = current
                 self.refreshTab()
-                self.owner.quietNotice("窗口没有跟上操作，请再试一次", log: "slide-over: window rejected landing")
+                self.owner.quietNotice(WSL10n.text("notice.slideOver.landingRejected", zh: "窗口没有跟上操作，请再试一次"), kind: .problem, log: "slide-over: window rejected landing")
                 return
             }
             if !current.hidden { current.frame = report.observed; self.docked = current }

@@ -49,7 +49,7 @@ enum DirectionKeyPresets {
 
     /// 设置页和提示里这一套叫什么：按当前键盘布局显示键名（Dvorak 上 WASD 那一簇显示 ,AOE）。
     static func label(for set: DirectionKeySet) -> String {
-        guard set != .arrows else { return "方向键" }
+        guard set != .arrows else { return WSL10n.text("gesture.keys.arrows", zh: "方向键") }
         return set.labelOrder.map {
             WindowBrowserSettings.displayName(for: GlobalShortcutSettings.HotKey(keyCode: set.keyCode($0), modifiers: 0))
         }.joined()
@@ -81,7 +81,8 @@ enum DirectionKeyPresets {
         }
         if GlobalShortcutSettings.numberedExpandEnabled {
             for keyCode in GlobalShortcutSettings.numberedKeyCodes {
-                holders[KeyCombo(keyCode: keyCode, carbonModifiers: GlobalShortcutSettings.numberedModifiers)] = "按编号展开已收起的窗口"
+                holders[KeyCombo(keyCode: keyCode, carbonModifiers: GlobalShortcutSettings.numberedModifiers)]
+                = WSL10n.text("gesture.keys.numbered", zh: "按编号展开已收起的窗口")
             }
         }
         var titles: [DirectionSlot: String] = [:]
@@ -91,7 +92,8 @@ enum DirectionKeyPresets {
         for slot in plan.changed {
             GlobalShortcutSettings.setHotKey(plan.result[slot].map(hotKey), for: shortcut(slot))
         }
-        var skipped = plan.clashes.map { (slot: $0.slot, combo: $0.combo, reason: "已用于“\($0.holder)”") }
+        var skipped = plan.clashes.map { (slot: $0.slot, combo: $0.combo,
+                                          reason: WSL10n.text("gesture.keys.usedBy", zh: "已用于“%@”", $0.holder)) }
         var changed = plan.changed
         // 被别的 App 占着、注册不上的方向：退回原来的组合，不留一个按了没反应的快捷键。
         // 原来的组合已经换给了另一个方向（IJKL ⇄ HJKL 互换 J K），那个方向也跟着不换，不把谁关掉。
@@ -103,9 +105,12 @@ enum DirectionKeyPresets {
                 GlobalShortcutSettings.setHotKey(fallback.result[slot].map(hotKey), for: shortcut(slot))
             }
             for slot in DirectionSlot.allCases where refused.contains(slot) {
-                if let combo = plan.result[slot] { skipped.append((slot, combo, "被其他应用占用")) }
+                if let combo = plan.result[slot] {
+                    skipped.append((slot, combo, WSL10n.text("gesture.keys.taken", zh: "被其他应用占用")))
+                }
             }
-            skipped += fallback.clashes.map { (slot: $0.slot, combo: $0.combo, reason: "已用于“\($0.holder)”") }
+            skipped += fallback.clashes.map { (slot: $0.slot, combo: $0.combo,
+                                                reason: WSL10n.text("gesture.keys.usedBy", zh: "已用于“%@”", $0.holder)) }
             changed.subtract(fallback.returned)
             _ = register()
         }
@@ -127,21 +132,26 @@ enum DirectionKeyPresets {
         let setName = outcome.set.map { $0 == .arrows ? label(for: $0) : " \(label(for: $0))" } ?? ""
         let title: String
         if outcome.restored {
-            title = "换回了原来的快捷键"
+            title = WSL10n.text("gesture.keys.backToOriginal", zh: "换回了原来的快捷键")
         } else if outcome.changed.isEmpty {
             let already = outcome.skipped.isEmpty && outcome.set != nil && DirectionKeySet.matching(now) == outcome.set
-            title = already ? "已经是\(setName)" : "快捷键没有换"
+            title = already ? WSL10n.text("gesture.keys.alreadySet", zh: "已经是%@", setName)
+                            : WSL10n.text("gesture.keys.unchanged", zh: "快捷键没有换")
         } else if outcome.set == .arrows {
-            title = "换回了方向键"
+            title = WSL10n.text("gesture.keys.backToArrows", zh: "换回了方向键")
         } else {
-            title = "换成了\(setName)"
+            title = WSL10n.text("gesture.keys.switched", zh: "换成了%@", setName)
         }
         let changed = DirectionSlot.allCases.compactMap { slot -> String? in
             guard outcome.changed.contains(slot), let combo = now[slot] else { return nil }
             return "\(name(combo)) \(shortcut(slot).title)"
         }
-        let skipped = outcome.skipped.map { "\(name($0.combo)) \($0.reason)，\(shortcut($0.slot).title)没换" }
-        let back = outcome.canSwitchBack ? "再点一次“方向键”换回原来的" : ""
+        let skipped = outcome.skipped.map {
+            WSL10n.text("gesture.keys.skippedLine", zh: "%@ %@，%@没换",
+                        name($0.combo), $0.reason, shortcut($0.slot).title)
+        }
+        let back = outcome.canSwitchBack
+            ? WSL10n.text("gesture.keys.switchBack", zh: "再点一次“方向键”换回原来的") : ""
         let detail = [changed.joined(separator: " · "), skipped.joined(separator: "；"), back]
             .filter { !$0.isEmpty }.joined(separator: "；")
         return (title, detail)

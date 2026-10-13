@@ -6,26 +6,26 @@ import Foundation
 
 /// 页头和页面上固定的几句话。
 enum WS2PrivacyCopy {
-    static let headerLead = "WindowShade 读到的每一样都列在这里。"
+    static var headerLead: String { WSL10n.text("settings.privacy.headerLead", zh: "WindowShade 读到的每一样都列在这里。") }
     /// 第二句承诺。要等联网实测（nettop，见设备清单）核过才能说，在那之前保持 false。
     static let showsNetworkPromise = false
-    static let networkPromise = "除了检查更新，都不离开这台 Mac。"
+    static var networkPromise: String { WSL10n.text("settings.privacy.networkPromise", zh: "除了检查更新，都不离开这台 Mac。") }
 
     static func headerSubtitle(showingNetworkPromise: Bool = showsNetworkPromise) -> String {
         showingNetworkPromise ? headerLead + networkPromise : headerLead
     }
 
-    static let readAtPrefix = "打开这一页时读的 · "
-    static let rereadTitle = "再读一次"
-    static let showDetailsTitle = "显示技术细节"
-    static let exportTitle = "导出…"
+    static var readAtPrefix: String { WSL10n.text("settings.privacy.readAtPrefix", zh: "打开这一页时读的 · ") }
+    static var rereadTitle: String { WSL10n.text("settings.privacy.reread", zh: "再读一次") }
+    static var showDetailsTitle: String { WSL10n.text("settings.privacy.showDetails", zh: "显示技术细节") }
+    static var exportTitle: String { WSL10n.text("settings.privacy.export", zh: "导出…") }
     /// 读不到时写的字，不编一个值。
-    static let notRead = "没读到"
-    static let planned = "还没读"
-    static let granted = "已授权"
-    static let needsGrant = "去授权"
-    static let showInFinder = "在访达中显示"
-    static let destinationGroupTitle = "去了哪里"
+    static var notRead: String { WSL10n.text("settings.privacy.notRead", zh: "没读到") }
+    static var planned: String { WSL10n.text("settings.privacy.planned", zh: "还没读") }
+    static var granted: String { WSL10n.text("settings.privacy.granted", zh: "已授权") }
+    static var needsGrant: String { WSL10n.text("settings.privacy.needsGrant", zh: "去授权") }
+    static var showInFinder: String { WSL10n.text("settings.privacy.showInFinder", zh: "在访达中显示") }
+    static var destinationGroupTitle: String { WSL10n.text("settings.privacy.destinationGroup", zh: "去了哪里") }
 
     /// 刷脸解锁实验打开后才出现的几行（bluetooth-presence、face-identity、unlock-secret）。
     static let faceUnlockFeature = "face-unlock-experiment"
@@ -39,18 +39,18 @@ enum WS2PrivacyCopy {
     }
 
     /// 行上副标题后面的标签：要“辅助功能”。
-    static func permissionTag(_ permission: String) -> String { "要“\(permission)”" }
+    static func permissionTag(_ permission: String) -> String { WSL10n.text("settings.privacy.permissionTag", zh: "要“%@”", permission) }
 
     /// “去了哪里”里联网那张卡：写明问谁、不通时问谁、怎么让它不联网。
     static func networkCard(primaryHost: String, fallbackHost: String) -> (lead: String, body: String) {
-        ("检查更新会联网。",
-         "问 \(primaryHost) 有没有新版本，带上现在的版本号；那里不通时改问 GitHub（\(fallbackHost)）。"
-         + "关掉“自动检查更新”，就不会自己联网检查。")
+        (WSL10n.text("settings.privacy.network.lead", zh: "检查更新会联网。"),
+         WSL10n.text("settings.privacy.network.body", zh: "问 %@ 有没有新版本，带上现在的版本号；那里不通时改问 GitHub（%@）。关掉“自动检查更新”，就不会自己联网检查。", primaryHost, fallbackHost))
     }
 
-    static let storageCard = (
-        lead: "存在这台 Mac 上的：",
-        body: "你的设置；收起的窗口的标题和位置（恢复记录），出问题时靠它把窗口找回来；运行记录，出问题时用来查原因。")
+    static var storageCard: (lead: String, body: String) {
+        (WSL10n.text("settings.privacy.onDisk.lead", zh: "存在这台 Mac 上的："),
+         WSL10n.text("settings.privacy.onDisk.body", zh: "你的设置；收起的窗口的标题和位置（恢复记录），出问题时靠它把窗口找回来；运行记录，出问题时用来查原因。"))
+    }
 }
 
 /// “在访达中显示”要打开的两处：运行记录文件夹和设置文件所在的目录。
@@ -78,7 +78,7 @@ struct WS2PrivacySnapshot {
         var result = values
         for row in rows where result[row.id] == nil {
             guard let permission = row.permission, let granted = permissions[permission] else { continue }
-            result[row.id] = granted ? WS2PrivacyCopy.granted : "未授权"
+            result[row.id] = granted ? WS2PrivacyCopy.granted : WSL10n.text("settings.privacy.value.notAuthorized", zh: "未授权")
         }
         return result
     }
@@ -140,32 +140,33 @@ struct WS2PrivacyRowPresentation: Equatable {
 enum WS2PrivacyFormat {
     static func screen(count: Int, thisScreenHasNotch: Bool?) -> String? {
         guard let thisScreenHasNotch else { return nil }
-        let notch = thisScreenHasNotch ? "有刘海" : "没有刘海"
-        return count > 1 ? "\(count) 块屏 · 这块\(notch)" : "这块屏\(notch)"
+        let notch = thisScreenHasNotch ? WSL10n.text("settings.privacy.value.hasNotch", zh: "有刘海") : WSL10n.text("settings.privacy.value.noNotch", zh: "没有刘海")
+        return count > 1 ? WSL10n.text("settings.privacy.screenSummary.multi", zh: "%@ 块屏 · 这块%@", String(count), notch)
+                        : WSL10n.text("settings.privacy.screenSummary.single", zh: "这块屏%@", notch)
     }
 
     static func hinge(desktopEnabled: Bool, angle: Double?) -> String {
-        guard desktopEnabled else { return "关着" }
+        guard desktopEnabled else { return WSL10n.text("settings.privacy.value.offGeneric", zh: "关着") }
         guard let angle, angle.isFinite else { return WS2PrivacyCopy.notRead }
         return "\(Int(angle.rounded()))°"
     }
 
-    static func onOff(_ on: Bool) -> String { on ? "开着" : "关着" }
+    static func onOff(_ on: Bool) -> String { on ? WSL10n.text("settings.privacy.value.onGeneric", zh: "开着") : WSL10n.text("settings.privacy.value.offGeneric", zh: "关着") }
 
     /// 相机：“有人在看时收起私人窗口”开着时，解锁期间会用相机；其余时候没在用。
     static func camera(bystanderEnabled: Bool) -> String {
-        bystanderEnabled ? "解锁时在用" : "没在用"
+        bystanderEnabled ? WSL10n.text("settings.privacy.value.bystanderActive", zh: "解锁时在用") : WSL10n.text("settings.privacy.value.bystanderIdle", zh: "没在用")
     }
 
     static func music(activitiesEnabled: Bool, paused: Bool?) -> String {
-        guard activitiesEnabled else { return "关着" }
-        guard let paused else { return "没在放" }
-        return paused ? "音乐 · 暂停" : "音乐 · 播放中"
+        guard activitiesEnabled else { return WSL10n.text("settings.privacy.value.offGeneric", zh: "关着") }
+        guard let paused else { return WSL10n.text("settings.privacy.value.musicIdle", zh: "没在放") }
+        return paused ? WSL10n.text("settings.privacy.value.musicPaused", zh: "音乐 · 暂停") : WSL10n.text("settings.privacy.value.musicPlaying", zh: "音乐 · 播放中")
     }
 
     static func recording(activitiesEnabled: Bool, title: String?) -> String {
-        guard activitiesEnabled else { return "关着" }
-        return title ?? "没有 App 在录音"
+        guard activitiesEnabled else { return WSL10n.text("settings.privacy.value.offGeneric", zh: "关着") }
+        return title ?? WSL10n.text("settings.privacy.value.noRecording", zh: "没有 App 在录音")
     }
 
     /// 配件电量：先排配件，再排这台 Mac；最多写两个，其余写“等 N 个”。耳机另有自己的活动，不在这里。
@@ -179,14 +180,14 @@ enum WS2PrivacyFormat {
             if lhs.isMac != rhs.isMac { return !lhs.isMac }
             return lhs.name == rhs.name ? lhs.row.deviceID < rhs.row.deviceID : lhs.name < rhs.name
         }
-        guard !listed.isEmpty else { return "没有连着的配件" }
+        guard !listed.isEmpty else { return WSL10n.text("settings.privacy.value.noAccessory", zh: "没有连着的配件") }
         func text(_ item: (name: String, isMac: Bool, row: BatterySourceRow)) -> String {
             if item.row.presence == .connected, let percent = item.row.percent { return "\(item.name) \(percent)%" }
             return "\(item.name) \(DeviceBatteryCopy.percentUnavailable)"
         }
         let shown = listed.prefix(2).map(text).joined(separator: "、")
         let rest = listed.count - 2
-        return rest > 0 ? "\(shown) 等 \(listed.count) 个" : shown
+        return rest > 0 ? WSL10n.text("settings.privacy.value.andMore", zh: "%@ 等 %@ 个", shown, String(listed.count)) : shown
     }
 }
 

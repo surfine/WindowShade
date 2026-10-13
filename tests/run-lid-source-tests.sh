@@ -8,7 +8,7 @@ mkdir -p .build/lid-source-tests
 SOURCES=(prototype/Support/SecureLogFile.swift prototype/Support/Diagnostics.swift
   prototype/Core/FlickMotion.swift prototype/Core/LidGesture.swift
   prototype/Effects/FoldDriver.swift prototype/Effects/LidReconnectBackoff.swift prototype/Effects/LidAngleSource.swift)
-swiftc -parse-as-library -O "${SOURCES[@]}" tests/LidFeedTests.swift -o .build/lid-source-tests/lid-feed
+swiftc -parse-as-library -O "${SOURCES[@]}" prototype/Core/WSL10n.swift tests/LidFeedTests.swift -o .build/lid-source-tests/lid-feed
 .build/lid-source-tests/lid-feed
-swiftc -parse-as-library -O "${SOURCES[@]}" tests/LidSourceTests.swift -o .build/lid-source-tests/lid-source
+swiftc -parse-as-library -O "${SOURCES[@]}" prototype/Core/WSL10n.swift tests/LidSourceTests.swift -o .build/lid-source-tests/lid-source
 .build/lid-source-tests/lid-source

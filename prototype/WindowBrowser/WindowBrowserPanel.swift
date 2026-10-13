@@ -44,7 +44,8 @@ final class WindowBrowserPanel: NSPanel {
         // Dock 面板锚定在图标下方，保持不可拖动，避免与锚点/过渡区域打架。
         isMovableByWindowBackground = mode == .keyboard
         // 无边框窗口默认没有标题，VoiceOver 会读成无名窗口；这里给两种用途明确名称。
-        title = mode == .dock ? "窗口浏览" : "窗口选择"
+        title = mode == .dock ? WSL10n.text("settings.section.browser", zh: "窗口浏览")
+                              : WSL10n.text("browser.panel.chooseTitle", zh: "窗口选择")
         isExcludedFromWindowsMenu = true
         // 无边框浮层不应参与系统标签页合并（防御性设置，正常情况下也不会被合并）。
         tabbingMode = .disallowed

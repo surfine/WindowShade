@@ -4,6 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/welcome-flow-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  prototype/Core/SwitcherOrigin.swift prototype/Core/FlickMotion.swift prototype/App/WelcomeFlow.swift \
+  prototype/Core/WSL10n.swift prototype/Core/SwitcherOrigin.swift prototype/Core/FlickMotion.swift prototype/App/WelcomeFlow.swift \
   tests/WelcomeFlowTests.swift -o .build/welcome-flow-tests/flow
 .build/welcome-flow-tests/flow

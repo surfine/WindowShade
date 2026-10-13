@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/rescue-announce-tests
 swiftc -swift-version 6 -parse-as-library prototype/Core/NotchSentence.swift prototype/Core/RescueAnnounce.swift \
+  prototype/Core/WSL10n.swift \
   prototype/Core/NotchChangeFilter.swift prototype/App/UpdaterCopy.swift tests/RescueAnnounceTests.swift \
   -o .build/rescue-announce-tests/tests
 .build/rescue-announce-tests/tests

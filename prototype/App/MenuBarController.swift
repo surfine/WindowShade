@@ -64,7 +64,7 @@ extension AppDelegate {
 
     // D20B：顶层固定 9 项（见 StatusMenuLayout）。原来的“当前窗口”标题行不再占一行，
     // 改成前三项的悬停提示；其余旧项挪进“整理▸”“已收起的窗口▸”，action 与快捷键不变。
-    let contextCaption = pinnedPreviewController.ws2CachedMenuTitle()
+    let contextCaption = pinnedPreviewController.ws2CachedMenuCaption()
     func action(_ title: String, _ symbol: String, _ selector: Selector,
                 _ shortcut: GlobalShortcut? = nil, enabled: Bool = true, menu: NSMenu? = nil,
                 id: String? = nil) {
@@ -109,53 +109,54 @@ extension AppDelegate {
 
     let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
     let firstFixed = statusMenu.items.count
-    let foldTitle = foldToggleMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口")
-    action(foldTitle,
-           foldTitle.contains("展开") ? "rectangle.expand.vertical" : "rectangle.compress.vertical",
-           #selector(toggleAction), .toggleShade, id: "ws.menu.fold")
-    action("收进刘海", "rectangle.topthird.inset.filled", #selector(tuckCurrentAction), .tuckCurrent,
+    let fold = foldToggleState()
+    action(fold.menuTitle, fold.symbol, #selector(toggleAction), .toggleShade, id: "ws.menu.fold")
+    action(WSL10n.text("settings.shade.tuckNotch.name", zh: "收进刘海"), "rectangle.topthird.inset.filled",
+           #selector(tuckCurrentAction), .tuckCurrent,
            enabled: ax && NotchController.isEnabled, id: "ws.menu.tuck")
-    let pinTitle = pinnedPreviewMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口")
-    action(pinTitle,
-           pinTitle.contains("取消置顶") ? "pin.slash" : "pin",
+    let pin = pinnedPreviewController.currentTargetPinState()
+    action(pin.menuTitle, pin.symbol,
            #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen, id: "ws.menu.pin")
-    if contextCaption != "当前窗口" {
+    if let contextCaption {
       for item in statusMenu.items[firstFixed...] { item.toolTip = contextCaption }
     }
     let arrangement = NSMenu()
-    let arrangeItem = NSMenuItem(title: "整理", action: nil, keyEquivalent: "")
+    let arrangeItem = NSMenuItem(title: WSL10n.text("menu.arrange", zh: "整理"), action: nil, keyEquivalent: "")
     arrangeItem.identifier = NSUserInterfaceItemIdentifier("ws.menu.arrange")
     arrangeItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
     arrangement.delegate = self
     arrangeItem.submenu = arrangement; statusMenu.addItem(arrangeItem)
     action(MainActor.assumeIsolated { slideOver.menuTitle }, "sidebar.right", #selector(toggleSlideOverAction), .slideOver, enabled: ax && screen, menu: arrangement)
     if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
-      action("退出侧拉", "sidebar.right", #selector(exitSlideOverAction), menu: arrangement)
+      action(WSL10n.text("menu.exitSlideOver", zh: "退出侧拉"), "sidebar.right", #selector(exitSlideOverAction), menu: arrangement)
     }
-    action("画中画", "pip", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)
-    action("魔法平铺", "wand.and.stars", #selector(magicTileAction), .magicTile, enabled: ax, menu: arrangement)
+    action(WSL10n.text("menu.pictureInPicture", zh: "画中画"), "pip", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)
+    action(WSL10n.text("menu.magicTile", zh: "魔法平铺"), "wand.and.stars", #selector(magicTileAction), .magicTile, enabled: ax, menu: arrangement)
     // 卷轴概览：和主菜单“窗口”里那一项同一个去处，卷轴没开时灰着（由 StripOverviewMenuTarget 验证）。
     MainActor.assumeIsolated {
       arrangement.addItem(StandardMenu.stripOverviewItem(id: StatusMenuLayout.stripOverviewRowID, symbol: "rectangle.split.3x1"))
     }
-    if NSScreen.screens.count > 1 { action("移到另一块屏幕", "display", #selector(nextDisplayAction), .nextDisplay, enabled: ax, menu: arrangement) }
-    action("带到每张桌面", "square.on.square", #selector(toggleCarryAction), .carry, enabled: ax, menu: arrangement)
+    if NSScreen.screens.count > 1 { action(WSL10n.text("menu.nextDisplay", zh: "移到另一块屏幕"), "display", #selector(nextDisplayAction), .nextDisplay, enabled: ax, menu: arrangement) }
+    action(WSL10n.text("menu.carryToAllDesktops", zh: "带到每张桌面"), "square.on.square", #selector(toggleCarryAction), .carry, enabled: ax, menu: arrangement)
     if appearanceMode == .proxyTitleBar {
       action(focusMenuTitle(), "macwindow", #selector(focusCurrentAppAction), .arrangeOrFocus, enabled: ax, menu: arrangement)
     } else {
-      let title = thumbnailsInUse ? (hasArrangedOverlayFrames ? "恢复缩略图原位" : "整理缩略图")
-                                : (hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条")
+      let title = thumbnailsInUse
+        ? (hasArrangedOverlayFrames ? WSL10n.text("menu.restoreThumbnails", zh: "恢复缩略图原位")
+                                    : WSL10n.text("menu.arrangeThumbnails", zh: "整理缩略图"))
+        : (hasArrangedOverlayFrames ? WSL10n.text("menu.restoreBars", zh: "恢复卷帘条原位")
+                                    : WSL10n.text("menu.arrangeBars", zh: "整理卷帘条"))
       action(title, "rectangle.grid.1x2", #selector(arrangeShadedWindows), .arrangeOrFocus,
              enabled: menuState.canArrangeShades, menu: arrangement)
     }
     arrangement.addItem(.separator())
-    action("全部收进刘海", "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled, menu: arrangement)
-    action("选择窗口…", "rectangle.on.rectangle", #selector(openWindowBrowserPanel), .windowBrowser,
+    action(WSL10n.text("menu.tuckAll", zh: "全部收进刘海"), "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled, menu: arrangement)
+    action(WSL10n.text("menu.chooseWindow", zh: "选择窗口…"), "rectangle.on.rectangle", #selector(openWindowBrowserPanel), .windowBrowser,
            enabled: WindowBrowserSettings.keyboardPanelEnabled, menu: arrangement)
-    action("启动台", "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad, id: "ws.menu.launchpad")
+    action(WSL10n.text("silent.launcher.open", zh: "启动台"), "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad, id: "ws.menu.launchpad")
 
     // 已收起的窗口▸：没有收起的窗口时灰着，顶层仍是同样 9 项。
-    let foldedItem = NSMenuItem(title: "已收起的窗口", action: nil, keyEquivalent: "")
+    let foldedItem = NSMenuItem(title: WSL10n.text("settings.shortcuts.group.folded", zh: "已收起的窗口"), action: nil, keyEquivalent: "")
     foldedItem.identifier = NSUserInterfaceItemIdentifier("ws.menu.folded")
     foldedItem.image = NSImage(systemSymbolName: "rectangle.stack", accessibilityDescription: nil)
     if menuState.foldedWindows.isEmpty {
@@ -169,7 +170,7 @@ extension AppDelegate {
         foldedMenu.addItem(foldedWindowMenuItem(entry, index: index))
       }
       if !sections.overflow.isEmpty {
-        let more = NSMenuItem(title: "更多收起的窗口（\(sections.overflow.count)）",
+        let more = NSMenuItem(title: WSL10n.text("menu.moreFolded", zh: "更多收起的窗口（%@）", String(sections.overflow.count)),
                               action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         submenu.delegate = self
@@ -180,7 +181,7 @@ extension AppDelegate {
         foldedMenu.addItem(more)
       }
       foldedMenu.addItem(.separator())
-      let restore = NSMenuItem(title: "全部展开", action: #selector(restoreAll), keyEquivalent: "")
+      let restore = NSMenuItem(title: WSL10n.text("menu.unrollAll", zh: "全部展开"), action: #selector(restoreAll), keyEquivalent: "")
       restore.target = self
       foldedMenu.addItem(restore)
       foldedItem.submenu = foldedMenu
@@ -192,11 +193,11 @@ extension AppDelegate {
     // 「检查更新…」「开发」始终挂在菜单上，用 isHidden 随 ⌥ 显隐；它们不算在固定 9 项里。
     // 「欢迎使用」只在设置里。
     let optionHeld = NSEvent.modifierFlags.contains(.option)
-    let settings = NSMenuItem(title: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
+    let settings = NSMenuItem(title: WSL10n.text("menu.settings", zh: "设置…"), action: #selector(showPreferences), keyEquivalent: ",")
     settings.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
     settings.identifier = NSUserInterfaceItemIdentifier("ws.menu.settings")
     statusMenu.addItem(settings)
-    let about = NSMenuItem(title: "关于", action: #selector(showAboutPanel), keyEquivalent: ",")
+    let about = NSMenuItem(title: WSL10n.text("menu.about", zh: "关于"), action: #selector(showAboutPanel), keyEquivalent: ",")
     about.identifier = NSUserInterfaceItemIdentifier("ws.menu.about")
     about.keyEquivalentModifierMask = [.option]
     about.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
@@ -209,13 +210,13 @@ extension AppDelegate {
     statusMenu.addItem(updateItem)
     // 与原工程的发行 feed 约定一致；设置 SUFeedURL 的构建不得展示诊断入口。
     if Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") == nil {
-      let developer = NSMenuItem(title: "开发", action: nil, keyEquivalent: "")
+      let developer = NSMenuItem(title: WSL10n.text("menu.developer", zh: "开发"), action: nil, keyEquivalent: "")
       developer.isHidden = !optionHeld
       developer.image = NSImage(systemSymbolName: "hammer", accessibilityDescription: nil)
       let tools = NSMenu(); developer.submenu = tools
       if let text = menuState.hingeAngleText { tools.addItem(.sectionHeader(title: text)) }
-      action("验证 Touch ID…", "touchid", #selector(verifyTouchIDAction), menu: tools)
-      let cameras = NSMenuItem(title: "检测面部动作", action: nil, keyEquivalent: "")
+      action(WSL10n.text("menu.verifyTouchID", zh: "验证 Touch ID…"), "touchid", #selector(verifyTouchIDAction), menu: tools)
+      let cameras = NSMenuItem(title: WSL10n.text("menu.faceObservations", zh: "检测面部动作"), action: nil, keyEquivalent: "")
       cameras.submenu = NSMenu()
       MainActor.assumeIsolated {
         for camera in FaceObservationSource.devices() {
@@ -226,7 +227,7 @@ extension AppDelegate {
       tools.addItem(cameras)
       statusMenu.addItem(developer)
     }
-    let quitItem = NSMenuItem(title: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
+    let quitItem = NSMenuItem(title: WSL10n.text("menu.quit", zh: "退出 WindowShade"), action: #selector(quit), keyEquivalent: "q")
     quitItem.identifier = NSUserInterfaceItemIdentifier("ws.menu.quit")
     quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil); statusMenu.addItem(quitItem)
     if StatusMenuLayout.visibleFixedIDs(in: statusMenu) != StatusMenuLayout.fixedTopLevel.map(\.id) {
@@ -240,7 +241,7 @@ extension AppDelegate {
     guard !entries.isEmpty else { return }
 
     if !menu.items.isEmpty { menu.addItem(.separator()) }
-    menu.addItem(.sectionHeader(title: "点一下取消置顶"))
+    menu.addItem(.sectionHeader(title: WSL10n.text("menu.clickToUnpin", zh: "点一下取消置顶")))
 
     for (index, entry) in entries.enumerated() {
       let item = NSMenuItem(
@@ -263,7 +264,7 @@ extension AppDelegate {
     menu.addItem(suspendPinned)
 
     let stopPinnedPreviews = NSMenuItem(
-      title: "全部取消置顶",
+      title: WSL10n.text("menu.unpinAll", zh: "全部取消置顶"),
       action: #selector(stopAllPinnedPreviewsAction),
       keyEquivalent: "")
     stopPinnedPreviews.target = self
@@ -355,25 +356,39 @@ extension AppDelegate {
     }
   }
   func focusMenuTitle() -> String {
-    guard let session = focusSession else { return "专注当前 App" }
+    guard let session = focusSession else { return WSL10n.text("menu.focusApp", zh: "专注当前 App") }
     switch session.stage {
     case .arrangedAway:
-      return "专注：显示卷帘条原位"
+      return WSL10n.text("menu.focus.showBars", zh: "专注：显示卷帘条原位")
     case .barsRestoredHome:
-      return "专注：恢复专注前状态"
+      return WSL10n.text("menu.focus.restore", zh: "专注：恢复专注前状态")
     }
   }
   var hasArrangedOverlayFrames: Bool {
     arrangedOverlayFrames.keys.contains { shaded[$0]?.overlay != nil }
   }
-  func foldToggleMenuTitle() -> String {
-    guard !shaded.isEmpty else { return "收起当前窗口" }
-    if currentShadedOverlayID() != nil { return "展开当前窗口" }
-    if let id = pinnedPreviewController.currentTargetWindowID, shaded[id] != nil {
-      return "展开当前窗口"
-    }
-    return "收起当前窗口"
+  /// 收起/展开这一项的两副面孔：菜单里用短称呼（“收起窗口”），悬停提示用全称（“收起当前窗口”）。
+  struct FoldToggleState {
+    let isUnroll: Bool
+    let menuTitle: String
+    let caption: String
+    var symbol: String { isUnroll ? "rectangle.expand.vertical" : "rectangle.compress.vertical" }
   }
+  func foldToggleState() -> FoldToggleState {
+    func state(_ isUnroll: Bool) -> FoldToggleState {
+      FoldToggleState(isUnroll: isUnroll,
+                      menuTitle: isUnroll ? WSL10n.text("menu.unrollWindow", zh: "展开窗口")
+                                          : WSL10n.text("browser.action.foldRow", zh: "收起窗口"),
+                      caption: isUnroll ? WSL10n.text("menu.unrollCurrentWindow", zh: "展开当前窗口")
+                                        : WSL10n.text("menu.rollUpCurrentWindow", zh: "收起当前窗口"))
+    }
+    guard !shaded.isEmpty else { return state(false) }
+    if currentShadedOverlayID() != nil { return state(true) }
+    if let id = pinnedPreviewController.currentTargetWindowID, shaded[id] != nil { return state(true) }
+    return state(false)
+  }
+  /// 悬停提示与探针用的全称。
+  func foldToggleMenuTitle() -> String { foldToggleState().caption }
   /// 菜单项显示当前设置的快捷键；关掉了、被其他应用占用或按键画不出来时不显示。
   private func applyShortcut(_ shortcut: GlobalShortcut, to item: NSMenuItem) {
     guard let hotKey = menuHotKey(for: shortcut),
@@ -421,13 +436,13 @@ extension AppDelegate {
 
   func duoAngleMenuTitle() -> String {
     guard let angle = duoController.angle, angle.isFinite else {
-      switch duoController.sensorStatus {
-      case "传感器未启动", "角度读取已暂停":
-        return "屏幕开合角度：等待传感器"
-      default:
-        return "屏幕开合角度：不可用"
+      switch duoController.sensorPhase {
+      case .notStarted, .paused:
+        return WSL10n.text("menu.duoAngle.waiting", zh: "屏幕开合角度：等待传感器")
+      case .connected, .retrying, .captureFailed:
+        return WSL10n.text("menu.duoAngle.unavailable", zh: "屏幕开合角度：不可用")
       }
     }
-    return String(format: "屏幕开合角度：%.1f°", angle)
+    return WSL10n.text("menu.duoAngle.reading", zh: "屏幕开合角度：%.1f°", angle)
   }
 }

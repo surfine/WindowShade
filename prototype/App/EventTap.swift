@@ -79,9 +79,9 @@ extension AppDelegate {
             let duplicated = failed.filter { $0.value.status == OSStatus(eventHotKeyExistsErr) }
             let taken = failed.filter { $0.value.status != OSStatus(eventHotKeyExistsErr) }
             var parts: [String] = []
-            if !taken.isEmpty { parts.append("\(names(taken)) 被其他应用占用") }
-            if !duplicated.isEmpty { parts.append("\(names(duplicated)) 被 WindowShade 里的另一个快捷键占用") }
-            quietNotice(parts.joined(separator: "；"),
+            if !taken.isEmpty { parts.append(WSL10n.text("notice.hotkey.taken", zh: "%@ 被其他应用占用", names(taken))) }
+            if !duplicated.isEmpty { parts.append(WSL10n.text("notice.hotkey.duplicated", zh: "%@ 被 WindowShade 里的另一个快捷键占用", names(duplicated))) }
+            quietNotice(parts.joined(separator: WSL10n.text("notice.joiner", zh: "；")),
                         log: "hotkey: registration failed "
                             + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value.status)" }
                                 .joined(separator: ","))
@@ -109,7 +109,7 @@ extension AppDelegate {
             // 旧版本可能存下现在被拒绝的组合（例如纯 ⌘ 系列）：清掉，避免每次启动
             // 都重复提示；用户重新录制即可。
             WindowBrowserSettings.hotKey = nil
-            quietNotice("这个快捷键被保留，已忽略",
+            quietNotice(WSL10n.text("notice.hotkey.reserved", zh: "这个快捷键被保留，已忽略"), kind: .problem,
                         log: "window-browser: refused reserved hotkey \(config.keyCode)")
             return false
         }
@@ -121,7 +121,9 @@ extension AppDelegate {
             unavailableHotKeyIDs.insert(GlobalShortcut.windowBrowser.hotKeyID)
             let name = WindowBrowserSettings.displayName(for: config)
             quietNotice(status == OSStatus(eventHotKeyExistsErr)
-                            ? "\(name) 被 WindowShade 里的另一个快捷键占用" : "快捷键 \(name) 注册失败",
+                            ? WSL10n.text("notice.hotkey.duplicated", zh: "%@ 被 WindowShade 里的另一个快捷键占用", name)
+                            : WSL10n.text("notice.hotkey.registerFailed", zh: "快捷键 %@ 注册失败", name),
+                            kind: .problem,
                         log: "window-browser: hotkey registration failed status=\(status)")
             return false
         }
@@ -234,7 +236,7 @@ extension AppDelegate {
     func expandShadedWindow(atMenuIndex index: Int) {
         let entries = sortedShadedEntries()
         guard entries.indices.contains(index) else {
-            quietNotice("没有对应窗口", log: "hotkey: no shaded window at index=\(index)")
+            quietNotice(WSL10n.text("notice.hotkey.noWindow", zh: "没有对应窗口"), kind: .problem, log: "hotkey: no shaded window at index=\(index)")
             return
         }
         unshade(entries[index].0)

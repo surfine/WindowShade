@@ -15,11 +15,16 @@ final class LidAngleSource: @unchecked Sendable {
   enum Status {
     case connected(LidReport)
     case disconnected, stopped
+    /// 界面上的一句状态（第31批：走目录；zh 源句是语义身份）。
     var message: String {
       switch self {
-      case .connected(let report): return report == .precise ? "精细角度传感器已连接" : "角度传感器已连接"
-      case .disconnected: return "未检测到传感器，正在重试；仍可使用窗口动画"
-      case .stopped: return "角度读取已暂停"
+      case .connected(let report):
+        return report == .precise ? WSL10n.text("duo.sensor.connectedPrecise", zh: "精细角度传感器已连接")
+                                  : WSL10n.text("duo.sensor.connected", zh: "角度传感器已连接")
+      case .disconnected:
+        return WSL10n.text("duo.sensor.retrying", zh: "未检测到传感器，正在重试；仍可使用窗口动画")
+      case .stopped:
+        return WSL10n.text("duo.sensor.paused", zh: "角度读取已暂停")
       }
     }
   }

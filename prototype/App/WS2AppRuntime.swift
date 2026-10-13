@@ -449,7 +449,9 @@ import Cocoa
         guard let owner else { return }
         let m = focus.model,now = clock.now()
         // 左耳“专注”或“休息”加一圈环，右耳“18 分”（最后 60 秒“0:42”，暂停时“暂停”）。
-        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息"),
+        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil
+                                                : (m.phase == .focus ? WSL10n.text("notch.focus.focus", zh: "专注")
+                                                                     : WSL10n.text("notch.focus.rest", zh: "休息")),
                                               trailing:NotchEarText.focusTrailing(compactText:m.compactText(at:now),paused:m.isPaused),
                                               subtitle:NotchEarText.focusSubtitle(isRest:m.phase == .rest,completedToday:m.completedToday,paused:m.isPaused),
                                               paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now),

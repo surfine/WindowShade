@@ -31,7 +31,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     var platter: CALayer?
     let pill = LaunchpadCapsule(frame: NSRect(x: 0, y: 0, width: 110, height: 34))
     let field = NSTextField()
-    let emptyLabel = NSTextField(labelWithString: "没有找到 App")
+    let emptyLabel = NSTextField(labelWithString: WSL10n.text("launchpad.noApps", zh: "没有找到 App"))
     let glyph = NSImageView()
     let dots = CALayer()
     let done = LaunchpadCapsule(frame: NSRect(x: 0, y: 0, width: 72, height: 34))
@@ -174,7 +174,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         glyph.image = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 13, weight: .semibold))
         glyph.contentTintColor = .secondaryLabelColor
-        field.placeholderAttributedString = placeholder("搜索")
+        field.placeholderAttributedString = placeholder(WSL10n.text("silent.launcher.search", zh: "搜索"))
         field.font = .systemFont(ofSize: 14, weight: .medium)
         field.textColor = .labelColor
         field.isBordered = false
@@ -200,7 +200,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         list.onMenu = { [weak self] app, event in self?.showMenu(for: app, event: event) }
         list.icon = { [weak self] app in self?.art?(app).0 }
         addSubview(list)
-        let doneLabel = NSTextField(labelWithString: "完成")
+        let doneLabel = NSTextField(labelWithString: WSL10n.text("notch.session.done", zh: "完成"))
         doneLabel.font = .systemFont(ofSize: 14, weight: .semibold)
         doneLabel.textColor = .labelColor
         doneLabel.alignment = .center
@@ -209,8 +209,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         done.content.addSubview(doneLabel)
         done.isHidden = true
         addSubview(done)
-        field.setAccessibilityLabel("搜索 App")
-        setAccessibilityLabel("启动台")
+        field.setAccessibilityLabel(WSL10n.text("launchpad.searchApps", zh: "搜索 App"))
+        setAccessibilityLabel(WSL10n.text("silent.launcher.open", zh: "启动台"))
         accessibilityObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.refreshAccessibilityAppearance() }
@@ -984,22 +984,22 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func showMenu(for app: LaunchpadApp, event: NSEvent?) {
         let menu = NSMenu()
-        menu.addItem(withTitle: "打开", action: #selector(menuOpen(_:)), keyEquivalent: "").representedObject = app.path
-        menu.addItem(withTitle: "在访达中显示", action: #selector(menuReveal(_:)), keyEquivalent: "").representedObject = app.path
+        menu.addItem(withTitle: WSL10n.text("notch.action.open", zh: "打开"), action: #selector(menuOpen(_:)), keyEquivalent: "").representedObject = app.path
+        menu.addItem(withTitle: WSL10n.text("settings.privacy.showInFinder", zh: "在访达中显示"), action: #selector(menuReveal(_:)), keyEquivalent: "").representedObject = app.path
         menu.addItem(.separator())
         if isOnHome(app.path) {
-            menu.addItem(withTitle: "从主屏幕移除", action: #selector(menuRemove(_:)), keyEquivalent: "").representedObject = app.path
+            menu.addItem(withTitle: WSL10n.text("launchpad.removeFromHome", zh: "从主屏幕移除"), action: #selector(menuRemove(_:)), keyEquivalent: "").representedObject = app.path
         } else {
-            menu.addItem(withTitle: "添加到主屏幕", action: #selector(menuAdd(_:)), keyEquivalent: "").representedObject = app.path
+            menu.addItem(withTitle: WSL10n.text("launchpad.addToHome", zh: "添加到主屏幕"), action: #selector(menuAdd(_:)), keyEquivalent: "").representedObject = app.path
         }
-        menu.addItem(withTitle: "编辑主屏幕", action: #selector(menuEdit(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: WSL10n.text("launchpad.editHome", zh: "编辑主屏幕"), action: #selector(menuEdit(_:)), keyEquivalent: "")
         // HIG：破坏性动作放菜单末尾、红显（iOS 主屏幕上下文菜单同规）。
         if LaunchpadUninstallAvailability.menuItemEnabled(appPath: app.path) {
             menu.addItem(.separator())
-            let uninstall = menu.addItem(withTitle: "卸载 App…", action: #selector(menuUninstall(_:)), keyEquivalent: "")
+            let uninstall = menu.addItem(withTitle: WSL10n.text("launchpad.uninstall", zh: "卸载 App…"), action: #selector(menuUninstall(_:)), keyEquivalent: "")
             uninstall.representedObject = app.path
             uninstall.attributedTitle = NSAttributedString(
-                string: "卸载 App…",
+                string: WSL10n.text("launchpad.uninstall", zh: "卸载 App…"),
                 attributes: [.foregroundColor: NSColor.systemRed, .font: NSFont.systemFont(ofSize: 13)])
         }
         for item in menu.items { item.target = self }
@@ -1011,10 +1011,10 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func showMenu(forFolder folder: LaunchpadFolder, event: NSEvent?) {
         let menu = NSMenu()
-        menu.addItem(withTitle: "打开", action: #selector(menuOpenFolder(_:)), keyEquivalent: "").representedObject = folder.id
-        menu.addItem(withTitle: "重新命名", action: #selector(menuRename(_:)), keyEquivalent: "").representedObject = folder.id
+        menu.addItem(withTitle: WSL10n.text("notch.action.open", zh: "打开"), action: #selector(menuOpenFolder(_:)), keyEquivalent: "").representedObject = folder.id
+        menu.addItem(withTitle: WSL10n.text("launchpad.rename", zh: "重新命名"), action: #selector(menuRename(_:)), keyEquivalent: "").representedObject = folder.id
         menu.addItem(.separator())
-        menu.addItem(withTitle: "编辑主屏幕", action: #selector(menuEdit(_:)), keyEquivalent: "")
+        menu.addItem(withTitle: WSL10n.text("launchpad.editHome", zh: "编辑主屏幕"), action: #selector(menuEdit(_:)), keyEquivalent: "")
         for item in menu.items { item.target = self }
         let popEvent = event ?? NSEvent.mouseEvent(with: .rightMouseDown, location: NSEvent.mouseLocation,
             modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window?.windowNumber ?? 0,
@@ -1050,11 +1050,11 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         guard let path = sender.representedObject as? String, let app = apps[path] else { return }
         // iOS 主屏幕式三选（HIG destructive 两段确认）：默认项是完整卸载，「取消」为安全默认。
         let alert = NSAlert()
-        alert.messageText = "卸载「\(app.name)」？"
-        alert.informativeText = "App 和它在 ~/Library 的关联文件会一起移到废纸篓，可从废纸篓找回。也可以只把它从主屏幕移除，App 本体不动。"
-        alert.addButton(withTitle: "卸载并移到废纸篓")
-        alert.addButton(withTitle: "仅从主屏幕移除")
-        alert.addButton(withTitle: "取消")
+        alert.messageText = WSL10n.text("launchpad.uninstallAsk", zh: "卸载「%@」？", app.name)
+        alert.informativeText = WSL10n.text("launchpad.uninstallDetail", zh: "App 和它在 ~/Library 的关联文件会一起移到废纸篓，可从废纸篓找回。也可以只把它从主屏幕移除，App 本体不动。")
+        alert.addButton(withTitle: WSL10n.text("launchpad.uninstallToTrash", zh: "卸载并移到废纸篓"))
+        alert.addButton(withTitle: WSL10n.text("launchpad.removeOnly", zh: "仅从主屏幕移除"))
+        alert.addButton(withTitle: WSL10n.text("settings.common.cancel", zh: "取消"))
         alert.window.orderFrontRegardless()
         let finish: (NSApplication.ModalResponse) -> Void = { response in
             switch response {
@@ -1500,20 +1500,22 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         case .slideOver(let left):
             let w = max(320, area.width * 0.3)
             rect = CGRect(x: left ? area.minX + 8 : area.maxX - w - 8, y: area.minY + 8, width: w, height: area.height - 16)
-            title = "侧拉"
+            title = WSL10n.text("silent.window.slideOver", zh: "侧拉")
         case .half(let left):
             rect = CGRect(x: left ? area.minX + 8 : area.midX + 4, y: area.minY + 8, width: area.width / 2 - 12, height: area.height - 16)
-            title = left ? "左半屏" : "右半屏"
+            title = left ? WSL10n.text("say.preview.leftHalf", zh: "左半屏")
+                         : WSL10n.text("say.preview.rightHalf", zh: "右半屏")
         case .quarter(let left, let top):
             rect = CGRect(x: left ? area.minX + 8 : area.midX + 4, y: top ? area.minY + 8 : area.midY + 4,
                           width: area.width / 2 - 12, height: area.height / 2 - 12)
-            title = top ? (left ? "左上角" : "右上角") : (left ? "左下角" : "右下角")
+            title = top ? (left ? WSL10n.text("placement.topLeft", zh: "左上角") : WSL10n.text("placement.topRight", zh: "右上角"))
+                        : (left ? WSL10n.text("placement.bottomLeft", zh: "左下角") : WSL10n.text("placement.bottomRight", zh: "右下角"))
         case .notch:
             rect = notchDropRect
-            title = "收进刘海"
+            title = WSL10n.text("silent.window.tuck", zh: "收进刘海")
         case .fill:
             rect = area.insetBy(dx: 8, dy: 8)
-            title = "铺满屏幕"
+            title = WSL10n.text("say.preview.fillScreen", zh: "铺满屏幕")
         case .open:
             rect = nil
             title = ""
@@ -1876,21 +1878,21 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             children.append(element)
         }
         if jiggling {
-            add("完成", done.frame) { [weak self] in self?.endJiggle() }
+            add(WSL10n.text("notch.session.done", zh: "完成"), done.frame) { [weak self] in self?.endJiggle() }
         }
         if let folder {
-            add("关闭文件夹", folder.frame) { [weak self] in self?.closeFolder() }
+            add(WSL10n.text("launchpad.closeFolder", zh: "关闭文件夹"), folder.frame) { [weak self] in self?.closeFolder() }
             for (rect, app) in folder.visibleApps(in: self) { add(app.name, rect) { [weak self] in self?.launch(app, focus: nil) } }
             return children
         }
         if onToday {
             for item in today.items { add(item.title, item.frame) { [weak self] in self?.activateToday(item.action) } }
-            add("返回主屏幕", dots.frame) { [weak self] in self?.settle(to: 0) }
+            add(WSL10n.text("launchpad.backHome", zh: "返回主屏幕"), dots.frame) { [weak self] in self?.settle(to: 0) }
             return children
         }
         if !searching {
-            if pager.page > -1 { add("上一页", dots.frame) { [weak self] in guard let self else { return }; self.settle(to: self.pager.page - 1) } }
-            if pager.page < pageCount - 1 { add("下一页", dots.frame) { [weak self] in guard let self else { return }; self.settle(to: self.pager.page + 1) } }
+            if pager.page > -1 { add(WSL10n.text("launchpad.previousPage", zh: "上一页"), dots.frame) { [weak self] in guard let self else { return }; self.settle(to: self.pager.page - 1) } }
+            if pager.page < pageCount - 1 { add(WSL10n.text("launchpad.nextPage", zh: "下一页"), dots.frame) { [weak self] in guard let self else { return }; self.settle(to: self.pager.page + 1) } }
         }
         if onLibrary {
             for (rect, title, action) in library.accessibilityItems() {
@@ -1910,7 +1912,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             case .app(let app):
                 add(app.name, rect) { [weak self] in self?.launch(app, focus: nil) }
             case .folder(let folder):
-                add("\(folder.name)，文件夹", rect) { [weak self] in self?.openFolder(folder.id) }
+                add(WSL10n.text("launchpad.folderSpoken", zh: "%@，文件夹", folder.name), rect) { [weak self] in self?.openFolder(folder.id) }
             }
         }
         return children

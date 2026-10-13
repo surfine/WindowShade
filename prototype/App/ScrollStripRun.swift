@@ -387,7 +387,7 @@ final class ScrollStripController {
         let parked = strip.parked()
         let ids = strip.columns[column].ids
         if Motion.reduced || parked.left.contains(column) || parked.right.contains(column) {
-            _ = gestures.owner.notch.announce("这一列放不下了", tone: .problem)
+            _ = gestures.owner.notch.announce(WSL10n.text("strip.columnFull", zh: "这一列放不下了"), tone: .problem)
             return
         }
         for (step, dx) in [8, -8, 5, -3, 0].enumerated() {
@@ -606,7 +606,7 @@ final class ScrollStripController {
         guard let drop else { return false }
         var trial = strip
         guard StripNotchExchange.place(id, width: width, at: drop, into: &trial) else {
-            _ = gestures.owner.notch.announce("这一列放不下了", tone: .problem)
+            _ = gestures.owner.notch.announce(WSL10n.text("strip.columnFull", zh: "这一列放不下了"), tone: .problem)
             return false
         }
         guard let taken = take(id) else { return false }

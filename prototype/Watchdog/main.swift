@@ -292,6 +292,15 @@ final class UpdateGuard: NSObject, @unchecked Sendable {
     }
 }
 
+// 看护也随语言：读产品偏好域里的界面语言（没存过就是跟随系统），与 App 同一套解析规则；
+// 译文在 Contents/Resources/Localization/en.lproj（build.sh 拷进看护包）。
+private func applyGuardInterfaceLanguage() {
+    let appDomain = UserDefaults(suiteName: "com.windowshade.prototype")
+    let preference = appDomain.map { InterfaceLanguagePreference.stored(in: $0) } ?? .system
+    WSL10n.language = InterfaceLanguagePreference.resolve(preference)
+}
+applyGuardInterfaceLanguage()
+
 let guardApp = NSApplication.shared
 guardApp.setActivationPolicy(.accessory)
 let updateGuard = UpdateGuard(store: guardStore)

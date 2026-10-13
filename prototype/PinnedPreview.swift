@@ -17,23 +17,23 @@ enum PinnedPreviewError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noFocusedWindow:
-            return "没有可置顶预览的当前窗口"
+            return WSL10n.text("pin.error.noFocusedWindow", zh: "没有可置顶预览的当前窗口")
         case .ownWindow:
-            return "WindowShade 自己的窗口不能置顶预览"
+            return WSL10n.text("pin.error.ownWindow", zh: "WindowShade 自己的窗口不能置顶预览")
         case .unsupportedWindow:
-            return "此窗口不能置顶预览"
+            return WSL10n.text("pin.error.unsupportedWindow", zh: "此窗口不能置顶预览")
         case .noShareableContent:
-            return "无法读取屏幕内容"
+            return WSL10n.text("pin.error.noShareableContent", zh: "无法读取屏幕内容")
         case .noSCWindow:
-            return "无法捕获这个窗口"
+            return WSL10n.text("pin.error.noSCWindow", zh: "无法捕获这个窗口")
         case .noAXGeometry:
-            return "无法读取窗口位置"
+            return WSL10n.text("pin.error.noAXGeometry", zh: "无法读取窗口位置")
         case .screenRecordingDenied:
-            return "需要屏幕录制权限"
+            return WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
         case .accessibilityDenied:
-            return "需要辅助功能权限"
+            return WSL10n.text("notice.carry.needsAccessibility", zh: "需要辅助功能权限")
         case .targetChanged:
-            return "目标窗口在启动过程中已变化"
+            return WSL10n.text("pin.error.targetChanged", zh: "目标窗口在启动过程中已变化")
         }
     }
 }
@@ -163,7 +163,7 @@ struct PinnedPreviewMenuEntry {
     var displayTitle: String {
         let cleanAppName = cleanDisplayTitle(appName)
         let cleanTitle = cleanDisplayTitle(title)
-        if cleanTitle.isEmpty { return cleanAppName.isEmpty ? "未命名窗口" : cleanAppName }
+        if cleanTitle.isEmpty { return cleanAppName.isEmpty ? WSL10n.text("window.untitled", zh: "未命名窗口") : cleanAppName }
         if cleanAppName.isEmpty { return cleanTitle }
         return "\(cleanAppName) — \(cleanTitle)"
     }
@@ -177,10 +177,11 @@ final class PinnedPreviewController {
     private let sessionsDidChange: () -> Void
     private var sessions: [CGWindowID: PinnedPreviewSession] = [:]
     private var currentTarget: PinnedPreviewTarget?
-    func ws2CachedMenuTitle() -> String {
+    /// 菜单的悬停提示：最近三秒内解析到的窗口名；没有就是 nil（不再拿“当前窗口”当哨兵字符串）。
+    func ws2CachedMenuCaption() -> String? {
         guard let currentTarget, !currentTarget.ws2Caption.isEmpty,
               currentTarget.ws2CaptionPID == NSWorkspace.shared.frontmostApplication?.processIdentifier,
-              ProcessInfo.processInfo.systemUptime - currentTarget.ws2CaptionTime < 3 else { return "当前窗口" }
+              ProcessInfo.processInfo.systemUptime - currentTarget.ws2CaptionTime < 3 else { return nil }
         return currentTarget.ws2Caption
     }
     // 目标窗口解析会触发多次同步 AX IPC（忙 app 单次可卡到全局 2s timeout）。
@@ -318,7 +319,7 @@ final class PinnedPreviewController {
                                                   width: frame.width, height: frame.height)
                 wlog("pin-preview: \(label) restarted id=\(id)")
             } catch {
-                self.notice("置顶的画面没能恢复",
+                self.notice(WSL10n.text("pin.restoreFailed", zh: "置顶的画面没能恢复"),
                             "pin-preview: \(label) restart failed id=\(id) \(error.localizedDescription)")
                 self.stopPreview(id: id, reason: "\(label)-restart-failed")
             }
@@ -663,26 +664,39 @@ final class PinnedPreviewController {
 
     // 动态翻转：当前聚焦窗口已置顶时显示「取消置顶」，否则「置顶」。菜单使用
     // 最近完成的 target 快照；显式 toggle 会在执行前强制刷新，不能误操作旧窗口。
+    /// 菜单里“置顶/取消置顶”这一项的两副面孔：语义状态带上标题与图标，调用方不再按中文串判。
+    struct PinMenuState: Equatable {
+        let isPinned: Bool
+        let menuTitle: String
+        var symbol: String { isPinned ? "pin.slash" : "pin" }
+    }
+
+    func currentTargetPinState() -> PinMenuState {
+        let pinned = currentTarget.map { sessions[$0.windowID] != nil } ?? false
+        return PinMenuState(isPinned: pinned,
+                            menuTitle: pinned ? WSL10n.text("menu.unpinWindow", zh: "取消置顶窗口")
+                                              : WSL10n.text("menu.pinWindow", zh: "置顶窗口"))
+    }
+
+    /// 悬停提示里的全称（“置顶当前窗口 / 取消置顶当前窗口”）。
     func currentTargetMenuTitle() -> String {
-        if let target = currentTarget, sessions[target.windowID] != nil {
-            return "取消置顶当前窗口"
-        }
-        return "置顶当前窗口"
+        currentTargetPinState().isPinned ? WSL10n.text("menu.unpinCurrentWindow", zh: "取消置顶当前窗口")
+                                         : WSL10n.text("menu.pinCurrentWindow", zh: "置顶当前窗口")
     }
 
     func pinCurrentTargetPreview() {
         guard hasAccessibilityPermission() else {
-            notice("需要权限", "pin-preview: failed reason=accessibility")
+            notice(WSL10n.text("notice.shade.needsPermission", zh: "需要权限"), "pin-preview: failed reason=accessibility")
             return
         }
         guard hasScreenRecordingPermission() else {
-            notice("需要屏幕录制权限", "pin-preview: failed reason=screen-recording")
+            notice(WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限"), "pin-preview: failed reason=screen-recording")
             return
         }
         refreshCurrentTarget(reason: "toggle", force: true) { [weak self] target, _ in
             guard let self else { return }
             guard let target else {
-                self.notice("没有可以置顶的窗口", "pin-preview: failed reason=no-focused-window")
+                self.notice(WSL10n.text("pin.noWindow", zh: "没有可以置顶的窗口"), "pin-preview: failed reason=no-focused-window")
                 return
             }
             // 双向 toggle：已置顶则取消，未置顶则置顶。与 ⌃⌘C 折叠/展开对称。
@@ -712,7 +726,8 @@ final class PinnedPreviewController {
 
     /// 菜单标题双态翻转：和“置顶当前窗口 / 取消置顶当前窗口”同一种用法。
     func suspendAllMenuTitle() -> String {
-        hasSuspendedPreviews ? "恢复全部置顶" : "暂时取消全部置顶"
+        hasSuspendedPreviews ? WSL10n.text("menu.resumeAllPins", zh: "恢复全部置顶")
+                             : WSL10n.text("settings.shortcut.suspendPins", zh: "暂时取消全部置顶")
     }
 
     /// 老板键：一下把所有置顶的窗口让开，再按一下原样放回。不是取消置顶——会话（真实窗口、位置）
@@ -808,7 +823,7 @@ final class PinnedPreviewController {
                                                   width: frame.width, height: frame.height)
                 wlog("pin-preview: resume id=\(id) frame=\(Self.format(frame))")
             } catch {
-                self.notice("置顶的画面没能恢复",
+                self.notice(WSL10n.text("pin.restoreFailed", zh: "置顶的画面没能恢复"),
                             "pin-preview: resume restart failed id=\(id) \(error.localizedDescription)")
                 self.stopPreview(id: id, reason: "resume-restart-failed")
             }
@@ -1003,7 +1018,7 @@ final class PinnedPreviewController {
             return
         }
         guard let frame = currentSourceFrame(id: id) ?? Optional(cocoaFrame(fromWindowServerBounds: scWindow.frame)) else {
-            notice("无法读取窗口位置", "pin-preview: failed reason=no-frame id=\(id)")
+            notice(WSL10n.text("pin.error.noAXGeometry", zh: "无法读取窗口位置"), "pin-preview: failed reason=no-frame id=\(id)")
             completion?(.failure(.noAXGeometry))
             return
         }
@@ -1014,7 +1029,7 @@ final class PinnedPreviewController {
         let panel = PinnedPreviewPanel(frame: frame)
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
         // 窗口名与面板内标题一致：VoiceOver 读窗口时能听到是哪个窗口的置顶预览。
-        panel.title = "置顶预览：\(displayTitle)"
+        panel.title = WSL10n.text("pin.panelTitle", zh: "置顶预览：%@", displayTitle)
         let contentView = PinnedPreviewContentView(videoLayer: capture.videoLayer,
             title: displayTitle)
         panel.contentView = contentView
@@ -1069,7 +1084,7 @@ final class PinnedPreviewController {
                 completion?(.success(()))
             } catch {
                 let failure = error as? PinnedPreviewError ?? .noSCWindow
-                self?.notice("没能置顶这个窗口",
+                self?.notice(WSL10n.text("pin.failed", zh: "没能置顶这个窗口"),
                              "pin-preview: capture failed id=\(id) \(error.localizedDescription)")
                 self?.stopPreview(id: id, reason: "capture-failed")
                 completion?(.failure(failure))
@@ -1357,7 +1372,7 @@ final class PinnedPreviewController {
                 wlog("pin-preview: exit interact id=\(id) frame=\(Self.format(stableFrame))")
                 self.sessionsDidChange()
             } catch {
-                self.notice("置顶的画面没能恢复",
+                self.notice(WSL10n.text("pin.restoreFailed", zh: "置顶的画面没能恢复"),
                             "pin-preview: restart failed id=\(id) \(error.localizedDescription)")
                 self.stopPreview(id: id, reason: "restart-failed")
             }

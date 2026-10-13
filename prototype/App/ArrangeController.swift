@@ -386,7 +386,7 @@ extension AppDelegate {
         let arrangedThumbnails = arrangeThumbnailEntries(thumbnails)
         let arrangedStrips = arrangeShadedEntries(strips, reason: "housekeeping")
         guard arrangedThumbnails || arrangedStrips else {
-            quietNotice("没有收起的窗口", log: "arrange: no shaded overlays")
+            quietNotice(WSL10n.text("notice.arrange.noShaded", zh: "没有收起的窗口"), kind: .info, log: "arrange: no shaded overlays")
             return
         }
     }
@@ -444,7 +444,7 @@ extension AppDelegate {
             playUnfoldSound()
         }
         if !skipped.isEmpty {
-            quietNotice("有的 App 没有响应，它的窗口先不展开",
+            quietNotice(WSL10n.text("notice.arrange.unresponsive", zh: "有的 App 没有响应，它的窗口先不展开"), kind: .problem,
                         log: "restoreAll: kept \(skipped.count) windows of unresponsive apps")
         }
     }

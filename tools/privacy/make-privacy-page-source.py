@@ -26,6 +26,15 @@ registry = pathlib.Path(a.registry) if a.registry else root / "tools/privacy/reg
 data = json.loads(registry.read_text())
 
 
+def localized(prefix: str, field: str, zh: str, en: str | None) -> str:
+    """有条目级英文（signal["en"][field]）就走 WSL10n 出当前语言；没有就照旧出中文常量。
+    中文仍是语义身份（目录键里的 zh），英文是显示译文。"""
+    if en:
+        key = f"privacy.{prefix}.{field}"
+        return f'WSL10n.text({swift(key)}, zh: {swift(zh)})'
+    return swift(zh)
+
+
 def swift(_value: str) -> str:
     return '"' + _value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ") + '"'
 
@@ -104,7 +113,12 @@ lines = [
     "    static let groups: [WS2PrivacyGroup] = [",
 ]
 for group in data["groups"]:
-    lines.append(f'        WS2PrivacyGroup(title: {swift(group["title"])}, subtitle: {swift(group["subtitle"])}),')
+    gen = group.get("en", {})
+    lines.append('        WS2PrivacyGroup(title: '
+                 + localized("group." + group["title"], "title", group["title"], gen.get("title"))
+                 + ', subtitle: '
+                 + localized("group." + group["title"], "subtitle", group["subtitle"], gen.get("subtitle"))
+                 + '),')
 lines += [
     "    ]",
     "",
@@ -114,12 +128,17 @@ lines += [
 ]
 for signal in data["signals"]:
     lines.append("        WS2PrivacyRow(")
+    sen = signal.get("en", {})
+    # 字段顺序与提交件逐字节一致（tests/run-privacy-page-sync.sh 会比对）；只把文本字段接到目录。
     for key in ("id", "label", "sensitivity", "group", "reads", "purpose", "destination", "activation", "toggle", "status"):
-        lines.append(f"            {key}: {swift(signal[key])},")
-    lines.append(f"            combined: {swift(signal['combined'])},")
+        if key in TEXT_FIELDS:
+            lines.append(f"            {key}: {localized(signal['id'], key, signal[key], sen.get(key))},")
+        else:
+            lines.append(f"            {key}: {swift(signal[key])},")
+    lines.append(f"            combined: {localized(signal['id'], 'combined', signal['combined'], sen.get('combined'))},")
     symbols = ", ".join(swift(s) for s in sorted(interfaces.get(signal["id"], [])))
     lines.append(f"            interfaces: [{symbols}],")
-    lines.append(f"            subtitle: {swift(signal['subtitle'])},")
+    lines.append(f"            subtitle: {localized(signal['id'], 'subtitle', signal['subtitle'], sen.get('subtitle'))},")
     if signal.get("permission"):
         lines.append(f"            permission: {swift(signal['permission'])},")
     if signal.get("switch"):

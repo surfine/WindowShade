@@ -75,11 +75,26 @@ enum WSL10n {
     static func setting(_ key: String, zh: String) -> SettingsText {
         SettingsText(key: key, zh: zh)
     }
+
+    /// 带占位符的设置行（如"由 %@ 接管"）：zh 仍是语义身份，.shown 按当前语言替换 args。
+    static func setting(_ key: String, zh: String, _ args: CVarArg...) -> SettingsText {
+        SettingsText(key: key, zh: zh, formatArgs: args)
+    }
 }
 
 /// 见 `WSL10n.setting(_:zh:)`：zh 是稳定身份，shown 是当前语言的显示文本。
 struct SettingsText: Equatable {
     let key: String
     let zh: String
-    var shown: String { WSL10n.text(key, zh: zh) }
+    var formatArgs: [CVarArg] = []
+    var shown: String {
+        let template = WSL10n.text(key, zh: zh)
+        guard !formatArgs.isEmpty else { return template }
+        return String(format: template, arguments: formatArgs)
+    }
+
+    /// 身份是 key + zh 源句；格式化参数不影响"这是哪一行"。
+    static func == (lhs: SettingsText, rhs: SettingsText) -> Bool {
+        lhs.key == rhs.key && lhs.zh == rhs.zh
+    }
 }

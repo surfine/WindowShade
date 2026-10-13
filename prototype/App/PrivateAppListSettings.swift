@@ -15,7 +15,7 @@ enum PrivateAppSuggestions {
 
 @MainActor
 final class PrivateAppListPanel: NSObject {
-    static let rowTitle = "私人 App"
+    static let rowTitle = "私人 App"  // 设置行：显示时走 WSL10n
     static let rowSubtitle = "有人在看、离开就锁、专注时共用"
     private static var current: PrivateAppListPanel?
 
@@ -99,8 +99,8 @@ final class PrivateAppListPanel: NSObject {
         scroll.translatesAutoresizingMaskIntoConstraints = false
         holder.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
 
-        let add = NSButton(title: "添加…", target: self, action: #selector(addFromDisk))
-        let close = NSButton(title: "完成", target: self, action: #selector(done))
+        let add = NSButton(title: WSL10n.text("settings.privateApps.add", zh: "添加…"), target: self, action: #selector(addFromDisk))
+        let close = NSButton(title: WSL10n.text("settings.privateApps.done", zh: "完成"), target: self, action: #selector(done))
         close.keyEquivalent = "\r"
         let buttons = NSStackView(views: [add, NSView(), close])
         buttons.orientation = .horizontal
@@ -121,14 +121,14 @@ final class PrivateAppListPanel: NSObject {
         listStack.arrangedSubviews.forEach { listStack.removeArrangedSubview($0); $0.removeFromSuperview() }
         let ids = list.bundleIDs
         if ids.isEmpty {
-            let empty = NSTextField(wrappingLabelWithString: "名单里还没有 App")
+            let empty = NSTextField(wrappingLabelWithString: WSL10n.text("settings.privateApps.empty", zh: "名单里还没有 App"))
             empty.textColor = .secondaryLabelColor
             listStack.addArrangedSubview(empty)
         }
         for id in ids { listStack.addArrangedSubview(row(bundleID: id, removable: true)) }
         let pending = PrivateAppSuggestions.items.filter { !list.contains(bundleID: $0.bundleID) }
         if !pending.isEmpty {
-            let label = NSTextField(labelWithString: "常见的")
+            let label = NSTextField(labelWithString: WSL10n.text("settings.privateApps.common", zh: "常见的"))
             label.font = .systemFont(ofSize: 11, weight: .semibold)
             label.textColor = .secondaryLabelColor
             listStack.addArrangedSubview(label)
@@ -150,10 +150,10 @@ final class PrivateAppListPanel: NSObject {
         let label = NSTextField(labelWithString: name)
         label.lineBreakMode = .byTruncatingTail
         label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let button = NSButton(title: removable ? "移除" : "添加", target: self,
+        let button = NSButton(title: removable ? WSL10n.text("settings.privateApps.remove", zh: "移除") : WSL10n.text("settings.privateApps.addShort", zh: "添加"), target: self,
                               action: removable ? #selector(removeTapped(_:)) : #selector(addSuggestionTapped(_:)))
         button.identifier = NSUserInterfaceItemIdentifier(bundleID)
-        button.setAccessibilityLabel("\(removable ? "移除" : "添加")\(name)")
+        button.setAccessibilityLabel(WSL10n.text("settings.privateApps.a11y", zh: "%@%@", removable ? WSL10n.text("settings.privateApps.remove", zh: "移除") : WSL10n.text("settings.privateApps.addShort", zh: "添加"), name))
         let row = NSStackView(views: [icon, label, NSView(), button])
         row.orientation = .horizontal
         row.spacing = 8
@@ -176,7 +176,7 @@ final class PrivateAppListPanel: NSObject {
         open.allowedContentTypes = [.applicationBundle]
         open.allowsMultipleSelection = true
         open.canChooseDirectories = false
-        open.prompt = "添加"
+        open.prompt = WSL10n.text("settings.privateApps.addShort", zh: "添加")
         open.beginSheetModal(for: panel) { [weak self] response in
             let urls = open.urls
             MainActor.assumeIsolated {

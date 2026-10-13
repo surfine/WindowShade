@@ -11,6 +11,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
 fi
 
 swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
+  prototype/Core/WSL10n.swift \
   prototype/App/StandardMenu.swift \
   prototype/App/GlobalShortcuts.swift \
   prototype/WindowBrowser/WindowBrowserModels.swift \
@@ -47,13 +48,13 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
 .build/window-browser-tests/core
 
 swiftc -target "$(uname -m)-apple-macosx14.0" \
-  prototype/WindowBrowser/WindowBrowserPreviewStartup.swift \
+  prototype/Core/WSL10n.swift prototype/WindowBrowser/WindowBrowserPreviewStartup.swift \
   tests/WindowBrowserPreviewStartupTests.swift \
   -o .build/window-browser-tests/preview-startup
 .build/window-browser-tests/preview-startup
 
 swiftc -target "$(uname -m)-apple-macosx14.0" \
-  prototype/WindowBrowser/WindowBrowserMetadataQueue.swift \
+  prototype/Core/WSL10n.swift prototype/WindowBrowser/WindowBrowserMetadataQueue.swift \
   tests/MetadataQueueTests.swift \
   -o .build/window-browser-tests/metadata-queue
 .build/window-browser-tests/metadata-queue

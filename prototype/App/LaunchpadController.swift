@@ -24,7 +24,7 @@ final class LaunchpadController {
     /// 探针跑的时候不改用户存下的排列。
     var persists = true
     static let layoutKey = "Launchpad.layout"
-    static let otherFolderName = "其他"
+    static var otherFolderName: String { WSL10n.text("launchpad.otherFolder", zh: "其他") }
 
     init(owner: AppDelegate) {
         self.owner = owner
@@ -54,13 +54,18 @@ final class LaunchpadController {
         var items = values
         // 空闲时补一张番茄钟卡：显示预设，按一下就开始（负一屏不新增窗口，也不弹设置）。
         if !items.contains(where: { $0.kind == .focus }), owner.ws2Runtime.focus.model.phase == .idle {
-            let label = WS2FocusSettings.preset == .minutes50 ? "番茄钟 50 / 10" : "番茄钟 25 / 5"
-            items.append(NotchActivity(id: "focus.idle", kind: .focus, title: label, subtitle: "按一下开始",
+            let label = WS2FocusSettings.preset == .minutes50
+                ? WSL10n.text("launchpad.focusPreset50", zh: "番茄钟 50 / 10")
+                : WSL10n.text("launchpad.focusPreset25", zh: "番茄钟 25 / 5")
+            items.append(NotchActivity(id: "focus.idle", kind: .focus, title: label,
+                                   subtitle: WSL10n.text("launchpad.tapToStart", zh: "按一下开始"),
                                        symbol: "timer", startedAt: 0))
         }
         // 再补一张计时器卡，和番茄钟卡同一排：按一下长出选分钟；计时器在走时，那一条活动自己就是这张卡。
         if !items.contains(where: { $0.kind == .timer }) {
-            items.append(NotchActivity(id: LaunchpadActivityCards.idleTimerID, kind: .timer, title: "计时器", subtitle: "按一下选分钟",
+            items.append(NotchActivity(id: LaunchpadActivityCards.idleTimerID, kind: .timer,
+                                   title: WSL10n.text("notch.kind.timer", zh: "计时器"),
+                                   subtitle: WSL10n.text("launchpad.tapToPickMinutes", zh: "按一下选分钟"),
                                        symbol: "timer", startedAt: 0))
         }
         panel?.view.today.updateActivities(items)
@@ -192,7 +197,7 @@ final class LaunchpadController {
             guard let error else { return }
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { [weak self] in
-                    self?.owner.quietNotice("\(app.name) 没能打开它", log: "launchpad: open with \(app.name) failed: \(error.localizedDescription)")
+                    self?.owner.quietNotice(WSL10n.text("notice.launchpad.openFailed", zh: "%@ 没能打开它", app.name), kind: .problem, log: "launchpad: open with \(app.name) failed: \(error.localizedDescription)")
                 }
             }
         }
@@ -301,7 +306,7 @@ final class LaunchpadController {
         guard let (keyCode, flags) = Self.spotlightShortcut() else {
             if !isShowing { show() }
             panel?.view.focusSearch()
-            owner.quietNotice("Spotlight 的快捷键关着，先在启动台里搜索",
+            owner.quietNotice(WSL10n.text("notice.launchpad.spotlightOff", zh: "Spotlight 的快捷键关着，先在启动台里搜索"), kind: .info,
                               log: "launchpad: Spotlight shortcut disabled; stay in launchpad search")
             return
         }
@@ -391,9 +396,9 @@ final class LaunchpadController {
             guard plan.block == .none, plan.appItem != nil else {
                 // App 已不在盘上（刚卸载完、列表残影还在）：如实说，不误导为"不能卸载"。
                 let message = plan.block == .notAnApp && !app.path.isEmpty
-                    ? "\(name) 已经不在了"
-                    : "这个 App 不能从这里卸载"
-                owner.quietNotice(message, log: "launchpad: uninstall blocked \(app.path) reason=\(plan.block)")
+                    ? WSL10n.text("notice.launchpad.alreadyGone", zh: "%@ 已经不在了", name)
+                    : WSL10n.text("notice.launchpad.notUninstallable", zh: "这个 App 不能从这里卸载")
+                owner.quietNotice(message, kind: plan.block == .notAnApp ? .info : .problem, log: "launchpad: uninstall blocked \(app.path) reason=\(plan.block)")
                 return
             }
             let bundleID = app.bundleID ?? Bundle(path: app.path)?.bundleIdentifier ?? ""
@@ -405,7 +410,7 @@ final class LaunchpadController {
                 onFinished: { [weak self] trashed, displayName in
                     self?.closeUninstallOverlay()
                     self?.rescan { [weak self] in
-                        self?.owner.quietNotice("已把 \(displayName) 移到废纸篓（\(trashed) 项，可在废纸篓找回）",
+                        self?.owner.quietNotice(WSL10n.text("notice.launchpad.trashed", zh: "已把 %@ 移到废纸篓（%@ 项，可在废纸篓找回）", displayName, trashed), kind: .done,
                                                 log: "launchpad: uninstalled \(displayName) trashed=\(trashed)")
                     }
                 })

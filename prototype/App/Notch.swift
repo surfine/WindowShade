@@ -854,7 +854,7 @@ final class NotchController {
         let app = NSRunningApplication(processIdentifier: pid)
         var item = Tucked(id: id, pid: pid, element: win, home: home, snapshot: snapshot,
                           icon: app?.icon, title: windowTitle.isEmpty ? (app?.localizedName ?? "") : windowTitle)
-        item.foldStatus = "正在收起"
+        item.foldStatus = WSL10n.text("notice.notch.rolling", zh: "正在收起")
         let incarnation = item.incarnation
         tucked.append(item)
         wlog("notch: tuck id=\(id) landed=\(landed) home=\(home)")
@@ -885,15 +885,15 @@ final class NotchController {
                 case .verifiedHidden: self.tucked[index].foldStatus = nil
                 case .notStarted:
                     self.tucked.remove(at: index); self.parkOnInstall[id] = nil
-                    self.owner.quietNotice("这个窗口没有收起", log: "notch: fold not started id=\(id)")
-                case .stillVisible: self.tucked[index].foldStatus = "收起状态未确认"
-                case .unknown: self.tucked[index].foldStatus = "收起状态未确认"
+                    self.owner.quietNotice(WSL10n.text("notice.notch.notFolded", zh: "这个窗口没有收起"), kind: .problem, log: "notch: fold not started id=\(id)")
+                case .stillVisible: self.tucked[index].foldStatus = WSL10n.text("notice.notch.foldUnknown", zh: "收起状态未确认")
+                case .unknown: self.tucked[index].foldStatus = WSL10n.text("notice.notch.foldUnknown", zh: "收起状态未确认")
                 }
                 self.refresh()
             }
             if accepted == nil {
                 tucked.removeAll { $0.id == id && $0.incarnation == incarnation }
-                owner.quietNotice("这个窗口暂时不能收起", log: "notch: evidence admission rejected id=\(id)")
+                owner.quietNotice(WSL10n.text("notice.notch.cannotFold", zh: "这个窗口暂时不能收起"), kind: .problem, log: "notch: evidence admission rejected id=\(id)")
             }
         }
         // 展开时按（已经看不见的）卷帘条现在的位置算落点：甩进来的这一扇被拖离了原处，
@@ -953,7 +953,7 @@ final class NotchController {
             lastBatch = []
             for id in batch.reversed() { release(id, reason: "\(reason) batch") }
             wlog("notch: released a batch of \(batch.count)")
-            announce("放回了 \(batch.count) 扇", tone: .done)
+            announce(WSL10n.text("notch.batch.putBack", zh: "放回了 %@ 扇", String(batch.count)), tone: .done)
             return
         }
         if let last = tucked.last {
@@ -1628,7 +1628,7 @@ final class NotchController {
               let screen = screenForAXWindow(pos: pos, size: size) ?? NSScreen.main else { return false }
         let windows = owner.gestures.arrangeableWindows(on: screen, focused: id)
         guard let match = windows.first(where: { $0.window.id == id }) else {
-            announce("这个窗口收不进去", tone: .problem)
+            announce(WSL10n.text("notch.tuck.refused", zh: "这个窗口收不进去"), tone: .problem)
             return false
         }
         tuck(match.element, id: match.window.id, pid: match.window.pid,
@@ -1656,10 +1656,11 @@ final class NotchController {
         wlog("notch: tucked all \(windows.count) windows on \(target.localizedName)")
         coachUsed(.notchHome)
         if windows.isEmpty {
-            announce("这块屏上没有能收的窗口", tone: .problem)
+            announce(WSL10n.text("notch.tuck.noWindows", zh: "这块屏上没有能收的窗口"), tone: .problem)
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.announce("收进了 \(windows.count) 扇", detail: "两指往下拉刘海，整批拿回来", tone: .done)
+                self?.announce(WSL10n.text("notch.batch.tucked", zh: "收进了 %@ 扇", String(windows.count)),
+                               detail: WSL10n.text("notch.batch.hint", zh: "两指往下拉刘海，整批拿回来"), tone: .done)
             }
         }
         return windows.count
@@ -1674,7 +1675,8 @@ final class NotchController {
         let next = back ? trail.index + 1 : trail.index - 1
         guard trail.ids.indices.contains(next) else {
             wlog("notch: switch \(back ? "back" : "forward") — nothing further")
-            announce(back ? "没有更早用过的 App 了" : "已经是最近的这个了", tone: .info)
+            announce(back ? WSL10n.text("notch.cycle.noEarlier", zh: "没有更早用过的 App 了")
+                          : WSL10n.text("notch.cycle.latest", zh: "已经是最近的这个了"), tone: .info)
             return
         }
         trail.index = next
@@ -1687,7 +1689,8 @@ final class NotchController {
         }
         app?.activate()
         (panel ?? notchPanel)?.alert(NotchPanel.Alert(id: target.id, icon: app?.icon, title: app?.localizedName ?? "",
-                                                      subtitle: back ? "上一个" : "下一个"), duration: 0.9)
+                                                      subtitle: back ? WSL10n.text("notch.cycle.previous", zh: "上一个")
+                                                              : WSL10n.text("notch.cycle.next", zh: "下一个")), duration: 0.9)
         wlog("notch: switch \(back ? "back" : "forward") to pid=\(target.pid)")
     }
 
@@ -2308,7 +2311,7 @@ extension NotchController: GlanceElsewhereSource {
             strip: anchor.tile, panel: panel, card: card.offsetBy(dx: -panel.minX, dy: -panel.minY),
             picture: NSRect(origin: .zero, size: card.size), backdropArea: nil, cornerRadius: radius,
             source: live ? .stream : .snapshotOnly, snapshot: still, pid: anchor.pid,
-            bundleID: app?.bundleIdentifier ?? "", accessibilityTitle: anchor.title, staleText: "不是实时画面",
+            bundleID: app?.bundleIdentifier ?? "", accessibilityTitle: anchor.title, staleText: WSL10n.text("notch.staleText", zh: "不是实时画面"),
             growFrom: anchor.tile.offsetBy(dx: -panel.minX, dy: -panel.minY))
     }
 
@@ -2392,8 +2395,15 @@ struct NotchTile {
         // 共享时只留会话状态；新加的额度数字不能绕过同一条遮隐路径。
         copy.quantity = .unknown
         copy.quantityText = nil
-        copy.spoken = copy.phase == .waiting ? "编程会话，在等你" : (copy.phase == .running || copy.phase == .quota) ? "编程会话，在跑" : copy.phase == .quotaLow ? "编程会话，在跑，额度快用完了" : "编程会话"
-        tile.title = "编程会话"
+        let sessionKind = WSL10n.text("notch.kind.session", zh: "编程会话")
+        let join = WSL10n.text("notch.join", zh: "，")
+        switch copy.phase {
+        case .waiting: copy.spoken = sessionKind + join + WSL10n.text("notch.row.waiting", zh: "在等你")
+        case .running, .quota: copy.spoken = sessionKind + join + WSL10n.text("notch.row.running", zh: "在跑")
+        case .quotaLow: copy.spoken = sessionKind + join + WSL10n.text("notch.row.runningQuotaLow", zh: "在跑，额度快用完了")
+        default: copy.spoken = sessionKind
+        }
+        tile.title = WSL10n.text("notch.kind.session", zh: "编程会话")
         tile.ongoing = copy
         return tile
     }
@@ -2430,11 +2440,11 @@ final class NotchPanel: NSPanel {
         case leftHalf, fill, tuck, magic, rightHalf
         var title: String {
             switch self {
-            case .leftHalf: return "左半屏"
-            case .fill: return "铺满屏幕"
-            case .tuck: return "收进刘海"
-            case .magic: return "魔法平铺"
-            case .rightHalf: return "右半屏"
+            case .leftHalf: return WSL10n.text("say.preview.leftHalf", zh: "左半屏")
+            case .fill: return WSL10n.text("say.preview.fillScreen", zh: "铺满屏幕")
+            case .tuck: return WSL10n.text("silent.window.tuck", zh: "收进刘海")
+            case .magic: return WSL10n.text("menu.magicTile", zh: "魔法平铺")
+            case .rightHalf: return WSL10n.text("say.preview.rightHalf", zh: "右半屏")
             }
         }
         var symbol: String {
@@ -2974,8 +2984,13 @@ final class NotchPanel: NSPanel {
 
     private func showActivityMenu(_ event: NSEvent) {
         let menu = NSMenu()
-        let destinations: [(String, String)] = [("实时活动", "today"), ("音乐", "enableMusic"), ("隔空投送", "airDrop"),
-                                                ("路线", "route"), ("语音备忘录", "voiceMemos"), ("番茄钟", "focusOpen")]
+        let destinations: [(String, String)] = [
+            (WSL10n.text("settings.shade.activities.name", zh: "实时活动"), "today"),
+            (WSL10n.text("notch.kind.music", zh: "音乐"), "enableMusic"),
+            (WSL10n.text("silent.activity.airdrop", zh: "隔空投送"), "airDrop"),
+            (WSL10n.text("silent.activity.route", zh: "路线"), "route"),
+            (WSL10n.text("notch.kind.voiceMemos", zh: "语音备忘录"), "voiceMemos"),
+            (WSL10n.text("settings.shade.focus.name", zh: "番茄钟"), "focusOpen")]
         for (title, action) in destinations {
             let item = NSMenuItem(title: title, action: #selector(activityMenuAction(_:)), keyEquivalent: "")
             item.representedObject = action; item.target = self; menu.addItem(item)
@@ -3547,9 +3562,9 @@ final class NotchPanel: NSPanel {
     var levelForProbe: (kind: String, value: Double)? {
         meter.map {
             switch $0.kind {
-            case .volume: return ("音量", $0.value)
-            case .brightness: return ("亮度", $0.value)
-            case .keyboardLight: return ("键盘灯", $0.value)
+            case .volume: return (WSL10n.text("notch.level.volume", zh: "音量"), $0.value)
+            case .brightness: return (WSL10n.text("notch.level.brightness", zh: "亮度"), $0.value)
+            case .keyboardLight: return (WSL10n.text("notch.level.keyboardLight", zh: "键盘灯"), $0.value)
             }
         }
     }
@@ -4459,12 +4474,15 @@ final class NotchPanel: NSPanel {
         if stripLanding, dropState != .none { return StripNotchExchange.landingLine }
         if dropState != .none, fileDrop != nil { return nil }
         switch dropState {
-        case .armed: return isDisabled(dropChoice) ? NotchSmallBehaviour.disabledReason : "松手：\(dropChoice.title)"
-        case .offered: return "拖到这里，排好或收进刘海"
-        case .confirmed: return dropChoice == .tuck ? "正在收起" : dropChoice.title
+        case .armed: return isDisabled(dropChoice)
+                ? NotchSmallBehaviour.disabledReason
+                : WSL10n.text("notch.drop.release", zh: "松手：%@", dropChoice.title)
+        case .offered: return WSL10n.text("notch.drop.offer", zh: "拖到这里，排好或收进刘海")
+        case .confirmed: return dropChoice == .tuck ? WSL10n.text("notch.drop.confirmed", zh: "正在收起") : dropChoice.title
         case .none:
-            if pulled > 0, compact == nil { return "启动台" }
-            return isExpanded && tiles.isEmpty && (cardItems.isEmpty || mergedRow) ? "点一下回主屏幕 · 左右滑换 App" : nil
+            if pulled > 0, compact == nil { return WSL10n.text("silent.launcher.open", zh: "启动台") }
+            return isExpanded && tiles.isEmpty && (cardItems.isEmpty || mergedRow)
+                ? WSL10n.text("notch.launchpad.hint", zh: "点一下回主屏幕 · 左右滑换 App") : nil
         }
     }
 }
@@ -6128,7 +6146,7 @@ extension NotchContentView {
                 width = (text as NSString).size(withAttributes: [.font: queryLabel.font as Any]).width
             }
             queryLabel.stringValue = text
-            queryLabel.setAccessibilityLabel("筛选：\(query)")
+            queryLabel.setAccessibilityLabel(WSL10n.text("notch.filter.label", zh: "筛选：%@", query))
             let height: CGFloat = 16
             let y = rect.height - content.notchHeight / 2 - height / 2
             queryCursor.frame = NSRect(x: right - 1.5, y: y + 1, width: 1.5, height: height - 2)
@@ -6331,18 +6349,30 @@ final class NotchCompactView: NSView {
             } else if let spoken = compact.calendar?.spoken, !spoken.isEmpty {
                 setAccessibilityLabel(spoken)
             } else if let leading = compact.leading {
+                let joinText = WSL10n.text("notch.join", zh: "，")
                 switch compact.sessionPhase {
-                case .waiting?: setAccessibilityLabel("\(leading)，在等你")
-                case .running?: setAccessibilityLabel("\(leading)，在跑")
-                case .quota?: setAccessibilityLabel(compact.trailing.flatMap { $0.isEmpty ? nil : "\(leading)，在跑，\($0)" } ?? "\(leading)，在跑")
-                case .quotaLow?: setAccessibilityLabel("\(leading)，在跑，额度快用完了")
+                case .waiting?:
+                    setAccessibilityLabel(leading + joinText + WSL10n.text("notch.row.waiting", zh: "在等你"))
+                case .running?:
+                    setAccessibilityLabel(leading + joinText + WSL10n.text("notch.row.running", zh: "在跑"))
+                case .quota?:
+                    let running = WSL10n.text("notch.row.running", zh: "在跑")
+                    let withEar = compact.trailing.flatMap {
+                        $0.isEmpty ? nil : WSL10n.text("notch.row.runningWithEar", zh: "在跑，%@", $0)
+                    }
+                    setAccessibilityLabel(leading + joinText + (withEar ?? running))
+                case .quotaLow?:
+                    setAccessibilityLabel(leading + joinText
+                        + WSL10n.text("notch.row.runningQuotaLow", zh: "在跑，额度快用完了"))
                 case .done?: setAccessibilityLabel(leading)
                 case nil:
                     let tail = compact.trailing.flatMap { $0.isEmpty ? nil : $0 }
                     setAccessibilityLabel(tail.map { "\(leading)，\($0)" } ?? leading)
                 }
             } else {
-                setAccessibilityLabel(compact.count > 0 ? "刘海里收着 \(compact.count) 扇窗口" : "收起的窗口有变化")
+                setAccessibilityLabel(compact.count > 0
+                    ? WSL10n.text("notch.folded.count", zh: "刘海里收着 %@ 扇窗口", String(compact.count))
+                    : WSL10n.text("notch.folded.changed", zh: "收起的窗口有变化"))
             }
         }
     }
@@ -7095,7 +7125,7 @@ final class NotchAlertView: NSView {
         setAccessibilityRole(.staticText)
         if let alert {
             let ear = alert.ear.map { "，\($0)" } ?? ""
-            let action = alert.actionLabel.map { "，点一下\($0)" } ?? ""
+            let action = alert.actionLabel.map { WSL10n.text("notch.alert.action", zh: "，点一下%@", $0) } ?? ""
             if let peek = alert.peek {
                 setAccessibilityLabel(NowPlayingPeek.spoken(title: peek.title, artist: peek.artist))
             } else {
@@ -7371,7 +7401,7 @@ final class NotchTileView: NSView {
 
     /// 读屏念“第几个，共几个”（和焦点挪动时的播报同一个说法）。
     func setPosition(_ index: Int, of count: Int) {
-        setAccessibilityHelp("第 \(index) 个，共 \(count) 个")
+        setAccessibilityHelp(WSL10n.text("notch.alert.index", zh: "第 %@ 个，共 %@ 个", String(index + 1), String(count)))
     }
 
     /// 亮起或熄灭键盘焦点。`bump` 不为空：到头了，朝那个方向轻轻顶 6 点再弹回。
@@ -7436,32 +7466,32 @@ final class NotchTileView: NSView {
     /// 点下去会发生什么（和菜单里的说法一致）。
     static func verb(_ kind: NotchTile.Kind) -> String {
         switch kind {
-        case .tucked: return "放回"
-        case .strip, .thumbnail: return "展开"
-        case .slideOver: return "拉出"
-        case .carried: return "回到"
-        case .minimized, .hiddenApp: return "还原"
-        case .elsewhere: return "去"
-        case .parked: return "滑进来"
-        case .session: return "过去"
-        case .playing, .activity: return "打开"
+        case .tucked: return WSL10n.text("notch.verb.putBack", zh: "放回")
+        case .strip, .thumbnail: return WSL10n.text("notch.verb.unroll", zh: "展开")
+        case .slideOver: return WSL10n.text("notch.verb.pullOut", zh: "拉出")
+        case .carried: return WSL10n.text("notch.verb.returnTo", zh: "回到")
+        case .minimized, .hiddenApp: return WSL10n.text("notch.verb.restore", zh: "还原")
+        case .elsewhere: return WSL10n.text("notch.verb.goTo", zh: "去")
+        case .parked: return WSL10n.text("notch.verb.slideIn", zh: "滑进来")
+        case .session: return WSL10n.text("notch.action.goThere", zh: "过去")
+        case .playing, .activity: return WSL10n.text("notch.action.open", zh: "打开")
         }
     }
 
     static func kindName(_ kind: NotchTile.Kind) -> String {
         switch kind {
-        case .tucked: return "收进刘海"
-        case .strip: return "收起的窗口"
-        case .thumbnail: return "收成缩略图的窗口"
-        case .slideOver: return "侧拉"
-        case .carried: return "带到每张桌面"
-        case .minimized: return "已最小化"
-        case .hiddenApp: return "已隐藏"
-        case .elsewhere: return "在别的桌面"
-        case .parked: return "停在屏幕外的一列"
-        case .session: return "编程会话"
-        case .playing: return "正在播放"
-        case .activity: return "正在进行"
+        case .tucked: return WSL10n.text("silent.window.tuck", zh: "收进刘海")
+        case .strip: return WSL10n.text("notch.where.strip", zh: "收起的窗口")
+        case .thumbnail: return WSL10n.text("notch.where.thumbnail", zh: "收成缩略图的窗口")
+        case .slideOver: return WSL10n.text("notch.where.slideOver", zh: "侧拉")
+        case .carried: return WSL10n.text("menu.carryToAllDesktops", zh: "带到每张桌面")
+        case .minimized: return WSL10n.text("notch.where.minimized", zh: "已最小化")
+        case .hiddenApp: return WSL10n.text("notch.where.hiddenApp", zh: "已隐藏")
+        case .elsewhere: return WSL10n.text("notch.where.elsewhere", zh: "在别的桌面")
+        case .parked: return WSL10n.text("notch.where.parked", zh: "停在屏幕外的一列")
+        case .session: return WSL10n.text("notch.kind.session", zh: "编程会话")
+        case .playing: return WSL10n.text("say.preview.playing", zh: "正在播放")
+        case .activity: return WSL10n.text("notch.where.activity", zh: "正在进行")
         }
     }
 
@@ -7665,7 +7695,7 @@ final class NotchTileView: NSView {
             let dot = NSRect(x: card.maxX - 10 - diameter, y: card.maxY - 10 - diameter, width: diameter, height: diameter)
             NSColor.systemOrange.setFill()
             NSBezierPath(ovalIn: dot).fill()
-            let label = NSAttributedString(string: "等你", attributes: [
+            let label = NSAttributedString(string: WSL10n.text("notch.session.waitingTag", zh: "等你"), attributes: [
                 .font: NSFont.systemFont(ofSize: 10, weight: .semibold), .foregroundColor: NSColor.systemOrange,
             ])
             let size = label.size()
@@ -7776,7 +7806,7 @@ final class NotchPeek {
         view.layer?.masksToBounds = true
         view.layer?.contents = image
         view.layer?.contentsGravity = .resize
-        let label = NSTextField(labelWithString: "收起时的画面")
+        let label = NSTextField(labelWithString: WSL10n.text("glance.stalePicture", zh: "收起时的画面"))
         label.font = .systemFont(ofSize: 11, weight: .medium)
         label.textColor = .white
         label.wantsLayer = true

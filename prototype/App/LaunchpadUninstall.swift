@@ -52,9 +52,9 @@ final class LaunchpadUninstallOverlay: NSView {
     private let statusLabel = NSTextField(labelWithString: "")
     private let listScrollView = NSScrollView()
     private let listTable = NSTableView()
-    private let trashButton = NSButton(title: "移到废纸篓", target: nil, action: nil)
-    private let cancelButton = NSButton(title: "先不删", target: nil, action: nil)
-    private let quitButton = NSButton(title: "退出 App", target: nil, action: nil)
+    private let trashButton = NSButton(title: WSL10n.text("habit.fallback.trash", zh: "移到废纸篓"), target: nil, action: nil)
+    private let cancelButton = NSButton(title: WSL10n.text("launchpad.keepForNow", zh: "先不删"), target: nil, action: nil)
+    private let quitButton = NSButton(title: WSL10n.text("launchpad.quitAppNow", zh: "退出 App"), target: nil, action: nil)
     private let spinner = NSProgressIndicator()
     private var toggleAllButton: NSButton?
     private var rows: [WS2AppUninstallItem] = []
@@ -78,7 +78,7 @@ final class LaunchpadUninstallOverlay: NSView {
         appIcon = NSWorkspace.shared.icon(forFile: app.path)
         iconView.image = appIcon
         iconView.setAccessibilityElement(true)
-        iconView.setAccessibilityLabel("\(app.name) 的图标")
+        iconView.setAccessibilityLabel(WSL10n.text("launchpad.appIcon", zh: "%@ 的图标", app.name))
         iconView.frame = NSRect(x: 20, y: 20, width: 48, height: 48)
         addSubview(iconView)
 
@@ -88,7 +88,7 @@ final class LaunchpadUninstallOverlay: NSView {
         addSubview(titleLabel)
 
         let sizeText = ByteCountFormatter.string(fromByteCount: plan.totalBytes, countStyle: .file)
-        statusLabel.stringValue = "卸载后可从废纸篓找回 · 共 \(sizeText)"
+        statusLabel.stringValue = WSL10n.text("launchpad.recoverable", zh: "卸载后可从废纸篓找回 · 共 %@", sizeText)
         statusLabel.font = .systemFont(ofSize: 12)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.frame = NSRect(x: 80, y: 26, width: 340, height: 18)
@@ -100,7 +100,7 @@ final class LaunchpadUninstallOverlay: NSView {
         addSubview(listScrollView)
 
         // 全选 / 全不选（清单长时逐条点太累）；App 本体始终保留勾选。
-        let toggleAll = NSButton(title: "全不选", target: nil, action: nil)
+        let toggleAll = NSButton(title: WSL10n.text("launchpad.selectNone", zh: "全不选"), target: nil, action: nil)
         toggleAll.bezelStyle = .rounded
         toggleAll.controlSize = .small
         toggleAll.frame = NSRect(x: 20, y: 92, width: 80, height: 22)
@@ -120,7 +120,7 @@ final class LaunchpadUninstallOverlay: NSView {
         listScrollView.documentView = listTable
 
         trashButton.bezelStyle = .rounded
-        trashButton.setAccessibilityLabel("把勾选的文件移到废纸篓")
+        trashButton.setAccessibilityLabel(WSL10n.text("launchpad.trashChecked", zh: "把勾选的文件移到废纸篓"))
         trashButton.keyEquivalent = "\r"
         trashButton.frame = NSRect(x: 268, y: 66, width: 152, height: 32)
         trashButton.target = self
@@ -128,7 +128,7 @@ final class LaunchpadUninstallOverlay: NSView {
         addSubview(trashButton)
 
         cancelButton.bezelStyle = .rounded
-        cancelButton.setAccessibilityLabel("先不删，回到启动台")
+        cancelButton.setAccessibilityLabel(WSL10n.text("launchpad.cancelBack", zh: "先不删，回到启动台"))
         cancelButton.keyEquivalent = "\u{1b}"
         cancelButton.frame = NSRect(x: 20, y: 66, width: 90, height: 32)
         cancelButton.target = self
@@ -161,7 +161,7 @@ final class LaunchpadUninstallOverlay: NSView {
 
     private func showQuitting() {
         state = .quittingApp
-        statusLabel.stringValue = "App 正在运行——先退出它（系统会问没保存的内容）"
+        statusLabel.stringValue = WSL10n.text("launchpad.appRunning", zh: "App 正在运行——先退出它（系统会问没保存的内容）")
         listScrollView.isHidden = true
         trashButton.isEnabled = false
         quitButton.isHidden = false
@@ -170,7 +170,7 @@ final class LaunchpadUninstallOverlay: NSView {
     @objc private func quitPressed() {
         guard let runningApp else { enterReview(); return }
         runningApp.terminate()
-        statusLabel.stringValue = "正在退出…"
+        statusLabel.stringValue = WSL10n.text("launchpad.quitting", zh: "正在退出…")
         trashButton.isEnabled = false
         quitWatch?.cancel()
         quitWatch = Task { [weak self] in
@@ -193,7 +193,7 @@ final class LaunchpadUninstallOverlay: NSView {
         rows = plan.items
         checked = Set(rows.map(\.path))
         state = .reviewing(rows)
-        statusLabel.stringValue = "勾选要一并移到废纸篓的关联文件（可找回）"
+        statusLabel.stringValue = WSL10n.text("launchpad.pickFiles", zh: "勾选要一并移到废纸篓的关联文件（可找回）")
         listTable.reloadData()
         refreshButtons()
     }
@@ -205,7 +205,8 @@ final class LaunchpadUninstallOverlay: NSView {
         if let toggleAllButton, case .reviewing = state {
             let optional = rows.filter { !$0.isAppBundle }
             let allOn = !optional.isEmpty && optional.allSatisfy { checked.contains($0.path) }
-            toggleAllButton.title = allOn ? "全不选" : "全选"
+            toggleAllButton.title = allOn ? WSL10n.text("launchpad.selectNone", zh: "全不选")
+                                          : WSL10n.text("menu.selectAll", zh: "全选")
         }
     }
 
@@ -228,7 +229,7 @@ final class LaunchpadUninstallOverlay: NSView {
         guard selected.contains(where: \.isAppBundle) else { return }
         state = .trashing
         trashButton.isEnabled = false
-        statusLabel.stringValue = "正在移到废纸篓…"
+        statusLabel.stringValue = WSL10n.text("launchpad.trashing", zh: "正在移到废纸篓…")
         spinner.isIndeterminate = true
         spinner.controlSize = .small
         spinner.frame = NSRect(x: 20, y: 92, width: 16, height: 16)
@@ -245,19 +246,19 @@ final class LaunchpadUninstallOverlay: NSView {
                     let failures = self.rows.filter { outcome.failures.contains($0.path) }
                     self.state = .done(trashed: outcome.trashed.count, failures: failures)
                     if failures.isEmpty {
-                        self.statusLabel.stringValue = "已移到废纸篓 \(outcome.trashed.count) 项"
-                        self.trashButton.title = "完成"
-                        self.trashButton.setAccessibilityLabel("关闭卸载面板")
+                        self.statusLabel.stringValue = WSL10n.text("launchpad.trashedCount", zh: "已移到废纸篓 %@ 项", String(outcome.trashed.count))
+                        self.trashButton.title = WSL10n.text("notch.session.done", zh: "完成")
+                        self.trashButton.setAccessibilityLabel(WSL10n.text("launchpad.closeUninstall", zh: "关闭卸载面板"))
                         self.trashButton.keyEquivalent = "\r"
                         self.trashButton.action = #selector(self.finishPressed)
                     } else {
-                        self.statusLabel.stringValue = "移到废纸篓 \(outcome.trashed.count) 项，\(failures.count) 项没成功（可能被占用）"
+                        self.statusLabel.stringValue = WSL10n.text("launchpad.trashedPartial", zh: "移到废纸篓 %@ 项，%@ 项没成功（可能被占用）", String(outcome.trashed.count), String(failures.count))
                         // 失败项留在清单里，可改勾后重试。
                         self.rows = failures + self.rows.filter { $0.isAppBundle && self.checked.contains($0.path) && !outcome.failures.contains($0.path) }
                         self.checked = Set(self.rows.map(\.path))
                         self.listTable.reloadData()
-                        self.trashButton.title = "重试失败项"
-                        self.trashButton.setAccessibilityLabel("重试没成功的文件")
+                        self.trashButton.title = WSL10n.text("launchpad.retryFailed", zh: "重试失败项")
+                        self.trashButton.setAccessibilityLabel(WSL10n.text("launchpad.retryFiles", zh: "重试没成功的文件"))
                         self.trashButton.isEnabled = true
                         self.trashButton.action = #selector(self.retryPressed)
                     }
@@ -273,8 +274,8 @@ final class LaunchpadUninstallOverlay: NSView {
         guard !stillChecked.isEmpty else { finishPressed(); return }
         state = .trashing
         trashButton.isEnabled = false
-        trashButton.title = "移到废纸篓"
-        statusLabel.stringValue = "正在移到废纸篓…"
+        trashButton.title = WSL10n.text("habit.fallback.trash", zh: "移到废纸篓")
+        statusLabel.stringValue = WSL10n.text("launchpad.trashing", zh: "正在移到废纸篓…")
         spinner.isIndeterminate = true
         spinner.frame = NSRect(x: 20, y: 92, width: 16, height: 16)
         spinner.startAnimation(nil)
@@ -290,13 +291,13 @@ final class LaunchpadUninstallOverlay: NSView {
                     let left = self.rows.filter { outcome.failures.contains($0.path) }
                     self.state = .done(trashed: outcome.trashed.count, failures: left)
                     if left.isEmpty {
-                        self.statusLabel.stringValue = "已移到废纸篓"
-                        self.trashButton.title = "完成"
-                        self.trashButton.setAccessibilityLabel("关闭卸载面板")
+                        self.statusLabel.stringValue = WSL10n.text("launchpad.trashed", zh: "已移到废纸篓")
+                        self.trashButton.title = WSL10n.text("notch.session.done", zh: "完成")
+                        self.trashButton.setAccessibilityLabel(WSL10n.text("launchpad.closeUninstall", zh: "关闭卸载面板"))
                         self.trashButton.keyEquivalent = "\r"
                         self.trashButton.action = #selector(self.finishPressed)
                     } else {
-                        self.statusLabel.stringValue = "还有 \(left.count) 项没成功"
+                        self.statusLabel.stringValue = WSL10n.text("launchpad.stillFailing", zh: "还有 %@ 项没成功", String(left.count))
                     }
                     self.trashButton.isEnabled = true
                 }
@@ -356,21 +357,21 @@ extension LaunchpadUninstallOverlay: NSTableViewDataSource, NSTableViewDelegate 
         let size = ByteCountFormatter.string(fromByteCount: item.bytes, countStyle: .file)
         let name: String
         switch item.group {
-        case .app: name = "App 本体"
-        case .preferences: name = "偏好设置"
-        case .appSupport: name = "应用支持"
-        case .caches: name = "缓存"
-        case .savedState: name = "窗口状态"
-        case .webKit: name = "网页数据"
-        case .cookies: name = "Cookie"
-        case .logs: name = "日志"
-        case .appScripts: name = "应用脚本"
-        case .httpStorage: name = "网络存储"
-        case .container: name = "容器"
-        case .groupContainer: name = "共享容器"
-        case .launchAgent: name = "启动代理"
+        case .app: name = WSL10n.text("launchpad.file.app", zh: "App 本体")
+        case .preferences: name = WSL10n.text("launchpad.file.preferences", zh: "偏好设置")
+        case .appSupport: name = WSL10n.text("launchpad.file.appSupport", zh: "应用支持")
+        case .caches: name = WSL10n.text("launchpad.file.caches", zh: "缓存")
+        case .savedState: name = WSL10n.text("launchpad.file.savedState", zh: "窗口状态")
+        case .webKit: name = WSL10n.text("launchpad.file.webKit", zh: "网页数据")
+        case .cookies: name = WSL10n.text("launchpad.file.cookies", zh: "Cookie")
+        case .logs: name = WSL10n.text("launchpad.file.logs", zh: "日志")
+        case .appScripts: name = WSL10n.text("launchpad.file.appScripts", zh: "应用脚本")
+        case .httpStorage: name = WSL10n.text("launchpad.file.httpStorage", zh: "网络存储")
+        case .container: name = WSL10n.text("launchpad.file.container", zh: "容器")
+        case .groupContainer: name = WSL10n.text("launchpad.file.groupContainer", zh: "共享容器")
+        case .launchAgent: name = WSL10n.text("launchpad.file.launchAgent", zh: "启动代理")
         }
-        return "\(name) · \(size)"
+        return name + " · " + size
     }
 
     private func shortPath(_ path: String) -> String {

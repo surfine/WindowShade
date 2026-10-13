@@ -22,9 +22,10 @@ enum WindowBrowserSettings {
 
     /// 一次性说明的文案：告诉用户两个入口，并说明不会动真实窗口。
     static func firstRunHintText(hotKeyDisplay: String?) -> String {
-        let shortcut = hotKeyDisplay.map { "或按 \($0)" } ?? "或用菜单里的“选择窗口…”"
-        return "鼠标停在 Dock 图标上可查看该应用的窗口，\(shortcut)打开窗口选择面板；"
-            + "悬停与搜索都不会改动窗口。"
+        let shortcut = hotKeyDisplay != nil
+            ? WSL10n.text("settings.browser.firstRun.orKey", zh: "或按 %@", hotKeyDisplay!)
+            : WSL10n.text("settings.browser.firstRun.orMenu", zh: "或用菜单里的“选择窗口…”")
+        return WSL10n.text("settings.browser.firstRun.hint", zh: "鼠标停在 Dock 图标上可查看该应用的窗口，%@打开窗口选择面板；悬停与搜索都不会改动窗口。", shortcut)
     }
 
     /// 面板默认展示方式：自动（按窗口数量判定）、固定缩略图网格、固定紧凑列表。
@@ -35,9 +36,9 @@ enum WindowBrowserSettings {
 
         var displayName: String {
             switch self {
-            case .automatic: return "自动"
-            case .grid: return "缩略图"
-            case .list: return "列表"
+            case .automatic: return WSL10n.text("browser.style.automatic", zh: "自动")
+            case .grid: return WSL10n.text("settings.shade.collapse.thumbnail", zh: "缩略图")
+            case .list: return WSL10n.text("browser.style.list", zh: "列表")
             }
         }
     }
@@ -164,7 +165,7 @@ enum WindowBrowserSettings {
         let special: [Int: String] = [
             kVK_LeftArrow: "←", kVK_RightArrow: "→", kVK_UpArrow: "↑", kVK_DownArrow: "↓",
             kVK_Return: "↩", kVK_Delete: "⌫", kVK_ForwardDelete: "⌦", kVK_Escape: "esc",
-            kVK_Tab: "⇥", kVK_Space: "空格", kVK_Home: "↖", kVK_End: "↘",
+            kVK_Tab: "⇥", kVK_Space: WSL10n.text("habit.key.space", zh: "空格"), kVK_Home: "↖", kVK_End: "↘",
             kVK_PageUp: "⇞", kVK_PageDown: "⇟"
         ]
         if let name = special[Int(keyCode)] { return name }
@@ -214,8 +215,8 @@ enum WindowBrowserSettings {
             kVK_ANSI_0: "0", kVK_ANSI_1: "1", kVK_ANSI_2: "2", kVK_ANSI_3: "3",
             kVK_ANSI_4: "4", kVK_ANSI_5: "5", kVK_ANSI_6: "6", kVK_ANSI_7: "7",
             kVK_ANSI_8: "8", kVK_ANSI_9: "9",
-            kVK_Space: "空格", kVK_Tab: "⇥", kVK_Return: "↩", kVK_Escape: "esc"
+            kVK_Space: WSL10n.text("habit.key.space", zh: "空格"), kVK_Tab: "⇥", kVK_Return: "↩", kVK_Escape: "esc"
         ]
-        return map[Int(keyCode)] ?? "键码 \(keyCode)"
+        return map[Int(keyCode)] ?? WSL10n.text("browser.keyCode", zh: "键码 %@", String(keyCode))
     }
 }

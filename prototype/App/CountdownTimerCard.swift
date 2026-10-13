@@ -47,9 +47,9 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
     private let track = CAShapeLayer()
     private let fill = CAShapeLayer()
     private var chips: [NSButton] = []
-    private let start = CountdownTimerCard.pill("开始", fill: CountdownTimerCard.orange, textColor: .white)
-    private let end = CountdownTimerCard.pill("结束", fill: NSColor.white.withAlphaComponent(0.18), textColor: .white)
-    private let again = CountdownTimerCard.pill("再来一个", fill: CountdownTimerCard.orange, textColor: .white)
+    private let start = CountdownTimerCard.pill(WSL10n.text("timer.start", zh: "开始"), fill: CountdownTimerCard.orange, textColor: .white)
+    private let end = CountdownTimerCard.pill(WSL10n.text("notch.action.end", zh: "结束"), fill: NSColor.white.withAlphaComponent(0.18), textColor: .white)
+    private let again = CountdownTimerCard.pill(WSL10n.text("timer.again", zh: "再来一个"), fill: CountdownTimerCard.orange, textColor: .white)
     private let pause = CountdownTimerCard.round("pause.fill", fill: NSColor(srgbRed: 1, green: 0.624, blue: 0.039, alpha: 0.32))
     private let stop = CountdownTimerCard.round("xmark", fill: NSColor.white.withAlphaComponent(0.18))
 
@@ -70,7 +70,7 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
             let chip = NSButton(title: "", target: self, action: #selector(chipAction(_:)))
             chip.tag = preset; chip.isBordered = false; chip.wantsLayer = true
             chip.layer?.cornerRadius = 13
-            chip.setAccessibilityLabel("\(preset) 分钟")
+            chip.setAccessibilityLabel(WSL10n.text("timer.minutesLong", zh: "%@ 分钟", String(preset)))
             addSubview(chip); chips.append(chip)
         }
         start.target = self; start.action = #selector(startAction)
@@ -78,7 +78,7 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
         again.target = self; again.action = #selector(againAction)
         pause.target = self; pause.action = #selector(pauseAction)
         stop.target = self; stop.action = #selector(endAction)
-        stop.setAccessibilityLabel("结束"); stop.toolTip = "结束"
+        stop.setAccessibilityLabel(WSL10n.text("notch.action.end", zh: "结束")); stop.toolTip = WSL10n.text("notch.action.end", zh: "结束")
         footer.stringValue = ""
         rebuild()
     }
@@ -138,19 +138,21 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
         let alpha = paused ? CGFloat(CountdownTimerStyle.pausedAlpha) : 1
         switch mode {
         case .picker:
-            title.stringValue = "计时器"
-            detail.stringValue = "\(selection) 分 · ↑ ↓ 调，回车开始"
+            title.stringValue = WSL10n.text("notch.kind.timer", zh: "计时器")
+            detail.stringValue = WSL10n.text("timer.pickHint", zh: "%@ 分 · ↑ ↓ 调，回车开始", String(selection))
             detail.alignment = .right
             for chip in chips { styleChip(chip) }
-            setAccessibilityLabel("计时器，选分钟，现在是 \(selection) 分钟")
+            setAccessibilityLabel(WSL10n.text("timer.pickSpoken", zh: "计时器，选分钟，现在是 %@ 分钟", String(selection)))
         case .alert:
-            title.stringValue = "时间到"
+            title.stringValue = WSL10n.text("timer.timeUp", zh: "时间到")
             detail.stringValue = CountdownTimerText.minutesLine(timer.totalMinutes > 0 ? timer.totalMinutes : selection)
             detail.alignment = .left
-            setAccessibilityLabel("时间到，\(detail.stringValue)")
+            setAccessibilityLabel(WSL10n.text("timer.timeUpSpoken", zh: "时间到，%@", detail.stringValue))
         case .running:
             title.stringValue = ""
-            detail.stringValue = done ? "时间到" : (paused ? "已暂停" : "计时器 · \(timer.totalMinutes) 分钟")
+            detail.stringValue = done ? WSL10n.text("timer.timeUp", zh: "时间到")
+                                          : (paused ? WSL10n.text("say.paused", zh: "已暂停")
+                                                    : WSL10n.text("timer.running", zh: "计时器 · %@ 分钟", String(timer.totalMinutes)))
             detail.alignment = .left
             big.stringValue = done ? CountdownTimerText.overtime(timer.overtime(at: now)) : CountdownTimerText.big(remaining: timer.remaining(at: now))
             big.textColor = (done ? Self.orange : NSColor.white).withAlphaComponent(alpha)
@@ -161,10 +163,11 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
             CATransaction.commit()
             pause.image = NSImage(systemSymbolName: paused ? "play.fill" : "pause.fill", accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: 15, weight: .semibold))
-            let pauseLabel = paused ? "继续" : "暂停"
+            let pauseLabel = paused ? WSL10n.text("notch.action.resume", zh: "继续") : WSL10n.text("notch.action.pause", zh: "暂停")
             pause.setAccessibilityLabel(pauseLabel); pause.toolTip = pauseLabel
             footer.stringValue = CountdownTimerSettings.chimeEnabled
-                ? "到时间响一次系统提示音 · 超时 10 分钟后自己结束" : "超时 10 分钟后自己结束"
+                ? WSL10n.text("timer.chimeOn", zh: "到时间响一次系统提示音 · 超时 10 分钟后自己结束")
+                : WSL10n.text("timer.chimeOff", zh: "超时 10 分钟后自己结束")
             setAccessibilityLabel(CountdownTimerText.spoken(for: timer, at: now))
         }
         needsLayout = true
@@ -173,7 +176,7 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
     private func styleChip(_ chip: NSButton) {
         let on = chip.tag == selection
         chip.layer?.backgroundColor = (on ? NSColor.white : NSColor.white.withAlphaComponent(0.14)).cgColor
-        chip.attributedTitle = NSAttributedString(string: "\(chip.tag) 分", attributes: [
+        chip.attributedTitle = NSAttributedString(string: WSL10n.text("timer.minutesShort", zh: "%@ 分", String(chip.tag)), attributes: [
             .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
             .foregroundColor: on ? NSColor.black : NSColor.white])
     }
@@ -326,7 +329,7 @@ final class CountdownTimerPresenter {
     /// 时间到：已经开着大卡就原位变成“时间到”；否则鼓一张 10 秒的提醒。睡过头醒来不会走到这里。
     private func showTimeUp() {
         NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
-                             userInfo: [.announcement: "时间到，" + CountdownTimerText.minutesLine(host.model.totalMinutes),
+                             userInfo: [.announcement: WSL10n.text("timer.timeUp", zh: "时间到") + WSL10n.text("notch.join", zh: "，") + CountdownTimerText.minutesLine(host.model.totalMinutes),
                                         .priority: NSAccessibilityPriorityLevel.high.rawValue])
         if let card, card.mode == .running { card.render(host.model, at: host.now); return }
         guard unlocked(), let leases else { return }

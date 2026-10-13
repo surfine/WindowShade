@@ -219,7 +219,7 @@ extension AppDelegate {
         // 屏幕几何与 journal 快照都在主线程取好；AX 扫描在后台。
         guard let screen = NSScreen.main ?? NSScreen.screens.first else {
             isRescuingOffscreenWindows = false
-            if !silent { quietNotice("没有可用屏幕", log: "rescue: no screen") }
+            if !silent { quietNotice(WSL10n.text("notice.rescue.noScreen", zh: "没有可用屏幕"), kind: .problem, log: "rescue: no screen") }
             return
         }
         let targetTopLeft = CGPoint(x: screen.visibleFrame.minX + 80,
@@ -244,7 +244,7 @@ extension AppDelegate {
                 DispatchQueue.main.async { [weak self] in
                     self?.showPermissionOnboardingIfNeeded(force: true)
                 }
-                finish(silent ? nil : "需要权限")
+                finish(silent ? nil : WSL10n.text("notice.rescue.needsPermission", zh: "需要权限"))
                 return
             }
             var result = JournalRescueResult()
@@ -324,7 +324,7 @@ extension AppDelegate {
                 notch.announce(line.headline, detail: line.detail, tone: .info)
             }
         }
-        finish(rescued == 0 && !silent ? "没有需要救援的窗口" : nil)
+        finish(rescued == 0 && !silent ? WSL10n.text("notice.rescue.nothing", zh: "没有需要救援的窗口") : nil)
     }
 
     /// 写回一个窗口；返回这条 journal 是否可以清掉（只有验证通过的 journal 条目才返回 true）。

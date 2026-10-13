@@ -1578,12 +1578,13 @@ final class HabitCenter {
 
     /// 在说话岛上问一次。岛正忙就先不问（不记已问，下一次认出来再试）。
     private func askOrigin(_ origin: SwitcherOrigin) {
-        guard let notch = owner?.notch, let name = origin.title else { return }
-        let subtitle = "点一下，以后照 \(name) 的习惯提醒你"
+        guard let notch = owner?.notch, let name = origin.titleText else { return }
+        let subtitle = WSL10n.text("habit.askOrigin.sub", zh: "点一下，以后照 %@ 的习惯提醒你", name)
         // 借卡住提示的那一路：它有小叉。不演按键，所以演示是空的；rule 只用来认回声，.symbols 在没答来处时不开。
         let tip = HabitTip(rule: .symbols,
-                           content: HabitTip.Content(title: "之前常用 \(name)？", subtitle: subtitle, demo: .keys(from: [], to: [])),
-                           hint: "不想答就点叉",
+                           content: HabitTip.Content(title: WSL10n.text("habit.askOrigin.title", zh: "之前常用 %@？", name),
+                                                    subtitle: subtitle, demo: .keys(from: [], to: [])),
+                           hint: WSL10n.text("habit.askOrigin.hint", zh: "不想答就点叉"),
                            perform: { HabitCenter.shared.originAnswered(origin) },
                            close: { HabitCenter.shared.originDeclined() })
         guard notch.teachHabit(tip) else { return }

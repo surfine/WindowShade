@@ -3,8 +3,10 @@ import Foundation
 /// 刘海上的一句话：主句最多 8 个字形簇，细节放副句；名字（设备、App）从中间截断，窗口标题之类从尾部截断。
 /// 纯逻辑，不碰 AppKit、不读任何东西。文案规则见 docs/copy-guide.md。
 enum NotchSentence {
-    static let headlineLimit = 8
-    static let detailLimit = 24
+    /// 主句/副句的长度预算（第31批：按语言取）。中文 8 个字是稿里的口径；英文按同一块地方的实测宽度放宽，
+    /// 到真机核对之后再定死（刘海面出厂默认关，这里先按 ~24 字符给）。
+    static var headlineLimit: Int { WSL10n.language == .en ? 24 : 8 }
+    static var detailLimit: Int { WSL10n.language == .en ? 40 : 24 }
     static let ellipsis = "…"
 
     struct Line: Equatable, Sendable {
@@ -70,13 +72,14 @@ enum NotchSentence {
 
     // MARK: 窗口有变化
 
-    static let privateDetail = "指针停上来就能找回来"
+    static var privateDetail: String { WSL10n.text("notch.sentence.privateDetail", zh: "指针停上来就能找回来") }
 
     /// 收起的窗口标题变了：主句“App 名有变化”（App 名中间截断，整句 ≤ 8），副句是窗口标题。
     /// 私人 App：副句换成固定的一句，标题不出现在任何地方。
     static func windowChange(appName: String, windowTitle: String, isPrivateApp: Bool) -> Line {
         let name = appName.trimmingCharacters(in: .whitespacesAndNewlines)
-        let head = headline(name: name.isEmpty ? "窗口" : name, suffix: "有变化")
+        let head = headline(name: name.isEmpty ? WSL10n.text("menu.window", zh: "窗口") : name,
+                            suffix: WSL10n.text("notch.sentence.changed", zh: "有变化"))
         if isPrivateApp { return Line(headline: head, detail: privateDetail) }
         let title = windowTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         return Line(headline: head, detail: truncateTail(title, limit: detailLimit))
@@ -132,7 +135,8 @@ enum NotchSentence {
         /// 合出来的一句；只有一件时就是它自己。
         var line: Line {
             guard extraCount > 0 else { return compose(headline: first.headline, detail: first.detail) }
-            return Line(headline: compose(headline: first.headline).headline, detail: "还有 \(extraCount) 件")
+            return Line(headline: compose(headline: first.headline).headline,
+                        detail: WSL10n.text("notch.sentence.moreItems", zh: "还有 %@ 件", String(extraCount)))
         }
 
         /// 停留时间不因合并而延长：从第一件开口算，说满 `hold`。
@@ -150,9 +154,15 @@ extension NotchSentence {
         case copy, download
 
         /// 成功的主句，都不超过 8 个字。
-        var doneHeadline: String { self == .copy ? "拷好了" : "下载好了" }
+        var doneHeadline: String {
+            self == .copy ? WSL10n.text("notch.sentence.copyDone", zh: "拷好了")
+                          : WSL10n.text("notch.sentence.downloadDone", zh: "下载好了")
+        }
         /// 出错的主句。
-        var failedHeadline: String { self == .copy ? "没拷完" : "没下完" }
+        var failedHeadline: String {
+            self == .copy ? WSL10n.text("notch.sentence.copyFailed", zh: "没拷完")
+                          : WSL10n.text("notch.sentence.downloadFailed", zh: "没下完")
+        }
     }
 
     /// 成功一句：主句“拷好了”或“下载好了”，副句是文件名（太长从中间截断，保住扩展名）。几个文件时副句写个数。
@@ -161,7 +171,8 @@ extension NotchSentence {
         switch clean.count {
         case 0: return Line(headline: work.doneHeadline, detail: "")
         case 1: return Line(headline: work.doneHeadline, detail: truncateMiddle(clean[0], limit: detailLimit))
-        default: return Line(headline: work.doneHeadline, detail: "\(clean.count) 个文件")
+        default: return Line(headline: work.doneHeadline,
+                             detail: WSL10n.text("notch.sentence.files", zh: "%@ 个文件", String(clean.count)))
         }
     }
 

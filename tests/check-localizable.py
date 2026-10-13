@@ -97,22 +97,26 @@ def main():
                 failures.append(f"WS2SilentCopy.sayings: {key} 的中文和表里不同")
 
     # 防漏网扫描（§9.4，第28批加）：全 prototype/ 的中文字符串字面量行数不得超过棘轮基线。
-    # 基线 = 第28批完成静音线迁移后的实况（3888），冻结在 tests/localizable-ratchet.json；
-    # 后续批次每迁一个表面就调低，只许降不许升。身份表（WS2SilentCopy/WS2SettingsInfo/生成的
-    # WS2PrivacyData）、QA 探针、权限名等仍占位数，逐批甄别消化。
+    # 基线冻结在 tests/localizable-ratchet.json，只许降不许升。
+    # 口径（2026-10-13 修正）：只数**没走目录的裸中文字面量**——`WSL10n.text/setting(zh:)`
+    # 里的中文是语义身份源句，显示已经走目录出当前语言，不该算漏网。旧口径把它们也计入，
+    # 结果是"把行迁进目录"反而让计数上涨（第30批设置面板迁移实测：本页 66 → 5 行裸字面量，
+    # 旧口径总数却 +38，全是被计入的身份源句）。证据：docs/design-review/2026-10-13-settings-panel/README.md。
+    # 身份表（WS2SettingsInfo 的 short 表等）、生成的 WS2PrivacyData、QA 探针、权限名等仍占位数，逐批消化。
     ratchet_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "localizable-ratchet.json")
     ratchet = 3888
     if os.path.isfile(ratchet_path):
         ratchet = json.load(open(ratchet_path, encoding="utf-8"))["han_literal_lines"]
     han_lines = 0
     HAN_SEARCH = HAN_RE.search
+    WSL10N_LINE = re.compile(r"WSL10n\.(?:text|setting)\(")
     for path in swift_files(root):
         for line in open(path, encoding="utf-8"):
             stripped = line.lstrip()
             if stripped.startswith("//"):
                 continue
             code = line.split("//")[0]
-            if '"' in code and HAN_SEARCH(code):
+            if '"' in code and HAN_SEARCH(code) and not WSL10N_LINE.search(code):
                 han_lines += 1
     if han_lines > ratchet:
         failures.append(f"防漏网：中文字面量行数 {han_lines} 超过棘轮基线 {ratchet}（迁移只许降不许升）")

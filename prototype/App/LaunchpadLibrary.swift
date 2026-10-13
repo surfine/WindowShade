@@ -236,7 +236,10 @@ final class LaunchpadLibraryPage {
             }
             if let cluster = tile.cluster {
                 items.append((cluster.frame.offsetBy(dx: tile.layer.frame.minX, dy: tile.layer.frame.minY),
-                              "\(tile.category.title)，共 \(tile.category.apps.count) 个 App", .cluster(tile.category, cluster)))
+                              WSL10n.text("launchpad.categorySpoken", zh: "%@，共 %@ 个 App",
+                                                                   tile.category.title,
+                                                                   String(tile.category.apps.count)),
+                        .cluster(tile.category, cluster)))
             }
         }
         return items
@@ -259,7 +262,7 @@ final class LaunchpadLibraryList: NSView, NSTableViewDataSource, NSTableViewDele
     var icon: ((LaunchpadApp) -> CGImage?)?
     private let scroll = NSScrollView()
     private let table = LaunchpadListTable()
-    private let emptyLabel = NSTextField(labelWithString: "没有找到 App")
+    private let emptyLabel = NSTextField(labelWithString: WSL10n.text("launchpad.noApps", zh: "没有找到 App"))
     private var rows: [Row] = []
 
     override init(frame: NSRect) {
@@ -489,7 +492,8 @@ extension LaunchpadView {
         dots.opacity = 0
         glyph.alphaValue = 1
         field.alphaValue = 1
-        field.placeholderAttributedString = placeholder(top ? "App 资料库" : "搜索")
+        field.placeholderAttributedString = placeholder(top ? WSL10n.text("silent.launcher.library", zh: "App 资料库")
+                                                          : WSL10n.text("silent.launcher.search", zh: "搜索"))
         layoutPill(animated: true)
         updateDots()
     }

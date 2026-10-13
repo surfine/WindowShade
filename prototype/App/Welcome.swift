@@ -45,15 +45,20 @@ final class WelcomeView: NSView {
         /// 舞台上那段动画演的是什么（VoiceOver 读它）；没有舞台的一步是 nil。
         var picture: String? = nil
     }
-    static let pages: [Page] = [
+    /// 每一步的标题、一句话、舞台说明。核算属性：换语言时窗口还开着，取值要按当前语言重出（第31批）。
+    static var pages: [Page] {
+        [
         // 一句话（docs/design-drafts 的 M4）：先说刚换 Mac 的人在哪卡住，再说它什么时候出声。
         Page(title: WelcomeFlow.introTitle,
              lede: WelcomeFlow.introLede,
-             picture: "动画：按了 ⌃C 没有反应，刘海展开说“Mac 上拷贝按 ⌘C”；按了 ⌘C，刘海收回；再按 ⌘V，那句话落进邮件。"),
+             picture: WSL10n.text("welcome.flow.picture.intro",
+                                  zh: "动画：按了 ⌃C 没有反应，刘海展开说“Mac 上拷贝按 ⌘C”；按了 ⌘C，刘海收回；再按 ⌘V，那句话落进邮件。")),
         Page(title: WelcomeFlow.originTitle, lede: WelcomeFlow.originNote(for: .unanswered),
-             picture: "示意图：选了 Windows，左下角四颗键帽换成 Mac 上的 fn、control、option、command。"),
+             picture: WSL10n.text("welcome.flow.picture.origin",
+                                  zh: "示意图：选了 Windows，左下角四颗键帽换成 Mac 上的 fn、control、option、command。")),
         Page(title: WelcomeFlow.permissionTitle, lede: WelcomeFlow.permissionLede),
-    ]
+        ]
+    }
     /// 问来处的那一步。
     static let originPage = WelcomeFlow.originStep
     /// 授权那一步（缺权限的提醒直接打开到这里）。
@@ -82,9 +87,9 @@ final class WelcomeView: NSView {
     private let titleLabel = NSTextField(labelWithString: "")
     private let lede = NSTextField(wrappingLabelWithString: "")
     private let dots = WelcomeDots()
-    private let skip = NSButton(title: "跳过", target: nil, action: nil)
-    private let back = NSButton(title: "上一步", target: nil, action: nil)
-    let next = NSButton(title: "继续", target: nil, action: nil)
+    private let skip = NSButton(title: WSL10n.text("welcome.button.skip", zh: "跳过"), target: nil, action: nil)
+    private let back = NSButton(title: WSL10n.text("welcome.button.back", zh: "上一步"), target: nil, action: nil)
+    let next = NSButton(title: WSL10n.text("welcome.button.next", zh: "继续"), target: nil, action: nil)
     private let permissionBox = NSStackView()
     private(set) var index = 0
     /// 第一次摆好页面之前不做翻页动画。
@@ -289,7 +294,8 @@ final class WelcomeView: NSView {
         dots.current = index
         let last = index == Self.permissionPage
         back.isHidden = index == 0
-        next.title = last ? "开始使用" : "继续"
+        next.title = last ? WSL10n.text("welcome.button.start", zh: "开始使用")
+                          : WSL10n.text("welcome.button.next", zh: "继续")
         // 焦点还在某个选项上就离开了第二步：交回这一页，← → 接着翻页，不会在看不见的选项之间换答案。
         if index != Self.originPage, let focused = window?.firstResponder as? NSView, focused.isDescendant(of: choices) {
             window?.makeFirstResponder(self)
@@ -457,7 +463,7 @@ final class WelcomeView: NSView {
             self.resetMoveIcon()
             self.lede.stringValue = UpdateCopy.moveFailed
             self.next.title = UpdateCopy.showInFinder
-            self.skip.title = "继续"
+            self.skip.title = WSL10n.text("welcome.button.next", zh: "继续")
             [self.skip, self.next].forEach { $0.isEnabled = true }
             self.layoutButtons()
             NSAccessibility.post(element: self.lede, notification: .valueChanged)
@@ -532,7 +538,8 @@ final class WelcomeView: NSView {
         guard !onMoveStep else { return }
         let last = WelcomeFlow.isLast(index)
         let granted = last && permissionsGranted()
-        skip.title = last ? "稍后再说" : "跳过"
+        skip.title = last ? WSL10n.text("welcome.button.later", zh: "稍后再说")
+                          : WSL10n.text("welcome.button.skip", zh: "跳过")
         skip.isHidden = granted
         if last {
             next.isEnabled = granted
@@ -705,7 +712,7 @@ final class WelcomeChoice: NSView {
             .withSymbolConfiguration(.init(pointSize: 24, weight: .regular))
         icon.imageScaling = .scaleNone
         icon.frame = NSRect(x: 14, y: (size.height - 32) / 2, width: 40, height: 32)
-        label.stringValue = origin.title ?? ""
+        label.stringValue = origin.titleText ?? ""
         label.font = .systemFont(ofSize: 14, weight: .medium)
         label.alignment = .left
         label.frame = NSRect(x: 60, y: (size.height - 20) / 2, width: size.width - 60 - 40, height: 20)
@@ -784,7 +791,7 @@ final class WelcomeChoice: NSView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .radioButton }
-    override func accessibilityLabel() -> String? { origin.title }
+    override func accessibilityLabel() -> String? { origin.titleText }
     override func accessibilityValue() -> Any? { NSNumber(value: isSelected ? 1 : 0) }
     override func accessibilityPerformPress() -> Bool {
         onPick?(origin)
@@ -1063,7 +1070,8 @@ final class WelcomeScene {
         bar.frame = CGRect(x: 0, y: size.height - 4.6 * u, width: size.width, height: 4.6 * u)
         bar.backgroundColor = (dark ? Self.color(0x18181c, alpha: 0.55) : Self.color(0xffffff, alpha: 0.55)).cgColor
         root.addSublayer(bar)
-        let name = text("\(app)    文件    编辑    窗口", size: 1.6 * u, weight: .semibold, color: ink)
+        let name = text(WSL10n.text("welcome.art.menubar", zh: "%@    文件    编辑    窗口", app),
+                        size: 1.6 * u, weight: .semibold, color: ink)
         name.alignmentMode = .left
         name.frame = CGRect(x: 2.4 * u, y: (4.6 * u - 2.2 * u) / 2, width: 40 * u, height: 2.2 * u)
         bar.addSublayer(name)
@@ -1219,8 +1227,9 @@ final class WelcomeScene {
     /// 备忘录和邮件两扇窗口：左边是要拷贝的，右边是要粘贴的。
     private func twoWindows() -> (memo: (frame: CGRect, layers: [CALayer]), mail: (frame: CGRect, layers: [CALayer])) {
         let memoFrame = rect(5, 22, 43, 52), mailFrame = rect(52, 22, 43, 52)
-        return ((memoFrame, window(memoFrame, title: "购物清单", lines: 5)),
-                (mailFrame, window(mailFrame, title: "邮件", lines: 4, skippingFirstLine: true)))
+        return ((memoFrame, window(memoFrame, title: WSL10n.text("welcome.art.memoTitle", zh: "购物清单"), lines: 5)),
+                (mailFrame, window(mailFrame, title: WSL10n.text("welcome.art.mailTitle", zh: "邮件"),
+                                   lines: 4, skippingFirstLine: true)))
     }
 
     /// 要拷贝的那一行是选中的（系统的选中底色）。
@@ -1237,7 +1246,7 @@ final class WelcomeScene {
     /// 刘海里的字照卡住时的真提示写（docs/stuck-habits.md：菜单里那一项叫“拷贝”，副句“常用快捷键把 ⌃ 换成 ⌘”）。
     private func stuck() {
         cycle = 8; stillAt = WelcomeFlow.introRestMoment
-        menubar("备忘录")
+        menubar(WSL10n.text("welcome.art.appName", zh: "备忘录"))
         let n = notch()
         let (memo, mail) = twoWindows()
         select(line: 1, in: memo.frame, of: memo.layers[1])
@@ -1268,9 +1277,13 @@ final class WelcomeScene {
         let left = (size.width - open.width) / 2
         // 两行字的顶边离屏幕顶边多远：有刘海时在摄像头那一截下面，没有时在胶囊里居中（两行共高 5u）。
         let textTop = notched ? 5.6 * u : floatGap + (open.height - 5 * u) / 2
-        let headline = text("Mac 上拷贝按 ⌘C", size: 1.9 * u, color: .white)
+        // 两行字重用卡住时真提示的目录键（habit.*）：舞台演的就是刘海真会说的那两句，两处不许分头写。
+        let headline = text(WSL10n.text("habit.copy.title", zh: "Mac 上%@按 ⌘C",
+                                        WSL10n.text("habit.fallback.copy", zh: "拷贝")),
+                            size: 1.9 * u, color: .white)
         headline.frame = CGRect(x: left, y: size.height - textTop - 2.6 * u, width: open.width, height: 2.6 * u)
-        let detail = text("常用快捷键把 ⌃ 换成 ⌘", size: 1.45 * u, weight: .regular, color: NSColor.white.withAlphaComponent(0.6))
+        let detail = text(WSL10n.text("habit.controlFamily", zh: "常用快捷键把 ⌃ 换成 ⌘"),
+                          size: 1.45 * u, weight: .regular, color: NSColor.white.withAlphaComponent(0.6))
         detail.frame = CGRect(x: left, y: size.height - textTop - 5 * u, width: open.width, height: 2 * u)
         for line in [headline, detail] {
             line.zPosition = 7
@@ -1315,7 +1328,7 @@ final class WelcomeScene {
     /// 第二步的舞台：和第一步停下时同一张桌面，没有动画；左下角一块键盘，选了 Windows 才出现。
     private func keysStep() {
         stillAt = WelcomeFlow.introRestMoment
-        menubar("备忘录")
+        menubar(WSL10n.text("welcome.art.appName", zh: "备忘录"))
         _ = notch()
         let (memo, _) = twoWindows()
         select(line: 1, in: memo.frame, of: memo.layers[1])

@@ -85,7 +85,7 @@ extension AppDelegate {
             overlay.contentView?.toolTip = "收起状态未确认，点击可尝试恢复窗口"
             revealPreparedOverlay(overlay)
         }
-        quietNotice("收起状态未确认，已保留恢复入口", log: "shade: observation unknown id=\(id); recovery retained")
+        quietNotice(WSL10n.text("notice.foldGuard.unconfirmed", zh: "收起状态未确认，已保留恢复入口"), kind: .problem, log: "shade: observation unknown id=\(id); recovery retained")
     }
 
     /// AX observers are installed on CFRunLoopGetMain. The C callback verifies that

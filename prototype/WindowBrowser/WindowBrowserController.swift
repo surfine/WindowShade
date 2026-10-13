@@ -594,7 +594,7 @@ final class WindowBrowserController: NSObject {
         dispatchPrecondition(condition: .onQueue(.main))
         guard !dockEntryUnavailable else { return }
         dockEntryUnavailable = true
-        owner?.quietNotice("Dock 悬停入口暂不可用",
+        owner?.quietNotice(WSL10n.text("notice.browser.hoverUnavailable", zh: "Dock 悬停入口暂不可用"), kind: .problem,
                            log: "window-browser: dock entry unavailable reason=\(reason)")
     }
 
@@ -924,18 +924,18 @@ final class WindowBrowserController: NSObject {
         dispatchPrecondition(condition: .onQueue(.main))
         markInputArrival("keyboard")
         guard WindowBrowserSettings.keyboardPanelEnabled else {
-            owner?.quietNotice("窗口浏览已在设置里关闭",
+            owner?.quietNotice(WSL10n.text("notice.browser.disabled", zh: "窗口浏览已在设置里关闭"), kind: .info,
                                log: "window-browser: keyboard panel disabled in settings")
             return false
         }
         guard !environmentSuspended, !EffectSecurityBoundary.isLocked else {
-            owner?.quietNotice("现在打不开窗口面板",
+            owner?.quietNotice(WSL10n.text("notice.browser.cannotOpen", zh: "现在打不开窗口面板"), kind: .problem,
                                log: "window-browser: panel refused (locked or suspended)")
             return false
         }
         guard hasAccessibilityPermission() else {
             owner?.showPermissionOnboardingIfNeeded(force: true)
-            owner?.quietNotice("需要权限", log: "window-browser: keyboard panel needs accessibility")
+            owner?.quietNotice(WSL10n.text("notice.browser.needsPermission", zh: "需要权限"), kind: .needsPermission, log: "window-browser: keyboard panel needs accessibility")
             return false
         }
         // 已经打开键盘面板时不再叠一个：把它带到前台并聚焦搜索框。
@@ -1130,7 +1130,7 @@ final class WindowBrowserController: NSObject {
         }
         if placement.previewedPlan != nil {
             placement.cancelPreview()
-            statusOverride = "已取消排布预览"
+            statusOverride = WSL10n.text("browser.status.previewCancelled", zh: "已取消排布预览")
             refreshPanel()
             return
         }
@@ -1390,10 +1390,10 @@ final class WindowBrowserController: NSObject {
         if let statusOverride {
             status = statusOverride
         } else if session.mode == .dock, catalog.isRefreshPending(pid: session.app?.pid ?? 0) {
-            status = "正在刷新窗口…"
+            status = WSL10n.text("browser.status.refreshing", zh: "正在刷新窗口…")
         } else if !hasScreenRecordingPermission() {
             // 缺权限只在页脚说一次（旁边是“打开设置”入口），卡片里只写短原因。
-            status = "没有屏幕录制权限，只显示图标与标题"
+            status = WSL10n.text("browser.status.noRecording", zh: "没有屏幕录制权限，只显示图标与标题")
         } else {
             status = ""
         }
@@ -1494,7 +1494,7 @@ final class WindowBrowserController: NSObject {
             case .cachedFoldSnapshot:
                 cancelThumbnail(for: record.key)
                 contentView?.applyThumbnail(foldedImage, for: record.key,
-                                            note: "上次的画面")
+                                            note: WSL10n.text("browser.status.lastPicture", zh: "上次的画面"))
             case .applicationIcon:
                 cancelThumbnail(for: record.key)
                 // 折叠/最小化窗口优先展示“已保存的最后画面”，明确标为快照；没有才用图标。
@@ -1502,19 +1502,19 @@ final class WindowBrowserController: NSObject {
                     windowKey: record.key,
                     purpose: isSelected ? .selectedLarge : .card)
                     ?? thumbnails.snapshotImage(windowKey: record.key, purpose: .card) {
-                    contentView?.applyThumbnail(snapshot, for: record.key, note: "上次的画面")
+                    contentView?.applyThumbnail(snapshot, for: record.key, note: WSL10n.text("browser.status.lastPicture", zh: "上次的画面"))
                     break
                 }
                 let note: String
                 if record.isMinimized {
-                    note = "窗口已最小化，没有画面"
+                    note = WSL10n.text("browser.status.minimizedNoPicture", zh: "窗口已最小化，没有画面")
                 } else if record.shadeState == .folded {
-                    note = "没有可用的旧画面"
+                    note = WSL10n.text("browser.note.noOldPicture", zh: "没有可用的旧画面")
                 } else if !hasScreenRecording {
                     // 页脚已统一说明缺权限并给出设置入口，卡片里不再逐张重复。
                     note = ""
                 } else {
-                    note = "画面暂不可用"
+                    note = WSL10n.text("browser.note.pictureUnavailable", zh: "画面暂不可用")
                 }
                 contentView?.applyThumbnail(nil, for: record.key, note: note)
             case .pinnedMirror, .liveStream:
@@ -1556,11 +1556,11 @@ final class WindowBrowserController: NSObject {
                     self.mark("first-new-screenshot")
                 }
                 self?.contentView?.applyThumbnail(image, for: key,
-                                                  note: "窗口缩略图")
+                                                  note: WSL10n.text("browser.note.thumbnail", zh: "窗口缩略图"))
             },
             onFailure: { [weak self] _ in
                 self?.contentView?.applyThumbnail(nil, for: key,
-                                                  note: "画面暂不可用")
+                                                  note: WSL10n.text("browser.note.pictureUnavailable", zh: "画面暂不可用"))
             },
             onFinish: { [weak self] in
                 guard let self, let current = box.value else { return }
@@ -1743,7 +1743,7 @@ final class WindowBrowserController: NSObject {
     /// 实时预览不可用时在页脚说明原因：界面已经回退到快照或图标。
     private func showLivePreviewFallback() {
         guard let selected = listState.selection, record(for: selected) != nil else { return }
-        statusOverride = "实时画面不可用，改用上次的画面"
+        statusOverride = WSL10n.text("browser.status.liveUnavailable", zh: "实时画面不可用，改用上次的画面")
         refreshPanel()
     }
 
@@ -1815,7 +1815,7 @@ final class WindowBrowserController: NSObject {
                 guard let self else { return }
                 guard ready else {
                     self.handleImmediate(
-                        outcome: .failed(reason: "没能确认临时预览已停止，没有收起窗口"),
+                        outcome: .failed(reason: WSL10n.text("browser.reason.previewStillRunning", zh: "没能确认临时预览已停止，没有收起窗口")),
                         action: action, key: key)
                     return
                 }
@@ -1939,7 +1939,7 @@ final class WindowBrowserController: NSObject {
         panel.collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary,
                                    .moveToActiveSpace]
         panel.isExcludedFromWindowsMenu = true
-        panel.title = "窗口大图预览"
+        panel.title = WSL10n.text("browser.panel.previewTitle", zh: "窗口大图预览")
         panel.tabbingMode = .disallowed
         let view = WindowBrowserQuickLookView(frame: NSRect(origin: .zero, size: frame.size))
         view.update(record: record, image: image, icon: icon, message: message, params: params)
@@ -2002,11 +2002,14 @@ final class WindowBrowserController: NSObject {
                 thumbnails.invalidate(windowKey: key)
             }
             if case .permissionRequired(let kind) = outcome {
-                owner?.quietNotice(kind == .accessibility ? "需要辅助功能权限" : "需要屏幕录制权限",
+                owner?.quietNotice(kind == .accessibility
+                                       ? WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限")
+                                       : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限"),
+                                   kind: .needsPermission,
                                    log: "window-browser: permission required kind=\(kind.rawValue)")
             }
             if case .failed(let reason) = outcome {
-                owner?.quietNotice("操作未完成", log: "window-browser: \(action.rawValue) failed \(reason)")
+                owner?.quietNotice(WSL10n.text("notice.browser.actionIncomplete", zh: "操作未完成"), kind: .problem, log: "window-browser: \(action.rawValue) failed \(reason)")
             }
             if case .unsupported(let reason) = outcome, action == .newWindow {
                 owner?.quietNotice(reason, log: "window-browser: new window unsupported \(reason)")
@@ -2079,7 +2082,7 @@ final class WindowBrowserController: NSObject {
     }
 
     private func placementMenuItem(for key: WindowKey) -> NSMenuItem {
-        let parent = NSMenuItem(title: "排布", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: WSL10n.text("browser.menu.arrange", zh: "排布"), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         submenu.autoenablesItems = false
         let encoded = encodeKey(key)
@@ -2097,7 +2100,7 @@ final class WindowBrowserController: NSObject {
             submenu.addItem(item)
         }
         submenu.addItem(.separator())
-        let previewParent = NSMenuItem(title: "预览", action: nil, keyEquivalent: "")
+        let previewParent = NSMenuItem(title: WSL10n.text("browser.menu.preview", zh: "预览"), action: nil, keyEquivalent: "")
         let previewMenu = NSMenu()
         previewMenu.autoenablesItems = false
         for action in WindowPlacementAction.placeable {
@@ -2111,7 +2114,7 @@ final class WindowBrowserController: NSObject {
         previewParent.submenu = previewMenu
         submenu.addItem(previewParent)
         submenu.addItem(.separator())
-        let undo = NSMenuItem(title: "撤销上次排布",
+        let undo = NSMenuItem(title: WSL10n.text("browser.menu.undoArrange", zh: "撤销上次排布"),
                               action: #selector(placementUndo(_:)),
                               keyEquivalent: "")
         undo.target = self
@@ -2140,11 +2143,11 @@ final class WindowBrowserController: NSObject {
     @objc private func placementPreview(_ sender: NSMenuItem) {
         guard let payload = placementPayload(sender) else { return }
         guard let plan = placementPlan(for: payload.key, action: payload.action) else {
-            reportPlacement(.unsupported(reason: "没有可用的排布目标"), key: payload.key)
+            reportPlacement(.unsupported(reason: WSL10n.text("browser.reason.noArrangeTarget", zh: "没有可用的排布目标")), key: payload.key)
             return
         }
         let token = placement.preview(plan)
-        let previewStatus = "预览：\(payload.action.title)（不移动窗口）"
+        let previewStatus = WSL10n.text("browser.status.preview", zh: "预览：%@（不移动窗口）", payload.action.title)
         statusOverride = previewStatus
         refreshPanel()
         // 预览自动消失，不会留下常驻装饰；取消预览也不会改变真实窗口。
@@ -2189,7 +2192,7 @@ final class WindowBrowserController: NSObject {
                 case .completed:
                     self.performPlacement(action: action, key: key, on: screen, then: then)
                 default:
-                    let failed = WindowPlacementOutcome.failed(reason: "没能确认窗口已展开，没有排布")
+                    let failed = WindowPlacementOutcome.failed(reason: WSL10n.text("browser.reason.unrollUnconfirmedNoArrange", zh: "没能确认窗口已展开，没有排布"))
                     self.reportPlacement(failed, key: key)
                     then?(failed)
                 }
@@ -2197,7 +2200,7 @@ final class WindowBrowserController: NSObject {
             return
         }
         if record.shadeState == .restoring {
-            let refused = WindowPlacementOutcome.refused(reason: "窗口正在恢复，稍后再试")
+            let refused = WindowPlacementOutcome.refused(reason: WSL10n.text("browser.reason.restoring", zh: "窗口正在恢复，稍后再试"))
             reportPlacement(refused, key: key)
             then?(refused)
             return
@@ -2209,7 +2212,7 @@ final class WindowBrowserController: NSObject {
                                   on screen: NSScreen? = nil,
                                   then: ((WindowPlacementOutcome) -> Void)? = nil) {
         guard let plan = placementPlan(for: key, action: action, on: screen) else {
-            let unsupported = WindowPlacementOutcome.unsupported(reason: "没有可用的排布目标")
+            let unsupported = WindowPlacementOutcome.unsupported(reason: WSL10n.text("browser.reason.noArrangeTarget", zh: "没有可用的排布目标"))
             reportPlacement(unsupported, key: key)
             then?(unsupported)
             return
@@ -2253,23 +2256,23 @@ final class WindowBrowserController: NSObject {
         dispatchPrecondition(condition: .onQueue(.main))
         switch outcome {
         case .applied(let record):
-            statusOverride = "已\(record.action.title)排布，可撤销"
+            statusOverride = WSL10n.text("browser.status.arranged", zh: "已%@排布，可撤销", record.action.title)
             MainActor.assumeIsolated {
                 appDelegate?.gestures.recordPlacement(windowID: key.originalWindowID, pid: key.application.pid,
                                                       action: record.action, before: record.frameBeforeAX,
                                                       after: record.frameAfterAX)
             }
         case .undone:
-            statusOverride = "已撤销上次排布"
+            statusOverride = WSL10n.text("browser.status.arrangeUndone", zh: "已撤销上次排布")
         case .unsupported(let reason):
             statusOverride = reason
         case .refused(let reason):
             statusOverride = reason
         case .failed(let reason):
-            statusOverride = "排布未完成：\(reason)"
-            owner?.quietNotice("排布未完成", log: "window-browser: placement failed \(reason)")
+            statusOverride = WSL10n.text("notice.browser.arrangeFailed", zh: "排布未完成：%@", reason)
+            owner?.quietNotice(WSL10n.text("notice.browser.arrangeIncomplete", zh: "排布未完成"), kind: .problem, log: "window-browser: placement failed \(reason)")
         case .uncertain(let reason):
-            statusOverride = "排布结果无法确认：\(reason)"
+            statusOverride = WSL10n.text("notice.browser.arrangeUnconfirmed", zh: "排布结果无法确认：%@", reason)
         }
         wlog("window-browser: placement outcome=\(outcome) id=\(key.originalWindowID)")
         refreshPanel()
@@ -2405,7 +2408,7 @@ final class WindowBrowserController: NSObject {
             prepareForDrop(key, unfoldFolded: false) { [weak self] ready in
                 guard let self else { return }
                 guard ready else {
-                    self.owner?.quietNotice("没能把窗口放过去", log: "window-browser: drop prepare failed id=\(id)")
+                    self.owner?.quietNotice(WSL10n.text("notice.browser.cannotPlace", zh: "没能把窗口放过去"), kind: .problem, log: "window-browser: drop prepare failed id=\(id)")
                     return
                 }
                 self.applyPlacement(action: action, key: key, on: screen) { [weak self] outcome in
@@ -2480,13 +2483,13 @@ final class WindowBrowserController: NSObject {
         prepareForDrop(key, unfoldFolded: true) { [weak self] ready in
             guard let self else { return }
             guard ready else {
-                self.owner?.quietNotice("没能把窗口放过去", log: "window-browser: slide-over prepare failed id=\(id)")
+                self.owner?.quietNotice(WSL10n.text("notice.browser.cannotPlace", zh: "没能把窗口放过去"), kind: .problem, log: "window-browser: slide-over prepare failed id=\(id)")
                 return
             }
             self.resolveBrowserTarget(key) { [weak self] resolved in
                 guard let self else { return }
                 guard let element = resolved?.element else {
-                    self.owner?.quietNotice("没能确认是哪一扇窗口",
+                    self.owner?.quietNotice(WSL10n.text("notice.browser.cannotIdentify", zh: "没能确认是哪一扇窗口"), kind: .problem,
                                             log: "window-browser: slide-over target unresolved id=\(id)")
                     return
                 }
@@ -2667,7 +2670,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                   completion: @escaping (WindowBrowserTargetValidation) -> Void) {
         DispatchQueue.main.async { [weak self] in
             guard let self else {
-                completion(.unverifiable(reason: "控制器已释放"))
+                completion(.unverifiable(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
                 return
             }
             guard self.catalog.identityAllocator.isCurrent(target) else {
@@ -2685,7 +2688,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
             // AX 核对在专用串行队列执行，主线程不阻塞；校验只需要身份。
             self.resolveBrowserTarget(target) { resolved in
                 guard resolved != nil else {
-                    completion(.unverifiable(reason: "无法按完整身份解析窗口"))
+                    completion(.unverifiable(reason: WSL10n.text("browser.reason.identity", zh: "无法按完整身份解析窗口")))
                     return
                 }
                 completion(.valid)
@@ -2698,7 +2701,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
         let completion: @MainActor (WindowBrowserActionOutcome) -> Void = { reply($0) }
         DispatchQueue.main.async { [weak self] in
             guard let self, let owner = self.owner else {
-                completion(.failed(reason: "控制器已释放"))
+                completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
                 return
             }
             self.resolveBrowserTarget(target, options: .capabilities) { resolved in
@@ -2750,7 +2753,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                  resolved: WindowBrowserResolvedTarget,
                                  completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard let owner else {
-            completion(.failed(reason: "控制器已释放"))
+            completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
             return
         }
         let element = resolved.element
@@ -2763,7 +2766,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
         focusAXWindow(element, pid: pid)
         _ = scheduler.schedule(after: 0.2) { [weak self] in
             guard let self else {
-                completion(.uncertain(reason: "激活后无法确认目标仍然存在"))
+                completion(.uncertain(reason: WSL10n.text("browser.reason.targetGoneAfterActivate", zh: "激活后无法确认目标仍然存在")))
                 return
             }
             self.resolveBrowserTarget(target) { stillThere in
@@ -2803,7 +2806,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
     private func performFold(target: WindowKey, element: AXUIElement,
                              completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard let owner else {
-            completion(.failed(reason: "控制器已释放"))
+            completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
             return
         }
         if let record = record(for: target), record.shadeState == .folded {
@@ -2812,7 +2815,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
         }
         guard owner.windowBrowserBeginFold(key: target, element: element,
                                            completion: { success in
-            completion(success ? .completed : .failed(reason: "窗口没能收起"))
+            completion(success ? .completed : .failed(reason: WSL10n.text("browser.reason.rollUpFailed", zh: "窗口没能收起")))
         }) != nil else {
             completion(.busy)
             return
@@ -2825,7 +2828,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
     private func performUnfold(target: WindowKey,
                                completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard let owner else {
-            completion(.failed(reason: "控制器已释放"))
+            completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
             return
         }
         let id = target.originalWindowID
@@ -2842,12 +2845,12 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
             _ = owner.unshadeReturningElement(id, playSound: true, pinAfterRestore: false)
             catalog.confirmWindowDestroyed(target)
             thumbnails.invalidate(windowKey: target)
-            finish.call(.awaitingUser(reason: "快速查看窗口已重新打开，请重新选择新窗口"))
+            finish.call(.awaitingUser(reason: WSL10n.text("browser.reason.quickLookReopened", zh: "快速查看窗口已重新打开，请重新选择新窗口")))
             return
         }
         let element = owner.unshadeReturningElement(id, playSound: true, pinAfterRestore: true,
                                                     onVerified: { success in
-            finish.call(success ? .completed : .failed(reason: "没能确认窗口已经恢复"))
+            finish.call(success ? .completed : .failed(reason: WSL10n.text("browser.reason.restoreUnconfirmed", zh: "没能确认窗口已经恢复")))
         })
         if element == nil {
             // quickLookClosed 路径会在 onVerified(false) 中给出结果；已经展开的情况
@@ -2859,12 +2862,12 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
     private func performPinPreview(target: WindowKey, element: AXUIElement,
                                    completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard let owner else {
-            completion(.failed(reason: "控制器已释放"))
+            completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
             return
         }
         let id = target.originalWindowID
         if owner.shaded[id]?.hide == .quickLookClosed {
-            completion(.unsupported(reason: "快速查看窗口会重新打开；请在新窗口中重新选择操作"))
+            completion(.unsupported(reason: WSL10n.text("browser.reason.quickLookWillReopen", zh: "快速查看窗口会重新打开；请在新窗口中重新选择操作")))
             return
         }
         if let record = record(for: target), record.shadeState == .folded {
@@ -2874,20 +2877,20 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                           onVerified: { [weak self] success in
                 guard let self else { return }
                 guard success else {
-                    finish.call(.failed(reason: "展开未确认，未启动置顶预览"))
+                    finish.call(.failed(reason: WSL10n.text("browser.reason.pinSkipped", zh: "展开未确认，未启动置顶预览")))
                     return
                 }
                 // 展开后重新按完整身份解析（AX 读取在专用队列），再启动置顶预览。
                 self.resolveBrowserTarget(target) { refreshed in
                     guard let refreshed else {
-                        finish.call(.failed(reason: "展开成功但目标已变化"))
+                        finish.call(.failed(reason: WSL10n.text("browser.reason.pinTargetChanged", zh: "展开成功但目标已变化")))
                         return
                     }
                     self.startPinnedPreview(target: target, element: refreshed.element,
                                             completion: { outcome in
                         // 展开已经成功：置顶失败时如实说明是部分步骤失败，窗口保持展开。
                         if case .failed(let reason) = outcome {
-                            finish.call(.failed(reason: "展开已成功，但置顶预览失败：\(reason)"))
+                            finish.call(.failed(reason: WSL10n.text("browser.reason.pinFailed", zh: "展开已成功，但置顶预览失败：%@", reason)))
                         } else {
                             finish.call(outcome)
                         }
@@ -2930,7 +2933,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
         let element = resolved.element
         axResolverQueue.async { [weak self] in
             guard let self else {
-                DispatchQueue.main.async { completion(.failed(reason: "控制器已释放")) }
+                DispatchQueue.main.async { completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放"))) }
                 return
             }
             self.noteAXCall()
@@ -2938,34 +2941,34 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
             let before = axBoolAttribute(element, axFullScreenAttribute)
             self.noteAXCall()
             guard isAXAttributeSettable(element, axFullScreenAttribute) else {
-                DispatchQueue.main.async { completion(.unsupported(reason: "这个窗口不能全屏")) }
+                DispatchQueue.main.async { completion(.unsupported(reason: WSL10n.text("browser.reason.cannotFillScreen", zh: "这个窗口不能全屏"))) }
                 return
             }
             guard !before else {
-                DispatchQueue.main.async { completion(.unsupported(reason: "它已经是全屏了")) }
+                DispatchQueue.main.async { completion(.unsupported(reason: WSL10n.text("browser.reason.alreadyFullScreen", zh: "它已经是全屏了"))) }
                 return
             }
             let wrote = AXUIElementSetAttributeValue(
                 element, axFullScreenAttribute as CFString, kCFBooleanTrue) == .success
             guard wrote else {
-                DispatchQueue.main.async { completion(.unsupported(reason: "这个窗口不能全屏")) }
+                DispatchQueue.main.async { completion(.unsupported(reason: WSL10n.text("browser.reason.cannotFillScreen", zh: "这个窗口不能全屏"))) }
                 return
             }
             _ = self.scheduler.schedule(after: 0.4) { [weak self] in
                 guard let self else {
-                    completion(.uncertain(reason: "全屏状态没变"))
+                    completion(.uncertain(reason: WSL10n.text("browser.reason.fullScreenUnchanged", zh: "全屏状态没变")))
                     return
                 }
                 self.axResolverQueue.async { [weak self] in
                     guard let self else {
-                        DispatchQueue.main.async { completion(.uncertain(reason: "全屏状态没变")) }
+                        DispatchQueue.main.async { completion(.uncertain(reason: WSL10n.text("browser.reason.fullScreenUnchanged", zh: "全屏状态没变"))) }
                         return
                     }
                     self.noteAXCall()
                     let after = axBoolAttribute(element, axFullScreenAttribute)
                     DispatchQueue.main.async {
                         completion(after != before ? .completed
-                                   : .uncertain(reason: "全屏状态没变"))
+                                   : .uncertain(reason: WSL10n.text("browser.reason.fullScreenUnchanged", zh: "全屏状态没变")))
                     }
                 }
             }
@@ -2980,12 +2983,12 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                   completion: @escaping @MainActor (WindowBrowserActionOutcome) -> Void) {
         let pid = helperParents[target.application.pid]?.pid ?? target.application.pid
         guard NSRunningApplication(processIdentifier: pid)?.isTerminated == false else {
-            completion(.failed(reason: "找不到这个 App"))
+            completion(.failed(reason: WSL10n.text("browser.reason.appNotFound", zh: "找不到这个 App")))
             return
         }
         axResolverQueue.async { [weak self] in
             guard let self else {
-                DispatchQueue.main.async { completion(.failed(reason: "控制器已释放")) }
+                DispatchQueue.main.async { completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放"))) }
                 return
             }
             self.noteAXCall()
@@ -2994,11 +2997,11 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                 wlog("window-browser: new window pid=\(pid) menu=\(resolution.label)")
                 switch resolution {
                 case .disabled:
-                    completion(.unsupported(reason: "这个 App 现在不能新建窗口"))
+                    completion(.unsupported(reason: WSL10n.text("browser.reason.newWindowRefused", zh: "这个 App 现在不能新建窗口")))
                 case .noCommand:
-                    completion(.unsupported(reason: "这个 App 的菜单里没有新建窗口"))
+                    completion(.unsupported(reason: WSL10n.text("browser.reason.noNewWindowItem", zh: "这个 App 的菜单里没有新建窗口")))
                 case .unreadable:
-                    completion(.unsupported(reason: "没能让它新建窗口"))
+                    completion(.unsupported(reason: WSL10n.text("browser.reason.newWindowFailed", zh: "没能让它新建窗口")))
                 case .ready(let item):
                     self.pressNewWindow(item: item, pid: pid, completion: completion)
                 }
@@ -3011,13 +3014,13 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                 completion: @escaping @MainActor (WindowBrowserActionOutcome) -> Void) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard running, NSRunningApplication(processIdentifier: pid)?.isTerminated == false else {
-            completion(.failed(reason: "找不到这个 App"))
+            completion(.failed(reason: WSL10n.text("browser.reason.appNotFound", zh: "找不到这个 App")))
             return
         }
         owner?.activateApp(pid: pid)
         axResolverQueue.async { [weak self] in
             guard let self else {
-                DispatchQueue.main.async { completion(.failed(reason: "控制器已释放")) }
+                DispatchQueue.main.async { completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放"))) }
                 return
             }
             let before = WindowBrowserNewWindow.layerZeroWindowIDs(pid: pid)
@@ -3026,7 +3029,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
             DispatchQueue.main.async {
                 wlog("window-browser: new window pid=\(pid) pressed=\(pressed)")
                 guard pressed else {
-                    completion(.failed(reason: "没能让它新建窗口"))
+                    completion(.failed(reason: WSL10n.text("browser.reason.newWindowFailed", zh: "没能让它新建窗口")))
                     return
                 }
                 self.waitForNewWindow(pid: pid, before: before, attempt: 0, completion: completion)
@@ -3038,7 +3041,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                   completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         _ = scheduler.schedule(after: 0.25) { [weak self] in
             guard let self else {
-                completion(.uncertain(reason: "没看到新窗口出来"))
+                completion(.uncertain(reason: WSL10n.text("browser.reason.newWindowNotVisible", zh: "没看到新窗口出来")))
                 return
             }
             let after = WindowBrowserNewWindow.layerZeroWindowIDs(pid: pid)
@@ -3047,7 +3050,7 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                 return
             }
             guard attempt + 1 < 10 else {
-                completion(.uncertain(reason: "没看到新窗口出来"))
+                completion(.uncertain(reason: WSL10n.text("browser.reason.newWindowNotVisible", zh: "没看到新窗口出来")))
                 return
             }
             self.waitForNewWindow(pid: pid, before: before, attempt: attempt + 1, completion: completion)
@@ -3059,22 +3062,22 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                 completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         let pid = target.application.pid
         guard let app = NSRunningApplication(processIdentifier: pid) else {
-            completion(.failed(reason: "找不到这个 App"))
+            completion(.failed(reason: WSL10n.text("browser.reason.appNotFound", zh: "找不到这个 App")))
             return
         }
         guard app.hide() else {
-            completion(.failed(reason: "系统没有让开它"))
+            completion(.failed(reason: WSL10n.text("browser.reason.appDidNotStepAside", zh: "系统没有让开它")))
             return
         }
         _ = scheduler.schedule(after: 0.4) { [weak self] in
             guard let self else {
-                completion(.failed(reason: "系统没有让开它"))
+                completion(.failed(reason: WSL10n.text("browser.reason.appDidNotStepAside", zh: "系统没有让开它")))
                 return
             }
             let hidden = NSRunningApplication(processIdentifier: pid)?.isHidden ?? false
             let stillOnScreen = self.owner?.windowBrowserIsWindowStillPresent(key: target) ?? false
             completion(hidden || !stillOnScreen ? .completed
-                       : .failed(reason: "系统没有让开它"))
+                       : .failed(reason: WSL10n.text("browser.reason.appDidNotStepAside", zh: "系统没有让开它")))
         }
     }
 
@@ -3083,16 +3086,16 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                 completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         let pid = target.application.pid
         guard let app = NSRunningApplication(processIdentifier: pid) else {
-            completion(.failed(reason: "找不到这个 App"))
+            completion(.failed(reason: WSL10n.text("browser.reason.appNotFound", zh: "找不到这个 App")))
             return
         }
         guard app.terminate() else {
-            completion(.failed(reason: "这个 App 不能退出"))
+            completion(.failed(reason: WSL10n.text("browser.reason.cannotQuit", zh: "这个 App 不能退出")))
             return
         }
         waitForApplicationToTerminate(pid: pid, attempt: 0) { terminated in
             completion(terminated ? .completed
-                       : .awaitingUser(reason: "App 还在，可能有未保存的内容要确认"))
+                       : .awaitingUser(reason: WSL10n.text("browser.reason.awaitingQuitConfirm", zh: "App 还在，可能有未保存的内容要确认")))
         }
     }
 
@@ -3131,17 +3134,17 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
             owner.handleTrafficLight(.close, id)
         } else {
             guard resolved.canClose else {
-                completion(.unsupported(reason: "这个窗口当前不可关闭"))
+                completion(.unsupported(reason: WSL10n.text("browser.reason.cannotClose", zh: "这个窗口当前不可关闭")))
                 return
             }
             guard pressAXButton(resolved.element, kAXCloseButtonAttribute as String) else {
-                completion(.failed(reason: "关闭请求未能投递"))
+                completion(.failed(reason: WSL10n.text("browser.reason.closeNotDelivered", zh: "关闭请求未能投递")))
                 return
             }
         }
         waitForWindowToDisappear(target: target, attempt: 0) { disappeared in
             completion(disappeared ? .completed
-                       : .awaitingUser(reason: "窗口仍在，可能有保存确认框"))
+                       : .awaitingUser(reason: WSL10n.text("browser.reason.saveSheet", zh: "窗口仍在，可能有保存确认框")))
         }
     }
 
@@ -3171,11 +3174,11 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                  resolved: WindowBrowserResolvedTarget,
                                  completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard let owner else {
-            completion(.failed(reason: "控制器已释放"))
+            completion(.failed(reason: WSL10n.text("browser.reason.controllerGone", zh: "控制器已释放")))
             return
         }
         if owner.shaded[target.originalWindowID]?.hide == .quickLookClosed {
-            completion(.unsupported(reason: "快速查看窗口会重新打开；请在新窗口中重新选择操作"))
+            completion(.unsupported(reason: WSL10n.text("browser.reason.quickLookWillReopen", zh: "快速查看窗口会重新打开；请在新窗口中重新选择操作")))
             return
         }
         if resolved.isMinimized {
@@ -3189,12 +3192,12 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                                           pinAfterRestore: true) { [weak self] success in
                 guard let self else { return }
                 guard success else {
-                    finish.call(.failed(reason: "展开未确认，未执行最小化"))
+                    finish.call(.failed(reason: WSL10n.text("browser.reason.minimizeSkipped", zh: "展开未确认，未执行最小化")))
                     return
                 }
                 self.resolveBrowserTarget(target, options: .capabilities) { refreshed in
                     guard let refreshed else {
-                        finish.call(.failed(reason: "展开后目标已变化"))
+                        finish.call(.failed(reason: WSL10n.text("browser.reason.minimizeTargetChanged", zh: "展开后目标已变化")))
                         return
                     }
                     self.minimize(target: target, resolved: refreshed,
@@ -3210,18 +3213,18 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                           resolved: WindowBrowserResolvedTarget,
                           completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard resolved.canMinimize else {
-            completion(.unsupported(reason: "这个窗口不能最小化"))
+            completion(.unsupported(reason: WSL10n.text("browser.reason.cannotMinimize", zh: "这个窗口不能最小化")))
             return
         }
         setAXMinimized(resolved.element, true)
         _ = scheduler.schedule(after: 0.4) { [weak self] in
             guard let self else {
-                completion(.failed(reason: "最小化未生效"))
+                completion(.failed(reason: WSL10n.text("browser.reason.minimizeFailed", zh: "最小化未生效")))
                 return
             }
             self.resolveBrowserTarget(target, options: .capabilities) { refreshed in
                 completion(refreshed?.isMinimized == true
-                           ? .completed : .failed(reason: "最小化未生效"))
+                           ? .completed : .failed(reason: WSL10n.text("browser.reason.minimizeFailed", zh: "最小化未生效")))
             }
         }
     }
@@ -3334,7 +3337,7 @@ final class WindowBrowserThumbnailBackend: @preconcurrency WindowThumbnailBacken
             if let image {
                 completion(.success(image))
             } else {
-                completion(.failure(.captureFailed("单窗截图不可用")))
+                completion(.failure(.captureFailed(WSL10n.text("browser.reason.singleWindowCapture", zh: "单窗截图不可用"))))
             }
         }
     }

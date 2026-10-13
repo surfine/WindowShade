@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/approval-card"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/AgentSessions.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/AgentSessions.swift" \
   "$ROOT/prototype/Core/AuthorizationModels.swift" "$ROOT/prototype/App/AuthorizationCopy.swift" \
   "$ROOT/tests/support/WS2TestSupport.swift" "$ROOT/tests/ApprovalCardTests.swift" \
   -o "$BUILD/approval-card-tests"

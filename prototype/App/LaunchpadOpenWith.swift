@@ -46,17 +46,18 @@ extension LaunchpadView {
         if !pillAtTop, let files = openingFiles {
             // 链接（网址）不是文件：写网站名，亮着的只有能打开网址的 App（浏览器）。
             if files.allSatisfy({ !$0.isFileURL }) {
-                guard files.count == 1 else { return "用哪个 App 打开这 \(files.count) 个链接" }
+                guard files.count == 1 else { return WSL10n.text("launchpad.openWithLinks", zh: "用哪个 App 打开这 %@ 个链接", String(files.count)) }
                 var site = files[0].host ?? files[0].absoluteString
                 if site.count > 28 { site = String(site.prefix(14)) + "…" + String(site.suffix(10)) }
-                return "用哪个 App 打开“\(site)”"
+                return WSL10n.text("launchpad.openWithSite", zh: "用哪个 App 打开“%@”", site)
             }
-            guard files.count == 1 else { return "用哪个 App 打开这 \(files.count) 个文件" }
+            guard files.count == 1 else { return WSL10n.text("launchpad.openWithFiles", zh: "用哪个 App 打开这 %@ 个文件", String(files.count)) }
             var name = files[0].lastPathComponent
             if name.count > 28 { name = String(name.prefix(14)) + "…" + String(name.suffix(10)) }
-            return "用哪个 App 打开“\(name)”"
+            return WSL10n.text("launchpad.openWithName", zh: "用哪个 App 打开“%@”", name)
         }
-        return pillAtTop ? "App 资料库" : "搜索"
+        return pillAtTop ? WSL10n.text("silent.launcher.library", zh: "App 资料库")
+                         : WSL10n.text("silent.launcher.search", zh: "搜索")
     }
 
     /// 停在主屏幕第一页、什么都没打开：这时再按主屏幕键就收起。

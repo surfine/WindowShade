@@ -776,12 +776,12 @@ extension GlanceProbe {
     notch.resetCoachForProbe()
     try await wait("quiet notch", timeout: 8) { !notch.isAlerting }
 
-    owner.quietNotice("没有可以收起的窗口")
+    owner.quietNotice(WSL10n.text("notice.probe.noWindows", zh: "没有可以收起的窗口"), kind: .problem)
     let problem = notch.announcementForProbe
     print("\(problem?.tone == .problem && problem?.title == "没有可以收起的窗口" ? "PASS" : "FAIL") coach: a failure is said on the notch with the problem tone, not in the menu bar (\(problem.map { "\($0.title)" } ?? "nothing"))")
     try await wait("problem gone", timeout: 6) { !notch.isAlerting }
 
-    owner.quietNotice("已带到每张桌面")
+    owner.quietNotice(WSL10n.text("notice.probe.carried", zh: "已带到每张桌面"), kind: .done)
     let done = notch.announcementForProbe
     print("\(done?.tone == .done ? "PASS" : "FAIL") coach: a success is said with a check mark")
     try await wait("done gone", timeout: 6) { !notch.isAlerting }

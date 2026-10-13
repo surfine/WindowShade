@@ -12,7 +12,7 @@ final class CarryStripPanel: NSPanel {
     init(frame: NSRect) {
         super.init(contentRect: frame, styleMask: [.borderless, .nonactivatingPanel],
                    backing: .buffered, defer: false)
-        title = "WindowShade 带到每张桌面"
+        title = WSL10n.text("carry.header", zh: "WindowShade 带到每张桌面")
         level = .floating
         // 每张桌面都在，包括全屏 App 的桌面；不进 ⌘` 的窗口轮换。
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .stationary]
@@ -61,9 +61,9 @@ final class CarryStripView: NSView {
         stopButton.bezelStyle = .regularSquare
         stopButton.isBordered = false
         stopButton.image = NSImage(systemSymbolName: "xmark.circle.fill",
-                                   accessibilityDescription: "不再带到每张桌面")
+                                   accessibilityDescription: WSL10n.text("carry.stop", zh: "不再带到每张桌面"))
         stopButton.contentTintColor = .tertiaryLabelColor
-        stopButton.toolTip = "不再带到每张桌面"
+        stopButton.toolTip = WSL10n.text("carry.stop", zh: "不再带到每张桌面")
         stopButton.target = self
         stopButton.action = #selector(stopPressed)
         addSubview(stopButton)
@@ -72,7 +72,7 @@ final class CarryStripView: NSView {
         layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
         setAccessibilityElement(true)
         setAccessibilityRole(.button)
-        setAccessibilityHelp("停在上面看一眼，单击画面回到这个窗口")
+        setAccessibilityHelp(WSL10n.text("carry.help", zh: "停在上面看一眼，单击画面回到这个窗口"))
     }
 
     required init?(coder: NSCoder) { nil }
@@ -86,7 +86,7 @@ final class CarryStripView: NSView {
     func setTitle(_ title: String) {
         titleLabel.stringValue = title
         toolTip = title
-        setAccessibilityLabel("带到每张桌面：\(title)")
+        setAccessibilityLabel(WSL10n.text("carry.label", zh: "带到每张桌面：%@", title))
     }
 
     override func layout() {
@@ -126,7 +126,7 @@ final class CarryStripView: NSView {
 
 /// 系统菜单入口，外层沿用卷帘条的非激活面板。
 private final class CarryMoreView: NSView {
-    let button = NSButton(title: "更多窗口", target: nil, action: nil)
+    let button = NSButton(title: WSL10n.text("carry.moreWindows", zh: "更多窗口"), target: nil, action: nil)
     var onPress: (() -> Void)?
 
     override init(frame: NSRect) {
@@ -135,20 +135,22 @@ private final class CarryMoreView: NSView {
         button.font = .systemFont(ofSize: 12)
         button.target = self
         button.action = #selector(pressed)
-        button.setAccessibilityLabel("更多窗口")
+        button.setAccessibilityLabel(WSL10n.text("carry.moreWindows", zh: "更多窗口"))
         updateHelp(previewsEnabled: GlanceController.isEnabled)
         addSubview(button)
     }
     required init?(coder: NSCoder) { nil }
     func updateHelp(previewsEnabled: Bool) {
-        let help = previewsEnabled ? "选择一个窗口看一眼，不切换桌面" : "选择一个窗口，显示它的卷帘条"
+        let help = previewsEnabled
+            ? WSL10n.text("carry.moreHelpPreviews", zh: "选择一个窗口看一眼，不切换桌面")
+            : WSL10n.text("carry.moreHelp", zh: "选择一个窗口，显示它的卷帘条")
         button.toolTip = help
         button.setAccessibilityHelp(help)
     }
     override func layout() {
         super.layout()
         button.frame = bounds
-        button.title = bounds.width >= 72 ? "更多窗口" : "•••"
+        button.title = bounds.width >= 72 ? WSL10n.text("carry.moreWindows", zh: "更多窗口") : "•••"
     }
     @objc private func pressed() { onPress?() }
 }
@@ -228,14 +230,14 @@ final class CarryController: GlanceCarrySource {
     /// 菜单与快捷键：当前窗口没带着就带上，带着就放下。
     func toggleCurrentWindow() {
         guard hasAccessibilityPermission() else {
-            owner.quietNotice("需要辅助功能权限", log: "carry: accessibility missing")
+            owner.quietNotice(WSL10n.text("notice.carry.needsAccessibility", zh: "需要辅助功能权限"), kind: .needsPermission, log: "carry: accessibility missing")
             return
         }
         owner.pinnedPreviewController.refreshCurrentTarget(reason: "carry", force: true) {
             [weak self] target, _ in
             guard let self else { return }
             guard let target else {
-                self.owner.quietNotice("没有可以带着的窗口", log: "carry: no focused window")
+                self.owner.quietNotice(WSL10n.text("notice.carry.noWindow", zh: "没有可以带着的窗口"), kind: .problem, log: "carry: no focused window")
                 return
             }
             if self.carried[target.windowID] != nil {
@@ -249,7 +251,7 @@ final class CarryController: GlanceCarrySource {
     func carry(_ win: AXUIElement, id: CGWindowID) {
         guard carried[id] == nil else { return }
         guard owner.shaded[id] == nil else {
-            owner.quietNotice("先展开这个窗口，再带到每张桌面", log: "carry: refused shaded id=\(id)")
+            owner.quietNotice(WSL10n.text("notice.carry.unrollFirst", zh: "先展开这个窗口，再带到每张桌面"), kind: .problem, log: "carry: refused shaded id=\(id)")
             return
         }
         var pid: pid_t = 0
@@ -273,7 +275,7 @@ final class CarryController: GlanceCarrySource {
         refreshVisibility(reason: "carry")
         refreshSnapshot(item)
         ensureTimer()
-        owner.quietNotice("已带到每张桌面", log: "carry: start id=\(id) app=\(appName)")
+        owner.quietNotice(WSL10n.text("notice.carry.done", zh: "已带到每张桌面"), kind: .done, log: "carry: start id=\(id) app=\(appName)")
         owner.rebuildMenu()
     }
 
@@ -337,7 +339,7 @@ final class CarryController: GlanceCarrySource {
         if let frame = plan.moreFrame, !overflowIDs.isEmpty {
             if morePanel == nil {
                 let panel = CarryStripPanel(frame: frame)
-                panel.title = "更多窗口"
+                panel.title = WSL10n.text("carry.moreWindows", zh: "更多窗口")
                 let view = CarryMoreView(frame: NSRect(origin: .zero, size: frame.size))
                 view.onPress = { [weak self] in self?.showOverflowMenu() }
                 panel.contentView = view
@@ -364,7 +366,7 @@ final class CarryController: GlanceCarrySource {
     }
 
     private func makeOverflowMenu(selection: CarryMenuSelection) -> NSMenu {
-        let menu = NSMenu(title: "更多窗口")
+        let menu = NSMenu(title: WSL10n.text("carry.moreWindows", zh: "更多窗口"))
         menu.autoenablesItems = false
         for id in overflowIDs {
             guard let item = carried[id] else { continue }
@@ -373,7 +375,8 @@ final class CarryController: GlanceCarrySource {
             entry.target = selection
             entry.representedObject = NSNumber(value: id)
             entry.image = item.view.appIconForMenu
-            entry.toolTip = GlanceController.isEnabled ? "看一眼" : "显示卷帘条"
+            entry.toolTip = GlanceController.isEnabled ? WSL10n.text("say.preview.glance", zh: "看一眼")
+                                                       : WSL10n.text("carry.showBar", zh: "显示卷帘条")
             menu.addItem(entry)
         }
         return menu
@@ -488,7 +491,7 @@ final class CarryController: GlanceCarrySource {
             cornerRadius: radius,
             source: hasScreenRecordingPermission() ? .stream : .snapshotOnly,
             snapshot: item.snapshot, pid: item.pid, bundleID: item.bundleID,
-            accessibilityTitle: item.title, staleText: "不是实时画面")
+            accessibilityTitle: item.title, staleText: WSL10n.text("notch.staleText", zh: "不是实时画面"))
     }
 
     /// 回到那扇窗：激活它的 App 并把窗口提到前面，系统会切到它所在的桌面。

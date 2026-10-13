@@ -41,13 +41,17 @@ final class LaunchpadTodayPage {
              frame: CGRect(x: clock.minX + 22, y: clock.minY + 44, width: column - 44, height: clockHeight - 56),
              font: min(64, clockHeight * 0.40), weight: .light)
         drawMonth(date, frame: month)
-        items.append(Item(frame: month, title: "打开日历", action: .calendar))
+        items.append(Item(frame: month, title: WSL10n.text("launchpad.openCalendar", zh: "打开日历"), action: .calendar))
         // 右边那一列：小组件标题在上，活动卡片铺开，四个快捷方式压在列底。
         let rightX = clock.maxX + 24
         let toolsHeight: CGFloat = 30
         let toolRow = CGRect(x: rightX, y: month.maxY - toolsHeight, width: column, height: toolsHeight)
-        text("实时活动", frame: CGRect(x: rightX + 4, y: y, width: column - 8, height: 28), font: 20, weight: .semibold)
-        let tools: [(String, NotchActivityAction)] = [("音乐", .enableMusic), ("隔空投送", .airDrop), ("路线", .route), ("语音备忘录", .voiceMemos), ("番茄钟", .focusOpen)]
+        text(WSL10n.text("settings.shade.activities.name", zh: "实时活动"), frame: CGRect(x: rightX + 4, y: y, width: column - 8, height: 28), font: 20, weight: .semibold)
+        let tools: [(String, NotchActivityAction)] = [(WSL10n.text("notch.kind.music", zh: "音乐"), .enableMusic),
+                                                      (WSL10n.text("silent.activity.airdrop", zh: "隔空投送"), .airDrop),
+                                                      (WSL10n.text("silent.activity.route", zh: "路线"), .route),
+                                                      (WSL10n.text("notch.kind.voiceMemos", zh: "语音备忘录"), .voiceMemos),
+                                                      (WSL10n.text("settings.shade.focus.name", zh: "番茄钟"), .focusOpen)]
         for (index, tool) in tools.enumerated() {
             let rect = CGRect(x: toolRow.minX + CGFloat(index) * column / CGFloat(tools.count), y: toolRow.minY, width: column / CGFloat(tools.count) - 4, height: toolsHeight)
             plate(rect, radius: 15)
@@ -91,7 +95,8 @@ final class LaunchpadTodayPage {
         let current = calendar.component(.day, from: date)
         let col = (frame.width - 36) / 7
         let row = (frame.height - 84) / 6
-        let symbols = formatter.veryShortStandaloneWeekdaySymbols ?? ["日", "一", "二", "三", "四", "五", "六"]
+        let symbols = formatter.veryShortStandaloneWeekdaySymbols
+            ?? WSL10n.text("launchpad.weekdays", zh: "日,一,二,三,四,五,六").split(separator: ",").map(String.init)
         for i in 0..<7 {
             let symbol = symbols[(calendar.firstWeekday - 1 + i) % 7]
             text(symbol, frame: CGRect(x: frame.minX + 18 + CGFloat(i) * col, y: frame.minY + 53, width: col, height: 20), font: 12, alpha: 0.6, alignment: .center)

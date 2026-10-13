@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/privacy-pane-tests
 swiftc -swift-version 6 -module-cache-path "$(pwd)/.build/module-cache" \
+  prototype/Core/WSL10n.swift \
   prototype/App/WS2PrivacyData.swift prototype/App/WS2PrivacyModel.swift \
   prototype/Core/DeviceBattery.swift prototype/App/DeviceBatteryCopy.swift prototype/Core/NotchSentence.swift \
   prototype/Support/SecureLogFile.swift prototype/Support/Diagnostics.swift \
