@@ -68,11 +68,11 @@ extension AppDelegate {
         let host = inputController.remoteHostForSettings
         let conductorOn = WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: .standard)
         let (root, stack) = inputPageRoot()
-        stack.addArrangedSubview(inputCaption(WSL10n.text("settings.remote.caption", zh: "没打开时不听遥控器。")))
+        stack.addArrangedSubview(inputCaption(WSL10n.text("settings.remote.caption", zh: "遥控模式没开时，遥控器不起作用。")))
         var rows = [
             inputRow(name: WSL10n.setting("settings.remote.siri.name", zh: "Siri 遥控器"),
-                     subtitle: WSL10n.setting("settings.remote.siri.sub", zh: "没在听，连没连上未知"),
-                     detail: WSL10n.setting("settings.remote.siri.detail", zh: "没打开遥控模式时不听，所以不知道有没有连上。"),
+                     subtitle: WSL10n.setting("settings.remote.siri.sub", zh: "遥控模式没开，连接状态未知。"),
+                     detail: WSL10n.setting("settings.remote.siri.detail", zh: "遥控模式没开时不查找遥控器，所以看不到有没有配对。"),
                      symbol: "appletvremote.gen4", control: inputStatus(WSL10n.text("settings.remote.status.unknown", zh: "未知"))),
             inputRow(name: WSL10n.setting("settings.remote.mode.name", zh: "遥控模式"),
                      subtitle: remoteSubtitle(on: prefs.remoteMode, host: host),

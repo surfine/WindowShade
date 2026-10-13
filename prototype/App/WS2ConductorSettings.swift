@@ -49,18 +49,21 @@ extension AppDelegate {
             stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
         ])
         let store = UserDefaults.standard
-        let intro = WSL10n.text("conductor.settings.intro", zh: "选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。")
-        stack.addArrangedSubview(WS2SettingsCopy.content(name: nil, subtitle: intro, symbol: nil).view)
+        // 页头走 SettingsText 重载：en 用 shortEn 短句（String 重载会吃 16 字硬截）。
+        stack.addArrangedSubview(WS2SettingsCopy.content(
+            name: nil,
+            subtitle: WSL10n.setting("conductor.settings.intro", zh: "选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。"),
+            symbol: nil).view)
         let on = WS2InputPreferences.load(from: store).remoteMode && WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store)
         let sound = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: store),
                                     action: #selector(prefConductorSound(_:)), name: WSL10n.text("conductor.settings.sound", zh: "提示音"))
         var rows = [
             conductorRow(name: WSL10n.setting("conductor.settings.mode", zh: "指挥模式"),
-                         subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "在遥控模式下面打开"), symbol: nil,
+                         subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "先在遥控模式里打开"), symbol: nil,
                          control: conductorStatus(on ? WSL10n.text("conductor.settings.on", zh: "开着")
                                                       : WSL10n.text("conductor.settings.off", zh: "关着"))),
             conductorRow(name: WSL10n.setting("conductor.settings.sound", zh: "提示音"),
-                         subtitle: WSL10n.setting("conductor.settings.sound.sub", zh: "每一拍轻敲一声，认没认出各有各的声"), symbol: nil,
+                         subtitle: WSL10n.setting("conductor.settings.sound.sub", zh: "每一拍轻敲一声。"), symbol: nil,
                          control: sound),
         ]
         let coding = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: store),
@@ -87,7 +90,7 @@ extension AppDelegate {
             field.setAccessibilityLabel(WSL10n.text("conductor.settings.modelSlot", zh: "模型位置 %@", String(index)))
             field.widthAnchor.constraint(equalToConstant: 180).isActive = true
             rows.append(conductorRow(name: WSL10n.setting("conductor.settings.modelSlot", zh: "模型位置 %@", String(index)),
-                                     subtitle: WSL10n.setting("conductor.settings.localOnly", zh: "只存在这里"),
+                                     subtitle: WSL10n.setting("conductor.settings.localOnly", zh: "只留在这台 Mac 上"),
                                      symbol: nil, control: field))
         }
         let card = makeUnifiedSettingsCard(rows)
@@ -140,14 +143,14 @@ extension AppDelegate {
         let row = NSStackView(views: [labels, control])
         row.orientation = .horizontal
         row.alignment = .centerY
-        row.spacing = 12
+        row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
-        // 与 Preferences 的行同一个钉法：内容列撑满到控件左端，控件贴行右端。
+        // 与其它页的行同一行高下限；labels 钉满到控件左端，控件贴行右端。
         NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
-            labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-            control.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+            labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
     }
 }
