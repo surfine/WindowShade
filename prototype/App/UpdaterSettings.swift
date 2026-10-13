@@ -105,6 +105,7 @@ extension UpdaterController {
         let built = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: name.flatMap { WS2SettingsCopy.symbol(for: $0) })
         let labels = built.view
         let detail = built.detail
+        WS2SettingsCopy.pinInfoTrailing(labels)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let row = NSStackView(views: [labels, control])
