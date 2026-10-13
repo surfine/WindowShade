@@ -14,7 +14,7 @@ final class DuoController: NSObject {
   /// 传感器到哪一步了（第31批）：菜单和状态行据此说话，不再按中文句子判。
   enum SensorPhase: Equatable { case notStarted, connected, retrying, paused, captureFailed }
   private(set) var sensorPhase: SensorPhase = .notStarted
-  private(set) var sensorStatus = WSL10n.text("duo.sensor.notStarted", zh: "传感器未启动")
+  private(set) var sensorStatus = WSL10n.text("duo.sensor.notStarted", zh: "传感器还没启动")
   private static func phase(of status: LidAngleSource.Status) -> SensorPhase {
     switch status {
     case .connected: return .connected

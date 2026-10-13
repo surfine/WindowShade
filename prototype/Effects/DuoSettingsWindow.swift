@@ -570,14 +570,22 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     control.setContentHuggingPriority(.required, for: .horizontal)
     control.setContentCompressionResistancePriority(.required, for: .horizontal)
     let row = NSStackView(views: [labels, control])
+    // 与 Preferences 的统一行同一套参数：行高下限 48、文字上下各留 8pt，
+    // 否则卡片 inner.spacing=0 时分隔线贴着文字（Effects 页实测）。
+    labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     NSLayoutConstraint.activate([
       labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
       labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
       control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+      labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+      labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
     ])
     row.orientation = .horizontal
     row.alignment = .centerY
     row.spacing = 14
+    row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
 
@@ -759,11 +767,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.addArrangedSubview(automaticSection)
     stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
-      makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),
-                    control: desktop, action: #selector(changed)),
+      makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),                    control: desktop, action: #selector(changed)),
       makeToggleRow(name: WSL10n.setting("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.setting("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
                     control: windows, action: #selector(changed)),
-      makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "临时停用，不改动上面的开关。"), button: pause),
+      makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "所有效果先停一停，开关保持原样。"), button: pause),
     ])
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -889,11 +896,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let actionCard = makeSettingsCard([
       makeActionRow(
         title: WSL10n.setting("settings.advanced.reset.name", zh: "恢复动态效果默认值"),
-        subtitle: WSL10n.setting("settings.advanced.reset.sub", zh: "把桌面、窗口和样式都恢复默认。"),
+        subtitle: WSL10n.setting("settings.advanced.reset.sub", zh: "把效果页的开关都恢复默认。"),
         button: reset),
       makeActionRow(
         title: WSL10n.setting("settings.advanced.diagnostics.name", zh: "诊断日志"),
-        subtitle: WSL10n.setting("settings.advanced.diagnostics.sub", zh: "打开运行记录排查问题。"),
+        subtitle: WSL10n.setting("settings.advanced.diagnostics.sub", zh: "打开诊断日志排查问题。"),
         button: diagnostics),
     ])
     stack.addArrangedSubview(actionCard)
@@ -1155,8 +1162,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       ? WSL10n.text("duo.status.reduceMotion", zh: " · 减少动态效果已暂停动画") : ""
     let paused = controller.pausedByUser ? WSL10n.text("duo.status.paused", zh: " · 效果已暂停") : ""
     status.stringValue = captureMessage
-      ?? WSL10n.text("duo.status.summary", zh: "设置合盖桌面效果与窗口收起动画。%@ · 当前 %@%@%@%@",
-                     controller.sensorStatus, reading, permission, reduced, paused)
+      ?? WSL10n.text("duo.status.summary", zh: "设置合盖桌面效果与窗口收起动画。%@ · 当前 %@%@%@%@",                     controller.sensorStatus, reading, permission, reduced, paused)
   }
 
   func windowWillClose(_ notification: Notification) {

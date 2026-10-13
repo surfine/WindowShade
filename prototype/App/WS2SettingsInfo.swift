@@ -96,6 +96,11 @@ import Cocoa
         "arrow.counterclockwise", "menubar.rectangle",
         "dock.rectangle", "arrow.2.squarepath", "pause", "arrow.left.arrow.right",
         "eye.slash", "square.grid.2x2",
+        "macwindow.on.rectangle", "paintbrush", "livephoto", "record.circle",
+        "bell", "waveform", "hand.raised", "tray", "clock", "arrow.left.and.right",
+        "square.on.square", "doc.on.doc", "arrow.down.circle", "plus.magnifyingglass",
+        "minus.magnifyingglass", "display", "rectangle.bottomthird.inset.filled",
+        "arrow.uturn.backward", "lock", "slider.horizontal.3",
     ]
 
     nonisolated static func tableSymbol(_ name: String?) -> String? {
@@ -164,6 +169,8 @@ import Cocoa
         "settings.advanced.diagnostics.sub": "Open the run log to find problems",
         "settings.advanced.reduceMotionHint": "Turn on Reduce motion in System Settings",
         "settings.language.sub": "Takes effect immediately",
+        "conductor.settings.intro": "Sessions, model slots and drafts",
+        "conductor.settings.hookConfig.sub": "Paste it into Claude Code's settings",
     ]
 
     /// 只返回 §4.11 对得上的符号。对不上返回 nil，不另造一个。
@@ -229,8 +236,7 @@ import Cocoa
             ("在菜单里", "menubar.rectangle"),
             ("键盘", "keyboard"),
             // 第35批补（同批离屏核对发现的缺口）：
-            ("Dock 悬停", "dock.rectangle"),
-            ("再点一下 Dock", "dock.rectangle"),
+            ("Dock 悬停", "dock.rectangle"),            ("再点一下 Dock", "dock.rectangle"),
             ("两指上下滑", "dock.rectangle"),
             ("Dock 留在", "dock.rectangle"),
             ("调度中心里按", "rectangle.expand.vertical"),
@@ -244,6 +250,47 @@ import Cocoa
             ("面板背景", "circle.lefthalf.filled"),
             ("默认显示方式", "square.grid.2x2"),
             ("排布与撤销", "rectangle.grid.1x2"),
+            // 第36批补（图标缺口清零）：
+            ("预览对象", "macwindow.on.rectangle"),
+            ("预览样式", "paintbrush"),
+            ("实时预览", "livephoto"),
+            ("屏幕录制权限", "record.circle"),
+            ("恢复动态效果默认值", "arrow.counterclockwise"),
+            ("标题栏手势", "hand.tap"),
+            ("有变化时提醒", "bell"),
+            ("回来时说一下", "bell"),
+            ("实时活动", "waveform"),
+            ("跟着声音跳", "waveform"),
+            ("正在播放", "music.note"),
+            ("计时器到时间响一声", "timer"),
+            ("开始计时器", "timer"),
+            ("浏览器下载", "arrow.down.circle"),
+            ("合成一排", "rectangle.split.2x1"),
+            ("悬停不误触", "hand.raised"),
+            ("文件架", "tray"),
+            ("之前常用", "clock"),
+            ("窗口之间留缝", "arrow.left.and.right"),
+            ("浮在其他窗口上面", "square.on.square"),
+            ("收起和展开时播放音效", "speaker.wave.2"),
+            ("收起音效", "speaker.wave.2"),
+            ("展开音效", "speaker.wave.2"),
+            ("拷贝进度", "doc.on.doc"),
+            ("设备的电量", "battery.75percent"),
+            ("方言", "character.bubble"),
+            ("整理卷帘条", "rectangle.compress.vertical"),
+            ("变大一级", "plus.magnifyingglass"),
+            ("变小一级", "minus.magnifyingglass"),
+            ("移到另一块屏幕", "display"),
+            ("移到上一块屏幕", "display"),
+            ("上半屏", "rectangle.topthird.inset.filled"),
+            ("下半屏", "rectangle.bottomthird.inset.filled"),
+            ("撤销上次排布", "arrow.uturn.backward"),
+            ("并进左", "rectangle.grid.1x2"),
+            ("并进右", "rectangle.grid.1x2"),
+            ("离开就锁", "lock"),
+            ("随身设备", "iphone"),
+            ("检查频率", "clock"),
+            ("当前版本", "info.circle"),
         ]
         for (needle, symbol) in pairs where name.contains(needle) {
             return symbol
