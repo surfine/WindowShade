@@ -110,7 +110,7 @@ lines = [
     "}",
     "",
     "enum WS2PrivacyData {",
-    "    static let groups: [WS2PrivacyGroup] = [",
+    "    static var groups: [WS2PrivacyGroup] { [",
 ]
 for group in data["groups"]:
     gen = group.get("en", {})
@@ -120,11 +120,11 @@ for group in data["groups"]:
                  + localized("group." + group["title"], "subtitle", group["subtitle"], gen.get("subtitle"))
                  + '),')
 lines += [
-    "    ]",
+    "    ] }",
     "",
     "    static let groupOrder: [String] = [" + ", ".join(swift(g) for g in declared) + "]",
     "",
-    "    static let rows: [WS2PrivacyRow] = [",
+    "    static var rows: [WS2PrivacyRow] { [",
 ]
 for signal in data["signals"]:
     lines.append("        WS2PrivacyRow(")
@@ -146,7 +146,7 @@ for signal in data["signals"]:
     if signal.get("appears_with"):
         lines.append(f"            appearsWith: {swift(signal['appears_with'])},")
     lines.append("        ),")
-lines += ["    ]", "}", ""]
+lines += ["    ] }", "}", ""]
 
 pathlib.Path(a.out).write_text("\n".join(lines))
 current = sum(1 for s in data["signals"] if s["status"] == "current")

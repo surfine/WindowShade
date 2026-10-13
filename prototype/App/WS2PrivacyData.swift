@@ -36,16 +36,16 @@ struct WS2PrivacyGroup: Sendable {
 }
 
 enum WS2PrivacyData {
-    static let groups: [WS2PrivacyGroup] = [
+    static var groups: [WS2PrivacyGroup] { [
         WS2PrivacyGroup(title: WSL10n.text("privacy.group.不用问就能读的.title", zh: "不用问就能读的"), subtitle: WSL10n.text("privacy.group.不用问就能读的.subtitle", zh: "系统给每个 App 都开着")),
         WS2PrivacyGroup(title: WSL10n.text("privacy.group.你同意后才读的.title", zh: "你同意后才读的"), subtitle: WSL10n.text("privacy.group.你同意后才读的.subtitle", zh: "系统会先问你")),
         WS2PrivacyGroup(title: WSL10n.text("privacy.group.用了系统没公开的方法的.title", zh: "用了系统没公开的方法的"), subtitle: WSL10n.text("privacy.group.用了系统没公开的方法的.subtitle", zh: "Apple 没写进文档，系统更新后可能失效")),
         WS2PrivacyGroup(title: WSL10n.text("privacy.group.去了哪里.title", zh: "去了哪里"), subtitle: ""),
-    ]
+    ] }
 
     static let groupOrder: [String] = ["不用问就能读的", "你同意后才读的", "用了系统没公开的方法的", "去了哪里"]
 
-    static let rows: [WS2PrivacyRow] = [
+    static var rows: [WS2PrivacyRow] { [
         WS2PrivacyRow(
             id: "screen-shape",
             label: WSL10n.text("privacy.screen-shape.label", zh: "屏幕和刘海的形状"),
@@ -1043,5 +1043,5 @@ enum WS2PrivacyData {
             interfaces: ["trashItem("],
             subtitle: WSL10n.text("privacy.app-uninstall.subtitle", zh: "删 App 连文件进废纸篓"),
         ),
-    ]
+    ] }
 }

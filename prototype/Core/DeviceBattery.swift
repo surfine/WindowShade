@@ -276,7 +276,7 @@ struct BatterySourceNote: Equatable, Sendable {
 }
 
 enum BatterySources {
-  static let notes: [BatterySourceNote] = [
+  static var notes: [BatterySourceNote] { [
     BatterySourceNote(id: "hid.apple-peripheral", fact: WSL10n.text("battery.fact.peripheral", zh: "外设电量百分数"),
                       availability: .wired(method: "IOKit AppleDeviceManagementHIDEventService BatteryPercent", cadence: "120s")),
     BatterySourceNote(id: "power.internal", fact: WSL10n.text("battery.fact.mac", zh: "这台 Mac 的电池百分数"),
@@ -288,7 +288,7 @@ enum BatterySources {
     BatterySourceNote(id: "tablet", fact: WSL10n.text("battery.fact.tablet", zh: "iPad 电量"), availability: .unproven),
     BatterySourceNote(id: "watch", fact: WSL10n.text("battery.fact.watch", zh: "Apple Watch 电量"), availability: .unproven),
     BatterySourceNote(id: "vision", fact: WSL10n.text("battery.fact.vision", zh: "Vision Pro 电量"), availability: .unproven),
-  ]
+  ] }
 
   /// 充电盒只用自己的读数。左右耳再完整也不拿来填盒子。
   static func chargingCasePercent(left: Int?, right: Int?, read: Int?) -> Int? {

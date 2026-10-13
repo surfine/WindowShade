@@ -3,7 +3,7 @@ import Cocoa
 /// 打开「离开就锁」之前的那一页：会读什么、什么时候可能锁错、怎么取消、只锁不解锁。
 /// 按「打开」才打开；按「先不开」、按 Esc 或关掉设置窗口都不打开。每次打开前都弹，不记“看过了”。
 @MainActor enum PresenceLockRiskSheet {
-    static let title = WSL10n.text("presence.risk.title", zh: "离开就锁会这样做")
+    static var title: String { WSL10n.text("presence.risk.title", zh: "离开就锁会这样做") }
     /// 每行一个符号加一句（copy-guide 规则 7），一行一件事。
     static let rows: [(symbol: String, text: String)] = [
         ("iphone", WSL10n.text("presence.risk.row.phone", zh: "看你的手机连不连得上、有没有回应")),
