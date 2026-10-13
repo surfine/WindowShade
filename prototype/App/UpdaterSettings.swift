@@ -91,10 +91,10 @@ extension UpdaterController {
 
     /// 返回这一行和它的说明文字（结果写在说明里）。
     private static func row(name: String?, subtitle: String?, control: NSControl, leading: Bool = false) -> (NSView, NSTextField?) {
-        control.sizeToFit()
-        control.setContentHuggingPriority(.required, for: .horizontal)
-        control.setContentCompressionResistancePriority(.required, for: .horizontal)
         if leading {
+            control.sizeToFit()
+            control.setContentHuggingPriority(.required, for: .horizontal)
+            control.setContentCompressionResistancePriority(.required, for: .horizontal)
             let row = NSStackView(views: [control])
             row.orientation = .horizontal
             row.alignment = .centerY
@@ -106,19 +106,11 @@ extension UpdaterController {
         let labels = built.view
         let detail = built.detail
         WS2SettingsCopy.pinInfoTrailing(labels)
-        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let row = NSStackView(views: [labels, control])
+        let row = WS2SettingsRow(content: labels, control: control)
         NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-            control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
             labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return (row, detail)

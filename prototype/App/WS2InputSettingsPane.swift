@@ -376,22 +376,9 @@ extension AppDelegate {
     private func inputRow(name: SettingsText, subtitle: SettingsText, detail: SettingsText,
                           symbol: String?, control: NSView, indent: Bool = false) -> NSView {
         let content = WS2SettingsCopy.content(name: name, subtitle: subtitle, detail: detail, symbol: symbol)
-        (control as? NSControl)?.sizeToFit()
-        control.setContentHuggingPriority(.required, for: .horizontal)
-        control.setContentCompressionResistancePriority(.required, for: .horizontal)
-        content.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        content.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         WS2SettingsCopy.pinInfoTrailing(content)
-        let row = NSStackView(views: [content, control])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
+        let row = WS2SettingsRow(content: content, control: control, leadingInset: indent ? 24 : 0)
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
-        NSLayoutConstraint.activate([
-            content.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: indent ? 24 : 0),
-            content.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-            control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-        ])
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
     }

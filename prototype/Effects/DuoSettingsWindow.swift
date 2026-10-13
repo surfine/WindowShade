@@ -39,9 +39,9 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .shortcuts: return "command"
     case .permissions: return "lock.shield"
     case .advanced: return "slider.horizontal.3"
-    case .pointer: return ""
+    case .pointer: return "computermouse"
     case .remote: return "appletvremote.gen4"
-    case .conductor: return ""
+    case .conductor: return "switch.2"
     }
   }
 }
@@ -565,25 +565,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func makeRow(labels: NSStackView, control: NSView) -> NSView {
-    // 控件保持自身大小、贴行右端：labels 已被约束钉满到控件左端，控件若 hugging 低
-    // 会被 NSStackView 拉伸占满剩余宽度（Pause 按钮实测被拉成整行宽）。
-    control.setContentHuggingPriority(.required, for: .horizontal)
-    control.setContentCompressionResistancePriority(.required, for: .horizontal)
-    let row = NSStackView(views: [labels, control])
-    // 与 Preferences 的统一行同一套参数：行高下限 48、文字上下各留 8pt，
-    // 否则卡片 inner.spacing=0 时分隔线贴着文字（Effects 页实测）。
-    labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    // 行容器负责：控件贴行右端、内容列到控件左端、ⓘ 由卡片统一成列（见 WS2SettingsRow）。
+    let row = WS2SettingsRow(content: labels, control: control)
     NSLayoutConstraint.activate([
-      labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-      labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-      control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
       labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
       labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
     ])
-    row.orientation = .horizontal
-    row.alignment = .centerY
-    row.spacing = 14
     row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
     row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
@@ -650,6 +637,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       inner.addArrangedSubview(row)
       row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
     }
+    WS2SettingsRow.alignInfoColumns(in: rows)
     return card
   }
 

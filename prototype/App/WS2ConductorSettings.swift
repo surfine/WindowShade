@@ -136,16 +136,8 @@ extension AppDelegate {
     private func conductorRow(name: SettingsText, subtitle: SettingsText, symbol: String?, control: NSView) -> NSView {
         let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol).view
         WS2SettingsCopy.pinInfoTrailing(labels)
-        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        control.setContentHuggingPriority(.required, for: .horizontal)
-        control.setContentCompressionResistancePriority(.required, for: .horizontal)
-        let row = NSStackView(views: [labels, control])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
+        let row = WS2SettingsRow(content: labels, control: control, leadingInset: 12, trailingInset: 12)
         row.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
-        // 与其它页的行同一行高下限；labels 钉满到控件左端，控件贴行右端。
         NSLayoutConstraint.activate([
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
             labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
