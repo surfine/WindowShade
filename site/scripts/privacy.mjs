@@ -18,6 +18,11 @@ const flat = (s) => s.replace(/\n/g, ' ');
 // 只取 Swift 里的字符串字段：key: "…"
 function swiftFields(block) {
   const out = {};
+  // 第30批起生成器会出 WSL10n.text("privacy.<id>.<field>", zh: "…")：zh 源句仍是语义身份，
+  // 官网对照以 zh 为准（英文译文在目录里，官网这条链仍输出中文源站文案）。
+  for (const m of block.matchAll(/\b([A-Za-z]+): WSL10n\.text\("[^"]*",\s*zh: "((?:[^"\\]|\\.)*)"/g)) {
+    if (!(m[1] in out)) out[m[1]] = unswift(m[2]);
+  }
   for (const m of block.matchAll(/\b([A-Za-z]+): "((?:[^"\\]|\\.)*)"/g)) if (!(m[1] in out)) out[m[1]] = unswift(m[2]);
   return out;
 }
@@ -31,7 +36,11 @@ function swiftRows() {
 }
 function swiftGroups() {
   const groups = new Map();
-  for (const m of swiftSource.matchAll(/WS2PrivacyGroup\(title: "((?:[^"\\]|\\.)*)", subtitle: "((?:[^"\\]|\\.)*)"\)/g)) groups.set(unswift(m[1]), unswift(m[2]));
+  // 第30批：分组标题/副标也走 WSL10n（zh 为语义身份，官网对照以 zh 为准）。
+  const groupChunk = swiftSource.split('static let groups')[1] ?? '';
+  for (const m of groupChunk.matchAll(/WS2PrivacyGroup\(title: (?:WSL10n\.text\("[^"]*", zh: "((?:[^"\\]|\\.)*)"\)|"((?:[^"\\]|\\.)*)"), subtitle: (?:WSL10n\.text\("[^"]*", zh: "((?:[^"\\]|\\.)*)"\)|"((?:[^"\\]|\\.)*)")\)/g)) {
+    groups.set(unswift(m[1] ?? m[2]), unswift(m[3] ?? m[4] ?? ''));
+  }
   return groups;
 }
 
