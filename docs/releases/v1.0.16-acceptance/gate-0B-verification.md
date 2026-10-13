@@ -92,3 +92,18 @@
 - 站点隐私页构建中断一次修复：第30批生成器改出 `WSL10n.text(...)` 形式后，`site/scripts/privacy.mjs`
   的逐字对照器只会读裸字符串字面量（全部 undefined）。已教它拆 zh 源句（语义身份），build+check
   43 资产 PASS。README/官网数字同步 ZIP 10.04 MB / 解压 25.25 MB。
+
+
+## 第二次同版本号覆盖（2026-10-13 晚，用户裁定；第33–34批）
+
+用户要求把"未上线功能的英文适配 + 收尾复核"也放进已发布的 1.0.16（同版本号覆盖）：
+
+- 重建包：`dist/WindowShade-v1.0.16.zip` sha256 `fa3abcdb0c22a5309bf3bd89895954655d92bc0196e85a95399a3a9da5fc60f1`
+  （10,080,179 字节），二进制 `3dfbcc5b…`；版本仍 1.0.16 / build 16。
+- 门禁九步全过：deep-strict verify、**DR 与原 1.0.16 逐字相同**、self-check build=16、arm64、
+  `SUFeedURL`/`SUPublicEDKey` 未变、看护同 Team、上一版读新状态 EXIT=0。
+- Release 资产 `--clobber` 覆盖，回下载哈希逐字一致；tag `v1.0.16` 强推到 `08d90a0`。
+- appcast：enclosure 重签（`length="10080179"` + 新 edSignature），清单重签并 verify；
+  部署后线上 `/appcast.xml` 与本地逐字节一致、包 URL content-length=10080179。
+- README/官网数字同步 ZIP 10.08 MB / 解压 25.41 MB。
+- **同一偏差仍在**：build 号没变（16），Sparkle 不会主动提示已装的 1.0.16 用户；新装与手动检查更新会拿到新包。

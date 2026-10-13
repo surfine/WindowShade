@@ -8,16 +8,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <language>zh-Hans</language>
     <item>
       <title>1.0.16</title>
-      <pubDate>Tue, 13 Oct 2026 07:40:00 +0000</pubDate>
+      <pubDate>Tue, 13 Oct 2026 10:15:00 +0000</pubDate>
       <sparkle:version>16</sparkle:version>
       <sparkle:shortVersionString>1.0.16</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0.0</sparkle:minimumSystemVersion>
       <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <description><![CDATA[看不见的窗口，都在刘海里：收起的、侧拉的、最小化的、隐藏的，还有别的桌面上的，指针停在一格上就在它自己的位置出现。设置里新增界面语言（English）并覆盖全部用户可见界面（菜单、刘海、窗口浏览、启动台、手势、欢迎流程），双击标题栏收起可以按住 Option 跳过。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.16/WindowShade-v1.0.16.zip" length="10041404" type="application/octet-stream" sparkle:edSignature="Fv6O1GhnZDtA3yt/OEgLQS/QyoTDt2IXoq5BLQrG/sA5OImCdOA7e/RgLEum0hKDL5RiIs8VwRO1qgLcxzuYBw=="></enclosure>
+      <description><![CDATA[看不见的窗口，都在刘海里。这一版补齐全部用户可见界面的英文：设置、菜单、刘海、窗口浏览、启动台、手势、欢迎流程，以及还没上线的指挥、静音操作、遥控等表面。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.16/WindowShade-v1.0.16.zip" length="10080179" type="application/octet-stream" sparkle:edSignature="AXQhzu68GHv//VRcAAL1dBoxBAFgVPNvwGxd5xhIAZJFN6wX6KCOubTdi99uoM6D0GFUsIiRATNYH+UnQNX4CA=="></enclosure>
     </item>
   </channel>
 </rss><!-- sparkle-signatures:
-edSignature: ZK8MJAMUZeH24K5M4STjf1dHRI78pN8Xdc42U/FDJNmMD+9xkWBTfrJCFD3qlrdrYJu8BFxGqyxavjDgPZm8Dg==
-length: 1650
+edSignature: pB8jVNrjAlYwwSRwDBKXSkZDmPq0PY0W+OjGPtSCtgRl9o6QQMi7fBD+RNHviasFer7+Y+npRR8YbDKAB4m1DQ==
+length: 1512
 -->
