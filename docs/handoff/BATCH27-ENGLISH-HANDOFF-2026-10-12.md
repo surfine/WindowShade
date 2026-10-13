@@ -412,3 +412,25 @@ run `20261013T120624-adae7826`（早期构建 `b04a991c…`、run `20261013T1200
 3. **appcast**：条目重签（`sign_update --account windowshade`，新 edSignature/length，pubDate 2026-10-13），清单签名 verify PASS；wrangler 部署后线上 `/appcast.xml` 与本地逐字节一致、Cache-Control 生效、包 URL content-length 10041404。
 4. **顺手修站点构建**：第30批把隐私页生成器改成 `WSL10n.text(...)` 后，`site/scripts/privacy.mjs` 的逐字对照器（只认裸字面量）全部读 undefined、构建中止；已教它拆 zh 源句。README/官网数字同步 ZIP 10.04 MB / 解压 25.25 MB，线上核对通过。
 5. **已知偏差（用户裁定接受）**：build 号与已装的 1.0.16 相同，**Sparkle 不会主动提示已装用户更新**；新装和手动检查更新会拿到新包。要主动推就得再按规则升 build。
+
+
+---
+
+## 21. 第33批：未上线功能的英文适配（2026-10-13，本 session；用户追加）
+
+用户追加"还没上线的功能也做一下英文的适配"。指挥（ConductorSession/Page/View/Settings/Capabilities/ModelPicker）、
+静音操作与编程会话（WS2OwnedLaunchController 53 句、OwnedSessionView/OwnedCodexSession/OwnedProtocolHost/
+AgentSessionView/CodexApprovalHost/AgentSessions）、遥控与 CarPlay（WS2RemoteHost/CameraChoice/CarPlaySurfaceModel）、
+文件架与拖拽（FileDragSensor/FileShelfView/Model/Store）、画中画、日历卡（CalendarPresentation）、
+在场与私人窗口（PresenceLockRiskSheet/AwaySummary/NotchFaceObservations）、输入资格
+（WS2InputEligibility/InputDeviceKind/ScrollInstallPolicy）全部进目录。
+
+- 目录 **2120 → 2500 键**；防漏网棘轮 **1429 → 1034 行**。剩余占位：诊断与日志串、QA 探针与设计夹具、
+  历史迁移对照表（StandardMenu.legacyLocations）、文件架磁盘目录名（改名会动用户已有文件）。
+- 两处按中文串判逻辑改掉：提示音令牌（`ConductorSoundToken` 出 `toneN`/`beatN`，播放器优先按令牌取拍数，
+  历史中文标签兜底）；`ConductorCapabilities`/`ConductorSession` 的句子全走目录。
+- 校验：`check-localizable` PASS（2500 键）、`--check` EXIT=0（隐私登记 730 处、文案检查均过）；
+  **15 个新涉及的测试 runner 补编 `WSL10n.swift` 后全 PASS**。
+- **未验**：这些功能出厂默认关，VM 里没有触发路径——只有目录级与编译级校验，无屏幕证据；
+  等它们各自上线前的那一批再实拍（与 §19 同口径）。提交 `1ee2684`，已推分支与 `main`；
+  **没有跟着重发 1.0.16**（这些串在出厂默认关的功能里，对已发布包的用户可见行为没有影响）。
