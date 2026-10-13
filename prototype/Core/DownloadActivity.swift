@@ -111,7 +111,8 @@ struct DownloadCard: Equatable, Sendable {
         } else {
             quantity = .indeterminate
         }
-        return DownloadCard(title: "正在下载", subtitle: "\(summary.count) 个文件",
+        return DownloadCard(title: WSL10n.text("download.downloading", zh: "正在下载"),
+                            subtitle: WSL10n.text("fileDrag.countFiles", zh: "%@ 个文件", String(summary.count)),
                             symbol: "arrow.down.circle", detail: summary.names.joined(separator: "、"), lifetime: nil,
                             quantity: quantity)
     }
@@ -265,11 +266,11 @@ struct CopyCard: Equatable, Sendable {
     static func copying(_ summary: CopyActiveSummary) -> CopyCard {
         let subtitle: String
         if summary.count > 1 {
-            subtitle = "\(summary.count) 项"
+            subtitle = WSL10n.text("download.countItems", zh: "%@ 项", String(summary.count))
         } else {
             subtitle = summary.name.map { NotchSentence.truncateMiddle($0, limit: NotchSentence.detailLimit) } ?? ""
         }
-        return CopyCard(title: "正在拷贝", subtitle: subtitle, symbol: copySymbol, detail: "",
+        return CopyCard(title: WSL10n.text("download.copying", zh: "正在拷贝"), subtitle: subtitle, symbol: copySymbol, detail: "",
                         lifetime: nil, quantity: summary.quantity)
     }
 

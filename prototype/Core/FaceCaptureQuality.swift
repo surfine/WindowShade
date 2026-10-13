@@ -37,14 +37,14 @@ enum FaceQualityHint: String, Equatable, Sendable, CaseIterable {
     /// 刘海上的一句话。
     var text: String {
         switch self {
-        case .onlyOneFace: "只留一张脸"
-        case .moveCloser: "靠近一点"
-        case .moveBack: "离远一点"
-        case .centerFace: "把脸放到中间"
+        case .onlyOneFace: WSL10n.text("face.quality.onlyOneFace", zh: "只留一张脸")
+        case .moveCloser: WSL10n.text("face.quality.moveCloser", zh: "靠近一点")
+        case .moveBack: WSL10n.text("face.quality.moveBack", zh: "离远一点")
+        case .centerFace: WSL10n.text("face.quality.centerFace", zh: "把脸放到中间")
         case .lookAtCamera: "看向镜头"
-        case .tooDark: "光线太暗"
-        case .tooBright: "光线太强"
-        case .holdStill: "稳住别动"
+        case .tooDark: WSL10n.text("face.quality.tooDark", zh: "光线太暗")
+        case .tooBright: WSL10n.text("face.quality.tooBright", zh: "光线太强")
+        case .holdStill: WSL10n.text("face.quality.holdStill", zh: "稳住别动")
         }
     }
 }

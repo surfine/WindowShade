@@ -342,7 +342,7 @@ final class ShadeThumbnailView: NSView {
                 changeDot.add(pop, forKey: "change-pop")
             }
             CATransaction.commit()
-            setAccessibilityValue(showsChange ? "有变化" : nil)
+            setAccessibilityValue(showsChange ? WSL10n.text("notch.sentence.changed", zh: "有变化") : nil)
         }
     }
 

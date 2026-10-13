@@ -36,23 +36,24 @@ struct PresenceLockGlue: Sendable {
     private var lastSpoken: Int?
     private var lastInputCheck: WS2.Instant?
 
-    static let cancelLine = Line(text: "不锁了", detail: "", symbol: "hand.raised")
+    static let cancelLine = Line(text: WSL10n.text("presence.cancel", zh: "不锁了"), detail: "", symbol: "hand.raised")
 
     /// 合盖效果开着时，桌面先折进刘海，过这么久再锁屏。锁屏回执期限是 3 秒，留得下。
     static let foldLead: Double = 0.35
 
     /// 读屏念的那一句：倒数开始、剩 5 秒、剩 3 秒各念一次，其余几秒不念。
     static func spokenCountdown(_ seconds: Int, first: Bool) -> String? {
-        first || seconds == 5 || seconds == 3 ? "\(seconds) 秒后锁屏" : nil
+        first || seconds == 5 || seconds == 3
+            ? WSL10n.text("presence.lockingIn", zh: "%@ 秒后锁屏", String(seconds)) : nil
     }
 
     /// 倒数时刘海的那一句。秒数不写进句子：右边是等宽大数字（`Command.countdown` 的 `seconds`），
     /// 每秒原地换；这一句整个倒数不变，刘海只换数字、不重新进场。
     static func countdownLine(_ seconds: Int, _ reason: PresenceLock.Reason) -> Line {
-        let detail = "碰一下就不锁"
+        let detail = WSL10n.text("presence.tapToCancel", zh: "碰一下就不锁")
         switch reason {
-        case .devices: return Line(text: "手机不在身边", detail: detail, symbol: "iphone.slash")
-        case .camera: return Line(text: "看不到你了", detail: detail, symbol: "eye.slash")
+        case .devices: return Line(text: WSL10n.text("presence.phoneAway", zh: "手机不在身边"), detail: detail, symbol: "iphone.slash")
+        case .camera: return Line(text: WSL10n.text("presence.cannotSee", zh: "看不到你了"), detail: detail, symbol: "eye.slash")
         }
     }
 

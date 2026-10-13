@@ -392,7 +392,7 @@ final class SlideOverHandleView: NSView {
         super.init(frame: frame)
         setAccessibilityElement(true)
         setAccessibilityRole(.handle)
-        setAccessibilityLabel("调整侧拉窗口的大小")
+        setAccessibilityLabel(WSL10n.text("slideOver.a11y.resize", zh: "调整侧拉窗口的大小"))
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 

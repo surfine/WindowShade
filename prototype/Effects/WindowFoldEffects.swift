@@ -168,7 +168,7 @@ final class WindowFoldEffects {
     for job: Job, content: SCShareableContent?, screen: NSScreen, position: CGPoint, size: CGSize
   ) async throws {
     guard let session = job.session, let did = displayID(for: screen) else {
-      throw EffectError.unavailable("窗口所在屏幕不可用")
+      throw EffectError.unavailable(WSL10n.text("fold.err.displayUnavailable", zh: "窗口所在屏幕不可用"))
     }
     // 显示器的全局位置直接问 CoreGraphics（和 SCDisplay.frame 同一套坐标），不必先枚举全系统窗口。
     let displayFrame = CGDisplayBounds(did)
@@ -180,7 +180,7 @@ final class WindowFoldEffects {
       x: position.x - displayFrame.minX, y: position.y - displayFrame.minY, width: size.width,
       height: size.height)
     let clipped = requested.intersection(CGRect(origin: .zero, size: displayFrame.size))
-    guard !clipped.isEmpty else { throw EffectError.unavailable("窗口不在屏幕上") }
+    guard !clipped.isEmpty else { throw EffectError.unavailable(WSL10n.text("fold.err.offScreen", zh: "窗口不在屏幕上")) }
     let scale = screen.backingScaleFactor
     let pixelWidth = Int((clipped.width * scale).rounded())
     let pixelHeight = Int((clipped.height * scale).rounded())
@@ -198,7 +198,7 @@ final class WindowFoldEffects {
         shareable = try await OwnWindowContent.content(requiring: ids)
       }
       guard let display = shareable.displays.first(where: { $0.displayID == did }) else {
-        throw EffectError.unavailable("窗口所在屏幕不可用")
+        throw EffectError.unavailable(WSL10n.text("fold.err.displayUnavailable", zh: "窗口所在屏幕不可用"))
       }
       let excluded = shareable.windows.filter { ids.contains($0.windowID) }
       let filter = SCContentFilter(display: display, excludingWindows: excluded)
@@ -224,7 +224,7 @@ final class WindowFoldEffects {
           height: Int((size.height * scale).rounded()), bitsPerComponent: 8, bytesPerRow: 0,
           space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
       else {
-        throw EffectError.unavailable("窗口背景分配失败")
+        throw EffectError.unavailable(WSL10n.text("fold.err.background", zh: "窗口背景分配失败"))
       }
       canvas.draw(
         image,
@@ -232,7 +232,7 @@ final class WindowFoldEffects {
           x: (clipped.minX - requested.minX) * scale,
           y: (requested.maxY - clipped.maxY) * scale,
           width: clipped.width * scale, height: clipped.height * scale))
-      guard let padded = canvas.makeImage() else { throw EffectError.unavailable("窗口背景生成失败") }
+      guard let padded = canvas.makeImage() else { throw EffectError.unavailable(WSL10n.text("fold.err.backgroundImage", zh: "窗口背景生成失败")) }
       try session.renderer.setBackground(padded)
     }
   }

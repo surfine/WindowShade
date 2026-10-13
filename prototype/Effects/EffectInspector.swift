@@ -8,7 +8,7 @@ final class EffectInspector: NSObject, NSWindowDelegate {
   private let owner = AppDelegate()
   private var window: NSWindow?
   private let targets = NSPopUpButton()
-  private let status = NSTextField(wrappingLabelWithString: "选择临时测试窗口")
+  private let status = NSTextField(wrappingLabelWithString: WSL10n.text("effect.inspector.pickWindow", zh: "选择临时测试窗口"))
   private let clock = EffectDisplayClock()
   func run() {
     owner.ownsGlobalInput = false
@@ -24,7 +24,7 @@ final class EffectInspector: NSObject, NSWindowDelegate {
     let panel = NSPanel(
       contentRect: NSRect(x: 30, y: 30, width: 540, height: 175),
       styleMask: [.titled, .closable, .nonactivatingPanel], backing: .buffered, defer: false)
-    panel.title = "WindowShade Duo · 隔离测试控制台"
+    panel.title = WSL10n.text("effect.inspector.title", zh: "WindowShade Duo · 隔离测试控制台")
     panel.level = .floating
     panel.isReleasedWhenClosed = false
     panel.delegate = self
@@ -38,11 +38,11 @@ final class EffectInspector: NSObject, NSWindowDelegate {
     root.addArrangedSubview(targets)
     targets.widthAnchor.constraint(equalToConstant: 508).isActive = true
     let buttons = NSStackView(views: [
-      NSButton(title: "刷新窗口", target: self, action: #selector(refresh)),
-      NSButton(title: "折叠", target: self, action: #selector(fold)),
-      NSButton(title: "展开", target: self, action: #selector(unfold)),
-      NSButton(title: "直接恢复全部", target: self, action: #selector(restore)),
-      NSButton(title: "效果设置", target: self, action: #selector(settings)),
+      NSButton(title: WSL10n.text("effect.inspector.refresh", zh: "刷新窗口"), target: self, action: #selector(refresh)),
+      NSButton(title: WSL10n.text("effect.inspector.fold", zh: "折叠"), target: self, action: #selector(fold)),
+      NSButton(title: WSL10n.text("effect.inspector.unfold", zh: "展开"), target: self, action: #selector(unfold)),
+      NSButton(title: WSL10n.text("effect.inspector.restoreAll", zh: "直接恢复全部"), target: self, action: #selector(restore)),
+      NSButton(title: WSL10n.text("effect.inspector.settings", zh: "效果设置"), target: self, action: #selector(settings)),
     ])
     root.addArrangedSubview(buttons)
     root.addArrangedSubview(status)

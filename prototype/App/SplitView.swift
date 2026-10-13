@@ -667,7 +667,7 @@ final class SplitDividerView: NSView {
         super.init(frame: frame)
         setAccessibilityElement(true)
         setAccessibilityRole(.splitter)
-        setAccessibilityLabel("拖动调整两个窗口的大小")
+        setAccessibilityLabel(WSL10n.text("split.a11y.resize", zh: "拖动调整两个窗口的大小"))
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 

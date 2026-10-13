@@ -66,14 +66,15 @@ let menuHoverPreviewMaxSize = NSSize(width: 240, height: 160)
 let shadeCaptureTimeoutNanoseconds: UInt64 = 450_000_000
 let shadeDefaultFoldSound = "Purr"
 let shadeDefaultUnfoldSound = "Pop"
-let shadeSoundChoices: [(label: String, name: String)] = [
-    ("柔和（Purr）", "Purr"),
-    ("低调（Submarine）", "Submarine"),
-    ("轻吹（Blow）", "Blow"),
-    ("细微轻响（Tink）", "Tink"),
-    ("玻璃（Glass）", "Glass"),
-    ("弹开（Pop）", "Pop")
-]
+/// 系统提示音的候选（第33批：显示名走目录，name 是系统音的名字、不翻译）。
+var shadeSoundChoices: [(label: String, name: String)] {
+    [(WSL10n.text("sound.purr", zh: "柔和（Purr）"), "Purr"),
+     (WSL10n.text("sound.submarine", zh: "低调（Submarine）"), "Submarine"),
+     (WSL10n.text("sound.blow", zh: "轻吹（Blow）"), "Blow"),
+     (WSL10n.text("sound.tink", zh: "细微轻响（Tink）"), "Tink"),
+     (WSL10n.text("sound.glass", zh: "玻璃（Glass）"), "Glass"),
+     (WSL10n.text("sound.pop", zh: "弹开（Pop）"), "Pop")]
+}
 /// main.swift 启动时在主线程写一次，之后只读。
 nonisolated(unsafe) var appDelegate: AppDelegate?
 
@@ -380,7 +381,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             dockClick.onHidden = { [weak self] app in
                 guard let self else { return }
                 if !self.notch.teach(.dockHide) {
-                    self.notch.announce("已让开 \(app.localizedName ?? "它")", detail: "再点一下 Dock 图标就回来", tone: .done)
+                    self.notch.announce(WSL10n.text("dock.stepAside", zh: "已让开 %@", app.localizedName ?? WSL10n.text("dock.stepAside.it", zh: "它")),
+                                detail: WSL10n.text("gesture.coach.dockHideHint", zh: "再点一下 Dock 图标就回来"), tone: .done)
                 }
             }
             dockClick.start(); switcher.applySetting(); dockLock.apply(); splitView.start()
@@ -667,22 +669,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                               appName: String, title: String) {
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
         // 收成缩略图的：读屏先说要做什么，再说是谁（"展开窗口：App"）；其余形态照旧。
-        let label = overlay.contentView is ShadeThumbnailView ? "展开窗口：\(appName)" : "已收起的窗口：\(displayTitle)"
+        let label = overlay.contentView is ShadeThumbnailView
+                ? WSL10n.text("bar.a11y.thumbnail", zh: "展开窗口：%@", appName)
+                : WSL10n.text("bar.a11y.folded", zh: "已收起的窗口：%@", displayTitle)
         let target = ShadedAccessibilityActionTarget { [weak self] in
             self?.unshade(id) ?? false
         }
         accessibilityActionTargets[id] = target
 
         let actions = [
-            NSAccessibilityCustomAction(name: "展开窗口", target: target,
+            NSAccessibilityCustomAction(name: WSL10n.text("bar.action.unroll", zh: "展开窗口"), target: target,
                                         selector: #selector(ShadedAccessibilityActionTarget.perform(_:)))
         ]
         guard let contentView = overlay.contentView else { return }
         contentView.setAccessibilityElement(true)
         contentView.setAccessibilityRole(NSAccessibility.Role.button)
         contentView.setAccessibilityLabel(label)
-        contentView.setAccessibilityValue("已收起")
-        contentView.setAccessibilityHelp("展开这个窗口")
+        contentView.setAccessibilityValue(WSL10n.text("say.rolledUp", zh: "已收起"))
+        contentView.setAccessibilityHelp(WSL10n.text("bar.a11y.unrollHelp", zh: "展开这个窗口"))
         contentView.setAccessibilityCustomActions(actions)
     }
 

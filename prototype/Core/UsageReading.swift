@@ -19,9 +19,9 @@ struct CodingSessionUsage: Equatable, Sendable {
 
     static let lowThreshold = 10
     var isLow: Bool { leftPercent <= Self.lowThreshold }
-    var compactText: String { "剩 \(leftPercent)%" }
+    var compactText: String { WSL10n.text("usage.left", zh: "剩 %@%%", String(leftPercent)) }
     /// 展开格里的一段：恢复时间 · 模型 · 强度，缺哪个省哪个。
-    var recoveryDetail: String? { recoveryPending ? "等待用量更新" : recovery.map { "\($0)恢复" } }
+    var recoveryDetail: String? { recoveryPending ? WSL10n.text("usage.waiting", zh: "等待用量更新") : recovery.map { WSL10n.text("usage.recoveryAt", zh: "%@恢复", $0) } }
     var detailText: String {
         [recoveryDetail, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
     }
@@ -87,14 +87,16 @@ struct UsageReading: Equatable, Sendable {
                                   model: model, effort: effort, windowKey: window.key)
     }
 
-    private static let weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
+    private static var weekdays: [String] {
+        WSL10n.text("usage.weekdays", zh: "周日,周一,周二,周三,周四,周五,周六").split(separator: ",").map(String.init)
+    }
 
     /// 恢复时间的说法：一小时内“18 分钟后”，一天内“2 小时后”，再远“周五 16:00”。已经过了只写“等待用量更新”。后面接“恢复”。
     static func recoveryText(resetsAt: Double, now: Double, calendar: Calendar) -> String {
         let delta = resetsAt - now
-        if delta <= 0 { return "等待用量更新" }
-        if delta < 3600 { return "\(Int((delta / 60).rounded(.up))) 分钟后" }
-        if delta < 86_400 { return "\(Int((delta / 3600).rounded())) 小时后" }
+        if delta <= 0 { return WSL10n.text("usage.waiting", zh: "等待用量更新") }
+        if delta < 3600 { return WSL10n.text("usage.inMinutes", zh: "%@ 分钟后", String(Int((delta / 60).rounded(.up)))) }
+        if delta < 86_400 { return WSL10n.text("usage.inHours", zh: "%@ 小时后", String(Int((delta / 3600).rounded()))) }
         let parts = calendar.dateComponents([.weekday, .hour, .minute], from: Date(timeIntervalSince1970: resetsAt))
         let day = weekdays[((parts.weekday ?? 1) - 1) % 7]
         return "\(day) \(String(format: "%02d:%02d", parts.hour ?? 0, parts.minute ?? 0))"

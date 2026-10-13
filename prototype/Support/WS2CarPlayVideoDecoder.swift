@@ -38,7 +38,7 @@ final class WS2CarPlayVideoDecoder {
             extensions: [kCMFormatDescriptionExtension_SampleDescriptionExtensionAtoms: atoms] as CFDictionary,
             formatDescriptionOut: &format)
         guard status == noErr, let format else {
-            lastError = "格式描述建立失败（\(status)）"
+            lastError = WSL10n.text("carplay.decode.format", zh: "格式描述建立失败（%@）", String(describing: status))
             configured = false
             return
         }
@@ -57,11 +57,11 @@ final class WS2CarPlayVideoDecoder {
     @discardableResult
     func enqueue(annexB: [UInt8]) -> Bool {
         guard configured, let formatDescription else {
-            lastError = "还没配置解码格式"
+            lastError = WSL10n.text("carplay.decode.notConfigured", zh: "还没配置解码格式")
             return false
         }
         guard let block = Self.avccBlockBuffer(fromAnnexB: annexB) else {
-            lastError = "Annex B 转换失败"
+            lastError = WSL10n.text("carplay.decode.annexB", zh: "Annex B 转换失败")
             return false
         }
         var sampleBuffer: CMSampleBuffer?
@@ -78,7 +78,7 @@ final class WS2CarPlayVideoDecoder {
             sampleSizeArray: nil,
             sampleBufferOut: &sampleBuffer)
         guard status == noErr, let sampleBuffer else {
-            lastError = "样例封装失败（\(status)）"
+            lastError = WSL10n.text("carplay.decode.sampleBuffer", zh: "样例封装失败（%@）", String(describing: status))
             return false
         }
         // 上游没有可靠时间戳：尽快解码，画不画由层自己按队列决定。
@@ -86,7 +86,8 @@ final class WS2CarPlayVideoDecoder {
             layer.flush()
         }
         layer.enqueue(sampleBuffer)
-        lastError = layer.status == .failed ? "解码器错误（\(String(describing: layer.error))）" : nil
+        lastError = layer.status == .failed
+                ? WSL10n.text("carplay.decode.decoderError", zh: "解码器错误（%@）", String(describing: layer.error)) : nil
         return layer.status != .failed
     }
 

@@ -13,13 +13,13 @@ struct WS2InputEligibility: Equatable, Sendable {
         enabled && deviceConnected && permitted && unlocked && competingTool == nil && !excludedApp && qualifiedPerEventSource && tapHealthy
     }
     var status: String {
-        if !enabled { return WSL10n.text("input.elig.off", zh: "已关闭") }
-        if let competingTool { return WSL10n.text("input.elig.byTool", zh: "由%@接管", competingTool) }
-        if !deviceConnected { return WSL10n.text("input.elig.noDevice", zh: "设备未连接") }
-        if !permitted { return WSL10n.text("input.elig.needsPermission", zh: "需要输入权限") }
-        if !qualifiedPerEventSource { return WSL10n.text("input.elig.sourceUnconfirmed", zh: "来源尚未确认") }
-        if !tapHealthy { return WSL10n.text("input.elig.stopped", zh: "已停止接管") }
-        if !unlocked || excludedApp { return WSL10n.text("input.elig.hold", zh: "暂不接管") }
+        if !enabled { return "已关闭" }
+        if let competingTool { return "由\(competingTool)接管" }
+        if !deviceConnected { return "设备未连接" }
+        if !permitted { return "需要输入权限" }
+        if !qualifiedPerEventSource { return "来源尚未确认" }
+        if !tapHealthy { return "已停止接管" }
+        if !unlocked || excludedApp { return "暂不接管" }
         return "已开启"
     }
 }

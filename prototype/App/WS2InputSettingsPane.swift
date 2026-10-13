@@ -283,6 +283,7 @@ extension AppDelegate {
     private func inputState(_ phrase: String) -> SettingsText {
         switch phrase {
         case "关着": return WSL10n.setting("settings.remote.status.off", zh: "关着")
+        case "开着": return WSL10n.setting("settings.remote.status.on", zh: "开着")
         case "关着，不改滚动": return WSL10n.setting("settings.input.status.offNoChange", zh: "关着，不改滚动")
         case "一格只滚一行": return WSL10n.setting("settings.input.fine.on", zh: "一格只滚一行")
         case "后退和前进": return WSL10n.setting("settings.input.sideButtons.on", zh: "后退和前进")

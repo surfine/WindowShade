@@ -9,10 +9,10 @@ enum FaceGestureAction: CaseIterable, Sendable {
     /// 面向用户的中文提示；只描述动作，不暗示身份或安全含义。
     var instruction: String {
         switch self {
-        case .blink: return "眨一下眼"
-        case .nod: return "轻轻点头，再回正"
-        case .turnLeft: return "向左转头，再回正"
-        case .turnRight: return "向右转头，再回正"
+        case .blink: return WSL10n.text("face.gesture.blink", zh: "眨一下眼")
+        case .nod: return WSL10n.text("face.gesture.nod", zh: "轻轻点头，再回正")
+        case .turnLeft: return WSL10n.text("face.gesture.turnLeft", zh: "向左转头，再回正")
+        case .turnRight: return WSL10n.text("face.gesture.turnRight", zh: "向右转头，再回正")
         }
     }
 
@@ -184,10 +184,10 @@ struct OwnerTurnChallenge {
         /// 面向用户的提示；只说要做的动作。
         var instruction: String {
             switch self {
-            case .lookAtCamera: return "看向镜头"
-            case .turn(.left): return "向左转头"
-            case .turn(.right): return "向右转头"
-            case .lookBack: return "再看回镜头"
+            case .lookAtCamera: return WSL10n.text("face.gesture.lookAtCamera", zh: "看向镜头")
+            case .turn(.left): return WSL10n.text("face.gesture.turnLeftShort", zh: "向左转头")
+            case .turn(.right): return WSL10n.text("face.gesture.turnRightShort", zh: "向右转头")
+            case .lookBack: return WSL10n.text("face.gesture.lookBack", zh: "再看回镜头")
             }
         }
     }

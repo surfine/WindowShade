@@ -118,7 +118,7 @@ struct NotchFocusController: Sendable {
 
     /// “标题，第 k 个，共 n 个”。标题按 NotchSentence 从尾部截断（窗口标题一类），空标题念“窗口”。
     static func moveAnnouncement(title: String, index: Int, count: Int) -> String {
-        "\(label(for: title))，第 \(index) 个，共 \(count) 个"
+        WSL10n.text("notch.alert.indexWithLabel", zh: "%@，第 %@ 个，共 %@ 个", label(for: title), String(index), String(count))
     }
 
     /// 同上，但整句已经备好（会话格的“项目，在等你”）：不再截断，状态一直念全。

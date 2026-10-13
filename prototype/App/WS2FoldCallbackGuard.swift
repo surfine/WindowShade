@@ -82,7 +82,7 @@ extension AppDelegate {
               MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else { return }
         if let overlay = state.overlay,
            enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-unconfirmed") {
-            overlay.contentView?.toolTip = "收起状态未确认，点击可尝试恢复窗口"
+            overlay.contentView?.toolTip = WSL10n.text("fold.guard.tip", zh: "收起状态未确认，点击可尝试恢复窗口")
             revealPreparedOverlay(overlay)
         }
         quietNotice(WSL10n.text("notice.foldGuard.unconfirmed", zh: "收起状态未确认，已保留恢复入口"), kind: .problem, log: "shade: observation unknown id=\(id); recovery retained")

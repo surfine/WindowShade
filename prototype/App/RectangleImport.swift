@@ -100,7 +100,7 @@ extension AppDelegate {
         refreshPreferencesWindowIfOpen()
         wlog("rectangle-import: \(result.count) shortcuts from \(source), yielded=\(result.yielded)")
         if RectangleImport.isRectangleRunning {
-            notch.announce("退出 Rectangle 后就能用", detail: "它还开着，这些快捷键暂时归它", tone: .info)
+            notch.announce(WSL10n.text("rectangle.import.quitFirst", zh: "退出 Rectangle 后就能用"), detail: WSL10n.text("rectangle.import.stillRunning", zh: "它还开着，这些快捷键暂时归它"), tone: .info)
             let observer = RectangleExitObserver()
             observer.token = NSWorkspace.shared.notificationCenter.addObserver(
                 forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
@@ -111,13 +111,16 @@ extension AppDelegate {
                 MainActor.assumeIsolated {
                     self?.registerGlobalShortcuts()
                     self?.rebuildMenu()
-                    self?.notch.announce("Rectangle 的快捷键现在归 WindowShade 了", tone: .done)
+                    self?.notch.announce(WSL10n.text("rectangle.import.done", zh: "Rectangle 的快捷键现在归 WindowShade 了"), tone: .done)
                 }
             }
             return
         }
-        var detail = source == .recommended ? "用的是 Rectangle 推荐的那一套" : "照你在 Rectangle 里的设置"
-        if !result.yielded.isEmpty { detail += "；\(result.yielded.joined(separator: "、"))的快捷键让给了它" }
-        notch.announce("换成了 Rectangle 的快捷键", detail: detail, tone: .done)
+        var detail = source == .recommended ? WSL10n.text("rectangle.import.recommended", zh: "用的是 Rectangle 推荐的那一套") : WSL10n.text("rectangle.import.yours", zh: "照你在 Rectangle 里的设置")
+        if !result.yielded.isEmpty {
+                detail += WSL10n.text("rectangle.import.yielded", zh: "；%@的快捷键让给了它",
+                                      result.yielded.joined(separator: WSL10n.text("settings.browser.excluded.separator", zh: "、")))
+            }
+        notch.announce(WSL10n.text("rectangle.import.switched", zh: "换成了 Rectangle 的快捷键"), detail: detail, tone: .done)
     }
 }

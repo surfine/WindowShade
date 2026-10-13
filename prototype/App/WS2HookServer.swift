@@ -196,7 +196,7 @@ struct WS2HookSessions: Sendable {
         guard let digest = WS2.Digest(Data(SHA256.hash(data: bytes))) else { return }
         let key = WS2.ApprovalKey(session: context.session, epoch: context.epoch, requestID: .integer(Int64(clamping: id)))
         let request = WS2.ApprovalRequest(key: key, context: context, targetDigest: digest,
-            summary: tool ?? "需要你确认", risk: .unknown, createdAt: now,
+            summary: tool ?? WSL10n.text("notch.session.placeholderSummary", zh: "需要你确认"), risk: .unknown, createdAt: now,
             deadline: now.adding(AgentSessions.maximumApprovalLifetime), shownAfterSequence: id)
         _ = store.receive(.init(context: context, sequence: id, receivedAt: now, commandID: nil, turnID: nil, payload: .approval(request)))
         if store.request(for: key) != nil { waiting[context.session.id] = key }

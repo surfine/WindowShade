@@ -19,7 +19,7 @@ else
 fi
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
   -module-cache-path "$(pwd)/.build/module-cache" \
-  prototype/Effects/FoldPageKey.swift \
+  prototype/Core/WSL10n.swift prototype/Effects/FoldPageKey.swift \
   prototype/Effects/FoldGPU.swift \
   tests/FoldRendererPipelineTests.swift \
   -o .build/fold-renderer-tests/fold-renderer

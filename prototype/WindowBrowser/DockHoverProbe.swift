@@ -1094,7 +1094,7 @@ final class WindowBrowserUIRouteProbe {
         let keyboardWasEnabled = WindowBrowserSettings.keyboardPanelEnabled
         delegate.setupStatusItem()
         func browserMenuItem() -> NSMenuItem? {
-            delegate.statusMenu.items.first { $0.title == "选择窗口…" }
+            delegate.statusMenu.items.first { $0.title == WSL10n.text("menu.chooseWindow", zh: "选择窗口…") }
         }
         let shortcutItems = delegate.statusMenu.items.filter { !$0.keyEquivalent.isEmpty }
             .map { "\($0.title)=\($0.keyEquivalent)" }

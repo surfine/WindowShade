@@ -480,7 +480,7 @@ final class CarPlaySurfaceView: NSView {
     private let titleLabel = NSTextField(labelWithString: "")
     private let detailLabel = NSTextField(labelWithString: "")
     private let hintLabel = NSTextField(labelWithString: WS2CarPlaySurfaceModel.exitHint)
-    private let reconnectButton = NSButton(title: "重新连接", target: nil, action: nil)
+    private let reconnectButton = NSButton(title: WSL10n.text("carplay.reconnect", zh: "重新连接"), target: nil, action: nil)
     private var tileLayers: [CALayer] = []
     private let tileHost = CALayer()
     /// live 真画面垫在最底层；没有就不加。

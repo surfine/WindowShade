@@ -65,7 +65,7 @@ import Cocoa
         reconcile()
     }
     var devices: [Device] {
-        entries.values.map { Device(attachment:$0.id,label:$0.controller.vendorName ?? "游戏手柄",enabled:$0.gate.enabled) }
+        entries.values.map { Device(attachment:$0.id,label:$0.controller.vendorName ?? WSL10n.text("conductor.pad.generic", zh: "游戏手柄"),enabled:$0.gate.enabled) }
             .sorted { $0.attachment.uuidString < $1.attachment.uuidString }
     }
     @discardableResult func setEnabled(_ enabled: Bool, attachment: UUID) -> Bool {

@@ -27,20 +27,20 @@ enum InputDeviceClassifier: Sendable {
     static func classify(_ value: ScrollEvidence) -> Result {
         guard case .verifiedPerEvent = value.association,
               let device = value.device, !device.localToken.isEmpty else {
-            return Result(kind: .unknown, mayRewrite: false, reason: WSL10n.text("scroll.reason.sourceUnknown", zh: "事件来源未确认"))
+            return Result(kind: .unknown, mayRewrite: false, reason: "事件来源未确认")
         }
         if device.vendorID == 0x05ac && device.productID == 0x0315 {
-            return Result(kind: .siriRemote, mayRewrite: false, reason: WSL10n.text("scroll.reason.remote", zh: "遥控器不用滚轮改写"))
+            return Result(kind: .siriRemote, mayRewrite: false, reason: "遥控器不用滚轮改写")
         }
         if device.vendorID == 0x05ac && device.productID == 0x0323 {
-            return Result(kind: .magicMouse, mayRewrite: true, reason: WSL10n.text("scroll.reason.magicMouse", zh: "已关联妙控鼠标"))
+            return Result(kind: .magicMouse, mayRewrite: true, reason: "已关联妙控鼠标")
         }
         if device.hidClass == .trackpad {
-            return Result(kind: .trackpad, mayRewrite: false, reason: WSL10n.text("scroll.reason.trackpad", zh: "保留触控板原事件"))
+            return Result(kind: .trackpad, mayRewrite: false, reason: "保留触控板原事件")
         }
         if device.vendorID != 0x05ac && device.hidClass == .mouse && !value.continuous && !value.hasMomentum {
-            return Result(kind: .wheelMouse, mayRewrite: true, reason: WSL10n.text("scroll.reason.wheelMouse", zh: "已关联离散滚轮"))
+            return Result(kind: .wheelMouse, mayRewrite: true, reason: "已关联离散滚轮")
         }
-        return Result(kind: .unknown, mayRewrite: false, reason: WSL10n.text("scroll.reason.insufficient", zh: "设备和事件证据不足"))
+        return Result(kind: .unknown, mayRewrite: false, reason: "设备和事件证据不足")
     }
 }

@@ -6,10 +6,10 @@ import UniformTypeIdentifiers
 enum PrivateAppSuggestions {
     struct Item { let name: String; let bundleID: String }
     static let items: [Item] = [
-        Item(name: "信息", bundleID: "com.apple.MobileSMS"),
-        Item(name: "邮件", bundleID: "com.apple.mail"),
-        Item(name: "微信", bundleID: "com.tencent.xinWeChat"),
-        Item(name: "密码", bundleID: "com.apple.Passwords"),
+        Item(name: WSL10n.text("privateApp.messages", zh: "信息"), bundleID: "com.apple.MobileSMS"),
+        Item(name: WSL10n.text("privateApp.mail", zh: "邮件"), bundleID: "com.apple.mail"),
+        Item(name: WSL10n.text("privateApp.wechat", zh: "微信"), bundleID: "com.tencent.xinWeChat"),
+        Item(name: WSL10n.text("privateApp.passwords", zh: "密码"), bundleID: "com.apple.Passwords"),
     ]
 }
 
