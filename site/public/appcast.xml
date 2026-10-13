@@ -8,16 +8,16 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <language>zh-Hans</language>
     <item>
       <title>1.0.16</title>
-      <pubDate>Mon, 13 Oct 2026 16:30:00 +0000</pubDate>
+      <pubDate>Wed, 14 Oct 2026 03:30:00 +0000</pubDate>
       <sparkle:version>16</sparkle:version>
       <sparkle:shortVersionString>1.0.16</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0.0</sparkle:minimumSystemVersion>
       <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
       <description><![CDATA[看不见的窗口，都在刘海里。这一版补齐全部用户可见界面的英文，并把设置面板再打磨一遍：每一行都有图标、行距放宽、说明改得更明白。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.16/WindowShade-v1.0.16.zip" length="9765838" type="application/octet-stream" sparkle:edSignature="wA5ot2NSTLatrcb+PjyYWcIJbFSpfYGcIJIGGpThek33b0trjiclP4nPIlgphyqU00A1GNwzM9IG9Ea7kMAKAg=="></enclosure>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.16/WindowShade-v1.0.16.zip" length="9771300" type="application/octet-stream" sparkle:edSignature="M2HfU5do01jLJZgT8nWFyTSlZlw0dw3AwWwusdnrRc4J3sMMs4vdjb/lP62bWuR/m5apnb/6qk7QeKbzklyaCA=="></enclosure>
     </item>
   </channel>
 </rss><!-- sparkle-signatures:
-edSignature: DAz/oxCqWL6Z3sSfcxCWfbKaODWTytz8ukB6wbQnDDuKdfAGzLu/1DGXzuDmA28BuGRAUHvn9B2rQN9UhDfdCw==
+edSignature: IJuRgFi0TI6eSERWa/N/lr9lyvHqCRbn6Ygh8kmVoGIzF2jcOQt/zQG5a2VqzdhWRzuDH/W+Y1VeZkAPEMrtCw==
 length: 1469
 -->
