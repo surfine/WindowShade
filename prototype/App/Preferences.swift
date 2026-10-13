@@ -598,6 +598,7 @@ extension AppDelegate {
             inner.addArrangedSubview(row)
             row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
         }
+        WS2SettingsRow.alignInfoColumns(in: rows)
         return card
     }
 
@@ -674,10 +675,14 @@ extension AppDelegate {
             trailing.append(allow)
         }
         trailing.append(toggle)
-        let row = NSStackView(views: [labels] + trailing)
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
+        // 控件列可能是「允许…」加开关两件，装进一个栈当这一行的控件；ⓘ 仍由行容器对齐。
+        let controls = NSStackView(views: trailing)
+        controls.orientation = .horizontal
+        controls.alignment = .centerY
+        controls.spacing = 10
+        controls.setContentHuggingPriority(.required, for: .horizontal)
+        controls.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let row = WS2SettingsRow(content: labels, control: controls)
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
@@ -719,19 +724,11 @@ extension AppDelegate {
         toggle.action = action
         toggle.setAccessibilityLabel(accessibleName)
         toggle.controlSize = .regular
-        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let row = NSStackView(views: [labels, toggle])
+        let row = WS2SettingsRow(content: labels, control: toggle)
         NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -14),
-            toggle.trailingAnchor.constraint(equalTo: row.trailingAnchor),
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
             labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: minHeight).isActive = true
         return row
@@ -749,22 +746,11 @@ extension AppDelegate {
     }
 
     func makeUnifiedControlRow(labels: NSStackView, minHeight: CGFloat, control: NSView) -> NSView {
-        (control as? NSControl)?.sizeToFit()
-        control.setContentHuggingPriority(.required, for: .horizontal)
-        control.setContentCompressionResistancePriority(.required, for: .horizontal)
-        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let row = NSStackView(views: [labels, control])
+        let row = WS2SettingsRow(content: labels, control: control)
         NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-            control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
             labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: minHeight).isActive = true
         return row
@@ -797,16 +783,7 @@ extension AppDelegate {
             ? WSL10n.text("settings.common.grantedA11y", zh: "%@，已授权，打开设置", name)
             : WSL10n.text("settings.common.grantA11y", zh: "%@，去授权", name))
         chip.setContentHuggingPriority(.required, for: .horizontal)
-        let trailing = chip
-        let row = NSStackView(views: [labels, trailing])
-        NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: trailing.leadingAnchor, constant: -12),
-            trailing.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-        ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 12
+        let row = WS2SettingsRow(content: labels, control: chip, spacing: 12)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
     }

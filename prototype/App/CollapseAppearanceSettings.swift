@@ -82,24 +82,13 @@ extension AppDelegate {
 
     /// 和 Preferences.swift 里的设置行同一个样子：左边名字和一句说明，右边控件。
     private func makeCollapseSettingsRow(name: SettingsText, subtitle: SettingsText?, control: NSView) -> NSView {
-        (control as? NSControl)?.sizeToFit()
-        control.setContentHuggingPriority(.required, for: .horizontal)
-        control.setContentCompressionResistancePriority(.required, for: .horizontal)
         let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
         WS2SettingsCopy.pinInfoTrailing(labels)
-        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let row = NSStackView(views: [labels, control])
+        let row = WS2SettingsRow(content: labels, control: control)
         NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-            control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
             labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
