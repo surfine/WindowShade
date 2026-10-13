@@ -458,3 +458,36 @@ CarPlay 重连与解码错误、分割/侧拉把手读屏等；
 受影响 49 个 runner 补编 `WSL10n.swift` 后全 PASS（`run-part4-core-tests` 在 HEAD 上就编不过，属既有问题）。
 **仍未做**：这些未上线功能在 VM 里没有触发路径，只有目录级/编译级/单测证据，没有屏幕截图；
 已发布的 1.0.16 包里没有这些串（要不要为此再切一版由用户定）。
+
+---
+
+## 23. 第35–37批：设置面板收尾与三、四次同版本号重发（2026-10-13 夜 – 10-14 凌晨）
+
+**第35批**（提交 `2bd6284`）：撤回第34批 `content()` 里的 hugging 实验残迹；新增 `WS2SettingsCopy.pinInfoTrailing`
+把 ⓘ 钉在内容列右端（覆盖全部行构建器与页头豁免）；Conductor 页行从 String 路径迁到 `SettingsText`
+目录路径（修掉英文 16 字硬截与整页无图标）；`symbol(for:)` 词表 +17。
+
+**第36批**（提交 `c395338`）：`symbol(for:)` 词表再 +38（Effects 预览卡四行、Roll up 十五行、Shortcuts 排列区、
+Privacy/Updater 零散行），全部 `NSImage(systemSymbolName:)` 实测；`DuoSettingsWindow.makeRow` 补
+edgeInsets/行高 ≥48（Effects 页分隔线贴文字的根因）；21 条文案通俗化（zh 双写逐字同步、en 只改表、
+超预算走 shortEn）；棘轮 932 → 969。
+
+**重发第 3、4 次**（提交 `9a1c479`、`c4a2516`）：均以同版本号 1.0.16 覆盖——
+重建包 → 9 步包级门禁（DR 与原 1.0.16 逐字一致）→ `gh release upload --clobber` → `git tag -f` 强推
+→ appcast 条目重签 + 清单重签 → wrangler 部署 → README 双版数字同步 → 回下载哈希核对。
+第 3 次包 sha256 `10a85c6f…`（9,765,838B）、第 4 次 `852501c7…`（9,771,300B）。已知偏差同 §20：
+build 号不变，Sparkle 不主动提示已装的 1.0.16 用户。`sign_update` 工具在临时目录里丢过一次，
+用 `docs/update.md` 记的 Sparkle 2.10.0 发布包（sha256 `c2bf58aa…`）重解即可，不依赖任何 worktree。
+
+**第37批**（提交 `8f09898`）：新增 `WS2SettingsRow` 统一拼设置行（内容列 + 控件列，八处行构建器全改走它）；
+ⓘ 成列规则收敛为「同一张卡里按最宽的开关/按钮定一条竖线」——分段、弹窗、输入框和复合控件不参与定列，
+否则开关行上会留出上百点空档（实测：参与定列时 Roll up 全页 ⓘ 被一个 423pt 的控件拖到 x=1039，
+只认开关/按钮后全页回到 x=1560 且贴着开关）；侧栏 `Mouse & trackpad`（`computermouse`）与
+`Conductor`（`switch.2`）补图标（`WindowShadeSettingsSection.symbolName` 里这两节此前写死空串，
+用户截图点名的就是这个）；清掉上一批两条过期 shortEn。
+
+**注意**：棘轮现在是 **969/969**（顶到上限），下一次再加裸中文字面量必须同时说明理由并上调。
+
+**证据**：每批 `./prototype/build.sh --check` EXIT=0；离屏渲染逐页核对（`/tmp/shots-36c`、`/tmp/shots-44`）；
+`run-settings-tests.sh`、`run-localization-tests.sh` PASS；各次重发的门禁输出与回下载哈希记在对应提交信息里。
+本机 `/Applications/WindowShade.app` 已装 `8f09898` 的构建（就是第 4 次重发的那一份）。
