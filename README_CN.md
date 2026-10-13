@@ -42,7 +42,7 @@
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新的 ZIP，解压，把 `WindowShade.app` 拖进“应用程序”打开，按提示给权限。它住在菜单栏里，不占 Dock 位置。
 
 - **要 macOS 14 以上、Apple Silicon。** 没有 Intel 版。
-- **1.0.16 下载包：** ZIP 9.77 MB，解压后的应用文件合计 24.32 MB（十进制；文件系统实际占用可能不同）。包里多了更新器，所以比上一版大。
+- **1.0.16 下载包：** ZIP 9.77 MB，解压后的应用文件合计 25.10 MB（十进制；文件系统实际占用可能不同）。包里多了更新器，所以比上一版大。
 - **安装包还没公证。** 第一次打开如果被系统拦住，去“系统设置 → 隐私与安全性”点“仍要打开”。不用关掉系统的安全检查。
 - 每次发布都附 SHA-256 校验文件。每个版本改了什么，见 [更新记录](https://github.com/surfine/WindowShade/releases)。
 
