@@ -232,7 +232,7 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
     let reason: String
     private let native: LAAuthenticationView
     private let purpose = NSTextField(labelWithString: "")
-    private let cancelButton = NSButton(title: "取消", target: nil, action: nil)
+    private let cancelButton = NSButton(title: WSL10n.text("settings.common.cancel", zh: "取消"), target: nil, action: nil)
     private let check = AuthorizationCheckmark()
     private(set) var isConfirmed = false
     init(context: LAContext, reason: String) {
@@ -247,9 +247,9 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
         cancelButton.font = .systemFont(ofSize: 11); cancelButton.contentTintColor = .white.withAlphaComponent(0.65)
         cancelButton.target = self; cancelButton.action = #selector(cancelRequest)
         cancelButton.keyEquivalent = "\u{1b}"
-        check.setAccessibilityLabel("已确认"); check.isHidden = true
+        check.setAccessibilityLabel(WSL10n.text("auth.confirmed", zh: "已确认")); check.isHidden = true
         for view in [native, purpose, cancelButton, check] { addSubview(view) }
-        setAccessibilityLabel("WindowShade Touch ID 认证")
+        setAccessibilityLabel(WSL10n.text("auth.sheet.label", zh: "WindowShade Touch ID 认证"))
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
     override func layout() {

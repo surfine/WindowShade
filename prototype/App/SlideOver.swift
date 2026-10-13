@@ -102,7 +102,12 @@ final class SlideOverController {
     var chromeFrameAX: CGRect? { chrome.frameAX }
     var chromeHandleFrame: NSRect? { chrome.handleFrame }
     var chromeCornerRadius: CGFloat { chrome.cornerRadius }
-    var menuTitle: String { docked == nil ? "侧拉当前窗口" : (docked!.hidden ? "拉出侧拉的窗口" : "收起侧拉的窗口") }
+    var menuTitle: String {
+        docked == nil
+            ? WSL10n.text("slideOver.menu.start", zh: "侧拉当前窗口")
+            : (docked!.hidden ? WSL10n.text("slideOver.menu.pullOut", zh: "拉出侧拉的窗口")
+                              : WSL10n.text("slideOver.menu.putBack", zh: "收起侧拉的窗口"))
+    }
 
     // MARK: - 入口
 
@@ -149,7 +154,8 @@ final class SlideOverController {
         let size = current.size
         let chosen = preferred.flatMap { Self.neighborFree($0, screen) ? $0 : nil } ?? Self.side(for: current, on: screen)
         guard let side = chosen else {
-            if !owner.notch.announce("不能侧拉", detail: "两边都挨着别的屏幕", tone: .problem) {
+            if !owner.notch.announce(WSL10n.text("slideOver.cannot", zh: "不能侧拉"),
+                                        detail: WSL10n.text("pip.bothSides", zh: "两边都挨着别的屏幕"), tone: .problem) {
                 owner.quietNotice(WSL10n.text("notice.slideOver.bothSides", zh: "不能侧拉：两边都挨着别的屏幕"), kind: .problem, log: "slide-over: both sides have displays")
             }
             return
@@ -966,7 +972,7 @@ final class SlideOverTabView: NSView {
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil))
         setAccessibilityElement(true)
         setAccessibilityRole(.button)
-        setAccessibilityLabel("拉出侧拉的窗口")
+        setAccessibilityLabel(WSL10n.text("slideOver.menu.pullOut", zh: "拉出侧拉的窗口"))
     }
     override func accessibilityPerformPress() -> Bool { onReveal?(); return true }
     override func mouseEntered(with event: NSEvent) { hovering = true }

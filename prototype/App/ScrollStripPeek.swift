@@ -274,7 +274,7 @@ final class StripPeek {
         let content = GlanceContentView(frame: NSRect(origin: .zero, size: panelFrame.size),
                                         cardFrame: cardInPanel, pictureFrame: NSRect(origin: .zero, size: card.size),
                                         cornerRadius: max(4, SystemCornerRadius.window * scale),
-                                        staleText: "不是实时画面", accessibilityTitle: title)
+                                        staleText: WSL10n.text("notch.staleText", zh: "不是实时画面"), accessibilityTitle: title)
         panel.contentView = content
         panel.alphaValue = 0
         let current = Shown(sliver: sliver, panel: panel, content: content)

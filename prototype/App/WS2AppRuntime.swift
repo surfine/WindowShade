@@ -366,7 +366,9 @@ import Cocoa
         host.start()
         view.renderDevices(host.devices)
     }
-    var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
+    var menuTitle: String {
+        WSL10n.text("focus.menuPrefix", zh: "番茄钟 · %@", focus.model.compactText(at:clock.now()))
+    }
     /// 只把番茄钟摆出来。空闲时不开始计时。
     func showFocusStatus() {
         guard let owner, NotchController.isEnabled, NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }

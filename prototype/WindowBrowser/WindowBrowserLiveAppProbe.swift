@@ -85,13 +85,13 @@ final class WindowBrowserLiveAppProbe {
         let titles = items.map { $0.title }
         record("status menu has items", !items.isEmpty)
         print("live-app-probe: statusMenu items=\(items.count) titles=\(titles.joined(separator: " | "))")
-        guard let browserItem = items.first(where: { $0.title == "选择窗口…" }) else {
-            record("status menu contains 选择窗口…", false)
+        guard let browserItem = items.first(where: { $0.title == WSL10n.text("menu.chooseWindow", zh: "选择窗口…") }) else {
+            record("status menu contains the window browser item", false)
             dismissMenu()
             finish()
             return
         }
-        record("status menu contains 选择窗口…", true)
+        record("status menu contains the window browser item", true)
         record("选择窗口… is enabled", browserItem.enabled)
         guard AXUIElementPerformAction(browserItem.element, kAXPressAction as CFString) == .success else {
             record("选择窗口… answers AXPress", false)
@@ -110,7 +110,7 @@ final class WindowBrowserLiveAppProbe {
         let onScreen = panelOnScreen()
         let windows = appWindows(pid: targetPID)
         let titled = windows.map { (element: $0, title: axString($0, kAXTitleAttribute as String) ?? "") }
-        guard let panel = titled.first(where: { $0.title == "窗口选择" })?.element else {
+        guard let panel = titled.first(where: { $0.title == WSL10n.text("browser.panel.chooseTitle", zh: "窗口选择") })?.element else {
             if attempt < 12 {
                 retry(after: 0.2) { [self] in inspectPanel(attempt: attempt + 1) }
                 return
@@ -204,7 +204,7 @@ final class WindowBrowserLiveAppProbe {
         }
         retry(after: 0.4) { [self] in
             let items = collectMenuItems(from: item, depth: 0)
-            guard let browserItem = items.first(where: { $0.title == "选择窗口…" }) else {
+            guard let browserItem = items.first(where: { $0.title == WSL10n.text("menu.chooseWindow", zh: "选择窗口…") }) else {
                 postEscape()
                 completion(false)
                 return

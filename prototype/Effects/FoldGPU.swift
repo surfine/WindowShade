@@ -123,7 +123,7 @@ final class FoldGPU: @unchecked Sendable {
     guard let device = MTLCreateSystemDefaultDevice(),
       let queue = device.makeCommandQueue(maxCommandBufferCount: queueCapacity)
     else {
-      throw EffectError.unavailable("Metal 不可用")
+      throw EffectError.unavailable(WSL10n.text("fold.err.metalUnavailable", zh: "Metal 不可用"))
     }
     let library = try device.makeLibrary(URL: libraryURL())
     let descriptors = fragments.map { descriptor(library, fragment: $0) }
@@ -156,7 +156,7 @@ final class FoldGPU: @unchecked Sendable {
         results.lock.lock()
         results.states[index] = state
         if state == nil, results.error == nil {
-          results.error = error ?? EffectError.unavailable("渲染管线编译失败")
+          results.error = error ?? EffectError.unavailable(WSL10n.text("fold.err.pipeline", zh: "渲染管线编译失败"))
         }
         results.lock.unlock()
         group.leave()
@@ -167,7 +167,7 @@ final class FoldGPU: @unchecked Sendable {
     defer { results.lock.unlock() }
     if let error = results.error { throw error }
     return try results.states.map {
-      guard let state = $0 else { throw EffectError.unavailable("渲染管线编译失败") }
+      guard let state = $0 else { throw EffectError.unavailable(WSL10n.text("fold.err.pipeline", zh: "渲染管线编译失败")) }
       return state
     }
   }
@@ -308,7 +308,7 @@ enum FoldStillTexture {
       rowAlignment: device.minimumLinearTextureAlignment(for: .bgra8Unorm),
       pageSize: Int(getpagesize()))
     guard let buffer = device.makeBuffer(length: layout.length, options: .storageModeShared) else {
-      throw EffectError.unavailable("图像纹理分配失败")
+      throw EffectError.unavailable(WSL10n.text("fold.err.imageTexture", zh: "图像纹理分配失败"))
     }
     let base = buffer.contents()
     let path: Path
@@ -327,7 +327,7 @@ enum FoldStillTexture {
         let context = CGContext(
           data: base, width: width, height: height, bitsPerComponent: 8,
           bytesPerRow: layout.rowBytes, space: space, bitmapInfo: bitmapInfo.rawValue)
-      else { throw EffectError.unavailable("图像转换失败") }
+      else { throw EffectError.unavailable(WSL10n.text("fold.err.imageConvert", zh: "图像转换失败")) }
       context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
       path = .drawn
     }
@@ -339,7 +339,7 @@ enum FoldStillTexture {
       let texture = buffer.makeTexture(
         descriptor: descriptor, offset: 0, bytesPerRow: layout.rowBytes)
     else {
-      throw EffectError.unavailable("图像纹理分配失败")
+      throw EffectError.unavailable(WSL10n.text("fold.err.imageTexture", zh: "图像纹理分配失败"))
     }
     return (texture, path)
   }

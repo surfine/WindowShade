@@ -515,7 +515,7 @@ final class NativeProxyTitleContentView: NSView {
                                                           trafficLightSlots: trafficLightSlots)
 
         if hovered && textFrame.width > 180 {
-            let hint = NSAttributedString(string: "双击展开", attributes: [
+            let hint = NSAttributedString(string: WSL10n.text("bar.hint.doubleClick", zh: "双击展开"), attributes: [
                 .font: NSFont.systemFont(ofSize: 11),
                 .foregroundColor: NSColor.secondaryLabelColor,
             ])
@@ -580,7 +580,7 @@ final class TitleStripView: NSImageView {
                                                                    windowTitle: windowTitle))
         setAccessibilityHelp(PaperSurfaceAccessibility.stripHelp())
         setAccessibilityCustomActions([
-            NSAccessibilityCustomAction(name: "展开窗口") { [weak self] in
+            NSAccessibilityCustomAction(name: WSL10n.text("bar.action.unroll", zh: "展开窗口")) { [weak self] in
                 self?.accessibilityPerformPress() ?? false
             }
         ])
@@ -718,13 +718,13 @@ final class ClassicTitleStripView: NSView {
                                                                    windowTitle: windowTitle))
         setAccessibilityHelp(PaperSurfaceAccessibility.stripHelp())
         setAccessibilityCustomActions([
-            NSAccessibilityCustomAction(name: "展开窗口") { [weak self] in
+            NSAccessibilityCustomAction(name: WSL10n.text("bar.action.unroll", zh: "展开窗口")) { [weak self] in
                 self?.accessibilityPerformPress() ?? false
             },
-            NSAccessibilityCustomAction(name: "缩放窗口") { [weak self] in
+            NSAccessibilityCustomAction(name: WSL10n.text("bar.action.zoom", zh: "缩放窗口")) { [weak self] in
                 self?.performControlAction(.zoom) ?? false
             },
-            NSAccessibilityCustomAction(name: "关闭窗口") { [weak self] in
+            NSAccessibilityCustomAction(name: WSL10n.text("bar.action.close", zh: "关闭窗口")) { [weak self] in
                 self?.performControlAction(.close) ?? false
             },
         ])
@@ -735,9 +735,9 @@ final class ClassicTitleStripView: NSView {
 
     private func accessibilityLabel(for action: ClassicAction) -> String {
         switch action {
-        case .close: return "关闭窗口"
-        case .zoom: return "缩放窗口"
-        case .expand: return "展开窗口"
+        case .close: return WSL10n.text("bar.action.close", zh: "关闭窗口")
+        case .zoom: return WSL10n.text("bar.action.zoom", zh: "缩放窗口")
+        case .expand: return WSL10n.text("bar.action.unroll", zh: "展开窗口")
         }
     }
 

@@ -455,7 +455,7 @@ final class NotchActivitySources {
                       [kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE].contains(transport),
                       let name = Self.string(device, kAudioObjectPropertyName), name.localizedCaseInsensitiveContains("AirPods") else { continue }
                 airPods.append(NotchSourceSnapshot(kind: .airPods, title: name,
-                    subtitle: device == output ? "已连接 · 当前声音输出" : "已连接", symbol: "airpodspro",
+                    subtitle: device == output ? WSL10n.text("source.airpods.connected.current", zh: "已连接 · 当前声音输出") : WSL10n.text("source.connected", zh: "已连接"), symbol: "airpodspro",
                     progress: nil, isPaused: false, detail: ""))
                 break
             }
@@ -477,9 +477,9 @@ final class NotchActivitySources {
                     let input = Self.uint(object, kAudioProcessPropertyIsRunningInput) == 1
                     let state = Self.uint(object, kAudioProcessPropertyPID).flatMap { Self.recordingState(pid: pid_t($0)) }
                     if input || state != nil {
-                        result.append(NotchSourceSnapshot(kind: .recording, title: "语音备忘录",
-                            subtitle: state == true ? "录音已暂停" : (state == false ? "正在录音" : "麦克风使用中"),
-                            symbol: "waveform", progress: nil, isPaused: state == true, detail: "打开语音备忘录查看录音"))
+                        result.append(NotchSourceSnapshot(kind: .recording, title: WSL10n.text("source.voiceMemos", zh: "语音备忘录"),
+                            subtitle: state == true ? WSL10n.text("source.recording.paused", zh: "录音已暂停") : (state == false ? WSL10n.text("source.recording.recording", zh: "正在录音") : WSL10n.text("source.recording.micBusy", zh: "麦克风使用中")),
+                            symbol: "waveform", progress: nil, isPaused: state == true, detail: WSL10n.text("launchpad.openVoiceMemos", zh: "打开语音备忘录查看录音")))
                     }
                 }
             }

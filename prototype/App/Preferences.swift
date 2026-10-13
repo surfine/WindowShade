@@ -432,11 +432,11 @@ extension AppDelegate {
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.common.group.permissions", zh: "权限")))
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能"),
-                                     subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: "找到、移动和恢复窗口"),
+                                     subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")),
                                      granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
                                      name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
-                                     subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: "截取窗口画面做预览"),
+                                     subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览")),
                                      granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
         ])
         stack.addArrangedSubview(permissions)
@@ -524,7 +524,7 @@ extension AppDelegate {
         if !WS2SilentPhraseStore.save(profile) {
             // 和别的命令撞词了：不保存，退回原值并说明。
             NSApp.presentError(NSError(domain: "WindowShade.Silent", code: 1,
-                                       userInfo: [NSLocalizedDescriptionKey: "两条命令不能用同一个词"]))
+                                       userInfo: [NSLocalizedDescriptionKey: WSL10n.text("prefs.err.sameWord", zh: "两条命令不能用同一个词")]))
             sender.stringValue = WS2SilentPhraseStore.load().words[id] ?? ""
         }
     }
@@ -598,10 +598,10 @@ extension AppDelegate {
     func makePermissionDesignSample() -> NSView {
         makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                subtitle: "找到、移动和恢复窗口", granted: false,
+                subtitle: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口"), granted: false,
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
-                subtitle: "截取窗口画面做预览", granted: true,
+                subtitle: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览"), granted: true,
                 action: #selector(openScreenRecordingSettingsAction)),
         ])
     }
@@ -1046,7 +1046,7 @@ extension AppDelegate {
         guard value.isEmpty || value.lowercased().hasPrefix("ws://") || value.lowercased().hasPrefix("wss://") else {
             // 不像地址就不存：全屏还按原来的配置走，输入框退回已保存的值。
             NSApp.presentError(NSError(domain: "WindowShade.CarPlay", code: 1,
-                                       userInfo: [NSLocalizedDescriptionKey: "接收器地址要以 ws:// 或 wss:// 开头"]))
+                                       userInfo: [NSLocalizedDescriptionKey: WSL10n.text("prefs.err.receiverScheme", zh: "接收器地址要以 ws:// 或 wss:// 开头")]))
             sender.stringValue = CarPlaySurfaceController.receiverEndpoint ?? ""
             return
         }
@@ -1280,10 +1280,10 @@ extension AppDelegate {
         }
         var rows = [
             makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能"),
-                subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: "找到、移动和恢复窗口"), granted: ax,
+                subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")), granted: ax,
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
-                subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: "截取窗口画面做预览"), granted: screen,
+                subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览")), granted: screen,
                 action: #selector(openScreenRecordingSettingsAction)),
         ]
         // 第三行：日程（CAL-4）。可有可无，不算进"还差几步"；点了"允许"才问系统，拒绝之后整行不出。

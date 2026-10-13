@@ -55,7 +55,7 @@ final class SafariStylePreviewView: NSView {
         windowTitleForAccessibility = title
         let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
         setAccessibilityLabel(PaperSurfaceAccessibility.previewLabel(windowTitle: clean))
-        toolTip = clean.isEmpty ? "窗口预览" : clean
+        toolTip = clean.isEmpty ? WSL10n.text("pin.panel.shortTitle", zh: "窗口预览") : clean
     }
 
     /// 诊断/回归：当前实际使用的材质与最近一次应用的外观读数。

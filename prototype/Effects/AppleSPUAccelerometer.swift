@@ -22,10 +22,10 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
 
     var message: String {
       switch self {
-      case .searching: return "空间倾斜传感器正在连接…"
-      case .connected: return "空间倾斜传感器已连接"
-      case .unavailable(let reason): return "空间倾斜不可用：\(reason)"
-      case .stopped: return "空间倾斜传感器未启用"
+      case .searching: return WSL10n.text("tilt.connecting", zh: "空间倾斜传感器正在连接…")
+      case .connected: return WSL10n.text("tilt.connected", zh: "空间倾斜传感器已连接")
+      case .unavailable(let reason): return WSL10n.text("tilt.unavailable", zh: "空间倾斜不可用：%@", reason)
+      case .stopped: return WSL10n.text("tilt.off", zh: "空间倾斜传感器未启用")
       }
     }
   }
@@ -136,7 +136,7 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
     // for reports. IOHIDManagerOpen alone succeeds while producing no input
     // callbacks, which used to surface as “无法读取原始传感器报告”.
     guard (wakeDriver?() ?? wakeSensorDriver()) else {
-      deliver(.unavailable("系统未能唤醒 Apple Silicon 传感器"), token: token)
+      deliver(.unavailable(WSL10n.text("tilt.err.wake", zh: "系统未能唤醒 Apple Silicon 传感器")), token: token)
       return
     }
 
@@ -165,7 +165,7 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
     guard result == kIOReturnSuccess else {
       // Open 失败：从没激活过，不 Cancel；这份 context 引用也没人会释放，这里自己还回去。
       Unmanaged<AppleSPUAccelerometer>.fromOpaque(context).release()
-      deliver(.unavailable("系统拒绝访问 HID 设备"), token: token)
+      deliver(.unavailable(WSL10n.text("tilt.err.hid", zh: "系统拒绝访问 HID 设备")), token: token)
       return
     }
     // 回调里用的是 passRetained 出去的那一份引用，由取消句柄释放，避免 close 之后回调晚到踩到已释放对象。
@@ -179,7 +179,7 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
 
     let devices = (IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>) ?? []
     guard !devices.isEmpty else {
-      deliver(.unavailable("未检测到 Apple Silicon 加速度计"), token: token)
+      deliver(.unavailable(WSL10n.text("tilt.err.noAccelerometer", zh: "未检测到 Apple Silicon 加速度计")), token: token)
       return
     }
 
@@ -188,7 +188,7 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
     // arrives; a later report can recover the status without restarting the app.
     let timeout = DispatchWorkItem { [weak self] in
       guard let self, self.current(token), !self.hasReading else { return }
-      self.deliver(.unavailable("无法读取原始传感器报告"), token: token)
+      self.deliver(.unavailable(WSL10n.text("tilt.err.unreadable", zh: "无法读取原始传感器报告")), token: token)
     }
     self.timeout = timeout
     queue.asyncAfter(deadline: .now() + 2.5, execute: timeout)

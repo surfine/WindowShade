@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/process-file-hygiene
 swiftc -swift-version 6 -parse-as-library -O -module-cache-path "$(pwd)/.build/module-cache" \
-  prototype/App/AirPodsBatterySource.swift prototype/Core/DeviceBattery.swift prototype/Core/BluetoothBatteryParse.swift \
+  prototype/Core/WSL10n.swift prototype/App/AirPodsBatterySource.swift prototype/Core/DeviceBattery.swift prototype/Core/BluetoothBatteryParse.swift \
   prototype/Recovery/DurableShadeJournal.swift \
   prototype/Effects/AppleSPUAccelerometer.swift prototype/Effects/FoldDriver.swift prototype/Core/MotionTilt.swift prototype/Core/FlickMotion.swift \
   tests/ProcessFileHygieneTests.swift -o .build/process-file-hygiene/run

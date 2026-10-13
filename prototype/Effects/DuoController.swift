@@ -388,7 +388,7 @@ final class DuoController: NSObject {
           return
         }
         guard let filter else {
-          throw EffectError.unavailable("无法从捕获中排除效果窗口")
+          throw EffectError.unavailable(WSL10n.text("duo.err.cannotExcludeWindow", zh: "无法从捕获中排除效果窗口"))
         }
         let width = screen.frame.width * screen.backingScaleFactor
         let height = width * screen.frame.height / screen.frame.width

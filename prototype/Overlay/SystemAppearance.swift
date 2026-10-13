@@ -403,17 +403,19 @@ enum SystemSettingsLinks {
 enum PaperSurfaceAccessibility {
     static func stripLabel(appName: String, windowTitle: String) -> String {
         let title = displayTitle(appName: appName, windowTitle: windowTitle)
-        return "WindowShade 卷帘：\(title)"
+        return WSL10n.text("bar.window.title", zh: "WindowShade 卷帘：%@", title)
     }
 
     static func stripHelp() -> String {
-        "双击展开窗口；也可以用标题栏上的按钮关闭、缩放或展开。"
+        WSL10n.text("bar.a11y.help", zh: "双击展开窗口；也可以用标题栏上的按钮关闭、缩放或展开。")
     }
 
     /// 状态栏按钮的可访问性值：读成“没有折叠的窗口 / N 个折叠窗口”，
     /// 而不是一个孤立的数字。
     static func statusItemValue(foldedCount: Int) -> String {
-        foldedCount <= 0 ? "没有收起的窗口" : "\(foldedCount) 个收起的窗口"
+        foldedCount <= 0
+            ? WSL10n.text("bar.a11y.noFolded", zh: "没有收起的窗口")
+            : WSL10n.text("bar.a11y.foldedCount", zh: "%@ 个收起的窗口", String(foldedCount))
     }
 
     static let statusItemLabel = "WindowShade"
@@ -433,13 +435,14 @@ enum PaperSurfaceAccessibility {
 
     static func previewLabel(windowTitle: String) -> String {
         let clean = windowTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        return clean.isEmpty ? "窗口预览" : "窗口预览：\(clean)"
+        return clean.isEmpty ? WSL10n.text("pin.panel.shortTitle", zh: "窗口预览")
+                              : WSL10n.text("bar.window.previewTitle", zh: "窗口预览：%@", clean)
     }
 
     private static func displayTitle(appName: String, windowTitle: String) -> String {
         let cleanApp = appName.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanTitle = windowTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        if cleanTitle.isEmpty { return cleanApp.isEmpty ? "窗口" : cleanApp }
+        if cleanTitle.isEmpty { return cleanApp.isEmpty ? WSL10n.text("menu.window", zh: "窗口") : cleanApp }
         if cleanApp.isEmpty { return cleanTitle }
         return "\(cleanApp) — \(cleanTitle)"
     }

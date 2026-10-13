@@ -26,7 +26,11 @@ struct FocusTimer: Sendable {
         let restMinutes: Int
         /// 专注完成时是“今天第几个”（含刚完成的这个）；休息结束时不用。
         let nth: Int
-        var title: String { kind == .focusDone ? "休息 \(restMinutes) 分钟" : "休息好了" }
+        var title: String {
+        kind == .focusDone
+            ? WSL10n.text("focus.restFor", zh: "休息 %@ 分钟", String(restMinutes))
+            : WSL10n.text("focus.restDone", zh: "休息好了")
+    }
         var detail: String { kind == .focusDone ? "专注完成 · 今天第 \(nth) 个" : "再来一个？" }
         var symbol: String { kind == .focusDone ? "cup.and.saucer" : "play.circle.fill" }
         /// 停留秒数：专注结束 2.4，休息结束 5（要给人点“再来一个”的时间）。

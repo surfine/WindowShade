@@ -141,7 +141,7 @@ struct DeviceBatteryBook: Sendable {
     if let previous = readings[key], previous.provider == reading.provider,
        previous.providerEpoch == reading.providerEpoch, reading.receivedAt < previous.receivedAt { return [] }
     guard let percent = BatteryReading.validPercent(reading.percent) else {
-      if readings[key] == nil { unknownReason[key] = "未知" }
+      if readings[key] == nil { unknownReason[key] = WSL10n.text("battery.unknown", zh: "未知") }
       return []
     }
     unknownReason.removeValue(forKey: key)
@@ -214,7 +214,7 @@ struct DeviceBatteryBook: Sendable {
       lastSeen: lastSeen[deviceID],
       sampledAt: percent == nil ? nil : reading.flatMap { $0.sourceObservedAt ?? $0.receivedAt },
       sampleMethod: reading?.sampleMethod ?? "", percent: percent,
-      unknownReason: percent == nil ? (unknownReason[key] ?? "未知") : nil, presence: presence)
+      unknownReason: percent == nil ? (unknownReason[key] ?? WSL10n.text("battery.unknown", zh: "未知")) : nil, presence: presence)
   }
 
   // MARK: 低电量
@@ -277,17 +277,17 @@ struct BatterySourceNote: Equatable, Sendable {
 
 enum BatterySources {
   static let notes: [BatterySourceNote] = [
-    BatterySourceNote(id: "hid.apple-peripheral", fact: "外设电量百分数",
+    BatterySourceNote(id: "hid.apple-peripheral", fact: WSL10n.text("battery.fact.peripheral", zh: "外设电量百分数"),
                       availability: .wired(method: "IOKit AppleDeviceManagementHIDEventService BatteryPercent", cadence: "120s")),
-    BatterySourceNote(id: "power.internal", fact: "这台 Mac 的电池百分数",
+    BatterySourceNote(id: "power.internal", fact: WSL10n.text("battery.fact.mac", zh: "这台 Mac 的电池百分数"),
                       availability: .wired(method: "IOPSCopyPowerSourcesInfo", cadence: "system push")),
-    BatterySourceNote(id: "airpods.left", fact: "左耳电量", availability: .unproven),
-    BatterySourceNote(id: "airpods.right", fact: "右耳电量", availability: .unproven),
-    BatterySourceNote(id: "airpods.case", fact: "充电盒电量", availability: .unproven),
-    BatterySourceNote(id: "phone", fact: "iPhone 电量", availability: .unproven),
-    BatterySourceNote(id: "tablet", fact: "iPad 电量", availability: .unproven),
-    BatterySourceNote(id: "watch", fact: "Apple Watch 电量", availability: .unproven),
-    BatterySourceNote(id: "vision", fact: "Vision Pro 电量", availability: .unproven),
+    BatterySourceNote(id: "airpods.left", fact: WSL10n.text("battery.fact.leftEar", zh: "左耳电量"), availability: .unproven),
+    BatterySourceNote(id: "airpods.right", fact: WSL10n.text("battery.fact.rightEar", zh: "右耳电量"), availability: .unproven),
+    BatterySourceNote(id: "airpods.case", fact: WSL10n.text("battery.fact.case", zh: "充电盒电量"), availability: .unproven),
+    BatterySourceNote(id: "phone", fact: WSL10n.text("battery.fact.phone", zh: "iPhone 电量"), availability: .unproven),
+    BatterySourceNote(id: "tablet", fact: WSL10n.text("battery.fact.tablet", zh: "iPad 电量"), availability: .unproven),
+    BatterySourceNote(id: "watch", fact: WSL10n.text("battery.fact.watch", zh: "Apple Watch 电量"), availability: .unproven),
+    BatterySourceNote(id: "vision", fact: WSL10n.text("battery.fact.vision", zh: "Vision Pro 电量"), availability: .unproven),
   ]
 
   /// 充电盒只用自己的读数。左右耳再完整也不拿来填盒子。
@@ -359,7 +359,7 @@ enum InternalBattery {
 
   static func displayName(_ sample: InternalBatterySample) -> String {
     let name = sample.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    if name.isEmpty || name.hasPrefix("InternalBattery") { return "这台 Mac" }
+    if name.isEmpty || name.hasPrefix("InternalBattery") { return WSL10n.text("battery.thisMac", zh: "这台 Mac") }
     return name
   }
 }

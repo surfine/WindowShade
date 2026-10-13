@@ -9,7 +9,7 @@ swiftc "$root/prototype/Core/WSL10n.swift" "$root/prototype/Core/WireJSON.swift"
   -o "$root/.build/notch-activity-tests/tests"
 "$root/.build/notch-activity-tests/tests"
 # 计划 2-1：正在播放推送流的解析器与退路决策（不启动子进程）。
-swiftc -swift-version 6 "$root/prototype/Core/NowPlayingStreamParser.swift" "$root/prototype/App/NotchActivityPollPolicy.swift" \
+swiftc -swift-version 6 "$root/prototype/Core/WSL10n.swift" "$root/prototype/Core/NowPlayingStreamParser.swift" "$root/prototype/App/NotchActivityPollPolicy.swift" \
   "$root/tests/NowPlayingStreamTests.swift" -o "$root/.build/notch-activity-tests/now-playing-tests"
 "$root/.build/notch-activity-tests/now-playing-tests"
 swiftc "$root/prototype/Core/WSL10n.swift" "$root/prototype/Core/WireJSON.swift" "$root/prototype/Core/UsageReading.swift" "$root/prototype/Core/NotchActivities.swift" "$root/prototype/Core/ReleaseDefaults.swift" "$root/prototype/Core/DownloadActivity.swift" "$root/prototype/Core/NotchSentence.swift" \

@@ -66,14 +66,16 @@ enum ScrollInstallPolicy: Sendable {
     }
 }
 
+/// 滚动安装状态的中文源句（第33批复核）：这些是**语义身份**，由设置面板映射到目录键后显示；
+/// Core 这一层不出英文，否则面板按身份映射会对不上（`WS2InputSettingsPane.inputState`）。
 enum InputStatusCopy: Sendable {
     static func scrollHold(_ block: ScrollInstallPolicy.Block) -> String {
         switch block {
-        case .off: return WSL10n.text("scroll.status.off", zh: "关着，不改滚动")
-        case .yielded(let name): return WSL10n.text("input.elig.byToolSpaced", zh: "由 %@ 接管", name)
-        case .wheelUnknown, .noConfirmedWheel: return WSL10n.text("scroll.status.wheelUnknown", zh: "还没确认是哪只鼠标")
-        case .sourceUnverified: return WSL10n.text("scroll.status.sourceUnverified", zh: "还没确认滚动来自哪只")
-        case .systemStopped: return WSL10n.text("scroll.status.systemStopped", zh: "系统停掉了，滚动保持原样")
+        case .off: return "关着，不改滚动"
+        case .yielded(let name): return "由 \(name) 接管"
+        case .wheelUnknown, .noConfirmedWheel: return "还没确认是哪只鼠标"
+        case .sourceUnverified: return "还没确认滚动来自哪只"
+        case .systemStopped: return "系统停掉了，滚动保持原样"
         }
     }
 
@@ -81,7 +83,7 @@ enum InputStatusCopy: Sendable {
         guard on else { return offPhrase }
         switch decision {
         case .install: return onPhrase
-        case .hold(.off): return WSL10n.text("scroll.status.turnOnFirst", zh: "先打开平滑滚动或滚动方向")
+        case .hold(.off): return "先打开平滑滚动或滚动方向"
         case .hold(let block): return scrollHold(block)
         }
     }

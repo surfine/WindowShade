@@ -181,7 +181,7 @@ struct NowPlayingCardContent: Equatable, Sendable {
 
     var spoken: String {
         var text = artist.isEmpty ? title : "\(title)，\(artist)"
-        text += isPaused ? "，已暂停" : "，正在播放"
+        text += isPaused ? WSL10n.text("nowPlaying.suffix.paused", zh: "，已暂停") : WSL10n.text("nowPlaying.suffix.playing", zh: "，正在播放")
         return text
     }
 }
@@ -224,10 +224,12 @@ enum NowPlayingCardText {
     static func spokenProgress(position: Double, duration: Double?) -> String {
         func words(_ value: Double) -> String {
             let total = Int(max(0, value)), minutes = total / 60, seconds = total % 60
-            return minutes > 0 ? "\(minutes) 分 \(seconds) 秒" : "\(seconds) 秒"
+            return minutes > 0 ? WSL10n.text("nowPlaying.duration.both", zh: "%@ 分 %@ 秒", String(minutes), String(seconds))
+                              : WSL10n.text("nowPlaying.duration.seconds", zh: "%@ 秒", String(seconds))
         }
-        guard let duration else { return "直播，已播 " + words(position) }
-        return "已播 " + words(position) + "，剩余 " + words(max(0, (duration - position).rounded(.up)))
+        guard let duration else { return WSL10n.text("nowPlaying.liveElapsed", zh: "直播，已播 %@", words(position)) }
+        return WSL10n.text("nowPlaying.elapsedRemaining", zh: "已播 %@，剩余 %@",
+                             words(position), words(max(0, (duration - position).rounded(.up))))
     }
 }
 
@@ -399,7 +401,7 @@ enum AudioOutputList {
     }
 
     /// 读屏念的话：“播放到 AirPods Pro”。
-    static func spokenSelection(_ route: AudioOutputRoute) -> String { "播放到 \(route.name)" }
+    static func spokenSelection(_ route: AudioOutputRoute) -> String { WSL10n.text("nowPlaying.playToName", zh: "播放到 \(route.name)") }
 }
 
 // MARK: - 推送流判坏

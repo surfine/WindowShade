@@ -15,7 +15,7 @@ final class GlancePanel: NSPanel {
                    styleMask: [.borderless, .nonactivatingPanel],
                    backing: .buffered,
                    defer: false)
-        title = "WindowShade 看一眼"
+        title = WSL10n.text("glance.panel.title", zh: "WindowShade 看一眼")
         level = .floating
         collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary, .moveToActiveSpace]
         isOpaque = false
@@ -107,8 +107,8 @@ final class GlanceContentView: NSView {
 
         setAccessibilityElement(true)
         setAccessibilityRole(.image)
-        setAccessibilityLabel("看一眼：\(accessibilityTitle)")
-        setAccessibilityHelp("单击打开这个窗口")
+        setAccessibilityLabel(WSL10n.text("glance.panel.a11y", zh: "看一眼：\(accessibilityTitle)"))
+        setAccessibilityHelp(WSL10n.text("glance.panel.help", zh: "单击打开这个窗口"))
     }
 
     required init?(coder: NSCoder) { nil }
@@ -211,7 +211,7 @@ final class GlanceContentView: NSView {
 
     private func refreshPlaceholder() {
         let nothing = !hasSnapshot && !isLive
-        message.stringValue = nothing ? "画面暂时看不到" : ""
+        message.stringValue = nothing ? WSL10n.text("glance.noPicture", zh: "画面暂时看不到") : ""
         message.isHidden = !nothing
         if isLive { badge.isHidden = true }
         applySystemAppearance()

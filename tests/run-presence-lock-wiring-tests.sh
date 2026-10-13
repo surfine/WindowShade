@@ -6,7 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/presence-lock-wiring"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/SessionLockState.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/SessionLockState.swift" \
   "$ROOT/prototype/Core/PresenceLock.swift" "$ROOT/prototype/Core/PresenceLockGlue.swift" \
   "$ROOT/prototype/Core/WS2AwaySimulation.swift" "$ROOT/prototype/Core/WS2LockRequestPolicy.swift" \
   "$ROOT/prototype/App/WS2URLHandler.swift" \

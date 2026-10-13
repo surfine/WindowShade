@@ -99,7 +99,7 @@ import MetalKit
     let transparent = MTLTextureDescriptor.texture2DDescriptor(
       pixelFormat: .bgra8Unorm, width: 1, height: 1, mipmapped: false)
     guard let texture = device.makeTexture(descriptor: transparent) else {
-      throw EffectError.unavailable("纹理分配失败")
+      throw EffectError.unavailable(WSL10n.text("fold.err.texture", zh: "纹理分配失败"))
     }
     var zero: UInt32 = 0
     texture.replace(
@@ -109,7 +109,7 @@ import MetalKit
     view = MTKView(frame: CGRect(origin: .zero, size: size), device: device)
     super.init()
     guard CVMetalTextureCacheCreate(nil, nil, device, nil, &cache) == kCVReturnSuccess else {
-      throw EffectError.unavailable("纹理缓存分配失败")
+      throw EffectError.unavailable(WSL10n.text("fold.err.textureCache", zh: "纹理缓存分配失败"))
     }
     view.colorPixelFormat = .bgra8Unorm
     view.colorspace = colorSpace.cg
@@ -349,7 +349,7 @@ import MetalKit
           == kCVReturnSuccess,
         let wrapped
       else {
-        onFailure?(EffectError.unavailable("捕获纹理不可用"))
+        onFailure?(EffectError.unavailable(WSL10n.text("fold.err.captureTexture", zh: "捕获纹理不可用")))
         return
       }
       source = CVMetalTextureGetTexture(wrapped)
@@ -384,7 +384,7 @@ import MetalKit
       opticalSurface = device.makeTexture(descriptor: descriptor)
     }
     guard let opticalSurface else {
-      onFailure?(EffectError.unavailable("光学纹理分配失败"))
+      onFailure?(EffectError.unavailable(WSL10n.text("fold.err.opticalTexture", zh: "光学纹理分配失败")))
       return
     }
     let hasMotion = hypot(parameters.motionX, parameters.motionY) > 0.0001
@@ -406,7 +406,7 @@ import MetalKit
         pageTexture = device.makeTexture(descriptor: descriptor)
       }
       guard let pageTexture else {
-        onFailure?(EffectError.unavailable("光学纹理分配失败"))
+        onFailure?(EffectError.unavailable(WSL10n.text("fold.err.opticalTexture", zh: "光学纹理分配失败")))
         return
       }
       let pageKey = FoldPageKey(
@@ -543,7 +543,7 @@ import MetalKit
         pageState.completed(rebuilt: rebuiltKey, success: completed)
         guard completed else {
           // 这一帧没成：page 金字塔可能没画完，已作废，下一帧重建，绝不拿它去离焦。
-          onFailure?(failure ?? EffectError.unavailable("GPU 呈现失败"))
+          onFailure?(failure ?? EffectError.unavailable(WSL10n.text("fold.err.present", zh: "GPU 呈现失败")))
           return
         }
         append(gpuMilliseconds, to: &gpuTimes)

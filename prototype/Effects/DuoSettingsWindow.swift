@@ -762,7 +762,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.setCustomSpacing(18, after: preview)
 
 
-    let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点一下或开始打字都能撤掉。")
+    let note = NSTextField(wrappingLabelWithString: WSL10n.text("duo.preview.note", zh: "实时预览默认关闭。按 Esc、点一下或开始打字都能撤掉。"))
     note.font = SystemAppearancePolicy.font(relativeToBody: -1)
     note.textColor = .secondaryLabelColor
     note.maximumNumberOfLines = 2
@@ -1000,7 +1000,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     }
     guard CGPreflightScreenCaptureAccess() else {
       live.state = .off
-      captureMessage = "实时预览需要屏幕录制权限。"
+      captureMessage = WSL10n.text("duo.preview.needsScreenRecording", zh: "实时预览需要屏幕录制权限。")
       refreshStatus(force: true)
       return
     }
@@ -1015,7 +1015,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         guard epoch.accepts(token), !Task.isCancelled,
           let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
           let own = content.applications.first(where: { $0.processID == getpid() })
-        else { throw EffectError.unavailable("内建屏幕不可用") }
+        else { throw EffectError.unavailable(WSL10n.text("duo.err.noInternalDisplay", zh: "内建屏幕不可用")) }
         capture.onContentUnavailable = { [weak self] in
           guard let self, epoch.accepts(token) else { return }
           suspendPreview()
@@ -1082,12 +1082,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     guard force || now - lastStatusAt > 0.2 else { return }
     guard let controller else { return }
     lastStatusAt = now
-    pause.title = controller.pausedByUser ? "继续" : "暂停"
+    pause.title = controller.pausedByUser ? WSL10n.text("notch.action.resume", zh: "继续") : WSL10n.text("notch.action.pause", zh: "暂停")
     let reading = controller.angle.map { String(format: "%.0f°", $0) } ?? "—"
-    let permission = CGPreflightScreenCaptureAccess() ? "" : " · 需要屏幕录制权限"
+    let permission = CGPreflightScreenCaptureAccess() ? "" : WSL10n.text("duo.status.needsScreenRecording", zh: " · 需要屏幕录制权限")
     let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-      ? " · 减少动态效果已暂停动画" : ""
-    let paused = controller.pausedByUser ? " · 效果已暂停" : ""
+      ? WSL10n.text("duo.status.reduceMotion", zh: " · 减少动态效果已暂停动画") : ""
+    let paused = controller.pausedByUser ? WSL10n.text("duo.status.paused", zh: " · 效果已暂停") : ""
     status.stringValue = captureMessage
       ?? "设置合盖桌面效果与窗口收起动画。\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)"
   }
