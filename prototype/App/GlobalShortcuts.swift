@@ -111,51 +111,54 @@ enum GlobalShortcut: String, CaseIterable {
         }
     }
 
-    /// 设置页与冲突提示里的名字。
-    var title: String {
+    /// 设置页与冲突提示里的名字：名与说明一起走英文行长预算（SettingsText）。
+    var titleText: SettingsText {
         switch self {
-        case .toggleShade: return "收起或展开当前窗口"
-        case .arrangeOrFocus: return "整理卷帘条"
-        case .pinPreview: return "置顶或取消置顶当前窗口"
-        case .windowBrowser: return "选择窗口…"
-        case .carry: return "把当前窗口带到每张桌面"
-        case .stepSmaller: return "变小一级"
-        case .stepLarger: return "变大一级"
-        case .leftHalf: return "左半屏"
-        case .rightHalf: return "右半屏"
-        case .slideOver: return "侧拉当前窗口"
-        case .launchpad: return "打开启动台"
-        case .suspendPins: return "暂时取消全部置顶"
-        case .magicTile: return "魔法平铺"
-        case .nextDisplay: return "移到另一块屏幕"
-        case .tuckAll: return "全部收进刘海"
-        case .tuckCurrent: return "收进刘海"
-        case .topHalf: return "上半屏"
-        case .bottomHalf: return "下半屏"
-        case .topLeft: return "左上角"
-        case .topRight: return "右上角"
-        case .bottomLeft: return "左下角"
-        case .bottomRight: return "右下角"
-        case .leftThird: return "左三分之一"
-        case .centerThird: return "中间三分之一"
-        case .rightThird: return "右三分之一"
-        case .leftTwoThirds: return "左三分之二"
-        case .rightTwoThirds: return "右三分之二"
-        case .fill: return "铺满屏幕"
-        case .fullHeight: return "高度占满"
-        case .larger: return "大一点"
-        case .smaller: return "小一点"
-        case .center: return "居中"
-        case .undoPlacement: return "撤销上次排布"
-        case .previousDisplay: return "移到上一块屏幕"
-        case .pictureInPicture: return "画中画当前窗口"
-        case .focusTimer: return "开始或暂停番茄钟"
-        case .notchShelf: return "展开刘海那一排"
-        case .joinColumnLeft: return "并进左边这一列"
-        case .joinColumnRight: return "并进右边这一列"
-        case .countdownTimer: return "开始计时器"
+        case .toggleShade: return WSL10n.setting("settings.shortcut.toggleShade", zh: "收起或展开当前窗口")
+        case .arrangeOrFocus: return WSL10n.setting("settings.shortcut.arrangeOrFocus", zh: "整理卷帘条")
+        case .pinPreview: return WSL10n.setting("settings.shortcut.pinPreview", zh: "置顶或取消置顶当前窗口")
+        case .windowBrowser: return WSL10n.setting("settings.shortcut.windowBrowser", zh: "选择窗口…")
+        case .carry: return WSL10n.setting("settings.shortcut.carry", zh: "把当前窗口带到每张桌面")
+        case .stepSmaller: return WSL10n.setting("settings.shortcut.stepSmaller", zh: "变小一级")
+        case .stepLarger: return WSL10n.setting("settings.shortcut.stepLarger", zh: "变大一级")
+        case .leftHalf: return WSL10n.setting("settings.shortcut.leftHalf", zh: "左半屏")
+        case .rightHalf: return WSL10n.setting("settings.shortcut.rightHalf", zh: "右半屏")
+        case .slideOver: return WSL10n.setting("settings.shortcut.slideOver", zh: "侧拉当前窗口")
+        case .launchpad: return WSL10n.setting("settings.shortcut.launchpad", zh: "打开启动台")
+        case .suspendPins: return WSL10n.setting("settings.shortcut.suspendPins", zh: "暂时取消全部置顶")
+        case .magicTile: return WSL10n.setting("settings.shortcut.magicTile", zh: "魔法平铺")
+        case .nextDisplay: return WSL10n.setting("settings.shortcut.nextDisplay", zh: "移到另一块屏幕")
+        case .tuckAll: return WSL10n.setting("settings.shortcut.tuckAll", zh: "全部收进刘海")
+        case .tuckCurrent: return WSL10n.setting("settings.shortcut.tuckCurrent", zh: "收进刘海")
+        case .topHalf: return WSL10n.setting("settings.shortcut.topHalf", zh: "上半屏")
+        case .bottomHalf: return WSL10n.setting("settings.shortcut.bottomHalf", zh: "下半屏")
+        case .topLeft: return WSL10n.setting("settings.shortcut.topLeft", zh: "左上角")
+        case .topRight: return WSL10n.setting("settings.shortcut.topRight", zh: "右上角")
+        case .bottomLeft: return WSL10n.setting("settings.shortcut.bottomLeft", zh: "左下角")
+        case .bottomRight: return WSL10n.setting("settings.shortcut.bottomRight", zh: "右下角")
+        case .leftThird: return WSL10n.setting("settings.shortcut.leftThird", zh: "左三分之一")
+        case .centerThird: return WSL10n.setting("settings.shortcut.centerThird", zh: "中间三分之一")
+        case .rightThird: return WSL10n.setting("settings.shortcut.rightThird", zh: "右三分之一")
+        case .leftTwoThirds: return WSL10n.setting("settings.shortcut.leftTwoThirds", zh: "左三分之二")
+        case .rightTwoThirds: return WSL10n.setting("settings.shortcut.rightTwoThirds", zh: "右三分之二")
+        case .fill: return WSL10n.setting("settings.shortcut.fill", zh: "铺满屏幕")
+        case .fullHeight: return WSL10n.setting("settings.shortcut.fullHeight", zh: "高度占满")
+        case .larger: return WSL10n.setting("settings.shortcut.larger", zh: "大一点")
+        case .smaller: return WSL10n.setting("settings.shortcut.smaller", zh: "小一点")
+        case .center: return WSL10n.setting("settings.shortcut.center", zh: "居中")
+        case .undoPlacement: return WSL10n.setting("settings.shortcut.undoPlacement", zh: "撤销上次排布")
+        case .previousDisplay: return WSL10n.setting("settings.shortcut.previousDisplay", zh: "移到上一块屏幕")
+        case .pictureInPicture: return WSL10n.setting("settings.shortcut.pictureInPicture", zh: "画中画当前窗口")
+        case .focusTimer: return WSL10n.setting("settings.shortcut.focusTimer", zh: "开始或暂停番茄钟")
+        case .notchShelf: return WSL10n.setting("settings.shortcut.notchShelf", zh: "展开刘海那一排")
+        case .joinColumnLeft: return WSL10n.setting("settings.shortcut.joinColumnLeft", zh: "并进左边这一列")
+        case .joinColumnRight: return WSL10n.setting("settings.shortcut.joinColumnRight", zh: "并进右边这一列")
+        case .countdownTimer: return WSL10n.setting("settings.shortcut.countdownTimer", zh: "开始计时器")
         }
     }
+
+    /// 设置页与冲突提示里的名字。
+    var title: String { titleText.shown }
 
     /// 各版本出厂就占着的组合：新装的一个都不占；1.0.15 及以前是 ⌃⌘C、0、P、G 和四个方向键；
     /// 1.0.16 测试版另占 ⌃⌘S、L、M、N、H。只用来让升级上来的人照原样用下去，不再给新装的。

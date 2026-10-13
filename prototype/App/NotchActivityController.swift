@@ -37,7 +37,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         if let title {
             // 收场按种类默认（留 4 秒）；只有走完一轮才会真的留，点结束走下面的立即收。
             put(id: "ws2.focus", kind: .focus, title: title, subtitle: subtitle, symbol: "timer", progress: .reported(progress), paused: paused,
-                trailing: trailing, finalLook: NotchActivity.FinalLook(title: "这一轮完成", symbol: "checkmark.circle.fill", trailing: "✓", clearsProgress: false))
+                trailing: trailing, finalLook: NotchActivity.FinalLook(title: WSL10n.text("notch.focus.roundDone", zh: "这一轮完成"), symbol: "checkmark.circle.fill", trailing: "✓", clearsProgress: false))
         } else if let old = store.live(id: "ws2.focus") {
             store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime, immediately: !finishedRound)
         }
@@ -61,7 +61,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             }
         } else {
             let remaining = timer.total > 0 ? Double(timer.remaining(at: now)) / Double(timer.total) : 0
-            put(id: Self.timerActivityID, kind: .timer, title: "计时器", subtitle: CountdownTimerText.subtitle(for: timer),
+            put(id: Self.timerActivityID, kind: .timer, title: WSL10n.text("notch.kind.timer", zh: "计时器"), subtitle: CountdownTimerText.subtitle(for: timer),
                 symbol: "timer", progress: .reported(timer.state == .done ? 1 : min(1, max(0, remaining))),
                 paused: timer.state == .paused, trailing: CountdownTimerText.ear(for: timer, at: now))
         }
@@ -133,7 +133,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         guard Self.isEnabled, !suspended else { return }
         configure()
         if connected {
-            put(id: "ws2.remote", kind: .remote, title: "iPhone 上的遥控器", subtitle: "", symbol: symbol, trailing: "")
+            put(id: "ws2.remote", kind: .remote, title: WSL10n.text("notch.remote.title", zh: "iPhone 上的遥控器"), subtitle: "", symbol: symbol, trailing: "")
         } else if let old = store.live(id: "ws2.remote") {
             store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime)
         }
@@ -554,7 +554,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         choosingFiles = true
         let epoch = operationEpoch
         let picker = NSOpenPanel()
-        picker.title = "隔空投送"; picker.prompt = "选择文件"
+        picker.title = WSL10n.text("silent.activity.airdrop", zh: "隔空投送")
+        picker.prompt = WSL10n.text("notch.airdrop.prompt", zh: "选择文件")
         picker.allowsMultipleSelection = true; picker.canChooseDirectories = true
         picker.begin { [weak self] response in
             MainActor.assumeIsolated {
@@ -576,12 +577,15 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         configure()
         guard running else { return }
         guard let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: items) else {
-            put(id: "owned.airDrop", kind: .airDrop, title: "隔空投送", subtitle: "没送出去",
+            put(id: "owned.airDrop", kind: .airDrop,
+                title: WSL10n.text("silent.activity.airdrop", zh: "隔空投送"),
+                subtitle: Self.shareOutcome(.failed),
                 symbol: "airdrop", expires: ProcessInfo.processInfo.systemUptime + 4)
             publish(); return
         }
         sharing = service; service.delegate = self
-        put(id: "owned.airDrop", kind: .airDrop, title: "隔空投送", subtitle: "",
+        put(id: "owned.airDrop", kind: .airDrop,
+            title: WSL10n.text("silent.activity.airdrop", zh: "隔空投送"), subtitle: "",
             symbol: "airdrop", progress: .indeterminate, trailing: "",
             stale: .at(NotchActivityKind.airDrop.staleAfter.map { ProcessInfo.processInfo.systemUptime + $0 }))
         publish()
@@ -590,19 +594,29 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
 
     func sharingService(_ sharingService: NSSharingService, didShareItems items: [Any]) {
         guard sharing === sharingService else { return }
-        finishShare("已送出")
+        finishShare(Self.shareOutcome(.sent))
     }
     func sharingService(_ sharingService: NSSharingService, didFailToShareItems items: [Any], error: Error) {
         guard sharing === sharingService else { return }
         // 你自己取消的不说，活动安静地收掉。
-        finishShare((error as NSError).code == NSUserCancelledError ? nil : "没送出去")
+        finishShare((error as NSError).code == NSUserCancelledError ? nil : Self.shareOutcome(.failed))
+    }
+    /// 隔空投送的两种收尾：句子和图标一起给，调用方不再拿中文句子比出该画哪个符号（第31批）。
+    enum ShareOutcome { case sent, failed }
+    private static func shareOutcome(_ outcome: ShareOutcome) -> String {
+        switch outcome {
+        case .sent: return WSL10n.text("say.sent", zh: "已送出")
+        case .failed: return WSL10n.text("notch.airdrop.failed", zh: "没送出去")
+        }
     }
     private func finishShare(_ text: String?) {
         sharing?.delegate = nil; sharing = nil
         let now = ProcessInfo.processInfo.systemUptime
         if let text {
-            put(id: "owned.airDrop", kind: .airDrop, title: "隔空投送", subtitle: text,
-                symbol: text == "已送出" ? "checkmark.circle.fill" : "airdrop", expires: now + 4, now: now)
+            let sent = text == Self.shareOutcome(.sent)
+            put(id: "owned.airDrop", kind: .airDrop,
+                title: WSL10n.text("silent.activity.airdrop", zh: "隔空投送"), subtitle: text,
+                symbol: sent ? "checkmark.circle.fill" : "airdrop", expires: now + 4, now: now)
         } else if let old = store.activities.first(where: { $0.id == "owned.airDrop" }) {
             store.end(id: old.id, generation: old.generation, now: now)
         }
@@ -612,13 +626,15 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     private func chooseRoute() {
         let epoch = operationEpoch
         let dialog = NSAlert()
-        dialog.messageText = "查看路线"
-        dialog.informativeText = "输入出发地和目的地。"
-        dialog.addButton(withTitle: "查找路线"); dialog.addButton(withTitle: "取消")
+        dialog.messageText = WSL10n.text("notch.route.title", zh: "查看路线")
+        dialog.informativeText = WSL10n.text("notch.route.prompt", zh: "输入出发地和目的地。")
+        dialog.addButton(withTitle: WSL10n.text("notch.route.find", zh: "查找路线"))
+        dialog.addButton(withTitle: WSL10n.text("notch.route.cancel", zh: "取消"))
         let form = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 66))
         let start = NSTextField(frame: NSRect(x: 0, y: 36, width: 320, height: 26))
         let end = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 26))
-        start.placeholderString = "出发地"; end.placeholderString = "目的地"
+        start.placeholderString = WSL10n.text("notch.route.from", zh: "出发地")
+        end.placeholderString = WSL10n.text("notch.route.to", zh: "目的地")
         form.addSubview(start); form.addSubview(end); dialog.accessoryView = form
         // Native modal panels keep the event loop running; no synchronous route I/O here.
         guard dialog.runModal() == .alertFirstButtonReturn else { return }
@@ -632,7 +648,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         routeEpoch += 1
         let epoch = routeEpoch
         routeTask?.cancel(); routeItems = []
-        put(id: "owned.route", kind: .route, title: to, subtitle: "正在查找路线", symbol: "map.fill")
+        put(id: "owned.route", kind: .route, title: to,
+            subtitle: WSL10n.text("notch.route.searching", zh: "正在查找路线"), symbol: "map.fill")
         publish()
         routeTask = Task { [weak self] in
             do {
@@ -649,13 +666,15 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
                 guard let self, self.running, self.routeEpoch == epoch, let route = directions.routes.first else { return }
                 self.routeItems = [a, b]
                 let minutes = max(1, Int(ceil(route.expectedTravelTime / 60)))
-                let distance = String(format: "%.1f 公里", route.distance / 1000)
+                let distance = WSL10n.text("notch.route.kilometers", zh: "%.1f 公里", route.distance / 1000)
                 self.put(id: "owned.route", kind: .route, title: b.name ?? to,
-                         subtitle: "预计 \(minutes) 分钟 · \(distance)", symbol: "car.fill", detail: "在地图中打开路线")
+                         subtitle: WSL10n.text("notch.route.estimate", zh: "预计 %@ 分钟 · %@", String(minutes), distance),
+                         symbol: "car.fill", detail: WSL10n.text("notch.route.openInMaps", zh: "在地图中打开路线"))
                 self.publish()
             } catch {
                 guard let self, self.running, self.routeEpoch == epoch, !Task.isCancelled else { return }
-                self.put(id: "owned.route", kind: .route, title: to, subtitle: "没能找到路线", symbol: "map.fill",
+                self.put(id: "owned.route", kind: .route, title: to,
+                         subtitle: WSL10n.text("notch.route.notFound", zh: "没能找到路线"), symbol: "map.fill",
                          expires: ProcessInfo.processInfo.systemUptime + 6)
                 self.publish()
             }

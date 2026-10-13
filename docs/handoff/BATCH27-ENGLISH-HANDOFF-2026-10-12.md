@@ -237,3 +237,165 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 4. **appcast（首个）**：从官方发布页取 Sparkle 2.10.0 工具并核对 SHA-256（`c2bf58aa…da0c`，逐字一致）；`sign_update`（account `windowshade`）签 zip 得 `edSignature`；新建 `site/public/appcast.xml`（1.0.16 条目，`sparkle:version 16`、minimumSystemVersion 14.0.0、hardwareRequirements arm64、enclosure 指向 Release 附件）并**给清单本身签名**（`SURequireSignedFeed`）；`site/scripts/build.mjs` 给 `_headers` 加 `/appcast.xml → Cache-Control: public, max-age=300`；站点 build+check（43 资产）→ `wrangler pages deploy` → **线上核对**：`/appcast.xml` HTTP 200、`application/xml`、Cache-Control 生效、`sign_update --verify` 退出 0、包 URL 200。
 5. **README 双版 + 官网**：下载数字改 1.0.16（ZIP 9.86 MB / 解压 24.57 MB，包里多了更新器）；"开发中"节改口径（1.0.16 已是当前下载版，实时活动/欢迎/隐私页/语言开关在列；未进的只剩英文其余表面、Touch ID、启动台手势、实验项）；官网 `content.mjs` facts 改 `1.0.16 · ZIP 9.86 MB`，`releases/latest` 已解析到 v1.0.16。
 6. **未做（等用户）**：beta 频道自用一天与分批推送（`phasedRolloutInterval`）——本版是第一个带更新器的版本，**现有用户不会自动收到**（1.0.15 不联网）；用户真机清单（gate-0B-verification.md 末节 5 项）仍建议在自用时过一遍；#39/#40 的 issue 回复草稿在 [issue-replies.md](../releases/v1.0.16-acceptance/issue-replies.md)，待用户发布。
+
+---
+
+## 17. 第30批：设置面板全量英文化 + 收拾（2026-10-13，用户两次追加"全量迁移至英文"）
+
+用户先把设置面板交来"收拾和整顿"，再追加"请你全量迁移至英文"。按 skill-desk 路由到 `emil-design-eng`（原生面板打磨归它；
+`design-taste-frontend` 只管网页、`minimalist-ui`/`high-end-visual-design` 要点名、`hig-*` 本机没装）。
+
+1. **副标题被截的根因与修复**：#39 加长的句子在中文侧没有短句条目，`line()` 会**硬截前 16 字**（"按住 Op"）。
+   修法照既有机制：全文留在目录里，行内由 `short` 表给回原短句，多一个 ⓘ 承载修饰键出口。
+2. **防漏网判据修正**（`tests/check-localizable.py`）：旧口径把 `WSL10n(zh:)` 的**身份源句**也算漏网，
+   于是"把行迁进目录"反而让计数上涨（本页实测裸字面量 66→5，旧口径总数却 +38）。新口径只数**没走目录的裸中文字面量**，
+   判据是收紧；基线同口径批前≈3200 → 本批 2317。
+3. **设置面板全量英文化**（本轮主体）：
+   - 鼠标与触控板页、遥控器页：72 键；两页行构建器从自建（16 字硬截、只有 tooltip）换成共享机制（行内一句 + ⓘ 详情）。
+   - 快捷键页、窗口浏览页、效果页、私人 App、有人在看、更新段（`UpdaterCopy` 58 条）全部进目录。
+   - **行构建器统一**：`GlobalShortcut.titleText`（逐 case 目录键）让行的**名**也走 `SettingsText`；
+     权限行加 `SettingsText` 重载——此前英文副标题被旧 String 路径的 16 字硬截（实拍 "Unpin every pin…"）。
+   - **隐私页整体**：面板/模型/值串进目录；**生成链**（`registry.json` 加条目级 `en`，生成器出 `WSL10n`，缺 en 逐字节回退）
+     译出 65 条登记项的 8 个字段 + 4 个分组标题，共 **520 条**。
+   - **看护也随语言**（用户要求不留缺口）：`build.sh` 把 `WSL10n.swift`/`InterfaceLanguage.swift` 加进看护源集合（都只依赖 Foundation），
+     编译好的 `Localization/en.lproj` 一并拷进看护包，看护入口按同一规则解析语言；新读的偏好已登记
+     `tools/privacy/registry.json`（隐私检查 730 处 PASS）。
+4. **结果**：目录 **1408 键**（中英齐全）、防漏网 **2317 行**、`--check`/`--stage` 编译全 PASS、
+   隐私登记与生成件同步 PASS、文案检查 PASS。VM 实拍（改前/改后）：鼠标与触控板页、快捷键页、
+   隐私页（含展开详情）全部英文，见 `docs/design-review/2026-10-13-settings-panel/`。
+5. **仍未覆盖（属 §9 其余表面，不在设置面板内）**：刘海通知 66 处 `quietNotice` 句子 + 按中文句子判语气的
+   `noticeTone`/`contains("权限")`（英文模式下会判错，需按语义改判据）；欢迎窗口的标题/授权页/进度行（~15 条）。
+   改动未提交未推送（未得指示不提交）。
+
+---
+
+## 18. 第31批：通知面 + 欢迎流程英文（2026-10-13，本 session；§17 第 5 条的两项清完，但有 not_run）
+
+用户："全量英文，谢谢"→"请你接着做完，谢谢"。§17 列的剩余两项（刘海通知 66 处 + 欢迎窗口）都做了，
+并在隔离 VM 里用 Computer Use 实拍英文。**注意：§9 的其它表面（菜单栏/状态菜单、刘海实时活动、
+窗口浏览面板、启动台、手势提示）仍是中文，本批没有碰；不写"英语已支持"。**
+
+### 18.1 通知面（本轮先做的部分）
+
+1. `quietNotice` 的语气不再**按中文句子猜**：新增 `NoticeKind { info, done, problem, needsPermission }`，
+   由调用点显式传（原来 `noticeTone(_:)` 判 `contains("权限")`，英文模式下必然判错，已删除）。
+2. 66 处调用点分 16 个文件迁进目录（`notice.*`：`fold/hotkey/carry/slideOver/launchpad/arrange/shade/
+   browser/focus/notch/rescue/loginAtLaunch/probe/foldGuard`…），拼接符 `notice.joiner` 单独给键
+   （en 是 `"; "`，不是 `"；"`）。
+3. 间接来源一并迁：`WindowBrowserSettings.firstRunHintText`、`WindowBrowserActionPresentation`
+   （`browser.action.*` / `browser.outcome.*` / `browser.status.*` / `browser.quicklook.*`）、
+   `Notch.foldStatus`、`Rescue`、`UpdaterCopy` 复用键。
+
+### 18.2 欢迎流程（本 session 补齐的部分）
+
+`WelcomeFlow.swift` 原来**整份是中文常量**，`Welcome.swift` 的按钮/插画全是中文裸字面量（上一批只迁了窗口标题与授权行）：
+
+- 文案改**核算属性**（`static var` + `WSL10n.text`）：语言切换时还开着的欢迎窗口能跟着重出；
+  `WelcomeView.pages` 也从 `static let` 改核算属性。
+- 按钮 `welcome.button.*`（Skip / Back / Continue / Get Started / Not Now）、舞台说明书 `welcome.flow.picture.*`。
+- 插画：菜单栏 `welcome.art.menubar`（`%@    文件    编辑    窗口` → `%@    File    Edit    Window`）、
+  应用名 `welcome.art.appName`（备忘录 → Notes）、迷你窗口标题 `welcome.art.memoTitle`/`mailTitle`
+  （购物清单 → Shopping List、邮件 → Mail）。
+- 刘海那两行**复用真提示的键**（`habit.copy.title` + `habit.fallback.copy`、`habit.controlFamily`）：
+  舞台演的就是刘海真会说的，两处不许分头写（改动前的注释就是这么要求的）。
+- 来处显示名统一：新增 `SwitcherOrigin.titleText`（逐 case 目录键 `origin.windows/ipad/mac`），
+  欢迎选项、设置分段、刘海问来处共用；`title` 仍返回中文源句（身份，单测照旧）。
+- 刘海问来处提示：`habit.askOrigin.title/sub/hint`（`之前常用 %@？` 等），`HabitCloseButton` 的
+  读屏标签/帮助 `habit.close.*`（帮助里的两个名字从各自目录键取，改一处两处一起变）。
+- 顺手补批 30 漏的：`shead.browser` 分组标题 `触发`/`外观`/`权限`（原来 3 处裸中文），
+  "已排除 %@ 个应用：%@%@" 的 `、` 与 ` 等` 连接词，`@unknown default` 的中文串；
+  **并删掉两处畸形嵌套** `WSL10n.text(键, zh: WSL10n.text(键, zh: …))`（批 30 合并时留下的）。
+
+目录 **1524 → 1554 键**；防漏网棘轮 **2180 → 2150 行**（`tests/localizable-ratchet.json`，只降不升）。
+校验：`check-localizable` PASS；`run-localization-tests`（1554 键逐键英文解析、无汉字）PASS；
+welcome-flow / switcher-origin / release-defaults / quiet-defaults / origin-guess / habit-rules 全过；
+`build.sh --check` EXIT=0；`--stage` EXIT=0。
+
+### 18.3 VM 实拍与**修掉的缺陷**（证据：[design-review/2026-10-13-welcome-and-notices](../design-review/2026-10-13-welcome-and-notices/README.md)）
+
+构建 `4872143f4a5037938055fa97620d23a91cf0e66bceaafbe2258a9799dad5f918`（签名 Apple Development G3TN2MBQ2Q），
+run `20261013T120624-adae7826`（早期构建 `b04a991c…`、run `20261013T120005-7ffee488` 留作缺陷记录）。
+
+- 欢迎第 1/2/3 步 + `Get Started` 走完：全英文，插画（`Notes File Edit Window`、`Shopping List`、`Mail`、
+  岛上两行 `On a Mac, Copy is ⌘C` / `Most shortcuts use ⌘ where Windows uses Ctrl`）完整可读。
+- **缺陷**：第三个选项英文名 `Always used a Mac` 比卡片留的宽度长，被裁成 `Always used a M…`（BEFORE 图留档）。
+  名字统一改短为 **`Always Mac`**（设置里"之前常用"分段同一个名字），修后完整。
+- 通知面：把受控窗口"带到每张桌面"后，岛上说 **`Carried to every desktop`**（绿勾，`.done`）。
+- 恢复：受控窗口卷起后从菜单展开，回到 prepare 记录帧 (437,131 673×439)。
+
+### 18.4 未验 / 未做（别当通过）
+
+- **拒绝类通知两句没拍到**：`先展开这个窗口，再带到每张桌面`（卷起后 carry）与 `没有可以带着的窗口`
+  （没有前台窗口时 carry）。两次尝试都没复现条件——卷起受控窗口后焦点落到另一扇 TextEdit 窗口
+  （日志 `carry: start id=731`），想点桌面却抬起了 Finder 窗口。这两句只有目录级校验。
+- **菜单栏兜底通知**没拍到：`Notch.enabled` 出厂默认关（`ReleaseDefaults` 里 `deviceVerified: false`），
+  关着时通知落在状态栏标题、只亮 1.4 秒，两次都被自动截图错过。为拍岛上那句，VM 里用产品自己的
+  "卷帘页 → 收进刘海"开关临时打开、拍完已关回（`Notch.enabled` → 0）。
+- **刘海问来处提示**没有触发路径（要等来处推断跑出来），只有编译与目录校验。
+- **§9 其它表面仍中文**：菜单栏与状态菜单、刘海实时活动、窗口浏览面板、启动台、手势提示等
+  （棘轮 2150 行里绝大部分是它们；本批只消化了 30 行）。
+- 改动**未提交未推送**。
+
+---
+
+## 19. 第32批：§9 剩余用户可见表面全量英文（2026-10-13，本 session；"全量英文，兑现承诺"）
+
+§9 表面清单至此清完（用户可见范围）：菜单栏/状态菜单、刘海全部、窗口浏览面板、启动台、手势、
+置顶预览、计时器/媒体卡、授权确认、电量——全部进目录。**目录 2120 键；防漏网棘轮 2150 → 1429 行**
+（剩的主要是日志串、多语言菜单匹配词表、QA 探针——不是用户可见文案）。
+
+### 19.1 迁移范围（按面）
+
+1. **菜单**：`StandardMenu`（关于面板 credits、应用/编辑/窗口菜单、卷轴概览）、`MenuBarController`
+   （顶层九项、整理▸、已收起的窗口▸、置顶行、Touch ID/面部、退出）。`StatusMenuLayout.fixedTopLevel`
+   改核算属性（单测同步）；顶层结构断言照旧。
+2. **刘海**：`Notch`（批量收起/放回、切换 App 提示、拖放落点、筛选读屏、折叠数读屏、动作动词与去处、
+   等你徽章、收起时的画面）、`NotchRow`（ join/在等你/在跑/额度、13 种活动名、文件架格与右键菜单）、
+   `NotchSentence`（有变化/还有 N 件/拷好了/没拷完…）、`NotchActivities`（番茄钟今天第 N 个、会话
+   等你/在跑/额度快用完、文件架、用量低、正在进行）、`NotchActivityController`（隔空投送、路线对话框
+   与结果）、`NotchActivityView`（播放/暂停/跳过/结束/地图/过去按钮与无障碍）、`NotchLevelSetting`
+   （音量亮度三态说明）。
+3. **窗口浏览**：Controller（40+ 动作原因句）、Placement（方位名 + 排布结果句）、Actions、ContentView
+   （搜索、空态、权限按钮、计数）、CardView、ActionBar、MorePolicy 的键名、Settings（样式名 + 键码）、
+   Material、ThumbnailService、Panel、QuickLook、ActionPresentation。
+4. **启动台**：View（右键菜单、卸载确认对话框、jiggle 无障碍标签）、Uninstall（面板全程 24 条）、
+   Controller（番茄钟/计时器入口卡）、Activities、OpenWith、Library、Today（打开日历、实时活动、
+   周日—周六）、Folders、Model（App 资料库 14 个分类名，改 `title(for:)` 逐键目录）。
+5. **手势**：GestureHUD（33 个落点档名）、GestureCoach（12 对教学短句/长句）、TrackpadGestures
+   （改大小失败、别的 App 占手势、选项表）、DirectionKeyPresets（方向键/按编号展开/已用于/被占用…）、
+   MagicTiling(+Run)（铺满/侧拉/收进刘海/别的 N 扇/只有一块屏）、ScrollStrip(Overview/Run)、DockSwipe、
+   WindowSwitcher。
+6. **其它**：PinnedPreview（9 种失败原因、菜单双态、老板键、面板标题、未命名窗口）、Carry（条与更多
+   窗口菜单）、AuthorizationCopy（全部确认/拒绝句）、CountdownTimer(Card/Host)、FocusTimerCard、
+   NowPlayingCard、DeviceBatteryCopy（设备名、电量句、耳机分耳）、LidAngleSource（传感器状态）。
+7. `NotchSentence.headlineLimit` 首次按语言拆：zh 仍 8 字，en 暂 24/40——**占位，待真机在刘海实看定死**。
+
+### 19.2 语义路由修复（第31批同类，本批四处）
+
+菜单收起/置顶项的图标和提示不再按中文串判（`foldToggleState()` / `currentTargetPinState()` /
+`ws2CachedMenuCaption() -> String?`）；`DuoController` 新增 `sensorPhase` 枚举（原按
+`case "传感器未启动"` 判）；隔空投送结果改 `ShareOutcome`（原 `text == "已送出"`）；番茄钟
+`isRest` 与来源同查 `notch.focus.rest`。
+
+### 19.3 校验与 VM 实拍
+
+- `check-localizable` PASS（2120 键）、copy-lint PASS、隐私登记/隐私页同步 PASS、
+  `--check`/`--stage` EXIT=0，bin `86da9f96…`（G3TN2MBQ2Q）。
+- **49 个受影响测试 runner 补编 `prototype/Core/WSL10n.swift`**；受影响 53 套件全 PASS
+  （含 MenuStructure、Launchpad 全家、WindowBrowser、NotchSentence/Row/Activity/Level、
+  PowerFlash、PrivacyPane、AppKit、Localization）。
+- 顺手修两个 HEAD 上就有的问题：① 启动台 view/visual-fixture/perf 三个 runner 漏编
+  `WS2AppUninstallPlan/Scanner`（编不过）；② `PrivacyPaneTests` 断言 subtitle ≤16 字，
+  `app-uninstall` 17 字在 1.0.16 基线就崩——按生成链三处同步缩短为"删 App 连文件进废纸篓"。
+- **VM 实拍**（run `20261013T133637-53bbeeb8`、`…134207-d1b76be8`）：状态菜单九项与整理▸子菜单
+  全英文（证据 [2026-10-13-english-remaining-surfaces](../design-review/2026-10-13-english-remaining-surfaces/README.md)，
+  binding `465dd2e2…`）。
+
+### 19.4 not_run
+
+- **启动台面板实拍**：菜单项标题已实拍为 "Launchpad"，但点击链路三次没把面板打开（CU 会话内
+  50 秒截图新鲜度反复 HALT；点击未到菜单，App 日志无记录）——面板内英文（78 键）只有目录级校验。
+- 刘海活动、音量亮度条、电量闪现、手势教学、授权卡：句子走目录并过逐键英文解析，触发路径未逐个演。
+- 刘海句长英文档（24/40）待真机。
+- **英文整体目标**：用户可见表面已全量走目录；未迁移的剩 Conductor/Owned 会话页等**未上线功能**
+  与诊断串。改动未提交未推送。

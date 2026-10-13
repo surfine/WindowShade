@@ -117,7 +117,7 @@ extension AppDelegate {
         focusPulledOutOriginalSizes.removeValue(forKey: id)
         applyOverlayPresentation(overlay, bringForward: true)
         arrangeCurrentFocusShelf()
-        quietNotice("已放回顶部",
+        quietNotice(WSL10n.text("notice.focus.putBack", zh: "已放回顶部"), kind: .done,
                     log: "focus: return-to-stack id=\(id)")
         return true
     }
@@ -167,7 +167,7 @@ extension AppDelegate {
         syncRestoreJournal(id: id, fromOverlayFrame: pulled.overlay, restoredSize: pulled.restore.size)
         arrangeCurrentFocusShelf(excluding: [id])
         wlog("focus: pull-out stage id=\(id) app=\(state.appName) deltaY=\(Int(deltaY)) overlay=(\(Int(pulled.overlay.minX)),\(Int(pulled.overlay.minY)) \(Int(pulled.overlay.width))x\(Int(pulled.overlay.height))) restore=(\(Int(pulled.restore.minX)),\(Int(pulled.restore.minY)) \(Int(pulled.restore.width))x\(Int(pulled.restore.height)))")
-        quietNotice("已拉出，可拖动或调整宽度",
+        quietNotice(WSL10n.text("notice.focus.pulledOut", zh: "已拉出，可拖动或调整宽度"), kind: .done,
                     log: "focus: staged strip id=\(id) app=\(state.appName)")
         return true
     }
@@ -319,7 +319,7 @@ extension AppDelegate {
     func focusCurrentAppCycle() {
         guard ensureAccessibility() else {
             showPermissionOnboardingIfNeeded(force: true)
-            quietNotice("需要权限", log: "focus: 无辅助功能权限")
+            quietNotice(WSL10n.text("notice.focus.needsPermission", zh: "需要权限"), kind: .needsPermission, log: "focus: accessibility missing")
             return
         }
 
@@ -358,7 +358,7 @@ extension AppDelegate {
 
     func startFocusCurrentAppSession() {
         guard let focusedApp = focusedApplicationForFocusSession() else {
-            quietNotice("没有当前 App", log: "focus: no focused app")
+            quietNotice(WSL10n.text("notice.focus.noApp", zh: "没有当前 App"), kind: .problem, log: "focus: no focused app")
             return
         }
 
@@ -486,7 +486,7 @@ extension AppDelegate {
         }
 
         guard !arrangeEntries.isEmpty else {
-            quietNotice("没有可以收起的窗口", log: "focus: no foldable windows outside \(focusedPID)")
+            quietNotice(WSL10n.text("notice.focus.noWindows", zh: "没有可以收起的窗口"), kind: .problem, log: "focus: no foldable windows outside \(focusedPID)")
             return
         }
 
@@ -509,7 +509,7 @@ extension AppDelegate {
         if let focusedWinForCenter {
             centerFocusedWindowForFocusMode(focusedWinForCenter, pid: focusedPID)
         }
-        quietNotice("专注：\(focusedApp.localizedName ?? "当前 App")",
+        quietNotice(WSL10n.text("notice.focus.workingOn", zh: "专注：%@", focusedApp.localizedName ?? WSL10n.text("notice.common.currentApp", zh: "当前 App")),
                     log: "focus: start app=\(focusedApp.localizedName ?? "?") pid=\(focusedPID) entries=\(entries.count) created=\(createdCount) fastProxy=true")
         }
 
@@ -526,7 +526,7 @@ extension AppDelegate {
         var updated = session
         updated.stage = .barsRestoredHome
         focusSession = updated
-        quietNotice("卷帘条已回原位",
+        quietNotice(WSL10n.text("notice.focus.barBack", zh: "卷帘条已回原位"), kind: .done,
                     log: "focus: bars home app=\(session.focusedAppName) entries=\(session.entries.count)")
         rebuildMenu()
     }
@@ -557,7 +557,7 @@ extension AppDelegate {
         focusSession = nil
         focusRejoinStackFrames.removeAll()
         focusRejoinEntries.removeAll()
-        quietNotice("已恢复专注前状态",
+        quietNotice(WSL10n.text("notice.focus.restored", zh: "已恢复专注前状态"), kind: .done,
                     log: "focus: restore app=\(session.focusedAppName) unfolded=\(createdIDs.count)")
         rebuildMenu()
     }

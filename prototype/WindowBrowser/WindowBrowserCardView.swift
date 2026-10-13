@@ -14,7 +14,7 @@ final class WindowBrowserCardView: NSView {
     private let thumbnailView = NSImageView()
     private let placeholderView = NSView()
     private let placeholderIconView = NSImageView()
-    private let placeholderLabel = NSTextField(labelWithString: "暂无画面")
+    private let placeholderLabel = NSTextField(labelWithString: WSL10n.text("browser.card.noPicture", zh: "暂无画面"))
     private let titleField = NSTextField(wrappingLabelWithString: "")
     private let statusIconView = NSImageView()
     private let statusField = NSTextField(labelWithString: "")
@@ -147,7 +147,7 @@ final class WindowBrowserCardView: NSView {
         if status.hasVisibleText { label += "，\(status.text)" }
         setAccessibilityLabel(label)
         setAccessibilityValue(status.text)
-        setAccessibilityHelp("激活或展开这个窗口；菜单命令可访问全部操作")
+        setAccessibilityHelp(WSL10n.text("browser.card.help", zh: "激活或展开这个窗口；菜单命令可访问全部操作"))
         var customActions: [NSAccessibilityCustomAction] = []
         for item in actions where item.isEnabled {
             customActions.append(NSAccessibilityCustomAction(name: item.title) { [weak self] in
@@ -177,7 +177,7 @@ final class WindowBrowserCardView: NSView {
             thumbnailView.autoresizingMask = [.width, .height]
             thumbnailHost.isHidden = false
             placeholderView.isHidden = true
-            thumbnailView.setAccessibilityLabel(note ?? "窗口缩略图")
+            thumbnailView.setAccessibilityLabel(note ?? WSL10n.text("browser.note.thumbnail", zh: "窗口缩略图"))
             // 只有画面比例真的变了才需要重新收框；同一张图重复投递不触发布局。
             if sizeChanged { needsLayout = true }
         } else {
@@ -189,10 +189,10 @@ final class WindowBrowserCardView: NSView {
             // 已经挂上实时画面时保持宿主可见。
             thumbnailHost.isHidden = mountedLiveView == nil
             placeholderView.isHidden = false
-            placeholderLabel.stringValue = note ?? "暂无画面"
+            placeholderLabel.stringValue = note ?? WSL10n.text("browser.card.noPicture", zh: "暂无画面")
             // 空说明 = 原因已由页脚统一说明（如缺少屏幕录制权限），卡片里只留应用图标。
             placeholderLabel.isHidden = placeholderLabel.stringValue.isEmpty
-            placeholderLabel.setAccessibilityLabel(note ?? "窗口缩略图不可用")
+            placeholderLabel.setAccessibilityLabel(note ?? WSL10n.text("browser.card.thumbnailUnavailable", zh: "窗口缩略图不可用"))
             if hadImage { needsLayout = true }
         }
     }
@@ -239,7 +239,7 @@ final class WindowBrowserCardView: NSView {
         thumbnailHost.isHidden = true
         placeholderView.isHidden = false
         placeholderIcon = nil
-        placeholderLabel.stringValue = "暂无画面"
+        placeholderLabel.stringValue = WSL10n.text("browser.card.noPicture", zh: "暂无画面")
         placeholderLabel.isHidden = false
         titleField.stringValue = ""
         titleField.toolTip = nil

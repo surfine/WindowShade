@@ -596,8 +596,13 @@ final class HabitCloseButton: NSView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .button }
-    override func accessibilityLabel() -> String? { "只关这一次" }
-    override func accessibilityHelp() -> String? { "不想再看到，到设置里把「之前常用」改成「一直用 Mac」" }
+    override func accessibilityLabel() -> String? { WSL10n.text("habit.close.label", zh: "只关这一次") }
+    override func accessibilityHelp() -> String? {
+        // 引用的两个名字从它们各自的目录键取（设置里的“之前常用”、来处的“一直用 Mac”），改一处两处一起变。
+        WSL10n.text("habit.close.help", zh: "不想再看到，到设置里把「%@」改成「%@」",
+                    WSL10n.text("settings.shade.origin.name", zh: "之前常用"),
+                    WSL10n.text("origin.mac", zh: "一直用 Mac"))
+    }
     override func accessibilityPerformPress() -> Bool {
         onPress?()
         return onPress != nil

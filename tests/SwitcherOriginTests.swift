@@ -71,6 +71,8 @@ struct SwitcherOriginTests {
         expect(SwitcherOrigin.answers == [.windows, .ipad, .mac], "the three answers in on-screen order")
         expect(SwitcherOrigin.answers.map(\.title) == ["Windows", "iPad", "一直用 Mac"], "one name per answer, shared by welcome and settings")
         expect(SwitcherOrigin.unanswered.title == nil && !SwitcherOrigin.unanswered.isAnswered, "unanswered has no label")
+        // 显示名走目录（第31批）：测试里没装英文译文，按中文源句出（装了就出英文，由本地化套件逐键验证）。
+        expect(SwitcherOrigin.answers.map(\.titleText) == ["Windows", "iPad", "一直用 Mac"], "display names resolve through the catalog, zh here")
 
         if failures == 0 { print("PASS: switcher origin — defaults round trip, unanswered = no key, unknown values, change-only notifications with the previous answer, always on the main thread, shared labels") }
         else { print("FAILED \(failures)"); exit(1) }

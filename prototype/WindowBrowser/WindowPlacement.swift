@@ -21,16 +21,16 @@ enum WindowPlacementAction: String, CaseIterable {
 
     var title: String {
         switch self {
-        case .leftHalf: return "左半屏"
-        case .rightHalf: return "右半屏"
-        case .topLeft: return "左上角"
-        case .topRight: return "右上角"
-        case .bottomLeft: return "左下角"
-        case .bottomRight: return "右下角"
-        case .center: return "居中"
-        case .fill: return "铺满屏幕"
-        case .moveToDisplay: return "移到另一块屏幕"
-        case .undoLast: return "撤销上次排布"
+        case .leftHalf: return WSL10n.text("say.preview.leftHalf", zh: "左半屏")
+        case .rightHalf: return WSL10n.text("say.preview.rightHalf", zh: "右半屏")
+        case .topLeft: return WSL10n.text("placement.topLeft", zh: "左上角")
+        case .topRight: return WSL10n.text("placement.topRight", zh: "右上角")
+        case .bottomLeft: return WSL10n.text("placement.bottomLeft", zh: "左下角")
+        case .bottomRight: return WSL10n.text("placement.bottomRight", zh: "右下角")
+        case .center: return WSL10n.text("settings.shade.centering.center", zh: "居中")
+        case .fill: return WSL10n.text("say.preview.fillScreen", zh: "铺满屏幕")
+        case .moveToDisplay: return WSL10n.text("menu.nextDisplay", zh: "移到另一块屏幕")
+        case .undoLast: return WSL10n.text("browser.menu.undoArrange", zh: "撤销上次排布")
         }
     }
 
@@ -276,31 +276,31 @@ final class WindowPlacementController {
     func apply(_ plan: WindowPlacementPlan,
                completion: @escaping (WindowPlacementOutcome) -> Void) {
         guard let backend else {
-            completion(.failed(reason: "排布后端已释放"))
+            completion(.failed(reason: WSL10n.text("browser.reason.placementBackendGone", zh: "排布后端已释放")))
             return
         }
         cancelPreview()
         backend.readFrame(of: plan.target) { [weak self] frameBefore in
             guard let self else { return }
             guard let frameBefore else {
-                completion(.unsupported(reason: "窗口已不存在"))
+                completion(.unsupported(reason: WSL10n.text("browser.reason.windowGone", zh: "窗口已不存在")))
                 return
             }
             backend.writeFrame(plan.targetFrameAX, to: plan.target) { [self] wrote in
                 guard wrote else {
-                    completion(.failed(reason: "系统不允许移动这个窗口"))
+                    completion(.failed(reason: WSL10n.text("browser.reason.moveNotAllowed", zh: "系统不允许移动这个窗口")))
                     return
                 }
                 _ = self.scheduler.schedule(after: self.verificationDelay) { [weak self] in
                     guard let self else { return }
                     backend.readFrame(of: plan.target) { observed in
                         guard let observed else {
-                            completion(.uncertain(reason: "排布后无法确认窗口状态"))
+                            completion(.uncertain(reason: WSL10n.text("browser.reason.placementUnconfirmed", zh: "排布后无法确认窗口状态")))
                             return
                         }
                         guard WindowPlacementPolicy.matches(observed, plan: plan) else {
                             completion(.uncertain(
-                                reason: "没能移到目标位置（窗口可能有最小尺寸限制）"))
+                                reason: WSL10n.text("browser.reason.placementBlocked", zh: "没能移到目标位置（窗口可能有最小尺寸限制）")))
                             return
                         }
                         let record = WindowPlacementUndoRecord(
@@ -321,26 +321,26 @@ final class WindowPlacementController {
             return
         }
         guard let record = undoRecord else {
-            completion(.unsupported(reason: "没有可撤销的排布"))
+            completion(.unsupported(reason: WSL10n.text("browser.reason.nothingToUndo", zh: "没有可撤销的排布")))
             return
         }
         backend.readFrame(of: record.target) { [weak self] current in
             guard let self else { return }
             guard WindowPlacementPolicy.canUndo(record: record, currentFrame: current) else {
                 self.undoRecord = nil
-                completion(.refused(reason: "窗口已被移动，撤销不再适用"))
+                completion(.refused(reason: WSL10n.text("browser.reason.undoStale", zh: "窗口已被移动，撤销不再适用")))
                 return
             }
             backend.writeFrame(record.frameBeforeAX, to: record.target) { [self] wrote in
                 guard wrote else {
-                    completion(.failed(reason: "系统拒绝了撤销"))
+                    completion(.failed(reason: WSL10n.text("browser.reason.undoRefused", zh: "系统拒绝了撤销")))
                     return
                 }
                 _ = self.scheduler.schedule(after: self.verificationDelay) { [weak self] in
                     guard let self else { return }
                     backend.readFrame(of: record.target) { observed in
                         guard let observed else {
-                            completion(.uncertain(reason: "撤销后无法确认窗口状态"))
+                            completion(.uncertain(reason: WSL10n.text("browser.reason.undoUnconfirmed", zh: "撤销后无法确认窗口状态")))
                             return
                         }
                         let restored = abs(observed.minX - record.frameBeforeAX.minX) <= 2
@@ -348,7 +348,7 @@ final class WindowPlacementController {
                             && abs(observed.width - record.frameBeforeAX.width) <= 2
                             && abs(observed.height - record.frameBeforeAX.height) <= 2
                         guard restored else {
-                            completion(.uncertain(reason: "撤销后的位置与记录不一致"))
+                            completion(.uncertain(reason: WSL10n.text("browser.reason.undoMismatch", zh: "撤销后的位置与记录不一致")))
                             return
                         }
                         self.undoRecord = nil

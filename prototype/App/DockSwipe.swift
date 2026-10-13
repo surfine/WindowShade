@@ -166,8 +166,9 @@ final class DockSwipeController {
         // Swish 也在 Dock 图标上认滑动：两边都做会对同一下各做一件事。一次运行只说一次。
         if !toldAboutConflict {
             toldAboutConflict = true
-            owner?.notch.announce("\(other.localizedName ?? "Swish") 在运行，Dock 上的手势让给它",
-                                  detail: "退出它，这里的手势就回来", tone: .info)
+            owner?.notch.announce(WSL10n.text("gesture.notice.otherAppDock", zh: "%@ 在运行，Dock 上的手势让给它",
+                                              other.localizedName ?? "Swish"),
+                                  detail: WSL10n.text("gesture.notice.otherAppHint", zh: "退出它，这里的手势就回来"), tone: .info)
         }
         wlog("dock-swipe: \(direction.rawValue) left to \(other.localizedName ?? "Swish")")
         return true

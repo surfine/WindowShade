@@ -153,11 +153,11 @@ final class WindowBrowserActionBar: NSView {
             more.bezelStyle = .regularSquare
             more.imagePosition = .imageOnly
             more.image = WindowBrowserSymbol.image(named: "ellipsis",
-                                                   accessibilityDescription: "更多操作",
+                                                   accessibilityDescription: WSL10n.text("browser.more.actions", zh: "更多操作"),
                                                    pointSize: buttonPointSize)
-            if more.image == nil { more.title = "更多" }
-            more.toolTip = "更多操作（与右键菜单相同）"
-            more.setAccessibilityLabel("更多操作")
+            if more.image == nil { more.title = WSL10n.text("say.more", zh: "更多") }
+            more.toolTip = WSL10n.text("browser.more.tooltip", zh: "更多操作（与右键菜单相同）")
+            more.setAccessibilityLabel(WSL10n.text("browser.more.actions", zh: "更多操作"))
             more.identifier = NSUserInterfaceItemIdentifier(moreButtonIdentifier)
             addSubview(more)
             buttons.append(more)
@@ -179,7 +179,7 @@ final class WindowBrowserActionBar: NSView {
             indicator.style = .spinning
             indicator.controlSize = .small
             indicator.isDisplayedWhenStopped = false
-            indicator.setAccessibilityLabel("正在执行")
+            indicator.setAccessibilityLabel(WSL10n.text("browser.running.label", zh: "正在执行"))
             addSubview(indicator)
             indicator.startAnimation(nil)
             busyIndicator = indicator

@@ -41,18 +41,18 @@ enum CoachTip: String, CaseIterable, Codable {
     /// 刘海里的主句：不超过 8 个字，一眼看完。细节在 detail。
     var text: String {
         switch self {
-        case .halves: return "试试两指左滑"
-        case .magic: return "试试两指张开"
-        case .shake: return "试试晃一晃标题栏"
-        case .switcher: return "按窗口切换"
-        case .notchHome: return "点刘海回主屏幕"
-        case .stripScroll: return "两指滑动卷轴"
-        case .dockHide: return "它让开了"
-        case .shade: return "两指上推收起"
-        case .splitBar: return "拖分屏把手"
-        case .slideOverHandle: return "拖角上的弧"
-        case .rectangle: return "换成熟悉的键位"
-        case .pip: return "试试画中画"
+        case .halves: return WSL10n.text("gesture.coach.halves", zh: "试试两指左滑")
+        case .magic: return WSL10n.text("gesture.coach.magic", zh: "试试两指张开")
+        case .shake: return WSL10n.text("gesture.coach.shake", zh: "试试晃一晃标题栏")
+        case .switcher: return WSL10n.text("gesture.coach.switcher", zh: "按窗口切换")
+        case .notchHome: return WSL10n.text("gesture.coach.notchHome", zh: "点刘海回主屏幕")
+        case .stripScroll: return WSL10n.text("gesture.coach.stripScroll", zh: "两指滑动卷轴")
+        case .dockHide: return WSL10n.text("gesture.coach.dockHide", zh: "它让开了")
+        case .shade: return WSL10n.text("gesture.coach.shade", zh: "两指上推收起")
+        case .splitBar: return WSL10n.text("gesture.coach.splitBar", zh: "拖分屏把手")
+        case .slideOverHandle: return WSL10n.text("gesture.coach.slideOverHandle", zh: "拖角上的弧")
+        case .rectangle: return WSL10n.text("gesture.coach.rectangle", zh: "换成熟悉的键位")
+        case .pip: return WSL10n.text("gesture.coach.pip", zh: "试试画中画")
         case .habit: return ""
         }
     }
@@ -60,18 +60,18 @@ enum CoachTip: String, CaseIterable, Codable {
     /// 副句：怎么做、会怎样。
     var detail: String {
         switch self {
-        case .halves: return "在标题栏上两指往左滑是左半屏"
-        case .magic: return "在标题栏上两指张开，整块屏一下排好"
-        case .shake: return "拖着标题栏晃一晃，别的窗口一下让开"
-        case .switcher: return "按住 ⌥ 连按 Tab，收着的窗口也在里面"
-        case .notchHome: return "两指往上推，这块屏的窗口全收进来"
-        case .stripScroll: return "在这几扇的标题栏上两指左右滑"
-        case .dockHide: return "再点一下 Dock 图标就回来"
-        case .shade: return "标题栏上两指往上推收起，往下拉展开"
-        case .splitBar: return "两扇一起变；推到屏幕边，那一扇进侧拉"
-        case .slideOverHandle: return "改大小；拖窗口外面那一圈挪位置"
-        case .rectangle: return "设置 → 快捷键 → 更多排法，一键换上"
-        case .pip: return "把标题栏拖到屏幕角落停一下"
+        case .halves: return WSL10n.text("gesture.coach.halvesHint", zh: "在标题栏上两指往左滑是左半屏")
+        case .magic: return WSL10n.text("gesture.coach.magicHint", zh: "在标题栏上两指张开，整块屏一下排好")
+        case .shake: return WSL10n.text("gesture.coach.shakeHint", zh: "拖着标题栏晃一晃，别的窗口一下让开")
+        case .switcher: return WSL10n.text("gesture.coach.switcherHint", zh: "按住 ⌥ 连按 Tab，收着的窗口也在里面")
+        case .notchHome: return WSL10n.text("gesture.coach.notchHomeHint", zh: "两指往上推，这块屏的窗口全收进来")
+        case .stripScroll: return WSL10n.text("gesture.coach.stripScrollHint", zh: "在这几扇的标题栏上两指左右滑")
+        case .dockHide: return WSL10n.text("gesture.coach.dockHideHint", zh: "再点一下 Dock 图标就回来")
+        case .shade: return WSL10n.text("gesture.coach.shadeHint", zh: "标题栏上两指往上推收起，往下拉展开")
+        case .splitBar: return WSL10n.text("gesture.coach.splitBarHint", zh: "两扇一起变；推到屏幕边，那一扇进侧拉")
+        case .slideOverHandle: return WSL10n.text("gesture.coach.slideOverHandleHint", zh: "改大小；拖窗口外面那一圈挪位置")
+        case .rectangle: return WSL10n.text("gesture.coach.rectangleHint", zh: "设置 → 快捷键 → 更多排法，一键换上")
+        case .pip: return WSL10n.text("gesture.coach.pipHint", zh: "把标题栏拖到屏幕角落停一下")
         case .habit: return ""
         }
     }

@@ -52,7 +52,7 @@ final class WindowBrowserQuickLookView: NSView {
         iconView.isHidden = image != nil || icon == nil
         messageField.stringValue = message ?? ""
         messageField.isHidden = message == nil
-        setAccessibilityLabel("窗口大图预览：\(record.displayTitle)")
+        setAccessibilityLabel(WSL10n.text("browser.preview.label", zh: "窗口大图预览：%@", record.displayTitle))
         setAccessibilityValue(message ?? "")
         let veil = SystemAppearancePolicy.contentVeilColor(.transientPeek, .current)
         material.layer?.backgroundColor = SystemAppearancePolicy.cgColor(

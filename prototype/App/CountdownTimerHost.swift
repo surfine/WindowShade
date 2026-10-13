@@ -11,7 +11,7 @@ enum CountdownTimerText {
     static func ear(remaining: UInt64) -> String {
         let seconds = ceilingSeconds(remaining)
         if seconds <= 60 { return clock(seconds) }
-        return "\((seconds + 59) / 60) 分"
+        return WSL10n.text("timer.minutesShort", zh: "%@ 分", String((seconds + 59) / 60))
     }
 
     /// 大卡上的大字：m:ss，向上取整。
@@ -21,7 +21,7 @@ enum CountdownTimerText {
     static func overtime(_ elapsed: UInt64) -> String {
         let seconds = elapsed / WS2.Duration.second
         if seconds < 60 { return "+" + clock(seconds) }
-        return "+\(seconds / 60) 分"
+        return WSL10n.text("timer.plusMinutes", zh: "+%@ 分", String(seconds / 60))
     }
 
     /// 按状态选右耳的字：运行和暂停写剩余，超时写超时。空闲没有字。
@@ -34,28 +34,32 @@ enum CountdownTimerText {
     }
 
     /// “10 分钟计时器”：时间到的次句，也是大卡上的标题。
-    static func minutesLine(_ minutes: Int) -> String { "\(minutes) 分钟计时器" }
+    static func minutesLine(_ minutes: Int) -> String { WSL10n.text("timer.minutesLine", zh: "%@ 分钟计时器", String(minutes)) }
 
     /// 展开卡片的次句。
     static func subtitle(for timer: CountdownTimer) -> String {
         switch timer.state {
         case .idle: return ""
         case .running: return minutesLine(timer.totalMinutes)
-        case .paused: return "已暂停 · " + minutesLine(timer.totalMinutes)
-        case .done: return "时间到 · " + minutesLine(timer.totalMinutes)
+        case .paused: return WSL10n.text("say.paused", zh: "已暂停") + " · " + minutesLine(timer.totalMinutes)
+        case .done: return WSL10n.text("timer.timeUp", zh: "时间到") + " · " + minutesLine(timer.totalMinutes)
         }
     }
 
     /// 读屏念的话：紧凑读作“计时器，还剩 9 分钟”。
     static func spoken(for timer: CountdownTimer, at now: WS2.Instant) -> String {
         switch timer.state {
-        case .idle: return "计时器"
+        case .idle: return WSL10n.text("notch.kind.timer", zh: "计时器")
         case .running, .paused:
             let seconds = ceilingSeconds(timer.remaining(at: now))
-            let left = seconds <= 60 ? "\(seconds) 秒" : "\((seconds + 59) / 60) 分钟"
-            return "计时器，" + (timer.state == .paused ? "已暂停，" : "") + "还剩 " + left
+            let left = seconds <= 60 ? WSL10n.text("timer.seconds", zh: "%@ 秒", String(seconds))
+                                       : WSL10n.text("timer.minutesLong", zh: "%@ 分钟", String((seconds + 59) / 60))
+            return WSL10n.text("timer.spoken", zh: "计时器，%@还剩 %@",
+                               timer.state == .paused ? WSL10n.text("say.paused", zh: "已暂停") + WSL10n.text("notch.join", zh: "，") : "",
+                               left)
         case .done:
-            return "计时器，时间到，已超时 " + String(overtime(timer.overtime(at: now)).dropFirst())
+            return WSL10n.text("timer.spokenOvertime", zh: "计时器，时间到，已超时 %@",
+                                   String(overtime(timer.overtime(at: now)).dropFirst()))
         }
     }
 

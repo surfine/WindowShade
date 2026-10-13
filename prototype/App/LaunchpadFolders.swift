@@ -905,7 +905,7 @@ extension LaunchpadView {
         CATransaction.commit()
         // 模型：先把拖动中的让位记上，再合并。
         home.move(from: current.from, to: current.now)
-        var suggested = "文件夹"
+        var suggested = WSL10n.text("launchpad.folder", zh: "文件夹")
         if case .app(let app) = tiles[index] { suggested = LaunchpadLibrary.folderName(for: app) }
         let id = UUID().uuidString
         let creating = { if case .app = self.tiles[index] { return true }; return false }()

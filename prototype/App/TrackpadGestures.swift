@@ -503,7 +503,9 @@ final class TrackpadGestureController {
             // 一次会话只说一次：标题栏手势让给了它，别让人以为坏了。
             if !toldAboutConflict {
                 toldAboutConflict = true
-                owner.notch.announce("\(other.localizedName ?? "Swish") 在运行，标题栏手势让给它", detail: "退出它，这里的手势就回来", tone: .info)
+                owner.notch.announce(WSL10n.text("gesture.notice.otherApp", zh: "%@ 在运行，标题栏手势让给它",
+                                             other.localizedName ?? "Swish"),
+                                 detail: WSL10n.text("gesture.notice.otherAppHint", zh: "退出它，这里的手势就回来"), tone: .info)
             }
             return
         }
@@ -737,7 +739,7 @@ final class TrackpadGestureController {
     /// 往下变大一级（铺满），左右占半屏。不看“标题栏手势”开关：快捷键有自己的开关。
     func keyStep(_ direction: GestureDirection) {
         guard AXIsProcessTrusted() else {
-            owner.quietNotice("需要权限", log: "key-step: 无辅助功能权限")
+            owner.quietNotice(WSL10n.text("notice.shade.needsPermission", zh: "需要权限"), kind: .needsPermission, log: "key-step: accessibility missing")
             return
         }
         if let turn = keyHalf, let win = focusedWindow(), windowID(of: win) == turn.id, awayStep(turn.id) == nil,
@@ -778,7 +780,7 @@ final class TrackpadGestureController {
             return
         }
         if let id = focusedID, let step = awayStep(id) {
-            owner.notch.announce("\(step)，再排", tone: .problem)
+            owner.notch.announce(WSL10n.text("gesture.notice.stepThenArrange", zh: "%@，再排", step), tone: .problem)
             wlog("key-step: \(direction) refused, id=\(id) is not in its place")
             return
         }
@@ -807,20 +809,20 @@ final class TrackpadGestureController {
     /// 不走梯子，一下到位；浮窗说做了什么，捏合、“撤销上次排布”能撤回。
     func keyPlace(_ action: GestureAction) {
         guard AXIsProcessTrusted() else {
-            owner.quietNotice("需要权限", log: "key-place: 无辅助功能权限")
+            owner.quietNotice(WSL10n.text("notice.shade.needsPermission", zh: "需要权限"), kind: .needsPermission, log: "key-place: accessibility missing")
             return
         }
         keyHalf = nil
         let focused = focusedWindow()
         let focusedID = focused.flatMap { windowID(of: $0) }
         if let id = focusedID, let step = awayStep(id) {
-            owner.notch.announce("\(step)，再排", tone: .problem)
+            owner.notch.announce(WSL10n.text("gesture.notice.stepThenArrange", zh: "%@，再排", step), tone: .problem)
             wlog("key-place: \(action.rawValue) refused, id=\(id) is not in its place")
             return
         }
         guard let win = focused, let id = focusedID, cgWindowIsCurrentlyOnScreen(id),
               !isSettling(id), let pos = axPosition(win), let size = axSize(win) else {
-            owner.notch.announce("没有可以排的窗口", tone: .problem)
+            owner.notch.announce(WSL10n.text("gesture.notice.noWindows", zh: "没有可以排的窗口"), tone: .problem)
             wlog("key-place: no window for \(action.rawValue)")
             return
         }
@@ -842,10 +844,10 @@ final class TrackpadGestureController {
     /// 这扇窗此刻不在它自己的位置上：在画中画里、收起了、收进了刘海、侧拉收到了屏幕边外。
     /// 这时去挪它，只会把真窗口拉回屏幕，画中画或卷帘条却还在。返回要先做的那一步（浮窗上说）；在原处返回 nil。
     func awayStep(_ id: CGWindowID) -> String? {
-        if owner.pip.isInPictureInPicture(id) { return "先让这扇窗回到原处" }
-        if owner.shaded[id] != nil { return "先展开这扇窗" }
-        if owner.notch.isTucked(id) { return "先把这扇窗从刘海放回来" }
-        if owner.slideOver.isSlideOver(id), owner.slideOver.isHidden { return "先拉出侧拉的窗口" }
+        if owner.pip.isInPictureInPicture(id) { return WSL10n.text("gesture.note.bringBackFromPiP", zh: "先让这扇窗回到原处") }
+        if owner.shaded[id] != nil { return WSL10n.text("gesture.note.unrollFirst", zh: "先展开这扇窗") }
+        if owner.notch.isTucked(id) { return WSL10n.text("gesture.note.untuckFirst", zh: "先把这扇窗从刘海放回来") }
+        if owner.slideOver.isSlideOver(id), owner.slideOver.isHidden { return WSL10n.text("gesture.note.pullOutSlideOver", zh: "先拉出侧拉的窗口") }
         return nil
     }
 
@@ -1351,7 +1353,12 @@ final class TrackpadGestureController {
                   hypot(NSEvent.mouseLocation.x - drag.down.x, NSEvent.mouseLocation.y - drag.down.y) < 6,
                   let info = self.freshWindowInfo(drag.id), let current = cgWindowBounds(info),
                   current == drag.frameAtDown else { return }
-            let choices: [(String, GestureAction)] = [("收起窗口", .shade), ("左半屏", .leftHalf), ("右半屏", .rightHalf), ("铺满屏幕", .fill), ("魔法平铺", .magicTile)]
+            let choices: [(String, GestureAction)] = [
+                (WSL10n.text("browser.action.foldRow", zh: "收起窗口"), .shade),
+                (WSL10n.text("say.preview.leftHalf", zh: "左半屏"), .leftHalf),
+                (WSL10n.text("say.preview.rightHalf", zh: "右半屏"), .rightHalf),
+                (WSL10n.text("say.preview.fillScreen", zh: "铺满屏幕"), .fill),
+                (WSL10n.text("menu.magicTile", zh: "魔法平铺"), .magicTile)]
             let target = TitlebarHoldMenuTarget { [weak self] action in
                 guard let self, let info = self.freshWindowInfo(drag.id),
                       info[kCGWindowOwnerPID as String] as? pid_t == drag.pid,
@@ -1455,7 +1462,8 @@ final class TrackpadGestureController {
                 let target = Self.fitting(plan.target, window: win, size: landed.size, area: plan.area)
                 owner.cancelRestorePin(for: drag.id)
                 announceFlick(action, id: drag.id, at: target, screen: plan.screen,
-                              note: target.size != plan.target.size ? "这个窗口不能改大小，放在了正中" : nil)
+                              note: target.size != plan.target.size
+                        ? WSL10n.text("gesture.note.fixedSizeCentered", zh: "这个窗口不能改大小，放在了正中") : nil)
                 moveWindow(win, drag: drag, source: source, from: landed, to: target, velocity: .zero) { [weak self] observed in
                     self?.noteReplaced(drag.id)
                     self?.undoRecords[drag.id] = PlacementUndo(before: drag.frameAtDown, after: observed, element: win,
@@ -1867,7 +1875,7 @@ final class TrackpadGestureController {
             observed = CGRect(origin: axPosition(win) ?? centered.origin, size: observed.size)
         }
         if fixed {
-            hud.note("这个窗口不能改大小，放在了正中")
+            hud.note(WSL10n.text("gesture.note.fixedSizeCentered", zh: "这个窗口不能改大小，放在了正中"))
         } else if let note = Self.sizeNote(wanted: plan.target, got: observed.size) {
             hud.note(note)
         }
@@ -1900,7 +1908,7 @@ final class TrackpadGestureController {
         default: return false
         }
         if fixed, action != .center {
-            hud.note("这个窗口的大小是固定的")
+            hud.note(WSL10n.text("gesture.note.fixedSize", zh: "这个窗口的大小是固定的"))
             wlog("gesture: \(action.rawValue) id=\(id) skipped: the size cannot change")
             return true
         }
@@ -1924,10 +1932,11 @@ final class TrackpadGestureController {
         if sameFrame(observed, current) {
             let note: String
             switch action {
-            case .larger: note = "已经不能再大了"
-            case .smaller: note = "已经不能再小了"
-            default: note = sameFrame(target, current) ? "已经是这样了"
-                : Self.sizeNote(wanted: target, got: observed.size, centered: false) ?? "已经是这样了"
+            case .larger: note = WSL10n.text("gesture.note.alreadyLargest", zh: "已经不能再大了")
+            case .smaller: note = WSL10n.text("gesture.note.alreadySmallest", zh: "已经不能再小了")
+            default: note = sameFrame(target, current) ? WSL10n.text("gesture.note.alreadySo", zh: "已经是这样了")
+                : Self.sizeNote(wanted: target, got: observed.size, centered: false)
+                    ?? WSL10n.text("gesture.note.alreadySo", zh: "已经是这样了")
             }
             hud.note(note)
             return true
@@ -1958,9 +1967,12 @@ final class TrackpadGestureController {
     static func sizeNote(wanted: CGRect, got: CGSize, centered: Bool = true) -> String? {
         let wider = got.width - wanted.width, taller = got.height - wanted.height
         guard abs(wider) > 4 || abs(taller) > 4 else { return nil }
-        let placed = centered ? "，放在了正中" : ""
-        if abs(wider) > 4, abs(taller) > 4, (wider > 0) != (taller > 0) { return "这个窗口的大小是固定的\(placed)" }
-        return (wider > 4 || taller > 4 ? "这个窗口不能再小了" : "这个窗口不能再大了") + placed
+        let placed = centered ? WSL10n.text("gesture.note.centeredSuffix", zh: "，放在了正中") : ""
+        if abs(wider) > 4, abs(taller) > 4, (wider > 0) != (taller > 0) {
+            return WSL10n.text("gesture.note.fixedSize", zh: "这个窗口的大小是固定的") + placed
+        }
+        return (wider > 4 || taller > 4 ? WSL10n.text("gesture.note.cannotSmaller", zh: "这个窗口不能再小了")
+                                        : WSL10n.text("gesture.note.cannotLarger", zh: "这个窗口不能再大了")) + placed
     }
 
     /// size 放在 target 正中，并且不出可用区域（放不下时贴着可用区域的左上）。

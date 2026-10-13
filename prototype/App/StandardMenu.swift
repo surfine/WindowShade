@@ -37,7 +37,8 @@ enum StandardMenu {
                                   build: String)
         -> [NSApplication.AboutPanelOptionKey: Any] {
         let credits = NSMutableAttributedString(
-            string: "收起挡路的窗口，置顶要一直看的，或者停在 Dock 图标上翻出那个应用的所有窗口。\n",
+            string: WSL10n.text("menu.about.credits",
+                                zh: "收起挡路的窗口，置顶要一直看的，或者停在 Dock 图标上翻出那个应用的所有窗口。") + "\n",
             attributes: [.font: NSFont.systemFont(ofSize: 11),
                          .foregroundColor: NSColor.secondaryLabelColor])
         credits.append(NSAttributedString(
@@ -88,7 +89,7 @@ enum StandardMenu {
         let menu = NSMenu(title: appName)
 
         // 有自定义实现时用应用的“关于”面板（标准面板 + 授权信息），否则退回系统默认。
-        let about = NSMenuItem(title: "关于 \(appName)",
+        let about = NSMenuItem(title: WSL10n.text("menu.aboutApp", zh: "关于 %@", appName),
                                action: aboutAction
                                    ?? #selector(NSApplication.orderFrontStandardAboutPanel(_:)),
                                keyEquivalent: "")
@@ -97,31 +98,32 @@ enum StandardMenu {
         menu.addItem(.separator())
 
         if let settingsAction {
-            let settings = NSMenuItem(title: "设置…", action: settingsAction, keyEquivalent: ",")
+            let settings = NSMenuItem(title: WSL10n.text("menu.settings", zh: "设置…"), action: settingsAction, keyEquivalent: ",")
             settings.target = settingsTarget
             menu.addItem(settings)
             menu.addItem(.separator())
         }
 
-        let services = NSMenu(title: "服务")
-        let servicesItem = NSMenuItem(title: "服务", action: nil, keyEquivalent: "")
+        let servicesTitle = WSL10n.text("menu.services", zh: "服务")
+        let services = NSMenu(title: servicesTitle)
+        let servicesItem = NSMenuItem(title: servicesTitle, action: nil, keyEquivalent: "")
         servicesItem.submenu = services
         menu.addItem(servicesItem)
         NSApp.servicesMenu = services
         menu.addItem(.separator())
 
-        menu.addItem(withTitle: "隐藏 \(appName)",
+        menu.addItem(withTitle: WSL10n.text("menu.hideApp", zh: "隐藏 %@", appName),
                      action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
-        let hideOthers = NSMenuItem(title: "隐藏其他",
+        let hideOthers = NSMenuItem(title: WSL10n.text("menu.hideOthers", zh: "隐藏其他"),
                                     action: #selector(NSApplication.hideOtherApplications(_:)),
                                     keyEquivalent: "h")
         hideOthers.keyEquivalentModifierMask = [.command, .option]
         menu.addItem(hideOthers)
-        menu.addItem(withTitle: "显示全部",
+        menu.addItem(withTitle: WSL10n.text("menu.showAll", zh: "显示全部"),
                      action: #selector(NSApplication.unhideAllApplications(_:)),
                      keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "退出 \(appName)",
+        menu.addItem(withTitle: WSL10n.text("menu.quitApp", zh: "退出 %@", appName),
                      action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         item.submenu = menu
@@ -130,20 +132,20 @@ enum StandardMenu {
 
     private static func editMenuItem() -> NSMenuItem {
         let item = NSMenuItem()
-        let menu = NSMenu(title: "编辑")
+        let menu = NSMenu(title: WSL10n.text("menu.edit", zh: "编辑"))
         // selector 指向 NSText/NSTextView 的标准实现，由响应链上的 first responder 处理。
-        menu.addItem(withTitle: "撤销", action: Selector(("undo:")), keyEquivalent: "z")
-        let redo = NSMenuItem(title: "重做", action: Selector(("redo:")), keyEquivalent: "z")
+        menu.addItem(withTitle: WSL10n.text("menu.undo", zh: "撤销"), action: Selector(("undo:")), keyEquivalent: "z")
+        let redo = NSMenuItem(title: WSL10n.text("menu.redo", zh: "重做"), action: Selector(("redo:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         menu.addItem(redo)
         menu.addItem(.separator())
-        menu.addItem(withTitle: "剪切", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
-        menu.addItem(withTitle: "拷贝", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
-        menu.addItem(withTitle: "粘贴", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
-        let delete = NSMenuItem(title: "删除", action: #selector(NSText.delete(_:)),
+        menu.addItem(withTitle: WSL10n.text("menu.cut", zh: "剪切"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        menu.addItem(withTitle: WSL10n.text("menu.copy", zh: "拷贝"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        menu.addItem(withTitle: WSL10n.text("menu.paste", zh: "粘贴"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        let delete = NSMenuItem(title: WSL10n.text("menu.delete", zh: "删除"), action: #selector(NSText.delete(_:)),
                                 keyEquivalent: "")
         menu.addItem(delete)
-        menu.addItem(withTitle: "全选", action: #selector(NSText.selectAll(_:)),
+        menu.addItem(withTitle: WSL10n.text("menu.selectAll", zh: "全选"), action: #selector(NSText.selectAll(_:)),
                      keyEquivalent: "a")
         item.submenu = menu
         return item
@@ -152,10 +154,10 @@ enum StandardMenu {
     @MainActor
     private static func windowMenuItem() -> NSMenuItem {
         let item = NSMenuItem()
-        let menu = NSMenu(title: "窗口")
-        menu.addItem(withTitle: "关闭", action: #selector(NSWindow.performClose(_:)),
+        let menu = NSMenu(title: WSL10n.text("menu.window", zh: "窗口"))
+        menu.addItem(withTitle: WSL10n.text("menu.close", zh: "关闭"), action: #selector(NSWindow.performClose(_:)),
                      keyEquivalent: "w")
-        menu.addItem(withTitle: "最小化", action: #selector(NSWindow.performMiniaturize(_:)),
+        menu.addItem(withTitle: WSL10n.text("menu.minimize", zh: "最小化"), action: #selector(NSWindow.performMiniaturize(_:)),
                      keyEquivalent: "m")
         menu.addItem(.separator())
         menu.addItem(stripOverviewItem())
@@ -164,7 +166,7 @@ enum StandardMenu {
     }
 
     /// 卷轴概览（稿：卷轴.html 工作包 SS-05）：只用鼠标也能打开。快捷键默认不占；卷轴没开时灰着。
-    static let stripOverviewTitle = "卷轴概览"
+    static var stripOverviewTitle: String { WSL10n.text("silent.window.stripOverview", zh: "卷轴概览") }
     static let stripOverviewID = "ws.window.stripOverview"
 
     @MainActor
@@ -206,17 +208,19 @@ enum StatusMenuLayout {
     static let stripOverviewRowID = "ws.menu.arrange.stripOverview"
 
     /// 固定 9 项，按顺序。
-    static let fixedTopLevel: [(id: String, title: String)] = [
-        ("ws.menu.fold", "收起"),
-        ("ws.menu.tuck", "收进刘海"),
-        ("ws.menu.pin", "置顶"),
-        ("ws.menu.arrange", "整理"),
-        ("ws.menu.launchpad", "启动台"),
-        ("ws.menu.folded", "已收起的窗口"),
-        ("ws.menu.settings", "设置…"),
-        ("ws.menu.about", "关于"),
-        ("ws.menu.quit", "退出"),
-    ]
+    static var fixedTopLevel: [(id: String, title: String)] {
+        [
+        ("ws.menu.fold", WSL10n.text("menu.topLevel.fold", zh: "收起")),
+        ("ws.menu.tuck", WSL10n.text("settings.shade.tuckNotch.name", zh: "收进刘海")),
+        ("ws.menu.pin", WSL10n.text("menu.topLevel.pin", zh: "置顶")),
+        ("ws.menu.arrange", WSL10n.text("menu.arrange", zh: "整理")),
+        ("ws.menu.launchpad", WSL10n.text("silent.launcher.open", zh: "启动台")),
+        ("ws.menu.folded", WSL10n.text("settings.shortcuts.group.folded", zh: "已收起的窗口")),
+        ("ws.menu.settings", WSL10n.text("menu.settings", zh: "设置…")),
+        ("ws.menu.about", WSL10n.text("menu.about", zh: "关于")),
+        ("ws.menu.quit", WSL10n.text("menu.topLevel.quit", zh: "退出")),
+        ]
+    }
 
     /// 旧顶层项（以 action 名为键）→ 现在的位置。action 本身与快捷键不变，只换位置。
     static let legacyLocations: [(action: String, was: String, now: String)] = [
@@ -249,7 +253,9 @@ enum StatusMenuLayout {
             + (pinnedCount > 0 ? [pinnedRowID] : [])
     }
 
-    static func pinnedRowTitle(count: Int) -> String { "置顶的窗口（\(count)）" }
+    static func pinnedRowTitle(count: Int) -> String {
+        WSL10n.text("menu.pinnedRowTitle", zh: "置顶的窗口（%@）", String(count))
+    }
 
     /// 顶层实际可见的固定项 id（不含动态行、分隔线、按住 ⌥ 才显示的隐藏项）。
     static func visibleFixedIDs(in menu: NSMenu) -> [String] {

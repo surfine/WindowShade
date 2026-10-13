@@ -13,10 +13,10 @@ import QuartzCore
     private let detail = NSTextField(labelWithString:"")
     private let breath = CAShapeLayer()
     private let restTime = NSTextField(labelWithString:"")
-    private let restHint = NSTextField(labelWithString:"看看远处 · 点一下回来")
+    private let restHint = NSTextField(labelWithString: WSL10n.text("focus.restHint", zh: "看看远处 · 点一下回来"))
     private let stack = NSStackView()
     /// 休息视图右上角的小文字按钮：留一条结束休息的路（沿用 .skip）。
-    private let restSkip = NSButton(title:"跳过休息",target:nil,action:nil)
+    private let restSkip = NSButton(title: WSL10n.text("focus.skipRest", zh: "跳过休息"), target: nil, action: nil)
     /// 休息绿 #5FD38A。
     private static let restGreen = NSColor(srgbRed:0x5F/255,green:0xD3/255,blue:0x8A/255,alpha:1)
     private let pause = NSButton()
@@ -32,9 +32,9 @@ import QuartzCore
         restHint.font = .systemFont(ofSize:12); restHint.textColor = secondary; restHint.alignment = .center
         addSubview(restTime); addSubview(restHint); restTime.isHidden = true; restHint.isHidden = true
         restSkip.isBordered = false; restSkip.font = .systemFont(ofSize:11); restSkip.contentTintColor = secondary
-        restSkip.attributedTitle = NSAttributedString(string:"跳过休息",attributes:[.font:NSFont.systemFont(ofSize:11),.foregroundColor:secondary])
-        restSkip.target = self; restSkip.action = #selector(skipAction); restSkip.setAccessibilityLabel("跳过休息")
-        restSkip.toolTip = "跳过休息"; restSkip.isHidden = true; addSubview(restSkip)
+        restSkip.attributedTitle = NSAttributedString(string: WSL10n.text("focus.skipRest", zh: "跳过休息"),attributes:[.font:NSFont.systemFont(ofSize:11),.foregroundColor:secondary])
+        restSkip.target = self; restSkip.action = #selector(skipAction); restSkip.setAccessibilityLabel(WSL10n.text("focus.skipRest", zh: "跳过休息"))
+        restSkip.toolTip = WSL10n.text("focus.skipRest", zh: "跳过休息"); restSkip.isHidden = true; addSubview(restSkip)
         time.font = .monospacedDigitSystemFont(ofSize:28,weight:.medium); time.textColor = .white
         phase.font = .systemFont(ofSize:11,weight:.semibold); phase.textColor = secondary
         detail.font = .systemFont(ofSize:11); detail.textColor = secondary
@@ -44,8 +44,9 @@ import QuartzCore
         stack.translatesAutoresizingMaskIntoConstraints = false; addSubview(stack)
         NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo:centerXAnchor),stack.centerYAnchor.constraint(equalTo:centerYAnchor),
             widthAnchor.constraint(greaterThanOrEqualToConstant:240),heightAnchor.constraint(greaterThanOrEqualToConstant:110)])
-        configure(pause,"pause.fill","暂停",#selector(pauseAction)); configure(skip,"forward.end.fill","跳过",#selector(skipAction))
-        configure(end,"stop.fill","结束",#selector(endAction))
+        configure(pause, "pause.fill", WSL10n.text("notch.action.pause", zh: "暂停"), #selector(pauseAction))
+        configure(skip, "forward.end.fill", WSL10n.text("notch.action.skip", zh: "跳过"), #selector(skipAction))
+        configure(end, "stop.fill", WSL10n.text("notch.action.end", zh: "结束"), #selector(endAction))
         for button in [pause,skip,end] {
             NSLayoutConstraint.activate([button.widthAnchor.constraint(equalToConstant:32),button.heightAnchor.constraint(equalToConstant:32)])
         }
@@ -84,11 +85,18 @@ import QuartzCore
         if rest != resting { resting = rest; needsLayout = true }
         stack.isHidden = rest; restTime.isHidden = !rest; restHint.isHidden = !rest; restSkip.isHidden = !rest
         breath.isHidden = !rest
-        time.stringValue = model.phase == .idle ? "开始专注" : model.expandedText(at:now)
-        phase.stringValue = model.phase == .idle ? "番茄钟" : "专注\(model.isPaused ? " · 已暂停" : "")"
-        detail.stringValue = model.phase == .idle ? "今天完成 \(model.completedToday) 个" : "今天第 \(model.completedToday + 1) 个"
+        time.stringValue = model.phase == .idle ? WSL10n.text("focus.start", zh: "开始专注") : model.expandedText(at: now)
+        phase.stringValue = model.phase == .idle
+            ? WSL10n.text("settings.shade.focus.name", zh: "番茄钟")
+            : WSL10n.text("notch.focus.focus", zh: "专注")
+                + (model.isPaused ? " · " + WSL10n.text("say.paused", zh: "已暂停") : "")
+        detail.stringValue = model.phase == .idle
+            ? WSL10n.text("focus.doneToday", zh: "今天完成 %@ 个", String(model.completedToday))
+            : WSL10n.text("notch.focus.today", zh: "今天第 %@ 个", String(model.completedToday + 1))
         restTime.stringValue = model.expandedText(at:now)
-        let action = model.phase == .idle ? "开始" : model.isPaused ? "继续" : "暂停"
+        let action = model.phase == .idle ? WSL10n.text("launchpad.start", zh: "开始")
+                                          : model.isPaused ? WSL10n.text("notch.action.resume", zh: "继续")
+                                                           : WSL10n.text("notch.action.pause", zh: "暂停")
         configure(pause,model.phase == .idle || model.isPaused ? "play.fill" : "pause.fill",action,#selector(pauseAction))
         skip.isEnabled = model.phase != .idle; end.isEnabled = model.phase != .idle
         for button in [skip,end] { button.alphaValue = button.isEnabled ? 1 : 0.4 }
@@ -107,7 +115,12 @@ import QuartzCore
             breath.add(make("transform.scale",FocusBreath.scaleLow),forKey:"breathScale")
             breath.add(make("opacity",FocusBreath.opacityLow),forKey:"breathOpacity")
         }
-        let spoken = rest ? "休息\(model.isPaused ? "，已暂停" : "")，\(restTime.stringValue)，\(restHint.stringValue)" : "\(phase.stringValue)，\(time.stringValue)，\(detail.stringValue)"
+        let join = WSL10n.text("notch.join", zh: "，")
+        let spoken = rest
+            ? WSL10n.text("notch.focus.rest", zh: "休息")
+                + (model.isPaused ? join + WSL10n.text("say.paused", zh: "已暂停") : "")
+                + join + restTime.stringValue + join + restHint.stringValue
+            : [phase.stringValue, time.stringValue, detail.stringValue].joined(separator: join)
         setAccessibilityLabel(spoken)
     }
     override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if window == nil { breath.removeAllAnimations() } }

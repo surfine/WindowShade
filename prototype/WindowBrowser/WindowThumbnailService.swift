@@ -462,7 +462,7 @@ final class WindowThumbnailService {
                 promoteLocked(existingID)
             }
         } else if updateBackendStallLocked() {
-            stallFailure = .captureFailed("截图后端长时间无响应")
+            stallFailure = .captureFailed(WSL10n.text("browser.reason.captureBackendStalled", zh: "截图后端长时间无响应"))
             stallDeGradeLocked()
         } else {
             let id = WindowThumbnailJobID(value: nextJobID)
@@ -684,7 +684,7 @@ final class WindowThumbnailService {
             }
             for consumer in job.consumers where !consumer.isFinished {
                 pendingFailuresLocked.append(
-                    (consumer, .captureFailed("截图后端长时间无响应")))
+                    (consumer, .captureFailed(WSL10n.text("browser.reason.captureBackendStalled", zh: "截图后端长时间无响应"))))
             }
             job.consumers.removeAll()
         }

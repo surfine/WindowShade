@@ -228,7 +228,7 @@ struct NotchActivity: Equatable, Sendable {
     static let appearGateLimit: Double = 10
     /// 过期时右耳写的字、读屏念的话。
     static let staleEarText = "—"
-    static let staleSpoken = "可能已停"
+    static var staleSpoken: String { WSL10n.text("notch.stale.spoken", zh: "可能已停") }
     /// 过期时内容的透明度。
     static let staleAlpha: Double = 0.5
 
@@ -400,7 +400,7 @@ extension NotchActivity {
         /// “第 3 / 12”。只有 `.count` 有。
         var countText: String? {
             guard case .count(let k, let n) = self, n > 0 else { return nil }
-            return "第 \(min(max(1, k), n)) / \(n)"
+            return WSL10n.text("notch.level.page", zh: "第 %@ / %@", String(min(max(1, k), n)), String(n))
         }
 
         /// “3/12”：右耳放不下“第 3 / 12”时的短写法。只有 `.count` 有。
@@ -516,12 +516,15 @@ enum NotchEarText {
     }
 
     /// 番茄钟右耳：暂停写“暂停”，否则是 `FocusTimer.compactText`（“18 分”，最后 60 秒“0:42”）。
-    static func focusTrailing(compactText: String, paused: Bool) -> String { paused ? "暂停" : compactText }
+    static func focusTrailing(compactText: String, paused: Bool) -> String {
+        paused ? WSL10n.text("notch.focus.paused", zh: "暂停") : compactText
+    }
 
     /// 番茄钟副句：专注中是“今天第 N 个”（N 是已完成加 1），休息中那一个已经完成，N 就是已完成的个数；暂停写“已暂停”。
     static func focusSubtitle(isRest: Bool, completedToday: Int, paused: Bool) -> String {
-        if paused { return "已暂停" }
-        return "今天第 \(isRest ? completedToday : completedToday + 1) 个"
+        if paused { return WSL10n.text("say.paused", zh: "已暂停") }
+        return WSL10n.text("notch.focus.today", zh: "今天第 %@ 个",
+                           String(isRest ? completedToday : completedToday + 1))
     }
 
     /// 展开的卡片上的主句。番茄钟的标题只剩“专注”或“休息”，剩余时间在右耳那一段里，卡片上要合起来读：“专注 · 18 分”。
@@ -531,14 +534,17 @@ enum NotchEarText {
     }
 
     /// 番茄钟现在是休息吗（来源把阶段写在标题里：“专注”或“休息”）。
-    static func isRest(_ item: NotchActivity) -> Bool { item.kind == .focus && item.title == "休息" }
+    /// 番茄钟现在是休息吗：来源把阶段写在标题里，这里和来源查同一个目录键（不是裸中文串）。
+    static func isRest(_ item: NotchActivity) -> Bool {
+        item.kind == .focus && item.title == WSL10n.text("notch.focus.rest", zh: "休息")
+    }
 }
 
 /// 文件架的紧凑两耳（《文件架》稿“紧凑的个数”）：左耳托盘符号、右耳个数，优先级 10、最低。
 /// 暂存后个数滚到新值、右耳弹一下；减少动态效果时直接换。纯逻辑，画面在 `NotchCompactView`。
 enum NotchShelfEars {
     static let activityID = "ws2.shelf"
-    static let title = "文件架"
+    static var title: String { WSL10n.text("settings.shade.fileShelf.name", zh: "文件架") }
     /// 稿：右耳 pop 0.30 / 0.75；数字过渡 0.28 秒。
     static let popResponse: Double = 0.30
     static let popDamping: Double = 0.75
@@ -546,7 +552,10 @@ enum NotchShelfEars {
 
     static func trailing(count: Int) -> String { "\(count)" }
     /// 读屏：和那一排的末格一句话。
-    static func spoken(count: Int) -> String { count > 0 ? "文件架，\(count) 个" : "文件架空了" }
+    static func spoken(count: Int) -> String {
+        count > 0 ? WSL10n.text("notch.shelf.cellSpoken", zh: "文件架，%@ 个", String(count))
+                  : WSL10n.text("notch.shelf.empty", zh: "文件架空了")
+    }
 
     enum Roll: Equatable { case none, up, down }
 
@@ -934,7 +943,7 @@ struct CodingSessionActivities {
     static let symbol = "terminal"
     static let doneSymbol = "checkmark.circle.fill"
     /// 来源在没有工具名时给的占位说明，不当作“想执行”的内容念出来。
-    static let placeholderSummary = "需要你确认"
+    static var placeholderSummary: String { WSL10n.text("notch.session.placeholderSummary", zh: "需要你确认") }
 
     enum Status: Equatable, Sendable { case running, waiting, completed, gone }
 
@@ -1023,7 +1032,7 @@ struct CodingSessionActivities {
         guard next.isLow else { usageAlerted.remove(next.windowKey); return nil }
         guard usageAlerted.insert(next.windowKey).inserted else { return nil }
         if usageAlerted.count > 16, let drop = usageAlerted.first(where: { $0 != next.windowKey }) { usageAlerted.remove(drop) }
-        return Bloom(sessionID: Self.usageBloomID, headline: "额度快用完了",
+        return Bloom(sessionID: Self.usageBloomID, headline: WSL10n.text("notch.usage.low", zh: "额度快用完了"),
                      detail: next.recoveryDetail ?? "")
     }
 
@@ -1041,7 +1050,8 @@ struct CodingSessionActivities {
             guard !bloomed.contains(change.id) else { return Output(bloom: nil, completed: false) }
             bloomed.insert(change.id)
             let live = sessions[change.id]!
-            return Output(bloom: Bloom(sessionID: change.id, headline: "\(live.label)在等你",
+            return Output(bloom: Bloom(sessionID: change.id,
+                                       headline: WSL10n.text("notch.session.waitingHeadline", zh: "%@在等你", live.label),
                                        detail: Self.waitingDetail(assistant: live.assistant, summary: live.summary)),
                           completed: false)
         case .completed:
@@ -1053,8 +1063,8 @@ struct CodingSessionActivities {
             lastDone[change.id] = now
             if lastDone.count > 64, let oldest = lastDone.min(by: { $0.value < $1.value })?.key { lastDone.removeValue(forKey: oldest) }
             let label = change.project.isEmpty ? (known?.label ?? change.assistant) : change.project
-            let subtitle = change.changedFiles.map { "改了 \($0) 个文件" } ?? label
-            done = (Spec(title: "完成", subtitle: subtitle, symbol: Self.doneSymbol, trailing: "", phase: .done,
+            let subtitle = change.changedFiles.map { WSL10n.text("notch.session.filesChanged", zh: "改了 %@ 个文件", String($0)) } ?? label
+            done = (Spec(title: WSL10n.text("notch.session.done", zh: "完成"), subtitle: subtitle, symbol: Self.doneSymbol, trailing: "", phase: .done,
                          cwd: change.cwd.isEmpty ? (known?.cwd ?? "") : change.cwd, sessionID: change.id,
                          expiresAt: now + Self.completionLifetime), now + Self.completionLifetime)
             return Output(bloom: nil, completed: true)
@@ -1092,14 +1102,21 @@ struct CodingSessionActivities {
         let target = waiting.first ?? first
         if all.count == 1 {
             let waitingNow = first.waiting
-            return withUsage(Spec(title: first.label, subtitle: waitingNow ? Self.waitingDetail(assistant: first.assistant, summary: first.summary)
-                                                                          : "\(first.assistant)在跑",
-                                  symbol: Self.symbol, trailing: waitingNow ? "等你" : "", phase: waitingNow ? .waiting : .running,
+            return withUsage(Spec(title: first.label,
+                                  subtitle: waitingNow ? Self.waitingDetail(assistant: first.assistant, summary: first.summary)
+                                                       : WSL10n.text("notch.session.running", zh: "%@在跑", first.assistant),
+                                  symbol: Self.symbol,
+                                  trailing: waitingNow ? WSL10n.text("notch.session.waitingTag", zh: "等你") : "",
+                                  phase: waitingNow ? .waiting : .running,
                                   cwd: first.cwd, sessionID: first.id, expiresAt: nil))
         }
-        return withUsage(Spec(title: "\(all.count) 个会话",
-                              subtitle: waiting.isEmpty ? "\(all.count) 个在跑" : "\(waiting.count) 个在等你",
-                              symbol: Self.symbol, trailing: waiting.isEmpty ? "" : "等你", phase: waiting.isEmpty ? .running : .waiting,
+        return withUsage(Spec(title: WSL10n.text("notch.session.count", zh: "%@ 个会话", String(all.count)),
+                              subtitle: waiting.isEmpty
+                                  ? WSL10n.text("notch.session.countRunning", zh: "%@ 个在跑", String(all.count))
+                                  : WSL10n.text("notch.session.countWaiting", zh: "%@ 个在等你", String(waiting.count)),
+                              symbol: Self.symbol,
+                              trailing: waiting.isEmpty ? "" : WSL10n.text("notch.session.waitingTag", zh: "等你"),
+                              phase: waiting.isEmpty ? .running : .waiting,
                               cwd: target.cwd, sessionID: target.id, expiresAt: nil))
     }
 
@@ -1125,7 +1142,9 @@ struct CodingSessionActivities {
     var menuRows: [MenuRow] {
         let all = waiting
         return all.prefix(Self.menuRowLimit).map { item in
-            let name = all.count > 1 && !item.project.isEmpty ? "\(item.assistant) · \(item.project) · 等你" : "\(item.assistant) · 等你"
+            let name = all.count > 1 && !item.project.isEmpty
+                ? WSL10n.text("notch.session.menuRow", zh: "%@ · %@ · 等你", item.assistant, item.project)
+                : WSL10n.text("notch.session.menuRowShort", zh: "%@ · 等你", item.assistant)
             return MenuRow(sessionID: item.id, title: name)
         }
     }
@@ -1143,7 +1162,8 @@ struct CodingSessionActivities {
         return trimmed == placeholderSummary ? "" : trimmed
     }
     static func waitingDetail(assistant: String, summary: String) -> String {
-        summary.isEmpty ? "\(assistant)在等你确认" : "\(assistant)想执行 \(summary)"
+        summary.isEmpty ? WSL10n.text("notch.session.needsConfirm", zh: "%@在等你确认", assistant)
+                        : WSL10n.text("notch.session.wantsToRun", zh: "%@想执行 %@", assistant, summary)
     }
 }
 
@@ -1154,7 +1174,7 @@ enum NotchSessionEar {
     /// 转一整圈的时间。
     static let spinnerPeriod: Double = 1.0
     /// 琥珀色“等你”用 systemOrange（视图层取色）。
-    static let waitingText = "等你"
+    static var waitingText: String { WSL10n.text("notch.session.waitingTag", zh: "等你") }
 }
 
 /// “过去”：按会话所在的目录，在终端窗口的标题或 AXDocument 里认出是哪一扇。纯逻辑；取标题和文档的是 App 那一层。
@@ -1374,7 +1394,8 @@ enum NotchMinimalPresentation {
 
     /// 读屏标签。过期了加一句“可能已停”。
     static func label(for item: NotchActivity) -> String {
-        item.isStale ? "正在进行：\(item.title)，\(NotchActivity.staleSpoken)" : "正在进行：\(item.title)"
+        let head = WSL10n.text("notch.session.ongoing", zh: "正在进行：%@", item.title)
+        return item.isStale ? head + WSL10n.text("notch.join", zh: "，") + NotchActivity.staleSpoken : head
     }
 
     /// 进度弧的终点（0…1）。只有 `.fraction` 画弧，其余（个数、不确定、不知道）只画圆点。

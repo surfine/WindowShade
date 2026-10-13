@@ -206,7 +206,7 @@ enum NotchRow {
     }
 
     private static func subtitle(of item: NotchActivity) -> String {
-        if item.kind == .music, item.isPaused { return "已暂停" }
+        if item.kind == .music, item.isPaused { return WSL10n.text("say.paused", zh: "已暂停") }
         return item.subtitle
     }
 
@@ -224,15 +224,19 @@ enum NotchRow {
         switch cell.kind {
         case .session:
             switch cell.phase {
-            case .waiting?: return join(name, "在等你")
-            case .running?: return join(name, "在跑")
-            case .quota?: return join(name, cell.earText.flatMap { $0.isEmpty ? nil : "在跑，\($0)" } ?? "在跑")
-            case .quotaLow?: return join(name, "在跑，额度快用完了")
+            case .waiting?: return join(name, WSL10n.text("notch.row.waiting", zh: "在等你"))
+            case .running?: return join(name, WSL10n.text("notch.row.running", zh: "在跑"))
+            case .quota?:
+                let running = WSL10n.text("notch.row.running", zh: "在跑")
+                let withEar = cell.earText.flatMap { $0.isEmpty ? nil : WSL10n.text("notch.row.runningWithEar", zh: "在跑，%@", $0) }
+                return join(name, withEar ?? running)
+            case .quotaLow?: return join(name, WSL10n.text("notch.row.runningQuotaLow", zh: "在跑，额度快用完了"))
             case .done?: return join(name, clipped(cell.subtitle))
             case nil: return name
             }
         case .music:
-            return join(name, cell.isPaused ? "已暂停" : "正在播放")
+            return join(name, cell.isPaused ? WSL10n.text("say.paused", zh: "已暂停")
+                                             : WSL10n.text("notch.row.playing", zh: "正在播放"))
         default:
             return join(name, clipped(cell.subtitle))
         }
@@ -248,7 +252,7 @@ enum NotchRow {
         case (true, true): return ""
         case (true, false): return tail
         case (false, true): return head
-        case (false, false): return "\(head)，\(tail)"
+        case (false, false): return "\(head)" + WSL10n.text("notch.join", zh: "，") + "\(tail)"
         }
     }
 }
@@ -263,7 +267,7 @@ enum NotchRowFilter {
     /// 筛选字最多多长：再长没有意义，也免得一直按着一个键撑爆。
     static let maxQueryLength = 24
     /// 一格也没有时写的话。
-    static let noMatchText = "没有匹配的"
+    static var noMatchText: String { WSL10n.text("notch.row.noMatch", zh: "没有匹配的") }
     /// 一格也没有时，那一排至少排几格宽（稿：不窄于两格）。
     static let emptyMinimumCells = 2
     /// 一格也没有时岛的宽度（含两边的边距）。
@@ -280,7 +284,7 @@ enum NotchRowFilter {
 
     /// 读屏念的话：剩几项；一项也没有就是“没有匹配的”。
     static func remainingAnnouncement(count: Int) -> String {
-        count > 0 ? "剩 \(count) 项" : noMatchText
+        count > 0 ? WSL10n.text("notch.row.remaining", zh: "剩 %@ 项", String(count)) : noMatchText
     }
 
     /// 汉字是不是要转拼音（基本区、扩展 A、兼容区）。
@@ -342,19 +346,19 @@ enum NotchRowFilter {
     /// 活动种类的名字（筛选用，也是用户平时的叫法）。
     static func kindName(_ kind: NotchActivityKind) -> String {
         switch kind {
-        case .music: return "音乐"
-        case .airPods: return "耳机"
-        case .airDrop: return "隔空投送"
-        case .route: return "路线"
-        case .recording: return "录音"
-        case .focus: return "番茄钟"
-        case .download: return "下载"
-        case .copy: return "拷贝"
-        case .remote: return "遥控器"
-        case .session: return "编程会话"
-        case .calendar: return "日程"
-        case .timer: return "计时器"
-        case .shelf: return "文件架"
+        case .music: return WSL10n.text("notch.kind.music", zh: "音乐")
+        case .airPods: return WSL10n.text("notch.kind.airPods", zh: "耳机")
+        case .airDrop: return WSL10n.text("silent.activity.airdrop", zh: "隔空投送")
+        case .route: return WSL10n.text("silent.activity.route", zh: "路线")
+        case .recording: return WSL10n.text("silent.activity.recording", zh: "录音")
+        case .focus: return WSL10n.text("settings.shade.focus.name", zh: "番茄钟")
+        case .download: return WSL10n.text("notch.kind.download", zh: "下载")
+        case .copy: return WSL10n.text("habit.fallback.copy", zh: "拷贝")
+        case .remote: return WSL10n.text("settings.section.remote", zh: "遥控器")
+        case .session: return WSL10n.text("notch.kind.session", zh: "编程会话")
+        case .calendar: return WSL10n.text("settings.shade.calendar.name", zh: "日程")
+        case .timer: return WSL10n.text("notch.kind.timer", zh: "计时器")
+        case .shelf: return WSL10n.text("settings.shade.fileShelf.name", zh: "文件架")
         }
     }
 }
@@ -372,10 +376,10 @@ extension NotchRow {
     /// 一排右段的末格：叠三张缩略图，下面写“文件架 · 6”。空着或关着时这一格不在。
     struct FileShelfCell: Equatable, Sendable {
         let count: Int
-        var title: String { "文件架 · \(count)" }
+        var title: String { WSL10n.text("notch.shelf.cellTitle", zh: "文件架 · %@", String(count)) }
         /// 叠几张缩略图：最多三张。
         var stacked: Int { min(3, count) }
-        var spoken: String { "文件架，\(count) 个" }
+        var spoken: String { WSL10n.text("notch.shelf.cellSpoken", zh: "文件架，%@ 个", String(count)) }
     }
 
     static func fileShelfCell(count: Int, enabled: Bool) -> FileShelfCell? {
@@ -478,8 +482,8 @@ enum FileShelfDrag {
 struct FileShelfClearUndo: Equatable, Sendable {
     private(set) var count = 0
     private(set) var deadline: Double?
-    static let line = "文件架空了"
-    static let undoTitle = "撤销"
+    static var line: String { WSL10n.text("notch.shelf.empty", zh: "文件架空了") }
+    static var undoTitle: String { WSL10n.text("menu.undo", zh: "撤销") }
 
     mutating func begin(count: Int, now: Double) {
         guard count > 0 else { return }
@@ -512,17 +516,17 @@ enum FileShelfActions {
         let enabled: Bool
     }
 
-    static let previewTitle = "大图预览"
-    static let removeTitle = "移出文件架"
-    static let airDropTitle = "隔空投送"
+    static var previewTitle: String { WSL10n.text("notch.shelf.preview", zh: "大图预览") }
+    static var removeTitle: String { WSL10n.text("notch.shelf.remove", zh: "移出文件架") }
+    static var airDropTitle: String { WSL10n.text("silent.activity.airdrop", zh: "隔空投送") }
 
     /// 右键：打开、用哪个 App 打开、在访达中显示、隔空投送、移出文件架。
     /// 灰着的格只能移出；叠放的一格不能“用哪个 App 打开”（里面不是同一种东西）。
     static func menu(isStack: Bool, live: Bool) -> [Item] {
         [
-            Item(action: .open, title: "打开", enabled: live),
-            Item(action: .openWith, title: "用哪个 App 打开", enabled: live && !isStack),
-            Item(action: .reveal, title: "在访达中显示", enabled: live),
+            Item(action: .open, title: WSL10n.text("notch.shelf.open", zh: "打开"), enabled: live),
+            Item(action: .openWith, title: WSL10n.text("notch.shelf.openWith", zh: "用哪个 App 打开"), enabled: live && !isStack),
+            Item(action: .reveal, title: WSL10n.text("settings.privacy.showInFinder", zh: "在访达中显示"), enabled: live),
             Item(action: .airDrop, title: airDropTitle, enabled: live),
             Item(action: .remove, title: removeTitle, enabled: true),
         ]
@@ -537,15 +541,19 @@ enum FileShelfActions {
 
     /// 每格念“报价单.pdf，文件架”；灰着的写上原因（`reason` 是格子上写的那句，可用时没有）。
     static func spoken(name: String, reason: String?) -> String {
-        [name, reason, "文件架"].compactMap { $0 }.joined(separator: "，")
+        [name, reason, WSL10n.text("settings.shade.fileShelf.name", zh: "文件架")].compactMap { $0 }
+            .joined(separator: WSL10n.text("notch.join", zh: "，"))
     }
 
-    static func cardSpoken(count: Int) -> String { count > 0 ? "文件架，\(count) 个" : "文件架空了" }
-    static func removedSpoken(_ name: String) -> String { "已移出文件架，\(name)" }
+    static func cardSpoken(count: Int) -> String {
+        count > 0 ? WSL10n.text("notch.shelf.cellSpoken", zh: "文件架，%@ 个", String(count)) : line
+    }
+    private static var line: String { WSL10n.text("notch.shelf.empty", zh: "文件架空了") }
+    static func removedSpoken(_ name: String) -> String { WSL10n.text("notch.shelf.removed", zh: "已移出文件架，%@", name) }
     /// 移出后念的一句。`name` 为 nil（屏幕正在共享，真文件名不念）或一次移出多个时只念个数。
     static func removedSpoken(name: String?, count: Int) -> String {
         if count == 1, let name { return removedSpoken(name) }
-        return count == 1 ? "已移出文件架，1 个" : "已移出文件架，\(count) 个"
+        return WSL10n.text("notch.shelf.removedCount", zh: "已移出文件架，%@ 个", String(count))
     }
 }
 

@@ -84,7 +84,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     /// 列表为空时列表区中央的一行说明（搜索无结果 / 没有窗口）。
     private let emptyStateField = NSTextField(labelWithString: "")
     /// 缺少屏幕录制权限时页脚右侧的入口：走现有的系统设置深链，不在悬停时弹授权框。
-    private let permissionButton = NSButton(title: "打开“屏幕录制”设置…", target: nil, action: nil)
+    private let permissionButton = NSButton(title: WSL10n.text("browser.permission.openSettings", zh: "打开“屏幕录制”设置…"), target: nil, action: nil)
     /// 页脚“打开设置”入口的回调（控制器接到现有权限页面）。
     var onOpenScreenRecordingSettings: (() -> Void)?
     // 只在主线程写；deinit 里移除时已没有别的引用。
@@ -133,26 +133,26 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         detailStatusField.font = WindowBrowserTypography.detail
         detailStatusField.textColor = .secondaryLabelColor
         detailStatusField.lineBreakMode = .byTruncatingTail
-        searchField.placeholderString = "搜索应用名或窗口标题"
-        searchField.setAccessibilityLabel("搜索窗口")
+        searchField.placeholderString = WSL10n.text("browser.search.placeholder", zh: "搜索应用名或窗口标题")
+        searchField.setAccessibilityLabel(WSL10n.text("browser.search.label", zh: "搜索窗口"))
         searchField.delegate = self
         styleControl.segmentCount = 2
         styleControl.setImage(WindowBrowserSymbol.image(named: "square.grid.2x2",
-                                                        accessibilityDescription: "缩略图"),
+                                                        accessibilityDescription: WSL10n.text("settings.shade.collapse.thumbnail", zh: "缩略图")),
                               forSegment: 0)
         styleControl.setImage(WindowBrowserSymbol.image(named: "list.bullet",
-                                                        accessibilityDescription: "列表"),
+                                                        accessibilityDescription: WSL10n.text("browser.style.list", zh: "列表")),
                               forSegment: 1)
         // 只显示系统符号，完整文案走 tooltip 与可访问性标签：避免在窄面板里
         // 把“缩略图/列表”截断成“……”。
         styleControl.setLabel("", forSegment: 0)
         styleControl.setLabel("", forSegment: 1)
-        styleControl.setToolTip("缩略图", forSegment: 0)
-        styleControl.setToolTip("列表", forSegment: 1)
+        styleControl.setToolTip(WSL10n.text("settings.shade.collapse.thumbnail", zh: "缩略图"), forSegment: 0)
+        styleControl.setToolTip(WSL10n.text("browser.style.list", zh: "列表"), forSegment: 1)
         styleControl.controlSize = .small
         styleControl.trackingMode = .selectOne
         styleControl.selectedSegment = 0
-        styleControl.setAccessibilityLabel("显示方式")
+        styleControl.setAccessibilityLabel(WSL10n.text("browser.style.label", zh: "显示方式"))
         styleControl.target = self
         styleControl.action = #selector(styleChanged)
         styleControl.segmentStyle = .automatic
@@ -176,7 +176,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         collectionView.backgroundColors = [.clear]
         collectionView.register(WindowBrowserGridItem.self,
                                 forItemWithIdentifier: WindowBrowserGridItem.identifier)
-        collectionView.setAccessibilityLabel("窗口网格")
+        collectionView.setAccessibilityLabel(WSL10n.text("browser.grid.label", zh: "窗口网格"))
 
         tableColumn.resizingMask = .autoresizingMask
         tableView.addTableColumn(tableColumn)
@@ -192,7 +192,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         tableView.intercellSpacing = NSSize(width: 0, height: params.spacingTight)
         tableView.selectionHighlightStyle = .none
         tableView.allowsEmptySelection = true
-        tableView.setAccessibilityLabel("窗口列表")
+        tableView.setAccessibilityLabel(WSL10n.text("browser.list.label", zh: "窗口列表"))
         tableView.isHidden = true
 
         scrollView.hasVerticalScroller = true
@@ -230,7 +230,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         permissionButton.contentTintColor = .linkColor
         permissionButton.target = self
         permissionButton.action = #selector(openScreenRecordingSettings)
-        permissionButton.setAccessibilityLabel("打开屏幕录制设置")
+        permissionButton.setAccessibilityLabel(WSL10n.text("browser.permission.settingsLabel", zh: "打开屏幕录制设置"))
         permissionButton.isHidden = true
 
         for view in [iconView, appNameField, detailStatusField, searchField, styleControl,
@@ -240,7 +240,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         }
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("窗口浏览面板")
+        setAccessibilityLabel(WSL10n.text("browser.panel.label", zh: "窗口浏览面板"))
 
         updateMaterialSurfaces()
     }
@@ -270,7 +270,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         self.selection = selection
         // Dock 面板锚在该应用的 Dock 图标正上方，系统气泡已经写着应用名：页眉不再重复
         // 应用图标与名称，只写窗口数（单窗口时整个页眉不占位）。键盘面板照常有标题。
-        appNameField.stringValue = mode == .dock ? detailStatus(for: records) : "窗口选择"
+        appNameField.stringValue = mode == .dock ? detailStatus(for: records)
+                                                  : WSL10n.text("browser.panel.chooseTitle", zh: "窗口选择")
         appNameField.font = mode == .dock ? WindowBrowserTypography.body
             : WindowBrowserTypography.header
         appNameField.textColor = mode == .dock ? .secondaryLabelColor : .labelColor
@@ -287,7 +288,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         permissionButton.isHidden = screenRecordingAvailable || status.isEmpty
         if records.isEmpty {
             emptyStateField.stringValue = mode == .keyboard && !searchField.stringValue.isEmpty
-                ? "没有匹配的窗口" : "没有可显示的窗口"
+                ? WSL10n.text("browser.empty.noMatch", zh: "没有匹配的窗口")
+                        : WSL10n.text("browser.empty.nothing", zh: "没有可显示的窗口")
         }
         emptyStateField.isHidden = !records.isEmpty
         searchField.isHidden = mode == .dock
@@ -405,7 +407,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
 
     private func detailStatus(for records: [WindowRecord]) -> String {
         if records.isEmpty { return "" }
-        return records.count == 1 ? "1 个窗口" : "\(records.count) 个窗口"
+        return records.count == 1 ? WSL10n.text("browser.count.oneWindow", zh: "1 个窗口")
+                                     : WSL10n.text("browser.count.windows", zh: "%@ 个窗口", String(records.count))
     }
 
     // MARK: 数据源重建（ID 差异）

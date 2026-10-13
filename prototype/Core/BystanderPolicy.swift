@@ -285,9 +285,14 @@ struct BystanderTuckLedger: Sendable {
 
 /// 设置里“有人在看时收起私人窗口”这一行：名单为空时灰着，提示先去选 App。
 enum BystanderTuckRow {
-    static let title = "有人在看时收起私人窗口"
-    static let subtitle = "只在解锁时用相机，不留任何画面"
-    static let emptySubtitle = "先在私人 App 里选几个"
+    static let titleZh = "有人在看时收起私人窗口"
+    static let subtitleZh = "只在解锁时用相机，不留任何画面"
+    static let emptySubtitleZh = "先在私人 App 里选几个"
+
+    /// 显示走目录：zh 是语义身份。
+    static var title: String { WSL10n.text("settings.bystander.title", zh: titleZh) }
+    static var subtitle: String { WSL10n.text("settings.bystander.subtitle", zh: subtitleZh) }
+    static var emptySubtitle: String { WSL10n.text("settings.bystander.empty", zh: emptySubtitleZh) }
 
     static func state(listEmpty: Bool) -> (enabled: Bool, subtitle: String) {
         listEmpty ? (false, emptySubtitle) : (true, subtitle)

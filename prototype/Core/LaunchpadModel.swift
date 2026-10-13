@@ -446,11 +446,26 @@ enum LaunchpadLibrary {
         }
     }
 
-    static let titles: [String: String] = [
-        "suggestions": "建议", "recent": "最近添加", "utilities": "工具", "developer": "开发工具", "productivity": "效率与财务",
-        "social": "社交", "creativity": "创意", "entertainment": "娱乐", "reading": "信息与阅读", "health": "健康与健身",
-        "travel": "旅行", "shopping": "购物与美食", "games": "游戏", "other": "其他",
-    ]
+    /// 类别名（第31批）：显示按当前语言取。zh 源句是语义身份，和 App 资料库的分节名一一对应。
+    static func title(for id: String) -> String {
+        switch id {
+        case "suggestions": return WSL10n.text("launchpad.category.suggestions", zh: "建议")
+        case "recent": return WSL10n.text("launchpad.category.recent", zh: "最近添加")
+        case "utilities": return WSL10n.text("launchpad.category.utilities", zh: "工具")
+        case "developer": return WSL10n.text("launchpad.category.developer", zh: "开发工具")
+        case "productivity": return WSL10n.text("launchpad.category.productivity", zh: "效率与财务")
+        case "social": return WSL10n.text("launchpad.category.social", zh: "社交")
+        case "creativity": return WSL10n.text("launchpad.category.creativity", zh: "创意")
+        case "entertainment": return WSL10n.text("launchpad.category.entertainment", zh: "娱乐")
+        case "reading": return WSL10n.text("launchpad.category.reading", zh: "信息与阅读")
+        case "health": return WSL10n.text("launchpad.category.health", zh: "健康与健身")
+        case "travel": return WSL10n.text("launchpad.category.travel", zh: "旅行")
+        case "shopping": return WSL10n.text("launchpad.category.shopping", zh: "购物与美食")
+        case "games": return WSL10n.text("launchpad.category.games", zh: "游戏")
+        case "other": return WSL10n.text("launchpad.category.other", zh: "其他")
+        default: return id
+        }
+    }
     static let order = ["suggestions", "recent", "productivity", "creativity", "social", "entertainment", "utilities",
                         "developer", "reading", "health", "travel", "shopping", "games", "other"]
 
@@ -468,14 +483,14 @@ enum LaunchpadLibrary {
         return order.compactMap { id in
             guard var list = groups[id], !list.isEmpty else { return nil }
             if id != "suggestions", id != "recent" { list.sort(by: LaunchpadSearch.ordered) }
-            return LaunchpadCategory(id: id, title: titles[id] ?? id, apps: list)
+            return LaunchpadCategory(id: id, title: title(for: id), apps: list)
         }
     }
 
     /// 新建文件夹时的名字：照 iOS，用落点那个 App 的类别（没写类别的叫“文件夹”）。
     static func folderName(for app: LaunchpadApp) -> String {
         let id = group(for: app.category)
-        return id == "other" ? "文件夹" : titles[id] ?? "文件夹"
+        return id == "other" ? WSL10n.text("launchpad.folder", zh: "文件夹") : title(for: id)
     }
 
     /// 搜索列表的分组字母：名字（中文按拼音）的第一个字母，不是字母的归到“#”。

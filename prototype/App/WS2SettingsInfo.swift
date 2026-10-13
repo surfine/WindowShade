@@ -6,6 +6,10 @@ import Cocoa
         "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回": "甩进刘海，点一下放回",
         "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你": "窗口标题变化时提醒",
         "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线": "音乐、外设、传送与路线",
+        // #39：双击行的全文带修饰键出口，行内短句仍是"系统三击做什么"这一句（ⓘ 显示全文）。
+        "三击标题栏会缩放窗口。按住 Option 双击不收起": "三击标题栏会缩放窗口",
+        "三击标题栏会最小化窗口。按住 Option 双击不收起": "三击标题栏会最小化窗口",
+        "在任意窗口的标题栏上双击。按住 Option 双击不收起": "在任意窗口的标题栏上双击",
         "卡住时，刘海按你原来的习惯提示 Mac 上怎么做": "遇到操作困难时提示",
         "半屏、四角、网格、魔法平铺、卷轴排好的窗口之间和屏幕边留一道缝": "窗口与屏幕边缘的间距",
         "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉": "拖中间竖条，同时调两扇",
@@ -125,6 +129,9 @@ import Cocoa
     /// 只给英文行长预算里放不下的行。用词与目录里的英文译文保持同一套词汇。
     nonisolated static let shortEn: [String: String] = [
         "settings.shade.sub": "How windows roll up, how a bar looks, and sound",
+        "settings.shade.doubleClick.sub": "Double-click any title bar",
+        "settings.shade.doubleClick.subZoom": "A triple-click zooms the window",
+        "settings.shade.doubleClick.subMinimize": "A triple-click minimizes the window",
         "settings.shade.glance.sub": "Glance without unrolling",
         "settings.shade.tuckNotch.sub": "Flick to tuck, click to bring back",
         "settings.shade.notchAlerts.sub": "The notch opens when a title changes",
@@ -200,6 +207,21 @@ import Cocoa
                 symbol: symbol ?? name.flatMap { Self.symbol(for: $0) })
     }
 
+    /// 行内一句状态 + ⓘ 里另给一段解释的行（鼠标与触控板、遥控器页）：行内显示短句，
+    /// ⓘ 与 tooltip 显示解释；两者都走同一张目录表，随语言切换。
+    static func content(name: SettingsText?, subtitle: SettingsText?, detail: SettingsText?, symbol: String? = nil) -> NSStackView {
+        // 行内只显示状态短句（subtitle 与 shownLine 相同 → 不触发自动 ⓘ），
+        // 详情单独给一个 ⓘ，避免同一行出现两个 ⓘ。
+        let short = subtitle.map { line($0) }
+        let built = content(name: name?.shown, subtitle: short, shownLine: short,
+                            symbol: symbol ?? name.flatMap { Self.symbol(for: $0.zh) })
+        if let detail {
+            let caption = (name?.shown.isEmpty == false ? name!.shown : WSL10n.text("settings.info.caption", zh: "说明"))
+            built.view.addArrangedSubview(WS2SettingsInfoButton(text: detail.shown, name: caption))
+        }
+        return built.view
+    }
+
     /// 迁移过的行（第27批）：zh 是语义身份——图标按它查；显示文本与短副标题走当前语言。
     /// zh 模式下与本文件里的 String 版逐字节同输出（line 的 zh 分支就是老路径）。
     static func content(name: SettingsText?, subtitle: SettingsText?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
@@ -208,7 +230,7 @@ import Cocoa
                 symbol: symbol ?? name.flatMap { Self.symbol(for: $0.zh) })
     }
 
-    private static func content(name: String?, subtitle: String?, shownLine: String?, symbol: String?) -> (view: NSStackView, detail: NSTextField?) {
+    static func content(name: String?, subtitle: String?, shownLine: String?, symbol: String?) -> (view: NSStackView, detail: NSTextField?) {
         let labels = NSStackView()
         labels.orientation = .vertical
         labels.alignment = .leading

@@ -199,11 +199,11 @@ enum MagicTiling {
 
     /// 浮窗里说的那一句：“主角 6 · 参考 4”，有侧拉、收进刘海的再补一句。names：窗口 id → App 名字。
     static func summary(_ plan: MagicPlan, names: [CGWindowID: String]) -> String {
-        guard let main = plan.placements.first else { return "这块屏上没有能排的窗口" }
+        guard let main = plan.placements.first else { return WSL10n.text("magic.noWindows", zh: "这块屏上没有能排的窗口") }
         var parts: [String] = []
-        let mainName = names[main.id] ?? "主窗口"
+        let mainName = names[main.id] ?? WSL10n.text("magic.mainWindow", zh: "主窗口")
         if plan.placements.count == 1 {
-            parts.append("\(mainName) 铺满")
+            parts.append(WSL10n.text("magic.fillsScreen", zh: "%@ 铺满", mainName))
         } else {
             let mainShare = Int((plan.share * 10).rounded())
             let sideNames = plan.placements.dropFirst().compactMap { names[$0.id] }
@@ -215,8 +215,13 @@ enum MagicTiling {
                 parts.append("\(mainName) \(mainShare) · \(unique.prefix(2).joined(separator: "、")) \(10 - mainShare)")
             }
         }
-        if let slide = plan.slideOver { parts.append("\(names[slide] ?? "聊天") 侧拉") }
-        if !plan.tuck.isEmpty { parts.append("\(plan.tuck.count) 扇收进刘海") }
+        if let slide = plan.slideOver {
+            parts.append(WSL10n.text("magic.sideBySide", zh: "%@ 侧拉",
+                                     names[slide] ?? WSL10n.text("magic.chatWindow", zh: "聊天")))
+        }
+        if !plan.tuck.isEmpty {
+            parts.append(WSL10n.text("magic.tucked", zh: "%@ 扇收进刘海", String(plan.tuck.count)))
+        }
         return parts.joined(separator: "，")
     }
 }

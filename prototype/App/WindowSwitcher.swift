@@ -164,7 +164,7 @@ final class WindowSwitcher {
         items = Self.collect(owner: owner)
         guard items.count > 1 || items.contains(where: { $0.kind == .shaded }) else {
             keys.isActive = false
-            owner.notch.announce("只有这一扇窗口", tone: .info)
+            owner.notch.announce(WSL10n.text("switcher.onlyOne", zh: "只有这一扇窗口"), tone: .info)
             return
         }
         owner.notch.coachUsed(.switcher)
@@ -437,7 +437,8 @@ final class WindowSwitcherCard: NSView {
             icon.draw(in: NSRect(x: picture.midX - 36, y: picture.midY - 36, width: 72, height: 72))
         }
         item.icon?.draw(in: NSRect(x: 10, y: 8, width: 20, height: 20))
-        let title = item.kind == .shaded ? "\(item.title)（收着）" : item.title
+        let title = item.kind == .shaded
+            ? WSL10n.text("switcher.rolledUpSuffix", zh: "%@（收着）", item.title) : item.title
         let style = NSMutableParagraphStyle()
         style.lineBreakMode = .byTruncatingMiddle
         (title as NSString).draw(in: NSRect(x: 36, y: 8, width: bounds.width - 44, height: 18), withAttributes: [

@@ -28,11 +28,23 @@ enum SwitcherOrigin: String, CaseIterable, Sendable {
     static let answers: [SwitcherOrigin] = [.windows, .ipad, .mac]
 
     /// 界面上的名字（欢迎窗口的三个选项、设置里的分段控件共用，一个东西只有一个名字）。没答没有名字。
+    /// 这里是中文源句（语义身份，测试和路由都查它）；要显示的名字走 `titleText`。
     var title: String? {
         switch self {
         case .windows: return "Windows"
         case .ipad: return "iPad"
         case .mac: return "一直用 Mac"
+        case .unanswered: return nil
+        }
+    }
+
+    /// 按当前语言显示的名字（第31批）：欢迎窗口的选项、设置里的分段、刘海问来处都用它。
+    /// 逐 case 写字面量键，检查器才查得到（动态拼键会变成没人引用的孤儿键）。
+    var titleText: String? {
+        switch self {
+        case .windows: return WSL10n.text("origin.windows", zh: "Windows")
+        case .ipad: return WSL10n.text("origin.ipad", zh: "iPad")
+        case .mac: return WSL10n.text("origin.mac", zh: "一直用 Mac")
         case .unanswered: return nil
         }
     }

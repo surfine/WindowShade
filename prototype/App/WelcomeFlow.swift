@@ -26,20 +26,34 @@ enum WelcomeFlow {
 
     // MARK: 文案（过 docs/copy-guide.md）
 
-    static let introEyebrow = "欢迎使用 WindowShade"
-    static let introTitle = "刚换 Mac？从刘海开始。"
-    static let introLede = "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。"
-    static let originTitle = "你之前常用哪个？"
-    static let permissionTitle = "最后一步：授权"
-    static let permissionLede = "辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。"
+    /// 第31批：都走目录（zh 是语义身份）。用核算属性而不是 `static let`：设置里换语言时窗口还开着，
+    /// 每次取值都要按当前语言重出。
+    static var introEyebrow: String { WSL10n.text("welcome.title", zh: "欢迎使用 WindowShade") }
+    static var introTitle: String { WSL10n.text("welcome.flow.introTitle", zh: "刚换 Mac？从刘海开始。") }
+    static var introLede: String {
+        WSL10n.text("welcome.flow.introLede",
+                    zh: "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。")
+    }
+    static var originTitle: String { WSL10n.text("welcome.flow.originTitle", zh: "你之前常用哪个？") }
+    static var permissionTitle: String { WSL10n.text("welcome.flow.permissionTitle", zh: "最后一步：授权") }
+    static var permissionLede: String {
+        WSL10n.text("welcome.flow.permissionLede",
+                    zh: "辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。")
+    }
 
     /// 第二步选项下面那一行，按选项换。
     static func originNote(for origin: SwitcherOrigin) -> String {
         switch origin {
-        case .windows: return "拷贝、粘贴用拇指按 ⌘，就在你原来按 Alt 的地方。其余的，卡住时刘海会说。"
-        case .ipad: return "在 Mac 上，菜单要两指点按，和 iPad 接触控板时一样。卡住时刘海会说。"
-        case .mac: return "那刘海多半不会开口。设置里随时能改。"
-        case .unanswered: return "选一个，刘海按你的习惯来教。"
+        case .windows:
+            return WSL10n.text("welcome.flow.note.windows",
+                               zh: "拷贝、粘贴用拇指按 ⌘，就在你原来按 Alt 的地方。其余的，卡住时刘海会说。")
+        case .ipad:
+            return WSL10n.text("welcome.flow.note.ipad",
+                               zh: "在 Mac 上，菜单要两指点按，和 iPad 接触控板时一样。卡住时刘海会说。")
+        case .mac:
+            return WSL10n.text("welcome.flow.note.mac", zh: "那刘海多半不会开口。设置里随时能改。")
+        case .unanswered:
+            return WSL10n.text("welcome.flow.note.unanswered", zh: "选一个，刘海按你的习惯来教。")
         }
     }
 
@@ -55,7 +69,9 @@ enum WelcomeFlow {
     static func eyebrow(forStep step: Int) -> String { step == introStep ? introEyebrow : "" }
 
     /// 页码点给读屏的名字。n 从 1 数；超出范围按最近的一页读。
-    static func pageLabel(_ n: Int) -> String { "第 \(max(1, min(stepCount, n))) 页" }
+    static func pageLabel(_ n: Int) -> String {
+        WSL10n.text("welcome.flow.pageLabel", zh: "第 %@ 页", String(max(1, min(stepCount, n))))
+    }
 
     // MARK: 舞台和窗口高度
 

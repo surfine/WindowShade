@@ -30,15 +30,17 @@ final class NotchActivityView: NSView {
         strip.wantsLayer = true
         addSubview(viewport); viewport.addSubview(strip)
         let actions: [(String, String, NotchActivityAction)] = [
-            ("音乐", "music.note", .enableMusic), ("隔空投送", "airdrop", .airDrop),
-            ("路线", "map", .route), ("语音备忘录", "waveform", .voiceMemos),
-            ("番茄钟", "timer", .focusOpen)]
+            (WSL10n.text("notch.kind.music", zh: "音乐"), "music.note", .enableMusic),
+            (WSL10n.text("silent.activity.airdrop", zh: "隔空投送"), "airdrop", .airDrop),
+            (WSL10n.text("silent.activity.route", zh: "路线"), "map", .route),
+            (WSL10n.text("notch.kind.voiceMemos", zh: "语音备忘录"), "waveform", .voiceMemos),
+            (WSL10n.text("settings.shade.focus.name", zh: "番茄钟"), "timer", .focusOpen)]
         tools = actions.map { title, symbol, action in
             let button = makeButton(title, symbol: symbol)
             button.identifier = .init(action.rawValue); button.target = self; button.action = #selector(tool(_:))
             addSubview(button); return button
         }
-        setAccessibilityLabel("实时活动")
+        setAccessibilityLabel(WSL10n.text("settings.shade.activities.name", zh: "实时活动"))
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
@@ -226,15 +228,19 @@ private final class ActivityCard: NSView {
         self.expanded = expanded
         // 过期：内容降到 0.5 透明（不猜、不补数）；结束：最后的样子照原样留着。
         alphaValue = item.isStale ? CGFloat(NotchActivity.staleAlpha) : 1
-        setAccessibilityLabel(item.isStale ? "\(NotchEarText.cardTitle(item))，\(NotchActivity.staleSpoken)" : nil)
+        setAccessibilityLabel(item.isStale
+            ? NotchEarText.cardTitle(item) + WSL10n.text("notch.join", zh: "，") + NotchActivity.staleSpoken
+            : nil)
         // 计时器：主句写“计时器 · 9 分”（和番茄钟同一种写法，超时写“+3 分”）。
         // 日程：主句写“设计评审 · 4 分”，开始后能加入的写“设计评审 · 已开始”。
         title.stringValue = item.kind == .timer
             ? [item.title, item.trailing ?? ""].filter { !$0.isEmpty }.joined(separator: " · ")
             : (item.kind == .calendar
-               ? [item.title, (item.trailing ?? "").isEmpty ? "已开始" : item.trailing ?? ""].joined(separator: " · ")
+               ? [item.title, (item.trailing ?? "").isEmpty
+                    ? WSL10n.text("notch.activity.started", zh: "已开始") : item.trailing ?? ""].joined(separator: " · ")
                : NotchEarText.cardTitle(item))
-        subtitle.stringValue = item.isPaused && item.kind == .music ? "已暂停 · \(item.subtitle)"
+        subtitle.stringValue = item.isPaused && item.kind == .music
+            ? WSL10n.text("say.paused", zh: "已暂停") + " · " + item.subtitle
             // 下载卡：收起时只有“正在下载”和个数；展开后副标题换成文件名。
             : (item.kind == .download && !item.detail.isEmpty ? (item.subtitle.isEmpty ? item.detail : "\(item.subtitle) · \(item.detail)") : item.subtitle)
         icon.image = NotchActivitySymbol.image(item.symbol)
@@ -252,26 +258,36 @@ private final class ActivityCard: NSView {
             // 结束了只留最后的样子：没有能按的。
             actions = []
         } else if item.kind == .music {
-            actions = [("上一首", "backward.end.fill", .previous), (item.isPaused ? "播放" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .playPause), ("下一首", "forward.end.fill", .next)]
+            actions = [(WSL10n.text("notch.action.previous", zh: "上一首"), "backward.end.fill", .previous),
+                       (item.isPaused ? WSL10n.text("notch.action.play", zh: "播放")
+                                      : WSL10n.text("notch.action.pause", zh: "暂停"),
+                        item.isPaused ? "play.fill" : "pause.fill", .playPause),
+                       (WSL10n.text("notch.action.next", zh: "下一首"), "forward.end.fill", .next)]
         } else if item.kind == .focus {
-            actions = [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause),
-                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "stop.fill", .end)]
+            actions = [(item.isPaused ? WSL10n.text("notch.action.resume", zh: "继续")
+                                          : WSL10n.text("notch.action.pause", zh: "暂停"),
+                            item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause),
+                       (WSL10n.text("notch.action.skip", zh: "跳过"), "forward.end.fill", .focusSkip),
+                       (WSL10n.text("notch.action.end", zh: "结束"), "stop.fill", .end)]
         } else if item.kind == .timer {
             // 计时器：暂停 / 继续、结束；已经超时就只剩结束。
             let overtime = (item.trailing ?? "").hasPrefix("+")
             let pauseAction: [(String, String, NotchActivityAction)] =
-                overtime ? [] : [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause)]
-            actions = pauseAction + [("结束", "xmark", .end)]
+                overtime ? [] : [(item.isPaused ? WSL10n.text("notch.action.resume", zh: "继续")
+                                                    : WSL10n.text("notch.action.pause", zh: "暂停"),
+                                      item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause)]
+            actions = pauseAction + [(WSL10n.text("notch.action.end", zh: "结束"), "xmark", .end)]
         } else if item.kind == .calendar {
             // 日程：有会议链接才有“加入”；点卡片本身长成大卡。
             actions = item.calendar?.hasLink == true ? [(CalendarWords.joinTitle, "video.fill", .join)]
-                : [("打开", "arrow.up.forward.app", .open)]
+                : [(WSL10n.text("notch.action.open", zh: "打开"), "arrow.up.forward.app", .open)]
         } else if item.kind == .route {
-            actions = [("地图", "arrow.up.forward.app", .open), ("移除路线", "xmark", .end)]
+            actions = [(WSL10n.text("notch.action.maps", zh: "地图"), "arrow.up.forward.app", .open),
+                       (WSL10n.text("notch.action.removeRoute", zh: "移除路线"), "xmark", .end)]
         } else if item.kind == .session {
             // 编程会话：去它所在的终端窗口（找不到就打开会话页）。
-            actions = [("过去", "arrow.up.forward.app", .open)]
-        } else { actions = [("打开", "arrow.up.forward.app", .open)] }
+            actions = [(WSL10n.text("notch.action.goThere", zh: "过去"), "arrow.up.forward.app", .open)]
+        } else { actions = [(WSL10n.text("notch.action.open", zh: "打开"), "arrow.up.forward.app", .open)] }
         buttons = actions.map { label, symbol, action in
             let button = makeButton("", symbol: symbol)
             button.setAccessibilityLabel(label); button.toolTip = label

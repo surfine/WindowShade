@@ -75,7 +75,7 @@ enum WindowBrowserActionPresentation {
         let reason: String?
         if blocked {
             enabled = false
-            reason = "操作正在进行中"
+            reason = WSL10n.text("browser.outcome.busy", zh: "操作正在进行中")
         } else if let outcome {
             switch outcome {
             case .completed:
@@ -88,13 +88,14 @@ enum WindowBrowserActionPresentation {
             case .permissionRequired(let kind):
                 enabled = false
                 reason = kind == .accessibility
-                    ? "需要辅助功能权限" : "需要屏幕录制权限"
+                    ? WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限")
+                    : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
             case .busy:
                 enabled = false
-                reason = "操作正在进行中"
+                reason = WSL10n.text("browser.outcome.busy", zh: "操作正在进行中")
             case .targetGone:
                 enabled = false
-                reason = "窗口已不存在"
+                reason = WSL10n.text("browser.outcome.targetGone", zh: "窗口已不存在")
             case .awaitingUser(let text), .uncertain(let text):
                 enabled = false
                 reason = text
@@ -121,27 +122,27 @@ enum WindowBrowserActionPresentation {
     static func title(for action: WindowBrowserAction, record: WindowRecord) -> String {
         switch action {
         case .activate:
-            return record.shadeState == .folded ? "展开窗口" : "显示窗口"
+            return record.shadeState == .folded ? WSL10n.text("browser.action.unfold", zh: "展开窗口") : WSL10n.text("browser.action.show", zh: "显示窗口")
         case .fold:
-            return "收起窗口"
+            return WSL10n.text("browser.action.foldRow", zh: "收起窗口")
         case .unfold:
-            return "展开窗口"
+            return WSL10n.text("browser.action.unfold", zh: "展开窗口")
         case .pinPreview:
-            return record.shadeState == .folded ? "展开并置顶预览" : "置顶预览"
+            return record.shadeState == .folded ? WSL10n.text("browser.action.unfoldPin", zh: "展开并置顶预览") : WSL10n.text("browser.action.pinPreview", zh: "置顶预览")
         case .unpinPreview:
-            return "取消置顶"
+            return WSL10n.text("browser.action.unpin", zh: "取消置顶")
         case .minimize:
-            return "最小化"
+            return WSL10n.text("browser.action.minimize", zh: "最小化")
         case .close:
-            return "关闭窗口"
+            return WSL10n.text("browser.action.close", zh: "关闭窗口")
         case .fullScreen:
-            return "进入全屏"
+            return WSL10n.text("browser.action.fullScreen", zh: "进入全屏")
         case .newWindow:
-            return "新建窗口"
+            return WSL10n.text("browser.action.newWindow", zh: "新建窗口")
         case .hideApp:
-            return "让开这个 App"
+            return WSL10n.text("browser.action.hideApp", zh: "让开这个 App")
         case .quitApp:
-            return "退出 App"
+            return WSL10n.text("browser.action.quitApp", zh: "退出 App")
         }
     }
 
@@ -207,40 +208,40 @@ enum WindowBrowserStatusPresentationFactory {
         switch (record.shadeState, record.pinState, record.systemVisibility) {
         case (.restoring, _, _):
             return WindowBrowserStatusPresentation(
-                text: "正在展开", symbolName: "arrow.triangle.2.circlepath",
+                text: WSL10n.text("browser.status.unrolling", zh: "正在展开"), symbolName: "arrow.triangle.2.circlepath",
                 isWarning: false, isSnapshot: false)
         case (.folded, .running, _):
             return WindowBrowserStatusPresentation(
-                text: "已收起 · 置顶预览", symbolName: "curtains.closed",
+                text: WSL10n.text("browser.status.foldedPinned", zh: "已收起 · 置顶预览"), symbolName: "curtains.closed",
                 isWarning: false, isSnapshot: false)
         case (.folded, .suspended, _):
             return WindowBrowserStatusPresentation(
-                text: "已收起 · 预览已暂停", symbolName: "curtains.closed",
+                text: WSL10n.text("browser.status.foldedPaused", zh: "已收起 · 预览已暂停"), symbolName: "curtains.closed",
                 isWarning: false, isSnapshot: false)
         case (.folded, _, _):
             // 已折叠且物理离屏是正常状态，不使用异常警告。
             return WindowBrowserStatusPresentation(
-                text: "已收起", symbolName: "curtains.closed",
+                text: WSL10n.text("browser.status.folded", zh: "已收起"), symbolName: "curtains.closed",
                 isWarning: false, isSnapshot: false)
         case (_, .running, _):
             return WindowBrowserStatusPresentation(
-                text: "置顶预览", symbolName: "pin",
+                text: WSL10n.text("browser.status.pinned", zh: "置顶预览"), symbolName: "pin",
                 isWarning: false, isSnapshot: false)
         case (_, .suspended, _):
             return WindowBrowserStatusPresentation(
-                text: "预览已暂停", symbolName: "pause.circle",
+                text: WSL10n.text("browser.status.paused", zh: "预览已暂停"), symbolName: "pause.circle",
                 isWarning: false, isSnapshot: false)
         case (_, _, .minimized):
             return WindowBrowserStatusPresentation(
-                text: hasSnapshot ? "已最小化 · 快照" : "已最小化",
+                text: hasSnapshot ? WSL10n.text("browser.status.minimizedSnapshot", zh: "已最小化 · 快照") : WSL10n.text("browser.status.minimized", zh: "已最小化"),
                 symbolName: "minus.square", isWarning: false, isSnapshot: hasSnapshot)
         case (_, _, .applicationHidden):
             return WindowBrowserStatusPresentation(
-                text: hasSnapshot ? "应用已隐藏 · 快照" : "应用已隐藏",
+                text: hasSnapshot ? WSL10n.text("browser.status.hiddenSnapshot", zh: "应用已隐藏 · 快照") : WSL10n.text("browser.status.hidden", zh: "应用已隐藏"),
                 symbolName: "eye.slash", isWarning: false, isSnapshot: hasSnapshot)
         case (_, _, .offScreen):
             return WindowBrowserStatusPresentation(
-                text: "屏幕外", symbolName: "rectangle.dashed",
+                text: WSL10n.text("browser.status.offScreen", zh: "屏幕外"), symbolName: "rectangle.dashed",
                 isWarning: false, isSnapshot: false)
         case (_, _, .unknown):
             return WindowBrowserStatusPresentation(
@@ -270,33 +271,33 @@ enum WindowBrowserAccessibilityAnnouncement {
         let suffix = target.isEmpty || action == .newWindow ? "" : "：\(target)"
         switch outcome {
         case .completed:
-            return "\(actionTitle(action))完成\(suffix)"
+            return WSL10n.text("browser.outcome.done", zh: "%@完成%@", actionTitle(action), suffix)
         case .awaitingUser(let reason):
             return reason
         case .permissionRequired(let kind):
-            return kind == .accessibility ? "需要辅助功能权限" : "需要屏幕录制权限"
+            return kind == .accessibility ? WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限") : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
         case .failed(let reason), .uncertain(let reason), .unsupported(let reason):
             return reason
         case .busy:
-            return "操作正在进行中"
+            return WSL10n.text("browser.outcome.busy", zh: "操作正在进行中")
         case .targetGone:
-            return "窗口已不存在"
+            return WSL10n.text("browser.outcome.targetGone", zh: "窗口已不存在")
         }
     }
 
     private static func actionTitle(_ action: WindowBrowserAction) -> String {
         switch action {
-        case .activate: return "激活"
-        case .fold: return "收起"
-        case .unfold: return "展开"
-        case .pinPreview: return "置顶预览"
-        case .unpinPreview: return "取消置顶预览"
-        case .close: return "关闭窗口"
-        case .minimize: return "最小化"
-        case .fullScreen: return "进入全屏"
-        case .newWindow: return "新建窗口"
-        case .hideApp: return "让开这个 App"
-        case .quitApp: return "退出 App"
+        case .activate: return WSL10n.text("browser.action.activate", zh: "激活")
+        case .fold: return WSL10n.text("browser.action.fold", zh: "收起")
+        case .unfold: return WSL10n.text("browser.action.unfoldShort", zh: "展开")
+        case .pinPreview: return WSL10n.text("browser.action.pinPreview", zh: "置顶预览")
+        case .unpinPreview: return WSL10n.text("browser.action.unpinPreview", zh: "取消置顶预览")
+        case .close: return WSL10n.text("browser.action.close", zh: "关闭窗口")
+        case .minimize: return WSL10n.text("browser.action.minimize", zh: "最小化")
+        case .fullScreen: return WSL10n.text("browser.action.fullScreen", zh: "进入全屏")
+        case .newWindow: return WSL10n.text("browser.action.newWindow", zh: "新建窗口")
+        case .hideApp: return WSL10n.text("browser.action.hideApp", zh: "让开这个 App")
+        case .quitApp: return WSL10n.text("browser.action.quitApp", zh: "退出 App")
         }
     }
 }
@@ -365,13 +366,13 @@ enum WindowBrowserQuickLookPolicy {
                         hasScreenRecording: Bool = true) -> String? {
         switch source {
         case .thumbnail: return nil
-        case .staleSnapshot: return "快照（画面可能已过期）"
-        case .foldSnapshot: return "收起时保存的快照"
+        case .staleSnapshot: return WSL10n.text("browser.quicklook.stale", zh: "快照（画面可能已过期）")
+        case .foldSnapshot: return WSL10n.text("browser.quicklook.folded", zh: "收起时保存的快照")
         case .applicationIcon:
-            if !hasScreenRecording { return "缺少屏幕录制权限，暂时只能显示应用图标" }
-            if isFolded { return "收起的窗口没有保存画面" }
-            if isMinimized { return "最小化窗口没有快照，暂时只能显示应用图标" }
-            return "暂时没有可用的窗口画面"
+            if !hasScreenRecording { return WSL10n.text("browser.quicklook.noRecording", zh: "缺少屏幕录制权限，暂时只能显示应用图标") }
+            if isFolded { return WSL10n.text("browser.quicklook.foldedNone", zh: "收起的窗口没有保存画面") }
+            if isMinimized { return WSL10n.text("browser.card.minimizedNoSnapshot", zh: "最小化窗口没有快照，暂时只能显示应用图标") }
+            return WSL10n.text("browser.card.noPictureYet", zh: "暂时没有可用的窗口画面")
         }
     }
 }

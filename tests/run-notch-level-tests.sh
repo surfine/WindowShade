@@ -9,25 +9,26 @@ mkdir -p .build/notch-level-tests
 
 # 每个测试各自带 @main，所以分开编、分开跑。
 swiftc -swift-version 6 -parse-as-library prototype/Core/NotchLevelGate.swift tests/NotchLevelGateTests.swift \
+  prototype/Core/WSL10n.swift \
   -o .build/notch-level-tests/level
 .build/notch-level-tests/level
 
-swiftc -swift-version 6 -parse-as-library prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift \
+swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift \
   tests/NotchLevelSuppressionTests.swift -o .build/notch-level-tests/suppression
 .build/notch-level-tests/suppression
 
-swiftc -swift-version 6 -parse-as-library prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift \
+swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift \
   prototype/Core/FlickMotion.swift tests/NotchLevelStepTests.swift -o .build/notch-level-tests/step
 .build/notch-level-tests/step
 
 # LV2：拦键与写回（可替换的写入端口；不碰真机、不装监听）。
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library -D NOTCH_LEVEL_HOST_TESTING \
-  prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift prototype/Core/NotchLevelStep.swift \
+  prototype/Core/WSL10n.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift prototype/Core/NotchLevelStep.swift \
   prototype/Core/FlickMotion.swift prototype/App/NotchLevelControl.swift tests/NotchLevelControlTests.swift \
   -o .build/notch-level-tests/control
 .build/notch-level-tests/control
 # LV3：两耳的几何、符号分档与设备符号、读屏那一句、全屏可见性判定。
-swiftc -swift-version 6 -parse-as-library prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift \
+swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift \
   prototype/Core/NotchLevelSuppression.swift prototype/Core/NotchLevelEars.swift prototype/Core/FlickMotion.swift \
   tests/NotchLevelEarsTests.swift -o .build/notch-level-tests/ears
 .build/notch-level-tests/ears
@@ -35,6 +36,6 @@ swiftc -swift-version 6 -parse-as-library prototype/Core/NotchLevelGate.swift pr
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift prototype/Core/NotchLevelSuppression.swift \
   prototype/Core/NotchLevelEars.swift prototype/Core/NotchLevelOutput.swift prototype/Core/NotchLevelScreen.swift \
-  prototype/Core/NotchLevelSetting.swift prototype/Core/ReleaseDefaults.swift prototype/Core/FlickMotion.swift tests/NotchLevelLV4Tests.swift \
+  prototype/Core/WSL10n.swift prototype/Core/NotchLevelSetting.swift prototype/Core/ReleaseDefaults.swift prototype/Core/FlickMotion.swift tests/NotchLevelLV4Tests.swift \
   -o .build/notch-level-tests/lv4
 .build/notch-level-tests/lv4

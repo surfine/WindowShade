@@ -90,13 +90,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private let desktop = NSSwitch()
   private let windows = NSSwitch()
   private let live = NSSwitch()
-  private let pause = NSButton(title: "暂停效果", target: nil, action: nil)
-  private let permission = NSButton(title: "打开屏幕录制设置…", target: nil, action: nil)
+  private let pause = NSButton(title: WSL10n.text("settings.effects.pause.name", zh: "暂停效果"), target: nil, action: nil)
+  private let permission = NSButton(title: WSL10n.text("settings.effects.openScreenRecording", zh: "打开屏幕录制设置…"), target: nil, action: nil)
   private let scrubber = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
   private let preset = NSSegmentedControl(
     labels: DuoPreset.allCases.map(\.title), trackingMode: .selectOne, target: nil, action: nil)
   private let mode = NSSegmentedControl(
-    labels: ["桌面", "窗口"], trackingMode: .selectOne, target: nil, action: nil)
+    labels: [WSL10n.text("settings.effects.target.desktop", zh: "桌面"), WSL10n.text("settings.effects.target.window", zh: "窗口")], trackingMode: .selectOne, target: nil, action: nil)
   private var lastStatusAt = 0.0
   private var previewClockRunning = false
   private var captureMessage: String?
@@ -689,21 +689,21 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     permission.action = #selector(openPermission)
     permission.bezelStyle = .rounded
 
-    let automaticSection = makeSectionLabel("效果")
+    let automaticSection = makeSectionLabel(WSL10n.text("settings.effects.group.effects", zh: "效果"))
     stack.addArrangedSubview(automaticSection)
     stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
-      makeToggleRow(title: "桌面开合", subtitle: "合上或打开盖子时，桌面跟着动一下。",
+      makeToggleRow(title: WSL10n.text("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.text("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),
                     control: desktop, action: #selector(changed)),
-      makeToggleRow(title: "收起窗口时的动画", subtitle: "收起或展开窗口时播放动画。",
+      makeToggleRow(title: WSL10n.text("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.text("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
                     control: windows, action: #selector(changed)),
-      makeActionRow(title: "暂停效果", subtitle: "临时停用，不改动上面的开关。", button: pause),
+      makeActionRow(title: WSL10n.text("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.text("settings.effects.pause.sub", zh: "临时停用，不改动上面的开关。"), button: pause),
     ])
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: automatic)
 
-    let previewSection = makeSectionLabel("预览")
+    let previewSection = makeSectionLabel(WSL10n.text("settings.effects.group.preview", zh: "预览"))
     stack.addArrangedSubview(previewSection)
     stack.setCustomSpacing(6, after: previewSection)
     let rendererView: NSView?
@@ -719,24 +719,24 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         name: NSView.frameDidChangeNotification, object: renderer.view)
       rendererView = renderer.view
     } catch {
-      captureMessage = "预览不可用：\(error.localizedDescription)"
+      captureMessage = WSL10n.text("settings.effects.previewUnavailable", zh: "预览不可用：%@", error.localizedDescription)
       rendererView = nil
     }
 
     mode.selectedSegment = 0
     mode.target = self
     mode.action = #selector(previewChanged)
-    mode.setAccessibilityLabel("预览对象")
+    mode.setAccessibilityLabel(WSL10n.text("settings.effects.previewTarget.name", zh: "预览对象"))
     preset.target = self
     preset.action = #selector(changed)
-    preset.setAccessibilityLabel("预览样式")
+    preset.setAccessibilityLabel(WSL10n.text("settings.effects.previewStyle.name", zh: "预览样式"))
 
     scrubber.target = self
     scrubber.action = #selector(previewChanged)
     scrubber.isContinuous = true
-    scrubber.setAccessibilityLabel("预览进度")
+    scrubber.setAccessibilityLabel(WSL10n.text("settings.effects.previewProgress", zh: "预览进度"))
     let rangeLabels = NSStackView(views: [
-      NSTextField(labelWithString: "展开"), scrubber, NSTextField(labelWithString: "收起"),
+      NSTextField(labelWithString: WSL10n.text("settings.effects.unroll", zh: "展开")), scrubber, NSTextField(labelWithString: WSL10n.text("settings.effects.roll", zh: "收起")),
     ])
     rangeLabels.orientation = .horizontal
     rangeLabels.alignment = .centerY
@@ -750,11 +750,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let previewRows = [
       rendererView,
       rangeLabels,
-      makeControlRow(title: "预览对象", subtitle: "看看桌面或单个窗口的效果。", control: mode),
-      makeControlRow(title: "预览样式", subtitle: "选择效果的观感。", control: preset),
-      makeToggleRow(title: "实时预览", subtitle: "打开后才会用到屏幕录制权限。",
+      makeControlRow(title: WSL10n.text("settings.effects.previewTarget.name", zh: "预览对象"), subtitle: WSL10n.text("settings.effects.previewTarget.sub", zh: "看看桌面或单个窗口的效果。"), control: mode),
+      makeControlRow(title: WSL10n.text("settings.effects.previewStyle.name", zh: "预览样式"), subtitle: WSL10n.text("settings.effects.previewStyle.sub", zh: "选择效果的观感。"), control: preset),
+      makeToggleRow(title: WSL10n.text("settings.effects.live.name", zh: "实时预览"), subtitle: WSL10n.text("settings.effects.live.sub", zh: "打开后才会用到屏幕录制权限。"),
                     control: live, action: #selector(liveChanged)),
-      makeActionRow(title: "屏幕录制权限", subtitle: "实时预览需要此权限。", button: permission),
+      makeActionRow(title: WSL10n.text("settings.effects.permission.name", zh: "屏幕录制权限"), subtitle: WSL10n.text("settings.effects.permission.sub", zh: "实时预览需要此权限。"), button: permission),
     ].compactMap { $0 }
     let preview = makeSettingsCard(previewRows)
     stack.addArrangedSubview(preview)

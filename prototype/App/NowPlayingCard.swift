@@ -69,7 +69,7 @@ final class NowPlayingRouteRow: NSView {
         setAccessibilityElement(true)
         setAccessibilityRole(.button)
         setAccessibilityLabel(route.name)
-        setAccessibilityValue(route.isCurrent ? "正在使用" : nil)
+        setAccessibilityValue(route.isCurrent ? WSL10n.text("nowPlaying.inUse", zh: "正在使用") : nil)
     }
     required init?(coder: NSCoder) { nil }
 
@@ -77,7 +77,7 @@ final class NowPlayingRouteRow: NSView {
 
     func setChecked(_ value: Bool) {
         checked = value
-        setAccessibilityValue(value ? "正在使用" : nil)
+        setAccessibilityValue(value ? WSL10n.text("nowPlaying.inUse", zh: "正在使用") : nil)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -252,13 +252,13 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     private let remainingField = NowPlayingCard.label(11, .medium, mono: true, alpha: 0.6)
     private let liveTag = NSView()
     private let liveText = NowPlayingCard.label(11, .semibold)
-    private lazy var previousButton = NowPlayingCardButton(symbol: "backward.fill", label: "上一首", pointSize: 18,
+    private lazy var previousButton = NowPlayingCardButton(symbol: "backward.fill", label: WSL10n.text("notch.action.previous", zh: "上一首"), pointSize: 18,
                                                            target: self, action: #selector(previousAction))
-    private lazy var playButton = NowPlayingCardButton(symbol: "pause.fill", label: "暂停", pointSize: 24,
+    private lazy var playButton = NowPlayingCardButton(symbol: "pause.fill", label: WSL10n.text("notch.action.pause", zh: "暂停"), pointSize: 24,
                                                        target: self, action: #selector(playAction))
-    private lazy var nextButton = NowPlayingCardButton(symbol: "forward.fill", label: "下一首", pointSize: 18,
+    private lazy var nextButton = NowPlayingCardButton(symbol: "forward.fill", label: WSL10n.text("notch.action.next", zh: "下一首"), pointSize: 18,
                                                        target: self, action: #selector(nextAction))
-    private lazy var outputButton = NowPlayingCardButton(symbol: AudioOutputKind.speaker.symbol, label: "播放到", pointSize: 18,
+    private lazy var outputButton = NowPlayingCardButton(symbol: AudioOutputKind.speaker.symbol, label: WSL10n.text("nowPlaying.playTo", zh: "播放到"), pointSize: 18,
                                                          target: self, action: #selector(outputAction))
     private let volumeRow = NowPlayingVolumeRowView()
     private let listHeader = NowPlayingCard.label(11, .semibold, alpha: 0.6)
@@ -364,12 +364,12 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         liveTag.wantsLayer = true
         liveTag.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.16).cgColor
         liveTag.layer?.cornerRadius = 7
-        liveText.stringValue = "直播"
+        liveText.stringValue = WSL10n.text("nowPlaying.live", zh: "直播")
         liveText.textColor = NSColor.white
         liveTag.addSubview(liveText)
         remainingField.alignment = .right
-        listHeader.stringValue = "播放到"
-        emptyRoutes.stringValue = "暂未找到设备"
+        listHeader.stringValue = WSL10n.text("nowPlaying.playTo", zh: "播放到")
+        emptyRoutes.stringValue = WSL10n.text("nowPlaying.noDevices", zh: "暂未找到设备")
         emptyRoutes.alignment = .center
         emptyRoutes.isHidden = true
         listDocument.addSubview(emptyRoutes)
@@ -380,7 +380,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         listScroll.documentView = listDocument
         listScroll.verticalScrollElasticity = .allowed
         playButton.setAccessibilityRole(.button)
-        outputButton.setAccessibilityHelp("选声音从哪里出来")
+        outputButton.setAccessibilityHelp(WSL10n.text("nowPlaying.pickOutput", zh: "选声音从哪里出来"))
         fadables = [titleField, artistField, barHost, elapsedField, remainingField, liveTag, previousButton, playButton, nextButton,
                     outputButton, listHeader, listScroll]
         for view in fadables { addSubview(view) }
@@ -410,7 +410,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         defer { renderWave() }
         let paused = next.isPaused
         playButton.setSymbol(paused ? "play.fill" : "pause.fill")
-        let playLabel = paused ? "播放" : "暂停"
+        let playLabel = paused ? WSL10n.text("notch.action.play", zh: "播放") : WSL10n.text("notch.action.pause", zh: "暂停")
         playButton.setAccessibilityLabel(playLabel)
         playButton.toolTip = playLabel
         if previous?.isPaused != paused || !entranceDone { applyCoverPauseScale(animated: previous != nil && entranceDone) }
@@ -853,7 +853,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         NSAccessibility.post(element: self, notification: .layoutChanged)
         if found.isEmpty {
             NSAccessibility.post(element: self, notification: .announcementRequested,
-                                 userInfo: [.announcement: "暂未找到设备", .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+                                 userInfo: [.announcement: WSL10n.text("nowPlaying.noDevices", zh: "暂未找到设备"), .priority: NSAccessibilityPriorityLevel.medium.rawValue])
         }
     }
 
@@ -1022,7 +1022,7 @@ final class NowPlayingVolumeRowView: NSView {
         layer?.addSublayer(fillLayer)
         setAccessibilityElement(true)
         setAccessibilityRole(.slider)
-        setAccessibilityLabel("音量")
+        setAccessibilityLabel(WSL10n.text("notch.level.volume", zh: "音量"))
     }
     required init?(coder: NSCoder) { nil }
 

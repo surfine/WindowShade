@@ -461,3 +461,20 @@ Phase 1–3 Computer Use 复验（gate-0B-verification.md）：单文档收/展�
 滑杆读数位置未直接复验、蓝牙三击与动画手感 not_run —— 四项进用户真机清单。
 事故记录：误用 git checkout 丢掉 xcstrings 第28批改动，用 .build 编译产物逐键恢复并核对零差异（已在交接 §15 记明）。
 未提交未推送；发布日流程（提交→tag→gh release→appcast）待用户裁定。
+
+## 第31批（欢迎流程 + 通知面英文，2026-10-13，本 session）
+
+实现：`WelcomeFlow` 文案核算属性走目录；`Welcome` 按钮/舞台说明/插画字（菜单栏、迷你窗口标题、刘海两行复用 habit 键）；`SwitcherOrigin.titleText` + `origin.*`（欢迎选项、设置分段、刘海问来处共用）；`HabitContext.askOrigin` 与 `HabitCloseButton` 辅助文案；设置页分组标题与"已排除"连接词补迁。目录 1524→1554 键；防漏网棘轮 2180→2150（只降）。
+校验：`check-localizable` PASS、`run-localization-tests`（每键英文解析 + 无汉字 1554/1554）、welcome-flow / switcher-origin / release-defaults / quiet-defaults / origin-guess / habit-rules 套件全过、`build.sh --check` EXIT=0（隐私登记 730 站点、文案检查通过）、`--stage` EXIT=0（签名 Apple Development G3TN2MBQ2Q）。
+VM 实拍（bin `4872143f…`，run 20261013T120624-adae7826）：欢迎三步英文 + Get Started 走完、隐私/卷帘页英文、岛通知 `Carried to every desktop`、受控窗口展回 (437,131)。修掉缺陷：第三个选项英文名裁字（`b04a991c…` 截图留档）。未验：拒绝类两条通知、菜单栏兜底通知、问来处提示、§9 其它表面。证据：[README](docs/design-review/2026-10-13-welcome-and-notices/README.md) + validation.json（binding 1e87fbe5…）。
+
+## 第32批（§9 剩余表面全量英文，2026-10-13，本 session）
+
+用户："全量英文，兑现承诺"。范围：菜单栏/状态菜单、刘海全部、窗口浏览、启动台、手势、置顶预览、
+计时器与媒体卡、授权确认、carry、卷轴、窗口切换器——全部进目录（+290 键，共 2120），棘轮 2150→1429。
+四处中文串判路由改语义枚举（fold/pin 菜单状态、sensorPhase、ShareOutcome、isRest）；
+NotchSentence 长度预算按语言拆（en 24/40 占位）；49 个测试 runner 补编 WSL10n，受影响 53 套件全 PASS；
+修复 HEAD 上就存在的 PrivacyPane subtitle>16 断言崩（登记表+目录+生成件同步）。
+`--check`/`--stage` EXIT=0（bin 86da9f96…）。VM 实拍：状态菜单+整理▸全英文；启动台面板 not_run（点击链路
+未达，标题已实拍）；活动/电量/手势句目录级 PASS。证据：docs/design-review/2026-10-13-english-remaining-surfaces/
+（binding 465dd2e2…）。改动未提交未推送。

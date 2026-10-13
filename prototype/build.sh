@@ -130,8 +130,11 @@ xcrun xcstringstool compile Resources/Localizable.xcstrings -o "$WORK/Localizati
 mkdir -p "$WORK/Watchdog"
 cp Watchdog/*.swift "$WORK/Watchdog/"
 GUARD_SOURCES=()
+# WSL10n 与 InterfaceLanguage 也要进看护（第30批全量英文化）：UpdaterCopy 的文案按目录出，
+# 看护按同一套规则解析语言（读产品的偏好域 + 系统首选语言），译文 Localization/en.lproj 一并拷进看护包。
+# 两者都只依赖 Foundation、自包含，符合"看护共用文件只依赖 Foundation/AppKit 和彼此"的约束。
 for source in Watchdog/main.swift Watchdog/GuardIcon.swift Core/UpdateVersion.swift Core/UpdateModels.swift \
-  Core/UpdateDecisions.swift App/UpdaterSystem.swift App/UpdaterCopy.swift; do
+  Core/UpdateDecisions.swift Core/WSL10n.swift Core/InterfaceLanguage.swift App/UpdaterSystem.swift App/UpdaterCopy.swift; do
   GUARD_SOURCES+=("$WORK/$source")
 done
 GUARD_FRAMEWORKS=(-framework AppKit -framework Security -framework ServiceManagement)
@@ -301,6 +304,9 @@ GUARD_APP="$APP/Contents/Helpers/WindowShadeUpdateGuard.app"
 rm -rf "$GUARD_APP"
 mkdir -p "$GUARD_APP/Contents/MacOS"
 cp "$WORK/WindowShadeUpdateGuard" "$GUARD_APP/Contents/MacOS/WindowShadeUpdateGuard"
+# 看护也随语言：把编好的 Localization 放进看护包（WSL10n 从 Bundle.main 找 Localization/en.lproj）。
+mkdir -p "$GUARD_APP/Contents/Resources/Localization"
+cp -R "$WORK/Localization/en.lproj" "$GUARD_APP/Contents/Resources/Localization/"
 GUARD_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
 GUARD_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" Info.plist)
 cat > "$GUARD_APP/Contents/Info.plist" <<PLIST

@@ -41,17 +41,17 @@ final class WS2PrivacyPane: NSStackView {
         let reread = NSButton(title: WS2PrivacyCopy.rereadTitle, target: self, action: #selector(rereadPressed(_:)))
         reread.bezelStyle = .rounded
         reread.controlSize = .small
-        reread.toolTip = "再读一次现在的值。"
+        reread.toolTip = WSL10n.text("settings.privacy.rereadTooltip", zh: "再读一次现在的值。")
         let details = NSButton(checkboxWithTitle: WS2PrivacyCopy.showDetailsTitle, target: self,
                                action: #selector(toggleDetails(_:)))
         details.state = showDetails ? .on : .off
         details.controlSize = .small
         details.font = SystemAppearancePolicy.font(relativeToBody: -1)
-        details.toolTip = "每行多一条登记表里的接口名。"
+        details.toolTip = WSL10n.text("settings.privacy.detailsTooltip", zh: "每行多一条登记表里的接口名。")
         let export = NSButton(title: WS2PrivacyCopy.exportTitle, target: self, action: #selector(exportJSON(_:)))
         export.bezelStyle = .rounded
         export.controlSize = .small
-        export.toolTip = "存成一个文件。不会上传。"
+        export.toolTip = WSL10n.text("settings.privacy.exportTooltip", zh: "存成一个文件。不会上传。")
         let spacer = NSView()
         spacer.setContentHuggingPriority(.init(1), for: .horizontal)
         let toolbar = NSStackView(views: [readAtLabel, reread, spacer, details, export])
@@ -169,26 +169,26 @@ final class WS2PrivacyPane: NSStackView {
         guard let owner else { return nil }
         switch id {
         case "activities":
-            return PrivacySwitchSpec(title: "实时活动", isOn: NotchActivityController.isEnabled,
+            return PrivacySwitchSpec(title: WSL10n.text("settings.privacy.switch.activities", zh: "实时活动"), isOn: NotchActivityController.isEnabled,
                                      target: owner, action: #selector(AppDelegate.prefToggleActivities(_:)))
         case "calendar":
-            return PrivacySwitchSpec(title: "日程", isOn: CalendarSettings.enabled && CalendarSource.access().canRead,
+            return PrivacySwitchSpec(title: WSL10n.text("settings.privacy.switch.calendar", zh: "日程"), isOn: CalendarSettings.enabled && CalendarSource.access().canRead,
                                      target: owner, action: #selector(AppDelegate.prefToggleCalendar(_:)))
         case "downloads":
-            return PrivacySwitchSpec(title: "浏览器下载", isOn: DownloadActivitySource.isEnabled,
+            return PrivacySwitchSpec(title: WSL10n.text("settings.privacy.switch.downloads", zh: "浏览器下载"), isOn: DownloadActivitySource.isEnabled,
                                      target: owner, action: #selector(AppDelegate.prefToggleDownloads(_:)))
         case "login":
-            return PrivacySwitchSpec(title: "登录时自动启动", isOn: owner.launchAtLoginEnabled(),
+            return PrivacySwitchSpec(title: WSL10n.text("settings.privacy.launchAtLogin.name", zh: "登录时自动启动"), isOn: owner.launchAtLoginEnabled(),
                                      target: owner, action: #selector(AppDelegate.prefToggleLaunchAtLogin(_:)))
         case "autoUpdate":
             return PrivacySwitchSpec(title: UpdateCopy.autoCheck, isOn: UpdaterController.shared.automaticallyChecks,
                                      target: UpdaterController.shared,
                                      action: #selector(UpdaterController.settingsToggleAutomaticChecks(_:)))
         case "desktop":
-            return PrivacySwitchSpec(title: "桌面开合", isOn: owner.duoController.settings.desktopEnabled,
+            return PrivacySwitchSpec(title: WSL10n.text("settings.privacy.switch.desktop", zh: "桌面开合"), isOn: owner.duoController.settings.desktopEnabled,
                                      target: self, action: #selector(toggleDesktop(_:)))
         case "focusQuiet":
-            return PrivacySwitchSpec(title: "专注模式时更安静", isOn: SystemQuietState.focusQuietEnabled,
+            return PrivacySwitchSpec(title: WSL10n.text("settings.privacy.switch.focusQuiet", zh: "专注模式时更安静"), isOn: SystemQuietState.focusQuietEnabled,
                                      target: self, action: #selector(toggleFocusQuiet(_:)))
         default:
             return nil
@@ -251,7 +251,7 @@ final class WS2PrivacyPane: NSStackView {
     @objc private func exportJSON(_ sender: NSButton) {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
-        panel.nameFieldStringValue = "WindowShade 读到的.json"
+        panel.nameFieldStringValue = WSL10n.text("settings.privacy.exportName", zh: "WindowShade 读到的.json")
         panel.canCreateDirectories = true
         let save: (NSApplication.ModalResponse) -> Void = { [weak self, weak panel] response in
             guard response == .OK, let url = panel?.url else { return }
@@ -267,7 +267,7 @@ final class WS2PrivacyPane: NSStackView {
     /// 导出页面上这一次读到的样子：private 行不带原值，还没读的行值为空。
     private func writeExport(to url: URL) {
         let values = snapshot.exportValues(rows: WS2PrivacyData.rows)
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "未知"
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? WSL10n.text("settings.privacy.permission.unknown", zh: "未知")
         do {
             let data = try WS2PrivacyExport.jsonData(
                 rows: WS2PrivacyData.rows, values: values, exportedAt: Date(), appVersion: version)
@@ -275,9 +275,9 @@ final class WS2PrivacyPane: NSStackView {
         } catch {
             let alert = NSAlert()
             alert.alertStyle = .warning
-            alert.messageText = "没能导出"
-            alert.informativeText = "文件没有存进你选的位置。换一个位置再试一次。"
-            alert.addButton(withTitle: "好")
+            alert.messageText = WSL10n.text("settings.privacy.exportFailedTitle", zh: "没能导出")
+            alert.informativeText = WSL10n.text("settings.privacy.exportFailedBody", zh: "文件没有存进你选的位置。换一个位置再试一次。")
+            alert.addButton(withTitle: UpdateCopy.ok)
             alert.runModal()
         }
     }
@@ -359,13 +359,13 @@ final class PrivacyRowView: NSView {
         subtitle.widthAnchor.constraint(lessThanOrEqualTo: labels.widthAnchor).isActive = true
 
         let chevron = NSButton(image: NSImage(systemSymbolName: expanded ? "chevron.down" : "chevron.right",
-                                              accessibilityDescription: expanded ? "收起" : "展开") ?? NSImage(),
+                                              accessibilityDescription: expanded ? WSL10n.text("settings.effects.roll", zh: "收起") : WSL10n.text("settings.effects.unroll", zh: "展开")) ?? NSImage(),
                                target: nil, action: nil)
         chevron.bezelStyle = .inline
         chevron.isBordered = false
         chevron.target = self
         chevron.action = #selector(toggle)
-        chevron.setAccessibilityLabel("\(row.label)的详情")
+        chevron.setAccessibilityLabel(WSL10n.text("settings.privacy.rowDetail", zh: "%@的详情", row.label))
         chevron.setContentHuggingPriority(.required, for: .horizontal)
 
         let header = PrivacyHeaderStack()
@@ -392,16 +392,16 @@ final class PrivacyRowView: NSView {
         ]
         if expanded {
             var lines: [NSView] = [
-                detailLine("读到的", row.reads),
-                detailLine("为什么", row.purpose),
-                detailLine("去了哪里", row.destination),
-                detailLine("什么时候读", row.activation),
+                detailLine(WSL10n.text("settings.privacy.detail.reads", zh: "读到的"), row.reads),
+                detailLine(WSL10n.text("settings.privacy.detail.purpose", zh: "为什么"), row.purpose),
+                detailLine(WSL10n.text("settings.privacy.detail.destination", zh: "去了哪里"), row.destination),
+                detailLine(WSL10n.text("settings.privacy.detail.activation", zh: "什么时候读"), row.activation),
             ]
             // 有真的开关就放开关，不再重复写一遍“开关：”。
-            if switchSpec == nil { lines.append(detailLine("开关", row.toggle)) }
-            if let combined = row.combined { lines.append(detailLine("合起来能看出什么", combined)) }
+            if switchSpec == nil { lines.append(detailLine(WSL10n.text("settings.privacy.detail.toggle", zh: "开关"), row.toggle)) }
+            if let combined = row.combined { lines.append(detailLine(WSL10n.text("settings.privacy.detail.combined", zh: "合起来能看出什么"), combined)) }
             if showDetails, !row.interfaces.isEmpty {
-                lines.append(detailLine("接口", row.interfaces.joined(separator: "、")))
+                lines.append(detailLine(WSL10n.text("settings.privacy.detail.interfaces", zh: "接口"), row.interfaces.joined(separator: "、")))
             }
             if let switchSpec { lines.append(switchRow(switchSpec)) }
             let detail = NSStackView(views: lines)
@@ -484,7 +484,12 @@ final class PrivacyRowView: NSView {
     private func detailLine(_ title: String, _ text: String) -> NSView {
         let font = SystemAppearancePolicy.font(relativeToBody: -1)
         let columnWidth = font.pointSize * 4.4
-        let caption = title == "什么时候读" ? "什么时候" : title == "合起来能看出什么" ? "合起来看" : title
+        // 按身份（中文源句）取短标题；显示走目录，不把中文串当显示。
+        let caption = title == WSL10n.text("settings.privacy.detail.activation", zh: "什么时候读")
+            ? WSL10n.text("settings.privacy.caption.when", zh: "什么时候")
+            : (title == WSL10n.text("settings.privacy.detail.combined", zh: "合起来能看出什么")
+                ? WSL10n.text("settings.privacy.caption.combined", zh: "合起来看")
+                : title)
         let label = NSTextField(wrappingLabelWithString: caption)
         label.font = font
         label.textColor = .secondaryLabelColor
@@ -531,8 +536,8 @@ enum WS2PrivacyValues {
         if UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey) {
             snapshot.features.insert(WS2PrivacyCopy.faceUnlockFeature)
         }
-        snapshot.permissions["辅助功能"] = hasAccessibilityPermission()
-        snapshot.permissions["屏幕录制"] = hasScreenRecordingPermission()
+        snapshot.permissions[WSL10n.text("settings.common.accessibility", zh: "辅助功能")] = hasAccessibilityPermission()
+        snapshot.permissions[WSL10n.text("settings.common.screenRecording", zh: "屏幕录制")] = hasScreenRecordingPermission()
         for row in WS2PrivacyData.rows where row.status != "planned" {
             if let value = value(for: row.id, owner: owner, window: window) { snapshot.values[row.id] = value }
         }
@@ -547,8 +552,8 @@ enum WS2PrivacyValues {
                                            thisScreenHasNotch: screen.map { $0.safeAreaInsets.top > 0 })
         case "lock-state":
             switch EffectSecurityBoundary.lockState {
-            case .unlocked: return "未锁屏"
-            case .locked: return "已锁屏"
+            case .unlocked: return WSL10n.text("settings.privacy.value.unlocked", zh: "未锁屏")
+            case .locked: return WSL10n.text("settings.privacy.value.locked", zh: "已锁屏")
             case .unknown: return nil
             }
         case "battery":
@@ -571,13 +576,13 @@ enum WS2PrivacyValues {
             guard let owner else { return nil }
             return WS2PrivacyFormat.onOff(owner.duoController.settings.desktopEnabled)
         case "update":
-            return UpdaterController.shared.automaticallyChecks ? "自动检查更新开着" : "自动检查更新关着"
+            return UpdaterController.shared.automaticallyChecks ? WSL10n.text("settings.privacy.value.autoCheckOn", zh: "自动检查更新开着") : WSL10n.text("settings.privacy.value.autoCheckOff", zh: "自动检查更新关着")
         case "settings":
-            return "存在这台 Mac 上"
+            return WSL10n.text("settings.privacy.value.onDisk", zh: "存在这台 Mac 上")
         case "diagnostics":
             return "~/Library/Logs/WindowShade"
         case "login-item":
-            return owner?.launchAtLoginEnabled() == true ? "已开启" : "未开启"
+            return owner?.launchAtLoginEnabled() == true ? WSL10n.text("settings.privacy.value.on", zh: "已开启") : WSL10n.text("settings.privacy.value.off", zh: "未开启")
         case "download-files":
             return WS2PrivacyFormat.onOff(DownloadActivitySource.isEnabled)
         case "copy-progress":

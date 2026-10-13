@@ -20,7 +20,7 @@ enum NotchLevelSetting {
 
 /// 这一行现在怎么写。
 struct NotchLevelSettingRow: Equatable, Sendable {
-    static let title = "音量和亮度"
+    static var title: String { WSL10n.text("settings.shade.levelKeys.name", zh: "音量和亮度") }
     static let symbol = "speaker.wave.2"
 
     var subtitle: String
@@ -29,12 +29,12 @@ struct NotchLevelSettingRow: Equatable, Sendable {
     /// 没允许辅助功能时的按钮字；nil 就不放按钮。
     var allowButton: String?
 
-    static let normalSubtitle = "按音量、亮度键时显示"
-    static let missingSubtitle = "系统的提示也会出现"
-    static let allowTitle = "允许…"
-    static let normalInfo = "按音量、亮度、键盘灯键时，刘海两边显示一条，系统自己的提示藏起来。锁屏和调度中心里仍是系统的提示。"
-    static let missingInfo = "在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。"
-    static let unverifiedInfo = "这个 macOS 版本还没核对过，系统的提示会一起出现。"
+    static var normalSubtitle: String { WSL10n.text("notch.level.subtitle", zh: "按音量、亮度键时显示") }
+    static var missingSubtitle: String { WSL10n.text("notch.level.missingSubtitle", zh: "系统的提示也会出现") }
+    static var allowTitle: String { WSL10n.text("notch.level.allow", zh: "允许…") }
+    static var normalInfo: String { WSL10n.text("notch.level.normalInfo", zh: "按音量、亮度、键盘灯键时，刘海两边显示一条，系统自己的提示藏起来。锁屏和调度中心里仍是系统的提示。") }
+    static var missingInfo: String { WSL10n.text("notch.level.missingInfo", zh: "在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。") }
+    static var unverifiedInfo: String { WSL10n.text("notch.level.unverifiedInfo", zh: "这个 macOS 版本还没核对过，系统的提示会一起出现。") }
 
     /// 三种写法：平时；没允许辅助功能；允许了但版本没核对过。
     /// 没允许时副标题固定是“系统的提示也会出现”并带按钮；版本没核对过时，ⓘ 改说版本（允许了也藏不了，不能说“就会藏起来”）。

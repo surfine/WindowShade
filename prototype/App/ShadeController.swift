@@ -35,7 +35,7 @@ extension AppDelegate {
     func toggle() {
         guard ensureAccessibility() else {
             showPermissionOnboardingIfNeeded(force: true)
-            quietNotice("需要权限", log: "toggle: 无辅助功能权限")
+            quietNotice(WSL10n.text("notice.shade.needsPermission", zh: "需要权限"), kind: .needsPermission, log: "toggle: accessibility missing")
             return
         }
         if let shadedID = currentShadedOverlayID() {
@@ -44,13 +44,13 @@ extension AppDelegate {
             return
         }
         guard let focusedWin = focusedWindow(), let focusedID = windowID(of: focusedWin) else {
-            quietNotice("没有可以收起的窗口", log: "toggle: 取不到聚焦窗口/windowID")
+            quietNotice(WSL10n.text("notice.shade.noWindow", zh: "没有可以收起的窗口"), kind: .problem, log: "toggle: no focused window")
             return
         }
         var win = focusedWin
         var id = focusedID
         if isDesktopWidgetWindow(id: id) {
-            quietNotice("桌面小组件不能收起", log: "toggle: reject desktop widget id=\(id)")
+            quietNotice(WSL10n.text("notice.shade.widget", zh: "桌面小组件不能收起"), kind: .problem, log: "toggle: reject desktop widget id=\(id)")
             return
         }
         // 聚焦窗口不在当前 Space（已折叠的除外——它们的真实窗口本来就不在屏上，
@@ -64,7 +64,7 @@ extension AppDelegate {
                 win = retargetWin
                 id = retargetID
             } else {
-                quietNotice("这个桌面没有可以收起的窗口",
+                quietNotice(WSL10n.text("notice.shade.noWindowOnDesktop", zh: "这个桌面没有可以收起的窗口"), kind: .problem,
                             log: "toggle: focused id=\(id) off active space; no on-space window")
                 return
             }
@@ -276,7 +276,7 @@ extension AppDelegate {
             wlog("shade: app not responding; window-server frame id=\(id) pid=\(entryPID) frame=\(readFrame == nil ? "-" : "ok")")
         }
         guard let pos = readFrame?.pos, let size = readFrame?.size else {
-            quietNotice("无法读取窗口", log: "shade: 取不到 pos/size")
+            quietNotice(WSL10n.text("notice.shade.cannotRead", zh: "无法读取窗口"), kind: .problem, log: "shade: no pos/size")
             return
         }
         var pid: pid_t = 0
@@ -291,7 +291,7 @@ extension AppDelegate {
         // App 卡住时问不到 role：要求窗口服务器里这扇窗属于它、在普通窗口层。
         let stalledWindow = stalled && cgWindowLayer(id) == 0 && windowServerOwner(id) == pid
         guard role == kAXWindowRole as String || adobeLayoutWindow || stalledWindow else {
-            quietNotice("这个窗口不能收起", log: "shade: reject non-window role=\(role ?? "?") id=\(id)")
+            quietNotice(WSL10n.text("notice.shade.cannotRoll", zh: "这个窗口不能收起"), kind: .problem, log: "shade: reject non-window role=\(role ?? "?") id=\(id)")
             return
         }
         let bundleID = appBundleID(pid: pid)
@@ -314,7 +314,7 @@ extension AppDelegate {
                           pid: pid, profile: profile, options: options, stalled: stalled)
         }
         guard let plan = shadePlan else {
-            quietNotice("这个窗口不能收起", log: "shade: plan rejected app=\(appName) id=\(id)")
+            quietNotice(WSL10n.text("notice.shade.cannotRoll", zh: "这个窗口不能收起"), kind: .problem, log: "shade: plan rejected app=\(appName) id=\(id)")
             return
         }
         let policy = plan.policy
@@ -380,7 +380,7 @@ extension AppDelegate {
                 dismissOverlay(overlay)
                 transitionOperationState(id: id, to: .failed, reason: "recovery-intent-write-failed")
                 completeFold(success: false)
-                quietNotice("恢复记录存不下来，窗口没有收起", log: "shade: refusing hide without durable intent id=\(id)")
+                quietNotice(WSL10n.text("notice.shade.journalFailed", zh: "恢复记录存不下来，窗口没有收起"), kind: .problem, log: "shade: refusing hide without durable intent id=\(id)")
                 return
             }
             // 这里不套 foldPhase 的闭包写法：tests/duo-integration-check.py 用
@@ -406,7 +406,7 @@ extension AppDelegate {
                 // 停车和调透明都没成：窗口原样没动，不装卷帘条。恢复意图留给救援按“窗口可见”清理。
                 dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "ax-stalled-unparked")
                 completeFold(success: false)
-                quietNotice("没能收起这个窗口", log: "shade: app not responding and window-server parking failed id=\(id)")
+                quietNotice(WSL10n.text("notice.shade.foldFailed", zh: "没能收起这个窗口"), kind: .problem, log: "shade: app not responding and window-server parking failed id=\(id)")
                 return
             }
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
@@ -676,7 +676,7 @@ extension AppDelegate {
         }
 
         guard #available(macOS 14.0, *) else {
-            quietNotice("系统版本不支持", log: "shade: ScreenCaptureKit unavailable on this macOS")
+            quietNotice(WSL10n.text("notice.shade.systemTooOld", zh: "系统版本不支持"), kind: .problem, log: "shade: ScreenCaptureKit unavailable on this macOS")
             return
         }
         handedToAsyncCapture = true
@@ -790,7 +790,7 @@ extension AppDelegate {
             wlog("    capture full=\(full.width)x\(full.height) scale=\(preparation.scale) fixedBarH=\(preparation.fixedBarH.map { String(format: "%.1f", $0) } ?? "-") visualBarH=\(preparation.visualBarH.map { String(Int($0)) } ?? "-") fallbackBarH=\(Int(preparation.fallbackBarH)) standardBarH=\(String(format: "%.1f", preparation.standardBarH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(max(1, Int(ceil(barH * preparation.scale)))) boundary=\(preparation.boundary)")
             guard let strip = preparation.strip else {
                 activateApp(pid: pid)
-                quietNotice("没能收起这个窗口", log: "shade: 裁剪失败")
+                quietNotice(WSL10n.text("notice.shade.cropFailed", zh: "没能收起这个窗口"), kind: .problem, log: "shade: crop failed")
                 return
             }
             if preparation.brokenHealth.0 {

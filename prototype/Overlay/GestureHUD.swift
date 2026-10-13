@@ -13,8 +13,8 @@ extension GestureAction {
     /// 浮窗标题：与菜单、设置里的叫法一致（docs/copy-guide.md）。
     var hudTitle: String {
         switch self {
-        case .shade: return "收起窗口"
-        case .expand: return "展开窗口"
+        case .shade: return WSL10n.text("browser.action.foldRow", zh: "收起窗口")
+        case .expand: return WSL10n.text("menu.unrollWindow", zh: "展开窗口")
         case .leftHalf: return WindowPlacementAction.leftHalf.title
         case .rightHalf: return WindowPlacementAction.rightHalf.title
         case .fill: return WindowPlacementAction.fill.title
@@ -23,50 +23,50 @@ extension GestureAction {
         case .topRight: return WindowPlacementAction.topRight.title
         case .bottomLeft: return WindowPlacementAction.bottomLeft.title
         case .bottomRight: return WindowPlacementAction.bottomRight.title
-        case .topHalf: return "上半屏"
-        case .bottomHalf: return "下半屏"
+        case .topHalf: return WSL10n.text("gesture.hud.topHalf", zh: "上半屏")
+        case .bottomHalf: return WSL10n.text("gesture.hud.bottomHalf", zh: "下半屏")
         case .center: return WindowPlacementAction.center.title
-        case .larger: return "大一点"
-        case .smaller: return "小一点"
-        case .fullHeight: return "高度占满"
-        case .leftTwoThirds: return "左三分之二"
-        case .leftThird: return "左三分之一"
-        case .rightTwoThirds: return "右三分之二"
-        case .rightThird: return "右三分之一"
-        case .toLeftDisplay: return "移到左边的屏幕"
-        case .toRightDisplay: return "移到右边的屏幕"
-        case .centerThird: return "中间三分之一"
-        case .topLeftTwoThirds: return "左上三分之二"
-        case .topRightTwoThirds: return "右上三分之二"
-        case .bottomLeftTwoThirds: return "左下三分之二"
-        case .bottomRightTwoThirds: return "右下三分之二"
-        case .topLeftThird: return "左上六分之一"
-        case .topCenterThird: return "中上六分之一"
-        case .topRightThird: return "右上六分之一"
-        case .bottomLeftThird: return "左下六分之一"
-        case .bottomCenterThird: return "中下六分之一"
-        case .bottomRightThird: return "右下六分之一"
-        case .topLeftNinth: return "左上九分之一"
-        case .topCenterNinth: return "中上九分之一"
-        case .topRightNinth: return "右上九分之一"
-        case .middleLeftNinth: return "左中九分之一"
-        case .middleCenterNinth: return "正中九分之一"
-        case .middleRightNinth: return "右中九分之一"
-        case .bottomLeftNinth: return "左下九分之一"
-        case .bottomCenterNinth: return "中下九分之一"
-        case .bottomRightNinth: return "右下九分之一"
-        case .magicTile: return "魔法平铺"
-        case .widerColumn: return "这一列宽一档"
-        case .narrowerColumn: return "这一列窄一档"
+        case .larger: return WSL10n.text("gesture.hud.larger", zh: "大一点")
+        case .smaller: return WSL10n.text("gesture.hud.smaller", zh: "小一点")
+        case .fullHeight: return WSL10n.text("gesture.hud.fullHeight", zh: "高度占满")
+        case .leftTwoThirds: return WSL10n.text("gesture.hud.leftTwoThirds", zh: "左三分之二")
+        case .leftThird: return WSL10n.text("gesture.hud.leftThird", zh: "左三分之一")
+        case .rightTwoThirds: return WSL10n.text("gesture.hud.rightTwoThirds", zh: "右三分之二")
+        case .rightThird: return WSL10n.text("gesture.hud.rightThird", zh: "右三分之一")
+        case .toLeftDisplay: return WSL10n.text("gesture.hud.toLeftDisplay", zh: "移到左边的屏幕")
+        case .toRightDisplay: return WSL10n.text("gesture.hud.toRightDisplay", zh: "移到右边的屏幕")
+        case .centerThird: return WSL10n.text("gesture.hud.centerThird", zh: "中间三分之一")
+        case .topLeftTwoThirds: return WSL10n.text("gesture.hud.topLeftTwoThirds", zh: "左上三分之二")
+        case .topRightTwoThirds: return WSL10n.text("gesture.hud.topRightTwoThirds", zh: "右上三分之二")
+        case .bottomLeftTwoThirds: return WSL10n.text("gesture.hud.bottomLeftTwoThirds", zh: "左下三分之二")
+        case .bottomRightTwoThirds: return WSL10n.text("gesture.hud.bottomRightTwoThirds", zh: "右下三分之二")
+        case .topLeftThird: return WSL10n.text("gesture.hud.topLeftThird", zh: "左上六分之一")
+        case .topCenterThird: return WSL10n.text("gesture.hud.topCenterThird", zh: "中上六分之一")
+        case .topRightThird: return WSL10n.text("gesture.hud.topRightThird", zh: "右上六分之一")
+        case .bottomLeftThird: return WSL10n.text("gesture.hud.bottomLeftThird", zh: "左下六分之一")
+        case .bottomCenterThird: return WSL10n.text("gesture.hud.bottomCenterThird", zh: "中下六分之一")
+        case .bottomRightThird: return WSL10n.text("gesture.hud.bottomRightThird", zh: "右下六分之一")
+        case .topLeftNinth: return WSL10n.text("gesture.hud.topLeftNinth", zh: "左上九分之一")
+        case .topCenterNinth: return WSL10n.text("gesture.hud.topCenterNinth", zh: "中上九分之一")
+        case .topRightNinth: return WSL10n.text("gesture.hud.topRightNinth", zh: "右上九分之一")
+        case .middleLeftNinth: return WSL10n.text("gesture.hud.middleLeftNinth", zh: "左中九分之一")
+        case .middleCenterNinth: return WSL10n.text("gesture.hud.middleCenterNinth", zh: "正中九分之一")
+        case .middleRightNinth: return WSL10n.text("gesture.hud.middleRightNinth", zh: "右中九分之一")
+        case .bottomLeftNinth: return WSL10n.text("gesture.hud.bottomLeftNinth", zh: "左下九分之一")
+        case .bottomCenterNinth: return WSL10n.text("gesture.hud.bottomCenterNinth", zh: "中下九分之一")
+        case .bottomRightNinth: return WSL10n.text("gesture.hud.bottomRightNinth", zh: "右下九分之一")
+        case .magicTile: return WSL10n.text("menu.magicTile", zh: "魔法平铺")
+        case .widerColumn: return WSL10n.text("gesture.hud.widerColumn", zh: "这一列宽一档")
+        case .narrowerColumn: return WSL10n.text("gesture.hud.narrowerColumn", zh: "这一列窄一档")
         }
     }
 
     /// 认出了手势、但此刻做不了时的标题：说现象，不说原因的实现。
     var unavailableTitle: String {
         switch self {
-        case .undoPlacement: return "没有可撤销的排布"
-        case .toLeftDisplay: return "左边没有别的屏幕"
-        case .toRightDisplay: return "右边没有别的屏幕"
+        case .undoPlacement: return WSL10n.text("browser.reason.nothingToUndo", zh: "没有可撤销的排布")
+        case .toLeftDisplay: return WSL10n.text("gesture.hud.noDisplayLeft", zh: "左边没有别的屏幕")
+        case .toRightDisplay: return WSL10n.text("gesture.hud.noDisplayRight", zh: "右边没有别的屏幕")
         default: return hudTitle
         }
     }

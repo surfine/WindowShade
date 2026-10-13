@@ -13,7 +13,7 @@ final class LaunchpadActivityCards {
     private var empty = CATextLayer()
 
     init() {
-        empty.string = "音乐、耳机、隔空投送与路线会显示在这里"
+        empty.string = WSL10n.text("launchpad.activities.empty", zh: "音乐、耳机、隔空投送与路线会显示在这里")
         empty.fontSize = 14; empty.foregroundColor = NSColor.white.withAlphaComponent(0.65).cgColor
         empty.isWrapped = true; root.addSublayer(empty)
     }
@@ -37,18 +37,18 @@ final class LaunchpadActivityCards {
             let label = [NotchEarText.cardTitle(item), item.subtitle].filter { !$0.isEmpty }.joined(separator: "，")
             let primary = CGRect(x: rect.maxX - 52, y: rect.midY - 20, width: 40, height: 40)
             if item.id == Self.idleTimerID {
-                hits.append(Hit(frame: primary, title: "选分钟", id: item.id, action: .timerOpen))
+                hits.append(Hit(frame: primary, title: WSL10n.text("launchpad.pickMinutes", zh: "选分钟"), id: item.id, action: .timerOpen))
                 hits.append(Hit(frame: rect, title: label, id: item.id, action: .timerOpen))
                 continue
             } else if item.kind == .timer {
-                hits.append(Hit(frame: primary, title: item.isPaused ? "继续" : "暂停", id: item.id, action: .focusTogglePause))
+                hits.append(Hit(frame: primary, title: item.isPaused ? WSL10n.text("notch.action.resume", zh: "继续") : WSL10n.text("notch.action.pause", zh: "暂停"), id: item.id, action: .focusTogglePause))
             } else if item.kind == .music {
-                hits.append(Hit(frame: primary, title: item.isPaused ? "播放" : "暂停", id: item.id, action: .playPause))
+                hits.append(Hit(frame: primary, title: item.isPaused ? WSL10n.text("notch.action.play", zh: "播放") : WSL10n.text("notch.action.pause", zh: "暂停"), id: item.id, action: .playPause))
             } else if item.id == "focus.idle" {
-                hits.append(Hit(frame: primary, title: "开始", id: item.id, action: .focusOpen))
+                hits.append(Hit(frame: primary, title: WSL10n.text("launchpad.start", zh: "开始"), id: item.id, action: .focusOpen))
             } else if item.kind == .focus {
                 // 番茄钟和刘海共用一份状态：负一屏这张卡也能暂停/继续。
-                hits.append(Hit(frame: primary, title: item.isPaused ? "继续" : "暂停", id: item.id, action: .focusTogglePause))
+                hits.append(Hit(frame: primary, title: item.isPaused ? WSL10n.text("notch.action.resume", zh: "继续") : WSL10n.text("notch.action.pause", zh: "暂停"), id: item.id, action: .focusTogglePause))
             }
             hits.append(Hit(frame: rect, title: label, id: item.id, action: .open))
         }
@@ -79,8 +79,12 @@ final class LaunchpadActivityCards {
             let width = root.bounds.width, height = root.bounds.height
             for field in [title, subtitle, status] { field.contentsScale = scale }
             title.string = NotchEarText.cardTitle(value)
-            subtitle.string = value.isPaused && value.kind == .music ? "已暂停 · \(value.subtitle)" : value.subtitle
-            status.string = value.kind == .recording ? "打开语音备忘录查看录音" : (value.kind == .route ? "在地图中打开路线" : "")
+            subtitle.string = value.isPaused && value.kind == .music
+                ? WSL10n.text("say.paused", zh: "已暂停") + " · " + value.subtitle
+                : value.subtitle
+            status.string = value.kind == .recording
+                ? WSL10n.text("launchpad.openVoiceMemos", zh: "打开语音备忘录查看录音")
+                : (value.kind == .route ? WSL10n.text("notch.route.openInMaps", zh: "在地图中打开路线") : "")
             if symbol != value.symbol {
                 symbol = value.symbol
                 icon.contents = NotchActivitySymbol.whiteImage(symbol)

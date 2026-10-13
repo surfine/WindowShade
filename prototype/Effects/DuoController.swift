@@ -11,7 +11,17 @@ final class DuoController: NSObject {
   private let sensor = LidAngleSource()
   /// 读数在 lid 队列上消化，主线程只在有变化时被叫醒（见 LidFeed）。
   private lazy var feed = LidFeed(source: sensor)
-  private(set) var sensorStatus = "传感器未启动"
+  /// 传感器到哪一步了（第31批）：菜单和状态行据此说话，不再按中文句子判。
+  enum SensorPhase: Equatable { case notStarted, connected, retrying, paused, captureFailed }
+  private(set) var sensorPhase: SensorPhase = .notStarted
+  private(set) var sensorStatus = WSL10n.text("duo.sensor.notStarted", zh: "传感器未启动")
+  private static func phase(of status: LidAngleSource.Status) -> SensorPhase {
+    switch status {
+    case .connected: return .connected
+    case .disconnected: return .retrying
+    case .stopped: return .paused
+    }
+  }
   /// 最近一份读数的角度；断开、恢复后清掉，直到新的读数到来。读数在 feed 里，这里只记清掉的时刻。
   var angle: Double? {
     let latest = feed.snapshot()
@@ -85,6 +95,7 @@ final class DuoController: NSObject {
     // 效果开着才在启动 4 秒后预热共享的 GPU 对象，避免第一次收起时主线程卡一下；没开效果的不多建 Metal 设备。
     if settings.desktopEnabled || settings.windowsEnabled { FoldGPU.shared.scheduleWarmUp() }
     sensor.onStatus = { [weak self] status in
+      self?.sensorPhase = Self.phase(of: status)
       self?.sensorStatus = status.message
       self?.settingsWindow?.refreshStatus()
       if case .disconnected = status {
@@ -405,7 +416,9 @@ final class DuoController: NSObject {
         if self.epoch.accepts(token) {
           self.dismissed = true
           wlog("duo: desktop start failed \(error.localizedDescription)")
-          self.sensorStatus = "捕获不可用：\(error.localizedDescription)"
+          self.sensorPhase = .captureFailed
+          self.sensorStatus = WSL10n.text("duo.sensor.captureFailed", zh: "捕获不可用：%@",
+                                          error.localizedDescription)
           self.settingsWindow?.refreshStatus()
         }
       }
