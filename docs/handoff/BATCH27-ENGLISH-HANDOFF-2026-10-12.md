@@ -399,3 +399,16 @@ run `20261013T120624-adae7826`（早期构建 `b04a991c…`、run `20261013T1200
 - 刘海句长英文档（24/40）待真机。
 - **英文整体目标**：用户可见表面已全量走目录；未迁移的剩 Conductor/Owned 会话页等**未上线功能**
   与诊断串。改动未提交未推送。
+
+
+---
+
+## 20. 1.0.16 同版本号重发（2026-10-13 晚，本 session；用户裁定以相同版本号发布）
+
+第30–32批以 `1205a03` 提交入库（159 文件；.zcode 不入库）。用户裁定重发 **1.0.16 原版本号**（只是一个小修复），偏离 DEVELOPMENT.md 第 1 条（不移动已发布 tag / 换包升小版本）——执行记录与已知偏差写在 gate-0B-verification.md 追记：
+
+1. **中途打过一版 1.0.17**（tag/Release 齐全），按用户裁定撤销：Release 删除、远端/本地 tag 删除、版本 bump 提交 revert（`85bfec0`）。
+2. **重发**：build 16 重建（bin `a9d7df55…`，DR 与原 1.0.16 逐字相同），包 `e3ab987b…`（10,041,404B）走完 9 步门禁全 PASS；`gh release upload --clobber` 覆盖资产；tag `v1.0.16` 强推到 `85bfec0`；发布说明更新（英文覆盖面口径）；回下载哈希逐字一致。
+3. **appcast**：条目重签（`sign_update --account windowshade`，新 edSignature/length，pubDate 2026-10-13），清单签名 verify PASS；wrangler 部署后线上 `/appcast.xml` 与本地逐字节一致、Cache-Control 生效、包 URL content-length 10041404。
+4. **顺手修站点构建**：第30批把隐私页生成器改成 `WSL10n.text(...)` 后，`site/scripts/privacy.mjs` 的逐字对照器（只认裸字面量）全部读 undefined、构建中止；已教它拆 zh 源句。README/官网数字同步 ZIP 10.04 MB / 解压 25.25 MB，线上核对通过。
+5. **已知偏差（用户裁定接受）**：build 号与已装的 1.0.16 相同，**Sparkle 不会主动提示已装用户更新**；新装和手动检查更新会拿到新包。要主动推就得再按规则升 build。
