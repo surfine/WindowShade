@@ -72,3 +72,23 @@
 3. 按住 ⌥ 双击任意标题栏 → 确认不收起（#39 的手感复核）。
 4. 设置 → 高级 → 界面语言切 English → 确认设置界面立刻变英文且不跳页。
 5. 动画手感（收起/展开的"跟手"与时长）——单张截图与合成输入都不能替代。
+
+
+## 追记：2026-10-13 同版本号重发（用户裁定）
+
+用户裁定"以相同版本号发布，因为只是一个小修复"，**偏离** DEVELOPMENT.md 发布流程第 1 条
+（"不再移动已发布的 tag；换包就升一个小版本"）。实际执行：
+
+- 版本保持 1.0.16（build 16）；tag `v1.0.16` 强推到新提交 `85bfec0`（第30–32批入库 + revert 中途
+  一度打出的 1.0.17）；Release 资产 `--clobber` 覆盖。
+- 新包 sha256 `e3ab987bc5b18ec7f45906f16fe5ab5520f1c41479e330536ea1a506b4f0fa08`（10,041,404 字节），
+  回下载逐字一致；DR 与原 1.0.16 逐字相同（同证书重签）；deep-strict verify、self-check build=16、
+  上一版读新状态 全 PASS。
+- **已知偏差（用户裁定接受）**：CFBundleVersion 与已装的 1.0.16 (build 16) 相同，Sparkle 按
+  `sparkle:version` 比较不会提示已装用户更新；appcast 条目的 edSignature/length 已重签，
+  新装与"检查更新"手动进入的用户会拿到新包。若要主动推给已装用户，需按原规则升 build 号再发一版。
+- appcast 条目重签（同一 1.0.16 版本号，新签名/长度，pubDate 2026-10-13），清单签名 verify 通过；
+  线上 /appcast.xml 逐字节与本地一致、Cache-Control 300s 生效、包 URL content-length 10041404。
+- 站点隐私页构建中断一次修复：第30批生成器改出 `WSL10n.text(...)` 形式后，`site/scripts/privacy.mjs`
+  的逐字对照器只会读裸字符串字面量（全部 undefined）。已教它拆 zh 源句（语义身份），build+check
+  43 资产 PASS。README/官网数字同步 ZIP 10.04 MB / 解压 25.25 MB。
