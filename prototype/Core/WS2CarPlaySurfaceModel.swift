@@ -37,7 +37,7 @@ struct WS2CarPlaySurfaceDisplay: Equatable {
 
 enum WS2CarPlaySurfaceModel {
     /// 退出提示，所有状态下都在底部。
-    static let exitHint = "再长按刘海或按 Esc 回到桌面"
+    static let exitHint = WSL10n.text("carplay.exitHint", zh: "再长按刘海或按 Esc 回到桌面")
 
     /// - Parameters:
     ///   - hasStarted: 这次进入全屏之后是否已经开始过一次连接。区分“还没连”和“连接断了”。
@@ -48,19 +48,19 @@ enum WS2CarPlaySurfaceModel {
         case .disconnected:
             if !hasStarted {
                 return WS2CarPlaySurfaceDisplay(
-                    phase: .waiting, symbol: "iphone", title: "连接 iPhone", detail: nil,
+                    phase: .waiting, symbol: "iphone", title: WSL10n.text("carplay.connect", zh: "连接 iPhone"), detail: nil,
                     showsTiles: false, showsLiveVideo: false, offersReconnect: false)
             }
             return WS2CarPlaySurfaceDisplay(
-                phase: .disconnected, symbol: "iphone.slash", title: "连接断了", detail: "回到桌面或重新连接",
+                phase: .disconnected, symbol: "iphone.slash", title: WSL10n.text("carplay.disconnected", zh: "连接断了"), detail: WSL10n.text("carplay.disconnected.detail", zh: "回到桌面或重新连接"),
                 showsTiles: false, showsLiveVideo: false, offersReconnect: true)
         case .missingIdentity:
             return WS2CarPlaySurfaceDisplay(
-                phase: .needsIdentity, symbol: "iphone.slash", title: "还不能连接 iPhone", detail: nil,
+                phase: .needsIdentity, symbol: "iphone.slash", title: WSL10n.text("carplay.needsIdentity", zh: "还不能连接 iPhone"), detail: nil,
                 showsTiles: false, showsLiveVideo: false, offersReconnect: false)
         case .connecting:
             return WS2CarPlaySurfaceDisplay(
-                phase: .connecting, symbol: "iphone.radiowaves.left.and.right", title: "正在连接 iPhone", detail: nil,
+                phase: .connecting, symbol: "iphone.radiowaves.left.and.right", title: WSL10n.text("carplay.connecting", zh: "正在连接 iPhone"), detail: nil,
                 showsTiles: false, showsLiveVideo: false, offersReconnect: false)
         case .ready:
             if session.isReceiverLive {
@@ -68,13 +68,13 @@ enum WS2CarPlaySurfaceModel {
                 let started = liveVideoStarted
                 return WS2CarPlaySurfaceDisplay(
                     phase: .connectedLive(phoneName: phoneName),
-                    symbol: "car", title: started ? (phoneName ?? "已连接 iPhone") : "等待 iPhone 的画面",
-                    detail: started ? nil : "iPhone 已连上接收器",
+                    symbol: "car", title: started ? (phoneName ?? WSL10n.text("carplay.connectedPhone", zh: "已连接 iPhone")) : WSL10n.text("carplay.waitingPicture", zh: "等待 iPhone 的画面"),
+                    detail: started ? nil : WSL10n.text("carplay.receiverConnected", zh: "iPhone 已连上接收器"),
                     showsTiles: false, showsLiveVideo: started, offersReconnect: false)
             }
             // 合成模式没有真的 iPhone 画面：写明是示意，不冒充。
             return WS2CarPlaySurfaceDisplay(
-                phase: .connectedSynthetic, symbol: "car", title: "示意画面", detail: "不是 iPhone 的画面",
+                phase: .connectedSynthetic, symbol: "car", title: WSL10n.text("carplay.synthetic", zh: "示意画面"), detail: WSL10n.text("carplay.synthetic.detail", zh: "不是 iPhone 的画面"),
                 showsTiles: true, showsLiveVideo: false, offersReconnect: false)
         case .waitingToReconnect:
             let attempt = session.reconnectAttempts
@@ -82,12 +82,12 @@ enum WS2CarPlaySurfaceModel {
             let seconds = reconnectSeconds(due: session.reconnectDueAt, now: now)
             return WS2CarPlaySurfaceDisplay(
                 phase: .reconnecting(attempt: attempt, of: total, afterSeconds: seconds),
-                symbol: "arrow.triangle.2.circlepath", title: "正在重新连接",
+                symbol: "arrow.triangle.2.circlepath", title: WSL10n.text("carplay.reconnecting", zh: "正在重新连接"),
                 detail: "第 \(attempt) 次，共 \(total) 次，\(seconds) 秒后再试",
                 showsTiles: false, showsLiveVideo: false, offersReconnect: false)
         case .gaveUp:
             return WS2CarPlaySurfaceDisplay(
-                phase: .gaveUp, symbol: "iphone.slash", title: "没有连上",
+                phase: .gaveUp, symbol: "iphone.slash", title: WSL10n.text("carplay.gaveUp", zh: "没有连上"),
                 detail: "试了 \(WS2CarPlaySession.maxReconnectAttempts) 次，都没连上",
                 showsTiles: false, showsLiveVideo: false, offersReconnect: true)
         }

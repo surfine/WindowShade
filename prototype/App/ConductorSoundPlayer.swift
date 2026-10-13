@@ -24,6 +24,7 @@ enum ConductorSoundCue: Hashable, Sendable {
         var out: [ConductorSoundCue] = []
         var label: String?
         var recognized = false
+        var toneIndex: Int?
         for effect in effects {
             switch effect {
             case .showNotch(.trajectory(_, let beats)):
@@ -33,18 +34,23 @@ enum ConductorSoundCue: Hashable, Sendable {
                 label = text; lastBeats = 0
             case .showNotch:
                 lastBeats = 0
-            case .sound("已识别"):
-                recognized = true; lastBeats = 0
-            case .sound("未识别"):
+            case .sound(let token) where token == "未识别":
                 out.append(.miss); lastBeats = 0
+            case .sound(let token) where token.hasPrefix("tone") || token.hasPrefix("beat"):
+                // 语言无关的令牌：直接从令牌取第几拍，不再解析（中文）标签文本。
+                toneIndex = Int(token.drop { !$0.isNumber }) ?? toneIndex
+                recognized = true; lastBeats = 0
+            case .sound:
+                recognized = true; lastBeats = 0
             default:
                 break
             }
         }
         if recognized {
+            // 优先用令牌带来的拍数；没有令牌（历史路径）时按中文标签前缀兜底。
             let names = ["一声", "二声", "三声", "四声"]
-            let index = label.flatMap { text in names.firstIndex { text.hasPrefix($0) } } ?? 0
-            out.append(.tone(index + 1))
+            let fallback = label.flatMap { text in names.firstIndex { text.hasPrefix($0) } } ?? 0
+            out.append(.tone((toneIndex ?? (fallback + 1))))
         }
         return out
     }

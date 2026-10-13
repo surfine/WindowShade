@@ -265,7 +265,7 @@ final class FileShelfController: NSObject, NSSharingServiceDelegate, @preconcurr
         guard !rows.isEmpty, !clear.isPending(at: now) else { return }
         clear.begin(count: rows.count, now: now)
         store.removeAll()
-        announce(FileShelfActions.cardSpoken(count: 0) + "，可以撤销")
+        announce(FileShelfActions.cardSpoken(count: 0) + WSL10n.text("fileShelf.undoableSuffix", zh: "，可以撤销"))
         clearTimer?.invalidate()
         let timer = Timer.scheduledTimer(withTimeInterval: FileShelfCardLayout.clearHold, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.finishClear() }
@@ -328,7 +328,7 @@ final class FileShelfController: NSObject, NSSharingServiceDelegate, @preconcurr
         if let airDropHandler { airDropHandler(items); return }
         guard sharing == nil else { return }
         guard let service = NSSharingService(named: .sendViaAirDrop), service.canPerform(withItems: items) else {
-            card?.flash("隔空投送暂时不可用")
+            card?.flash(WSL10n.text("fileShelf.airDropUnavailable", zh: "隔空投送暂时不可用"))
             return
         }
         sharing = service
@@ -338,13 +338,13 @@ final class FileShelfController: NSObject, NSSharingServiceDelegate, @preconcurr
 
     func sharingService(_ sharingService: NSSharingService, didShareItems items: [Any]) {
         guard sharing === sharingService else { return }
-        finishSharing("已送出")
+        finishSharing(WSL10n.text("say.sent", zh: "已送出"))
     }
 
     func sharingService(_ sharingService: NSSharingService, didFailToShareItems items: [Any], error: Error) {
         guard sharing === sharingService else { return }
         // 自己取消的不说。
-        finishSharing((error as NSError).code == NSUserCancelledError ? nil : "没送出去")
+        finishSharing((error as NSError).code == NSUserCancelledError ? nil : WSL10n.text("notch.airdrop.failed", zh: "没送出去"))
     }
 
     private func finishSharing(_ text: String?) {
@@ -666,7 +666,7 @@ final class FileShelfTileView: NSView {
 
     private func refreshAccessibility() {
         setAccessibilityLabel(FileShelfActions.spoken(name: shownName, reason: row.availability.label))
-        setAccessibilityHelp("点一下或按空格大图预览")
+        setAccessibilityHelp(WSL10n.text("fileShelf.previewHelp", zh: "点一下或按空格大图预览"))
         let actions = FileShelfActions.spokenActions(live: row.availability == .available)
         setAccessibilityCustomActions(actions.map { item in
             NSAccessibilityCustomAction(name: item.title) { [weak self] in
@@ -853,11 +853,11 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
     /// 格子条的外框（测试量位置用）。
     var scrollFrame: NSRect { scroll.frame }
     private let titleIcon = NSImageView()
-    private let titleLabel = NSTextField(labelWithString: "文件架")
+    private let titleLabel = NSTextField(labelWithString: WSL10n.text("settings.shade.fileShelf.name", zh: "文件架"))
     private let countLabel = NSTextField(labelWithString: "")
     private let noticeLabel = NSTextField(labelWithString: "")
     private let airDropPill = FileShelfPill(title: FileShelfActions.airDropTitle, symbol: "airplayaudio")
-    private let clearPill = FileShelfPill(title: "全部移出")
+    private let clearPill = FileShelfPill(title: WSL10n.text("fileShelf.removeAll", zh: "全部移出"))
     // 格子条与“文件架空了”。
     private let scroll = FileShelfScrollView()
     private let documentContainer = FlippedView()
@@ -1010,7 +1010,7 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
 
     private func name(of row: FileShelfRow) -> String {
         // 屏幕正在共享时，文件名不露：只写“文件”。
-        if redacted { return row.availability.label.map { "文件\n" + $0 } ?? "文件" }
+        if redacted { return row.availability.label.map { "文件\n" + $0 } ?? WSL10n.text("fileDrag.file", zh: "文件") }
         let name = row.entry.name.map { $0.isNewline ? " " : String($0) }.joined()
         if let label = row.availability.label { return name + "\n" + label }
         return name

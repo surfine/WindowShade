@@ -11,41 +11,41 @@ import Cocoa
     private var contentHeight:CGFloat=420
     private let stack=NSStackView()
     private let controller:WS2OwnedLaunchController
-    private let project=NSTextField(labelWithString:"尚未选择项目")
-    private let executable=NSTextField(labelWithString:"尚未选择 Codex")
+    private let project=NSTextField(labelWithString:WSL10n.text("owned.ui.noProject", zh: "尚未选择项目"))
+    private let executable=NSTextField(labelWithString:WSL10n.text("owned.ui.noExecutable", zh: "尚未选择 Codex"))
     private let status=NSTextField(wrappingLabelWithString:"")
     private let note=NSTextField(wrappingLabelWithString:"")
     private let model=NSPopUpButton(frame:.zero,pullsDown:false)
     private let effort=NSPopUpButton(frame:.zero,pullsDown:false)
-    private let browseModels=NSButton(title:"选择模型…",target:nil,action:nil)
-    private let openConductor=NSButton(title:"指挥模式",target:nil,action:nil)
+    private let browseModels=NSButton(title:WSL10n.text("owned.ui.browseModels", zh: "选择模型…"),target:nil,action:nil)
+    private let openConductor=NSButton(title:WSL10n.text("conductor.settings.mode", zh: "指挥模式"),target:nil,action:nil)
     private let draft=NSTextView(),output=NSTextView()
     private let outputScroll=NSScrollView()
-    private let chooseProject=NSButton(title:"选择项目…",target:nil,action:nil)
-    private let chooseExecutable=NSButton(title:"选择 Codex…",target:nil,action:nil)
-    private let launch=NSButton(title:"启动",target:nil,action:nil)
-    private let login=NSButton(title:"登录 ChatGPT",target:nil,action:nil)
-    private let cancelLogin=NSButton(title:"取消登录",target:nil,action:nil)
-    private let logout=NSButton(title:"退出登录",target:nil,action:nil)
-    private let resume=NSButton(title:"恢复上次会话",target:nil,action:nil)
-    private let send=NSButton(title:"发送",target:nil,action:nil)
-    private let interrupt=NSButton(title:"停止本轮",target:nil,action:nil)
-    private let stop=NSButton(title:"断开助手",target:nil,action:nil)
-    private let consent=NSButton(checkboxWithTitle:"运行所选 Codex；查询可能发送项目内容并消耗我的账号额度",target:nil,action:nil)
-    private let diagnostic=NSButton(checkboxWithTitle:"仅本次保留诊断尾部",target:nil,action:nil)
-    private let diagnostics=NSButton(title:"查看诊断",target:nil,action:nil)
+    private let chooseProject=NSButton(title:WSL10n.text("owned.ui.chooseProject", zh: "选择项目…"),target:nil,action:nil)
+    private let chooseExecutable=NSButton(title:WSL10n.text("owned.ui.chooseExecutable", zh: "选择 Codex…"),target:nil,action:nil)
+    private let launch=NSButton(title:WSL10n.text("owned.ui.launch", zh: "启动"),target:nil,action:nil)
+    private let login=NSButton(title:WSL10n.text("owned.ui.login", zh: "登录 ChatGPT"),target:nil,action:nil)
+    private let cancelLogin=NSButton(title:WSL10n.text("owned.ui.cancelLogin", zh: "取消登录"),target:nil,action:nil)
+    private let logout=NSButton(title:WSL10n.text("owned.ui.logout", zh: "退出登录"),target:nil,action:nil)
+    private let resume=NSButton(title:WSL10n.text("owned.ui.resume", zh: "恢复上次会话"),target:nil,action:nil)
+    private let send=NSButton(title:WSL10n.text("conductor.send", zh: "发送"),target:nil,action:nil)
+    private let interrupt=NSButton(title:WSL10n.text("conductor.stopTurn", zh: "停止本轮"),target:nil,action:nil)
+    private let stop=NSButton(title:WSL10n.text("owned.ui.stop", zh: "断开助手"),target:nil,action:nil)
+    private let consent=NSButton(checkboxWithTitle:WSL10n.text("owned.ui.consent", zh: "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"),target:nil,action:nil)
+    private let diagnostic=NSButton(checkboxWithTitle:WSL10n.text("owned.ui.diagnosticTail", zh: "仅本次保留诊断尾部"),target:nil,action:nil)
+    private let diagnostics=NSButton(title:WSL10n.text("owned.ui.viewDiagnostics", zh: "查看诊断"),target:nil,action:nil)
     private var renderTask:Task<Void,Never>?
     private var modelIDs:[String]=[],effortIDs:[String]=[]
     private var rejectedDraft=false
     private var displayingDiagnostics=false
-    private let heading=NSTextField(labelWithString:"编程会话")
+    private let heading=NSTextField(labelWithString:WSL10n.text("notch.kind.session", zh: "编程会话"))
     private let setup=NSStackView()
     private let launchActions=NSStackView()
     private let modelActions=NSStackView()
     private let accountActions=NSStackView()
     private let composer=WS2OwnedDraftScrollView()
-    private let replyHeading=NSTextField(labelWithString:"助手回复")
-    private let composerHeading=NSTextField(labelWithString:"给助手的文字")
+    private let replyHeading=NSTextField(labelWithString:WSL10n.text("owned.ui.replyHeading", zh: "助手回复"))
+    private let composerHeading=NSTextField(labelWithString:WSL10n.text("owned.ui.composerHeading", zh: "给助手的文字"))
     init(controller:WS2OwnedLaunchController) {
         self.controller=controller;super.init(frame:.zero)
         stack.orientation = .vertical;stack.alignment = .leading;stack.spacing=12
@@ -84,20 +84,20 @@ import Cocoa
             fieldsRow.widthAnchor.constraint(equalTo:setup.widthAnchor).isActive=true
         }
         consent.font = .systemFont(ofSize:11);consent.target=self;consent.action=#selector(consentChanged)
-        consent.toolTip="仅在点击启动后运行。登录和会话文件由 Codex 存在 WindowShade 的独立目录中，不修改你原有的 ~/.codex。只读不等于离线或只允许读取所选目录。"
+        consent.toolTip=WSL10n.text("owned.ui.consent.tip", zh: "仅在点击启动后运行。登录和会话文件由 Codex 存在 WindowShade 的独立目录中，不修改你原有的 ~/.codex。只读不等于离线或只允许读取所选目录。")
         setup.addArrangedSubview(consent)
-        diagnostic.font = .systemFont(ofSize:11);diagnostic.toolTip="最多保留 64 KiB 内存诊断，可能含路径和敏感内容。不会自动上传或导出。";setup.addArrangedSubview(diagnostic)
+        diagnostic.font = .systemFont(ofSize:11);diagnostic.toolTip=WSL10n.text("owned.ui.diagnostic.tip", zh: "最多保留 64 KiB 内存诊断，可能含路径和敏感内容。不会自动上传或导出。");setup.addArrangedSubview(diagnostic)
         launchActions.orientation = .horizontal;launchActions.spacing=8
         for button in [launch,login,cancelLogin,resume] { launchActions.addArrangedSubview(button) }
         stack.addArrangedSubview(launchActions)
         model.target=self;model.action=#selector(selectModel);effort.target=self;effort.action=#selector(selectEffort)
-        model.setAccessibilityLabel("实际可用模型");effort.setAccessibilityLabel("该模型支持的思考程度")
+        model.setAccessibilityLabel(WSL10n.text("owned.ui.modelLabel", zh: "实际可用模型"));effort.setAccessibilityLabel(WSL10n.text("owned.ui.effortLabel", zh: "该模型支持的思考程度"))
         browseModels.target=self;browseModels.action=#selector(showModelPicker)
         browseModels.image=NSImage(systemSymbolName:"gamecontroller",accessibilityDescription:nil)
-        browseModels.toolTip="在列表里选择模型，也能本次启用手柄。不会发送文字。"
+        browseModels.toolTip=WSL10n.text("owned.ui.browseModels.tip", zh: "在列表里选择模型，也能本次启用手柄。不会发送文字。")
         openConductor.target=self;openConductor.action=#selector(showConductor)
         openConductor.bezelStyle = .rounded
-        openConductor.toolTip="打开指挥页。只改草稿和模型，不会发送或批准命令。"
+        openConductor.toolTip=WSL10n.text("owned.ui.openConductor.tip", zh: "打开指挥页。只改草稿和模型，不会发送或批准命令。")
         modelActions.orientation = .horizontal;modelActions.spacing=8
         for view in [model,effort,browseModels,openConductor] { modelActions.addArrangedSubview(view) }
         stack.addArrangedSubview(modelActions)
@@ -122,10 +122,10 @@ import Cocoa
         composer.hasVerticalScroller=true;composer.borderType = .noBorder
         composer.drawsBackground=false;composer.wantsLayer=true
         composer.layer?.cornerRadius=12;composer.layer?.masksToBounds=true
-        configure(draft,editable:true);draft.delegate=self;draft.string=controller.draft;draft.setAccessibilityLabel("发送给助手的文字")
+        configure(draft,editable:true);draft.delegate=self;draft.string=controller.draft;draft.setAccessibilityLabel(WSL10n.text("owned.ui.draftLabel", zh: "发送给助手的文字"))
         draft.textContainerInset=NSSize(width:10,height:8)
         composer.documentView=draft;stack.addArrangedSubview(composer);composer.widthAnchor.constraint(equalTo:stack.widthAnchor).isActive=true;composer.heightAnchor.constraint(equalToConstant:72).isActive=true
-        send.toolTip="发送按钮才会提交。中文组合输入未完成时不会发送；回车只换行。"
+        send.toolTip=WSL10n.text("owned.ui.send.tip", zh: "发送按钮才会提交。中文组合输入未完成时不会发送；回车只换行。")
         stack.addArrangedSubview(row([send,interrupt]))
         accountActions.orientation = .horizontal;accountActions.spacing=8
         for button in [stop,logout,diagnostics] { accountActions.addArrangedSubview(button) }
@@ -152,18 +152,18 @@ import Cocoa
         }
     }
     func render() {
-        project.stringValue=controller.projectURL?.lastPathComponent ?? "尚未选择项目";project.toolTip=controller.projectURL?.path
-        heading.stringValue=controller.isBusy ? (controller.projectURL?.lastPathComponent ?? "编程会话") : "编程会话"
+        project.stringValue=controller.projectURL?.lastPathComponent ?? WSL10n.text("owned.ui.noProject", zh: "尚未选择项目");project.toolTip=controller.projectURL?.path
+        heading.stringValue=controller.isBusy ? (controller.projectURL?.lastPathComponent ?? WSL10n.text("notch.kind.session", zh: "编程会话")) : WSL10n.text("notch.kind.session", zh: "编程会话")
         heading.toolTip=controller.projectURL?.path
-        executable.stringValue=controller.executableURL?.path ?? "尚未选择 Codex";executable.toolTip=executable.stringValue
+        executable.stringValue=controller.executableURL?.path ?? WSL10n.text("owned.ui.noExecutable", zh: "尚未选择 Codex");executable.toolTip=executable.stringValue
         status.stringValue=controller.status
-        note.stringValue=rejectedDraft ? "文字太长，暂时不能发送。" : (controller.notice.isEmpty ? "需要额外权限的操作会被拒绝。" : controller.notice)
+        note.stringValue=rejectedDraft ? WSL10n.text("owned.ui.draftTooLong", zh: "文字太长，暂时不能发送。") : (controller.notice.isEmpty ? WSL10n.text("owned.ui.extraPermission", zh: "需要额外权限的操作会被拒绝。") : controller.notice)
         let next=controller.models.keys.sorted()
-        if next != modelIDs || model.numberOfItems==0 { modelIDs=next;model.removeAllItems();model.addItems(withTitles:["请选择模型"]+next) }
+        if next != modelIDs || model.numberOfItems==0 { modelIDs=next;model.removeAllItems();model.addItems(withTitles:[WSL10n.text("conductor.pickModel", zh: "请选择模型")]+next) }
         model.selectItem(at:controller.model.flatMap{modelIDs.firstIndex(of:$0)}.map{$0+1} ?? 0)
         model.toolTip=controller.model
         let efforts=controller.model.flatMap{controller.models[$0]}?.sorted() ?? []
-        if efforts != effortIDs || effort.numberOfItems==0 { effortIDs=efforts;effort.removeAllItems();effort.addItems(withTitles:["程度"]+efforts) }
+        if efforts != effortIDs || effort.numberOfItems==0 { effortIDs=efforts;effort.removeAllItems();effort.addItems(withTitles:[WSL10n.text("conductor.effort", zh: "程度")]+efforts) }
         effort.selectItem(at:controller.effort.flatMap{effortIDs.firstIndex(of:$0)}.map{$0+1} ?? 0)
         if !draft.hasMarkedText(),!rejectedDraft,draft.string != controller.draft { draft.string=controller.draft }
         let fresh=inputIsCurrent()
@@ -199,7 +199,7 @@ import Cocoa
         let value=displayingDiagnostics ? controller.diagnostics:controller.text
         outputScroll.isHidden=value.isEmpty && !displayingDiagnostics
         replyHeading.isHidden=outputScroll.isHidden
-        replyHeading.stringValue=displayingDiagnostics ? "诊断信息":"助手回复"
+        replyHeading.stringValue=displayingDiagnostics ? WSL10n.text("owned.ui.diagnostics", zh: "诊断信息"):WSL10n.text("owned.ui.replyHeading", zh: "助手回复")
         if output.string != value {
             let wasAtEnd=outputScroll.contentView.bounds.maxY>=output.bounds.maxY-24
             output.string=value
@@ -223,7 +223,7 @@ import Cocoa
     private func choose(directory:Bool) {
         guard inputIsCurrent(),!controller.isBusy else { return }
         let picker=NSOpenPanel();picker.canChooseDirectories=directory;picker.canChooseFiles = !directory
-        picker.allowsMultipleSelection=false;picker.canCreateDirectories=false;picker.prompt=directory ? "使用这个项目":"使用这个程序"
+        picker.allowsMultipleSelection=false;picker.canCreateDirectories=false;picker.prompt=directory ? WSL10n.text("owned.ui.useProject", zh: "使用这个项目"):WSL10n.text("owned.ui.useProgram", zh: "使用这个程序")
         picker.begin { [weak self] result in
             MainActor.assumeIsolated {
                 guard let self,self.inputIsCurrent(),result == .OK,let url=picker.url else { return }
@@ -254,7 +254,7 @@ import Cocoa
     @objc private func sendDraft() { guard inputIsCurrent() else { return };_=controller.send(draft.string,hasMarkedText:draft.hasMarkedText()) }
     @objc private func interruptTurn() { guard inputIsCurrent() else { return };_=controller.interrupt() }
     @objc private func stopSession() { guard inputIsCurrent() else { return };controller.stop() }
-    @objc private func toggleDiagnostics() { guard inputIsCurrent() else { return };displayingDiagnostics.toggle();diagnostics.title=displayingDiagnostics ? "返回回复":"查看诊断";render() }
+    @objc private func toggleDiagnostics() { guard inputIsCurrent() else { return };displayingDiagnostics.toggle();diagnostics.title=displayingDiagnostics ? "返回回复":WSL10n.text("owned.ui.viewDiagnostics", zh: "查看诊断");render() }
     func revoke() {
         renderTask?.cancel();renderTask=nil;inputIsCurrent={false}
         for button in [chooseProject,chooseExecutable,launch,login,cancelLogin,logout,resume,send,interrupt,stop,diagnostics,consent,diagnostic,model,effort,browseModels,openConductor] { button.isEnabled=false }

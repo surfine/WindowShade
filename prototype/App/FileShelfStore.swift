@@ -164,20 +164,20 @@ final class FileShelfStore: @unchecked Sendable {
 
     func addText(_ text: String, completion: (@Sendable (FileShelfAddOutcome) -> Void)? = nil) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let name = Self.shortName(trimmed, fallback: "文字")
+        let name = Self.shortName(trimmed, fallback: WSL10n.text("fileDrag.text", zh: "文字"))
         addTaken(.text, name: name, ext: "txt", body: Data(trimmed.utf8), empty: trimmed.isEmpty, completion: completion)
     }
 
     /// 网页上的图按原格式写下来；ext 是原格式的扩展名（png、jpg…）。
     func addImage(_ data: Data, fileExtension: String, completion: (@Sendable (FileShelfAddOutcome) -> Void)? = nil) {
         let ext = String(fileExtension.lowercased().filter { $0.isLetter || $0.isNumber }.prefix(5))
-        addTaken(.image, name: "图片", ext: ext.isEmpty ? "png" : ext, body: data, empty: data.isEmpty, completion: completion)
+        addTaken(.image, name: WSL10n.text("fileDrag.image", zh: "图片"), ext: ext.isEmpty ? "png" : ext, body: data, empty: data.isEmpty, completion: completion)
     }
 
     func addLink(_ url: URL, completion: (@Sendable (FileShelfAddOutcome) -> Void)? = nil) {
         let plist: [String: Any] = ["URL": url.absoluteString]
         let body = (try? PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)) ?? Data()
-        let name = Self.shortName(url.host ?? url.absoluteString, fallback: "链接")
+        let name = Self.shortName(url.host ?? url.absoluteString, fallback: WSL10n.text("fileDrag.link", zh: "链接"))
         addTaken(.link, name: name, ext: "webloc", body: body, empty: url.absoluteString.isEmpty, completion: completion)
     }
 

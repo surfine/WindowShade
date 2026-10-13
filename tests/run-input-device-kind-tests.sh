@@ -15,5 +15,5 @@ fi
 BUILD="$ROOT/.build/input-device-kind"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "${SOURCES[@]}" "$SUPPORT" "$ROOT/tests/InputDeviceKindTests.swift" -o "$BUILD/input-device-kind-tests"
+  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/tests/InputDeviceKindTests.swift" -o "$BUILD/input-device-kind-tests"
 "$BUILD/input-device-kind-tests"

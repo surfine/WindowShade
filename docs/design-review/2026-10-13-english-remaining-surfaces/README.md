@@ -70,3 +70,31 @@
   演出来——同第31批的口径：目录级 PASS + 代表性表面实拍，不逐句实拍。
 - 刘海句长英文档（24/40）待真机定。
 - 改动**未提交未推送**。
+
+
+## 追加（同日）：未上线功能的英文适配（第33批）
+
+用户追加"还没上线的功能也做一下英文的适配"。以下都进目录（目录 2120 → **2500 键**，棘轮 1429 → **1034 行**）：
+
+| 面 | 文件 |
+| --- | --- |
+| 指挥模式 | `ConductorSession`（状态机 30+ 句、消息、手势名）、`WS2ConductorPage`、`WS2ConductorView`（iPhone 端）、`WS2ConductorSettings`、`ConductorCapabilities`、`WS2ModelPickerView` |
+| 静音操作 / 编程会话 | `WS2OwnedLaunchController`（53 句状态与失败原因）、`WS2OwnedSessionView`、`WS2OwnedCodexSession`、`WS2OwnedProtocolHost`、`WS2AgentSessionView`、`WS2CodexApprovalHost`、`AgentSessions` |
+| 遥控与 CarPlay | `WS2RemoteHost`（配对流程）、`WS2CameraChoice`、`WS2CarPlaySurfaceModel`（连接阶段卡） |
+| 文件架与拖拽 | `FileDragSensor`（拖放落点与原因）、`FileShelfView`、`FileShelfModel`、`FileShelfStore` |
+| 画中画 | `PictureInPicture`、`PictureInPictureViews` |
+| 日历卡 | `CalendarPresentation` |
+| 在场 / 私人窗口 | `PresenceLockRiskSheet`、`AwaySummary`、`NotchFaceObservations` |
+| 输入资格 | `WS2InputEligibility`、`InputDeviceKind`、`ScrollInstallPolicy` |
+
+两处"按中文串判逻辑"也一并改掉：**提示音令牌**（`ConductorSoundPlayer` 原来匹配 `.sound("已识别")`
+并按"三拍"这类中文标签前缀推拍数）改成语言无关的 `toneN`/`beatN` 令牌 + 历史中文令牌兜底；
+**文件架磁盘目录名**（`WindowShade/文件架`、`收到的`、`拿来的`）保持原样——改名会动用户已有的文件，
+记为已知限制（Finder 里可见，但那是磁盘路径不是界面文案）。
+
+校验：`check-localizable` PASS（2500 键）、`--check` EXIT=0；**15 个新涉及的测试 runner 补编
+`WSL10n.swift` 后全 PASS**（conductor×3、owned/agent×3、file-drag/shelf×2、carplay/camera、
+calendar、away、input×3 等）。
+
+未验：这些功能出厂默认关（`ReleaseFactors`/默认值表），VM 里没有触发路径——只做了目录级与编译级校验，
+**没有屏幕证据**；等它们各自上线前的那一批再实拍。

@@ -15,5 +15,5 @@ fi
 BUILD="$ROOT/.build/agent-sessions"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "${SOURCES[@]}" "$SUPPORT" "$ROOT/tests/AgentSessionsTests.swift" -o "$BUILD/agent-sessions-tests"
+  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/tests/AgentSessionsTests.swift" -o "$BUILD/agent-sessions-tests"
 "$BUILD/agent-sessions-tests"

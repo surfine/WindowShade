@@ -54,11 +54,11 @@ enum FileDragKind: Equatable, Sendable {
     var holdingLabel: String {
         switch self {
         case .files(let count, let hasFolder):
-            if count == 1 { return hasFolder ? "文件夹" : "文件" }
-            return "\(count) 个"
-        case .text: return "文字"
-        case .image: return "图片"
-        case .link: return "链接"
+            if count == 1 { return hasFolder ? WSL10n.text("launchpad.folder", zh: "文件夹") : WSL10n.text("fileDrag.file", zh: "文件") }
+            return WSL10n.text("fileDrag.countItems", zh: "%@ 个", String(count))
+        case .text: return WSL10n.text("fileDrag.text", zh: "文字")
+        case .image: return WSL10n.text("fileDrag.image", zh: "图片")
+        case .link: return WSL10n.text("fileDrag.link", zh: "链接")
         }
     }
 
@@ -75,10 +75,10 @@ enum FileDragKind: Equatable, Sendable {
     /// 读屏念的：拿着什么。
     var spokenLabel: String {
         switch self {
-        case .files(let count, let hasFolder): return count == 1 ? (hasFolder ? "一个文件夹" : "一个文件") : "\(count) 个文件"
-        case .text: return "一段文字"
-        case .image: return "一张图片"
-        case .link: return "一个链接"
+        case .files(let count, let hasFolder): return count == 1 ? (hasFolder ? WSL10n.text("fileDrag.oneFolder", zh: "一个文件夹") : WSL10n.text("fileDrag.oneFile", zh: "一个文件")) : "\(count) 个文件"
+        case .text: return WSL10n.text("fileDrag.someText", zh: "一段文字")
+        case .image: return WSL10n.text("fileDrag.oneImage", zh: "一张图片")
+        case .link: return WSL10n.text("fileDrag.oneLink", zh: "一个链接")
         }
     }
 }
@@ -90,9 +90,9 @@ enum FileDropCell: Int, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .stage: return "暂存"
-        case .airDrop: return "隔空投送"
-        case .openWith: return "用 App 打开"
+        case .stage: return WSL10n.text("fileDrag.stage", zh: "暂存")
+        case .airDrop: return WSL10n.text("silent.activity.airdrop", zh: "隔空投送")
+        case .openWith: return WSL10n.text("fileDrag.openWith", zh: "用 App 打开")
         }
     }
 
@@ -141,17 +141,17 @@ enum FileDropPlan {
     static func state(of cell: FileDropCell, kind: FileDragKind, env: FileDropEnvironment) -> FileDropCellState {
         switch cell {
         case .stage:
-            if !env.shelfEnabled { return FileDropCellState(enabled: false, reason: "文件架没开") }
-            if env.shelfFull { return FileDropCellState(enabled: false, reason: "文件架满了") }
+            if !env.shelfEnabled { return FileDropCellState(enabled: false, reason: WSL10n.text("fileDrag.reason.shelfOff", zh: "文件架没开")) }
+            if env.shelfFull { return FileDropCellState(enabled: false, reason: WSL10n.text("fileDrag.reason.shelfFull", zh: "文件架满了")) }
             return FileDropCellState(enabled: true, reason: nil)
         case .airDrop:
-            if !env.airDropAvailable { return FileDropCellState(enabled: false, reason: "隔空投送没开") }
-            if env.airDropBusy { return FileDropCellState(enabled: false, reason: "正在隔空投送") }
+            if !env.airDropAvailable { return FileDropCellState(enabled: false, reason: WSL10n.text("fileDrag.reason.airDropOff", zh: "隔空投送没开")) }
+            if env.airDropBusy { return FileDropCellState(enabled: false, reason: WSL10n.text("fileDrag.reason.airDropBusy", zh: "正在隔空投送")) }
             return FileDropCellState(enabled: true, reason: nil)
         case .openWith:
             switch kind {
-            case .text: return FileDropCellState(enabled: false, reason: "文字挑不了 App")
-            case .image: return FileDropCellState(enabled: false, reason: "图片挑不了 App")
+            case .text: return FileDropCellState(enabled: false, reason: WSL10n.text("fileDrag.reason.textNoApp", zh: "文字挑不了 App"))
+            case .image: return FileDropCellState(enabled: false, reason: WSL10n.text("fileDrag.reason.imageNoApp", zh: "图片挑不了 App"))
             case .files, .link: return FileDropCellState(enabled: true, reason: nil)
             }
         }
@@ -334,7 +334,7 @@ enum FileDropPayload {
 /// 收承诺文件（NSFilePromiseReceiver）：对方把文件写进我们给的文件夹，收齐后照常记位置（书签）。
 /// 写进文件架自己的“收到的”文件夹，不放临时目录，免得系统清掉后书签找不到。
 enum FileShelfPromises {
-    static let failureText = "这个文件没能拿到，没有放进文件架"
+    static let failureText = WSL10n.text("fileDrag.failure", zh: "这个文件没能拿到，没有放进文件架")
 
     static var defaultDestination: URL {
         FileShelf.defaultRoot.appendingPathComponent("收到的", isDirectory: true)
@@ -620,6 +620,7 @@ final class FileDropCellView: NSView {
         layer?.backgroundColor = NSColor.white.withAlphaComponent(white).cgColor
         layer?.borderWidth = light == .lit ? FileDropGeometry.litStroke : 0
         layer?.borderColor = NSColor.controlAccentColor.cgColor
-        setAccessibilityLabel(enabled ? cell.title : "\(cell.title)，现在不能用")
+        setAccessibilityLabel(enabled ? cell.title
+                                      : cell.title + WSL10n.text("fileDrag.notUsableNow", zh: "，现在不能用"))
     }
 }

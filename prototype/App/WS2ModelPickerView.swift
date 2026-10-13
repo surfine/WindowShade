@@ -17,9 +17,9 @@ import Cocoa
     private let table = NSTableView()
     private let scroll = NSScrollView()
     private let deviceMenu = NSPopUpButton(frame: .zero, pullsDown: false)
-    private let enableButton = NSButton(title: "本次启用", target: nil, action: nil)
-    private let chooseButton = NSButton(title: "使用此模型", target: nil, action: nil)
-    private let status = NSTextField(wrappingLabelWithString: "尚未启用手柄")
+    private let enableButton = NSButton(title: WSL10n.text("conductor.enableNow", zh: "本次启用"), target: nil, action: nil)
+    private let chooseButton = NSButton(title: WSL10n.text("conductor.picker.use", zh: "使用此模型"), target: nil, action: nil)
+    private let status = NSTextField(wrappingLabelWithString: WSL10n.text("conductor.picker.padIdle", zh: "尚未启用手柄"))
     private var rows: [String] = []
     private var shownDevices: [WS2ControllerDevice] = []
     private var lastBackend: UUID?
@@ -57,25 +57,25 @@ import Cocoa
             controls.topAnchor.constraint(equalTo: topAnchor, constant: 12),
             controls.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12),
             controls.widthAnchor.constraint(equalToConstant: 200)])
-        let title = NSTextField(labelWithString: "选择模型"); title.font = .systemFont(ofSize: 15, weight: .semibold)
+        let title = NSTextField(labelWithString: WSL10n.text("conductor.picker.title", zh: "选择模型")); title.font = .systemFont(ofSize: 15, weight: .semibold)
         list.addArrangedSubview(title)
-        let column = NSTableColumn(identifier: .init("model")); column.title = "当前助手提供的模型"
+        let column = NSTableColumn(identifier: .init("model")); column.title = WSL10n.text("conductor.picker.column", zh: "当前助手提供的模型")
         column.width = 300; column.minWidth = 100
         table.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
         table.autoresizingMask = [.width]
         table.addTableColumn(column); table.headerView = nil; table.rowHeight = 28; table.allowsEmptySelection = false
         table.allowsMultipleSelection = false; table.delegate = self; table.dataSource = self
-        table.target = self; table.doubleAction = #selector(useSelection); table.setAccessibilityLabel("当前可用模型")
+        table.target = self; table.doubleAction = #selector(useSelection); table.setAccessibilityLabel(WSL10n.text("conductor.picker.tableLabel", zh: "当前可用模型"))
         scroll.hasVerticalScroller = true; scroll.borderType = .bezelBorder; scroll.documentView = table
         scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
         list.addArrangedSubview(scroll)
         scroll.widthAnchor.constraint(equalTo: list.widthAnchor).isActive = true
         scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 56).isActive = true
-        deviceMenu.setAccessibilityLabel("本次连接的手柄")
+        deviceMenu.setAccessibilityLabel(WSL10n.text("conductor.pad.label", zh: "本次连接的手柄"))
         enableButton.target = self; enableButton.action = #selector(toggleDevice)
         enableButton.image = NSImage(systemSymbolName: "gamecontroller", accessibilityDescription: nil)
         chooseButton.target = self; chooseButton.action = #selector(useSelection)
-        let back = NSButton(title: "返回会话", target: self, action: #selector(goBack))
+        let back = NSButton(title: WSL10n.text("conductor.picker.back", zh: "返回会话"), target: self, action: #selector(goBack))
         for control in [deviceMenu, enableButton, chooseButton, back] as [NSControl] { control.controlSize = .small }
         deviceMenu.widthAnchor.constraint(equalToConstant: 200).isActive = true
         let actionRow = NSStackView(views: [chooseButton, back]); actionRow.spacing = 8
@@ -124,7 +124,7 @@ import Cocoa
             input.ready = false; input.bind(nil); changedEnvironment?()
             rows = ids; lastAvailable = available; lastBackend = epoch; lastChosen = controller.model
             do { try input.replace(ids.map { .init(id: $0, enabled: available) }, selectedID: controller.model) }
-            catch { rows = []; input.revoke(); status.stringValue = "模型列表暂时不可用" }
+            catch { rows = []; input.revoke(); status.stringValue = WSL10n.text("conductor.picker.listUnavailable", zh: "模型列表暂时不可用") }
             rendering = true; table.reloadData(); rendering = false; showSelection()
         } else if lastChosen != controller.model {
             lastChosen = controller.model
@@ -146,18 +146,22 @@ import Cocoa
             let clean = String(String.UnicodeScalarView(device.label.unicodeScalars.filter {
                 $0.properties.generalCategory != .control && $0.properties.generalCategory != .format
             })).prefix(64)
-            deviceMenu.addItem(withTitle: "\(index + 1). \(clean.isEmpty ? "游戏手柄" : String(clean))\(device.enabled ? " · 已启用" : "")")
+            let padName = clean.isEmpty ? WSL10n.text("conductor.pad.generic", zh: "游戏手柄") : String(clean)
+            let enabledMark = device.enabled ? " · " + WSL10n.text("conductor.pad.enabled", zh: "已启用") : ""
+            deviceMenu.addItem(withTitle: "\(index + 1). \(padName)\(enabledMark)")
         }
         if let chosen, let index = devices.firstIndex(where: { $0.attachment == chosen }) { deviceMenu.selectItem(at: index) }
-        enableButton.title = devices.contains(where: \.enabled) ? "停用手柄" : "本次启用"
+        enableButton.title = devices.contains(where: \.enabled) ? WSL10n.text("conductor.pad.disable", zh: "停用手柄")
+                                                                  : WSL10n.text("conductor.enableNow", zh: "本次启用")
         renderHint()
         enableButton.isEnabled = isInputReady && !devices.isEmpty
     }
     private func renderHint() {
-        guard !rows.isEmpty else { status.stringValue = "还没有可选模型"; return }
-        guard controller.canChooseModel else { status.stringValue = "暂时不能选择模型"; return }
-        if let armedID { status.stringValue = "松开 A 使用：" + armedID; return }
-        status.stringValue = shownDevices.contains(where: \.enabled) ? "方向键选择，A 使用模型，B 返回。离开本页即停用。" : shownDevices.isEmpty ? "没有检测到游戏手柄；仍可用鼠标选择。" : "启用前先松开按键。仅操作当前列表。"
+        guard !rows.isEmpty else { status.stringValue = WSL10n.text("conductor.picker.none", zh: "还没有可选模型"); return }
+        guard controller.canChooseModel else { status.stringValue = WSL10n.text("conductor.picker.cannot", zh: "暂时不能选择模型"); return }
+        if let armedID { status.stringValue = WSL10n.text("conductor.picker.armed", zh: "松开 A 使用：%@", armedID); return }
+        status.stringValue = shownDevices.contains(where: \.enabled)
+                ? WSL10n.text("conductor.picker.padHint", zh: "方向键选择，A 使用模型，B 返回。离开本页即停用。") : shownDevices.isEmpty ? "没有检测到游戏手柄；仍可用鼠标选择。" : "启用前先松开按键。仅操作当前列表。"
     }
     private func showSelection() {
         guard let id = input.selection.selectedID, let row = rows.firstIndex(of: id) else { return }
@@ -186,7 +190,8 @@ import Cocoa
         let id = shownDevices[deviceMenu.indexOfSelectedItem].attachment
         if enableDevice?(id) != true {
             status.stringValue = WS2GamepadHandlerSeats.shared.desktopHoldsAny
-                ? "先在设置里关掉控制这台 Mac" : "未能启用；请点击此页，再松开所有按键。"
+                ? WSL10n.text("conductor.pad.status.turnOffInSettings", zh: "先在设置里关掉控制这台 Mac")
+                : WSL10n.text("conductor.picker.enableFailed", zh: "未能启用；请点击此页，再松开所有按键。")
         }
     }
     @objc private func useSelection() {

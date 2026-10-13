@@ -64,9 +64,9 @@ enum FileShelfAvailability: Equatable, Sendable {
     var label: String? {
         switch self {
         case .available: return nil
-        case .inTrash: return "在废纸篓里"
-        case .volumeOffline: return "硬盘没接上"
-        case .missing: return "找不到了"
+        case .inTrash: return WSL10n.text("fileShelf.inTrash", zh: "在废纸篓里")
+        case .volumeOffline: return WSL10n.text("fileShelf.volumeOffline", zh: "硬盘没接上")
+        case .missing: return WSL10n.text("fileShelf.missing", zh: "找不到了")
         }
     }
 }
@@ -131,7 +131,8 @@ struct FileShelfModel: Equatable, Sendable {
                     newEntries.append(FileShelfEntry(id: makeID(), kind: chunk[0].isFolder ? .folder : .file, name: chunk[0].name,
                                                      members: chunk, takenFile: nil, addedAt: stamp))
                 } else {
-                    newEntries.append(FileShelfEntry(id: makeID(), kind: .stack, name: "\(chunk.count) 个文件",
+                    newEntries.append(FileShelfEntry(id: makeID(), kind: .stack,
+                                             name: WSL10n.text("fileDrag.countFiles", zh: "%@ 个文件", String(chunk.count)),
                                                      members: chunk, takenFile: nil, addedAt: stamp))
                 }
             }
@@ -228,7 +229,9 @@ struct FileShelfModel: Equatable, Sendable {
         }
     }
 
-    static func missingNotice(count: Int) -> String? { count > 0 ? "\(count) 个找不到了" : nil }
+    static func missingNotice(count: Int) -> String? {
+        count > 0 ? WSL10n.text("fileShelf.missingCount", zh: "%@ 个找不到了", String(count)) : nil
+    }
 
     // MARK: items.json 编解码（逐条容错）
 

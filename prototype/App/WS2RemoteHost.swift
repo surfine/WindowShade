@@ -78,19 +78,19 @@ extension AuthTarget {
 
 /// 刘海和设置里用到的话。按 docs/copy-guide.md：说用户遇到的事。
 enum WS2RemoteCopy {
-    static let enterOnPhone = "在 iPhone 上输入"
-    static let codeValidity = "60 秒内有效"
-    static let allowTitle = "允许这台 iPhone 遥控"
-    static let allowDetail = "遥控和指挥都算"
-    static let confirmButton = "用 Touch ID 确认"
-    static let connected = "iPhone 已连接"
-    static let notConnected = "没连上，在 iPhone 上再选一次"
-    static let disconnected = "遥控器断开了"
-    static let anotherPhone = "另一台 iPhone 正在遥控"
-    static let removed = "这台 iPhone 不能再遥控了"
-    static let coolingDown = "错了 3 次，5 分钟后再试"
-    static let pairingUnavailable = "这台 Mac 现在还不能配对新的 iPhone"
-    static let pairedSuffix = "配一次，两种都能用"
+    static let enterOnPhone = WSL10n.text("remote.enterOnPhone", zh: "在 iPhone 上输入")
+    static let codeValidity = WSL10n.text("remote.codeValidity", zh: "60 秒内有效")
+    static let allowTitle = WSL10n.text("auth.allowRemote", zh: "允许这台 iPhone 遥控")
+    static let allowDetail = WSL10n.text("remote.allowDetail", zh: "遥控和指挥都算")
+    static let confirmButton = WSL10n.text("remote.confirmTouchID", zh: "用 Touch ID 确认")
+    static let connected = WSL10n.text("remote.connected", zh: "iPhone 已连接")
+    static let notConnected = WSL10n.text("remote.notConnected", zh: "没连上，在 iPhone 上再选一次")
+    static let disconnected = WSL10n.text("conductor.stage.disconnected", zh: "遥控器断开了")
+    static let anotherPhone = WSL10n.text("conductor.msg.otheriPhone", zh: "另一台 iPhone 正在遥控")
+    static let removed = WSL10n.text("conductor.stage.revoked", zh: "这台 iPhone 不能再遥控了")
+    static let coolingDown = WSL10n.text("remote.coolingDown", zh: "错了 3 次，5 分钟后再试")
+    static let pairingUnavailable = WSL10n.text("remote.pairingUnavailable", zh: "这台 Mac 现在还不能配对新的 iPhone")
+    static let pairedSuffix = WSL10n.text("remote.pairedSuffix", zh: "配一次，两种都能用")
     static let fallbackName = "iPhone"
     /// 4816 → “4 8 1 6”。
     static func spaced(_ code: String) -> String { code.map(String.init).joined(separator: " ") }
@@ -1042,7 +1042,7 @@ extension WS2RemoteHost {
         second.font = Self.roundedDigits(size: 30)
         third.stringValue = WS2RemoteCopy.codeValidity; third.isHidden = false
         button.isHidden = true
-        second.setAccessibilityLabel("配对码 " + WS2RemoteCopy.spaced(code))
+        second.setAccessibilityLabel(WSL10n.text("remote.pairingCode", zh: "配对码 %@", WS2RemoteCopy.spaced(code)))
         announce(WS2RemoteCopy.enterOnPhone)
     }
 

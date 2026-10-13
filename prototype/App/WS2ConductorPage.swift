@@ -14,20 +14,20 @@ import Cocoa
     var changedEnvironment: (() -> Void)?
 
     private let controller: WS2OwnedLaunchController
-    private let title = NSTextField(labelWithString: "指挥")
+    private let title = NSTextField(labelWithString: WSL10n.text("conductor.title", zh: "指挥"))
     private let sessions = NSStackView()
     private let modelMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let effortMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let editor = NSTextField(string: "")
-    private let write = NSButton(title: "采用草稿", target: nil, action: nil)
-    private let send = NSButton(title: "发送", target: nil, action: nil)
-    private let interrupt = NSButton(title: "停止本轮", target: nil, action: nil)
+    private let write = NSButton(title: WSL10n.text("conductor.adoptDraft", zh: "采用草稿"), target: nil, action: nil)
+    private let send = NSButton(title: WSL10n.text("conductor.send", zh: "发送"), target: nil, action: nil)
+    private let interrupt = NSButton(title: WSL10n.text("conductor.stopTurn", zh: "停止本轮"), target: nil, action: nil)
     private let receipt = NSTextField(wrappingLabelWithString: "")
     private var adoptedDraft: WS2OwnedLaunchController.ConductorDraft?
     private var displayedTarget: WS2OwnedLaunchController.ConductorTarget?
     private var displayedTurn: String?
     private let deviceMenu = NSPopUpButton(frame: .zero, pullsDown: false)
-    private let enableButton = NSButton(title: "本次启用", target: nil, action: nil)
+    private let enableButton = NSButton(title: WSL10n.text("conductor.enableNow", zh: "本次启用"), target: nil, action: nil)
     private let status = NSTextField(wrappingLabelWithString: "")
     private var shownDevices: [WS2ControllerDevice] = []
     private var previousRows: [ConductorPageSnapshot.Row] = []
@@ -68,20 +68,20 @@ import Cocoa
         sessions.alignment = .leading
         sessions.spacing = 4
         stack.addArrangedSubview(sessions)
-        modelMenu.setAccessibilityLabel("下一轮模型")
-        effortMenu.setAccessibilityLabel("下一轮思考程度")
-        modelMenu.toolTip = "下一轮使用的模型，不改变正在运行的这一轮。"
-        effortMenu.toolTip = "下一轮使用的思考程度，不改变正在运行的这一轮。"
+        modelMenu.setAccessibilityLabel(WSL10n.text("conductor.nextModel", zh: "下一轮模型"))
+        effortMenu.setAccessibilityLabel(WSL10n.text("conductor.nextEffort", zh: "下一轮思考程度"))
+        modelMenu.toolTip = WSL10n.text("conductor.nextModel.tip", zh: "下一轮使用的模型，不改变正在运行的这一轮。")
+        effortMenu.toolTip = WSL10n.text("conductor.nextEffort.tip", zh: "下一轮使用的思考程度，不改变正在运行的这一轮。")
         modelMenu.target = self
         modelMenu.action = #selector(pickModel)
         effortMenu.target = self
         effortMenu.action = #selector(pickEffort)
-        let nextLabel = NSTextField(labelWithString: "下一轮")
+        let nextLabel = NSTextField(labelWithString: WSL10n.text("conductor.nextRound", zh: "下一轮"))
         let menus = NSStackView(views: [nextLabel, modelMenu, effortMenu])
         menus.spacing = 8
         stack.addArrangedSubview(menus)
-        editor.placeholderString = "草稿"
-        editor.setAccessibilityLabel("待记下的草稿")
+        editor.placeholderString = WSL10n.text("conductor.draftPlaceholder", zh: "草稿")
+        editor.setAccessibilityLabel(WSL10n.text("conductor.draftLabel", zh: "待记下的草稿"))
         editor.isEditable = true
         editor.isBezeled = true
         editor.delegate = self
@@ -90,15 +90,15 @@ import Cocoa
         write.target = self
         write.action = #selector(commitDraft)
         write.bezelStyle = .rounded
-        write.toolTip = "只把现在的文字留在这台 Mac 上。不会发给助手。"
+        write.toolTip = WSL10n.text("conductor.write.tip", zh: "只把现在的文字留在这台 Mac 上。不会发给助手。")
         send.target = self
         send.action = #selector(sendDraft)
         send.bezelStyle = .rounded
-        send.toolTip = "只发送已采用的草稿。运行时补进当前这一轮，下一轮的模型和档位不会改动这一轮。"
+        send.toolTip = WSL10n.text("conductor.send.tip", zh: "只发送已采用的草稿。运行时补进当前这一轮，下一轮的模型和档位不会改动这一轮。")
         interrupt.target = self
         interrupt.action = #selector(interruptTurn)
         interrupt.bezelStyle = .rounded
-        interrupt.toolTip = "请求停止当前这一轮，等助手确认后才显示已停止。"
+        interrupt.toolTip = WSL10n.text("conductor.stop.tip", zh: "请求停止当前这一轮，等助手确认后才显示已停止。")
         let actions = NSStackView(views: [write, send, interrupt])
         actions.spacing = 8
         stack.addArrangedSubview(actions)
@@ -107,7 +107,7 @@ import Cocoa
         receipt.maximumNumberOfLines = 2
         stack.addArrangedSubview(receipt)
         receipt.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        deviceMenu.setAccessibilityLabel("本次连接的手柄")
+        deviceMenu.setAccessibilityLabel(WSL10n.text("conductor.pad.label", zh: "本次连接的手柄"))
         enableButton.target = self
         enableButton.action = #selector(toggleDevice)
         enableButton.image = NSImage(systemSymbolName: "gamecontroller", accessibilityDescription: nil)
@@ -176,7 +176,8 @@ import Cocoa
         if let value = adoptedDraft, !controller.acceptsConductorDraft(value) { adoptedDraft = nil }
         let marked = (editor.currentEditor() as? NSTextView)?.hasMarkedText() == true
         write.isEnabled = inputIsCurrent() && controller.conductorTarget != nil && !marked
-        send.title = adoptedDraft?.turn == nil ? "发送" : "补进本轮"
+        send.title = adoptedDraft?.turn == nil ? WSL10n.text("conductor.send", zh: "发送")
+                                                   : WSL10n.text("conductor.send.steer", zh: "补进本轮")
         send.isEnabled = inputIsCurrent() && !marked && adoptedDraft?.text == editor.stringValue && adoptedDraft != nil
         interrupt.isEnabled = inputIsCurrent() && controller.canInterrupt && displayedTarget != nil && displayedTurn != nil
     }
@@ -198,24 +199,27 @@ import Cocoa
             let clean = String(String.UnicodeScalarView(device.label.unicodeScalars.filter {
                 $0.properties.generalCategory != .control && $0.properties.generalCategory != .format
             })).prefix(64)
-            deviceMenu.addItem(withTitle: "\(index + 1). \(clean.isEmpty ? "游戏手柄" : String(clean))\(device.enabled ? " · 已启用" : "")")
+            let padName = clean.isEmpty ? WSL10n.text("conductor.pad.generic", zh: "游戏手柄") : String(clean)
+            let enabledMark = device.enabled ? " · " + WSL10n.text("conductor.pad.enabled", zh: "已启用") : ""
+            deviceMenu.addItem(withTitle: "\(index + 1). \(padName)\(enabledMark)")
         }
         if let chosen, let index = devices.firstIndex(where: { $0.attachment == chosen }) {
             deviceMenu.selectItem(at: index)
         }
-        enableButton.title = devices.contains(where: \.enabled) ? "停用手柄" : "本次启用"
+        enableButton.title = devices.contains(where: \.enabled) ? WSL10n.text("conductor.pad.disable", zh: "停用手柄")
+                                                                  : WSL10n.text("conductor.enableNow", zh: "本次启用")
         if devices.contains(where: \.enabled) {
-            status.stringValue = "方向键选择这一条。确认键的名字还没按这只手柄核对。离开这一页就停用。"
+            status.stringValue = WSL10n.text("conductor.pad.status.unnamed", zh: "方向键选择这一条。确认键的名字还没按这只手柄核对。离开这一页就停用。")
         } else if devices.isEmpty {
-            status.stringValue = "没有检测到游戏手柄。可以用指针选择。"
+            status.stringValue = WSL10n.text("conductor.pad.status.none", zh: "没有检测到游戏手柄。可以用指针选择。")
         } else {
-            status.stringValue = "启用前先松开按键。只操作当前这张列表。"
+            status.stringValue = WSL10n.text("conductor.pad.status.release", zh: "启用前先松开按键。只操作当前这张列表。")
         }
         enableButton.isEnabled = isInputReady && !devices.isEmpty
     }
 
     func noteDevicesBusy() {
-        status.stringValue = "手柄还在另一页，这里先只用指针。"
+        status.stringValue = WSL10n.text("conductor.pad.status.elsewhere", zh: "手柄还在另一页，这里先只用指针。")
     }
 
     func revoke() {
@@ -285,7 +289,7 @@ import Cocoa
             }
             bound.removeAll()
             if rows.isEmpty {
-                sessions.addArrangedSubview(NSTextField(labelWithString: "还没有会话"))
+                sessions.addArrangedSubview(NSTextField(labelWithString: WSL10n.text("conductor.sessions.none", zh: "还没有会话")))
             }
             for row in rows {
                 let button = NSButton(title: row.label, target: self, action: #selector(pickSession(_:)))
@@ -298,7 +302,7 @@ import Cocoa
             catch {
                 input.revoke()
                 renderedIdentity = nil
-                status.stringValue = "这张列表暂时不能用"
+                status.stringValue = WSL10n.text("conductor.list.unavailable", zh: "这张列表暂时不能用")
             }
         } else {
             for row in rows { bound[listID(row.id)] = row }
@@ -317,7 +321,7 @@ import Cocoa
             modelIDs = models
             rendering = true
             modelMenu.removeAllItems()
-            modelMenu.addItems(withTitles: ["请选择模型"] + models)
+            modelMenu.addItems(withTitles: [WSL10n.text("conductor.pickModel", zh: "请选择模型")] + models)
             rendering = false
         }
         rendering = true
@@ -328,7 +332,7 @@ import Cocoa
             effortIDs = efforts
             rendering = true
             effortMenu.removeAllItems()
-            effortMenu.addItems(withTitles: ["程度"] + efforts)
+            effortMenu.addItems(withTitles: [WSL10n.text("conductor.effort", zh: "程度")] + efforts)
             rendering = false
         }
         rendering = true
@@ -344,12 +348,12 @@ import Cocoa
         let snap = snapshot()
         let selection = ConductorPageSnapshot.Selection(id: row.id, revision: row.revision, listRevision: snap.listRevision)
         guard case .success = snap.acceptSelection(selection) else {
-            status.stringValue = "这一条已经变了"
+            status.stringValue = WSL10n.text("conductor.status.rowChanged", zh: "这一条已经变了")
             sync()
             return
         }
         guard controller.selectConductorSession(selection.id, revision: selection.revision) else {
-            status.stringValue = "这一轮结束后再切换"
+            status.stringValue = WSL10n.text("conductor.status.afterTurn", zh: "这一轮结束后再切换")
             sync()
             return
         }
@@ -395,9 +399,9 @@ import Cocoa
         let selection = highlighted.flatMap { before.confirm($0) ? $0 : nil }
         switch before.freezeDraft(text: editor.stringValue, hasMarkedText: marked, selection: selection) {
         case .failure(.markedText):
-            status.stringValue = "还在输入，草稿留着"
+            status.stringValue = WSL10n.text("conductor.status.typing", zh: "还在输入，草稿留着")
         case .failure:
-            status.stringValue = "这一条已经变了，草稿留着"
+            status.stringValue = WSL10n.text("conductor.status.rowChangedDraftKept", zh: "这一条已经变了，草稿留着")
         case .success(let frozen):
             let live = snapshot()
             switch live.acceptDraft(frozen) {
@@ -405,14 +409,14 @@ import Cocoa
                 if let target = displayedTarget,
                    let adopted = controller.adoptConductorDraft(accepted.text, hasMarkedText: marked, target: target) {
                     adoptedDraft = adopted
-                    status.stringValue = "已采用，还没发送"
+                    status.stringValue = WSL10n.text("conductor.status.adopted", zh: "已采用，还没发送")
                 } else {
-                    status.stringValue = "还不能采用，草稿留着"
+                    status.stringValue = WSL10n.text("conductor.status.cannotAdopt", zh: "还不能采用，草稿留着")
                 }
             case .failure(.staleModel), .failure(.staleEffort):
-                status.stringValue = "模型和档位已经变了，草稿留着"
+                status.stringValue = WSL10n.text("conductor.status.configChanged", zh: "模型和档位已经变了，草稿留着")
             case .failure:
-                status.stringValue = "这一条已经变了，草稿留着"
+                status.stringValue = WSL10n.text("conductor.status.rowChangedDraftKept", zh: "这一条已经变了，草稿留着")
             }
         }
         sync()
@@ -425,7 +429,7 @@ import Cocoa
         if value.turn == nil { accepted = controller.sendConductorDraft(value, hasMarkedText: marked) }
         else { accepted = controller.addConductorDraftToTurn(value, hasMarkedText: marked) }
         if accepted { adoptedDraft = nil }
-        else { status.stringValue = "会话已经变了，请重新采用草稿" }
+        else { status.stringValue = WSL10n.text("conductor.status.sessionChanged", zh: "会话已经变了，请重新采用草稿") }
         sync()
     }
 
@@ -448,7 +452,8 @@ import Cocoa
         let id = shownDevices[deviceMenu.indexOfSelectedItem].attachment
         if enableDevice?(id) != true {
             status.stringValue = WS2GamepadHandlerSeats.shared.desktopHoldsAny
-                ? "先在设置里关掉控制这台 Mac" : "未能启用。请点一下这一页，再松开所有按键。"
+                ? WSL10n.text("conductor.pad.status.turnOffInSettings", zh: "先在设置里关掉控制这台 Mac")
+                : WSL10n.text("conductor.pad.status.enableFailed", zh: "未能启用。请点一下这一页，再松开所有按键。")
         }
     }
 }

@@ -19,7 +19,7 @@ struct ConductorCapabilities: Equatable, Sendable {
         case unavailable(String)
     }
     func resolve(_ requested: ConductorEffort, keeping current: String) -> Resolution {
-        guard isValid else { return .unavailable("能力信息不可用，保持原设置") }
+        guard isValid else { return .unavailable(WSL10n.text("conductor.cap.unavailable", zh: "能力信息不可用，保持原设置")) }
         let value = requested.rawValue
         if supportedEfforts.contains(value) {
             return .supported(WS2.ExecutionConfig(model: model, effort: value, workflowID: nil,
@@ -30,9 +30,11 @@ struct ConductorCapabilities: Equatable, Sendable {
            supportedEfforts.contains("xhigh"), let workflow = ultracodeWorkflowID {
             return .supported(WS2.ExecutionConfig(model: model, effort: "xhigh", workflowID: workflow,
                 capabilityRevision: revision), needsCostConfirmation: true,
-                caption: "ultracode · xhigh · 工作流程开启")
+                caption: WSL10n.text("conductor.workflow.on", zh: "ultracode · xhigh · 工作流程开启"))
         }
-        return .unavailable(requested == .ultra ? "没有 ultra，保持原设置" : "这个模型没有 \(value)，保持 \(current)")
+        return .unavailable(requested == .ultra
+                             ? WSL10n.text("conductor.cap.noUltra", zh: "没有 ultra，保持原设置")
+                             : WSL10n.text("conductor.cap.modelMissing", zh: "这个模型没有 %@，保持 %@", value, current))
     }
     func accepts(_ config: WS2.ExecutionConfig) -> Bool {
         guard isValid, config.model == model, config.capabilityRevision == revision,
@@ -57,10 +59,12 @@ struct ConductorModelSlots: Sendable {
         case unavailable(String)
     }
     func select(_ number: Int, in completeSnapshot: [ConductorCapabilities]) -> Selection {
-        guard (1...4).contains(number) else { return .unavailable("模型只有四个位置") }
-        guard let model = slots[number - 1] else { return .unavailable("位置 \(number) 的模型不可用") }
+        guard (1...4).contains(number) else { return .unavailable(WSL10n.text("conductor.cap.fourSlots", zh: "模型只有四个位置")) }
+        guard let model = slots[number - 1] else { return .unavailable(WSL10n.text("conductor.cap.slotUnavailable", zh: "位置 %@ 的模型不可用", String(number))) }
         let matches = completeSnapshot.filter { $0.model == model && $0.isValid }
-        guard matches.count == 1 else { return .unavailable("位置 \(number) 的模型不可用") }
+        guard matches.count == 1 else {
+            return .unavailable(WSL10n.text("conductor.cap.slotUnavailable", zh: "位置 %@ 的模型不可用", String(number)))
+        }
         return .available(matches[0])
     }
 }

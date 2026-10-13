@@ -277,15 +277,15 @@ enum AgentApprovalCard {
     }
     static func title(_ button: Button) -> String {
         switch button {
-        case .look: return "去看看"
-        case .deny: return "不允许"
-        case .allowOnce: return "允许这一次"
-        case .allowWithTouchID: return "用 Touch ID 允许"
-        case .handleInTerminal: return "在终端里处理"
+        case .look: return WSL10n.text("agent.decision.look", zh: "去看看")
+        case .deny: return WSL10n.text("conductor.msg.denied", zh: "不允许")
+        case .allowOnce: return WSL10n.text("auth.allowOnce", zh: "允许这一次")
+        case .allowWithTouchID: return WSL10n.text("agent.decision.allowTouchID", zh: "用 Touch ID 允许")
+        case .handleInTerminal: return WSL10n.text("agent.decision.terminal", zh: "在终端里处理")
         }
     }
     /// 右耳。
-    static let waiting = "等你"
+    static var waiting: String { WSL10n.text("notch.session.waitingTag", zh: "等你") }
     /// 卡面上的命令摘要最多这么多个字；完整命令在“去看看”里。
     static let summaryLimit = 40
     /// 第一行非空内容，空白压成一个空格；过长或不止一行时截断加“…”。控制字符由调用方先转成可见形式。
@@ -297,17 +297,21 @@ enum AgentApprovalCard {
         guard first.count > summaryLimit || lines.count > 1 else { return first }
         return String(first.prefix(summaryLimit)) + "…"
     }
-    static func headline(summary: String) -> String { "想执行 " + summary }
+    static func headline(summary: String) -> String {
+        WSL10n.text("conductor.stage.approval", zh: "想执行 %@", summary)
+    }
     static func byline(agent: String, project: String) -> String { project.isEmpty ? agent : agent + " · " + project }
     /// 卡出现时高优先级念这一句。
-    static func announcement(agent: String, summary: String) -> String { agent + "想执行 " + summary + "，等你决定" }
+    static func announcement(agent: String, summary: String) -> String {
+        WSL10n.text("agent.announcement", zh: "%@想执行 %@，等你决定", agent, summary)
+    }
     static func text(_ receipt: Receipt, agent: String) -> String {
         switch receipt {
-        case .allowedOnce: return "已允许这一次"
-        case .denied: return "没有允许"
-        case .notConfirmed: return "没有确认，" + agent + "仍在等你"
-        case .touchIDUnavailable: return "Touch ID 暂时不可用"
-        case .notDelivered: return "连接断了，这一次可能没有送到"
+        case .allowedOnce: return WSL10n.text("auth.allowedOnce", zh: "已允许这一次")
+        case .denied: return WSL10n.text("agent.outcome.denied", zh: "没有允许")
+        case .notConfirmed: return WSL10n.text("auth.denied.agentWaiting", zh: "没有确认，%@仍在等你", agent)
+        case .touchIDUnavailable: return WSL10n.text("auth.unavailable", zh: "Touch ID 暂时不可用")
+        case .notDelivered: return WSL10n.text("agent.outcome.notDelivered", zh: "连接断了，这一次可能没有送到")
         }
     }
 }

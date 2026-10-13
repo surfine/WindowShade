@@ -13,7 +13,7 @@ enum AwaySummary {
     static let holdSeconds: Double = 8
     /// 解锁或唤醒后等多久再收账：让「手机不在时被解锁」这类晚一点才记下的事赶上，也等系统锁态稳定。
     static let settleSeconds: Double = 1.0
-    static let heading = "离开期间"
+    static var heading: String { WSL10n.text("away.heading", zh: "离开期间") }
 
     /// 摘要里的先后顺序就是这里的顺序：有人动过你的 Mac 最先，然后设备、窗口、下载。
     enum Kind: Int, Comparable, Sendable {
@@ -60,15 +60,17 @@ enum AwaySummary {
         /// 刘海上那一行：第一件事，多的折成件数。
         var compactDetail: String {
             guard let first = items.first else { return "" }
-            return count > 1 ? "\(first.text)，还有 \(count - 1) 件" : first.text
+            return count > 1 ? WSL10n.text("away.more", zh: "%@，还有 %@ 件", first.text, String(count - 1)) : first.text
         }
 
         /// 展开后的每一行：先说收着几扇窗口，再是各项，最后是没列出来的。
         var lines: [String] {
             var out: [String] = []
-            if tuckedCount > 0 { out.append("收着 \(tuckedCount) 扇窗口") }
+            if tuckedCount > 0 {
+                out.append(WSL10n.text("away.tucked", zh: "收着 %@ 扇窗口", String(tuckedCount)))
+            }
             out.append(contentsOf: items.map(\.text))
-            if omitted > 0 { out.append("还有 \(omitted) 件") }
+            if omitted > 0 { out.append(WSL10n.text("away.moreItems", zh: "还有 %@ 件", String(omitted))) }
             return out
         }
 
@@ -112,8 +114,10 @@ enum AwaySummary {
             perApp[entry.app] = ((old?.count ?? 0) + 1, old?.latest ?? entry)
         }
         for (app, group) in perApp.sorted(by: { ($1.value.latest.at, $0.key) < ($0.value.latest.at, $1.key) }) {
-            let name = app.isEmpty ? "窗口" : app
-            let text = group.count == 1 ? "\(name)有变化" : "\(name) \(group.count) 扇有变化"
+            let name = app.isEmpty ? WSL10n.text("menu.window", zh: "窗口") : app
+            let text = group.count == 1
+                    ? WSL10n.text("away.changedOne", zh: "%@有变化", name)
+                    : WSL10n.text("away.changedMany", zh: "%@ %@ 扇有变化", name, String(group.count))
             all.append(Item(kind: .window, text: text, windowID: group.latest.id))
         }
 
@@ -122,7 +126,9 @@ enum AwaySummary {
         let names = downloads.filter { interval.contains($0.at) }.sorted(by: newerFirst(\.at, \.name))
             .map(\.name).filter { !$0.isEmpty && seenName.insert($0).inserted }
         if let first = names.first {
-            let text = names.count == 1 ? "下载好了 · \(clipped(first))" : "下载好了 · \(names.count) 个文件"
+            let text = names.count == 1
+                    ? WSL10n.text("away.downloadedOne", zh: "下载好了 · %@", clipped(first))
+                    : WSL10n.text("away.downloadedMany", zh: "下载好了 · %@ 个文件", String(names.count))
             all.append(Item(kind: .download, text: text, windowID: nil))
         }
 

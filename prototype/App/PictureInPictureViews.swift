@@ -61,9 +61,9 @@ final class PiPView: NSView {
         selection.lineDashPattern = [5, 3]
         selection.isHidden = true
         clip.addSublayer(selection)
-        for (key, symbol, tip, size) in [("close", "xmark", "关掉画中画", 12), ("return", "pip.exit", "回到原处", 13),
-                                         ("up", "chevron.up", "上一页", 15), ("play", "playpause.fill", "播放 / 暂停", 17),
-                                         ("down", "chevron.down", "下一页", 15), ("crop", "crop", "只看一块", 12)] {
+        for (key, symbol, tip, size) in [("close", "xmark", WSL10n.text("pip.close", zh: "关掉画中画"), 12), ("return", "pip.exit", WSL10n.text("pip.back", zh: "回到原处"), 13),
+                                         ("up", "chevron.up", "上一页", 15), ("play", "playpause.fill", WSL10n.text("pip.playPause", zh: "播放 / 暂停"), 17),
+                                         ("down", "chevron.down", "下一页", 15), ("crop", "crop", WSL10n.text("pip.crop", zh: "只看一块"), 12)] {
             let button = NSButton(image: Self.symbol(symbol, size: CGFloat(size)), target: self, action: #selector(pressed(_:)))
             button.identifier = NSUserInterfaceItemIdentifier(key)
             button.isBordered = false
@@ -76,7 +76,7 @@ final class PiPView: NSView {
         }
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("画中画")
+        setAccessibilityLabel(WSL10n.text("pip.title", zh: "画中画"))
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
@@ -129,7 +129,7 @@ final class PiPView: NSView {
         controlsShown = show
         let cropped = hasCrop?() ?? false
         buttons["crop"]?.image = Self.symbol(cropped ? "arrow.up.left.and.arrow.down.right" : "crop", size: 12)
-        buttons["crop"]?.toolTip = cropped ? "看整扇窗口" : "只看一块"
+        buttons["crop"]?.toolTip = cropped ? WSL10n.text("pip.showAll", zh: "看整扇窗口") : WSL10n.text("pip.crop", zh: "只看一块")
         let duration = Motion.fadeDuration
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration
@@ -251,7 +251,7 @@ final class PiPTabView: NSView {
         super.init(frame: frame)
         setAccessibilityElement(true)
         setAccessibilityRole(.button)
-        setAccessibilityLabel("拿回画中画")
+        setAccessibilityLabel(WSL10n.text("pip.restore", zh: "拿回画中画"))
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
