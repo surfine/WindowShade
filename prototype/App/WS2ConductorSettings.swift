@@ -50,10 +50,13 @@ extension AppDelegate {
         ])
         let store = UserDefaults.standard
         // 页头走 SettingsText 重载：en 用 shortEn 短句（String 重载会吃 16 字硬截）。
-        stack.addArrangedSubview(WS2SettingsCopy.content(
+        // 页头不是行：hugging 提到 required，页头按文字宽度站，ⓘ 不被撑到整页宽。
+        let header = WS2SettingsCopy.content(
             name: nil,
             subtitle: WSL10n.setting("conductor.settings.intro", zh: "选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。"),
-            symbol: nil).view)
+            symbol: nil).view
+        header.setContentHuggingPriority(.required, for: .horizontal)
+        stack.addArrangedSubview(header)
         let on = WS2InputPreferences.load(from: store).remoteMode && WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store)
         let sound = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: store),
                                     action: #selector(prefConductorSound(_:)), name: WSL10n.text("conductor.settings.sound", zh: "提示音"))

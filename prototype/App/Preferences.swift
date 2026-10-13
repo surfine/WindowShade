@@ -598,7 +598,6 @@ extension AppDelegate {
             inner.addArrangedSubview(row)
             row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
         }
-        WS2SettingsRow.alignInfoColumns(in: rows)
         return card
     }
 
@@ -948,17 +947,11 @@ extension AppDelegate {
             labels.addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(openCalendarSettingsAction)))
             labels.toolTip = WSL10n.text("settings.shade.calendar.openSettings", zh: "打开系统设置")
         }
-        let row = NSStackView(views: [labels, controls])
+        let row = WS2SettingsRow(content: labels, control: controls)
         NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: controls.leadingAnchor, constant: -14),
-            controls.trailingAnchor.constraint(equalTo: row.trailingAnchor),
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
             labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
@@ -1319,15 +1312,7 @@ extension AppDelegate {
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         trailing.setContentHuggingPriority(.required, for: .horizontal)
-        let row = NSStackView(views: [labels, trailing])
-        NSLayoutConstraint.activate([
-            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.trailingAnchor.constraint(equalTo: trailing.leadingAnchor, constant: -12),
-            trailing.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-        ])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 12
+        let row = WS2SettingsRow(content: labels, control: trailing, spacing: 12)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
     }

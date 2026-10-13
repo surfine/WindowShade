@@ -85,8 +85,7 @@ extension AppDelegate {
                         : WSL10n.setting("settings.remote.conductor.needRemote", zh: "先打开遥控模式"),
                      detail: WSL10n.setting("settings.remote.conductor.detail", zh: "用遥控器走进刘海那一排里的会话：看会话、换模型、留草稿。"),
                      symbol: nil, control: inputSwitch(on: prefs.remoteMode && conductorOn, enabled: prefs.remoteMode,
-                                                       action: #selector(prefInputConductor(_:)), name: WSL10n.text("settings.remote.conductor.name", zh: "指挥模式")),
-                     indent: true),
+                                                       action: #selector(prefInputConductor(_:)), name: WSL10n.text("settings.remote.conductor.name", zh: "指挥模式"))),
         ]
         if prefs.remoteMode {
             let peers = host?.pairedPeers ?? []
@@ -94,7 +93,7 @@ extension AppDelegate {
                 rows.append(inputRow(name: WSL10n.setting("settings.remote.peers.name", zh: "已配对的 iPhone"),
                                      subtitle: WSL10n.setting("settings.remote.peers.empty", zh: "还没有"),
                                      detail: WSL10n.setting("settings.remote.peers.emptyDetail", zh: "在 iPhone 上的遥控器里选这台 Mac，就能配对。"),
-                                     symbol: nil, control: inputStatus(""), indent: true))
+                                     symbol: nil, control: inputStatus("")))
             }
             for peer in peers {
                 let name = peer.displayName ?? WS2RemoteCopy.fallbackName
@@ -105,7 +104,7 @@ extension AppDelegate {
                 rows.append(inputRow(name: WSL10n.setting("settings.remote.peer.name", zh: "%@ · 已配对", name),
                                      subtitle: WSL10n.setting("settings.remote.peers.name", zh: "已配对的 iPhone"),
                                      detail: WSL10n.setting("settings.remote.peer.detail", zh: "移除后，这台 iPhone 不能再遥控，也不能指挥。"),
-                                     symbol: nil, control: remove, indent: true))
+                                     symbol: nil, control: remove))
             }
         }
         rows.append(contentsOf: gamepadRows())
