@@ -377,8 +377,8 @@ import Cocoa
         return (content, detail)
     }
 
-    /// 行容器里把 ⓘ 钉到内容列右端：标签列吸收多余宽度，各行（有 ⓘ 的）的 ⓘ 排成一列，
-    /// 不再跟着每行文字的宽窄漂。NSStackView 的 gravityAreas 不按 hugging 分余量，所以用显式约束。
+    /// 行容器里把 ⓘ 钉到内容列右端：标签列吸收多余宽度，ⓘ 落在内容列的右端。
+    /// NSStackView 的 gravityAreas 不按 hugging 分余量，所以用显式约束。
     /// 只给设置行用；页头不是行，不调用（页头 ⓘ 保持贴文字）。
     static func pinInfoTrailing(_ content: NSStackView) {
         guard let button = content.arrangedSubviews.compactMap({ $0 as? WS2SettingsInfoButton }).first else { return }
@@ -392,34 +392,16 @@ import Cocoa
 }
 
 /// 设置行：内容列（图标 + 标题副标题 + ⓘ）与右边的控件列。
-/// 控件宽度各行不一（开关 40pt、按钮 150–220pt）时，ⓘ 若贴着控件左缘就会一行一个位置；
-/// 卡片建好后调 `WS2SettingsRow.alignInfoColumns(in:)`，按卡里最宽的控件给 ⓘ 立一条固定的列。
+/// 不变式在这里强制：行构造时就把 ⓘ 钉在自己控件的左侧（间距 spacing）——
+/// 调用方拼行时不需要记得调 pinInfoTrailing，谁用这个行容器都不会漏。
+/// 控件同宽的卡（整卡开关）ⓘ 自然连成一条竖线；宽窄不一的卡一行一个位置，紧跟控件。
 final class WS2SettingsRow: NSStackView {
     private let content: NSStackView
     private let control: NSView?
-    private let trailingInset: CGFloat
-    private let rowSpacing: CGFloat
-    private var adjacent: NSLayoutConstraint?
-    private var lane: NSLayoutConstraint?
-
-    /// 这行会不会出 ⓘ（`content()` 在副标题被截短或显式给 detail 时才加）。
-    var hasInfo: Bool { content.arrangedSubviews.contains { $0 is WS2SettingsInfoButton } }
-    /// 参与定列的控件宽度：只认开关和按钮——分段、弹窗、输入框、拼起来的复合控件
-    /// 天生比开关宽得多，让它们定列会在开关行上留出上百点的空档。
-    var controlWidth: CGFloat {
-        switch control {
-        case is NSSwitch, is NSButton:
-            return control?.fittingSize.width ?? 0
-        default:
-            return 0
-        }
-    }
 
     init(content: NSStackView, control: NSView?, leadingInset: CGFloat = 0, trailingInset: CGFloat = 0, spacing: CGFloat = 14) {
         self.content = content
         self.control = control
-        self.trailingInset = trailingInset
-        self.rowSpacing = spacing
         super.init(frame: .zero)
         orientation = .horizontal
         alignment = .centerY
@@ -434,39 +416,13 @@ final class WS2SettingsRow: NSStackView {
             control.setContentCompressionResistancePriority(.required, for: .horizontal)
             addArrangedSubview(control)
             control.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -trailingInset).isActive = true
-            let adjacent = content.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -spacing)
-            adjacent.isActive = true
-            self.adjacent = adjacent
+            content.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -spacing).isActive = true
+            WS2SettingsCopy.pinInfoTrailing(content)
         } else {
             content.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -trailingInset).isActive = true
         }
     }
     required init?(coder: NSCoder) { nil }
-
-    /// 内容列右端退到「行右缘 − 列宽 − 间距」，同卡同宽 → ⓘ 落在同一条竖线上。
-    /// 宽度取卡里带 ⓘ 的最宽控件，所以开关行的 ⓘ 仍是贴着开关的（列宽 = 开关宽）。
-    func pinLane(_ width: CGFloat) {
-        guard hasInfo, let control else { return }
-        adjacent?.isActive = false
-        lane?.isActive = false
-        let lane = content.trailingAnchor.constraint(equalTo: trailingAnchor,
-                                                     constant: -(trailingInset + width + rowSpacing))
-        lane.isActive = true
-        self.lane = lane
-        control.widthAnchor.constraint(lessThanOrEqualToConstant: width).isActive = true
-    }
-
-    /// 卡片建好后调一次：同一张卡里带 ⓘ 的行按最宽的那个控件定列，卡内一条竖线。
-    /// 卡内控件通常同类（开关 / 按钮 / 分段），所以开关卡照旧贴着开关、按钮卡按最宽的按钮对齐；
-    /// 比上限还宽的控件（输入框、允许+开关这类复合控件）不参与定列，自己贴着控件放——
-    /// 否则一个宽输入框会把整卡的 ⓘ 拖出一条几十甚至上百点的空档。
-    static let infoLaneCap: CGFloat = 240
-    static func alignInfoColumns(in rows: [NSView]) {
-        let candidates = rows.compactMap { $0 as? WS2SettingsRow }
-        let eligible = candidates.filter { $0.hasInfo && $0.controlWidth > 0 && $0.controlWidth <= infoLaneCap }
-        guard let width = eligible.map(\.controlWidth).max(), width > 0 else { return }
-        for row in eligible { row.pinLane(width) }
-    }
 }
 final class WS2SettingsInfoButton: NSButton {
     private let fullText: String

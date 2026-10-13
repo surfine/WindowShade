@@ -637,7 +637,6 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       inner.addArrangedSubview(row)
       row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
     }
-    WS2SettingsRow.alignInfoColumns(in: rows)
     return card
   }
 
@@ -651,17 +650,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
     let labels = settingsContent(title: title, subtitle: subtitle)
 
-    let row = NSStackView(views: [labels, control])
-    NSLayoutConstraint.activate([
-      labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-      labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-      control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
-    ])
-    row.orientation = .horizontal
-    row.alignment = .centerY
-    row.spacing = 14
-    labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    let row = WS2SettingsRow(content: labels, control: control)
     row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
@@ -676,18 +665,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func makeControlRow(labels: NSStackView, control: NSView) -> NSView {
-    let row = NSStackView(views: [labels, control])
+    let row = WS2SettingsRow(content: labels, control: control)
     NSLayoutConstraint.activate([
-      labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-      labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
-      control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+      labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+      labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
     ])
-    row.orientation = .horizontal
-    row.alignment = .centerY
-    row.spacing = 14
-    labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    control.setContentHuggingPriority(.required, for: .horizontal)
     row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
@@ -705,19 +687,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     button.font = SystemAppearancePolicy.font(relativeToBody: -1)
 
     button.controlSize = .regular
-    button.setContentHuggingPriority(.required, for: .horizontal)
-    button.setContentCompressionResistancePriority(.required, for: .horizontal)
-    let row = NSStackView(views: [labels, button])
+    let row = WS2SettingsRow(content: labels, control: button)
     NSLayoutConstraint.activate([
-      labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-      labels.trailingAnchor.constraint(equalTo: button.leadingAnchor, constant: -14),
-      button.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+      labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+      labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
     ])
-    row.orientation = .horizontal
-    row.alignment = .centerY
-    row.spacing = 14
-    labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
