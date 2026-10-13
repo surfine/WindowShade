@@ -334,7 +334,7 @@ enum FileDropPayload {
 /// 收承诺文件（NSFilePromiseReceiver）：对方把文件写进我们给的文件夹，收齐后照常记位置（书签）。
 /// 写进文件架自己的“收到的”文件夹，不放临时目录，免得系统清掉后书签找不到。
 enum FileShelfPromises {
-    static let failureText = WSL10n.text("fileDrag.failure", zh: "这个文件没能拿到，没有放进文件架")
+    static var failureText: String { WSL10n.text("fileDrag.failure", zh: "这个文件没能拿到，没有放进文件架") }
 
     static var defaultDestination: URL {
         FileShelf.defaultRoot.appendingPathComponent("收到的", isDirectory: true)

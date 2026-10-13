@@ -78,7 +78,7 @@ extension AuthTarget {
 
 /// 刘海和设置里用到的话。按 docs/copy-guide.md：说用户遇到的事。
 enum WS2RemoteCopy {
-    static let enterOnPhone = WSL10n.text("remote.enterOnPhone", zh: "在 iPhone 上输入")
+    static var enterOnPhone: String { WSL10n.text("remote.enterOnPhone", zh: "在 iPhone 上输入") }
     static let codeValidity = WSL10n.text("remote.codeValidity", zh: "60 秒内有效")
     static let allowTitle = WSL10n.text("auth.allowRemote", zh: "允许这台 iPhone 遥控")
     static let allowDetail = WSL10n.text("remote.allowDetail", zh: "遥控和指挥都算")

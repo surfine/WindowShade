@@ -5,12 +5,12 @@ import UniformTypeIdentifiers
 /// 另给几个常见建议（默认不勾，点了才加）。名单本身在 Core/PrivateAppList。
 enum PrivateAppSuggestions {
     struct Item { let name: String; let bundleID: String }
-    static let items: [Item] = [
+    static var items: [Item] { [
         Item(name: WSL10n.text("privateApp.messages", zh: "信息"), bundleID: "com.apple.MobileSMS"),
         Item(name: WSL10n.text("privateApp.mail", zh: "邮件"), bundleID: "com.apple.mail"),
         Item(name: WSL10n.text("privateApp.wechat", zh: "微信"), bundleID: "com.tencent.xinWeChat"),
         Item(name: WSL10n.text("privateApp.passwords", zh: "密码"), bundleID: "com.apple.Passwords"),
-    ]
+    ] }
 }
 
 @MainActor

@@ -36,7 +36,8 @@ struct PresenceLockGlue: Sendable {
     private var lastSpoken: Int?
     private var lastInputCheck: WS2.Instant?
 
-    static let cancelLine = Line(text: WSL10n.text("presence.cancel", zh: "不锁了"), detail: "", symbol: "hand.raised")
+    /// 核算属性：语言切换后重新取（静态 let 会在首次访问时把语言冻住）。
+    static var cancelLine: Line { Line(text: WSL10n.text("presence.cancel", zh: "不锁了"), detail: "", symbol: "hand.raised") }
 
     /// 合盖效果开着时，桌面先折进刘海，过这么久再锁屏。锁屏回执期限是 3 秒，留得下。
     static let foldLead: Double = 0.35

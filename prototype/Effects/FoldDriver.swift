@@ -17,11 +17,12 @@ struct FoldOptics {
 
 enum DuoPreset: String, CaseIterable {
   case silk, shade, frost
+  /// 档位名（第34批）：显示走目录；zh 源句是语义身份。
   var title: String {
     switch self {
-    case .silk: return "轻柔"
-    case .shade: return "标准"
-    case .frost: return "磨砂"
+    case .silk: return WSL10n.text("effects.preset.silk", zh: "轻柔")
+    case .shade: return WSL10n.text("effects.preset.shade", zh: "标准")
+    case .frost: return WSL10n.text("effects.preset.frost", zh: "磨砂")
     }
   }
   var optics: FoldOptics {

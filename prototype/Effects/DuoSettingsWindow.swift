@@ -143,6 +143,21 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     DispatchQueue.main.async { [weak self] in self?.refreshLocalizedCopy() }
   }
 
+  /// 标题、按钮、分段控件这些**建窗口时只设一次**的东西（第34批复核：语言切换只重建页面视图，
+  /// 不会刷新这些存储控件，于是它们会一直停在建窗口时那门语言）。
+  private func refreshControlCopy() {
+    pause.title = controller?.pausedByUser == true
+      ? WSL10n.text("notch.action.resume", zh: "继续")
+      : WSL10n.text("notch.action.pause", zh: "暂停")
+    permission.title = WSL10n.text("settings.effects.openScreenRecording", zh: "打开屏幕录制设置…")
+    let targets = [WSL10n.text("settings.effects.target.desktop", zh: "桌面"),
+                   WSL10n.text("settings.effects.target.window", zh: "窗口")]
+    for (i, label) in targets.enumerated() where i < mode.segmentCount { mode.setLabel(label, forSegment: i) }
+    for (i, presetCase) in DuoPreset.allCases.enumerated() where i < preset.segmentCount {
+      preset.setLabel(presetCase.title, forSegment: i)
+    }
+  }
+
   /// 语言切换的显式重建：标题、侧栏、当前页整个换；缓存页整批作废。
   /// 已显示的刘海句子不回溯改写，下一句起就是新语言（证据里如实记录）。
   func refreshLocalizedCopy() {
@@ -160,6 +175,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     sidebarTable.reloadData()
     pages.removeAll()
     rebuildAllPages()
+    refreshControlCopy()
     // 同一分节也要真的换页：先清掉 pageHost 上的旧内容，绕开“同页不重装”的守卫。
     pageHost?.subviews.forEach { $0.removeFromSuperview() }
     select(section: currentSection)
@@ -515,6 +531,40 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     WS2SettingsCopy.content(name: title, subtitle: subtitle, symbol: WS2SettingsCopy.symbol(for: title)).view
   }
 
+  /// 迁移过的行（第34批）：行标题/副标题走 `SettingsText`，和设置面板其它页共用同一套
+  /// 行长机制（英文用 shortEn/34 字预算 + 单个 ⓘ 承载全文），不再走中文 16 字硬截。
+  private func makeToggleRow(name: SettingsText, subtitle: SettingsText, control: NSSwitch, action: Selector) -> NSView {
+    control.controlSize = .regular
+    control.target = self
+    control.action = action
+    control.setAccessibilityLabel(name.shown)
+    let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    return makeRow(labels: labels, control: control)
+  }
+
+  private func makeControlRow(name: SettingsText, subtitle: SettingsText, control: NSView) -> NSView {
+    let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    return makeRow(labels: labels, control: control)
+  }
+
+  private func makeActionRow(name: SettingsText, subtitle: SettingsText, button: NSButton) -> NSView {
+    let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    return makeRow(labels: labels, control: button)
+  }
+
+  private func makeRow(labels: NSStackView, control: NSView) -> NSView {
+    let row = NSStackView(views: [labels, control])
+    NSLayoutConstraint.activate([
+      labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+      labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
+      control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+    ])
+    row.orientation = .horizontal
+    row.alignment = .centerY
+    row.spacing = 14
+    return row
+  }
+
   /// 迁移过的行（第27批）：zh 是语义身份（图标按它查），显示走当前语言。
   private func settingsContent(title: SettingsText, subtitle: SettingsText) -> NSStackView {
     WS2SettingsCopy.content(name: title, subtitle: subtitle).view
@@ -693,11 +743,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.addArrangedSubview(automaticSection)
     stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
-      makeToggleRow(title: WSL10n.text("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.text("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),
+      makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),
                     control: desktop, action: #selector(changed)),
-      makeToggleRow(title: WSL10n.text("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.text("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
+      makeToggleRow(name: WSL10n.setting("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.setting("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
                     control: windows, action: #selector(changed)),
-      makeActionRow(title: WSL10n.text("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.text("settings.effects.pause.sub", zh: "临时停用，不改动上面的开关。"), button: pause),
+      makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "临时停用，不改动上面的开关。"), button: pause),
     ])
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -750,11 +800,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let previewRows = [
       rendererView,
       rangeLabels,
-      makeControlRow(title: WSL10n.text("settings.effects.previewTarget.name", zh: "预览对象"), subtitle: WSL10n.text("settings.effects.previewTarget.sub", zh: "看看桌面或单个窗口的效果。"), control: mode),
-      makeControlRow(title: WSL10n.text("settings.effects.previewStyle.name", zh: "预览样式"), subtitle: WSL10n.text("settings.effects.previewStyle.sub", zh: "选择效果的观感。"), control: preset),
-      makeToggleRow(title: WSL10n.text("settings.effects.live.name", zh: "实时预览"), subtitle: WSL10n.text("settings.effects.live.sub", zh: "打开后才会用到屏幕录制权限。"),
+      makeControlRow(name: WSL10n.setting("settings.effects.previewTarget.name", zh: "预览对象"), subtitle: WSL10n.setting("settings.effects.previewTarget.sub", zh: "看看桌面或单个窗口的效果。"), control: mode),
+      makeControlRow(name: WSL10n.setting("settings.effects.previewStyle.name", zh: "预览样式"), subtitle: WSL10n.setting("settings.effects.previewStyle.sub", zh: "选择效果的观感。"), control: preset),
+      makeToggleRow(name: WSL10n.setting("settings.effects.live.name", zh: "实时预览"), subtitle: WSL10n.setting("settings.effects.live.sub", zh: "打开后才会用到屏幕录制权限。"),
                     control: live, action: #selector(liveChanged)),
-      makeActionRow(title: WSL10n.text("settings.effects.permission.name", zh: "屏幕录制权限"), subtitle: WSL10n.text("settings.effects.permission.sub", zh: "实时预览需要此权限。"), button: permission),
+      makeActionRow(name: WSL10n.setting("settings.effects.permission.name", zh: "屏幕录制权限"), subtitle: WSL10n.setting("settings.effects.permission.sub", zh: "实时预览需要此权限。"), button: permission),
     ].compactMap { $0 }
     let preview = makeSettingsCard(previewRows)
     stack.addArrangedSubview(preview)
@@ -878,7 +928,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     popup.target = self
     popup.action = #selector(changeInterfaceLanguage(_:))
     popup.setAccessibilityLabel(WSL10n.text("settings.language.name", zh: "界面语言"))
-    return makeControlRow(title: WSL10n.setting("settings.language.name", zh: "界面语言"),
+    return makeControlRow(name: WSL10n.setting("settings.language.name", zh: "界面语言"),
                           subtitle: WSL10n.setting("settings.language.sub", zh: "切换后立即生效"),
                           control: popup)
   }
@@ -1089,7 +1139,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       ? WSL10n.text("duo.status.reduceMotion", zh: " · 减少动态效果已暂停动画") : ""
     let paused = controller.pausedByUser ? WSL10n.text("duo.status.paused", zh: " · 效果已暂停") : ""
     status.stringValue = captureMessage
-      ?? "设置合盖桌面效果与窗口收起动画。\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)"
+      ?? WSL10n.text("duo.status.summary", zh: "设置合盖桌面效果与窗口收起动画。%@ · 当前 %@%@%@%@",
+                     controller.sensorStatus, reading, permission, reduced, paused)
   }
 
   func windowWillClose(_ notification: Notification) {

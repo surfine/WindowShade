@@ -37,7 +37,7 @@ struct WS2CarPlaySurfaceDisplay: Equatable {
 
 enum WS2CarPlaySurfaceModel {
     /// 退出提示，所有状态下都在底部。
-    static let exitHint = WSL10n.text("carplay.exitHint", zh: "再长按刘海或按 Esc 回到桌面")
+    static var exitHint: String { WSL10n.text("carplay.exitHint", zh: "再长按刘海或按 Esc 回到桌面") }
 
     /// - Parameters:
     ///   - hasStarted: 这次进入全屏之后是否已经开始过一次连接。区分“还没连”和“连接断了”。

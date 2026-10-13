@@ -7481,6 +7481,23 @@
         }
       }
     },
+    "duo.status.summary": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set the lid effect and the rolling-up animation. %@ · now %@%@%@%@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置合盖桌面效果与窗口收起动画。%@ · 当前 %@%@%@%@"
+          }
+        }
+      }
+    },
     "effect.inspector.fold": {
       "extractionState": "manual",
       "localizations": {
@@ -7596,6 +7613,57 @@
           "stringUnit": {
             "state": "translated",
             "value": "展开"
+          }
+        }
+      }
+    },
+    "effects.preset.frost": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frosted"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "磨砂"
+          }
+        }
+      }
+    },
+    "effects.preset.shade": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标准"
+          }
+        }
+      }
+    },
+    "effects.preset.silk": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gentle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻柔"
           }
         }
       }
