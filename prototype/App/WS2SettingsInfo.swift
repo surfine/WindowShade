@@ -89,6 +89,13 @@ import Cocoa
         "timer", "cup.and.saucer", "magicmouse", "rectangle.and.hand.point.up.left",
         "keyboard", "appletvremote.gen4", "gamecontroller", "iphone",
         "battery.75percent", "viewfinder", "touchid", "lock.shield", "mic.fill", "info.circle",
+        "computermouse", "arrow.up.arrow.down", "rectangle.2.swap", "hand.tap",
+        "cursorarrow.and.square.on.square.dashed", "switch.2", "speaker.wave.2",
+        "chevron.left.forwardslash.chevron.right", "terminal", "numbers", "character.bubble",
+        "circle.lefthalf.filled", "power", "arrow.triangle.2.circlepath", "stethoscope",
+        "arrow.counterclockwise", "menubar.rectangle",
+        "dock.rectangle", "arrow.2.squarepath", "pause", "arrow.left.arrow.right",
+        "eye.slash", "square.grid.2x2",
     ]
 
     nonisolated static func tableSymbol(_ name: String?) -> String? {
@@ -193,6 +200,50 @@ import Cocoa
             ("按编号展开", "rectangle.expand.vertical"),
             ("快捷键", "command"),
             ("隐私", "lock.shield"),
+            // 第34批补：此前这些行没有图标（鼠标与触控板、指挥、遥控、窗口浏览等页）。
+            ("平滑滚动", "scroll"),
+            ("鼠标滚动方向", "computermouse"),
+            ("触控板滚动方向", "arrow.up.arrow.down"),
+            ("精细", "arrow.up.arrow.down"),
+            ("侧键", "rectangle.2.swap"),
+            ("三指轻点", "hand.tap"),
+            ("四指轻点", "hand.tap"),
+            ("要避开的", "cursorarrow.and.square.on.square.dashed"),
+            ("私人 App", "lock.shield"),
+            ("指挥模式", "switch.2"),
+            ("提示音", "speaker.wave.2"),
+            ("编程会话", "chevron.left.forwardslash.chevron.right"),
+            ("Claude Code 的配置", "terminal"),
+            ("模型位置", "numbers"),
+            ("遥控", "appletvremote.gen4"),
+            ("界面语言", "character.bubble"),
+            ("外观", "circle.lefthalf.filled"),
+            ("开机自启", "power"),
+            ("启动", "power"),
+            ("更新", "arrow.triangle.2.circlepath"),
+            ("诊断", "stethoscope"),
+            ("重置", "arrow.counterclockwise"),
+            ("暴露", "rectangle.inset.filled"),
+            ("排列", "rectangle.grid.1x2"),
+            ("菜单栏", "menubar.rectangle"),
+            ("在菜单里", "menubar.rectangle"),
+            ("键盘", "keyboard"),
+            // 第35批补（同批离屏核对发现的缺口）：
+            ("Dock 悬停", "dock.rectangle"),
+            ("再点一下 Dock", "dock.rectangle"),
+            ("两指上下滑", "dock.rectangle"),
+            ("Dock 留在", "dock.rectangle"),
+            ("调度中心里按", "rectangle.expand.vertical"),
+            ("按窗口切换", "arrow.left.arrow.right"),
+            ("桌面开合", "arrow.2.squarepath"),
+            ("暂停效果", "pause"),
+            ("收起窗口时的动画", "rectangle.compress.vertical"),
+            ("把当前窗口带到每张桌面", "arrow.left.arrow.right"),
+            ("打开窗口浏览", "rectangle.on.rectangle"),
+            ("按应用排除", "eye.slash"),
+            ("面板背景", "circle.lefthalf.filled"),
+            ("默认显示方式", "square.grid.2x2"),
+            ("排布与撤销", "rectangle.grid.1x2"),
         ]
         for (needle, symbol) in pairs where name.contains(needle) {
             return symbol
@@ -218,6 +269,7 @@ import Cocoa
         if let detail {
             let caption = (name?.shown.isEmpty == false ? name!.shown : WSL10n.text("settings.info.caption", zh: "说明"))
             built.view.addArrangedSubview(WS2SettingsInfoButton(text: detail.shown, name: caption))
+            WS2SettingsCopy.pinInfoTrailing(built.view)
         }
         return built.view
     }
@@ -277,6 +329,19 @@ import Cocoa
         content.setContentHuggingPriority(.defaultLow, for: .horizontal)
         content.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         return (content, detail)
+    }
+
+    /// 行容器里把 ⓘ 钉到内容列右端：标签列吸收多余宽度，各行（有 ⓘ 的）的 ⓘ 排成一列，
+    /// 不再跟着每行文字的宽窄漂。NSStackView 的 gravityAreas 不按 hugging 分余量，所以用显式约束。
+    /// 只给设置行用；页头不是行，不调用（页头 ⓘ 保持贴文字）。
+    static func pinInfoTrailing(_ content: NSStackView) {
+        guard let button = content.arrangedSubviews.compactMap({ $0 as? WS2SettingsInfoButton }).first else { return }
+        button.setContentHuggingPriority(.required, for: .horizontal)
+        button.setContentCompressionResistancePriority(.required, for: .horizontal)
+        for view in content.arrangedSubviews where view is NSStackView {
+            view.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        }
+        content.trailingAnchor.constraint(equalTo: button.trailingAnchor).isActive = true
     }
 }
 final class WS2SettingsInfoButton: NSButton {

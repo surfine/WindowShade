@@ -391,7 +391,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func allowHorizontalExpansion(in view: NSView) {
-    if let stack = view as? NSStackView {
+    if let stack = view as? NSStackView,
+       stack.contentHuggingPriority(for: .horizontal) < .required {
+      // 只放行没被钉死的 stack：页头在 makePageHeader 里把 hugging 提到 required，
+      // 这里不覆盖它，页头 ⓘ 才能贴着文字站（行容器另有 pinInfoTrailing 钉列）。
       stack.setHuggingPriority(.defaultLow, for: .horizontal)
     }
     view.subviews.forEach { allowHorizontalExpansion(in: $0) }
@@ -518,13 +521,19 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   // 只保留一行说明。符号只使用 §4.11 里有的名字。
   private func makePageHeader(title: String, subtitle: String, symbolName: String?) -> NSView {
     _ = title
-    return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+    let header = WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+    // 页头不是行：select(section:) 的 allowHorizontalExpansion 会把整页 stack 的 hugging
+    // 压低、把页头撑到整页宽，ⓘ 就被甩到内容列右缘。页头按文字本身的宽度站，不吸收余量。
+    header.setContentHuggingPriority(.required, for: .horizontal)
+    return header
   }
 
   /// 迁移过的页头（第27批）：副标题走当前语言。
   private func makePageHeader(title: SettingsText, subtitle: SettingsText, symbolName: String?) -> NSView {
     _ = title
-    return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+    let header = WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+    header.setContentHuggingPriority(.required, for: .horizontal)
+    return header
   }
 
   private func settingsContent(title: String, subtitle: String) -> NSStackView {
@@ -539,20 +548,27 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     control.action = action
     control.setAccessibilityLabel(name.shown)
     let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    WS2SettingsCopy.pinInfoTrailing(labels)
     return makeRow(labels: labels, control: control)
   }
 
   private func makeControlRow(name: SettingsText, subtitle: SettingsText, control: NSView) -> NSView {
     let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    WS2SettingsCopy.pinInfoTrailing(labels)
     return makeRow(labels: labels, control: control)
   }
 
   private func makeActionRow(name: SettingsText, subtitle: SettingsText, button: NSButton) -> NSView {
     let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    WS2SettingsCopy.pinInfoTrailing(labels)
     return makeRow(labels: labels, control: button)
   }
 
   private func makeRow(labels: NSStackView, control: NSView) -> NSView {
+    // 控件保持自身大小、贴行右端：labels 已被约束钉满到控件左端，控件若 hugging 低
+    // 会被 NSStackView 拉伸占满剩余宽度（Pause 按钮实测被拉成整行宽）。
+    control.setContentHuggingPriority(.required, for: .horizontal)
+    control.setContentCompressionResistancePriority(.required, for: .horizontal)
     let row = NSStackView(views: [labels, control])
     NSLayoutConstraint.activate([
       labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),

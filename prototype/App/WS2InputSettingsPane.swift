@@ -381,6 +381,7 @@ extension AppDelegate {
         control.setContentCompressionResistancePriority(.required, for: .horizontal)
         content.setContentHuggingPriority(.defaultLow, for: .horizontal)
         content.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        WS2SettingsCopy.pinInfoTrailing(content)
         let row = NSStackView(views: [content, control])
         row.orientation = .horizontal
         row.alignment = .centerY

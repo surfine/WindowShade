@@ -180,13 +180,19 @@ extension AppDelegate {
     // 与效果页一致：页内不重复大标题，只留一行说明。
     private func makeSettingsHeader(title: String, subtitle: String, symbolName: String? = nil) -> NSView {
         _ = title
-        return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+        let header = WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+        // 页头不是行：allowHorizontalExpansion 会把页头撑到整页宽、把 ⓘ 甩到内容列右缘。
+        // 页头按文字本身的宽度站，不吸收余量。
+        header.setContentHuggingPriority(.required, for: .horizontal)
+        return header
     }
 
     /// 迁移过的页头（第27批）：说明走当前语言与英文行长预算。
     private func makeSettingsHeader(title: String, subtitle: SettingsText, symbolName: String? = nil) -> NSView {
         _ = title
-        return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+        let header = WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+        header.setContentHuggingPriority(.required, for: .horizontal)
+        return header
     }
 
     func makeShadeSettingsPage() -> NSView {
@@ -607,12 +613,16 @@ extension AppDelegate {
     }
 
     private func makeUnifiedLabels(name: String, subtitle: String?, symbol: String? = nil) -> NSStackView {
-        WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol ?? WS2SettingsCopy.symbol(for: name)).view
+        let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol ?? WS2SettingsCopy.symbol(for: name)).view
+        WS2SettingsCopy.pinInfoTrailing(labels)
+        return labels
     }
 
     /// 迁移过的行（第27批）：zh 是语义身份（图标按它查），显示文本与短副标题走当前语言。
     private func makeUnifiedLabels(name: SettingsText, subtitle: SettingsText?, symbol: String? = nil) -> NSStackView {
-        WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol).view
+        let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol).view
+        WS2SettingsCopy.pinInfoTrailing(labels)
+        return labels
     }
 
     /// "有人在看时收起私人窗口"：名单变了由 BystanderRowHost 重画这一行。
@@ -649,6 +659,7 @@ extension AppDelegate {
         let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle,
                                              symbol: NotchLevelSettingRow.symbol).view
         labels.addArrangedSubview(WS2SettingsInfoButton(text: info, name: name.shown))
+        WS2SettingsCopy.pinInfoTrailing(labels)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         var trailing: [NSView] = []

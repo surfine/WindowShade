@@ -55,18 +55,18 @@ extension AppDelegate {
         let sound = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: store),
                                     action: #selector(prefConductorSound(_:)), name: WSL10n.text("conductor.settings.sound", zh: "提示音"))
         var rows = [
-            conductorRow(name: WSL10n.text("conductor.settings.mode", zh: "指挥模式"),
-                         subtitle: WSL10n.text("conductor.settings.mode.sub", zh: "在遥控模式下面打开"), symbol: nil,
+            conductorRow(name: WSL10n.setting("conductor.settings.mode", zh: "指挥模式"),
+                         subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "在遥控模式下面打开"), symbol: nil,
                          control: conductorStatus(on ? WSL10n.text("conductor.settings.on", zh: "开着")
                                                       : WSL10n.text("conductor.settings.off", zh: "关着"))),
-            conductorRow(name: WSL10n.text("conductor.settings.sound", zh: "提示音"),
-                         subtitle: WSL10n.text("conductor.settings.sound.sub", zh: "每一拍轻敲一声，认没认出各有各的声"), symbol: nil,
+            conductorRow(name: WSL10n.setting("conductor.settings.sound", zh: "提示音"),
+                         subtitle: WSL10n.setting("conductor.settings.sound.sub", zh: "每一拍轻敲一声，认没认出各有各的声"), symbol: nil,
                          control: sound),
         ]
         let coding = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: store),
                                      action: #selector(prefConductorCodingSessions(_:)), name: WSL10n.text("notch.kind.session", zh: "编程会话"))
-        rows.append(conductorRow(name: WSL10n.text("notch.kind.session", zh: "编程会话"),
-                                 subtitle: WSL10n.text("conductor.settings.coding.sub", zh: "在刘海里看 Claude Code 在跑还是在等你"),
+        rows.append(conductorRow(name: WSL10n.setting("notch.kind.session", zh: "编程会话"),
+                                 subtitle: WSL10n.setting("conductor.settings.coding.sub", zh: "在刘海里看 Claude Code 在跑还是在等你"),
                                  symbol: nil, control: coding))
         let copy = NSButton(title: WSL10n.text("conductor.settings.copyConfig", zh: "拷贝配置"), target: self,
                             action: #selector(prefConductorCopyHookConfig(_:)))
@@ -74,9 +74,9 @@ extension AppDelegate {
         copy.setAccessibilityLabel(WSL10n.text("conductor.settings.copyConfig.label", zh: "拷贝 Claude Code 的配置"))
         let helperReady = FileManager.default.isExecutableFile(atPath: WS2ConductorSettings.hookHelperPath)
         copy.isEnabled = helperReady
-        rows.append(conductorRow(name: WSL10n.text("conductor.settings.hookConfig", zh: "Claude Code 的配置"),
-                                 subtitle: helperReady ? WSL10n.text("conductor.settings.hookConfig.sub", zh: "拷贝后粘贴到它的设置里")
-                                                      : WSL10n.text("conductor.settings.hookConfig.missing", zh: "这个版本里没有"),
+        rows.append(conductorRow(name: WSL10n.setting("conductor.settings.hookConfig", zh: "Claude Code 的配置"),
+                                 subtitle: helperReady ? WSL10n.setting("conductor.settings.hookConfig.sub", zh: "拷贝后粘贴到它的设置里")
+                                                      : WSL10n.setting("conductor.settings.hookConfig.missing", zh: "这个版本里没有"),
                                  symbol: nil, control: copy))
         for index in 1...4 {
             let field = NSTextField(string: WS2ConductorSettings.text(WS2ConductorSettings.slotKey(index), in: store))
@@ -86,8 +86,8 @@ extension AppDelegate {
             field.action = #selector(prefConductorSlot(_:))
             field.setAccessibilityLabel(WSL10n.text("conductor.settings.modelSlot", zh: "模型位置 %@", String(index)))
             field.widthAnchor.constraint(equalToConstant: 180).isActive = true
-            rows.append(conductorRow(name: WSL10n.text("conductor.settings.modelSlot", zh: "模型位置 %@", String(index)),
-                                     subtitle: WSL10n.text("conductor.settings.localOnly", zh: "只存在这里"),
+            rows.append(conductorRow(name: WSL10n.setting("conductor.settings.modelSlot", zh: "模型位置 %@", String(index)),
+                                     subtitle: WSL10n.setting("conductor.settings.localOnly", zh: "只存在这里"),
                                      symbol: nil, control: field))
         }
         let card = makeUnifiedSettingsCard(rows)
@@ -130,16 +130,24 @@ extension AppDelegate {
         field.textColor = .secondaryLabelColor
         return field
     }
-    private func conductorRow(name: String, subtitle: String, symbol: String?, control: NSView) -> NSView {
+    private func conductorRow(name: SettingsText, subtitle: SettingsText, symbol: String?, control: NSView) -> NSView {
         let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol).view
+        WS2SettingsCopy.pinInfoTrailing(labels)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         control.setContentHuggingPriority(.required, for: .horizontal)
+        control.setContentCompressionResistancePriority(.required, for: .horizontal)
         let row = NSStackView(views: [labels, control])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 12
         row.edgeInsets = NSEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
+        // 与 Preferences 的行同一个钉法：内容列撑满到控件左端，控件贴行右端。
+        NSLayoutConstraint.activate([
+            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
+            labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
+            control.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
+        ])
         return row
     }
 }
