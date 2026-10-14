@@ -13,13 +13,20 @@ struct InterfaceLanguageTests {
         // 明确偏好优先于系统。
         expect(InterfaceLanguagePreference.resolve(.zh, systemPreferred: ["en-US"]) == .zh,
                "zh overrides an English system")
+        expect(InterfaceLanguagePreference.resolve(.zhHant, systemPreferred: ["en-US"]) == .zhHant,
+               "zhHant overrides an English system")
         expect(InterfaceLanguagePreference.resolve(.en, systemPreferred: ["zh-Hans-CN"]) == .en,
                "en overrides a Chinese system")
 
-        // 跟随系统：中文的各种写法都算中文。
-        for language in ["zh", "zh-Hans", "zh-Hans-CN", "zh-Hant", "ZH-hans", "zh-TW"] {
+        // 跟随系统：简体各种写法都算简体。
+        for language in ["zh", "zh-Hans", "zh-Hans-CN", "ZH-hans", "zh-CN", "zh-SG"] {
             expect(InterfaceLanguagePreference.resolve(.system, systemPreferred: [language]) == .zh,
-                   "system \(language) → Chinese")
+                   "system \(language) → Simplified")
+        }
+        // 台湾、香港、澳门与带 Hant 的标签都算繁体。
+        for language in ["zh-Hant", "zh-TW", "zh-Hant-TW", "ZH-HANT", "zh-HK", "zh-MO"] {
+            expect(InterfaceLanguagePreference.resolve(.system, systemPreferred: [language]) == .zhHant,
+                   "system \(language) → Traditional")
         }
         // 其它语言一律英文；只认首个首选语言。
         for language in ["en", "en-US", "ja-JP", "de-DE", "fr"] {

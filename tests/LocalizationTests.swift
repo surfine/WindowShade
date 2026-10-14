@@ -89,6 +89,40 @@ struct LocalizationTests {
             print("FAIL cannot read the compiled Localizable.strings")
         }
 
+        // 第39批：繁体走真实路径——目录逐键都能出繁体，且没有一条还是简体（挑几个简体专用字兜底）。
+        let hantDir = URL(fileURLWithPath: CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : CommandLine.arguments[1])
+        WSL10n.setBundle(nil, for: .en)
+        if let hantBundle = Bundle(path: hantDir.path) {
+            WSL10n.setBundle(hantBundle, for: .zhHant)
+        } else {
+            failures += 1
+            print("FAIL cannot open the zh-Hant bundle at \(hantDir.path)")
+        }
+        WSL10n.language = .zhHant
+        if let catalog = NSDictionary(contentsOf: hantDir.appendingPathComponent("Localizable.strings"))
+            as? [String: String] {
+            let sentinel = "\u{1}<missing>"
+            let simplifiedOnly: Set<Character> = ["设", "认", "语", "关", "无", "发", "时", "门", "务", "软", "网", "动", "这", "为", "于", "会", "过", "还", "后", "没", "边", "块", "让", "换", "录", "拟", "读", "写", "较", "级", "处", "应", "对", "开", "长", "点", "标", "题", "栏", "屏", "隐", "营", "销"]
+            var missing: [String] = []
+            var simplified: [String] = []
+            for key in catalog.keys.sorted() {
+                let resolved = WSL10n.text(key, zh: sentinel)
+                if resolved == sentinel {
+                    missing.append(key)
+                } else if resolved.contains(where: { simplifiedOnly.contains($0) }) {
+                    simplified.append("\(key): \(resolved)")
+                }
+            }
+            expect(missing.isEmpty, "every catalog key resolves through WSL10n in Traditional: \(missing.prefix(3))")
+            expect(simplified.isEmpty, "no Traditional value still uses simplified-only glyphs: \(simplified.prefix(3))")
+            print("ok   catalog keys checked end to end in Traditional: \(catalog.count)")
+        } else {
+            failures += 1
+            print("FAIL cannot read the compiled zh-Hant Localizable.strings")
+        }
+        WSL10n.setBundle(nil, for: .zhHant)
+        WSL10n.language = .zh
+
         WSL10n.language = .zh
         expect(WS2SilentCopy.line("window.left") == "左半屏", "switching back to Chinese restores the source text")
 

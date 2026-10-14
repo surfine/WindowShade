@@ -896,12 +896,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     return root
   }
 
-  /// 语言行（第27批）：跟随系统 / 简体中文 / English；语言名用各自的写法（不进目录表）。
+  /// 语言行（第27批；繁体第39批）：跟随系统 / 简体中文 / 繁體中文 / English；语言名用各自的写法（不进目录表）。
   private func makeLanguageRow() -> NSView {
     let popup = NSPopUpButton(frame: .zero, pullsDown: false)
     let choices: [(InterfaceLanguagePreference, String)] = [
       (.system, WSL10n.text("settings.language.system", zh: "跟随系统")),
       (.zh, "简体中文"),
+      (.zhHant, "繁體中文"),
       (.en, "English"),
     ]
     for (preference, title) in choices {

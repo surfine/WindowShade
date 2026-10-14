@@ -9,7 +9,7 @@ mkdir -p "$OUT"
 xcrun xcstringstool compile prototype/Resources/Localizable.xcstrings -o "$OUT/strings"
 swiftc -parse-as-library prototype/Core/WSL10n.swift prototype/Core/SwitcherOrigin.swift prototype/Core/GestureCoach.swift \
   prototype/Core/HabitRules.swift prototype/Core/WS2SilentCopy.swift tests/LocalizationTests.swift -o "$OUT/localization"
-"$OUT/localization" "$OUT/strings/en.lproj"
+"$OUT/localization" "$OUT/strings/en.lproj" "$OUT/strings/zh-Hant.lproj"
 # 界面语言（第27批）：解析规则、偏好存取、立即生效；只碰测试专属 suite。
 swiftc -parse-as-library prototype/Core/WSL10n.swift prototype/Core/InterfaceLanguage.swift \
   tests/InterfaceLanguageTests.swift -o "$OUT/language"

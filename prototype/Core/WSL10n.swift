@@ -6,12 +6,23 @@
 // 不放在 App 根目录的 .lproj 里，免得改变系统给这个 App 选的界面语言。
 import Foundation
 
-enum WSLanguage: Sendable, Equatable { case zh, en }
+enum WSLanguage: String, Sendable, Equatable, CaseIterable {
+    case zh, zhHant, en
+
+    /// 译文目录名；简体是源语言，没有目录（直接用 Swift 里的字面量）。
+    var lprojName: String? {
+        switch self {
+        case .zh: return nil
+        case .zhHant: return "zh-Hant"
+        case .en: return "en"
+        }
+    }
+}
 
 private final class WSL10nState: @unchecked Sendable {
     private let lock = NSLock()
     private var languageValue: WSLanguage = .zh
-    private var bundleValue: Bundle?
+    private var bundles: [WSLanguage: Bundle] = [:]
     private var bundleResolved = false
 
     var language: WSLanguage {
@@ -19,20 +30,40 @@ private final class WSL10nState: @unchecked Sendable {
         set { lock.lock(); languageValue = newValue; lock.unlock() }
     }
 
-    /// 英文译文所在的目录；没设过就去 App 资源里找一次。
+    /// 当前语言译文所在的目录；没设过就去 App 资源里找一次。
+    var currentBundle: Bundle? {
+        get {
+            lock.lock(); defer { lock.unlock() }
+            let language = languageValue
+            if let cached = bundles[language] { return cached }
+            guard let name = language.lprojName, !bundleResolved else { return nil }
+            bundleResolved = true
+            if let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/\(name).lproj", isDirectory: true),
+               FileManager.default.fileExists(atPath: url.path) {
+                let bundle = Bundle(url: url)
+                bundles[language] = bundle
+                return bundle
+            }
+            return nil
+        }
+    }
+
+    /// 英文译文所在的目录（测试与检查用）。
     var englishBundle: Bundle? {
         get {
             lock.lock(); defer { lock.unlock() }
-            if !bundleResolved {
-                bundleResolved = true
-                if let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/en.lproj", isDirectory: true),
-                   FileManager.default.fileExists(atPath: url.path) {
-                    bundleValue = Bundle(url: url)
-                }
-            }
-            return bundleValue
+            guard let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/en.lproj", isDirectory: true),
+                  FileManager.default.fileExists(atPath: url.path) else { return bundles[.en] }
+            let bundle = Bundle(url: url)
+            bundles[.en] = bundle
+            return bundle
         }
-        set { lock.lock(); bundleValue = newValue; bundleResolved = true; lock.unlock() }
+        set { lock.lock(); if let newValue { bundles[.en] = newValue }; bundleResolved = true; lock.unlock() }
+    }
+
+    /// 测试与检查用：指定某个语言的译文目录。
+    func setBundle(_ bundle: Bundle?, for language: WSLanguage) {
+        lock.lock(); bundles[language] = bundle; bundleResolved = true; lock.unlock()
     }
 }
 
@@ -51,15 +82,19 @@ enum WSL10n {
         set { state.englishBundle = newValue }
     }
 
-    /// key 对应的一句。zh 是 Swift 里写的中文源句（文案检查查的就是它），中文时原样返回；
-    /// 英文时取译文，译文里的 %@ 按顺序换成 args；缺译文就退回中文，不出空句。
-    /// 带占位符的源句必须带 args：zh 一路也做替换，免得“%@的说明”原样漏给读屏。
+    /// 测试和打包检查用：指定某个语言的译文目录（繁体等）。
+    static func setBundle(_ bundle: Bundle?, for language: WSLanguage) {
+        state.setBundle(bundle, for: language)
+    }
+
+    /// key 对应的一句。zh 是 Swift 里写的中文源句（文案检查查的就是它），简体时原样返回；
+    /// 繁体/英文时取译文，译文里的 %@ 按顺序换成 args；缺译文就退回中文，不出空句。
+    /// 带占位符的源句必须带 args：中文一路也做替换，免得“%@的说明”原样漏给读屏。
     static func text(_ key: String, zh: String, _ args: CVarArg...) -> String {
         let template: String
-        switch (language, englishBundle) {
-        case (.en, .some(let bundle)):
+        if language != .zh, let bundle = state.currentBundle {
             template = bundle.localizedString(forKey: key, value: zh, table: "Localizable")
-        default:
+        } else {
             template = zh
         }
         guard template != zh, !args.isEmpty else {

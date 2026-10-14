@@ -76,6 +76,76 @@ import Cocoa
         "恢复默认值，或打开诊断日志排查问题。": "恢复默认，或打开诊断日志",
     ]
 
+    /// 繁体短副标题表（第39批）：键是**繁体全文**，值是一行放得下的繁体短句——
+    /// 与 short 表（键是简体全文）对称，因为简体与繁体的全文不同，键也必须各用各的。
+    /// 由 tools/localize/short-hant.py 从 short 表 + 目录生成，不要手改。
+    nonisolated static let shortHant: [String: String] = [
+        "設定怎麼收起視窗、收起後什麼樣、要不要提示音。": "視窗的收起方式與外觀",
+        "指標停在捲簾條上，視窗在原處出現，移開就收回": "停在捲簾條上看一眼",
+        "朝瀏海甩一下標題列，視窗就收進瀏海；指標停在瀏海上，點一下放回": "甩進瀏海，點一下放回",
+        "收起的視窗標題變了，比如編譯完成，瀏海會短暫展開告訴你": "視窗標題變化時提醒",
+        "在瀏海和啟動台主畫面最左邊那一頁檢視音樂、耳機、AirDrop與路線": "音樂、周邊裝置、傳送與路線",
+        "按三下標題列會縮放視窗。按住 Option 按兩下不收起": "按三下標題列會縮放視窗",
+        "按三下標題列會最小化視窗。按住 Option 按兩下不收起": "按三下標題列會最小化視窗",
+        "在任意視窗的標題列上按兩下。按住 Option 按兩下不收起": "在任意視窗的標題列上按兩下",
+        "卡住時，瀏海按你原來的習慣提示 Mac 上怎麼做": "遇到操作困難時提示",
+        "半螢幕、四角、網格、魔法並排、卷軸排好的視窗之間和螢幕邊留一道縫": "視窗與螢幕邊緣的間距",
+        "兩扇視窗拼滿一塊螢幕時，中間出現一根小豎條：拖它兩扇一起變，推到螢幕邊那一扇進側拉": "拖中間豎條，同時調兩扇",
+        "收起的視窗也不會被別的視窗擋住": "收起後也保持置頂",
+        "找到、移動和恢復視窗": "找到、移動和恢復視窗",
+        "擷取視窗畫面做預覽": "擷取視窗畫面做預覽",
+        "在任何應用裡都能用。點“錄製…”再按下新的組合；“清除”會關掉這個快速鍵。": "錄製或清除全域性快速鍵",
+        "一下讓開所有置頂的視窗，再按一下按原來的前後順序放回": "讓開置頂視窗，再按放回",
+        "視窗留在原處，在別的桌面上也能看一眼": "在其他桌面看一眼",
+        "視窗靠到螢幕邊、浮在前面；再按一次收到螢幕邊，或拉出來": "側拉，再按收到螢幕邊",
+        "視窗縮成一張即時畫面浮在螢幕角落，再按一次回到原處；把標題列拖到螢幕角落停一下也行": "即時畫面懸在螢幕角落",
+        "列出所有 App；把圖示拖到螢幕邊就側拉，拖到一邊就開在那一半": "拖 App 圖示來安排視窗",
+        "捲簾條展開；原來大小的視窗鋪滿螢幕": "展開卷簾條或鋪滿視窗",
+        "鋪滿的視窗回到原來大小；原來大小的視窗收起": "還原視窗大小或收起",
+        "把這塊螢幕上的視窗一次排好：要地方多的佔大頭，聊天放側拉；捏合整批撤回": "按需要分配視窗位置",
+        "按原來的排法放到下一塊螢幕上；上下襬的顯示器也行": "保留排法，移到另一螢幕",
+        "這塊螢幕上的視窗全部收進瀏海，再按一下放回來": "整螢幕收進瀏海，再按放回",
+        "只把當前視窗收進瀏海": "只收進當前視窗",
+        "裝過 Rectangle 的照它現在的設定，沒裝過的用它推薦的那一套（⌃⌥ 加方向鍵和字母）。下面的名字和 Raycast 的視窗命令一一對應": "沿用 Rectangle 快速鍵",
+        "變小一級、變大一級、左半螢幕、右半螢幕改用 ⌃⌥ 加字母，和 Swish 一樣。別的動作在用的組合不搶": "部分排列改用字母快速鍵",
+        "左右不動，上下佔滿": "左右不動，上下佔滿",
+        "大小不變，放到正中": "大小不變，放到正中",
+        "四邊各往外 30 點": "四邊各往外 30 點",
+        "四邊各往裡 30 點": "四邊各往裡 30 點",
+        "回到排之前的位置和大小": "回到排列前的位置和大小",
+        "和“移到另一塊螢幕”反著轉": "反向移到另一塊螢幕",
+        "外觀選“統一標題列”時，改為專注當前 App；選“縮圖”時，把縮圖排到螢幕下邊，再按放回原位": "按外觀整理視窗或縮圖",
+        "預設不設定。再按一次同一個組合會關掉面板。": "再按同一快速鍵關閉面板",
+        "在 Dock 圖示上看這個應用的全部視窗，也可以用選單或快速鍵開啟。": "從 Dock 檢視應用視窗",
+        "滑鼠停在 Dock 圖示上時顯示視窗面板。不會啟動沒在執行的應用。": "懸停 Dock 圖示檢視視窗",
+        "它已經在最前、視窗露著時才這樣（和 Windows 工作列一樣）；再點一下回來": "再點前台應用，讓開視窗",
+        "往上滑看這個 App 的所有視窗，往下滑讓開這個 App": "上滑檢視，下滑讓開",
+        "指標碰到別的螢幕的底邊時 Dock 不跟過去（只管放在底部的 Dock）；開啟時記下 Dock 現在在哪": "不讓底部 Dock 跟隨指標",
+        "指標指著哪扇就關哪扇，⌘Q 退出它的 App；只在指揮中心開著時這樣，平時不動你的 ⌘W": "在指揮中心關閉所指視窗",
+        "預設不佔用快速鍵，可以在“快速鍵”裡設定": "快速鍵預設留空",
+        "按住連按 Tab 一扇一扇地挑，鬆手切過去；收著的視窗也在裡面。選 ⌘Tab 會換掉系統的 App 切換": "按 Tab 挑視窗，鬆手切換",
+        "選中視窗 0.4 秒後開始播放即時畫面": "選中 0.4 秒後播放預覽",
+        "開啟系統的“減少透明度”時，自動使用不透明背景。": "跟隨系統減少透明度",
+        "自動：視窗多的時候用列表，少的時候用縮圖。面板裡的切換隻影響這一次。": "根據視窗數量自動切換",
+        "在視窗右鍵選單裡選“排布”：左半、右半、四角、居中、鋪滿螢幕、移到另一塊螢幕。可以先看效果，移好之後還能撤銷。": "右鍵選單快速排布視窗",
+        "識別 Dock 圖示，切換、收起、展開和關閉視窗": "識別 Dock 圖示並操作視窗",
+        "視窗縮圖與即時預覽；缺失時顯示圖示和文字列表": "無錄螢幕權限時顯示列表",
+        "WindowShade 會在登入後自動執行": "登入後自動執行",
+        "需要在系統設定中批准登入項": "需在系統設定中批准",
+        "開機後自動執行 WindowShade": "開機後自動執行",
+        "當前 app bundle 不支援登入項": "此版本不支援登入項",
+        "Swish 正在執行，標題列上的手勢交給它；在捲簾條上往下滑仍可展開": "Swish 接管標題列手勢",
+        "在標題列上兩指滑動、滾動滾輪或拖著甩一下：往上收起，往下鋪滿": "標題列手勢：上收下鋪",
+        "開始、暫停或繼續同一個番茄鍾；預設不佔用任何快速鍵": "預設不佔鍵，開始或暫停",
+        "捲簾條跟原來一樣或用統一標題列，也可以在原處縮成縮圖": "跟原來一樣、統一標題列或縮圖",
+        "讓它更透一些，能看到後面的內容": "更透，能看到後面",
+        "WindowShade 讀到的每一樣都列在這裡。": "讀到的都列在這裡",
+        "有新版本時在選單裡告訴你，不會自己裝。": "有新版時告訴你，不自動裝",
+        "新版本用著不對，可以換回剛才那一版。": "可以換回剛才那一版",
+        "合上或開啟蓋子時，桌面跟著動一下。": "合上或開啟時桌面跟著動",
+        "恢復預設值，或開啟診斷日誌排查問題。": "恢復預設，或開啟診斷日誌",
+    ]
+
     /// design-system §4.11 里出现过的符号。页头只许用这份里的名字。
     nonisolated static let tableSymbols: Set<String> = [
         "rectangle.compress.vertical", "rectangle.expand.vertical",
@@ -111,6 +181,8 @@ import Cocoa
     /// 一行里放得下的短句。全文更长时由气泡保留，不在这里截掉意思。
     nonisolated static func line(_ subtitle: String) -> String {
         if let mapped = short[subtitle] { return mapped }
+        // 繁体：传进来的已经是繁体全文，查繁体短句表（键与 short 对称，用全文）。
+        if WSL10n.language == .zhHant, let mapped = shortHant[subtitle] { return mapped }
         if subtitle.count <= 16 { return subtitle }
         if let range = subtitle.range(of: "个应用") {
             let head = String(subtitle[..<range.upperBound])
@@ -124,17 +196,26 @@ import Cocoa
     nonisolated static let englishLineBudget = 34
 
     /// 迁移过的行的短副标题（第27批）：zh 时与老路径逐字节相同；en 先查 shortEn（按目录键，
-    /// 语义身份），没有就在词边界截断——不把单词劈开。全文都在气泡与 tooltip 里。
+    /// 语义身份），没有就在词边界截断——不把单词劈开。繁体（第39批）按繁体全文查 shortHant，
+    /// 查不到就跟简体同口径按 16 字截。全文都在气泡与 tooltip 里。
     nonisolated static func line(_ subtitle: SettingsText) -> String {
-        guard WSL10n.language == .en, WSL10n.englishBundle != nil else { return line(subtitle.zh) }
-        if let mapped = shortEn[subtitle.key] { return mapped }
-        let shown = subtitle.shown
-        guard shown.count > englishLineBudget else { return shown }
-        var head = String(shown.prefix(englishLineBudget))
-        if let cut = head.lastIndex(of: " "), head.distance(from: head.startIndex, to: cut) >= englishLineBudget - 12 {
-            head = String(head[..<cut])
+        switch WSL10n.language {
+        case .en where WSL10n.englishBundle != nil:
+            if let mapped = shortEn[subtitle.key] { return mapped }
+            let shown = subtitle.shown
+            guard shown.count > englishLineBudget else { return shown }
+            var head = String(shown.prefix(englishLineBudget))
+            if let cut = head.lastIndex(of: " "), head.distance(from: head.startIndex, to: cut) >= englishLineBudget - 12 {
+                head = String(head[..<cut])
+            }
+            return head + "…"
+        case .zhHant:
+            let shown = subtitle.shown
+            if let mapped = shortHant[shown] { return mapped }
+            return shown.count <= 16 ? shown : String(shown.prefix(16))
+        default:
+            return line(subtitle.zh)
         }
-        return head + "…"
     }
 
     /// 英文短副标题表：目录键 → 一句能站住的英文短句。与中文 short 表同样的角色，

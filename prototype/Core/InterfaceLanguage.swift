@@ -1,9 +1,10 @@
-// 界面语言的选择与生效（第27批）。沿用 WSL10n 入口：这里只决定"用哪种语言"，
-// 文案查找仍在 WSL10n.text；不另造翻译系统。
+// 界面语言的选择与生效（第27批；繁体第39批）。
+// 沿用 WSL10n 入口：这里只决定"用哪种语言"，文案查找仍在 WSL10n.text；不另造翻译系统。
 //
-// 规则（验收契约 english-support-acceptance.md 第27批定案）：
-//   - 默认跟随系统：首选语言以 zh 开头（zh、zh-Hans、zh-Hant 都算）用中文，否则用英文。
-//   - 用户在设置里可覆盖成 跟随系统 / 简体中文 / English，存 UserDefaults 一个键。
+// 规则：
+//   - 默认跟随系统：首选语言按文字系统分流——zh-Hant / zh-TW / zh-HK / zh-MO 用繁体，
+//     其余 zh*（zh、zh-Hans、zh-CN…）用简体，非中文用英文。
+//   - 用户在设置里可覆盖成 跟随系统 / 简体中文 / 繁體中文 / English，存偏好一个键。
 //   - 切换立即生效：写偏好 → 设 WSL10n.language → 主线程发 didChangeNotification，
 //     由已显示的界面显式重建（DuoSettingsWindow、状态菜单等各自的观察者）。
 //
@@ -14,6 +15,7 @@ import Foundation
 enum InterfaceLanguagePreference: String, CaseIterable, Sendable {
     case system
     case zh
+    case zhHant
     case en
 
     /// 存偏好的键。没这个键（或存坏）就是跟随系统。
@@ -22,19 +24,26 @@ enum InterfaceLanguagePreference: String, CaseIterable, Sendable {
     /// 语言变了（设置里改了、或跟随系统下重新解析）。总在主线程发；订阅者是已显示的界面。
     static let didChangeNotification = Notification.Name("WindowShade.InterfaceLanguage.didChange")
 
-    /// 纯解析：偏好明确就照它；跟随系统看首选语言是不是中文，不是就用英文。
-    /// 扩展点（2026-10-12 用户定案「繁体留架构余地」）：将来加 zh-Hant 时，把下面
-    /// "zh 开头即中文"拆成按文字系统判定（zh-Hant/zh-TW/zh-HK → 繁体，其余 zh* → 简体），
-    /// WSLanguage 与设置里的语言行各加一项，目录补译文；现在不要预做。
+    /// 纯解析：偏好明确就照它；跟随系统按首选语言的文字系统分流。
     static func resolve(_ preference: InterfaceLanguagePreference,
                         systemPreferred: [String]) -> WSLanguage {
         switch preference {
         case .zh: return .zh
+        case .zhHant: return .zhHant
         case .en: return .en
         case .system:
             let first = systemPreferred.first?.lowercased() ?? ""
-            return first.hasPrefix("zh") ? .zh : .en
+            return language(forSystemTag: first)
         }
+    }
+
+    /// 系统语言标签 → 文案语言。繁体地区（台湾、香港、澳门）与带 Hant 的标签都算繁体。
+    static func language(forSystemTag tag: String) -> WSLanguage {
+        guard tag.hasPrefix("zh") else { return .en }
+        if tag.contains("-hant") || tag.contains("-tw") || tag.contains("-hk") || tag.contains("-mo") {
+            return .zhHant
+        }
+        return .zh
     }
 
     static func resolve(_ preference: InterfaceLanguagePreference) -> WSLanguage {
