@@ -502,3 +502,31 @@ build 号不变，Sparkle 不主动提示已装的 1.0.16 用户。`sign_update`
 第 5 次同版本号重发：tag v1.0.16 → `64d11a7`，包 sha256 `9676b485…`（9,767,275B），
 9 步门禁全 PASS（DR 逐字一致），appcast 重签部署，README 数字同步（ZIP 9.77 MB /
 解压 25.10 MB）。已知偏差不变：build 号 16，Sparkle 不主动提示已装用户。
+
+**第39批：繁体（台湾用语）全量适配（2026-10-14 早）**，提交 `008bdca`（代码）+ `8aee55a`（重发记录）。
+
+- **语言层**：`WSLanguage` 加 `.zhHant`；`InterfaceLanguage.language(forSystemTag:)` 按文字系统分流
+  （`zh-Hant`/`zh-TW`/`zh-HK`/`zh-MO` → 繁体，其余 `zh*` → 简体，非中文 → 英文）；设置的语言行加
+  「繁體中文」；`WSL10n` 的译文目录改成**按当前语言找**（`Localization/en.lproj` / `zh-Hant.lproj`），
+  找不到就回落简体源句（与英文同构）。
+- **文案**：2631 键全部补 `zh-Hant` 列，由仓库里的可复跑流水线生成：`tools/localize/zh-hant.py`
+  （OpenCC `s2twp` + 台湾专名表）+ `tools/localize/short-hant.py`（繁体短副标题表，键是繁体全文，
+  与 `short` 表对称）。专名表覆盖 Apple 台湾官方术语与我们的产品词（指揮中心/選單列/標題列/瀏海/
+  視窗/子母畫面/輔助使用/快速鍵/按兩下/拖移/Finder/AirDrop/鎖定畫面/權限/工作階段/手把/這台 Mac/
+  台而非臺……），写进 `docs/copy-guide.md` 新增的「台湾用词（繁体层）」一节，并说明两层词表的关系：
+  **简体表的「不要用」清单只约束简体层**（例：简体禁「巧控滑鼠」，繁体层就该用它）。
+- **校验**：`check-localizable.py` 新增 zh-Hant 规则（齐全、`%@` 一致、不得含简体专用字）；
+  `InterfaceLanguageTests` 断言 zh-Hant/zh-TW → 繁体；`LocalizationTests` 逐键走真实目录出繁体。
+  棘轮 969 → 1034（shortHant +64、「繁體中文」+1）。前置依赖：本机装了 `opencc`
+  （brew；`s2twp` 配置），脚本走 CLI，没有它就跑不了流水线。
+- **踩过的坑**：① 生成短句表的正则最初把 `tableSymbols` 整张表吞了（`[\n` 被吃进捕获组，
+  收尾锚点 `\n    ]` 因而匹配到下一张表）——已修，并在脚本里注释；② 隐私登记检查会把**注释里**
+  的 `UserDefaults` 当新调用点，注释措辞要避开。
+- **README**：新增 `README_TW.md`（由 README_CN 经同一流水线转写 + 台湾用词），三版互链。
+
+**第 6 次同版本号重发**：tag `v1.0.16` → `008bdca`，包 sha256 `20db409a…`（9,831,118B），
+9 步门禁全 PASS（DR 逐字一致），appcast 重签部署，三版 README 与官网数字同步
+（ZIP 9.83 MB / 解压 25.37 MB）。**未做**：官网的繁体页（`/tw/` 与繁体 history）——
+`site/scripts/{content,chrome,history,build}.mjs` 目前是「中文/英文」二元的（到处用 `en` 布尔），
+要加第三语言得把语言串透这几处；首页文案 148 条可照 App 的流水线转，history 那篇长文的繁体
+版需要单独过一遍。这批先发 App。
