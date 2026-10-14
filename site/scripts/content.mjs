@@ -3,6 +3,8 @@
 // and each feature answers the same question — where is the window you need?
 // Anything a first-time reader does not need to decide on belongs in the README,
 // the release notes, or the history essay — not here.
+import { toTraditional, hant } from './zh-hant.mjs';
+
 const shared = {
   download: ['下载 Mac 版', 'Download for Mac'],
   source: ['源代码', 'Source code'],
@@ -445,3 +447,12 @@ export const copy = {
 };
 
 for (const [key, [zh, en]] of Object.entries(shared)) { copy.zh[key] = zh; copy.en[key] = en; }
+
+// 繁体（第39批）：从简体文案转出，查 site/scripts/zh-hant.json（tools/localize/site-zh-hant.py 生成）。
+// 语言的路径类字段要自成一套：/tw/ 与 /tw/history/，页面里显示「简体」这个切换标签。
+copy.zhHant = toTraditional(copy.zh);
+copy.zhHant.lang = 'zh-Hant';
+copy.zhHant.path = '/tw/';
+copy.zhHant.language = '简体';
+copy.zhHant.languageHref = '/';
+copy.zhHant.storyMeta = (n) => `七章 · 四個動手實驗 · ${n} 條原始史料`;
