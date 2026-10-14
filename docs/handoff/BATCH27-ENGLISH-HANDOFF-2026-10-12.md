@@ -530,3 +530,13 @@ build 号不变，Sparkle 不主动提示已装的 1.0.16 用户。`sign_update`
 `site/scripts/{content,chrome,history,build}.mjs` 目前是「中文/英文」二元的（到处用 `en` 布尔），
 要加第三语言得把语言串透这几处；首页文案 148 条可照 App 的流水线转，history 那篇长文的繁体
 版需要单独过一遍。这批先发 App。
+
+**第40批：官网繁体页（2026-10-14）**，提交见上一条。站点原来只有中文/英文两套（脚本里到处
+是 `en` 布尔），这次把语言串透 `chrome/history/content/build` 四个模块：`LANGS` 表统管路径与
+切换标签，`/tw/` 与 `/tw/history/` 上线，hreflang 三条 + x-default，sitemap 补两条。
+繁体文案由 `tools/localize/site-zh-hant.py` 从站点全部脚本的字面量 + `content.zh` 抽出
+（465 条）走同一套 App 流水线，写成 `site/scripts/zh-hant.json`；繁体页面生成后再整页过一遍
+对照表（兜住 `launchpad.mjs` 这类模块里直接写的串），并把同一张表注入 `window.WS_TW` 供
+`history.js` 运行时用。核查：线上两页 `<html lang="zh-Hant">`、可见文案零简体残留
+（`窗口` 0 处、`視窗` 51/133 处）。**注意**：页面里 `window.WS_TW` 那个 JSON 的**键**是简体
+（对照表本来就是简→繁），扫描「是否还有简体」时要先把这个 blob 剔掉，别误报。
