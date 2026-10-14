@@ -599,3 +599,28 @@ skill-desk 说「万能入口」）。项目侧的调查记录 `docs/research/ta
   三版 README 与官网数字同步（ZIP 9.83 MB / 解压 25.37 MB），从发布 zip 重装 `/Applications`
   用已装 app 渲染核对（高階页显示「介面語言 · 跟隨系統」）。
 - 网络仍时通时断：`gh release upload` 与 `git push` 各重试过一次才成功（tag 推了 3 次）。
+
+**第45–46批：去 Apple 台湾官网逐条核实繁体用词 + 第 9、10 次同版本号重发（2026-10-14）**
+
+用户要求「不要信口开河，去 Apple 台湾官网查一次，必须地道」——于是不再依赖通用词表（taiwan.md 那套
+是通用台湾语，不等于 Apple 规范），直接查 `support.apple.com/zh-tw` 的 macOS 使用手册、GarageBand、
+APNs 部署指南等原文：
+
+- **改的**：`撤銷 → 還原`（Apple TW 的 Undo 就叫「還原」，zh-CN 才写「撤销」；GarageBand zh-tw
+  原文「編輯 > 還原 / 重做」）；`觸控板 → 觸控式軌跡板`（Apple TW 设置页名）；`恢復 → 回復`
+  （Apple TW 的 restore 用「回復」：页标题「將 iPhone 或 iPad 備份及回復到 Mac 或 iCloud」）；
+  `懸停 → 停留`（Apple TW 说「將指標移到／停留在…上方」）。
+- **核实通过、保留**：逾時、中斷連線、捲動、按兩下、點按、子母畫面、輔助使用、指揮中心、啟動台、
+  接續互通、推播、拖移、指標、圖示、鍵盤快速鍵、感測器、伺服器、音訊、執行緒、剪貼簿、帳號、登入、
+  備份，以及**右鍵**——Apple TW 自己的页标题就是「在 Mac 上使用右鍵點按」（设置项叫「輔助按鈕」）。
+- **同一词分上下文**：新增整句覆盖表 `STRING_OVERRIDES`（按简体源句查）——「撤销」在撤销授权/连线的
+  句子里是「取消」；「触控板」指游戏手把触控面仍是「觸控板」、设备名单里的 Magic Trackpad 写「巧控板」；
+  Dock 悬停行的行名用 Apple 句式「指標停在 Dock 圖示」。
+- **踩到一个真 bug**：`zh-hant.py` 的 `main()` 里内联了 `apply_terms(convert(...))`，绕过了
+  `convert_to_traditional`——整句覆盖只在我临时预览里生效，正式生成时没生效，结果**第 9 次重发的包里
+  那几条没改上**。第 46 批修掉，重发第 10 次。教训：新增机制后要验「正式入口」的输出，别只验函数预览。
+- 重发：第 9 次（`bb86af6`／sha `f42b9f7d…`）→ 第 10 次（`2e6ba13`／sha `82b6e2e7…`，9,831,132B），
+  两次都走完 9 步门禁、appcast 重签部署、README/官网数字同步，并以**已装 app 的渲染**验收
+  （视窗瀏覽页显示「指標停在 Dock 圖示」「快速鍵預設留空」）。
+- 核实结论与出处写进 `docs/copy-guide.md` 的台湾用词节（新增一表，逐条标 Apple 页面），
+  调查文档 `docs/research/taiwan-terminology-converter.md` 也补了这一轮。
