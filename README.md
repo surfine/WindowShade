@@ -97,7 +97,9 @@ The current download is **1.0.16** — tucked windows and the rest of the notch 
 
 These are not in the download yet:
 
-- **English interface** — 1.0.16 covers the whole Settings window and the silent-action sentences at the notch; menus, the window browser, privacy and the rest are still being translated. Pick the language in Settings → Advanced (follow the system / 简体中文 / English); it takes effect immediately. [Details](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
+- **Three interface languages.** Settings → Advanced → Interface language: **follow the system / 简体中文 / 繁體中文 / English**; it takes effect immediately, no restart.
+  The Traditional build follows Taiwan usage (瀏海, 捲簾條, 快速鍵, 輔助使用), with the same coverage as the English one.
+  English covers the whole Settings window and the notch sentences; a few surfaces are still being translated. [Details](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
 - **Touch ID in the notch** — expands the notch around the system fingerprint prompt to confirm a WindowShade request; it does not unlock macOS. [Details](docs/touch-id-island.md)
 - **Launchpad and new gestures** — the Home grid with the App Library (`⌃⌘L`), Magic Tiling, the scroll strip, Picture in Picture, Slide Over with a split handle, `⌥`-Tab by window, Rectangle key import, Dock click-to-hide, and more. [Launchpad](docs/launchpad.md) · [title-bar gestures](docs/gestures.md)
 - **Experimental or device-limited** — face scanning, presence locking, remote control and CarPlay have experimental and device limits; none of this claims macOS face unlock or complete CarPlay reception.
