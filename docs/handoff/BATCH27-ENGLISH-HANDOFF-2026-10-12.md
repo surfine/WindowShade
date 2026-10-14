@@ -540,3 +540,12 @@ build 号不变，Sparkle 不主动提示已装的 1.0.16 用户。`sign_update`
 `history.js` 运行时用。核查：线上两页 `<html lang="zh-Hant">`、可见文案零简体残留
 （`窗口` 0 处、`視窗` 51/133 处）。**注意**：页面里 `window.WS_TW` 那个 JSON 的**键**是简体
 （对照表本来就是简→繁），扫描「是否还有简体」时要先把这个 blob 剔掉，别误报。
+
+**第41批：调查 taiwan.md 的转换器并借鉴（2026-10-14）**，提交 `4f37e69`。
+新增 `docs/research/taiwan-terminology-converter.md`（他们的词条 schema、构建期算法、卫生纪律、
+CC BY-SA 4.0 的许可边界），并把两条机制落进我们的流水线：`SKIP:`（= 他们的
+`auto_convert: false`，词条留档但不盲替换）与 `FALSE_POSITIVES`（命中片段先摘出去再换回），
+`--audit` 增加「已确认不动」分类。第一例真实 false positive：`Apple 沒寫進文件`——
+台湾也把 documentation 叫「文件」，留档防止将来加「文件→檔案」时改坏。另借他们的
+Unicode 教训加了兼容字自检（zh-Hant 出现 U+F900–FAFF / U+2F800–2FA1F 即失败）。
+**数据没抄**（他们 CC BY-SA 4.0，我们 MIT）：只当核对清单用，译文逐字节未变。
