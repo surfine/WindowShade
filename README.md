@@ -14,7 +14,7 @@ A free, open-source window utility for Mac.
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#download)
 [![License](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**Download for Mac**](https://github.com/surfine/WindowShade/releases/latest) · [**Website**](https://windowshade.aaronlau.me/en/) · [**Intro video**](https://www.bilibili.com/video/BV1K7ag6WEdH/) (Bilibili, in Chinese) · [**Window stories**](https://windowshade.aaronlau.me/en/history/) · [简体中文](README_CN.md)
+[**Download for Mac**](https://github.com/surfine/WindowShade/releases/latest) · [**Website**](https://windowshade.aaronlau.me/en/) · [**Intro video**](https://www.bilibili.com/video/BV1K7ag6WEdH/) (Bilibili, in Chinese) · [**Window stories**](https://windowshade.aaronlau.me/en/history/) · [简体中文](README_CN.md) · [繁體中文](README_TW.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-en-dark.png">

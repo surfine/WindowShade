@@ -20,6 +20,10 @@ import sys
 CALL_RE = re.compile(r'WSL10n\.(?:text|setting)\(\s*"([^"\\]+)"\s*,\s*zh:\s*("(?:[^"\\\n]|\\.)*")?')
 SILENT_RE = re.compile(r'^\s*"([A-Za-z0-9_.]+)":\s*"((?:[^"\\\n]|\\.)*)"', re.M)
 HAN_RE = re.compile(r'[\u4e00-\u9fff]')
+# 常见的「只有简体才这么写」的字。台湾译文里出现任何一个，就是没转换或手改漏了。
+# 只收字形不同的常用字，不收两岸同形的字（那会误报）。
+SIMPLIFIED_ONLY_CHARS = "设认语关无发时门务软网动这为于会过还后没边块让换录拟读写较级处应对开长点标题栏屏隐营销"
+SIMPLIFIED_ONLY_RE = re.compile(f"[{SIMPLIFIED_ONLY_CHARS}]")
 
 
 def swift_files(root):
@@ -42,15 +46,21 @@ def main():
     for key, entry in strings.items():
         loc = entry.get("localizations", {})
         values = {}
-        for lang in ("zh-Hans", "en"):
+        for lang in ("zh-Hans", "zh-Hant", "en"):
             value = loc.get(lang, {}).get("stringUnit", {}).get("value", "")
             if not value:
                 failures.append(f"{key}: 缺 {lang} 译文")
             values[lang] = value
-        if values["zh-Hans"].count("%@") != values["en"].count("%@"):
-            failures.append(f"{key}: zh-Hans 和 en 的 %@ 个数不同")
+        for lang in ("zh-Hant", "en"):
+            if values["zh-Hans"].count("%@") != values[lang].count("%@"):
+                failures.append(f"{key}: zh-Hans 和 {lang} 的 %@ 个数不同")
         if HAN_RE.search(values["en"]):
             failures.append(f"{key}: en 译文里有汉字（漏译或抄了中文）")
+        # 繁体防线：台湾译文里不该再出现只在简体里用的字（挑一批高频简体字兜底；
+        # 目录由 tools/localize/zh-hant.py 生成，这里防的是手改与将来新文案漏转）。
+        stray = SIMPLIFIED_ONLY_RE.search(values["zh-Hant"])
+        if stray:
+            failures.append(f"{key}: zh-Hant 里有简体字 {stray.group(0)!r}（zh-Hant: {values['zh-Hant']!r}）")
         zh[key] = values["zh-Hans"]
 
     used = set()

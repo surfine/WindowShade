@@ -14,7 +14,7 @@
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下载)
 [![许可](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**下载 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官网**](https://windowshade.aaronlau.me/) · [**介绍视频**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**窗口往事**](https://windowshade.aaronlau.me/history/) · [English](README.md)
+[**下载 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官网**](https://windowshade.aaronlau.me/) · [**介绍视频**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**窗口往事**](https://windowshade.aaronlau.me/history/) · [繁體中文](README_TW.md) · [English](README.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-dark.png">
