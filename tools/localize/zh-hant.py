@@ -97,6 +97,11 @@ TAIWAN_TERMS = [
     #    「右鍵點按」Apple TW 页面标题自己就这么写（设置项叫「輔助按鈕」），所以 右鍵 保留。
     ("撤銷", "還原"),
     ("觸控板", "觸控式軌跡板"),
+    # restore = 「回復」（Apple TW：「將 iPhone 或 iPad 備份及回復到 Mac 或 iCloud」；
+    # zh-CN 才写「恢复」）。undo 已经是「還原」，两者在 Apple TW 里分工不同。
+    ("恢復", "回復"),
+    # hover = 「停留」（Apple TW：「將指標移到／停留在…上方」；「悬停」是大陆说法）。
+    ("懸停", "停留"),
     ("魔法平鋪", "魔法並排"),
     ("捲簾條", "捲簾條"),            # 确认写法（OpenCC 已对）
     # ④ 2026-10-14 复核（对照 taiwan.md 的 2057 条词对做覆盖核对，见
@@ -144,6 +149,8 @@ STRING_OVERRIDES = {
     "手柄的按键、摇杆、触控板、陀螺仪（控制这台 Mac 开着时；游戏在前台时不读）": "手把的按鍵、搖桿、觸控板、陀螺儀（控制這台 Mac 開著時；遊戲在前台時不讀）",
     # 设备名单里的 Magic Trackpad 用 Apple 台湾的产品名「巧控板」，不是「觸控式軌跡板」。
     "妙控鼠标、键盘、触控板、耳机": "巧控滑鼠、鍵盤、巧控板、耳機",
+    # 行名用 Apple TW 的「指標停在 Dock 圖示」句式，比「Dock 圖示停留檢視視窗」自然。
+    "Dock 悬停查看窗口": "指標停在 Dock 圖示",
 }
 
 # 盲替换的保护清单：出现这些片段时整段绕开，不做词表替换。
@@ -235,7 +242,7 @@ def main():
     keys = [k for k, entry in strings.items() if "zh-Hans" in entry.get("localizations", {})]
     sources = [strings[k]["localizations"]["zh-Hans"]["stringUnit"]["value"] for k in keys]
 
-    converted = [apply_terms(t) for t in convert(sources)]
+    converted = convert_to_traditional(sources)
 
     if args.audit:
         hits = {}
