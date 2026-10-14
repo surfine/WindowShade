@@ -141,6 +141,13 @@ IT）、ThunderKO C2T（約 500 對）、1997《大陸用語檢索手冊》（�
 | 来源与许可 | 三个语料库逐条记来源，CC BY-SA 4.0 | 用词取自 Apple 台湾官方写法，自建 |
 | 校验 | 生成物 DO NOT EDIT、pre-commit 检测、Unicode 正規化 | `check-localizable.py` 挡简体字、脚本可复跑 |
 
+## 已内化成技能
+
+这套做法（字形与词级分开、自己的词表 + 盲替换保护、拿参考词表核对而非照抄、校验挡简体字与
+CJK 兼容字）已内化为可迁移的技能：`~/.agents/skills/zh-hant-localization/`
+（`SKILL.md` + `scripts/zh-hant.py` 生成骨架 + `scripts/coverage-audit.py` 覆盖核对）。
+skill-desk 的分派里也加了这条路由；别的项目要出正体中文时直接用它，不必重新摸索。
+
 ## 来源
 
 - 转换器页：<https://taiwan.md/terminology/converter/?dir=cn2tw>

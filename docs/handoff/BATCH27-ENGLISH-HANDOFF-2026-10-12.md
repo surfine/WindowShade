@@ -574,3 +574,9 @@ Unicode 教训加了兼容字自检（zh-Hant 出现 U+F900–FAFF / U+2F800–2
 **网络提示**：本轮 GitHub 的 git/https 时通时断（`curl` 到 github.com 200 但 `git push`
 超时两次）；处理办法是 `GIT_HTTP_LOW_SPEED_TIME=60` 重试，门禁的「上一版包」改用本地已核
 哈希的资产副本。以后再遇到，先别怀疑签名或包，先重试网络。
+
+**第43批：把繁体方法内化成技能（2026-10-14）**。新增 `~/.agents/skills/zh-hant-localization/`
+（SKILL.md + `scripts/zh-hant.py` 生成骨架 + `scripts/coverage-audit.py` 覆盖核对，均在真数据上
+验过），并按 skill-desk 的维护惯例登记进 catalog 与名册、同步了它的 LANES 分派（要用时对
+skill-desk 说「万能入口」）。项目侧的调查记录 `docs/research/taiwan-terminology-converter.md`
+末尾加了指向技能的说明。以后别的项目要出正体中文，直接用它，不必重新摸索。
