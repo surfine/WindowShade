@@ -2664,7 +2664,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有匹配的視窗"
+            "value" : "沒有對應的視窗"
           }
         }
       }
@@ -4182,7 +4182,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "操作超時，可能還在進行"
+            "value" : "操作逾時，可能還在進行"
           }
         }
       }
@@ -6988,7 +6988,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "麥克風斷開了，草稿保留"
+            "value" : "麥克風中斷連線了，草稿保留"
           }
         }
       }
@@ -7977,7 +7977,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只發送已採用的草稿。執行時補進當前這一輪，下一輪的模型和檔位不會改動這一輪。"
+            "value" : "只傳送已採用的草稿。執行時補進當前這一輪，下一輪的模型和檔位不會改動這一輪。"
           }
         }
       }
@@ -8575,7 +8575,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "遙控器斷開了"
+            "value" : "遙控器中斷連線了"
           }
         }
       }
@@ -9518,7 +9518,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "待發送草稿"
+            "value" : "待傳送草稿"
           }
         }
       }
@@ -15084,7 +15084,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Home、End 在 Mac 上只滾動頁面"
+            "value" : "Home、End 在 Mac 上只捲動頁面"
           }
         }
       }
@@ -15521,7 +15521,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "垃圾桶就是回收站"
+            "value" : "垃圾桶就是資源回收筒"
           }
         }
       }
@@ -20604,7 +20604,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有匹配的"
+            "value" : "沒有對應的"
           }
         }
       }
@@ -23824,7 +23824,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "賬號狀態變化，已斷開。"
+            "value" : "帳號狀態變化，已中斷連線。"
           }
         }
       }
@@ -23847,7 +23847,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "助手返回的資訊不完整，已斷開。"
+            "value" : "助手返回的資訊不完整，已中斷連線。"
           }
         }
       }
@@ -23916,7 +23916,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已退出登入"
+            "value" : "已登出"
           }
         }
       }
@@ -23939,7 +23939,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已結束登入流程；重新連線後可核對賬號狀態。"
+            "value" : "已結束登入流程；重新連線後可核對帳號狀態。"
           }
         }
       }
@@ -23962,7 +23962,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "登入或設定檢查失敗，已斷開。"
+            "value" : "登入或設定檢查失敗，已中斷連線。"
           }
         }
       }
@@ -24008,7 +24008,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "退出登入結果未知；本地連線已關閉。"
+            "value" : "登出結果未知；本地連線已關閉。"
           }
         }
       }
@@ -24031,7 +24031,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "助手訊息未通過校驗，已斷開。"
+            "value" : "助手訊息未通過校驗，已中斷連線。"
           }
         }
       }
@@ -24054,7 +24054,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這次操作需要額外權限，已拒絕。當前入口僅供只讀查詢。"
+            "value" : "這次操作需要額外權限，已拒絕。當前入口僅供唯讀查詢。"
           }
         }
       }
@@ -24123,7 +24123,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "專案或設定已改變，已斷開。"
+            "value" : "專案或設定已改變，已中斷連線。"
           }
         }
       }
@@ -24192,7 +24192,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "助手設定與當前權限不符，已斷開。"
+            "value" : "助手設定與當前權限不符，已中斷連線。"
           }
         }
       }
@@ -24238,7 +24238,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "停止結果未知，已斷開連線。"
+            "value" : "停止結果未知，已中斷連線連線。"
           }
         }
       }
@@ -24284,7 +24284,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "請求超時，結果未知；已斷開。"
+            "value" : "請求逾時，結果未知；已中斷連線。"
           }
         }
       }
@@ -24606,7 +24606,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已斷開連線"
+            "value" : "已中斷連線連線"
           }
         }
       }
@@ -24629,7 +24629,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已斷開"
+            "value" : "已中斷連線"
           }
         }
       }
@@ -24652,7 +24652,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在斷開"
+            "value" : "正在中斷連線"
           }
         }
       }
@@ -24721,7 +24721,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "正在退出登入"
+            "value" : "正在登出"
           }
         }
       }
@@ -25135,7 +25135,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在列表裡選擇模型，也能本次啟用手把。不會發送文字。"
+            "value" : "在列表裡選擇模型，也能本次啟用手把。不會傳送文字。"
           }
         }
       }
@@ -25250,7 +25250,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "執行所選 Codex；查詢可能傳送專案內容並消耗我的賬號額度"
+            "value" : "執行所選 Codex；查詢可能傳送專案內容並消耗我的帳號額度"
           }
         }
       }
@@ -25273,7 +25273,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "僅在點選啟動後執行。登入和工作階段檔案由 Codex 存在 WindowShade 的獨立目錄中，不修改你原有的 ~/.codex。只讀不等於離線或只允許讀取所選目錄。"
+            "value" : "僅在點選啟動後執行。登入和工作階段檔案由 Codex 存在 WindowShade 的獨立目錄中，不修改你原有的 ~/.codex。唯讀不等於離線或只允許讀取所選目錄。"
           }
         }
       }
@@ -25503,7 +25503,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "退出登入"
+            "value" : "登出"
           }
         }
       }
@@ -25595,7 +25595,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開啟指揮頁。只改草稿和模型，不會發送或批准命令。"
+            "value" : "開啟指揮頁。只改草稿和模型，不會傳送或批准命令。"
           }
         }
       }
@@ -25664,7 +25664,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "傳送按鈕才會提交。中文組合輸入未完成時不會發送；回車只換行。"
+            "value" : "傳送按鈕才會提交。中文組合輸入未完成時不會傳送；Return只換行。"
           }
         }
       }
@@ -25687,7 +25687,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "斷開助手"
+            "value" : "中斷連線助手"
           }
         }
       }
@@ -27642,7 +27642,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你的裝置名合起來，能看出你有哪些耳機和音箱，有的還帶著你的名字；看不出你在聽什麼。"
+            "value" : "你的裝置名合起來，能看出你有哪些耳機和揚聲器，有的還帶著你的名字；看不出你在聽什麼。"
           }
         }
       }
@@ -27711,7 +27711,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在正在播放的大卡上，選聲音從哪裡出來，並按圖示認出現在用的是耳機、音箱還是這台 Mac"
+            "value" : "在正在播放的大卡上，選聲音從哪裡出來，並按圖示認出現在用的是耳機、揚聲器還是這台 Mac"
           }
         }
       }
@@ -27987,7 +27987,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這台 Mac 的電源變化時（系統推送，不再定時讀）；配件連上、斷開時；已連著的配件每 2 分鐘讀一次；AirPods 成為聲音輸出時讀一次，之後最多 10 分鐘一次"
+            "value" : "這台 Mac 的電源變化時（系統推播，不再定時讀）；配件連上、中斷連線時；已連著的配件每 2 分鐘讀一次；AirPods 成為聲音輸出時讀一次，之後最多 10 分鐘一次"
           }
         }
       }
@@ -28194,7 +28194,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隨身裝置的連線和斷開，合上鎖定畫面狀態，能看出你什麼時候離開座位、什麼時候回來。"
+            "value" : "隨身裝置的連線和中斷連線，合上鎖定畫面狀態，能看出你什麼時候離開座位、什麼時候回來。"
           }
         }
       }
@@ -28286,7 +28286,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "配對裝置的標識、連上或斷開、訊號強弱"
+            "value" : "配對裝置的標識、連上或中斷連線、訊號強弱"
           }
         }
       }
@@ -28516,7 +28516,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "設定裡的「日程」開關，預設關；歡迎視窗第三步點「允許」、再在系統彈窗裡同意後才讀"
+            "value" : "設定裡的「日程」開關，預設關；歡迎視窗第三步點「允許」、再在系統彈出視窗裡同意後才讀"
           }
         }
       }
@@ -28562,7 +28562,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "攝像頭畫面和鎖定畫面狀態合起來，能看出你在不在座位上。"
+            "value" : "網路攝影機畫面和鎖定畫面狀態合起來，能看出你在不在座位上。"
           }
         }
       }
@@ -28608,7 +28608,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "攝像頭"
+            "value" : "網路攝影機"
           }
         }
       }
@@ -28654,7 +28654,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "攝像頭拍到的畫面裡，臉朝哪邊、眼睛睜沒睜開、有沒有別人正對螢幕"
+            "value" : "網路攝影機拍到的畫面裡，臉朝哪邊、眼睛睜沒睜開、有沒有別人正對螢幕"
           }
         }
       }
@@ -28700,7 +28700,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "“有人在看時收起私人視窗”，以及系統設定裡的攝像頭授權"
+            "value" : "“有人在看時收起私人視窗”，以及系統設定裡的網路攝影機授權"
           }
         }
       }
@@ -29505,7 +29505,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只在這台 Mac 裡傳遞；預設不在區域網裡監聽"
+            "value" : "只在這台 Mac 裡傳遞；預設不在區域網路裡監聽"
           }
         }
       }
@@ -29574,7 +29574,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "同一賬戶裡對方的身份、專案和工作階段編號、請求摘要"
+            "value" : "同一帳戶裡對方的身份、專案和工作階段編號、請求摘要"
           }
         }
       }
@@ -30057,7 +30057,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "可能經過本地網路或系統的連續互通"
+            "value" : "可能經過本地網路或系統的接續互通"
           }
         }
       }
@@ -30770,7 +30770,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "人臉特徵和攝像頭畫面合起來，能認出這是不是你。"
+            "value" : "人臉特徵和網路攝影機畫面合起來，能認出這是不是你。"
           }
         }
       }
@@ -32012,7 +32012,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "僅在開發者開關開啟、靜音操作頁開著時讀；頁面關掉、耳機斷開、鎖定畫面就停；系統有新姿態才回調，沒有定時器"
+            "value" : "僅在開發者開關開啟、靜音操作頁開著時讀；頁面關掉、耳機中斷連線、鎖定畫面就停；系統有新姿態才回調，沒有定時器"
           }
         }
       }
@@ -32932,7 +32932,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "平滑滾動或滑鼠滾動方向開啟之後"
+            "value" : "平滑捲動或滑鼠捲動方向開啟之後"
           }
         }
       }
@@ -33024,7 +33024,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按你的設定改滾動"
+            "value" : "按你的設定改捲動"
           }
         }
       }
@@ -33047,7 +33047,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "滾輪和滑鼠按鍵（開了平滑滾動或改滾動方向才攔截；不存）"
+            "value" : "滾輪和滑鼠按鍵（開了平滑捲動或改捲動方向才攔截；不存）"
           }
         }
       }
@@ -33070,7 +33070,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按設定改滾動"
+            "value" : "按設定改捲動"
           }
         }
       }
@@ -33093,7 +33093,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "平滑滾動、滑鼠滾動方向"
+            "value" : "平滑捲動、滑鼠捲動方向"
           }
         }
       }
@@ -33415,7 +33415,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按了哪個鍵、有沒有同時按修飾鍵，以及點選和滾動的位置；不讀你打的字"
+            "value" : "按了哪個鍵、有沒有同時按修飾鍵，以及點選和捲動的位置；不讀你打的字"
           }
         }
       }
@@ -34588,7 +34588,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "播放變化的通知一來就讀；通知漏掉時有一個定時兜底；離開就鎖鎖定畫面前、解開後各看一次在不在放；只有推送流壞了才退回問音樂和 Spotify，那時才可能請你允許“自動化”"
+            "value" : "播放變化的通知一來就讀；通知漏掉時有一個定時兜底；離開就鎖鎖定畫面前、解開後各看一次在不在放；只有推播流壞了才退回問音樂和 Spotify，那時才可能請你允許“自動化”"
           }
         }
       }
@@ -35347,7 +35347,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隨身裝置的連線與斷開合起來，能看出你什麼時候帶著它離開這台 Mac。"
+            "value" : "隨身裝置的連線與中斷連線合起來，能看出你什麼時候帶著它離開這台 Mac。"
           }
         }
       }
@@ -36290,7 +36290,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只在這個區域網裡；不上傳"
+            "value" : "只在這個區域網路裡；不上傳"
           }
         }
       }
@@ -36313,7 +36313,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在區域網裡出現的這台 Mac"
+            "value" : "在區域網路裡出現的這台 Mac"
           }
         }
       }
@@ -36359,7 +36359,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "不讀東西；把這台 Mac 的名字宣告給同一個區域網裡的裝置"
+            "value" : "不讀東西；把這台 Mac 的名字宣告給同一個區域網路裡的裝置"
           }
         }
       }
@@ -36658,7 +36658,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只在這個區域網裡；不上傳"
+            "value" : "只在這個區域網路裡；不上傳"
           }
         }
       }
@@ -36727,7 +36727,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "同一個區域網裡 iPhone 上的遙控器發來的連線狀態和按鍵、觸控指令；不讀別的裝置"
+            "value" : "同一個區域網路裡 iPhone 上的遙控器發來的連線狀態和按鍵、觸控指令；不讀別的裝置"
           }
         }
       }
@@ -36773,7 +36773,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "遙控模式；關掉就停止宣告、斷開並停止監聽"
+            "value" : "遙控模式；關掉就停止宣告、中斷連線並停止監聽"
           }
         }
       }
@@ -37348,7 +37348,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "功能需要時讀；隱私權這一頁只讀已有的值"
+            "value" : "功能需要時讀；隱私權這一頁唯讀已有的值"
           }
         }
       }
@@ -37900,7 +37900,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "啟動時，以及切換 App、App 啟動或退出、鎖定畫面或解鎖、換桌面時各讀一次，不會定時去讀；專注模式要你在這裡開啟開關、再在系統彈窗裡同意後才讀"
+            "value" : "啟動時，以及切換 App、App 啟動或退出、鎖定畫面或解鎖、換桌面時各讀一次，不會定時去讀；專注模式要你在這裡開啟開關、再在系統彈出視窗裡同意後才讀"
           }
         }
       }
@@ -37923,7 +37923,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "是否在共享螢幕和是否開著專注模式合起來，能看出你大概正在開會或演示。"
+            "value" : "是否在共享螢幕和是否開著專注模式合起來，能看出你大概正在開會或示範。"
           }
         }
       }
@@ -38015,7 +38015,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "螢幕有沒有正在被共享或錄製，系統專注模式開沒開；只讀“有”或“沒有”，不讀共享給了誰、專注模式的名字"
+            "value" : "螢幕有沒有正在被共享或錄製，系統專注模式開沒開；唯讀“有”或“沒有”，不讀共享給了誰、專注模式的名字"
           }
         }
       }
@@ -38061,7 +38061,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "專注模式：展開這一行，開啟「專注模式時更安靜」並在系統彈窗裡同意才讀，預設關；共享狀態沒有單獨的開關，它只會讓瀏海更安靜"
+            "value" : "專注模式：展開這一行，開啟「專注模式時更安靜」並在系統彈出視窗裡同意才讀，預設關；共享狀態沒有單獨的開關，它只會讓瀏海更安靜"
           }
         }
       }
@@ -38383,7 +38383,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只讀你明確建立的、受系統保護的憑據"
+            "value" : "唯讀你明確建立的、受系統保護的憑據"
           }
         }
       }
@@ -39809,7 +39809,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已居中"
+            "value" : "已置中"
           }
         }
       }
@@ -42799,7 +42799,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在視窗右鍵選單裡選“排布”：左半、右半、四角、居中、鋪滿螢幕、移到另一塊螢幕。可以先看效果，移好之後還能撤銷。"
+            "value" : "在視窗右鍵選單裡選“排布”：左半、右半、四角、置中、鋪滿螢幕、移到另一塊螢幕。可以先看效果，移好之後還能撤銷。"
           }
         }
       }
@@ -44685,7 +44685,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "滾動和按鍵預設不改。"
+            "value" : "捲動和按鍵預設不改。"
           }
         }
       }
@@ -44731,7 +44731,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一行一個應用標識。列在這裡的，滾動保持原樣。"
+            "value" : "一行一個應用標識。列在這裡的，捲動保持原樣。"
           }
         }
       }
@@ -44846,7 +44846,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "按住 ⌥ 時，一條滾動只走一行。要和平滑滾動或滑鼠滾動方向一起開。"
+            "value" : "按住 ⌥ 時，一條捲動只走一行。要和平滑捲動或滑鼠捲動方向一起開。"
           }
         }
       }
@@ -44961,7 +44961,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在標題列上用中鍵點一下收起或展開；往上拖也是收起，往下拖展開。預設關，開啟才裝鉤子。"
+            "value" : "在標題列上用中鍵點一下收起或展開；往上拖也是收起，往下拖展開。預設關，開啟才裝掛勾。"
           }
         }
       }
@@ -45053,7 +45053,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "只准備改滑鼠的滾動。還不能確認事件來自哪隻滑鼠時，先不改。"
+            "value" : "只准備改滑鼠的捲動。還不能確認事件來自哪隻滑鼠時，先不改。"
           }
         }
       }
@@ -45076,7 +45076,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "滑鼠滾動方向"
+            "value" : "滑鼠捲動方向"
           }
         }
       }
@@ -45145,7 +45145,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "側鍵 4、5 準備用作這個 App 的後退和前進。要和平滑滾動或滑鼠滾動方向一起開。"
+            "value" : "側鍵 4、5 準備用作這個 App 的後退和前進。要和平滑捲動或滑鼠捲動方向一起開。"
           }
         }
       }
@@ -45214,7 +45214,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開啟之後，滾輪的一格會變成一段連續滾動。現在還不能確認事件來自哪隻滑鼠，所以先不改。"
+            "value" : "開啟之後，滾輪的一格會變成一段連續捲動。現在還不能確認事件來自哪隻滑鼠，所以先不改。"
           }
         }
       }
@@ -45283,7 +45283,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "平滑滾動"
+            "value" : "平滑捲動"
           }
         }
       }
@@ -45352,7 +45352,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "先開啟平滑滾動或滾動方向"
+            "value" : "先開啟平滑捲動或捲動方向"
           }
         }
       }
@@ -45375,7 +45375,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "關著，不改滾動"
+            "value" : "關著，不改捲動"
           }
         }
       }
@@ -45398,7 +45398,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "還沒確認滾動來自哪隻"
+            "value" : "還沒確認捲動來自哪隻"
           }
         }
       }
@@ -45421,7 +45421,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "系統停掉了，滾動保持原樣"
+            "value" : "系統停掉了，捲動保持原樣"
           }
         }
       }
@@ -45536,7 +45536,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這一項先存著。觸控板的滾動現在還不能改。"
+            "value" : "這一項先存著。觸控板的捲動現在還不能改。"
           }
         }
       }
@@ -45559,7 +45559,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "觸控板滾動方向"
+            "value" : "觸控板捲動方向"
           }
         }
       }
@@ -45582,7 +45582,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "觸控板的滾動先不改"
+            "value" : "觸控板的捲動先不改"
           }
         }
       }
@@ -46824,7 +46824,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@的詳情"
+            "value" : "%@的詳細資訊"
           }
         }
       }
@@ -48020,7 +48020,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "開啟後，這台 Mac 出現在 iPhone 上的遙控器的列表裡。關掉就不再出現，連著的也會斷開。"
+            "value" : "開啟後，這台 Mac 出現在 iPhone 上的遙控器的列表裡。關掉就不再出現，連著的也會中斷連線。"
           }
         }
       }
@@ -49032,7 +49032,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ws:// 開頭並帶令牌；不填時全螢幕只顯示示意畫面"
+            "value" : "ws:// 開頭並帶權杖；不填時全螢幕只顯示示意畫面"
           }
         }
       }
@@ -49055,7 +49055,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "放得下就居中"
+            "value" : "放得下就置中"
           }
         }
       }
@@ -49101,7 +49101,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "居中"
+            "value" : "置中"
           }
         }
       }
@@ -49147,7 +49147,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "放不下才居中"
+            "value" : "放不下才置中"
           }
         }
       }
@@ -49193,7 +49193,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "貼邊：挪得最少。居中：永遠在正中"
+            "value" : "貼邊：挪得最少。置中：永遠在正中"
           }
         }
       }
@@ -50734,7 +50734,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "普通話"
+            "value" : "國語"
           }
         }
       }
@@ -51102,7 +51102,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "本地選擇專案和 Codex，登入後進行只讀查詢。開啟頁面不會啟動程式。"
+            "value" : "本地選擇專案和 Codex，登入後進行唯讀查詢。開啟頁面不會啟動程式。"
           }
         }
       }
@@ -51148,7 +51148,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "看當前工作階段、模型和草稿。不會發送，也不會連線遙控器。"
+            "value" : "看當前工作階段、模型和草稿。不會傳送，也不會連線遙控器。"
           }
         }
       }
@@ -51355,7 +51355,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "平滑滾動"
+            "value" : "平滑捲動"
           }
         }
       }
@@ -51470,7 +51470,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在瀏海里看清再確認。採用草稿不會發送。"
+            "value" : "在瀏海里看清再確認。採用草稿不會傳送。"
           }
         }
       }
@@ -51608,7 +51608,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在標題列上兩指滑動、滾動滾輪或拖著甩一下：往上收起，往下鋪滿"
+            "value" : "在標題列上兩指滑動、捲動滾輪或拖著甩一下：往上收起，往下鋪滿"
           }
         }
       }
@@ -51907,7 +51907,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "居中"
+            "value" : "置中"
           }
         }
       }
@@ -52827,7 +52827,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "瀏海里選分鐘，回車開始；預設不佔用任何快速鍵"
+            "value" : "瀏海里選分鐘，Return開始；預設不佔用任何快速鍵"
           }
         }
       }
@@ -53977,7 +53977,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "活動詳情"
+            "value" : "活動詳細資訊"
           }
         }
       }
@@ -56093,7 +56093,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "演示排布"
+            "value" : "示範排布"
           }
         }
       }
@@ -56116,7 +56116,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "演示這一螢幕"
+            "value" : "示範這一螢幕"
           }
         }
       }
@@ -56415,7 +56415,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "賬戶活動"
+            "value" : "帳戶活動"
           }
         }
       }
@@ -56438,7 +56438,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "選賬戶"
+            "value" : "選帳戶"
           }
         }
       }
@@ -56484,7 +56484,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "賬戶額度"
+            "value" : "帳戶額度"
           }
         }
       }
@@ -56622,7 +56622,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "居中"
+            "value" : "置中"
           }
         }
       }
@@ -58002,7 +58002,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "超時 10 分鐘後自己結束"
+            "value" : "逾時 10 分鐘後自己結束"
           }
         }
       }
@@ -58025,7 +58025,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "到時間響一次系統提示音 · 超時 10 分鐘後自己結束"
+            "value" : "到時間響一次系統提示音 · 逾時 10 分鐘後自己結束"
           }
         }
       }
@@ -58117,7 +58117,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ 分 · ↑ ↓ 調，回車開始"
+            "value" : "%@ 分 · ↑ ↓ 調，Return開始"
           }
         }
       }
@@ -58255,7 +58255,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "計時器，時間到，已超時 %@"
+            "value" : "計時器，時間到，已逾時 %@"
           }
         }
       }
@@ -59566,7 +59566,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這台 Mac 上沒法在選單裡更新 WindowShade。到下載頁下載新版，拖進“應用程式”資料夾替換原來那一份。"
+            "value" : "這台 Mac 上沒法在選單裡更新 WindowShade。到下載頁下載新版，拖進“應用程式”資料夾取代原來那一份。"
           }
         }
       }
