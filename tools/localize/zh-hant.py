@@ -26,6 +26,12 @@ CATALOG = os.path.join(ROOT, "prototype", "Resources", "Localizable.xcstrings")
 # 分三类：① Apple 台湾官方界面术语（OpenCC 不认识或给的是大陆式译法）；
 # ② Mac 通用部件的台湾叫法；③ 我们自己的产品词在台湾的写法。
 # 顺序无关（按 needle 长度从长到短替换），但同一处多次命中时以更长的为准。
+#
+# 带 `SKIP:` 注释的条目不参与盲替换——对应 taiwan.md 转换器的 `auto_convert: false`：
+# 「这个说法该换成台湾用词」和「能不能对全文做字符串替换」是两件事，中国侧那个词
+# 若在台湾另有正当用法，替换会改坏正确文字（他们的例子：挺胸→蠻胸、力挺→力蠻）。
+# 我们的文案是自家写的，风险低，但单字／通用词的全局替换同样危险，一律标 SKIP，
+# 要用时人工决定。方法出处见 docs/research/taiwan-terminology-converter.md。
 TAIWAN_TERMS = [
     # ① Apple 台湾官方术语
     ("排程中心", "指揮中心"),        # Mission Control
@@ -69,6 +75,8 @@ TAIWAN_TERMS = [
     ("隔空播放", "AirPlay"),
     ("負一屏", "主畫面最左邊那一頁"),
     ("分屏", "分割畫面"),            # Split View 的台湾叫法
+    # SKIP：单字「屏」的全局替换风险最高——「屏蔽」「屏東」（地名）「屏風」都不该动。
+    # 现在的文案里没有这些词，所以这条仍然生效；文案一旦出现，先加进 FALSE_POSITIVES。
     ("屏", "螢幕"),                  # 其余单字「屏」都是"屏幕"义（半屏/这块屏/锁屏已先处理）
     # ② Mac 部件
     ("窗口", "視窗"),
@@ -87,12 +95,32 @@ TAIWAN_TERMS = [
     ("捲簾條", "捲簾條"),            # 确认写法（OpenCC 已对）
 ]
 
+# 盲替换的保护清单：出现这些片段时整段绕开，不做词表替换。
+# 对应 taiwan.md 的 `false_positives`——「含 china 字串但其实是台湾合法写法」。
+# 我们目前为空：文案是自家写的，未出现这类词；新增文案时按需补。
+FALSE_POSITIVES = [
+    # 已确认的一例：台湾也把 documentation 叫「文件」——我们的
+    # privacy.group.用了系统没公开的方法的.subtitle 就是「Apple 沒寫進文件」。
+    # 词表里没有「文件 → 檔案」这条规则（OpenCC 只把「文档」给成「文件」），
+    # 这里留档，防止将来有人加这条规则时改坏它。
+    "沒寫進文件",
+    # "屏東",   # 地名（含「屏」）
+    # "屏蔽",   # 动词
+    # "質量",   # 物理量，台湾也用「質量」
+]
+
 # 审计用：出现即说明这条还没换成台湾说法（排除我们有意保留的写法）。
+# 后一半取自 taiwan.md 的常见对照（当核对清单用，没有搬他们的数据）。
 AUDIT_WORDS = [
     "窗口", "選單欄", "默認", "設置", "快捷鍵", "單擊", "雙擊", "全屏",
     "畫中畫", "妙控", "隱私(?!權)", "輔助功能", "鼠標", "軟件", "網絡", "信息",
     "文件夾", "打印", "磁盤", "視頻", "屏幕", "優盤",
+    "打車", "博客", "博主", "質量", "算法", "數組", "文件(?!架)",
 ]
+
+
+# 标了 SKIP 的词（对应 taiwan.md 的 auto_convert: false）：留在表里做文档，不参与替换。
+SKIPPED: set[str] = set()
 
 
 def convert(texts):
@@ -116,9 +144,23 @@ def convert(texts):
 
 
 def apply_terms(text):
+    """词表替换：长度降序（长的先换，避免被短的先截走）；命中的词写成 SKIP 就跳过。
+
+    带 `SKIP:` 的条目按 taiwan.md 的 `auto_convert: false` 语义处理：仍留在表里当文档，
+    但不参与替换。FALSE_POSITIVES 里的片段先摘出去，换完再放回来。
+    """
+    protected = []
+    for index, fragment in enumerate(FALSE_POSITIVES):
+        marker = f"\u0001{index}\u0001"
+        if fragment in text:
+            text = text.replace(fragment, marker)
+            protected.append((marker, fragment))
     for source, target in sorted(TAIWAN_TERMS, key=lambda pair: -len(pair[0])):
-        if source != target:
-            text = text.replace(source, target)
+        if source == target or source in SKIPPED:
+            continue
+        text = text.replace(source, target)
+    for marker, fragment in protected:
+        text = text.replace(marker, fragment)
     return text
 
 
@@ -141,7 +183,12 @@ def main():
 
     if args.audit:
         hits = {}
+        known = 0
         for key, text in zip(keys, converted):
+            # 命中 FALSE_POSITIVES 的算「已确认不动」，不报成待查。
+            if any(fragment in text for fragment in FALSE_POSITIVES):
+                known += 1
+                continue
             for word in AUDIT_WORDS:
                 if re.search(word, text):
                     hits.setdefault(word, []).append((key, text))
@@ -149,7 +196,8 @@ def main():
             print(f"{word}: {len(items)} 处")
             for key, text in items[:3]:
                 print(f"    {key}: {text}")
-        print(f"\n合计 {len(keys)} 条，含待查用词的 {len({k for v in hits.values() for k, _ in v})} 条")
+        todo = {k for v in hits.values() for k, _ in v}
+        print(f"\n合计 {len(keys)} 条；{known} 条命中保护清单（已确认不动）；待查 {len(todo)} 条")
         return
 
     for key, value in zip(keys, converted):

@@ -24,6 +24,9 @@ HAN_RE = re.compile(r'[\u4e00-\u9fff]')
 # 只收字形不同的常用字，不收两岸同形的字（那会误报）。
 SIMPLIFIED_ONLY_CHARS = "设认语关无发时门务软网动这为于会过还后没边块让换录拟读写较级处应对开长点标题栏屏隐营销"
 SIMPLIFIED_ONLY_RE = re.compile(f"[{SIMPLIFIED_ONLY_CHARS}]")
+# CJK 兼容表意字（U+F900–FAFF、U+2F800–2FA1F）：看着和标准字一样，码位不同，
+# 会让 diff 与编辑静默失效（taiwan.md 踩过：U+F906 的「句」）。一律不许出现在译文里。
+COMPATIBILITY_IDEOGRAPH_RE = re.compile(r"[\uF900-\uFAFF\U0002F800-\U0002FA1F]")
 
 
 def swift_files(root):
@@ -61,6 +64,9 @@ def main():
         stray = SIMPLIFIED_ONLY_RE.search(values["zh-Hant"])
         if stray:
             failures.append(f"{key}: zh-Hant 里有简体字 {stray.group(0)!r}（zh-Hant: {values['zh-Hant']!r}）")
+        compat = COMPATIBILITY_IDEOGRAPH_RE.search(values["zh-Hant"])
+        if compat:
+            failures.append(f"{key}: zh-Hant 里有 CJK 兼容字 U+{ord(compat.group(0)):04X}（应为标准码位）")
         zh[key] = values["zh-Hans"]
 
     used = set()
