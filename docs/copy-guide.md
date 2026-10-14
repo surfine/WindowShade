@@ -113,6 +113,12 @@
 
 生成方式：`tools/localize/zh-hant.py` 把目录里每条简体源句走 OpenCC `s2twp`（简体→繁体 +
 台湾用词），再套脚本里的台湾专名表，写进 `Localizable.xcstrings` 的 `zh-Hant` 列。
+
+**盲替换的防护**（借鉴 taiwan.md 转换器的做法，见 [taiwan-terminology-converter.md](../research/taiwan-terminology-converter.md)）：
+词条表里可以写 `SKIP:` 把一条规则留档但不参与替换，对应他们的 `auto_convert: false`
+（「中国侧那个词在台湾另有正当用法」时盲替换会改坏正确文字）；`FALSE_POSITIVES`
+列已确认不该动的片段（现在有一条：`沒寫進文件`——台湾也把 documentation 叫「文件」）。
+`--audit` 会把命中保护清单的算「已确认不动」，只报真正的待查项。
 新文案入库后重跑一次即可；`tests/check-localizable.py` 会挡住「zh-Hant 里还有简体字」的漏网。
 短副标题表由 `tools/localize/short-hant.py` 生成（键是繁体全文，与 `short` 表对称）。
 
