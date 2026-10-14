@@ -143,6 +143,16 @@
 | session | **工作階段** | 會話 |
 | game controller | **手把** | 手柄 |
 | 巧控滑鼠 / 巧控板 / 巧控鍵盤 | 照 Apple 台湾 | OpenCC 出「妙控」 |
+| scroll / timeout / disconnect / center | **捲動 / 逾時 / 中斷連線 / 置中** | 滾動 / 超時 / 斷開 / 居中 |
+| read-only / send / replace | **唯讀 / 傳送 / 取代** | 只讀 / 發送 / 替換 |
+| account | **帳戶 / 帳號**（「帳」不是「賬」） | 賬戶 / 賬號 |
+| sign out / dialog | **登出 / 彈出視窗** | 退出登入 / 彈窗 |
+| camera / speaker / recycle bin | **網路攝影機 / 揚聲器 / 資源回收筒** | 攝像頭 / 音箱 / 回收站 |
+| Continuity / push / token | **接續互通 / 推播 / 權杖** | 連續互通 / 推送 / 令牌 |
+| details / match / demo | **詳細資訊 / 對應 / 示範** | 詳情 / 匹配 / 演示 |
+| LAN / Mandarin / hook | **區域網路 / 國語 / 掛勾** | 區域網 / 普通話 / 鉤子 |
+| Enter 键 | **Return**（键名用英文，与「按 Esc」一致） | 回車 |
+| 有意保留（台湾也这么写，或 Apple 这么写） | **恢復 / 解鎖 / 藍牙 / 日誌 / 重置 / 標籤頁 / 進度條 / 一鍵 / 桌面** | — |
 | configuration | **設定** | 配置 |
 | 外設 / 反饋 / 認證 | **周邊裝置 / 回饋 / 驗證** | 同简体 |
 

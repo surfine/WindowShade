@@ -14,7 +14,7 @@
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下載)
 [![許可](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**下載 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官網**](https://windowshade.aaronlau.me/) · [**介紹影片**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**視窗往事**](https://windowshade.aaronlau.me/history/) · [简体中文](README_CN.md) · [English](README.md)
+[**下載 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官網**](https://windowshade.aaronlau.me/) · [**介紹影片**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**視窗往事**](https://windowshade.aaronlau.me/history/) · [繁體中文](README_TW.md) · [简体中文](README_CN.md) · [English](README.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-dark.png">
@@ -56,7 +56,7 @@
 
 **帶到每張桌面、置頂。** 按 `⌃⌘G` 把當前視窗帶到每張桌面：視窗留在原處，別的桌面右上角出現它的捲簾條；停在上面看一眼（視窗被隱藏或最小化時改顯示帶提示的截圖），按一下畫面就回到它，再按一次放下。按 `⌃⌘P` 把那扇視窗置頂，你切到別的視窗，它也不會被蓋住；選單列裡能看到所有置頂的視窗，也能一次全部取消。
 
-**視窗瀏覽。** 把指標停在 Dock 裡的應用圖示上，這個應用開著的視窗會一起列出來，每扇都帶畫面和標題。面板只用來看：按下卡片上的按鈕，才會動那扇視窗；選中一扇按空格開啟大圖預覽，視窗不會被切到前面；左右、四角、居中、填滿或移到別的螢幕，都先畫出視窗要去的位置，你同意了才移動，移好了還能撤銷。也可以從選單列的“選擇視窗…”開啟，或者按你自己設的快速鍵——Dock 入口預設關閉。面板是臨時的：不替換系統 Dock，也不接管 Command-Tab。細節見 [視窗瀏覽說明](docs/window-browser.md)。
+**視窗瀏覽。** 把指標停在 Dock 裡的應用圖示上，這個應用開著的視窗會一起列出來，每扇都帶畫面和標題。面板只用來看：按下卡片上的按鈕，才會動那扇視窗；選中一扇按空格開啟大圖預覽，視窗不會被切到前面；左右、四角、置中、填滿或移到別的螢幕，都先畫出視窗要去的位置，你同意了才移動，移好了還能撤銷。也可以從選單列的“選擇視窗…”開啟，或者按你自己設的快速鍵——Dock 入口預設關閉。面板是臨時的：不取代系統 Dock，也不接管 Command-Tab。細節見 [視窗瀏覽說明](docs/window-browser.md)。
 
 **彩蛋：合上蓋子，桌面留在原處。**
 
@@ -98,7 +98,7 @@ WindowShade 要兩項權限。**輔助使用**：找到、移動、恢復視窗�
 下面這些還沒進下載版：
 
 - **介面語言** —— 設定 → 高階裡的介面語言可選**跟隨系統 / 簡體中文 / 繁體中文 / English**，切換立即生效，不用重啟；繁體用台灣用語（瀏海、捲簾條、快速鍵、輔助使用）。
-- **英文介面** —— 1.0.16 覆蓋整個設定視窗和瀏海上的靜音短句；選單、視窗瀏覽、隱私權等還在逐批遷移。[說明](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
+- **英文介面** —— 1.0.16 覆蓋整個設定視窗和瀏海上的靜音短句；選單、視窗瀏覽、隱私權等還在逐批遷移。設定 → 高階裡選語言（跟隨系統/簡體中文/English），切換立即生效，不用重啟。[說明](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
 - **瀏海 Touch ID** —— 選單裡選“驗證 Touch ID…”，瀏海展開顯示系統指紋提示，確認本次 WindowShade 請求；它不解鎖 macOS。[說明](docs/touch-id-island.md)
 - **啟動台與新動作** —— 按 `⌃⌘L` 開啟主螢幕（末頁是 App 資料庫）、魔法並排、卷軸、子母畫面、帶分割畫面把手的側拉、`⌥`+Tab 按視窗切換、一鍵換上 Rectangle 快速鍵、點 Dock 讓開後隱藏，等等。[啟動台](docs/launchpad.md) · [標題列手勢](docs/gestures.md)
 - **實驗或有裝置限制** —— 刷臉、離開就鎖、遙控和 CarPlay 仍有實驗與裝置限制，不能據此聲稱支援系統刷臉解鎖或完整 CarPlay 接收。
