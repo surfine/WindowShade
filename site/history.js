@@ -1,5 +1,8 @@
 (() => {
- const en = document.documentElement.lang === 'en';
+ const lang = document.documentElement.lang;
+ const en = lang === 'en';
+ // 繁体（第39批）：文案表由构建时注入 window.WS_TW（src 与 site/scripts/zh-hant.json 同源）。
+ const tw = lang === 'zh-Hant' ? (window.WS_TW || {}) : null;
  const pixelSurfaces=[...document.querySelectorAll('.titlebar-archive,.retro-panel,.gesture-window,.platinum-window')];
  function alignEraPixels() {
   for (const surface of pixelSurfaces) {
@@ -12,7 +15,7 @@
  window.addEventListener('resize',alignEraPixels);
  const pixelResize=new ResizeObserver(alignEraPixels);
  pixelSurfaces.forEach(surface=>pixelResize.observe(surface));
- const t = (zh, eng) => en ? eng : zh;
+ const t = (zh, eng) => en ? eng : (tw ? (tw[zh] || zh) : zh);
  const $ = id => document.getElementById(id);
  // Touch browsers do not reliably send dblclick (iOS Safari least of all): count two quick taps
  // in the same spot ourselves. Mouse users keep the native dblclick.

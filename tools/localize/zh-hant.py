@@ -46,6 +46,7 @@ TAIWAN_TERMS = [
     ("塊屏", "塊螢幕"),              # 「这块屏」= this display
     ("內建屏", "內建螢幕"),
     ("會話", "工作階段"),            # session
+    ("主屏幕", "主畫面"),            # home screen（台湾叫主畫面）
     ("外設", "周邊裝置"),            # peripheral
     ("許可權", "權限"),              # OpenCC 的错译：permission → 權限
     ("訪達", "Finder"),              # Finder 在台湾不译
@@ -55,6 +56,7 @@ TAIWAN_TERMS = [
     ("手柄", "手把"),                # game controller（台湾叫手把）
     ("搖桿", "搖桿"),                # 台湾也用「搖桿」，保留
     ("在Finder中顯示", "在 Finder 中顯示"),
+    ("映象", "鏡像"),                # mirror（OpenCC 给了「映象」，那是 image）
     ("反饋", "回饋"),
     ("認證", "驗證"),                # authentication
     ("應用程序", "應用程式"),

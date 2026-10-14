@@ -5,7 +5,8 @@ import { copy } from './content.mjs';
 import { launchpadSection } from './launchpad.mjs';
 import { historyPage, historyIndex } from './history.mjs';
 import { privacyMain } from './privacy.mjs';
-import { siteHeader, siteFooter, shareMeta, shareFallback, repo, release } from './chrome.mjs';
+import { siteHeader, siteFooter, shareMeta, shareFallback, repo, release, LANGS, langInfo } from './chrome.mjs';
+import { translateHtml, twScript } from './zh-hant.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dist = path.join(root, 'dist');
@@ -40,22 +41,23 @@ const actionIcons = [
   '<svg viewBox="0 0 16 16"><circle cx="3.5" cy="8" r=".9"/><circle cx="8" cy="8" r=".9"/><circle cx="12.5" cy="8" r=".9"/></svg>',
 ];
 function page(c) {
-  const history = c.lang === 'en' ? '/en/history/' : '/history/';
+  const info = langInfo(c.lang);
+  const history = info.history;
   const en = c.lang === 'en';
-  const book = historyIndex(en);
+  const book = historyIndex(c.lang);
   return `<!doctype html>
 <html lang="${c.lang}">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>${c.title}</title>
-${shareMeta({ origin, path: c.path, title: c.title, description: c.description, image: en ? '/media/og-en.jpg' : '/media/og.jpg', imageAlt: c.shareAlt, en })}
-<link rel="alternate" hreflang="zh-CN" href="${origin}/"><link rel="alternate" hreflang="en" href="${origin}/en/"><link rel="alternate" hreflang="x-default" href="${origin}/">
+${shareMeta({ origin, path: c.path, title: c.title, description: c.description, image: en ? '/media/og-en.jpg' : '/media/og.jpg', imageAlt: c.shareAlt, lang: c.lang })}
+<link rel="alternate" hreflang="zh-CN" href="${origin}/"><link rel="alternate" hreflang="zh-Hant" href="${origin}/tw/"><link rel="alternate" hreflang="en" href="${origin}/en/"><link rel="alternate" hreflang="x-default" href="${origin}/">
 <script src="/motion.js" defer></script><script src="/app.js" defer></script><script src="/teach.js" defer></script><script src="/island.js" defer></script><script src="/launchpad.js" defer></script><link rel="stylesheet" href="/launchpad.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/history.css"><link rel="stylesheet" href="/era.css">
 </head>
 <body class="home">
 ${shareFallback}<a class="skip" href="#main">${c.skip}</a>
-${siteHeader(en, 'home')}
+${siteHeader(c.lang, 'home')}
 <main id="main">
 
 <section class="hero wrap">
@@ -68,7 +70,7 @@ ${siteHeader(en, 'home')}
 </div>
 <div class="stage-foot"><p class="stage-hint">${c.stageHint}</p><button class="chip" id="fold" type="button" aria-controls="reference-body" aria-expanded="true" data-fold="${c.fold}" data-unfold="${c.unfold}">${c.fold}</button></div>
 <p class="sr-only" id="demo-status" aria-live="polite" data-expanded="${c.expandedStatus}" data-folded="${c.foldedStatus}"></p>
-<noscript><p class="caption">${en ? 'Enable JavaScript to try the interactive illustration.' : '开启 JavaScript 即可体验交互示意。'}</p></noscript>
+<noscript><p class="caption">${en ? 'Enable JavaScript to try the interactive illustration.' : c.lang === 'zh-Hant' ? '開啟 JavaScript 即可體驗互動示意。' : '开启 JavaScript 即可体验交互示意。'}</p></noscript>
 </div>
 </section>
 
@@ -129,27 +131,32 @@ ${launchpadSection(c.lang)}
 <section class="trust wrap section" id="privacy"><div class="trust-copy"><h2>${c.trustTitle}</h2><p class="lead">${c.trustBody}</p><a class="text-link" href="${repo}/blob/main/WindowShade.md">${c.researchLink}${arrow('out')}</a></div><div class="questions" id="questions"><h3>${c.faqTitle}</h3><div class="faq-list">${c.faqs.map(([q, a]) => `<details><summary>${q}<span class="plus" aria-hidden="true"></span></summary><p>${a}</p></details>`).join('')}</div></div></section>
 
 <section class="closing wrap section"><img src="/media/icon-256.png" width="88" height="88" alt="" loading="lazy"><h2>${c.endTitle}</h2>${download(c, ' large')}<p>${c.endBody}</p></section>
-</main>${siteFooter(en, 'home')}
+</main>${siteFooter(c.lang)}
 </body></html>`;
 }
 for (const c of Object.values(copy)) {
-  const target = path.join(dist, c.path === '/' ? '' : 'en');
+  const target = path.join(dist, c.path.replace(/^\/|\/$/g, ''));
   await mkdir(target, { recursive: true });
-  await writeFile(path.join(target, 'index.html'), page(c));
+  // 繁体页面：整页过一遍对照表（兜住别的模块里写的简体串），并注入给客户端脚本的同一张表。
+  const html = c.lang === 'zh-Hant' ? translateHtml(page(c)) : page(c);
+  await writeFile(path.join(target, 'index.html'), html);
 }
-for (const en of [false, true]) {
-  const target = path.join(dist, en ? 'en/history' : 'history');
+for (const { history } of LANGS) {
+  const target = path.join(dist, history.replace(/^\/|\/$/g, ''));
   await mkdir(target, { recursive: true });
-  await writeFile(path.join(target, 'index.html'), historyPage(en, origin));
+  const code = history.startsWith('/tw/') ? 'zh-Hant' : history.startsWith('/en/') ? 'en' : 'zh-CN';
+  let html = historyPage(langInfo(code).code, origin);
+  if (code === 'zh-Hant') html = translateHtml(html).replace('<link rel="stylesheet" href="/style.css">', `${twScript}<link rel="stylesheet" href="/style.css">`);
+  await writeFile(path.join(target, 'index.html'), html);
 }
 await mkdir(path.join(dist, 'privacy'), { recursive: true });
 await writeFile(path.join(dist, 'privacy/index.html'), `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>权限与隐私 · WindowShade</title>
 ${shareMeta({ origin, path: '/privacy/', title: '权限与隐私 · WindowShade', description: 'WindowShade 读到的每一样都列在这里。', image: '/media/og.jpg', imageAlt: copy.zh.shareAlt, en: false })}
 <script src="/motion.js" defer></script><link rel="stylesheet" href="/style.css"></head>
-<body>${shareFallback}${siteHeader(false, 'privacy')}${privacyMain()}${siteFooter(false, 'privacy')}</body></html>`);
+<body>${shareFallback}${siteHeader('zh-CN', 'privacy')}${privacyMain()}${siteFooter('zh-CN')}</body></html>`);
 await writeFile(path.join(dist, '404.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WindowShade · 404</title><link rel="stylesheet" href="/style.css"><main class="closing wrap section"><img src="/media/icon.png" width="72" height="72" alt=""><h1>这一页，暂时不在这里。</h1><p>This page has wandered off.</p><a class="button primary" href="/">回到首页 / Home</a></main></html>`);
 await writeFile(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);
-await writeFile(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/en/</loc></url><url><loc>${origin}/history/</loc></url><url><loc>${origin}/en/history/</loc></url><url><loc>${origin}/privacy/</loc></url></urlset>`);
+await writeFile(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/en/</loc></url><url><loc>${origin}/tw/</loc></url><url><loc>${origin}/history/</loc></url><url><loc>${origin}/en/history/</loc></url><url><loc>${origin}/tw/history/</loc></url><url><loc>${origin}/privacy/</loc></url></urlset>`);
 await writeFile(path.join(dist, '_headers'), `/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  X-Frame-Options: DENY\n  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src https://infinitemac.org; object-src 'none'; base-uri 'self'; frame-ancestors 'none'\n/media/*\n  Cache-Control: public, max-age=86400\n/appcast.xml\n  Cache-Control: public, max-age=300\n`);
-console.log(`Built Chinese and English pages in ${dist}`);
+console.log(`Built Chinese, Traditional and English pages in ${dist}`);
