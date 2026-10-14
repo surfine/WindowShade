@@ -153,6 +153,25 @@
 | LAN / Mandarin / hook | **區域網路 / 國語 / 掛勾** | 區域網 / 普通話 / 鉤子 |
 | Enter 键 | **Return**（键名用英文，与「按 Esc」一致） | 回車 |
 | 有意保留（台湾也这么写，或 Apple 这么写） | **恢復 / 解鎖 / 藍牙 / 日誌 / 重置 / 標籤頁 / 進度條 / 一鍵 / 桌面** | — |
+
+**2026-10-14 对照 Apple 台湾官网（support.apple.com/zh-tw）逐条核实**（不再凭印象）：
+
+| 概念 | Apple 台湾原文 | 出处 |
+| --- | --- | --- |
+| Undo / Redo | **還原 / 重做**（zh-CN 才叫「撤销」） | GarageBand zh-tw：編輯 >「還原」/「重做」 |
+| trackpad | **觸控式軌跡板**（配件名另叫「巧控板」） | 「在 Mac 上更改「觸控式軌跡板」設定」 |
+| click / double-click / scroll | **點按 / 按兩下 / 捲動**（「自然捲動」「捲動與縮放」） | 同上 |
+| 右键 | **右鍵點按**（设置项叫「輔助按鈕」）——所以「右鍵」保留 | 「在 Mac 上使用右鍵點按」 |
+| timeout / disconnect | **逾時 / 中斷連線** | Exchange 逾時错误页、Directory Utility 连线设定 |
+| Picture in Picture | **子母畫面** | 「在 iPhone 上使用「子母畫面」進行多工處理」 |
+| Accessibility / Mission Control / Launchpad | **輔助使用 / 指揮中心 / 啟動台** | macOS 使用手册各页 |
+| Continuity / keyboard shortcut | **接續互通 / 鍵盤快速鍵** | MacBook 技巧页、macOS 使用手册 |
+| push notification | **推播** | APNs 部署指南 zh-tw |
+| drag / pointer / icon | **拖移 / 指標 / 圖示**（「藉由拖移視窗」「指標控制」） | 指挥中心页、輔助使用「指標控制」 |
+
+**同一词分上下文**（词表做不到，走整句覆盖 `STRING_OVERRIDES`）：「撤销」在撤销动作里是
+**還原**，在撤销授权/连线的句子里是**取消**；「触控板」指 Mac 的是**觸控式軌跡板**，
+指游戏手把触控面仍是**觸控板**，设备名单里的 Magic Trackpad 写**巧控板**。
 | configuration | **設定** | 配置 |
 | 外設 / 反饋 / 認證 | **周邊裝置 / 回饋 / 驗證** | 同简体 |
 

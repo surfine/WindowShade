@@ -2871,7 +2871,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷上次排布"
+            "value" : "還原上次排布"
           }
         }
       }
@@ -4113,7 +4113,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "沒有可撤銷的排布"
+            "value" : "沒有可還原的排布"
           }
         }
       }
@@ -4596,7 +4596,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷後的位置與記錄不一致"
+            "value" : "還原後的位置與記錄不一致"
           }
         }
       }
@@ -4619,7 +4619,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "系統拒絕了撤銷"
+            "value" : "系統拒絕了還原"
           }
         }
       }
@@ -4642,7 +4642,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "視窗已被移動，撤銷不再適用"
+            "value" : "視窗已被移動，還原不再適用"
           }
         }
       }
@@ -4665,7 +4665,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷後無法確認視窗狀態"
+            "value" : "還原後無法確認視窗狀態"
           }
         }
       }
@@ -4803,7 +4803,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已撤銷上次排布"
+            "value" : "已還原上次排布"
           }
         }
       }
@@ -4826,7 +4826,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已%@排布，可撤銷"
+            "value" : "已%@排布，可還原"
           }
         }
       }
@@ -11588,7 +11588,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "，可以撤銷"
+            "value" : "，可以還原"
           }
         }
       }
@@ -14739,7 +14739,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷"
+            "value" : "還原"
           }
         }
       }
@@ -18902,7 +18902,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷"
+            "value" : "還原"
           }
         }
       }
@@ -26814,7 +26814,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "倒數時碰一下鍵盤或觸控板就不鎖"
+            "value" : "倒數時碰一下鍵盤或觸控式軌跡板就不鎖"
           }
         }
       }
@@ -28125,7 +28125,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "巧控滑鼠、鍵盤、觸控板、耳機"
+            "value" : "巧控滑鼠、鍵盤、觸控式軌跡板、耳機"
           }
         }
       }
@@ -29459,7 +29459,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你明確繫結之後；鎖定畫面、睡眠、撤銷都會關掉"
+            "value" : "你明確繫結之後；鎖定畫面、睡眠、還原都會關掉"
           }
         }
       }
@@ -30172,7 +30172,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "選擇來源、撤銷連線"
+            "value" : "選擇來源、還原連線"
           }
         }
       }
@@ -31782,7 +31782,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手把的編號、方向鍵和按鈕、觸控板輸入，以及扳機的阻力回饋"
+            "value" : "手把的編號、方向鍵和按鈕、觸控式軌跡板輸入，以及扳機的阻力回饋"
           }
         }
       }
@@ -32196,7 +32196,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "你開啟時儲存並應用，撤銷時還原差異"
+            "value" : "你開啟時儲存並應用，還原時還原差異"
           }
         }
       }
@@ -32679,7 +32679,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手把的按鍵、搖桿、觸控板、陀螺儀（控制這台 Mac 開著時；遊戲在前台時不讀）"
+            "value" : "手把的按鍵、搖桿、觸控式軌跡板、陀螺儀（控制這台 Mac 開著時；遊戲在前台時不讀）"
           }
         }
       }
@@ -32771,7 +32771,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "手指位置和輕點次數合起來，能看出你什麼時候在用觸控板、怎麼用。"
+            "value" : "手指位置和輕點次數合起來，能看出你什麼時候在用觸控式軌跡板、怎麼用。"
           }
         }
       }
@@ -32817,7 +32817,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "觸控板上的手指"
+            "value" : "觸控式軌跡板上的手指"
           }
         }
       }
@@ -35301,7 +35301,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "遙控模式；設定裡的「移除」撤銷這一台"
+            "value" : "遙控模式；設定裡的「移除」還原這一台"
           }
         }
       }
@@ -35761,7 +35761,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "觸控板和滑鼠觸點"
+            "value" : "觸控式軌跡板和滑鼠觸點"
           }
         }
       }
@@ -42201,7 +42201,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已撤銷"
+            "value" : "已還原"
           }
         }
       }
@@ -42776,7 +42776,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "排布與撤銷"
+            "value" : "排布與還原"
           }
         }
       }
@@ -42799,7 +42799,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在視窗右鍵選單裡選“排布”：左半、右半、四角、置中、鋪滿螢幕、移到另一塊螢幕。可以先看效果，移好之後還能撤銷。"
+            "value" : "在視窗右鍵選單裡選“排布”：左半、右半、四角、置中、鋪滿螢幕、移到另一塊螢幕。可以先看效果，移好之後還能還原。"
           }
         }
       }
@@ -45329,7 +45329,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "像觸控板"
+            "value" : "像觸控式軌跡板"
           }
         }
       }
@@ -45536,7 +45536,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "這一項先存著。觸控板的捲動現在還不能改。"
+            "value" : "這一項先存著。觸控式軌跡板的捲動現在還不能改。"
           }
         }
       }
@@ -45559,7 +45559,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "觸控板捲動方向"
+            "value" : "觸控式軌跡板捲動方向"
           }
         }
       }
@@ -45582,7 +45582,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "觸控板的捲動先不改"
+            "value" : "觸控式軌跡板的捲動先不改"
           }
         }
       }
@@ -48572,7 +48572,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "滑鼠與觸控板"
+            "value" : "滑鼠與觸控式軌跡板"
           }
         }
       }
@@ -52666,7 +52666,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷上次排布"
+            "value" : "還原上次排布"
           }
         }
       }
@@ -57151,7 +57151,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "撤銷"
+            "value" : "還原"
           }
         }
       }
@@ -60210,7 +60210,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 Mac 上，選單要兩指點按，和 iPad 接觸控板時一樣。卡住時瀏海會說。"
+            "value" : "在 Mac 上，選單要兩指點按，和 iPad 接觸控式軌跡板時一樣。卡住時瀏海會說。"
           }
         }
       }
