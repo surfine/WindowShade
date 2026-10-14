@@ -14,7 +14,8 @@
 
 按 Aaron 9/28 点名的领域打（收起本体、窗口浏览、盒盖动画、启动台、标题栏手势、iPadOS 27 风格的甩一下、刘海、看一眼、侧拉，
 加上 iPadOS 27 风格的分屏和从 Rectangle / Raycast 换过来）。“最强的别家”一栏取这一格里做得最好的那一家，
-各家功能清单与出处见 [竞品调研：DockDoor / DockMate / Swish / WindowMizer / Alcove](competitors.md) 和 [Wins](competitive-analysis.md)。
+各家功能清单与出处见 [竞品调研：DockDoor / DockMate / Swish / WindowMizer / Alcove](competitors.md) 和 [Wins](competitive-analysis.md)；
+机制层与可借的做法见 [竞品深挖](competitive-deep-dive.md)。
 2026-10-05：刘海的「最强的别家」从 NotchNook 改为 Alcove。尺子换成岛怎么变形之后重打为 88（主要都有；签名构建上的 notch / home 重跑还没做，不到 90）；旧的 96 不再沿用。
 “真机”一栏只写签名构建上跑过的探针，单元测试不算在里面。
 
