@@ -12531,7 +12531,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "拖分割畫面把手"
+            "value" : "拖分割顯示把手"
           }
         }
       }
@@ -50987,7 +50987,7 @@
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "分割畫面把手"
+            "value" : "分割顯示把手"
           }
         }
       }
