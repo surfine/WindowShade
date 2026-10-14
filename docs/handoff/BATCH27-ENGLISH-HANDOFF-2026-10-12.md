@@ -580,3 +580,22 @@ Unicode 教训加了兼容字自检（zh-Hant 出现 U+F900–FAFF / U+2F800–2
 验过），并按 skill-desk 的维护惯例登记进 catalog 与名册、同步了它的 LANES 分派（要用时对
 skill-desk 说「万能入口」）。项目侧的调查记录 `docs/research/taiwan-terminology-converter.md`
 末尾加了指向技能的说明。以后别的项目要出正体中文，直接用它，不必重新摸索。
+
+**第44批：门面与第 8 次同版本号发布（2026-10-14）**
+
+- **三版 README**：界面语言一条改写成「跟随系统 / 简体中文 / 繁體中文 / English」四档，
+  繁体那档写明按台湾用语、覆盖面和英文一致（README.md、README_CN.md、README_TW.md 同步）。
+- **官网**：facts 列表加一项「简体、繁體与英文界面」（三版各自出对应写法，繁体由对照表自动出
+  「簡體、繁體與英文介面」）。
+- **GitHub 仓库首页**：description 补上三种界面语言；topics 加 `notch` / `taiwan` /
+  `traditional-chinese`；发布说明改成「补英文 → 打磨设置面板 → 加正體中文」的时间线，
+  并写明繁体按台湾用语、核对过 taiwan.md 的两千多条词对。
+- **关键一步：main 快进到发布提交**。此前 GitHub 首页显示的是 main 上的旧 README，
+  而发布包是从工作分支构建的（tag 也指在那里）——首页与制品脱节。本轮确认
+  `origin/main` 与工作分支 **0 分叉**（main 落后 20 个提交），按发布纪律「标签=源码=包」
+  把 main 快进到 `494094b`，首页三语 README 随之生效。
+- **第 8 次同版本号重发**：tag `v1.0.16` → `494094b`，包 sha256 `f40db7ee…`（9,831,122B），
+  9 步门禁全 PASS（DR 逐字一致），appcast 重签并部署（线上清单逐字节一致），
+  三版 README 与官网数字同步（ZIP 9.83 MB / 解压 25.37 MB），从发布 zip 重装 `/Applications`
+  用已装 app 渲染核对（高階页显示「介面語言 · 跟隨系統」）。
+- 网络仍时通时断：`gh release upload` 与 `git push` 各重试过一次才成功（tag 推了 3 次）。
