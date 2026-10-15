@@ -7317,6 +7317,48 @@
    "symbol": "AXUIElementCopyAttributeValue",
    "source": "return AXUIElementCopyAttributeValue(element, name as CFString, &ref) == .success ? ref : nil",
    "signal": "window-ax"
+  },
+  {
+   "path": "prototype/App/AudioLevelTap.swift",
+   "line": 31,
+   "symbol": "TCCAccessPreflight",
+   "source": "guard let raw = symbol(\"TCCAccessPreflight\") else { return .unavailable }",
+   "signal": "music-levels"
+  },
+  {
+   "path": "prototype/App/AudioLevelTap.swift",
+   "line": 42,
+   "symbol": "TCCAccessRequest",
+   "source": "guard let raw = symbol(\"TCCAccessRequest\") else { done(false); return }",
+   "signal": "music-levels"
+  },
+  {
+   "path": "prototype/App/DeviceAuthorizationKey.swift",
+   "line": 130,
+   "symbol": "stateHash",
+   "source": "let raw: Data? = context.domainState.biometry.stateHash",
+   "signal": "authorization-key"
+  },
+  {
+   "path": "prototype/App/Preferences.swift",
+   "line": 834,
+   "symbol": "SMAppService",
+   "source": "SMAppService.mainApp.status == .enabled",
+   "signal": "login-item"
+  },
+  {
+   "path": "prototype/Effects/DuoController.swift",
+   "line": 554,
+   "symbol": "SCShareableContent",
+   "source": "if let own = try? await SCShareableContent.currentProcess {",
+   "signal": "window-image"
+  },
+  {
+   "path": "prototype/ScreenCaptureBridge.swift",
+   "line": 7,
+   "symbol": "SCShareableContent",
+   "source": "try await SCShareableContent.current",
+   "signal": "window-image"
   }
  ],
  "groups": [
