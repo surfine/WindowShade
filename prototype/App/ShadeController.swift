@@ -223,6 +223,15 @@ extension AppDelegate {
             stalledAtEntry ? win : refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
         }
         prepareBudgeted(win)
+        // 规格 R9 的发现：不能最小化的窗口、它的 App 还有别的可见窗口、SIP 全开——藏它的每条路都走不通
+        // （隐藏整个 App 会连别的窗口一起藏；私有停车与调透明度被 SIP 静默忽略；辅助功能移到屏外会被系统拉回；
+        // 最小化不可能）。开动画之前就告诉用户，不再先播动画再回滚。
+        if entryPID != 0, !stalledAtEntry, foldCannotHideWindow(win, pid: entryPID) {
+            quietNotice(WSL10n.text("notice.shade.cannotRoll", zh: "这个窗口不能收起"), kind: .problem,
+                        log: "shade: refuse id=\(id) pid=\(entryPID): cannot minimize, app has other visible windows, SIP blocks private moves")
+            completeFold(success: false)
+            return
+        }
         // 缩略图有自己的收起动画（截图缩进缩略图，见 Thumbnail.swift），不再播卷帘动画；
         // 手势跟手中已经开始的那一段照旧交给它收尾。
         let thumbnailFold = (options?.forcedAppearanceMode ?? appearanceMode) == .thumbnail
