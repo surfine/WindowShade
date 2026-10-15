@@ -190,14 +190,29 @@ func mirrorRoundCorners(_ image: CGImage) -> CGImage? {
                               bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
     ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
 
-    var origAlpha = [UInt8](repeating: 0, count: w * h)        // 先快照原始 alpha，避免边改边读
-    for y in 0..<h { for x in 0..<w { origAlpha[y * w + x] = buf[y * bpr + x * 4 + 3] } }
-
-    for y in 0..<h {
+    // 规格 H1：只有「镜像行不是全不透明」的行才可能被改（镜像处 alpha 255 时 min 不变），
+    // 实际只有上下两端带圆角缺口的几行。先找出这些行，只快照、只处理它们；结果与逐像素全扫逐字相同
+    // （tests/run-mirror-round-corners-tests.sh 拿旧实现对照）。
+    let opaqueRow: [Bool] = buf.withUnsafeBufferPointer { px in
+        (0..<h).map { y in
+            var x = 0, base = y * bpr + 3
+            while x < w { if px[base + x * 4] != 255 { return false }; x += 1 }
+            return true
+        }
+    }
+    let rows = (0..<h).filter { !opaqueRow[h - 1 - $0] }
+    guard !rows.isEmpty else { return ctx.makeImage() }
+    var origAlpha = [Int: [UInt8]]()                           // 先快照这些行的原始 alpha，避免边改边读
+    for y in Set(rows.map { h - 1 - $0 }) {
+        origAlpha[y] = (0..<w).map { buf[y * bpr + $0 * 4 + 3] }
+    }
+    for y in rows {
         let my = h - 1 - y
+        let mirror = origAlpha[my]!
+        let own = origAlpha[y] ?? (0..<w).map { buf[y * bpr + $0 * 4 + 3] }
         for x in 0..<w {
-            let aSelf = origAlpha[y * w + x]
-            let aMirror = origAlpha[my * w + x]
+            let aSelf = own[x]
+            let aMirror = mirror[x]
             if aMirror < aSelf {                               // 镜像处更透明 → 把本像素也裁掉相应程度
                 let i = y * bpr + x * 4
                 let f = Float(aMirror) / Float(aSelf)          // 预乘 RGBA 同比缩放

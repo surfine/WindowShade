@@ -4,6 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/preview-renderer-bounds-tests
 swiftc -O -swift-version 6 -parse-as-library \
-  prototype/Capture/PreviewRenderer.swift tests/PreviewRendererBoundsTests.swift \
+  prototype/Capture/PreviewRenderer.swift tests/PreviewRendererStubs.swift tests/PreviewRendererBoundsTests.swift \
   -o .build/preview-renderer-bounds-tests/run
 .build/preview-renderer-bounds-tests/run
