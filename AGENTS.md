@@ -38,6 +38,7 @@
 
 ## 其它
 
+- 全部文档按「什么时候读」分区的索引见 [`docs/README.md`](docs/README.md)。
 - 面向开发者的构建、签名、发布流程见 [`DEVELOPMENT.md`](DEVELOPMENT.md)。
 - 面向用户的说明见 [`README_CN.md`](README_CN.md) / [`README.md`](README.md)。
 
