@@ -7310,6 +7310,13 @@
    "symbol": "AXUIElementCopyAttributeValue",
    "source": "guard AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &ref) == .success,",
    "signal": "window-ax"
+  },
+  {
+   "path": "prototype/App/FinderColumnsProbe.swift",
+   "line": 21,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "return AXUIElementCopyAttributeValue(element, name as CFString, &ref) == .success ? ref : nil",
+   "signal": "window-ax"
   }
  ],
  "groups": [
