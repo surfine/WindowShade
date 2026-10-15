@@ -30,7 +30,7 @@ final class PeripheralBatterySource: @unchecked Sendable {
   private var port: IONotificationPortRef?
   private var iterators: [io_iterator_t] = []
   private var services: [UInt64: (service: io_object_t, identity: DeviceIdentity)] = [:]
-  private var timer: DispatchSourceTimer?
+  private let timer = MaintenanceTimer(name: "peripheral-battery", interval: PeripheralBatterySource.refreshInterval, tolerance: 10)
   private var epoch: UInt64 = 0
   private var running = false
 
@@ -53,11 +53,12 @@ final class PeripheralBatterySource: @unchecked Sendable {
         if type == kIOFirstMatchNotification { drainMatched(iterator, initialSnapshot: true) }
         else { drainTerminated(iterator) }
       }
-      let timer = DispatchSource.makeTimerSource(queue: queue)
-      timer.schedule(deadline: .now() + Self.refreshInterval, repeating: Self.refreshInterval, leeway: .seconds(10))
-      timer.setEventHandler { [weak self] in self?.refreshAll() }
-      timer.resume()
-      self.timer = timer
+      // 规格 N4：两分钟一次的电量刷新不赶时间（插拔另有系统通知），交给系统的后台调度。
+      // 停掉时可能已有一次回调在等这条队列：到点再看一眼还在不在跑，停了就不读（服务对象已释放）。
+      timer.start(on: queue) { [weak self] in
+        guard let self, self.running else { return }
+        self.refreshAll()
+      }
     }
   }
 
@@ -65,7 +66,7 @@ final class PeripheralBatterySource: @unchecked Sendable {
     queue.async { [self] in
       guard running else { return }
       running = false
-      timer?.cancel(); timer = nil
+      timer.stop()
       for iterator in iterators { IOObjectRelease(iterator) }
       iterators.removeAll()
       if let port { IONotificationPortDestroy(port) }
