@@ -2,6 +2,7 @@
 // 作为 AppDelegate 扩展实现；隐藏/恢复/验证见 FoldTransaction。
 
 import Cocoa
+import os
 import ScreenCaptureKit
 
 extension AppDelegate {
@@ -177,6 +178,12 @@ extension AppDelegate {
                        preparedProfile: WindowChromeProfile? = nil,
                        recordedPosition: CGPoint? = nil, evidence: WS2FoldEvidence.Ticket? = nil) {
         let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
+        // 规格 N3：一次收起一个区间。收起有好几条收尾路径（当场核实、延后核实、放弃），
+        // 都汇到 settleFoldWaiters(id:tokens:success:)，区间在那里按窗口号结束（FoldCompletion.swift）。
+        if let stale = foldSignposts.removeValue(forKey: id) {
+            SystemLog.foldSignposter.endInterval("fold", stale, "superseded")
+        }
+        foldSignposts[id] = SystemLog.foldSignposter.beginInterval("fold", id: SystemLog.foldSignposter.makeSignpostID(), "window=\(id)")
         let (admissionBoot, admissionEpoch) = MainActor.assumeIsolated {
             (AuthorizationService.shared.ledger.bootID, AuthorizationService.shared.ledger.sessionEpoch)
         }
