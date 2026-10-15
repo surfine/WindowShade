@@ -1320,6 +1320,8 @@ final class WindowBrowserController: NSObject {
         let timer = Timer(timeInterval: 0.6, repeats: true) { [weak self] _ in
             self?.sweepClosedWindows()
         }
+        // 只在面板开着时跑（closePanel 里停）。容差 10%（规格 E4）：允许系统合并唤醒。
+        timer.tolerance = 0.06
         RunLoop.main.add(timer, forMode: .common)
         livenessTimer = timer
     }
