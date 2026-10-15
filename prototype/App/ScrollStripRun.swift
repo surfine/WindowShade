@@ -148,6 +148,8 @@ final class ScrollStripController {
         let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.watch() }
         }
+        // 容差 10%（规格 E4）：让系统把这次唤醒和别的合在一起，0.05 秒的偏差对「窗口关了没」无感。
+        timer.tolerance = 0.05
         RunLoop.main.add(timer, forMode: .common)
         watchTimer = timer
         wireNotch()
