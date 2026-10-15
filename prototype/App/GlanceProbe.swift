@@ -50,7 +50,7 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display"]
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
@@ -119,6 +119,11 @@ final class GlanceProbe {
     // --fold-unminimizable：另一扇不能最小化——核对收起前就被拒绝、窗口原位不动（见 restoreGuard 里的说明）。
     if CommandLine.arguments.contains("--restore-guard") || CommandLine.arguments.contains("--fold-unminimizable") {
       try await restoreGuard(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--capsule-color") {
+      try await capsuleColor(element: element, pid: process.processIdentifier)
       finish(nil)
       return
     }
@@ -790,6 +795,34 @@ final class GlanceProbe {
       : "FAIL restore-guard: the app's front window is \(ordered.first.map(String.init) ?? "none"), not the restored one")
     _ = owner.unshade(otherID)
     try? await wait("other restored", timeout: 8) { self.owner.shaded[otherID] == nil }
+  }
+
+  /// 规格 H3 的前提：采集换成 displayP3 后，置顶预览流里的录屏胶囊还认不认得出来。
+  /// 先用 sRGB、再用 displayP3 各开一次置顶预览（3 秒），数收到几帧、其中几帧认出并修掉了胶囊。
+  private func capsuleColor(element: AXUIElement, pid: pid_t) async throws {
+    let screenP3 = NSScreen.main?.canRepresent(.p3) == true
+    var results: [(String, Int, Int)] = []
+    for (name, space) in [("sRGB", CGColorSpace.sRGB), ("displayP3", CGColorSpace.displayP3)] {
+      WindowStreamCapture.probeColorSpaceName = space
+      WindowStreamCapture.probeIndicatorStats.withLock { $0 = (0, 0) }
+      owner.pinnedPreviewController.startPreview(targetWindowID: id, pid: pid, axWindow: element) { _ in }
+      try await Task.sleep(for: .seconds(4), clock: .suspending)
+      let stats = WindowStreamCapture.probeIndicatorStats.withLock { $0 }
+      owner.pinnedPreviewController.stopPreviews(forPID: pid, reason: "probe")
+      try await Task.sleep(for: .seconds(1.5), clock: .suspending)
+      results.append((name, stats.frames, stats.cleaned))
+      print("INFO capsule-color: \(name) frames=\(stats.frames) capsule recognised and cleaned in \(stats.cleaned)")
+    }
+    WindowStreamCapture.probeColorSpaceName = nil
+    print("INFO capsule-color: main display can represent P3=\(screenP3)")
+    let srgb = results[0], p3 = results[1]
+    guard srgb.1 > 0, p3.1 > 0 else { throw EffectError.unavailable("pinned preview delivered no frames") }
+    guard srgb.2 > 0 else {
+      print("INFO capsule-color: no capsule was recognised even in sRGB (system did not draw one on this window); inconclusive")
+      return
+    }
+    print(p3.2 > 0 ? "PASS capsule-color: the capsule is still recognised when capturing in displayP3"
+      : "FAIL capsule-color: the capsule is recognised in sRGB (\(srgb.2) frames) but not in displayP3")
   }
 
   /// 规格 V9（多显示器矩阵里「接着两块」那一类）：把临时窗口挪到不是主屏的那块上收起，
