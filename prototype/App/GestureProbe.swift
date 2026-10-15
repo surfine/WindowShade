@@ -20,9 +20,9 @@ extension GlanceProbe {
           NSWorkspace.shared.frontmostApplication?.processIdentifier != gestureFixturePID else { return }
     NSRunningApplication(processIdentifier: gestureFixturePID)?.activate()
     for _ in 0..<40 where NSWorkspace.shared.frontmostApplication?.processIdentifier != gestureFixturePID {
-      try? await Task.sleep(nanoseconds: 25_000_000)
+      try? await Task.sleep(for: .milliseconds(25), clock: .suspending)
     }
-    try? await Task.sleep(nanoseconds: 250_000_000)
+    try? await Task.sleep(for: .milliseconds(250), clock: .suspending)
   }
 
   /// 合成手势前：那个位置最上面的普通窗口必须是临时 App 的。探针运行时有人在用电脑，
@@ -41,7 +41,7 @@ extension GlanceProbe {
       if topOwner()?.pid == gestureFixturePID { return }
       if attempt == 0 {
         NSRunningApplication(processIdentifier: gestureFixturePID)?.activate()
-        try await Task.sleep(nanoseconds: 400_000_000)
+        try await Task.sleep(for: .milliseconds(400), clock: .suspending)
       }
     }
     throw EffectError.unavailable("the fixture is covered by \(topOwner()?.name ?? "?") there; stopped so no other window is touched")
@@ -72,7 +72,7 @@ extension GlanceProbe {
     try await wait("fixture frontmost", timeout: 3) {
       NSWorkspace.shared.frontmostApplication?.processIdentifier == pid
     }
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let hud = gestures.hud
     let bar = CGPoint(x: original.minX + 180, y: original.minY + 12)
     let content = CGPoint(x: original.midX, y: original.minY + 220)
@@ -103,7 +103,7 @@ extension GlanceProbe {
 
     // 1. 内容区：两指上滑是普通滚动，不显示、不收起。
     try await swipe(at: content, finger: CGVector(dx: 0, dy: 5), steps: 14)
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     guard gestures.lastPerformed == nil, !hud.isVisible, let now = bounds(id), closeTo(now, original) else {
       throw EffectError.unavailable("content swipe did something (performed=\(String(describing: gestures.lastPerformed)))")
     }
@@ -113,18 +113,18 @@ extension GlanceProbe {
     var unavailableTitle: String?
     try await magnify(at: bar, delta: -0.03, steps: 10) { step in
       if step == 9 {
-        try await Task.sleep(nanoseconds: 200_000_000)
+        try await Task.sleep(for: .milliseconds(200), clock: .suspending)
         unavailableTitle = hud.displayedTitle
         if hud.displaysArmed { unavailableTitle = "armed?!" }
       }
     }
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     guard unavailableTitle == "没有可撤销的排布", gestures.lastPerformed == nil,
           let still = bounds(id), closeTo(still, original) else {
       throw EffectError.unavailable("pinch without undo: title=\(unavailableTitle ?? "nil") performed=\(String(describing: gestures.lastPerformed))")
     }
     print("PASS gesture: pinching with nothing to undo says so and leaves the window alone")
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
 
     let stack2 = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
       as? [[String: Any]] ?? []).filter { cgWindowBounds($0)?.contains(bar) == true }.prefix(5)
@@ -140,12 +140,12 @@ extension GlanceProbe {
     var armedSeen = false
     try await swipe(at: bar, finger: CGVector(dx: 5, dy: 0), steps: 14) { step in
       if step == 6 {
-        try await Task.sleep(nanoseconds: 220_000_000)
+        try await Task.sleep(for: .milliseconds(220), clock: .suspending)
         hudFrame = hud.frame
         self.shoot(hud.frame, "hud-progress")
       }
       if step == 13 {
-        try await Task.sleep(nanoseconds: 220_000_000)
+        try await Task.sleep(for: .milliseconds(220), clock: .suspending)
         armedSeen = hud.displaysArmed && hud.shownAction == .rightHalf
         self.shoot(hud.frame, "hud-armed")
       }
@@ -158,7 +158,7 @@ extension GlanceProbe {
                  hudFrame.width, hudFrame.height, barBottom - hudFrame.maxY))
 
     // 3. 捏合（在窗口现在的标题栏上）：撤销上次排布，回到原位。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await magnify(at: titleBarPoint(), delta: -0.03, steps: 10)
     try await wait("undo placement", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
     print("PASS gesture: pinch undoes the placement (window back where it was)")
@@ -168,49 +168,49 @@ extension GlanceProbe {
     gestures.arrangeOnlyPID = pid
     try await magnify(at: bar, delta: 0.03, steps: 10)
     try await wait("magic tile from the spread", timeout: 3) { gestures.lastPerformed?.action == .magicTile }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     gestures.arrangeOnlyPID = nil
     try await magnify(at: titleBarPoint(), delta: -0.03, steps: 10)
     try await wait("undo magic tile", timeout: 3) { self.bounds(self.id).map { self.near($0, original) } == true }
     print("PASS gesture: spreading on the title bar starts Magic Tiling (the fixture's windows only), pinch puts them back")
 
     // 4b. 上下是一架尺寸梯子：下拉铺满，铺满后上推先还原。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await swipe(at: titleBarPoint(), finger: CGVector(dx: 0, dy: -5), steps: 14)
     try await wait("pull down fills", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await swipe(at: titleBarPoint(), finger: CGVector(dx: 0, dy: 5), steps: 14)
     try await wait("push up restores", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
     guard owner.shaded[id] == nil else { throw EffectError.unavailable("push up on a filled window rolled it up") }
     print("PASS gesture: pulling down on the title bar fills; pushing up on the filled window puts it back (not rolled up)")
     // 紧接着再往上推一下（0.6 秒内、同一方向）：当作连划的余波，不接着收起。
     try await swipe(at: titleBarPoint(), finger: CGVector(dx: 0, dy: 5), steps: 14)
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     guard owner.shaded[id] == nil, owner.currentOperationState(id) == .normal else {
       throw EffectError.unavailable("a quick second push up rolled the window up")
     }
     print("PASS gesture: a quick second push in the same direction is ignored (no double step on the ladder)")
 
     // 4c. 鼠标滚轮：两格不够、三格铺满，再三格还原；每串滚动停 0.3 秒结算。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await wheel(at: titleBarPoint(), lines: 1, count: 2)
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     guard let afterTwo = bounds(id), closeTo(afterTwo, original) else {
       throw EffectError.unavailable("two wheel notches already acted")
     }
     try await wheel(at: titleBarPoint(), lines: 1, count: 3)
     try await wait("wheel fills", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await wheel(at: titleBarPoint(), lines: -1, count: 3)
     try await wait("wheel restores", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
     print("PASS gesture: mouse wheel — 2 notches do nothing, 3 notches down fill, 3 notches up put it back")
 
     // 4d. 轻点两下（智能缩放：触控板两指 / Magic Mouse 单指）：铺满，再点两下还原。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await ensureFixtureAt(titleBarPoint())
     gestures.doubleTap(at: titleBarPoint())
     try await wait("double tap fills", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await ensureFixtureAt(titleBarPoint())
     gestures.doubleTap(at: titleBarPoint())
     try await wait("double tap restores", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
@@ -218,21 +218,21 @@ extension GlanceProbe {
 
     // 4e. 换屏后排回去。插拔显示器没法自动化：用 AX 把铺满的窗口挤小一点，模拟系统换屏时
     // 的调整，再调用换屏处理；人手改过尺寸的窗口则不能被排回去。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await swipe(at: titleBarPoint(), finger: CGVector(dx: 0, dy: -5), steps: 14)
     try await wait("fill before refit", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
     let squeezed = CGRect(x: visibleAX.minX, y: visibleAX.minY + 8, width: visibleAX.width, height: visibleAX.height - 20)
     setAXPosition(element, squeezed.origin)
     _ = setAXSize(element, squeezed.size)
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     gestures.screensChanged(force: true)
     try await wait("refit after screen change", timeout: 4) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
     let byHand = CGRect(x: visibleAX.minX + 120, y: visibleAX.minY + 90, width: 700, height: 460)
     setAXPosition(element, byHand.origin)
     _ = setAXSize(element, byHand.size)
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     gestures.screensChanged(force: true)
-    try await Task.sleep(nanoseconds: 2_200_000_000)
+    try await Task.sleep(for: .milliseconds(2200), clock: .suspending)
     guard let kept = bounds(id), near(kept, byHand) else {
       throw EffectError.unavailable("a window resized by hand was refit")
     }
@@ -242,7 +242,7 @@ extension GlanceProbe {
     print("PASS gesture: after a screen change a filled window the system squeezed fills again; one resized by hand is left alone")
 
     // 5. 上滑过了门槛又往回拉：取消，不收起。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let performedBefore = gestures.lastPerformed?.action
     let effects = owner.duoController.windowEffects
     var followed: (value: Double, visible: Bool)?
@@ -252,13 +252,13 @@ extension GlanceProbe {
         // 手指按着不动，最多等 2 秒再读。
         let deadline = CACurrentMediaTime() + 2
         repeat {
-          try await Task.sleep(nanoseconds: 50_000_000)
+          try await Task.sleep(for: .milliseconds(50), clock: .suspending)
           followed = effects.trackingState(id: self.id)
         } while CACurrentMediaTime() < deadline && !(followed.map { $0.visible && $0.value > 0.45 } ?? false)
         self.shoot(cocoaFrame(fromAXPosition: original.origin, size: original.size), "follow-mid")
       }
     }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     guard owner.shaded[id] == nil, gestures.lastPerformed?.action == performedBefore else {
       throw EffectError.unavailable("pull-back still acted")
     }
@@ -271,7 +271,7 @@ extension GlanceProbe {
     print(String(format: "PASS gesture: the window itself follows the fingers (%.0f%% rolled at the threshold); pulling back rolls it back untouched", followed.value * 100))
 
     // 6. 上滑：收起窗口。
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14)
     let released = CACurrentMediaTime()
     try await wait("folded by gesture", timeout: 3) {
@@ -281,7 +281,7 @@ extension GlanceProbe {
 
     // 7. 卷帘条上两指下拉：展开。
     try await wait("folded state", timeout: 3) { self.owner.currentOperationState(self.id) == .folded }
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     guard let overlay = owner.shaded[id]?.overlay else { throw EffectError.unavailable("no strip") }
     let stripPoint = CGPoint(x: overlay.frame.midX, y: coordinateBaselineY() - overlay.frame.midY)
     // 两指在卷帘条上拉时，指针就停在卷帘条上：看一眼按这个位置判断要不要收回。
@@ -290,7 +290,7 @@ extension GlanceProbe {
     // 拉一点就松手：停在看一眼，窗口还收着；指针移开就收回。
     // 慢慢拉、停住再松手（快速的一小下是甩，会直接展开——和 --pull 那套一样）。
     try await swipe(at: stripPoint, finger: CGVector(dx: 0, dy: -5), steps: 6, ownWindow: overlay, hold: 350_000_000)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     let stayed = owner.glance.isShowing && owner.shaded[id] != nil
     pointer = NSPoint(x: -9000, y: -9000)
     try await wait("glance retracts once the pointer leaves", timeout: 3) { !self.owner.glance.isShowing }
@@ -298,13 +298,13 @@ extension GlanceProbe {
       throw EffectError.unavailable("a short pull did not stay as a glance (showing=\(stayed))")
     }
     print("PASS gesture: a short pull on the strip and letting go stays as a glance with the window still folded; moving the pointer away puts it away")
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     pointer = onStrip
     // 拉一点就是看一眼：卡片跟着手指卷下来，窗口此刻还收着；拉满松手才展开。
     var peek: (card: NSRect?, stillFolded: Bool)?
     try await swipe(at: stripPoint, finger: CGVector(dx: 0, dy: -5), steps: 14, ownWindow: overlay) { step in
       if step == 6 {
-        try await Task.sleep(nanoseconds: 300_000_000)
+        try await Task.sleep(for: .milliseconds(300), clock: .suspending)
         peek = (self.owner.glance.cardFrame(for: self.id), self.owner.shaded[self.id] != nil)
         self.shoot(cocoaFrame(fromAXPosition: original.origin, size: original.size), "strip-pull-peek")
       }
@@ -323,7 +323,7 @@ extension GlanceProbe {
     print(String(format: "PASS gesture: pulling down on the strip expands it (window back %.0fms after release)", (CACurrentMediaTime() - pulled) * 1000))
 
     // 8. 卷帘条上轻点两下：展开（Magic Mouse 单指轻点两下同样走这里）。
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     await keepFixtureInFront()
     let stack8 = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
       as? [[String: Any]] ?? []).filter { cgWindowBounds($0)?.contains(bar) == true }.prefix(5)
@@ -335,7 +335,7 @@ extension GlanceProbe {
     print("INFO gesture: before step 8: \(stack8.joined(separator: ", ")) state=\(owner.currentOperationState(id).rawValue) active=\(effects.activeCount)")
     try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14)
     try await wait("folded again", timeout: 3) { self.owner.currentOperationState(self.id) == .folded }
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     guard let strip = owner.shaded[id]?.overlay?.frame else { throw EffectError.unavailable("no strip") }
     gestures.doubleTap(at: CGPoint(x: strip.midX, y: coordinateBaselineY() - strip.midY))
     try await wait("double tap expands", timeout: 3) {
@@ -345,26 +345,26 @@ extension GlanceProbe {
 
     // 9. 键盘：方向键和手势是同一架梯子（左半屏 → 铺满 → 往上撤销铺满 → 再往上收起 →
     //    往下把刚收起的那扇放下来）。直接调用快捷键入口，不合成按键。
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     await keepFixtureInFront()
     let leftHalf = CGRect(x: visibleAX.minX, y: visibleAX.minY, width: visibleAX.width / 2, height: visibleAX.height)
     try await key(.left)
     try await wait("key: left half", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
     print("PASS gesture: ⌃⌘← puts the focused window on the left half")
     // 紧接着按 ⌃⌘↓ 是拐进左下角（第 10 步单独验）；这里要的是铺满，等拐弯的窗口过去再按。
-    try await Task.sleep(nanoseconds: UInt64((KeyTurn.window + 0.3) * 1_000_000_000))
+    try await Task.sleep(for: .seconds(KeyTurn.window + 0.3), clock: .suspending)
     try await key(.down)
     try await wait("key: fill", timeout: 3) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
     print("PASS gesture: ⌃⌘↓ fills the screen between the menu bar and the Dock")
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await key(.up)
     try await wait("key: undo fill", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
     print("PASS gesture: ⌃⌘↑ on a filled window undoes the fill")
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await key(.up)
     try await wait("key: roll up", timeout: 4) { self.owner.currentOperationState(self.id) == .folded }
     print("PASS gesture: ⌃⌘↑ again rolls the window up")
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     try await key(.down, requireFocus: false)
     try await wait("key: unroll", timeout: 4) {
       self.owner.shaded[self.id] == nil && self.onscreen(self.id)
@@ -373,12 +373,12 @@ extension GlanceProbe {
     print("PASS gesture: ⌃⌘↓ right after brings back the window it rolled up, where it was")
 
     // 10. 拐弯占角：一口气往左滑走满，再往下拐，落在左下角。刚展开的窗口在动画结束前不接手势，多等一会儿。
-    try await Task.sleep(nanoseconds: 1_500_000_000)
+    try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
     let leftBar = CGPoint(x: leftHalf.minX + 180, y: leftHalf.minY + 12)
     try await swipe(at: leftBar, finger: CGVector(dx: -5, dy: 0), steps: 14,
                     then: CGVector(dx: 0, dy: -5), backSteps: 10)
     let bottomLeft = CGRect(x: visibleAX.minX, y: visibleAX.midY, width: visibleAX.width / 2, height: visibleAX.height / 2)
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     print("INFO gesture: after the turn, window=\(bounds(id).map { "\($0)" } ?? "-") expected=\(bottomLeft) hud=\(gestures.hud.shownAction?.rawValue ?? "-")")
     try await wait("turned into the bottom left corner", timeout: 3) {
       self.bounds(self.id).map { self.near($0, bottomLeft) } == true
@@ -387,24 +387,24 @@ extension GlanceProbe {
 
     // 10b. 撤销这一下（捏合），回到整高的左半屏：下面 11、11b 测的是整高的梯子，
     //      而窗口在下半行时键盘是在这一行里走（那套由 --grid 覆盖）。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await magnify(at: titleBarPoint(), delta: -0.03, steps: 10)
     try await wait("undo the corner", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
 
     // 11. 左右梯子：在整高的左半屏连按 ⌃⌘←，½ → ⅔ → ⅓，再按一次移到左边的屏幕，没有就回到 ½。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try await key(.left)
     try await wait("back to the left half", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     let twoThirds = CGRect(x: visibleAX.minX, y: visibleAX.minY, width: visibleAX.width * 2 / 3, height: visibleAX.height)
     try await key(.left)
     try await wait("key: left two thirds", timeout: 3) { self.bounds(self.id).map { self.near($0, twoThirds) } == true }
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     let oneThird = CGRect(x: visibleAX.minX, y: visibleAX.minY, width: visibleAX.width / 3, height: visibleAX.height)
     try await key(.left)
     try await wait("key: left third", timeout: 3) { self.bounds(self.id).map { self.near($0, oneThird) } == true }
     print("PASS gesture: ⌃⌘← again and again walks the left ladder: half, two thirds, one third")
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     let here = NSScreen.screens.first { $0.frame.contains(cocoaMousePoint(fromAXPoint: leftBar)) }
     if let here, let neighbor = TrackpadGestureController.neighbor(of: here, toward: .left) {
       let area = CGRect(origin: axPosition(fromCocoaFrame: neighbor.visibleFrame), size: neighbor.visibleFrame.size)
@@ -421,7 +421,7 @@ extension GlanceProbe {
     }
 
     // 11b. 键盘也能拐弯：⌃⌘→ 之后马上 ⌃⌘↓，落在右下角（按窗口此刻所在的屏幕算）。
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     try await key(.right)
     guard let now = bounds(id),
           let screen = NSScreen.screens.first(where: { $0.frame.contains(cocoaMousePoint(fromAXPoint: CGPoint(x: now.midX, y: now.midY))) })
@@ -440,7 +440,7 @@ extension GlanceProbe {
     try await exerciseFlicks(element: element, visibleAX: visibleAX)
 
     // 12. 卷帘条在最前面时按 ⌘H：隐藏的是它背后的 App，不是 WindowShade（卷帘条都还在）。
-    try await Task.sleep(nanoseconds: 1_500_000_000)
+    try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
     try await key(.up)
     try await wait("rolled up for the key check", timeout: 4) { self.owner.currentOperationState(self.id) == .folded }
     guard let stripWindow = owner.shaded[id]?.overlay,
@@ -554,11 +554,11 @@ extension GlanceProbe {
     print("\(!slide.tabVisible ? "PASS" : "FAIL") slide-over: the handle brings it back to where it was docked, floating again")
 
     // 朝它靠的那一边甩：收到屏幕边外。
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     let outward: CGFloat = docked.maxX > edge.midX ? 1 : -1
     let down = cocoaMousePoint(fromAXPoint: CGPoint(x: docked.midX, y: docked.minY + 12))
     setAXPosition(element, docked.offsetBy(dx: 90 * outward, dy: 0).origin)
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     var t0 = CACurrentMediaTime()
     var release = NSPoint(x: down.x + 90 * outward, y: down.y)
     let away = owner.gestures.simulateFlick(windowID: id, pid: pid, frameAtDown: docked, down: down,
@@ -570,9 +570,9 @@ extension GlanceProbe {
     // 拉回来，再朝另一边甩：按 iPadOS 26 语义换边，保持侧拉和窗口尺寸。
     slide.show(reason: "probe")
     try await wait("back again", timeout: 3) { self.bounds(self.id).map { self.closeTo($0, docked) } == true }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     setAXPosition(element, docked.offsetBy(dx: -120 * outward, dy: 0).origin)
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     t0 = CACurrentMediaTime()
     release = NSPoint(x: down.x - 120 * outward, y: down.y)
     _ = owner.gestures.simulateFlick(windowID: id, pid: pid, frameAtDown: docked, down: down,
@@ -610,10 +610,10 @@ extension GlanceProbe {
     slide.show(reason: "rapid-show")
     slide.hide(velocity: .zero, reason: "rapid-hide-final")
     try await wait("last request wins", timeout: 4) { slide.isHidden && slide.tabVisible }
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     guard !pinned() else { throw EffectError.unavailable("late pin resurrected hidden window") }
     slide.show(reason: "interrupted exit")
-    try await Task.sleep(nanoseconds: 70_000_000)
+    try await Task.sleep(for: .milliseconds(70), clock: .suspending)
     let expectedExit = slide.dockedFrame!
     slide.exit(reason: "menu")
     try await wait("exit during reveal restores window", timeout: 3) { self.bounds(self.id).map { self.closeTo($0, expectedExit) } == true && !slide.isSlideOver(self.id) }
@@ -659,7 +659,7 @@ extension GlanceProbe {
     try await wait("folded", timeout: 5) {
       self.owner.currentOperationState(self.id) == .folded && self.owner.shaded[self.id]?.overlay?.isVisible == true
     }
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     guard let overlay = owner.shaded[id]?.overlay else { throw EffectError.unavailable("no strip") }
     let stripPoint = CGPoint(x: overlay.frame.midX, y: coordinateBaselineY() - overlay.frame.midY)
     let onStrip = NSPoint(x: overlay.frame.midX, y: overlay.frame.midY)
@@ -669,20 +669,20 @@ extension GlanceProbe {
     try await swipe(at: stripPoint, finger: CGVector(dx: 0, dy: -5), steps: 6, ownWindow: overlay, hold: 350_000_000) { step in
       if step == 4 { early = self.owner.glance.cardFrame(for: self.id) }
     }
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     let stayed = owner.glance.isShowing && owner.shaded[id] != nil
     shoot(cocoaFrame(fromAXPosition: original.origin, size: original.size), "strip-short-pull")
     print("\(early != nil && stayed ? "PASS" : "FAIL") pull: a short pull shows the glance card under the fingers and, let go, stays as a glance with the window still folded (card=\(early.map { "\($0)" } ?? "nil") showing=\(stayed))")
     pointer = NSPoint(x: -9000, y: -9000)
     try await wait("glance retracts once the pointer leaves", timeout: 3) { !self.owner.glance.isShowing }
     print("PASS pull: moving the pointer away puts the glance away; the window stays folded (\(owner.shaded[id] != nil))")
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     if owner.shaded[id] == nil {
       owner.shade(element, id)
       try await wait("folded again", timeout: 5) {
         self.owner.currentOperationState(self.id) == .folded && self.owner.shaded[self.id]?.overlay?.isVisible == true
       }
-      try await Task.sleep(nanoseconds: 900_000_000)
+      try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     }
     pointer = onStrip
     var mid: (card: NSRect?, folded: Bool)?
@@ -715,30 +715,30 @@ extension GlanceProbe {
     }
     try await key(.left)
     try await expect(.leftHalf, "left half")
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     try await key(.down)
     try await expect(.bottomLeft, "turned into the bottom-left corner")
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     try await key(.left)
     try await expect(.bottomLeftTwoThirds, "bottom-left two thirds")
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     try await key(.left)
     try await expect(.bottomLeftThird, "bottom-left sixth")
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     try await key(.right)
     try await expect(.bottomCenterThird, "bottom-middle sixth")
     print("PASS grid: keyboard walks the bottom row — left half, turn to bottom-left, two thirds, one sixth, then one cell right to the bottom-middle sixth (\(bounds(id).map { "\($0)" } ?? "-"))")
     // 九等分：六分之一左右走一格再拐下去是下面的九分之一；九分之一左右走一格再拐上去是中间一行。
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     try await key(.right)
     try await expect(.bottomRightThird, "bottom-right sixth")
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     try await key(.down)
     try await expect(.bottomRightNinth, "turned into the bottom-right ninth")
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     try await key(.left)
     try await expect(.bottomCenterNinth, "bottom-middle ninth")
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     try await key(.up)
     try await expect(.middleCenterNinth, "turned up into the centre ninth")
     print("PASS grid: 3×3 — from a sixth, a step right then down is the bottom-right ninth; a step left then up is the centre ninth (\(bounds(id).map { "\($0)" } ?? "-"))")
@@ -754,9 +754,9 @@ extension GlanceProbe {
     AXUIElementSetAttributeValue(small, kAXMainAttribute as CFString, kCFBooleanTrue)
     try await wait("small window focused", timeout: 3) { focusedWindow().flatMap { windowID(of: $0) } == smallID }
     gestures.keyStep(.left)
-    try await Task.sleep(nanoseconds: 250_000_000)
+    try await Task.sleep(for: .milliseconds(250), clock: .suspending)
     let title = gestures.hud.displayedTitle
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     guard let after = bounds(smallID) else { throw EffectError.unavailable("small window gone") }
     let half = GestureAction.leftHalf.tile!.frame(in: area)
     let sameSize = abs(after.width - before.width) <= 2 && abs(after.height - before.height) <= 2
@@ -772,7 +772,7 @@ extension GlanceProbe {
     notch.install()
     guard notch.homeRectForProbe != nil else { print("INFO coach: no notch panel; skipped"); return }
     notch.resetCoachForProbe()
-    try await Task.sleep(nanoseconds: 5_000_000_000)   // 让开机自我介绍先过去（它也受同一套规则管）
+    try await Task.sleep(for: .seconds(5), clock: .suspending)   // 让开机自我介绍先过去（它也受同一套规则管）
     notch.resetCoachForProbe()
     try await wait("quiet notch", timeout: 8) { !notch.isAlerting }
 
@@ -790,14 +790,14 @@ extension GlanceProbe {
     let shown = notch.announcementForProbe
     print("\(taught && shown?.demo == .magic && shown?.tone == .tip ? "PASS" : "FAIL") coach: a tip shows on the notch with its little demonstration (\(shown.map { "\($0.title)" } ?? "nothing"))")
     notch.tapAnnouncementForProbe()
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     print("\(!notch.isAlerting ? "PASS" : "FAIL") coach: tapping a tip closes it")
 
     // 规则：点掉的不再出；五分钟一条；用过的不再教。
     notch.resetCoachForProbe()
     _ = notch.teach(.halves)
     notch.tapAnnouncementForProbe()
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let dismissedAgain = notch.teach(.halves)
     let otherSoon = notch.teach(.shake)
     notch.resetCoachForProbe()
@@ -844,7 +844,7 @@ extension GlanceProbe {
       // 跑完把光标放回原处。
       CGWarpMouseCursorPosition(point)
       CGAssociateMouseAndMouseCursorPosition(1)
-      try await Task.sleep(nanoseconds: 250_000_000)
+      try await Task.sleep(for: .milliseconds(250), clock: .suspending)
       let atPointer = MissionControlPick.target(at: point, in: WindowListCache.shared.onScreenWindows())
       guard atPointer?.pid == pid else {
         print("FAIL mc-keys: the cursor did not end up over the fixture window, so the probe stops "
@@ -926,7 +926,7 @@ extension GlanceProbe {
       let s = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
       return b.maxX <= s.minX + 3 || b.minX >= s.maxX - 3
     }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let expectedSize = PiPLayout.size(source: longFrame.size, level: .small, area: area)
     let corner = pip.cornerForProbe(lid)
     let panel = pip.panelFrameForProbe(lid) ?? .zero
@@ -946,15 +946,15 @@ extension GlanceProbe {
     let now = pip.panelFrameForProbe(lid) ?? panel
     pip.releaseForProbe(lid, at: now, velocity: CGVector(dx: opposite == .topLeft || opposite == .bottomLeft ? -3000 : 3000, dy: 0))
     try await wait("stashed", timeout: 3) { pip.tabFrameForProbe(lid) != nil && pip.isStashedForProbe(lid) }
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let framesStashed = pip.framesForProbe(lid)
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let still = pip.framesForProbe(lid) == framesStashed
     print("\(still ? "PASS" : "FAIL") pip: flung past the screen edge it hides, leaves a small tab at the edge and stops capturing (frames \(framesStashed) → \(pip.framesForProbe(lid)))")
 
     pip.revealForProbe(lid)
     try await wait("back from the edge", timeout: 4) { !pip.isStashedForProbe(lid) && pip.framesForProbe(lid) > framesStashed + 3 }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     print("PASS pip: the tab brings it back to its corner and the picture is live again")
 
     pip.resizeForProbe(lid, bigger: true)
@@ -972,7 +972,7 @@ extension GlanceProbe {
       guard let crop = pip.cropForProbe(lid) else { return false }
       return abs(crop.minX - longFrame.width / 2) < 3 && abs(crop.width - longFrame.width / 2) < 3
     }
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     let croppedPanel = pip.panelFrameForProbe(lid) ?? .zero
     print("\(croppedPanel.width < croppedPanel.height * 1.6 ? "PASS" : "FAIL") pip: “只看一块” shows just the right half of the window (\(Int(croppedPanel.width))×\(Int(croppedPanel.height)))")
 
@@ -981,7 +981,7 @@ extension GlanceProbe {
     let shared = pip.cornerForProbe(lid) ?? opposite
     pip.enter(element, id: mid, pid: pid, corner: shared)
     try await wait("second in", timeout: 4) { pip.framesForProbe(mid) > 3 }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let a = pip.panelFrameForProbe(lid) ?? .zero, b = pip.panelFrameForProbe(mid) ?? .zero
     print("\(!a.intersects(b) && abs(a.midX - b.midX) < a.width + b.width ? "PASS" : "FAIL") pip: a second window in the same corner lines up next to the first instead of covering it (\(a) / \(b))")
 
@@ -990,7 +990,7 @@ extension GlanceProbe {
     try await wait("both back", timeout: 4) {
       (self.bounds(lid).map { self.closeTo($0, longFrame) } ?? false) && (self.bounds(mid).map { self.closeTo($0, mainFrame) } ?? false)
     }
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     print("\(pip.activeIDs.isEmpty ? "PASS" : "FAIL") pip: both windows go back exactly where they were and the pictures are gone")
   }
 
@@ -1015,11 +1015,11 @@ extension GlanceProbe {
         throw EffectError.unavailable("the fixture is not focused; stopped so no other window is touched")
       }
       gestures.keyPlace(action)
-      try await Task.sleep(nanoseconds: 350_000_000)
+      try await Task.sleep(for: .milliseconds(350), clock: .suspending)
     }
     setAXPosition(element, CGPoint(x: area.minX + 200, y: area.minY + 150))
     _ = setAXSize(element, CGSize(width: 640, height: 420))
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
 
     try await press(.topHalf)
     let top = ScreenTile(x: 0, width: 6, row: .top).frame(in: area)
@@ -1031,7 +1031,7 @@ extension GlanceProbe {
 
     setAXPosition(element, CGPoint(x: area.minX + 120, y: area.minY + 90))
     _ = setAXSize(element, CGSize(width: 640, height: 420))
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     try await press(.center)
     try await wait("centred", timeout: 3) {
       self.bounds(self.id).map { abs($0.midX - area.midX) < 3 && abs($0.midY - area.midY) < 3 && abs($0.width - 640) < 3 } == true
@@ -1081,7 +1081,7 @@ extension GlanceProbe {
     let area = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
     func raise(_ elements: [AXUIElement]) async throws {
       for element in elements.reversed() { AXUIElementPerformAction(element, kAXRaiseAction as CFString) }
-      try await Task.sleep(nanoseconds: 500_000_000)
+      try await Task.sleep(for: .milliseconds(500), clock: .suspending)
       split.refresh()
     }
     owner.gestures.setFrame(wins[0], ScreenTile.leftHalf.frame(in: area))
@@ -1097,7 +1097,7 @@ extension GlanceProbe {
       guard let a = self.bounds(ida), let b = self.bounds(idb) else { return false }
       return abs(a.width - area.width / 3) < 4 && abs(b.minX - (area.minX + area.width / 3)) < 4 && abs(b.maxX - area.maxX) < 4
     }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     split.refresh()
     let followed = split.dividerFramesForProbe.first.map { abs(axPosition(fromCocoaFrame: $0).x + $0.width / 2 - (area.minX + area.width / 3)) < 3 } == true
     print("\(followed ? "PASS" : "FAIL") split: dragging the bar resizes both windows together and snaps to one third on release")
@@ -1109,7 +1109,7 @@ extension GlanceProbe {
     print("PASS split: flinging the bar to the right sends the right window into Slide Over and the left one fills the screen")
     owner.slideOver.exit(reason: "probe")
     try await wait("slide over gone", timeout: 3) { !self.owner.slideOver.isSlideOver(idb) }
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
 
     // 三扇：左半屏 + 右上 + 右下（魔法平铺带侧栏的样子）。
     owner.gestures.setFrame(wins[0], ScreenTile.leftHalf.frame(in: area))
@@ -1154,7 +1154,7 @@ extension GlanceProbe {
       guard let start = bounds(id) else { throw EffectError.unavailable("no frame") }
       let left = NSPoint(x: rect.midX - 170 + 34, y: rect.minY - 42)
       notch.dragMoved(to: left)
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
       let t0 = CACurrentMediaTime()
       let down = cocoaMousePoint(fromAXPoint: CGPoint(x: start.midX, y: start.minY + 12))
       var samples: [(TimeInterval, NSPoint)] = []
@@ -1165,16 +1165,16 @@ extension GlanceProbe {
       print("\(placed ? "PASS" : "FAIL") wins: dropping a title bar on the left square of the notch island puts the window on the left half (\(bounds(id).map { "\($0)" } ?? "-"))")
       setAXPosition(element, original.origin)
       _ = setAXSize(element, original.size)
-      try await Task.sleep(nanoseconds: 600_000_000)
+      try await Task.sleep(for: .milliseconds(600), clock: .suspending)
 
       // 2. 全部收进刘海，往下拉整批回来。
       let count = notch.tuckAll(on: screen)
       let allAway = (try? await wait("all tucked", timeout: 8) { fixtureIDs.allSatisfy { notch.isTucked($0) && !windowIsOnScreenNow($0) } }) != nil
-      try await Task.sleep(nanoseconds: 800_000_000)
+      try await Task.sleep(for: .milliseconds(800), clock: .suspending)
       notch.releaseLatest(reason: "probe")
       let allBack = (try? await wait("all back", timeout: 8) { fixtureIDs.allSatisfy { !notch.isTucked($0) && windowIsOnScreenNow($0) } }) != nil
       print("\(count == fixtureIDs.count && allAway && allBack ? "PASS" : "FAIL") wins: pushing the notch up tucks every window on the screen (\(count)); pulling down brings the whole batch back")
-      try await Task.sleep(nanoseconds: 1_200_000_000)
+      try await Task.sleep(for: .milliseconds(1200), clock: .suspending)
     } else {
       print("INFO wins: no notch on this Mac; island and tuck-all skipped")
     }
@@ -1189,8 +1189,8 @@ extension GlanceProbe {
       let away = (try? await wait("on the other screen", timeout: 3) {
         self.bounds(self.id).flatMap { screenForAXWindow(pos: $0.origin, size: $0.size) } != home
       }) != nil
-      try await Task.sleep(nanoseconds: 400_000_000)
-      for _ in 1..<NSScreen.screens.count { _ = gestures.moveToNextDisplay(); try await Task.sleep(nanoseconds: 400_000_000) }
+      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
+      for _ in 1..<NSScreen.screens.count { _ = gestures.moveToNextDisplay(); try await Task.sleep(for: .milliseconds(400), clock: .suspending) }
       let back = (try? await wait("back home", timeout: 3) {
         self.bounds(self.id).flatMap { screenForAXWindow(pos: $0.origin, size: $0.size) } == home
       }) != nil
@@ -1203,7 +1203,7 @@ extension GlanceProbe {
 
     // 4. 留缝：窄的缝，左半屏四边都让出来。
     ArrangeGap.points = 8
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     try await key(.left)
     if let screen = screenForAXWindow(pos: original.origin, size: original.size) {
       let visible = screen.visibleFrame
@@ -1215,7 +1215,7 @@ extension GlanceProbe {
     ArrangeGap.points = 0
     setAXPosition(element, original.origin)
     _ = setAXSize(element, original.size)
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
 
     // 5. ⌥Tab 按窗口切换：按住 ⌥ 按一下 Tab，面板选中下一扇；松开 ⌥ 就切过去（见 WinsSwitcherProbe.swift）。
     try await exerciseWinsSwitcher(element: element, pid: pid)
@@ -1230,7 +1230,7 @@ extension GlanceProbe {
       let point = CGPoint(x: icon.midX, y: icon.midY)
       for type in [CGEventType.mouseMoved, .leftMouseDown, .leftMouseUp] {
         CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: point, mouseButton: .left)?.post(tap: .cghidEventTap)
-        try await Task.sleep(nanoseconds: type == .mouseMoved ? 250_000_000 : 60_000_000)
+        try await Task.sleep(for: .milliseconds(type == .mouseMoved ? 250 : 60), clock: .suspending)
       }
       let hidden = (try? await wait("hidden by the Dock click", timeout: 3) { NSRunningApplication(processIdentifier: pid)?.isHidden == true }) != nil
       NSRunningApplication(processIdentifier: pid)?.unhide()
@@ -1285,14 +1285,14 @@ extension GlanceProbe {
     }
     setAXPosition(element, CGPoint(x: area.minX + 40, y: area.minY + 30))
     AXUIElementPerformAction(element, kAXRaiseAction as CFString)
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let ids = ([element] + extras).compactMap { windowID(of: $0) }
     var before: [CGWindowID: CGRect] = [:]
     for window in ids { before[window] = bounds(window) }
 
     let arranged = gestures.magicTile(main: id, element: element, announce: true)
     try await wait("strip on", timeout: 3) { strips.isActive }
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     guard let strip = strips.strip else { throw EffectError.unavailable("no strip") }
     let parkedRight = strip.parked().right.flatMap { strip.columns[$0].ids }
     let parkedOK = !parkedRight.isEmpty && parkedRight.allSatisfy { self.bounds($0).map { $0.minX >= area.maxX - ScrollStrip.sliver - 3 } == true }
@@ -1308,9 +1308,9 @@ extension GlanceProbe {
       viaGesture = false
       await strips.scrollForProbe(by: -720, steps: 30)
     }
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     try await wait("settled", timeout: 3) { strips.isSettledForProbe }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     guard let slid = strips.strip, let lastID = slid.columns.last?.ids.first else { throw EffectError.unavailable("strip gone") }
     let lastShown = bounds(lastID).map { abs($0.maxX - area.maxX) <= 4 } == true
     print("\(abs(slid.offset - slid.maxOffset) < 1 && lastShown ? "PASS" : "FAIL") strip: a two-finger swipe \(viaGesture ? "on the title bar" : "(fed directly)") slides the whole strip and settles with the last column against the right edge (offset=\(Int(slid.offset)) of \(Int(slid.maxOffset)))")
@@ -1318,9 +1318,9 @@ extension GlanceProbe {
     // ⌃⌘←：从第二列走回第一列（主角那一列），它整列滑出来。
     let secondID = slid.columns[1].ids[0]
     let stepped = strips.step(secondID, toward: .left)
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     try await wait("stepped", timeout: 3) { strips.isSettledForProbe }
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     guard let afterStep = strips.strip else { throw EffectError.unavailable("strip gone") }
     let shown = afterStep.trueFrame(column: 0)
     let mainBack = bounds(id).map { abs($0.minX - area.minX) <= 4 } == true
@@ -1328,7 +1328,7 @@ extension GlanceProbe {
 
     // 宽一档：最后一列从 ½ 到 ⅔。
     let widened = strips.resize(lastID, wider: true)
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     let wide = bounds(lastID).map { abs($0.width - (area.width * 2 / 3).rounded()) <= 4 } == true
     print("\(widened && wide ? "PASS" : "FAIL") strip: widening a column steps it from half to two thirds of the screen (\(bounds(lastID).map { Int($0.width) } ?? 0) of \(Int(area.width)))")
 
@@ -1338,7 +1338,7 @@ extension GlanceProbe {
     DistributedNotificationCenter.default().postNotificationName(Notification.Name("com.windowshade.fixture.newWindow"),
                                                                  object: nil, userInfo: nil, deliverImmediately: true)
     let joined = (try? await wait("new window joins", timeout: 5) { (strips.strip?.ids.count ?? 0) == beforeNew.ids.count + 1 }) != nil
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     let afterNew = strips.strip
     let newID = afterNew?.ids.first { !beforeNew.ids.contains($0) }
     let kept = afterNew.map { strip in beforeNew.columns.allSatisfy { column in
@@ -1358,7 +1358,7 @@ extension GlanceProbe {
     }
 
     // 捏合：整批放回原处，卷轴收掉。
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     let undone = gestures.undoPlacementForProbe(element, id: id)
     let back = (try? await wait("all back", timeout: 5) {
       !strips.isActive && ids.allSatisfy { window in
@@ -1389,11 +1389,11 @@ extension GlanceProbe {
     setAXPosition(small, CGPoint(x: area.midX + 40, y: area.minY + 80))
     setAXPosition(element, CGPoint(x: area.minX + 60, y: area.minY + 60))
     AXUIElementPerformAction(element, kAXRaiseAction as CFString)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     guard let bigBefore = bounds(id), let smallStart = bounds(smallID) else { throw EffectError.unavailable("no frames") }
 
     let arranged = gestures.magicTile(main: id, element: element, announce: true)
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     let big = bounds(id) ?? .zero, smallNow = bounds(smallID) ?? .zero
     let share = big.width / area.width
     let mainOK = abs(big.minX - area.minX) <= 2 && abs(big.height - area.height) <= 4
@@ -1413,7 +1413,7 @@ extension GlanceProbe {
       gestures.shake(keeping: smallID, pid: pid)
       try await wait("shaken away", timeout: 5) { self.owner.notch.isTucked(self.id) && !windowIsOnScreenNow(self.id) }
       let keeperStays = windowIsOnScreenNow(smallID)
-      try await Task.sleep(nanoseconds: 900_000_000)
+      try await Task.sleep(for: .milliseconds(900), clock: .suspending)
       gestures.shake(keeping: smallID, pid: pid)
       try await wait("shaken back", timeout: 5) { !self.owner.notch.isTucked(self.id) && windowIsOnScreenNow(self.id) }
       print("\(keeperStays ? "PASS" : "FAIL") shake: shaking one window sends the other into the notch; shaking again brings it back")
@@ -1423,7 +1423,7 @@ extension GlanceProbe {
 
     // 刘海收着系统里最小化的窗口：最小化大的那扇（小的那扇不能最小化），刘海的一排里有它，点一下还原。
     // 刚放回来的窗口还在做 1.1 秒的回位校正：等它做完再最小化。
-    try await Task.sleep(nanoseconds: 1_600_000_000)
+    try await Task.sleep(for: .milliseconds(1600), clock: .suspending)
     _ = setAXMinimizedReturningError(element, true)
     try await wait("minimized", timeout: 4) { !windowIsOnScreenNow(self.id) }
     owner.notch.refreshShelfForProbe()
@@ -1452,13 +1452,13 @@ extension GlanceProbe {
     pad.persists = false
     defer { pad.persists = savedPersists }
     if pad.isShowing { pad.hide(reason: "probe") }
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
 
     notch.pressForProbe(1)
     try await wait("home open", timeout: 3) { pad.isShowing }
     let fromNotch = pad.viewForProbe?.notchRect != nil
     let revealing = pad.viewForProbe?.layer?.mask != nil
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let resting = pad.viewForProbe?.restsOnHome == true
     notch.pressForProbe(1)
     try await wait("home closed", timeout: 3) { !pad.isShowing }
@@ -1468,7 +1468,7 @@ extension GlanceProbe {
     let file = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("刘海探针.txt")
     try "probe".write(to: file, atomically: true, encoding: .utf8)
     defer { try? FileManager.default.removeItem(at: file) }
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     pad.openWith([file], from: notch.homeRectForProbe ?? .zero)
     try await wait("open with", timeout: 3) { pad.isShowing && pad.viewForProbe?.openingFiles != nil }
     let view = pad.viewForProbe
@@ -1478,7 +1478,7 @@ extension GlanceProbe {
     let dim = view?.allowsOpening(calculator) == false
     let prompt = view?.pillPrompt ?? ""
     notch.pressForProbe(1)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     let left = pad.isShowing && pad.viewForProbe?.openingFiles == nil
     notch.pressForProbe(1)
     try await wait("closed again", timeout: 3) { !pad.isShowing }
@@ -1493,7 +1493,7 @@ extension GlanceProbe {
     try await wait("pinned", timeout: 5) { pins.isRunning(id: self.id) && pins.panelVisibleForProbe(id: self.id) }
     let before = pins.suspendAllMenuTitle()
     pins.toggleSuspendAll()
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let hidden = !pins.panelVisibleForProbe(id: id) && pins.isSuspended(id: id) && !pins.isRunning(id: id)
     let during = pins.suspendAllMenuTitle()
     print("\(hidden && pins.isPreviewing(id: id) && before == "暂时取消全部置顶" && during == "恢复全部置顶" ? "PASS" : "FAIL") pins: suspending hides the pinned panel and stops its picture but keeps the pin (menu: \(before) → \(during))")
@@ -1503,11 +1503,11 @@ extension GlanceProbe {
     print("\(pins.suspendAllMenuTitle() == "暂时取消全部置顶" ? "PASS" : "FAIL") pins: pressing again puts it back where it was (window \(panelBack.map { "\($0)" } ?? "-"))")
     // 暂停期间源窗口没了：恢复时不复活一个指向空窗口的面板。
     pins.toggleSuspendAll()
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     kill(pid, SIGTERM)
     try await wait("fixture gone", timeout: 4) { !windowIsOnScreenNow(self.id) }
     pins.toggleSuspendAll()
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     print("\(!pins.isPreviewing(id: id) ? "PASS" : "FAIL") pins: a window closed while pins were suspended is dropped on resume, not revived")
   }
 
@@ -1528,7 +1528,7 @@ extension GlanceProbe {
     // 实时画面要先起一个截屏流（机器忙时实测要 1 秒多）：等第一帧到了再数。
     try await wait("first live frame", timeout: 4) { slide.mirrorFrames > 0 }
     let start = slide.mirrorFrames
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     let perSecond = slide.mirrorFrames - start
     print("\(perSecond >= 5 && !slide.tabVisible ? "PASS" : "FAIL") slide-over desktops: pulling it out here shows its live picture at the docked size (\(perSecond) frames in 1s)")
 
@@ -1536,7 +1536,7 @@ extension GlanceProbe {
     try await wait("mirror gone, handle back", timeout: 3) { !slide.mirrorVisible && slide.tabVisible }
     print("PASS slide-over desktops: pushing the picture back to the edge puts the handle back")
     slide.exit(reason: "probe done")
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     print("\(!slide.tabVisible ? "PASS" : "FAIL") slide-over desktops: leaving Slide Over takes the handle away")
   }
 
@@ -1568,15 +1568,15 @@ extension GlanceProbe {
       if pad.viewForProbe != nil { pad.hide(reason: "probe done") }
     }
     pad.show()
-    try await Task.sleep(nanoseconds: 1_400_000_000)
+    try await Task.sleep(for: .milliseconds(1400), clock: .suspending)
     guard let view = pad.viewForProbe else { throw EffectError.unavailable("launchpad did not show") }
     shoot("launchpad-home")
     print("INFO launchpad layers: \(view.debugForProbe())")
-    try await Task.sleep(nanoseconds: 1_600_000_000)
+    try await Task.sleep(for: .milliseconds(1600), clock: .suspending)
     shoot("launchpad-home-later")
     print("INFO launchpad layers later: \(view.debugForProbe())")
     if let hold = ProcessInfo.processInfo.environment["PROBE_HOLD"].flatMap(Double.init) {
-      try await Task.sleep(nanoseconds: UInt64(hold * 1_000_000_000))
+      try await Task.sleep(for: .seconds(hold), clock: .suspending)
     }
     // 主屏幕上的每一格：每个 App 恰好一次，和扫到的集合完全相等（文件夹里的也算，被“移除”的只留在资料库、一定不在主屏幕上）。
     let home = view.homeForProbe
@@ -1592,7 +1592,7 @@ extension GlanceProbe {
        let model = home.items.first(where: { $0.folderID == folderID }),
        case .folder(let folder) = model {
       view.openFolderForProbe(folderID)
-      try await Task.sleep(nanoseconds: 900_000_000)
+      try await Task.sleep(for: .milliseconds(900), clock: .suspending)
       shoot("launchpad-folder")
       guard let overlay = view.folderForProbe, overlay.folderID == folderID,
             overlay.apps.map(\.path) == folder.apps else {
@@ -1600,7 +1600,7 @@ extension GlanceProbe {
       }
       print("PASS launchpad: opening the folder \"\(overlay.title)\" lists its \(overlay.apps.count) apps page-by-page (\(view.debugForProbe()))")
       view.closeFolderForProbe()
-      try await Task.sleep(nanoseconds: 700_000_000)
+      try await Task.sleep(for: .milliseconds(700), clock: .suspending)
       guard view.folderForProbe == nil else { throw EffectError.unavailable("launchpad: the folder stays open after closing it") }
       print("PASS launchpad: closing the folder puts the home screen back")
     } else {
@@ -1609,7 +1609,7 @@ extension GlanceProbe {
 
     // App 资料库那一页：打开真存在的一组（分类名不假定），里面就是这一类记下的 App；再收起来。
     view.libraryForProbe()
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     try await wait("library presentation settled", timeout: 4) {
       view.onLibrary && abs((view.strip.presentation() ?? view.strip).transform.m41 + CGFloat(view.pageForProbe) * view.bounds.width) < 1
     }
@@ -1619,7 +1619,7 @@ extension GlanceProbe {
       throw EffectError.unavailable("launchpad: the App Library has no category to open")
     }
     view.openCategoryForProbe(category.id)
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     shoot("launchpad-library-category")
     guard let opened = view.folderForProbe, opened.source == .category(category.id),
           opened.apps.map(\.path) == category.apps.map(\.path) else {
@@ -1627,11 +1627,11 @@ extension GlanceProbe {
     }
     print("PASS launchpad: the App Library groups the apps (\(byID.count) categories) and opening \"\(opened.title)\" shows its \(opened.apps.count) apps (\(view.debugForProbe()))")
     view.closeFolderForProbe()
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     guard view.folderForProbe == nil else { throw EffectError.unavailable("launchpad: the library category stays open after closing it") }
     print("PASS launchpad: closing the library category puts the App Library page back")
     view.openListForProbe()
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let listed = view.listForProbe.map(\.path)
     guard listed.count == scanned.count, Set(listed) == scanned else {
       throw EffectError.unavailable("launchpad: the App Library list omits or duplicates apps")
@@ -1648,10 +1648,10 @@ extension GlanceProbe {
     print("PASS launchpad: complete App Library list and localized search")
     view.typeForProbe("")
     view.homePageForProbe()
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
 
     view.typeForProbe(initials)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     let found = view.shownForProbe.first?.bundleID
     shoot("launchpad-search")
     guard found == "com.apple.calculator" else {
@@ -1660,14 +1660,14 @@ extension GlanceProbe {
     print("PASS launchpad: typing the initials \(initials) of \(calculator.name) finds it first (\(view.shownForProbe.prefix(3).map(\.name)))")
     view.typeForProbe("")
     view.pageForwardForProbe()
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     shoot("launchpad-page2")
     guard view.pageForProbe == 1 else {
       throw EffectError.unavailable("launchpad: page forward landed on page \(view.pageForProbe)")
     }
     print("PASS launchpad: turns to the next page")
     pad.hide(reason: "probe")
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     guard pad.viewForProbe == nil else { throw EffectError.unavailable("launchpad: the window is still there after closing") }
     print("PASS launchpad: closes")
 
@@ -1695,10 +1695,10 @@ extension GlanceProbe {
     print("PASS launchpad: dropping an app on the left half opens it there (\(bounds(id).map { "\($0)" } ?? "-"))")
     pad.openForProbe(path: appPath, drop: .slideOver(left: false))
     try await wait("in Slide Over", timeout: 8) { self.owner.slideOver.isSlideOver(self.id) }
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     print("PASS launchpad: dropping an app on the right edge puts it in Slide Over")
     owner.slideOver.exit(reason: "probe done")
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     setAXPosition(element, start.origin)
     _ = setAXSize(element, start.size)
     // 结束：用户存下的排列一个字没动（探针从头到尾都在内存里整理）。
@@ -1738,7 +1738,7 @@ extension GlanceProbe {
       throw EffectError.unavailable("no notch panel")
     }
     notch.dragMoved(to: CGPoint(x: zone.midX, y: rect.minY - 200))
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let islandFrame = notch.panelFrame
     let offered = islandFrame.map { $0.minY < rect.minY - 20 } == true
     notch.dragMoved(to: CGPoint(x: zone.midX, y: zone.midY))
@@ -1748,8 +1748,8 @@ extension GlanceProbe {
     guard let home = bounds(id) else { throw EffectError.unavailable("no fixture frame") }
     notch.tuck(element, id: id, pid: pid, landed: home, home: home, velocity: .zero)
     try await wait("tucked away", timeout: 5) { !windowIsOnScreenNow(self.id) && self.owner.shaded[self.id] != nil }
-    try await Task.sleep(nanoseconds: 400_000_000)
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     let alpha = owner.shaded[id]?.overlay?.alphaValue ?? -1
     let stripHidden = alpha == 0
     // 紧凑样式：两边菜单栏空着就往左右各长出一段，不然长出下巴。外框对齐到整点，容差 1 点多一点。
@@ -1763,7 +1763,7 @@ extension GlanceProbe {
     var steady = 0
     var last = notch.panelFrame
     for _ in 0..<30 where steady < 6 {
-      try await Task.sleep(nanoseconds: 100_000_000)
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
       steady = notch.panelFrame == last && (shapeNow().sides || shapeNow().chin) ? steady + 1 : 0
       last = notch.panelFrame
     }
@@ -1785,10 +1785,10 @@ extension GlanceProbe {
     // 变化提醒：收起的窗口有人盯着标题；刚收起的 2 秒里不算，之后第一次变化刘海短暂展开，30 秒内再变只标点。
     notch.syncWatchersForProbe()
     let watching = notch.isWatchingTitle(id)
-    try await Task.sleep(nanoseconds: 2_200_000_000)
+    try await Task.sleep(for: .milliseconds(2200), clock: .suspending)
     let before = notch.panelFrame ?? .zero
     notch.simulateTitleChange(id, title: "Build Succeeded")
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let alerting = notch.isAlerting
     // 提醒出现在指针所在那块屏的刘海上：量正在提醒的那一块。
     let alertFrame = notch.alertFrameForProbe ?? notch.panelFrame ?? .zero
@@ -1798,11 +1798,11 @@ extension GlanceProbe {
     // 收回的动画在机器忙时会慢一点：最多等 3 秒，看它回到原来的高度（一直回不去才算没过）。
     var settledBack = false
     for _ in 0..<30 {
-      try await Task.sleep(nanoseconds: 100_000_000)
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
       if notch.panelFrame.map({ abs($0.height - before.height) < 1 }) == true { settledBack = true; break }
     }
     notch.simulateTitleChange(id, title: "Build Succeeded again")
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let quietSecond = !notch.isAlerting && notch.changedCount == 1
     if pointerOnNotch {
       print("INFO notch: the pointer is resting on the notch, so it shows the row instead of the alert; alert check skipped")
@@ -1834,15 +1834,15 @@ extension GlanceProbe {
     notch.release(id, reason: "probe")
     try await wait("back home", timeout: 5) { windowIsOnScreenNow(self.id) && self.bounds(self.id).map { self.closeTo($0, home) } == true }
     print("\(notch.tuckedCount == 0 && notch.changedCount == 0 ? "PASS" : "FAIL") notch: taking it out flies it back to where it was, and its mark goes with it")
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     print("\(notch.isBareNotch ? "PASS" : "FAIL") notch: with nothing in it, nothing is drawn around the notch (panel=\(notch.panelFrame.map { "\($0)" } ?? "-"))")
 
     // 设置里关掉刘海：收在里面的窗口放回来（不然它的卷帘条是藏着的，找不到），面板拆掉；再打开恢复。
     let savedSetting = UserDefaults.standard.object(forKey: NotchController.enabledKey)
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     notch.tuck(element, id: id, pid: pid, landed: home, home: home, velocity: .zero)
     try await wait("tucked for the switch", timeout: 5) { !windowIsOnScreenNow(self.id) && notch.isTucked(self.id) }
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     notch.setEnabled(false)
     try await wait("back when switched off", timeout: 5) { windowIsOnScreenNow(self.id) && self.owner.shaded[self.id] == nil }
     let backFromSwitch = CACurrentMediaTime()
@@ -1859,14 +1859,14 @@ extension GlanceProbe {
     // 先等关掉刘海时放回来的那几次回位校正做完：机器不忙时 1.1 秒那一次正好落在挪上去之后，把窗口摆回原处，
     // “dragged up”就等不到（batch10 的失败）。
     try await afterRestorePins(since: backFromSwitch)
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     let under = CGRect(x: rect.midX - home.width / 2, y: home.minY, width: home.width, height: home.height)
     setAXPosition(element, under.origin)
     // 机器忙时临时 App 挪得慢，偶尔还会漏掉一次挪动：等窗口真的到了刘海正下方再甩（不然算出来的方向是从旧位置甩的），
     // 一秒还没到就再挪一次、再等。
     var placedUnder = false
     for _ in 0..<10 {
-      try await Task.sleep(nanoseconds: 100_000_000)
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
       if bounds(id).map({ abs($0.midX - rect.midX) <= 4 }) == true { placedUnder = true; break }
     }
     if !placedUnder {
@@ -1929,7 +1929,7 @@ extension GlanceProbe {
       let slot = zone.width / CGFloat(NotchPanel.DropChoice.allCases.count)
       let point = NSPoint(x: zone.minX + slot * (CGFloat(choice.rawValue) + 0.5), y: zone.midY)
       notch.dragMoved(to: point)
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
       let t0 = CACurrentMediaTime()
       let down = cocoaMousePoint(fromAXPoint: CGPoint(x: from.midX, y: from.minY + 12))
       var samples: [(TimeInterval, NSPoint)] = []
@@ -1952,7 +1952,7 @@ extension GlanceProbe {
     setAXPosition(small, CGPoint(x: area.midX + 40, y: area.minY + 80))
     setAXPosition(element, CGPoint(x: area.minX + 60, y: area.minY + 60))
     AXUIElementPerformAction(element, kAXRaiseAction as CFString)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     let smallStart = bounds(smallID) ?? smallHome
     try await dropOnIsland(.magic)
     var big = CGRect.zero, side = CGRect.zero
@@ -2021,7 +2021,7 @@ extension GlanceProbe {
     // AX / hide() 留作退路。
     DistributedNotificationCenter.default().post(
       name: Notification.Name("com.windowshade.fixture.hide"), object: nil)
-    try? await Task.sleep(nanoseconds: 400_000_000)
+    try? await Task.sleep(for: .milliseconds(400), clock: .suspending)
     if NSRunningApplication(processIdentifier: pid)?.isHidden != true,
        !setAXAppHidden(pid: pid, true) {
       _ = NSRunningApplication(processIdentifier: pid)?.hide()
@@ -2071,16 +2071,16 @@ extension GlanceProbe {
     let gestures = owner.gestures
     // 11c. 甩一下标题栏：真实拖动没法合成（会动到用户的指针和窗口），这里先用辅助功能把窗口挪开
     //      当作拖过，再把一段快速往左的指针轨迹交给离手时的判定。按下、拖动时的采集要在真机上试。
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     // 先摆到屏幕中间偏右：往左甩要有一段路可滑，才看得出是滑过去的（贴着左边时起点终点都在边上）。
     if let start = bounds(id) {
       setAXPosition(element, CGPoint(x: visibleAX.minX + visibleAX.width * 0.45, y: start.minY))
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     }
     guard let before = bounds(id) else { throw EffectError.unavailable("no fixture frame for the flick") }
     let dragged = before.offsetBy(dx: -160, dy: 0)
     setAXPosition(element, dragged.origin)
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     var t0 = CACurrentMediaTime()
     let down = cocoaMousePoint(fromAXPoint: CGPoint(x: before.midX, y: before.minY + 12))
     var release = NSPoint(x: down.x - 160, y: down.y)
@@ -2099,10 +2099,10 @@ extension GlanceProbe {
     print("\(midway != nil ? "PASS" : "FAIL") gesture: a fast flick to the left glides the window onto the left half (seen at x=\(Int(midway ?? -1)) between \(Int(dragged.minX)) and \(Int(flickLeft.minX)))")
 
     // 11d. 三指拖移：手指一离开触控板就判，不等系统晚 0.2–0.7 秒才补发的“松开”。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     guard let onLeft = bounds(id) else { throw EffectError.unavailable("no fixture frame for the touch flick") }
     setAXPosition(element, onLeft.offsetBy(dx: 160, dy: 0).origin)
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     t0 = CACurrentMediaTime()
     let downOnLeft = cocoaMousePoint(fromAXPoint: CGPoint(x: onLeft.midX, y: onLeft.minY + 12))
     release = NSPoint(x: downOnLeft.x + 160, y: downOnLeft.y)
@@ -2120,11 +2120,11 @@ extension GlanceProbe {
     print("\(proxied ? "PASS" : "FAIL") gesture: three fingers leaving the trackpad mid-throw send the left half over to the right half, a stand-in gliding while the drag is still open")
 
     // 11e. 先减速再放下：那是摆，不是甩，窗口留在放下的地方。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     guard let onRight = bounds(id) else { throw EffectError.unavailable("no fixture frame for the placed drag") }
     let placed = onRight.offsetBy(dx: -120, dy: 0)
     setAXPosition(element, placed.origin)
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     t0 = CACurrentMediaTime()
     let downOnRight = cocoaMousePoint(fromAXPoint: CGPoint(x: onRight.midX, y: onRight.minY + 12))
     release = NSPoint(x: downOnRight.x - 120, y: downOnRight.y)
@@ -2132,21 +2132,21 @@ extension GlanceProbe {
     let slowed = gestures.simulateFlick(windowID: id, pid: gestureFixturePID, frameAtDown: onRight, down: downOnRight,
                                         samples: throwSamples(ending: release, at: t0, speeds: slowing),
                                         release: release, at: t0)
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let stayed = bounds(id).map { closeTo($0, placed) } == true
     print("\((slowed ?? "").hasPrefix("slowed down") && stayed ? "PASS" : "FAIL") gesture: slowing down before letting go leaves the window where it was put (\(slowed ?? "taken"))")
 
     // 11f. 三指拖移时在触控板边上抬手：那是换个位置接着拖，不是甩。
     let downPlaced = cocoaMousePoint(fromAXPoint: CGPoint(x: placed.midX, y: placed.minY + 12))
     setAXPosition(element, placed.offsetBy(dx: 120, dy: 0).origin)
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     t0 = CACurrentMediaTime()
     release = NSPoint(x: downPlaced.x + 120, y: downPlaced.y)
     let edge = gestures.simulateFlick(windowID: id, pid: gestureFixturePID, frameAtDown: placed, down: downPlaced,
                                       samples: throwSamples(ending: release, at: t0, speeds: Array(repeating: 2600, count: 8)),
                                       release: release, at: t0 + 0.02, source: .touchLift, fingers: 3,
                                       lifted: [CGPoint(x: 0.95, y: 0.5), CGPoint(x: 0.97, y: 0.52), CGPoint(x: 0.99, y: 0.5)])
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let heldAtEdge = bounds(id).map { closeTo($0, placed.offsetBy(dx: 120, dy: 0)) } == true
     print("\((edge ?? "").contains("trackpad edge") && heldAtEdge ? "PASS" : "FAIL") gesture: lifting three fingers at the trackpad edge to drag on is not a flick (\(edge ?? "taken"))")
   }
@@ -2172,7 +2172,7 @@ extension GlanceProbe {
     let deadline = CACurrentMediaTime() + 0.5
     while CACurrentMediaTime() < deadline {
       if let x = bounds(id)?.minX, x > low, x < high { return x }
-      try await Task.sleep(nanoseconds: 12_000_000)
+      try await Task.sleep(for: .milliseconds(12), clock: .suspending)
     }
     return nil
   }
@@ -2241,11 +2241,11 @@ extension GlanceProbe {
         throw EffectError.unavailable("cannot synthesize scroll")
       }
       gestures.handle(event, ownWindow: ownWindow)
-      try await Task.sleep(nanoseconds: 8_000_000)
+      try await Task.sleep(for: .milliseconds(8), clock: .suspending)
       try await inspect?(step)
     }
     // 手指停住一会儿再抬起：慢慢拉一点，不是甩一下。
-    if hold > 0 { try await Task.sleep(nanoseconds: hold) }
+    if hold > 0 { try await Task.sleep(for: .nanoseconds(hold), clock: .suspending) }
     if let end = scrollEvent(phase: 4, finger: .zero, at: point) {
       gestures.handle(end, ownWindow: ownWindow)
     }
@@ -2260,7 +2260,7 @@ extension GlanceProbe {
             let event = NSEvent(cgEvent: cg) else { throw EffectError.unavailable("cannot synthesize wheel") }
       cg.location = point
       owner.gestures.handle(NSEvent(cgEvent: cg) ?? event, ownWindow: nil)
-      try await Task.sleep(nanoseconds: 60_000_000)
+      try await Task.sleep(for: .milliseconds(60), clock: .suspending)
     }
   }
 
@@ -2270,7 +2270,7 @@ extension GlanceProbe {
     try await ensureFixtureAt(point)
     for step in 0..<steps {
       gestures.magnify(phase: step == 0 ? .began : .changed, delta: delta, location: point, ownWindow: nil)
-      try await Task.sleep(nanoseconds: 8_000_000)
+      try await Task.sleep(for: .milliseconds(8), clock: .suspending)
       try await inspect?(step)
     }
     gestures.magnify(phase: .ended, delta: 0, location: point, ownWindow: nil)

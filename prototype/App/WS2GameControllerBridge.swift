@@ -170,7 +170,7 @@ import Cocoa
                 let r=GamepadMapping.Vector(x:Double(pad.rightThumbstick.xAxis.value),y:Double(pad.rightThumbstick.yAxis.value))
                 if GamepadMapping.axis(l) == .zero && GamepadMapping.axis(r) == .zero { e.movement=nil;_ = e.mapping.disconnect();return }
                 for effect in e.mapping.sample(left:l,right:r,at:self.clock.now().seconds) { self.emit(.movement(attachment:e.id,effect:effect)) }
-                do { try await Task.sleep(nanoseconds:16_666_667) } catch { return }
+                do { try await Task.sleep(for: .nanoseconds(16666667), clock: .suspending) } catch { return }
             }
         } }
     }

@@ -335,7 +335,7 @@ import Foundation
                               let raw=value["authUrl"]?.text,let url=Self.browserLoginURL(raw) else { throw CodexWire.Failure.malformed }
                         loginID=login;status=WSL10n.text("owned.status.browserLogin", zh: "请在浏览器中完成登录");onBrowserURL?(url)
                         loginDeadline?.cancel();loginDeadline=Task { [weak self] in
-                            do { try await Task.sleep(nanoseconds:300_000_000_000) } catch { return }
+                            do { try await Task.sleep(for: .seconds(300), clock: .suspending) } catch { return }
                             guard let self,self.session?.connectionID==connection,self.loginID==login else { return };self.cancelLogin()
                         }
                     case .cancelLogin:stop(reason:WSL10n.text("owned.fail.loginCancelled", zh: "已结束登录流程；重新连接后可核对账号状态。"));return

@@ -110,7 +110,7 @@ extension GlanceProbe {
       if !self.windowStaysAway(id, pid: pid, requireMinimized: kind == .minimized) { windowStayed = false }
       // 参考窗在隐藏那一轮里仍是最小化的。
       if let alsoWatch, !self.windowStaysAway(alsoWatch, pid: pid, requireMinimized: true) { windowStayed = false }
-      try await Task.sleep(nanoseconds: 30_000_000)
+      try await Task.sleep(for: .milliseconds(30), clock: .suspending)
     }
     let hiddenOK = !mustStayHidden || hideKept
     print("\(windowStayed && frontKept && hiddenOK ? "PASS" : "FAIL") shelf-glance: while resting on the tile nothing changes underneath — window stayed minimized, the fixture did not come to the front, it stayed hidden (window=\(windowStayed) front=\(frontKept) hidden=\(mustStayHidden ? "\(hideKept)" : "n/a"))")
@@ -142,7 +142,7 @@ extension GlanceProbe {
       for win in appWindows(pid: pid) where windowID(of: win) == self.id {
         if axBoolAttribute(win, kAXMinimizedAttribute as String) { return true }
       }
-      try await Task.sleep(nanoseconds: 16_000_000)
+      try await Task.sleep(for: .milliseconds(16), clock: .suspending)
     }
     throw EffectError.unavailable("shelf-glance: the fixture's reference window did not minimize in time")
   }

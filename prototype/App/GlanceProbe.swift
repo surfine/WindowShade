@@ -93,7 +93,7 @@ final class GlanceProbe {
       return id != 0 && onscreen(id)
     }
     guard let element, let original = bounds(id) else { throw EffectError.unavailable("no fixture") }
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     if CommandLine.arguments.contains("--fold-timing") {
       try await foldTiming(element: element)
       finish(nil)
@@ -119,17 +119,17 @@ final class GlanceProbe {
       }
       print("INFO space-follow before: \(spaces())")
       let minimized = setAXMinimizedReturningError(element, true)
-      try await Task.sleep(nanoseconds: 1_200_000_000)
+      try await Task.sleep(for: .milliseconds(1200), clock: .suspending)
       print("INFO space-follow minimized err=\(minimized.rawValue): \(spaces())")
       let restored = setAXMinimizedReturningError(element, false)
-      try await Task.sleep(nanoseconds: 1_500_000_000)
+      try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
       print("INFO space-follow restored err=\(restored.rawValue): \(spaces()) frontmost=\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?")")
       // 再试：用我们自己的连接把别的进程的窗口挪到当前桌面。
       if let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }),
          let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
          let here = PrivateSLSWindowMover.shared.currentSpace(displayID: CGDirectDisplayID(n.uint32Value)) {
         let moved = PrivateSLSWindowMover.shared.moveWindow(id: id, toSpace: here)
-        try await Task.sleep(nanoseconds: 800_000_000)
+        try await Task.sleep(for: .milliseconds(800), clock: .suspending)
         print("INFO space-follow SLS move to \(here) reported=\(moved): \(spaces())")
       }
       finish(nil)
@@ -141,7 +141,7 @@ final class GlanceProbe {
         let v = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame), size: screen.visibleFrame.size)
         for (label, x) in [("right-40", v.maxX - 40), ("right-8", v.maxX - 8), ("left-40", v.minX - original.width + 40)] {
           setAXPosition(element, CGPoint(x: x, y: v.minY + 60))
-          try await Task.sleep(nanoseconds: 350_000_000)
+          try await Task.sleep(for: .milliseconds(350), clock: .suspending)
           let b = bounds(id)
           print("INFO edge-park screen=\(screen.frame) \(label) asked x=\(Int(x)) got=\(b.map { "(\(Int($0.minX)),\(Int($0.minY)) \(Int($0.width))x\(Int($0.height)))" } ?? "?")")
         }
@@ -153,9 +153,9 @@ final class GlanceProbe {
     if CommandLine.arguments.contains("--stall-sample") {
       // 卡顿定位器自测：故意让主线程卡 0.7 秒，日志里应该出现调用栈，而且指向这里。
       MainThreadStallSentinel.shared.start()
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
       stallOnPurpose()
-      try await Task.sleep(nanoseconds: 400_000_000)
+      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
       finish(nil)
       return
     }
@@ -341,13 +341,13 @@ final class GlanceProbe {
       finish(nil)
       return
     }
-    try await Task.sleep(nanoseconds: 800_000_000)  // 收起后 0.7s 内不响应悬停
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)  // 收起后 0.7s 内不响应悬停
     let onStrip = NSPoint(x: strip.minX + strip.width * 0.6, y: strip.midY)
     // 收起本身会把焦点交给别的 App（异步落定）：等前台连续 0.4 秒不变，再以它为准。
     var frontBefore = NSWorkspace.shared.frontmostApplication?.processIdentifier
     var stableSince = CACurrentMediaTime()
     while CACurrentMediaTime() - stableSince < 0.4 {
-      try await Task.sleep(nanoseconds: 50_000_000)
+      try await Task.sleep(for: .milliseconds(50), clock: .suspending)
       let now = NSWorkspace.shared.frontmostApplication?.processIdentifier
       if now != frontBefore { frontBefore = now; stableSince = CACurrentMediaTime() }
     }
@@ -355,9 +355,9 @@ final class GlanceProbe {
     // 1. 路过：进卷帘条不到停留时间就离开，不应显示任何东西。
     pointer = onStrip
     glance.pointerEntered(id)
-    try await Task.sleep(nanoseconds: 90_000_000)
+    try await Task.sleep(for: .milliseconds(90), clock: .suspending)
     pointer = NSPoint(x: -9000, y: -9000)
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     guard !glance.isShowing, !glance.hasSession(id) else {
       throw EffectError.unavailable("passing over the strip opened a glance")
     }
@@ -408,11 +408,11 @@ final class GlanceProbe {
       let origin = axPosition(fromCocoaFrame: region)
       print("HOLD glance \(Int(origin.x)),\(Int(origin.y)),\(Int(region.width)),\(Int(region.height))")
       fflush(stdout)
-      try await Task.sleep(nanoseconds: 3_000_000_000)
+      try await Task.sleep(for: .seconds(3), clock: .suspending)
     }
     if liveExpected {
       let before = glance.pixelFrames(id)
-      try await Task.sleep(nanoseconds: 1_000_000_000)
+      try await Task.sleep(for: .seconds(1), clock: .suspending)
       let perSecond = glance.pixelFrames(id) - before
       guard perSecond >= 8 else { throw EffectError.unavailable("picture is not live: \(perSecond) frames/s") }
       print("PASS glance: picture keeps updating (\(perSecond) frames in 1s)")
@@ -425,7 +425,7 @@ final class GlanceProbe {
 
     // 3. 从卷帘条移到画面上：不收回。
     pointer = NSPoint(x: card.midX, y: card.midY)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     guard glance.isShowing else { throw EffectError.unavailable("moving onto the picture closed it") }
     print("PASS glance: moving from the strip onto the picture keeps it open")
 
@@ -455,7 +455,7 @@ final class GlanceProbe {
       if windowBack, restoredAt == nil { restoredAt = CACurrentMediaTime() }
       if !windowBack && !glance.hasSession(id) { gapSamples += 1 }
       if windowBack && !glance.hasSession(id) { break }
-      try await Task.sleep(nanoseconds: 10_000_000)
+      try await Task.sleep(for: .milliseconds(10), clock: .suspending)
     }
     guard let restoredAt else { throw EffectError.unavailable("window did not come back where it was") }
     guard owner.shaded[id] == nil else { throw EffectError.unavailable("still folded after expand") }
@@ -492,7 +492,7 @@ final class GlanceProbe {
     }
     let strip = panel.frame
     let front = NSWorkspace.shared.frontmostApplication?.processIdentifier
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     pointer = NSPoint(x: strip.midX - 20, y: strip.midY)
     let entered = CACurrentMediaTime()
     glance.pointerEntered(id)
@@ -513,14 +513,14 @@ final class GlanceProbe {
       shownMs, liveMs, frame.width, frame.height))
     if CommandLine.arguments.contains("--hold") {
       print("HOLD carry"); fflush(stdout)
-      try await Task.sleep(nanoseconds: 3_000_000_000)
+      try await Task.sleep(for: .seconds(3), clock: .suspending)
     }
     let before = glance.pixelFrames(id)
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     let perSecond = glance.pixelFrames(id) - before
     print("INFO carry: \(perSecond) picture updates in 1s\(otherSpace ? " from another desktop" : "")")
     pointer = NSPoint(x: frame.midX, y: frame.midY)
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     guard glance.isShowing else { throw EffectError.unavailable("moving onto the picture closed it") }
     pointer = NSPoint(x: -9000, y: -9000)
     try await wait("carried glance closed", timeout: 1.5) { !glance.hasSession(self.id) }
@@ -569,7 +569,7 @@ final class GlanceProbe {
         self.onscreen(self.id) && self.owner.shaded[self.id] == nil
           && self.owner.duoController.windowEffects.activeCount == 0
       }
-      try await Task.sleep(nanoseconds: 1_000_000_000)
+      try await Task.sleep(for: .seconds(1), clock: .suspending)
     }
     func median(_ xs: [Double]) -> Double { xs.sorted()[xs.count / 2] }
     let fast = FastCapture.isAvailable ? "fast capture" : "ScreenCaptureKit only"
@@ -607,7 +607,7 @@ final class GlanceProbe {
         }
       }
       belowInfo = c.map { "\($0.width)x\($0.height)" } ?? "nil"
-      try await Task.sleep(nanoseconds: 120_000_000)
+      try await Task.sleep(for: .milliseconds(120), clock: .suspending)
     }
     print(String(format: "BENCH capture window SCK median %.0fms (%@)", median(sck), sckInfo))
     print(String(format: "BENCH capture window CG  median %.0fms (%@)", median(cg), cgInfo))
@@ -621,7 +621,7 @@ final class GlanceProbe {
     let ok = setAXAppHidden(pid: pid, false)
     try await wait("unhidden", timeout: 2) { self.onscreen(self.id) }
     let back = (CACurrentMediaTime() - started) * 1000
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     let frontAfter = NSWorkspace.shared.frontmostApplication?.processIdentifier
     print(String(format: "EXP unhide: ax=%@ onscreen after %.0fms, frontmost %@",
       ok ? "ok" : "fail", back, frontAfter == front ? "unchanged" : "CHANGED"))
@@ -634,7 +634,7 @@ final class GlanceProbe {
     try await capture.start(window: scWindow, display: nil)
     try await wait("frame", timeout: 2) { capture.pixelFrameCount > 0 }
     let first = (CACurrentMediaTime() - t) * 1000
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     print(String(format: "EXP unhide: first frame %.0fms after stream start, %llu frames in ~1s",
       first, capture.pixelFrameCount))
     capture.stop()
@@ -663,7 +663,7 @@ final class GlanceProbe {
     let deadline = CACurrentMediaTime() + timeout
     while !Task.isCancelled, CACurrentMediaTime() < deadline {
       if condition() { return }
-      try await Task.sleep(nanoseconds: 8_000_000)
+      try await Task.sleep(for: .milliseconds(8), clock: .suspending)
     }
     throw EffectError.unavailable("timeout: \(label) \(label == "fixture window" ? lastLookup : "")")
   }

@@ -91,7 +91,7 @@ extension GlanceProbe {
         left = (try? await wait("left full screen through accessibility", timeout: 6) { back() }) != nil
       }
       if left { fullScreenOn = false }
-      try? await Task.sleep(nanoseconds: 800_000_000)
+      try? await Task.sleep(for: .milliseconds(800), clock: .suspending)
       return left
     }
 
@@ -102,13 +102,13 @@ extension GlanceProbe {
       }
       if slide.dockedWindowID == id { slide.exit(reason: "probe done") }
       carry.stopIfCarried(other.id, reason: "probe done")
-      try? await Task.sleep(nanoseconds: 600_000_000)
+      try? await Task.sleep(for: .milliseconds(600), clock: .suspending)
       setAXPosition(element, original.origin)
       setAXSize(element, original.size)
       setAXPosition(other.element, otherStart.origin)
       setAXPosition(full.element, fullStart.origin)
       setAXSize(full.element, fullStart.size)
-      try? await Task.sleep(nanoseconds: 500_000_000)
+      try? await Task.sleep(for: .milliseconds(500), clock: .suspending)
     }
 
     for (round, target) in targets.enumerated() {
@@ -174,7 +174,7 @@ extension GlanceProbe {
                      name, (CACurrentMediaTime() - started) * 1000,
                      spaceBefore.map(String.init) ?? "-", fullSpace.map(String.init) ?? "-"))
         // 等换桌面的动画走完，WindowShade 的换桌面处理也跑完（带着的卷帘条 0.4 秒后还会再核对一次）。
-        try await Task.sleep(nanoseconds: 1_200_000_000)
+        try await Task.sleep(for: .milliseconds(1200), clock: .suspending)
         func stillOnFullScreenDesktop() throws {
           guard isFullScreen(), spaceBefore == nil || currentSpace(target) == fullSpace else {
             throw EffectError.unavailable("fullscreen: the full-screen desktop is no longer in front (someone switched desktops); stopped")

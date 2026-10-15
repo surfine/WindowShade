@@ -346,7 +346,7 @@ final class CountdownTimerPresenter {
         card = alert
         holdTask?.cancel()
         holdTask = Task { [weak self, weak alert] in
-            do { try await Task.sleep(nanoseconds: Self.doneHold) } catch { return }
+            do { try await Task.sleep(for: .nanoseconds(Self.doneHold), clock: .suspending) } catch { return }
             guard let self, let alert, self.card === alert else { return }
             self.leases?.dismiss(ifShowing: alert)
         }

@@ -248,7 +248,7 @@ import Cocoa
         // Keep the runloop alive for our native reaper and the pre-existing updater gate.
         owned.stop(reason:"正在结束助手后退出",clearPrivate:true)
         if quitToken==token { quitDeadline=Task { [weak self] in
-            do { try await Task.sleep(nanoseconds:35_000_000_000) } catch { return }
+            do { try await Task.sleep(for: .seconds(35), clock: .suspending) } catch { return }
             guard let self,self.quitToken==token else { return };self.finishQuit(failed:true)
         } }
         finishQuit(childrenReady:!owned.isBusy)

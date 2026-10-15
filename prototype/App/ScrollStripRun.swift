@@ -1027,7 +1027,7 @@ final class ScrollStripController {
         let t0 = CACurrentMediaTime()
         for step in 1...max(1, steps) {
             scroll(fingerDX: fingerDX * CGFloat(step) / CGFloat(max(1, steps)), at: t0 + Double(step) * 0.016)
-            try? await Task.sleep(nanoseconds: 16_000_000)
+            try? await Task.sleep(for: .milliseconds(16), clock: .suspending)
         }
         endScroll(at: t0 + Double(max(1, steps)) * 0.016)
     }

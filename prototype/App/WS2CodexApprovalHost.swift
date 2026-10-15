@@ -128,7 +128,7 @@ import Cocoa
         presentationTask = Task { [weak self,weak view] in
             // Wait for the existing island's layout/animation completion, not an assumed fixed animation length.
             for _ in 0..<100 {
-                do { try await Task.sleep(nanoseconds:10_000_000) } catch { return }
+                do { try await Task.sleep(for: .milliseconds(10), clock: .suspending) } catch { return }
                 guard let self, let view, self.gate.current == review, self.isCurrent(review) else { return }
                 if let panel = view.window as? NotchPanel, panel.isVisible, panel.isSettledForProbe,
                    view.bounds.width > 0, view.bounds.height > 0, view.inputIsCurrent() {
@@ -232,7 +232,7 @@ import Cocoa
         guard !closed, let receipt else { return }
         view.showReceipt(AgentApprovalCard.text(receipt, agent:review.context.session.provider.displayName))
         receiptTask = Task { [weak self, weak view] in
-            do { try await Task.sleep(nanoseconds:Self.receiptHold) } catch { return }
+            do { try await Task.sleep(for: .nanoseconds(Self.receiptHold), clock: .suspending) } catch { return }
             guard let self else { return }
             self.receiptTask = nil
             if let view, self.presentedView === view { self.presentedView = nil; self.island.dismiss(ifShowing:view) }

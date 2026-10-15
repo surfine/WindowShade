@@ -68,7 +68,7 @@ extension GlanceProbe {
     let fixturePath = arguments[fixtureIndex + 1]
     for kind in ["slide-over", "pip", "notch"] {
       try await gapKillAndRelaunch(kind: kind, executable: executable, fixturePath: fixturePath)
-      try await Task.sleep(nanoseconds: 1_000_000_000)
+      try await Task.sleep(for: .seconds(1), clock: .suspending)
     }
   }
 
@@ -142,7 +142,7 @@ extension GlanceProbe {
     // kill -9：来不及收尾。窗口应该还留在外面（收在屏幕边外、让开、藏起来），不然就没什么可测的。
     kill(victim.processIdentifier, SIGKILL)
     try await wait("\(kind): first copy gone", timeout: 3) { !victim.isRunning }
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     func isBack() -> Bool {
       guard windowIsOnScreenNow(windowID), let frame = bounds(windowID) else { return false }
       return gapVisibleWidth(frame) > 64 && gapAlpha(windowID) > 0.5
@@ -219,10 +219,10 @@ extension GlanceProbe {
     default:
       throw EffectError.unavailable("kill-recovery victim: unknown state \(kind)")
     }
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     print("VICTIM READY fixture=\(pid) id=\(id) expect=\(Int(expect.minX)),\(Int(expect.minY)),\(Int(expect.width)),\(Int(expect.height))")
     fflush(stdout)
-    try await Task.sleep(nanoseconds: 90_000_000_000)
+    try await Task.sleep(for: .seconds(90), clock: .suspending)
     throw EffectError.unavailable("kill-recovery victim: nobody stopped this copy within 90 s; putting things back")
   }
 }

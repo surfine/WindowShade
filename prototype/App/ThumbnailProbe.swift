@@ -91,7 +91,7 @@ extension GlanceProbe {
     guard !glance.hasSession(id), glance.captureForProbe(id) == nil else {
       throw EffectError.unavailable("thumbnail: a stream started right after putting it away")
     }
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     guard !glance.hasSession(id), glance.captureForProbe(id) == nil else {
       throw EffectError.unavailable("thumbnail: a stream runs while nobody is looking")
     }
@@ -108,7 +108,7 @@ extension GlanceProbe {
       let deadline = CACurrentMediaTime() + 4
       while CACurrentMediaTime() < deadline {
         notch.simulateTitleChange(id, title: "缩略图探针 · 标题变了 \(Int(CACurrentMediaTime() * 1000))")
-        try await Task.sleep(nanoseconds: 400_000_000)
+        try await Task.sleep(for: .milliseconds(400), clock: .suspending)
         if view.showsChange { dotted = true; break }
       }
       let quiet = !notch.isAlerting
@@ -147,7 +147,7 @@ extension GlanceProbe {
       try await wait("live frame", timeout: 2.5) { glance.isLive(self.id) }
       capture = glance.captureForProbe(id)
       let before = glance.pixelFrames(id)
-      try await Task.sleep(nanoseconds: 1_000_000_000)
+      try await Task.sleep(for: .seconds(1), clock: .suspending)
       let perSecond = glance.pixelFrames(id) - before
       guard perSecond >= 8, capture?.isRunning == true else {
         throw EffectError.unavailable("thumbnail: glance picture is not live (\(perSecond) frames/s)")
@@ -155,7 +155,7 @@ extension GlanceProbe {
       print(String(format: "PASS thumbnail: resting on it grows the glance card back to %.0fx%.0f in place after %.0fms, live picture (%d frames in 1s)",
                    card.width, card.height, shownMs, Int(perSecond)))
     } else {
-      try await Task.sleep(nanoseconds: 700_000_000)
+      try await Task.sleep(for: .milliseconds(700), clock: .suspending)
       guard glance.diagnostics.lastShowedStaleNotice, glance.showsStaleNoticeForProbe(id) else {
         throw EffectError.unavailable("thumbnail: snapshot shown without saying so")
       }
@@ -180,7 +180,7 @@ extension GlanceProbe {
     pointer = onThumbnail
     glance.pointerEntered(id)
     try await wait("glance back while shrinking", timeout: 2) { glance.isShown(self.id) }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     guard glance.isShown(id), let back = glance.cardFrame(for: id), cardAtFullSize(back) else {
       throw EffectError.unavailable("thumbnail: coming back while it shrank did not leave the card open at full size")
     }
@@ -204,14 +204,14 @@ extension GlanceProbe {
                  (CACurrentMediaTime() - left) * 1000))
 
     // 5. 单击：原地展开。
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let clicked = CACurrentMediaTime()
     view.onClick?()
     try await wait("unrolled in place", timeout: 3) { openedInPlace() }
     print(String(format: "PASS thumbnail: a click opens the window in place in %.0fms", (CACurrentMediaTime() - clicked) * 1000))
 
     // 6. 整理后直接单击排好的缩略图：回整理前的原位展开。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let (tidiedOverlay, tidiedView) = try await fold()
     _ = try await tidy(tidiedOverlay)
     print("PASS thumbnail: ⌃⌘0 lines the thumbnail up along the bottom of the screen (menu says 恢复缩略图原位)")
@@ -223,13 +223,13 @@ extension GlanceProbe {
     print("PASS thumbnail: clicking a tidied thumbnail opens the window where it was, not along the bottom")
 
     // 7. 整理后停到缩略图上，单击卡片：同样回原位展开。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let (peekOverlay, _) = try await fold()
     let peekHome = try await tidy(peekOverlay)
     let homeThumbnail = ThumbnailLayout.thumbnail(inOverlayFrame: peekHome)
     let tidiedThumbnail = ThumbnailLayout.thumbnail(inOverlayFrame: peekOverlay.frame)
     // 刚收起的 0.7 秒里不开看一眼（hoverPreviewSuppressedUntil）：等过去再停上去。
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     pointer = NSPoint(x: tidiedThumbnail.midX, y: tidiedThumbnail.midY)
     glance.pointerEntered(id)
     try await wait("glance over the tidied thumbnail", timeout: 2) { glance.isShown(self.id) }
@@ -244,7 +244,7 @@ extension GlanceProbe {
     print("PASS thumbnail: after tidying, clicking the glance card opens the window where it was")
 
     // 8. 整理、放回原位，再展开：在缩略图那里展开。
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let (again, _) = try await fold()
     let home = try await tidy(again)
     // 放回时按屏幕可用区域夹进 8 点（restoreArrangedOverlayFrames），贴着边收起的会往里挪一点。

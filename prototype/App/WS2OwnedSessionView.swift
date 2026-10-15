@@ -147,7 +147,7 @@ import Cocoa
     func scheduleRender() {
         guard renderTask==nil else { return }
         renderTask=Task { [weak self] in
-            do { try await Task.sleep(nanoseconds:60_000_000) } catch { return }
+            do { try await Task.sleep(for: .milliseconds(60), clock: .suspending) } catch { return }
             guard let self else { return };self.renderTask=nil;self.render()
         }
     }

@@ -42,13 +42,13 @@ extension GlanceProbe {
         MissionControlPick.isActive(in: WindowListCache.shared.onScreenWindows())
       }
       // 调度中心把窗口挪到它自己排的位置：打开之后再读一次临时窗口的真实边界。
-      try await Task.sleep(nanoseconds: 400_000_000)
+      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
       guard let live = bounds(id) else { throw EffectError.unavailable("mc-quit: fixture frame inside Mission Control") }
       let point = CGPoint(x: live.midX, y: live.midY)
       // 系统用真实指针位置覆盖合成事件里的坐标：光标要真的挪到临时窗口上。
       CGWarpMouseCursorPosition(point)
       CGAssociateMouseAndMouseCursorPosition(1)
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
       let windows = WindowListCache.shared.onScreenWindows()
       let cursor = CGEvent(source: nil)?.location ?? .zero
       let picked = MissionControlPick.target(at: cursor, in: windows)
@@ -115,7 +115,7 @@ extension GlanceProbe {
       for (index, target) in targets.enumerated() {
         setAXPosition(target.1.element, CGPoint(x: x0 + CGFloat(index) * 60, y: area.minY + 40 + CGFloat(index) * 40))
       }
-      try await Task.sleep(nanoseconds: 400_000_000)
+      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     }
     // 每扇置顶后新出现的那块面板就是它的（面板跟着会话走，暂时取消再恢复也是同一块）。
     var panels: [CGWindowID: NSWindow] = [:]
@@ -139,7 +139,7 @@ extension GlanceProbe {
     func settledOrder() async throws -> [CGWindowID] {
       var last: [CGWindowID] = []
       for _ in 0..<10 {
-        try await Task.sleep(nanoseconds: 300_000_000)
+        try await Task.sleep(for: .milliseconds(300), clock: .suspending)
         let now = order()
         if now.count == 3, now == last { return now }
         last = now
@@ -155,7 +155,7 @@ extension GlanceProbe {
       let before = try await settledOrder()
       guard before.count == 3 else { throw EffectError.unavailable("pins order: \(before.count) pinned panels on screen before suspending") }
       pins.toggleSuspendAll()
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
       let away = targets.allSatisfy { !pins.panelVisibleForProbe(id: $0.1.id) && pins.isSuspended(id: $0.1.id) }
       let during = pins.suspendAllMenuTitle()
       pins.toggleSuspendAll()

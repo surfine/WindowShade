@@ -168,7 +168,7 @@ import Glibc
         let delay = max(0, deadline - clock())
         guard delay.isFinite, delay < 86_400 else { stop(.timeout); return }
         deadlineTask = Task { [weak self] in
-            do { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) } catch { return }
+            do { try await Task.sleep(for: .seconds(delay), clock: .suspending) } catch { return }
             guard let self, !self.stopped else { return }
             if let d = self.outbox.nextDeadline, self.clock() >= d { self.stop(.timeout) }
             else { self.scheduleDeadline() }

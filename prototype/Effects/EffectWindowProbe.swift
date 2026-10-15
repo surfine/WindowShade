@@ -193,7 +193,7 @@ final class EffectWindowProbe {
     let deadline = CACurrentMediaTime() + 10
     while !Task.isCancelled, CACurrentMediaTime() < deadline {
       if condition() { return }
-      try await Task.sleep(nanoseconds: 16_000_000)
+      try await Task.sleep(for: .milliseconds(16), clock: .suspending)
     }
     throw EffectError.unavailable("timeout: \(label)")
   }

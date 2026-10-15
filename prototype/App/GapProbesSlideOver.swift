@@ -67,7 +67,7 @@ extension GlanceProbe {
     for step in 1...6 {
       delta = CGVector(dx: inward * CGFloat(step) * 10, dy: -CGFloat(step) * 13)
       band.onDrag?(delta)
-      try await Task.sleep(nanoseconds: 16_000_000)
+      try await Task.sleep(for: .milliseconds(16), clock: .suspending)
     }
     let dragged = docked.offsetBy(dx: delta.dx, dy: -delta.dy)
     let followed = (try? await wait("window follows the border", timeout: 2) {
@@ -90,7 +90,7 @@ extension GlanceProbe {
       across.onBegin?()
       for step in 1...8 {
         across.onDrag?(CGVector(dx: dx * CGFloat(step) / 8, dy: 0))
-        try await Task.sleep(nanoseconds: 16_000_000)
+        try await Task.sleep(for: .milliseconds(16), clock: .suspending)
       }
       try await wait("dragged across", timeout: 2) {
         self.bounds(self.id).map { abs($0.midX - goal) < 4 } == true
@@ -114,7 +114,7 @@ extension GlanceProbe {
     middle.onBegin?()
     for step in 1...8 {
       middle.onDrag?(CGVector(dx: dxMiddle * CGFloat(step) / 8, dy: 0))
-      try await Task.sleep(nanoseconds: 16_000_000)
+      try await Task.sleep(for: .milliseconds(16), clock: .suspending)
     }
     let dropped = now.offsetBy(dx: dxMiddle, dy: 0)
     try await wait("dragged to the middle", timeout: 2) { self.bounds(self.id).map { self.closeTo($0, dropped) } == true }
@@ -122,7 +122,7 @@ extension GlanceProbe {
     let exited = (try? await wait("left slide over in the middle", timeout: 3) {
       !slide.isSlideOver(self.id) && !pinned() && !slide.chromeVisible
     }) != nil
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let stayed = bounds(id).map { closeTo($0, dropped) } == true
     print("\(exited && stayed ? "PASS" : "FAIL") slide-over border: dragging the border to the middle and letting go leaves Slide Over; the window stays where it was dropped, no border, not floating (\(bounds(id).map { "\($0)" } ?? "-"))")
   }
@@ -179,7 +179,7 @@ extension GlanceProbe {
     let dockedThere = (try? await wait("real window docked on its own desktop", timeout: 3) {
       self.bounds(self.id).map { self.near($0, docked) } == true
     }) != nil
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     let ghosts = leftHere()
     print("INFO slide-over spaces: the real window \(dockedThere ? "moved to the docked place" : "did not reach the docked place") on its own desktop (\(bounds(id).map { "\($0)" } ?? "-") want \(docked))")
     print("\(ghosts.isEmpty && spacesKept() ? "PASS" : "FAIL") slide-over spaces: with the window on another desktop, only its handle shows here — nothing else of it is left on this desktop (\(ghosts.isEmpty ? "nothing" : ghosts.joined(separator: ", "))), and neither desktop changed")
@@ -189,7 +189,7 @@ extension GlanceProbe {
     try await wait("live picture slid in", timeout: 3) { slide.mirrorVisible }
     try await wait("first live frame", timeout: 4) { slide.mirrorFrames > 0 }
     let start = slide.mirrorFrames
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     let perSecond = slide.mirrorFrames - start
     let realStayed = mover.windowSpace(id: id) == home && !windowIsOnScreenNow(id)
     print("\(perSecond >= 5 && realStayed && spacesKept() ? "PASS" : "FAIL") slide-over spaces: pulling the handle here shows its live picture (\(perSecond) frames in 1s); the real window stays on its own desktop")

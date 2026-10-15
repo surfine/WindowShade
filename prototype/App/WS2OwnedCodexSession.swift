@@ -78,7 +78,7 @@ import Foundation
         guard !closed,let deadline=approval.nextDeadline else { return }
         let now=clock.now(),delay=deadline>clock.now() ? deadline.elapsed(since:now):0
         expiry=Task { [weak self] in
-            do { try await Task.sleep(nanoseconds:delay) } catch { return }
+            do { try await Task.sleep(for: .nanoseconds(delay), clock: .suspending) } catch { return }
             guard let self,!self.closed else { return };self.approval.tick();self.scheduleExpiry()
         }
     }

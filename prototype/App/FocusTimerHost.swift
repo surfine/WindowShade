@@ -30,7 +30,7 @@ import Foundation
         guard let end = model.nextWake(at:now,presentation:presentation) else { return }
         let delay = max(1,end.elapsed(since:now)), generation = revision
         wake = Task { [weak self] in
-            do { try await Task.sleep(nanoseconds:delay) } catch { return }
+            do { try await Task.sleep(for: .nanoseconds(delay), clock: .suspending) } catch { return }
             guard let self, !Task.isCancelled, self.revision == generation else { return }
             self.handle(.tick)
         }

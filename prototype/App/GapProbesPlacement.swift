@@ -43,7 +43,7 @@ extension GlanceProbe {
     let dragged = start.offsetBy(dx: -160, dy: 0)
     setAXPosition(small, dragged.origin)
     try await wait("small window dragged", timeout: 2) { self.bounds(smallID).map { self.closeTo($0, dragged) } == true }
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
     let t0 = CACurrentMediaTime()
     let down = cocoaMousePoint(fromAXPoint: CGPoint(x: start.midX, y: start.minY + 12))
     let release = NSPoint(x: down.x - 160, y: down.y)
@@ -52,7 +52,7 @@ extension GlanceProbe {
                                          release: release, at: t0)
     let flickSaid = gestures.hud.displayedTitle
     try await wait("flick settles", timeout: 3) { !gestures.isGliding(smallID) }
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let leftHalf = GestureAction.leftHalf.tile!.frame(in: flickArea)
     let flick = judge(leftHalf)
     print("\(flick.ok && flickSaid == note ? "PASS" : "FAIL") fixed-size: flicked left, a window that can't be resized keeps its size, lands in the middle of the left half and the bubble says so (\(flicked ?? "taken"); after=\(flick.frame.map { "\($0)" } ?? "-") left half=\(leftHalf) said=\(flickSaid ?? "nothing"))")
@@ -73,7 +73,7 @@ extension GlanceProbe {
     // 等上一次的提示浮窗收起，免得读到的是甩那一下留下的话。
     try await wait("bubble from the flick gone", timeout: 4) { gestures.hud.displayedTitle == nil }
     notch.dragMoved(to: leftCell)
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let t1 = CACurrentMediaTime()
     let down1 = cocoaMousePoint(fromAXPoint: CGPoint(x: begin.midX, y: begin.minY + 12))
     var samples: [(TimeInterval, NSPoint)] = []
@@ -82,7 +82,7 @@ extension GlanceProbe {
                                          release: leftCell, at: t1)
     let islandSaid = gestures.hud.displayedTitle
     try await wait("island placement settles", timeout: 3) { !gestures.isGliding(smallID) }
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let islandHalf = GestureAction.leftHalf.tile!.frame(in: islandArea)
     let islandResult = judge(islandHalf)
     print("\(islandResult.ok && islandSaid == note ? "PASS" : "FAIL") fixed-size: dropped on the left square of the notch island, a window that can't be resized keeps its size, lands in the middle of the left half and the bubble says so (\(dropped ?? "taken"); after=\(islandResult.frame.map { "\($0)" } ?? "-") left half=\(islandHalf) said=\(islandSaid ?? "nothing"))")
@@ -126,7 +126,7 @@ extension GlanceProbe {
     let fastPass = hint.take(id: id, at: drop) == nil
     hint.update(id: id, at: drop)
     hint.update(id: id, at: NSPoint(x: visible.midX, y: visible.midY))
-    try await Task.sleep(nanoseconds: 350_000_000)
+    try await Task.sleep(for: .milliseconds(350), clock: .suspending)
     let movedAway = !hint.isArmed && !hint.isTracking(id)
     // 停一下：虚影亮起，松手进画中画。
     hint.update(id: id, at: drop)
@@ -140,7 +140,7 @@ extension GlanceProbe {
       guard let b = self.bounds(self.id) else { return false }
       return b.maxX <= screenAX.minX + 3 || b.minX >= screenAX.maxX - 3
     }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     func expected(_ level: PiPSizeLevel) -> NSRect {
       PiPLayout.frame(corner: .topLeft, size: PiPLayout.size(source: entered.size, level: level, area: visible), area: visible)
     }
@@ -182,7 +182,7 @@ extension GlanceProbe {
       let reached = (try? await wait("size \(want)", timeout: 2) { pip.levelForProbe(self.id) == want && sits(want) }) != nil
       sizesOK = sizesOK && reached
       steps.append("\(bigger ? "+" : "−")→\(pip.levelForProbe(id).map { "\($0)" } ?? "-") \(Int(pip.panelFrameForProbe(id)?.width ?? 0))")
-      try await Task.sleep(nanoseconds: 150_000_000)
+      try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     }
     let widths = PiPSizeLevel.allCases.map { Int(expected($0).width) }
     print("\(sizesOK ? "PASS" : "FAIL") pip corner: ⌘-scroll on the picture steps through the three sizes \(widths) and stops at either end, staying in its corner (\(steps.joined(separator: ", ")))")
@@ -192,7 +192,7 @@ extension GlanceProbe {
     let home = (try? await wait("back where it was before the drag", timeout: 4) {
       self.bounds(self.id).map { self.closeTo($0, original) } == true
     }) != nil
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     print("\(home && !pip.isInPictureInPicture(id) ? "PASS" : "FAIL") pip corner: going back puts the window where it was before the title bar was grabbed, not in the corner it was dropped in (\(bounds(id).map { "\($0)" } ?? "-") want \(original))")
     print("INFO pip corner: picture in picture over a full-screen app is not covered here (needs the fixture's full-screen window and would switch your desktop)")
   }

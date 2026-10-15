@@ -58,7 +58,7 @@ extension GlanceProbe {
         var last: NSRect?
         var steady = 0
         for _ in 0..<30 where steady < 3 {
-          try await Task.sleep(nanoseconds: 100_000_000)
+          try await Task.sleep(for: .milliseconds(100), clock: .suspending)
           let now = panel.shapeForProbe?.island
           steady = now == last && now.map(ready) == true && panel.isSettledForProbe ? steady + 1 : 0
           last = now
@@ -232,6 +232,6 @@ extension GlanceProbe {
       + "if it matches the hardware, the column or row showing right next to the notch is cyan. The shoulder staircase should start showing "
       + "about \(d45(curves.shoulderRadius)) steps out, the screen corners' about \(d45(shape.topCorner)) steps in. "
       + "Showing for 90 s: look with a loupe or a phone macro lens and take a photo.")
-    try await Task.sleep(nanoseconds: 90_000_000_000)
+    try await Task.sleep(for: .seconds(90), clock: .suspending)
   }
 }

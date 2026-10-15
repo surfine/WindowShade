@@ -148,7 +148,7 @@ enum TimeoutRace {
         return await withCheckedContinuation { (continuation: CheckedContinuation<T?, Never>) in
             let timeoutTask = Task {
                 do {
-                    try await Task.sleep(nanoseconds: timeoutNanoseconds)
+                    try await Task.sleep(for: .nanoseconds(timeoutNanoseconds), clock: .suspending)
                 } catch {
                     return
                 }
