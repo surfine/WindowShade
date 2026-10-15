@@ -25,7 +25,7 @@
 ### 发版前的虚拟机回归
 
 虚拟机在外置 QA 盘（`/Volumes/TiPlus 7100/WindowShade-QA`，Lume，见那里的 `RUNBOOK.md`）：`wsqa-manual` 是 macOS 26.6.2，
-`wsqa-15` 是 macOS 15.6.1；两台都开着 SIP、和一般用户一样。先 `./build.sh --stage`、在本机跑过一次 `tests/run-glance-probe.sh`
+`wsqa-15` 是 macOS 15.6.1（Lume 的 `--unattended sequoia` 在最后一步失败，所以是手动走的设定助理）；两台都开着 SIP、和一般用户一样，帐号 `lume`，本机公钥已放进去，WindowShade 的辅助功能与屏幕录制已授权。先 `./build.sh --stage`、在本机跑过一次 `tests/run-glance-probe.sh`
 （编出临时 App），开机（`./lume.sh run <名字> --storage windowshade-qa --display none`）后：
 
 ```sh
@@ -36,6 +36,7 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 虚拟机只有 2–4 核：计时（fold-timing 约是本机的两三倍）只看有没有跑通，不和本机比；browser-more 里几处 5 秒等待在虚拟机上偶尔不够，
 失败要重跑一次再判断。跑完正常停机（`./lume.sh stop <名字> --storage windowshade-qa`）。
 2026-10-16 在 macOS 26.6.2 上首跑：前五组全过，browser-more 三次里一次全过、两次在不同步骤等满 5 秒（记 inconclusive）。
+同日 macOS 15.6.1（`wsqa-15`，4 核）首跑：六组全过；计时与本机相近（第一次画面变化 168 ms、卷帘条 391 ms）。
 
 ## 模块结构
 
