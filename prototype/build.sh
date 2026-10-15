@@ -375,6 +375,10 @@ codesign --verify --deep --strict "$APP"
 
 if [ "$stage_only" = "1" ]; then
   echo "==> 发布前检查：Sparkle 已链接、嵌套代码同一个 Team、更新公钥没变"
+  # 版本号纪律（规格 R34）：build 号已经发过时只警告，验证用的 --stage 照常跑；但这个包不能发布。
+  if ! bash ../scripts/check-release-version.sh; then
+    echo "WARNING: 这个 build 号已经发过，这个包不能发布；发布前先升 prototype/Info.plist 的 CFBundleVersion。" >&2
+  fi
   if ! otool -L "$BIN" | grep -q "@rpath/Sparkle.framework"; then
     echo "ERROR: 主程序没有链接 Sparkle。" >&2
     exit 1

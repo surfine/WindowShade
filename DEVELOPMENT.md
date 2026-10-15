@@ -302,6 +302,8 @@ cd prototype
 
 1. **每个公开的包都升 `CFBundleVersion`**（`prototype/Info.plist`，同时升 `CFBundleShortVersionString`）。不再移动已发布的 tag，不再 `--clobber`；
    换包就升一个小版本。以前的“同一版本重新发布”一节作废。
+   **`bash scripts/check-release-version.sh` 必须先 PASS**：`CFBundleVersion` 不大于 appcast 里已发过的最高 build 号就失败。
+   `--stage` 遇到同样情形只警告（验证用的 `--stage` 照常能跑），但那个包不能发布。
 2. `./build.sh --stage` 隔离构建并签名，产物为 `.build/duo-validation/WindowShade.app`，不会停止或覆盖日常运行的应用。
    它会写入 `SUFeedURL`，检查链接了 Sparkle、嵌套代码同一个 Team、`SUPublicEDKey` 没变，并试跑 `--self-check`。
    **输出里出现“更新器没接齐，这个包不能发布”就停下**：少了 `main.swift` 里的 `UpdateLaunch.handleEarlyArguments()` /
@@ -322,7 +324,7 @@ cd prototype
    2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
    3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="=<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
    4. `WindowShade.app/Contents/MacOS/WindowShade --self-check` 返回 0，输出里有这次的 build 号（`build=N`），1 秒左右返回。
-   5. `CFBundleVersion` 大于上一版。
+   5. `CFBundleVersion` 大于上一版（`bash scripts/check-release-version.sh` PASS）。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。
    7. `lipo -archs` 和清单的 `hardwareRequirements` 一致。
    8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
