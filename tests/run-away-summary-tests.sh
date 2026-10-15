@@ -3,6 +3,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/away-summary-tests
-swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/AwaySummary.swift tests/AwaySummaryTests.swift \
+swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/AwaySummary.swift tests/AwaySummaryTests.swift \
   -o .build/away-summary-tests/away
 .build/away-summary-tests/away

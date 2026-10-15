@@ -8,7 +8,7 @@ SWIFTC_BIN="${SWIFTC:-swiftc}"
 FLAGS=(-swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library)
 # 纯逻辑：计时器 + 提醒 + 呼吸规则。
 "$SWIFTC_BIN" "${FLAGS[@]}" "$ROOT/prototype/Core/Contracts.swift" "$ROOT/tests/support/WS2TestSupport.swift" \
-  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/FocusTimer.swift" "$ROOT/tests/FocusTimerTests.swift" -o "$BUILD/focus-timer-reminders"
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/Core/FocusTimer.swift" "$ROOT/tests/FocusTimerTests.swift" -o "$BUILD/focus-timer-reminders"
 "$BUILD/focus-timer-reminders"
 # 休息回来监听（AppKit，监听用假的装卸）。
 "$SWIFTC_BIN" "${FLAGS[@]}" "$ROOT/tests/support/WS2TestSupport.swift" "$ROOT/prototype/Core/Contracts.swift" \

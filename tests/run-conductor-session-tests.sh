@@ -19,5 +19,5 @@ fi
 BUILD="$ROOT/.build/conductor-session"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/tests/ConductorSessionTests.swift" -o "$BUILD/conductor-session-tests"
+  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/tests/ConductorSessionTests.swift" -o "$BUILD/conductor-session-tests"
 "$BUILD/conductor-session-tests"

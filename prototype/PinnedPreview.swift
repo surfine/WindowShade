@@ -31,7 +31,7 @@ enum PinnedPreviewError: Error, LocalizedError {
         case .screenRecordingDenied:
             return WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
         case .accessibilityDenied:
-            return WSL10n.text("notice.carry.needsAccessibility", zh: "需要辅助功能权限")
+            return PrivacyPaneName.adjust(WSL10n.text("notice.carry.needsAccessibility", zh: "需要辅助功能权限"))
         case .targetChanged:
             return WSL10n.text("pin.error.targetChanged", zh: "目标窗口在启动过程中已变化")
         }

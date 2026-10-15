@@ -4,6 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/scroll-strip-tests
 swiftc -parse-as-library prototype/Core/ScrollStrip.swift prototype/Core/MagicTiling.swift prototype/Core/ArrangeGap.swift \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/FlickMotion.swift tests/ScrollStripTests.swift -o .build/scroll-strip-tests/strip
 .build/scroll-strip-tests/strip

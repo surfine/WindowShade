@@ -3,5 +3,5 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/launchpad-tests
-swiftc prototype/Core/WSL10n.swift prototype/Core/LaunchpadModel.swift tests/LaunchpadModelTests.swift -o .build/launchpad-tests/model
+swiftc prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/LaunchpadModel.swift tests/LaunchpadModelTests.swift -o .build/launchpad-tests/model
 .build/launchpad-tests/model

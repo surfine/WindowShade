@@ -37,8 +37,8 @@ enum WelcomeFlow {
     static var originTitle: String { WSL10n.text("welcome.flow.originTitle", zh: "你之前常用哪个？") }
     static var permissionTitle: String { WSL10n.text("welcome.flow.permissionTitle", zh: "最后一步：授权") }
     static var permissionLede: String {
-        WSL10n.text("welcome.flow.permissionLede",
-                    zh: "辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。")
+        PrivacyPaneName.adjust(WSL10n.text("welcome.flow.permissionLede",
+                    zh: "辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。"))
     }
 
     /// 第二步选项下面那一行，按选项换。

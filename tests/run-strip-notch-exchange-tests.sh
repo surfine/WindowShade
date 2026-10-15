@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/strip-notch-exchange-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/ScrollStrip.swift prototype/Core/MagicTiling.swift prototype/Core/ArrangeGap.swift \
   prototype/Core/FlickMotion.swift prototype/Core/StripNotchExchange.swift \
   prototype/Core/Contracts.swift prototype/Core/FocusNavigator.swift prototype/Core/NotchSentence.swift \

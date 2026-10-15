@@ -4,6 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/notch-sentence-tests
 swiftc -swift-version 6 -parse-as-library prototype/Core/NotchSentence.swift tests/NotchSentenceTests.swift \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   -o .build/notch-sentence-tests/tests
 .build/notch-sentence-tests/tests

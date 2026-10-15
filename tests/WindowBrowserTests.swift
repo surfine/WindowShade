@@ -2929,7 +2929,7 @@ enum WindowBrowserTests {
         expect(withoutAccessibility.first { $0.action == .activate }?.isEnabled == false,
                "without accessibility the same action is disabled everywhere")
         expect(withoutAccessibility.first { $0.action == .activate }?.disabledReason
-            == "需要辅助功能权限",
+            == PrivacyPaneName.adjust("需要辅助功能权限"),
                "the reason matches the permission that is missing")
 
         var pinned = sampleRecord()
@@ -3788,7 +3788,7 @@ enum WindowBrowserTests {
                "a failure announces the real reason instead of a generic error")
         expect(WindowBrowserAccessibilityAnnouncement.text(
             for: .permissionRequired(kind: .accessibility), action: .close,
-            windowTitle: "甲") == "需要辅助功能权限",
+            windowTitle: "甲") == PrivacyPaneName.adjust("需要辅助功能权限"),
                "a permission failure names the missing permission")
         expect(WindowBrowserAccessibilityAnnouncement.text(
             for: .awaitingUser(reason: "窗口仍在，可能有保存确认框"), action: .close,

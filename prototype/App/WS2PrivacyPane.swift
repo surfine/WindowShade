@@ -536,7 +536,7 @@ enum WS2PrivacyValues {
         if UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey) {
             snapshot.features.insert(WS2PrivacyCopy.faceUnlockFeature)
         }
-        snapshot.permissions[WSL10n.text("settings.common.accessibility", zh: "辅助功能")] = hasAccessibilityPermission()
+        snapshot.permissions[PrivacyPaneName.adjust(WSL10n.text("settings.common.accessibility", zh: "辅助功能"))] = hasAccessibilityPermission()
         snapshot.permissions[WSL10n.text("settings.common.screenRecording", zh: "屏幕录制")] = hasScreenRecordingPermission()
         for row in WS2PrivacyData.rows where row.status != "planned" {
             if let value = value(for: row.id, owner: owner, window: window) { snapshot.values[row.id] = value }

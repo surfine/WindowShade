@@ -3,6 +3,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/switcher-origin-tests
-swiftc -parse-as-library prototype/Core/WSL10n.swift prototype/Core/SwitcherOrigin.swift \
+swiftc -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/SwitcherOrigin.swift \
   tests/SwitcherOriginTests.swift -o .build/switcher-origin-tests/origin
 .build/switcher-origin-tests/origin

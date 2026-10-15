@@ -230,7 +230,7 @@ final class CarryController: GlanceCarrySource {
     /// 菜单与快捷键：当前窗口没带着就带上，带着就放下。
     func toggleCurrentWindow() {
         guard hasAccessibilityPermission() else {
-            owner.quietNotice(WSL10n.text("notice.carry.needsAccessibility", zh: "需要辅助功能权限"), kind: .needsPermission, log: "carry: accessibility missing")
+            owner.quietNotice(PrivacyPaneName.adjust(WSL10n.text("notice.carry.needsAccessibility", zh: "需要辅助功能权限")), kind: .needsPermission, log: "carry: accessibility missing")
             return
         }
         owner.pinnedPreviewController.refreshCurrentTarget(reason: "carry", force: true) {

@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/conductor-view"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/Contracts.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/Core/Contracts.swift" \
   "$ROOT/prototype/Core/ConductorSession.swift" \
   "$ROOT/prototype/Core/ConductorCapabilities.swift" \
   "$ROOT/prototype/Core/ConductorGesture.swift" \

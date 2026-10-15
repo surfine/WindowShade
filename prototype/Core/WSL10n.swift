@@ -122,10 +122,19 @@ struct SettingsText: Equatable {
     let key: String
     let zh: String
     var formatArgs: [CVarArg] = []
+    /// 这句指的是隐私与安全性里辅助功能那一栏：macOS 27 起按系统的新名字显示（见 PrivacyPaneName）。
+    var namesPrivacyPane = false
     var shown: String {
         let template = WSL10n.text(key, zh: zh)
-        guard !formatArgs.isEmpty else { return template }
-        return String(format: template, arguments: formatArgs)
+        let text = formatArgs.isEmpty ? template : String(format: template, arguments: formatArgs)
+        return namesPrivacyPane ? PrivacyPaneName.adjust(text) : text
+    }
+
+    /// 标成「指隐私权限那一栏」的同一句；身份（key + zh）不变。
+    func namingPrivacyPane() -> SettingsText {
+        var copy = self
+        copy.namesPrivacyPane = true
+        return copy
     }
 
     /// 身份是 key + zh 源句；格式化参数不影响"这是哪一行"。

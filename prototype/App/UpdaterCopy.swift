@@ -34,7 +34,7 @@ enum UpdateCopy {
     static var lowSpace: String { WSL10n.text("update.lowSpace", zh: "Mac 上的空间不够，没能更新。") }
     static func trialFailed(_ version: String) -> String { WSL10n.text("update.trialFailed", zh: "%@ 在这台 Mac 上没能正常打开，所以没有更新。", version) }
     static func refusedBefore(_ version: String) -> String { WSL10n.text("update.refusedBefore", zh: "%@ 上次在这台 Mac 上没能正常打开。", version) }
-    static var manualInstall: String { WSL10n.text("update.manualInstall", zh: "这一版要手动安装。装好后，要重新打开辅助功能和屏幕录制。") }
+    static var manualInstall: String { PrivacyPaneName.adjust(WSL10n.text("update.manualInstall", zh: "这一版要手动安装。装好后，要重新打开辅助功能和屏幕录制。")) }
     static var needsMove: String { WSL10n.text("update.needsMove", zh: "先把 WindowShade 移到“应用程序”文件夹，才能更新。") }
     static var needsAdmin: String { WSL10n.text("update.needsAdmin", zh: "要这台 Mac 的管理员来更新。") }
     static var otherUser: String { WSL10n.text("update.otherUser", zh: "这台 Mac 上还有别人开着 WindowShade，等他退出后再更新。") }
@@ -90,7 +90,7 @@ enum UpdateCopy {
     // 欢迎窗口：授权页
     static var standardAccount: String { WSL10n.text("update.standardAccount", zh: "打开这两项时，要输入管理员的名字和密码。") }
     static var permissionsAgainTitle: String { WSL10n.text("update.permissionsAgainTitle", zh: "再打开一次这两项") }
-    static var permissionsAgainLead: String { WSL10n.text("update.permissionsAgainLead", zh: "装好新版本后，系统要你重新打开辅助功能和屏幕录制。") }
+    static var permissionsAgainLead: String { PrivacyPaneName.adjust(WSL10n.text("update.permissionsAgainLead", zh: "装好新版本后，系统要你重新打开辅助功能和屏幕录制。")) }
     static var permissionsStuckHint: String { WSL10n.text("update.permissionsStuckHint", zh: "开关开着却没用？在列表里选中 WindowShade，点“−”删掉，再回来点“去授权”。") }
 }
 

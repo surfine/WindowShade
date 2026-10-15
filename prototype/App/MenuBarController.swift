@@ -80,9 +80,9 @@ extension AppDelegate {
     let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
     // 辅助功能没开时最上面多一行，点它去系统设置；权限回来就消失（规格 R2）。
     if !ax {
-      action(WSL10n.text("menu.accessibilityOff", zh: "打开辅助功能…"), "exclamationmark.triangle",
+      action(PrivacyPaneName.adjust(WSL10n.text("menu.accessibilityOff", zh: "打开辅助功能…")), "exclamationmark.triangle",
              #selector(openAccessibilitySettingsAction), id: StatusMenuLayout.accessibilityRowID)
-      statusMenu.items.last?.toolTip = WSL10n.text("menu.accessibilityOff.help", zh: "辅助功能没开，收起和移动窗口不会生效")
+      statusMenu.items.last?.toolTip = PrivacyPaneName.adjust(WSL10n.text("menu.accessibilityOff.help", zh: "辅助功能没开，收起和移动窗口不会生效"))
       dynamicRowCount += 1
     }
     if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
