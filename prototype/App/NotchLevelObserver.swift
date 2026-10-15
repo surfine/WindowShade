@@ -294,6 +294,7 @@ final class NotchLevelObserver {
         CGEvent.tapEnable(tap: port, enable: true)
         tap = port
         tapSource = source
+        EventTapHealth.shared.register(port, label: "volume-brightness-keys")
         systemPort.wantsKeyboardLight = onKeyboardLight != nil
         control.onLevel = { [weak self] kind, reading, result in self?.wrote(kind, reading, edge: result.edge) }
         observeTapFacts()
@@ -303,6 +304,7 @@ final class NotchLevelObserver {
 
     private func removeTap() {
         guard let tap else { return }
+        EventTapHealth.shared.unregister(tap)
         CGEvent.tapEnable(tap: tap, enable: false)
         if let tapSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), tapSource, .commonModes) }
         CFMachPortInvalidate(tap)

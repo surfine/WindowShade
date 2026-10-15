@@ -433,6 +433,7 @@ private final class GlobalInputTapThread: @unchecked Sendable {
     }
 
     func start() {
+        EventTapHealth.shared.register(port, label: "global-input")
         let thread = Thread { [self] in
             CFRunLoopAddSource(CFRunLoopGetCurrent(), self.source, .commonModes)
             CGEvent.tapEnable(tap: self.port, enable: true)
@@ -445,6 +446,7 @@ private final class GlobalInputTapThread: @unchecked Sendable {
     }
 
     func stop() {
+        EventTapHealth.shared.unregister(port)
         CGEvent.tapEnable(tap: port, enable: false)
         CFMachPortInvalidate(port)
     }

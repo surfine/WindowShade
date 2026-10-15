@@ -243,6 +243,8 @@ extension AppDelegate {
     }
     func scheduleEventTapReenable(delay: TimeInterval) {
         eventTapReenableWorkItem?.cancel()
+        // 退避期内体检别抢先重开（EventTapHealth），到点由下面这个任务开。
+        if let tap = eventTap { EventTapHealth.shared.hold(tap, for: delay) }
         let work = DispatchWorkItem { [weak self] in
             self?.eventTapReenableWorkItem = nil
             if let tap = self?.eventTap { CGEvent.tapEnable(tap: tap, enable: true) }

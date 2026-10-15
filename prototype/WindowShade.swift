@@ -179,6 +179,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var environmentWatch: Timer?
     private var tapSilentStops = 0
     private var lastAccessibilityTrusted = true
+    // 睡醒后的三档恢复（规格 R3），见 startWakeRecovery()。
+    private var wakeRecoveryObservers: [NSObjectProtocol] = []
+    private var wakeRecoveryWork: [DispatchWorkItem] = []
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
     var axReadGate = AXReadGate<pid_t, [WS2FoldCallbackStamp]>()
@@ -362,6 +365,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         logIfSlow("launch onboarding", threshold: 0.1) { showPermissionOnboardingIfNeeded(force: false) }
         logIfSlow("launch eventTap", threshold: 0.1) { setupEventTapWhenTrusted() }
+        startWakeRecovery()
         logIfSlow("launch gestures", threshold: 0.1) {
             MainActor.assumeIsolated { gestures.refreshMonitors() }
         }
@@ -976,6 +980,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                           callback: eventTapCallback, userInfo: nil) else { return false }
         eventTap = tap
         mouseDownTapPort = tap
+        EventTapHealth.shared.register(tap, label: "titlebar-click")
         // 钩子跑在自己的线程上：主线程卡住时，全系统的单击不用等它（见 eventTapCallback）。
         let thread = Thread {
             let src = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
@@ -987,6 +992,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         thread.qualityOfService = .userInteractive
         thread.start()
         return true
+    }
+
+    // MARK: 睡醒后的恢复（规格 R3）
+
+    /// 睡醒（整机或屏幕）后分三档恢复：立即、0.2 秒、0.8 秒（WakeRecoveryPlan）。
+    /// 「睡一觉醒来某样功能没回来」是同类工具更新日志里最多的一类；系统各部分醒来有先后，
+    /// 一次检查可能太早。每档只重开登记了、却被停掉的 tap，所以重复执行无害；再次睡醒会取消没跑完的档。
+    /// 各处原有的唤醒观察者（暂停/恢复各自的计时器）保持不变。
+    private func startWakeRecovery() {
+        guard wakeRecoveryObservers.isEmpty else { return }
+        let center = NSWorkspace.shared.notificationCenter
+        for (name, reason) in [(NSWorkspace.didWakeNotification, "wake"),
+                               (NSWorkspace.screensDidWakeNotification, "screens-wake")] {
+            wakeRecoveryObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.runWakeRecovery(reason: reason) }
+            })
+        }
+    }
+
+    private func runWakeRecovery(reason: String) {
+        wakeRecoveryWork.forEach { $0.cancel() }
+        let stages = WakeRecoveryPlan.delays.count
+        wakeRecoveryWork = WakeRecoveryPlan.delays.enumerated().map { stage, delay in
+            let work = DispatchWorkItem {
+                let reenabled = EventTapHealth.shared.sweep(reason: "wake-recovery")
+                wlog("wake-recovery: \(reason) stage \(stage + 1)/\(stages) "
+                     + (reenabled.isEmpty ? "all taps running" : "re-enabled \(reenabled)"))
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+            return work
+        }
     }
 
     // MARK: 装好之后的周期体检
@@ -1010,12 +1046,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func runEnvironmentCheck() {
-        // 一、通道还活着吗。这里只重开同一支 port（不重建、不新起线程），
-        // 与五处 tapDisabledBy* 的处理保持同一形状。
-        if let tap = eventTap, !CGEvent.tapIsEnabled(tap: tap) {
-            tapSilentStops += 1
-            CGEvent.tapEnable(tap: tap, enable: true)
-            wlog("environment: event tap was disabled silently, re-enabled (count=\(tapSilentStops))")
+        // 一、通道还活着吗。查登记表里的全部 tap（9 支，见 EventTapHealth），只重开同一支 port
+        // （不重建、不新起线程），与各处 tapDisabledBy* 的处理保持同一形状；主人关掉的不碰。
+        let reenabled = EventTapHealth.shared.sweep(reason: "environment")
+        if !reenabled.isEmpty {
+            tapSilentStops += reenabled.count
+            wlog("environment: event taps were disabled silently, re-enabled \(reenabled) (count=\(tapSilentStops))")
         }
         // 二、权限还在吗。从「有」变「无」时所有窗口动作都还在跑，但没有一件能生效，且不报错——
         // 这种「静默失灵」最难排查，所以要告诉人（规格 R2，对照 WindowMizer 的同一条）。

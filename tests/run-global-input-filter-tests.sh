@@ -10,7 +10,7 @@ swiftc -parse-as-library -swift-version 6 -strict-concurrency=complete -warnings
   prototype/Window/Coordinates.swift \
   prototype/Core/DockLockRule.swift \
   prototype/WindowBrowser/WindowBrowserDockDetection.swift \
-  prototype/App/GlobalInputFilter.swift \
+  prototype/App/GlobalInputFilter.swift prototype/Core/EventTapHealth.swift prototype/Support/SendableSystemHandles.swift \
   tests/GlobalInputFilterTests.swift \
   -o .build/global-input-filter-tests/tests
 .build/global-input-filter-tests/tests

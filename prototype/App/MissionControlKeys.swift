@@ -110,6 +110,7 @@ final class MissionControlKeys {
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port, 0)
         self.port = port
         self.source = source
+        EventTapHealth.shared.register(port, label: "mission-control-keys")
         let thread = Thread { [weak self] in
             guard let self, let source = self.source else { return }
             let runLoop = CFRunLoopGetCurrent()
@@ -132,7 +133,10 @@ final class MissionControlKeys {
     private func uninstall() {
         dispatchPrecondition(condition: .onQueue(.main))
         guard installed else { return }
-        if let port { CGEvent.tapEnable(tap: port, enable: false) }
+        if let port {
+            EventTapHealth.shared.unregister(port)
+            CGEvent.tapEnable(tap: port, enable: false)
+        }
         // 停的是钩子线程的 run loop；它退出时自己把 source 摘掉。
         if let threadRunLoop { CFRunLoopStop(threadRunLoop) }
         if let port { CFMachPortInvalidate(port) }

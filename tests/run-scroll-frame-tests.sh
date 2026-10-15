@@ -9,7 +9,7 @@ swiftc -swift-version 6 -parse-as-library \
   prototype/Core/InputDeviceKind.swift \
   prototype/Core/InputHookLifecycle.swift \
   prototype/Core/ScrollSession.swift \
-  prototype/App/ScrollTap.swift \
+  prototype/App/ScrollTap.swift prototype/Core/EventTapHealth.swift prototype/Support/SendableSystemHandles.swift \
   tests/ScrollFrameTests.swift \
   -o .build/scroll-frame-tests/scroll-frame
 .build/scroll-frame-tests/scroll-frame

@@ -37,10 +37,17 @@ final class WindowSwitcherKeys: @unchecked Sendable {
         modifier = trigger == .command ? .maskCommand : .maskAlternate
         lock.unlock()
         if trigger == .off {
-            if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
+            if let tap {
+                EventTapHealth.shared.unregister(tap)
+                CGEvent.tapEnable(tap: tap, enable: false)
+            }
             return
         }
-        if let tap { CGEvent.tapEnable(tap: tap, enable: true); return }
+        if let tap {
+            CGEvent.tapEnable(tap: tap, enable: true)
+            EventTapHealth.shared.register(tap, label: "window-switcher-keys")
+            return
+        }
         let mask = CGEventMask(1 << CGEventType.keyDown.rawValue) | CGEventMask(1 << CGEventType.keyUp.rawValue)
             | CGEventMask(1 << CGEventType.flagsChanged.rawValue)
         let refcon = Unmanaged.passUnretained(self).toOpaque()
@@ -54,6 +61,7 @@ final class WindowSwitcherKeys: @unchecked Sendable {
             return
         }
         tap = port
+        EventTapHealth.shared.register(port, label: "window-switcher-keys")
         let thread = Thread {
             let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port, 0)
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)

@@ -1,5 +1,8 @@
 import Cocoa
 
+// EventTapHealth（ScrollTap 登记用）会写日志；这组测试不带日志模块，给一个空实现。
+func wlog(_ message: String) {}
+
 @main
 struct ScrollFrameTests {
     nonisolated(unsafe) static var failures = 0
