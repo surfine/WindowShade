@@ -1242,9 +1242,17 @@ final class WindowBrowserController: NSObject {
                    !WindowBrowserHelperApps.hasLayerZeroWindow(WindowListCache.shared.allWindows(ofPID: pid)) {
                     // 没有普通窗口的辅助进程（Chrome、Electron 的 Helper）不去问 AX。
                     result = .empty
+                } else if AXStallBreaker.shared.shouldSkip(pid) {
+                    // 这个 App 刚卡过（规格 E5）：熔断开着就不再排队等满 AX 超时；报失败，旧条目保留不清。
+                    result = .failure(reason: "ax stalled, skipped by breaker")
                 } else {
                     self.noteAXCall()
+                    let started = axMonotonicNow()
                     result = self.discoverWindows(pid: pid, overlayIDs: overlays, groupedUnder: parent)
+                    // 把这次耗时交给熔断：卡住的 App 之后 4 秒内收起、救援、窗口浏览都直接跳过它。
+                    var failed = false
+                    if case .failure = result { failed = true }
+                    AXStallBreaker.shared.record(pid: pid, duration: axMonotonicNow() - started, timedOut: failed)
                 }
             } else {
                 // Still settle the slot: a newer request may be waiting behind it.
@@ -2005,7 +2013,7 @@ final class WindowBrowserController: NSObject {
             }
             if case .permissionRequired(let kind) = outcome {
                 owner?.quietNotice(kind == .accessibility
-                                       ? WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限")
+                                       ? PrivacyPaneName.adjust(WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限"))
                                        : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限"),
                                    kind: .needsPermission,
                                    log: "window-browser: permission required kind=\(kind.rawValue)")
