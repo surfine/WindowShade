@@ -207,8 +207,9 @@ extension TrackpadGestureController {
         var undone = 0
         for entry in group.entries {
             undoRecords.removeValue(forKey: entry.id)
-            guard let pos = axPosition(entry.element), let size = axSize(entry.element),
-                  inStrip.contains(entry.id) || sameFrame(CGRect(origin: pos, size: size), entry.after) else { continue }
+            // App 卡住时 AX 读不到外框，退到窗口服务器的外框（规格 R7），撤回不再悄悄跳过这扇。
+            guard let current = axWindowFrameWithFallback(entry.element, knownID: entry.id)?.frame,
+                  inStrip.contains(entry.id) || sameFrame(current, entry.after) else { continue }
             owner.cancelRestorePin(for: entry.id)
             setFrame(entry.element, entry.before)
             undone += 1
@@ -286,12 +287,13 @@ extension TrackpadGestureController {
             return false
         }
         guard let win = focused, let id = focusedID, cgWindowIsCurrentlyOnScreen(id), !isSettling(id),
-              let pos = axPosition(win), let size = axSize(win),
-              let current = screenForAXWindow(pos: pos, size: size),
+              let readFrame = axWindowFrameWithFallback(win, knownID: id)?.frame,
+              let current = screenForAXWindow(pos: readFrame.origin, size: readFrame.size),
               let index = screens.firstIndex(of: current) else {
             owner.notch.announce(WSL10n.text("magic.noWindowsToMove", zh: "没有可以移的窗口"), tone: .problem)
             return false
         }
+        let pos = readFrame.origin, size = readFrame.size
         let next = screens[(index + (backward ? screens.count - 1 : 1)) % screens.count]
         func area(_ screen: NSScreen) -> CGRect {
             CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame), size: screen.visibleFrame.size)

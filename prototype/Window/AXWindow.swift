@@ -35,6 +35,20 @@ func axSize(_ e: AXUIElement) -> CGSize? {
     return AXValueGetValue(v, .cgSize, &s) ? s : nil
 }
 
+/// 带回退的外框（规格 R7，判据见 Core/WindowFrameResolver.swift）。AX 两项都读到时不碰窗口服务器，
+/// 结果与分别调 axPosition／axSize 相同；缺了才查一次这扇窗的窗口服务器外框，并记下用了哪一层。
+func axWindowFrameWithFallback(_ e: AXUIElement, knownID: CGWindowID? = nil)
+    -> (frame: CGRect, source: WindowFrameSource)? {
+    let position = axPosition(e), size = axSize(e)
+    if let position, let size { return (CGRect(origin: position, size: size), .ax) }
+    let id = knownID ?? windowID(of: e)
+    let listed = id.flatMap { cgWindowInfo($0) }.flatMap { cgWindowBounds($0) }
+    let resolved = WindowFrameResolver.resolve(axPosition: position, axSize: size, windowList: listed)
+    wlog("window-frame: id=\(id.map { String($0) } ?? "?") ax-position=\(position != nil) ax-size=\(size != nil) "
+         + "used=\(resolved?.source.rawValue ?? "none")")
+    return resolved
+}
+
 func setAXPosition(_ e: AXUIElement, _ p: CGPoint) {
     var p = p
     if let v = AXValueCreate(.cgPoint, &p) {
