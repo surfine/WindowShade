@@ -62,6 +62,8 @@
 
 **第五、六批（2026-10-15，Aaron 不在，锁屏下继续）**：R15 核过不做、R14 核过不改、R46（静置）、R40、N2、M7；R28（macOS 27 隐私权限栏改名）、R42、H5、E5；R24 已量待文案决定。
 
+**解锁后的真机补跑（2026-10-15 晚）**：H2 核过不降、N3 ✅、R46 面板用过之后 ✅。**整套 30 组界面探针真机回归**（签名构建）：19 组全过（wins、home、pip、launchpad、rect、magic、strip、pull、mc-keys、strip-peek、browser-more、dock-gestures、launchpad-keys、thumbnail、habits、quiet-defaults、notch-shape、carry、edge-park）。界面语言是繁体时 grid、pins、gesture 有几项按简体文字找菜单，切简体（`-WindowShade.InterfaceLanguage zh`，只作用于那个进程）后过。仍不过的 9 组拿**装好的 1.0.16 原版**同条件对照：notch（标题变了刘海短暂展开等 2 项）、split（并排两窗中间的条）、coach（刘海上的提示与小演示）、flick（三指甩到一半抬手）、fullscreen（全屏桌面上的刘海面板）、slide-over-desktops／gesture／shelf-glance（等待超时）——**原版失败得一模一样，不是这几批的回归**，是这台机器当前环境（两块屏、macOS 27.0.1、当前设置）下过不了，1.0.16 发布前在别的环境下过过；要查清得逐项看环境，记在这里。唯一的差别是 --slide-over：原版全过、新构建因为 R31 改了恢复记录的删法而超时，探针已改（d164f30），新构建上 15 项全过。
+
 **到这里停下：剩下的都要 Aaron（2026-10-15 盘点）**
 - **要解锁屏幕跑界面探针**（R3 测完后屏幕锁着）：H2（`--fold-timing` 前后对比）、N3（关键路径签名区间）、R46（面板用过再关之后）、R39 长会话、V8、E3、E6，以及 R6／R9／R10／R11／R18／R20／R21／R22／R23／R32／R41／R48／R49 的复现与验收。
 - **要改系统设置，我不能代做**：R2、R29（收回权限）、R19／V10（台前调度）、R30（桌面排列开关）、V11（显示缩放）。
@@ -958,6 +960,7 @@
 #### 新立的四条冻结项（按 §0.3，它们**不进 §0.2 的六条**）
 
 #### R46 · 收起的面板不能挡底下的鼠标
+- **✅ 2026-10-15（面板用过之后）**：探针收尾等 1 秒再清点 App 自己「可见、透明度近 0、没设成让鼠标穿过」的窗口；30 组探针跑完全部 PASS。
 - **✅ 2026-10-15（静置状态）**：签名构建静置时只有 2 扇在屏窗口：刘海岛（本该接点击）与一条全屏宽 10 点高、压在菜单栏上沿的「肩」窗口——后者初始化就 `ignoresMouseEvents = true`，不挡菜单栏。透明度为 0 仍在屏的窗口：0 扇。面板用过再关之后的状态还没量（要解锁屏幕跑探针）。
 - **依据**：DockMate「Fixed Preview window **blocking mouse events while hidden**」——**收起之后那一块区域点不到下面**，是这一族里最容易被当成 bug 的一条。
 - **现状**：未核。我们的面板/覆盖层很多，**先找出哪些在收起后仍然吃鼠标**。
@@ -1077,7 +1080,7 @@
 | 编号 | 动作 | 验收 |
 | --- | --- | --- |
 | **H1** | **✅ 2026-10-15（4da4e93）**：没走 Metal／vImage，换成算法上的省：只处理「镜像行不全不透明」的几行；45 张图与旧实现逐字节相同，4K 一张 37.4 → 21.0 ms。原文：**`mirrorRoundCorners` 换掉标量循环**（`Capture/PreviewRenderer.swift:183`，另有 14 处同类循环）。优先走 Metal（`Effects/FoldRenderer.swift` 已有 device／纹理／缓存），退一步用 `vImageVerticalReflect` ＋ `vImagePremultiplyData` | 同一张 4K Retina 图**单次调用耗时前后对比**；**输出逐像素一致**（等价替换，不许改画面） |
-| **H2** | **`pixelAnalysisQueue` 的 QoS 复核**（`WindowShade.swift:170` 现为 `.userInitiated`）。**先量再改**：跑 `--fold-timing` 取基线 → 降 `.utility` → 再跑；关键路径上不能降的那几处单独保留 | 折叠延迟不劣化；非关键路径的 CPU 占比下降 |
+| **H2** | **✅ 2026-10-15 核过不降**：基线（签名构建、3 次 `--fold-timing`，各取暖机后 3 轮中位数）第一次画面变化 156／163／217 ms、卷帘条出现 406／413／463 ms。队列上的三件事（截图、裁标题栏条与红绿灯命中区、缩略图）**全在收起的关键路径上，主线程原地等结果**——降到 `.utility` 就是在系统忙时主动让收起变慢，正是本条说的「关键路径上不能降」。原文：**`pixelAnalysisQueue` 的 QoS 复核**（`WindowShade.swift:170` 现为 `.userInitiated`）。**先量再改**：跑 `--fold-timing` 取基线 → 降 `.utility` → 再跑；关键路径上不能降的那几处单独保留 | 折叠延迟不劣化；非关键路径的 CPU 占比下降 |
 | **H3** | **采集侧色彩与分辨率**（`ScreenCaptureBridge.swift:414-418` 现为 sRGB、未设 `captureResolution`）：按显示器能力选色彩空间（P3 屏用 `displayP3`），显式设 `captureResolution`，macOS 15+ 评估 HDR 档（**连着看功耗**） | 缩略图与系统截图色彩比对；P3 屏上不变淡；采集侧 CPU 不升 |
 | **H4** | **Vision 用到该用的地方**（ANE）：标题栏定位从像素启发式换成 `VNDetectRectangles`／`VNRecognizeText`；缩略图裁剪用 `VNGenerateAttentionBasedSaliency`。**只在「一扇窗一次」的路径上跑，不每帧** | 同一批窗口比较「启发式 vs Vision」的定位；低电量／热压力下能退回启发式 |
 | **H5** | **✅ 2026-10-15 核过不改**：实时画面早走 `CVMetalTextureCache`；唯一还从 `CGImage` 建纹理的是收起动画的静图，`FoldStillTexture` 已把色彩转换结果直接写进页对齐的共享 `MTLBuffer` 当纹理用、省掉 `replace` 整图拷贝（有逐像素一致的测试）。没有可以再接零拷贝的路径。原文：**零拷贝（2026-10-15 自纠：前提要改）**：此前写「`FoldRenderer` 是从 `CGImage` 建、要 CPU 上传」，**不准确**——`Effects/FoldRenderer.swift` **已经有** `CVMetalTextureCache`（`:35`／`:111`／`:291`）并用 `CVMetalTextureCacheCreateTextureFromImage`（`:346`）。→ 改成**核哪些路径还在走 `CGImage` 上传**（静态图/截图那条？），把能走 `CVPixelBuffer` 的都接过去 | 那条路径的 CPU 占比与内存带宽下降；画面一致 |
@@ -1091,7 +1094,7 @@
 | --- | --- | --- |
 | **N1** | **App Intents（已定案：最小切口）**：**先做 5–8 个最常用动作**（收起／全部收进刘海／打开窗口浏览／恢复全部／切到某扇窗…），**不铺满**。**这一条改写「扩展面」那一行的结论**——Apple 的原生答案，免费得到快捷指令／Spotlight／Siri，不必自造 CLI 或 URL scheme。**Intent 是用户可见的公开契约，先按[固定词汇表](copy-guide.md)定名再实现** | 快捷指令里能搜到、能跑通、能串成自动化；Spotlight 能搜到 |
 | **N2** | **`os.Logger`**：面向系统的诊断（启动、权限、通道体检、自愈）走统一记录，带 `subsystem` ＋ `category`；**涉及用户数据的字段标 `privacy:`，与隐私登记（[privacy-page.md](privacy-page.md)）逐条对齐**。文件日志保留（探针依赖它） | `log stream --predicate 'subsystem == …'` 看得到关键路径；隐私字段默认 `<private>` |
-| **N3** | **`OSSignposter`**：先给**折叠**与**窗口浏览**两条关键路径加区间与事件，让性能工作在 Instruments 里可见。E／H 系列的量测统一走这条 | Instruments 的 os_signpost 轨道能看到阶段划分；一次折叠的耗时分解可读 |
+| **N3** | **✅ 2026-10-15（c6f8dac）**：收起与窗口浏览两条已加；真机上 `--notch` 期间收起 4 开 4 合（2 folded、2 abandoned），`--browser-more` 期间会话 begin → 各阶段事件 → end(closed)。原文：**`OSSignposter`**：先给**折叠**与**窗口浏览**两条关键路径加区间与事件，让性能工作在 Instruments 里可见。E／H 系列的量测统一走这条 | Instruments 的 os_signpost 轨道能看到阶段划分；一次折叠的耗时分解可读 |
 | **N4** | **`NSBackgroundActivityScheduler`**：非延迟敏感的周期工作改走它（**更新检查** `App/Updater.swift:137` 的 10s 等）。**延迟敏感的不换**——R1 那个 5 秒通道体检必须保持 `Timer` | 功能行为不变；低电量下由系统自然推迟 |
 | **N5** | **`PrivacyInfo.xcprivacy`**：我们用了 Apple 的 required-reason API 却没有这张清单——**这是公证与上架的门槛**。**2026-10-15 逐类审计（源码＋二进制符号双查）**：① **SystemBootTime**（`systemUptime`／`mach_absolute_time`，43 个文件）→ `35F9.1`；② **UserDefaults**（85 个文件）→ `CA92.1`；③ **FileTimestamp**（7 个文件：`DownloadActivitySource`／`UpdaterSystem`／`FileShelfStore`／`HabitContext`／`Watchdog`／`WS2LocalLaunchProfile`／`WS2ProjectDirectory`；符号 `stat/lstat/getattrlist` 5 处）→ `C617.1`＋`3B52.1`（按站点归位）；④ **DiskSpace**（`UpdaterSystem.swift:616` 更新前探 `volumeAvailableCapacityForImportantUsage`）→ `E174.1`；⑤ ActiveKeyboards **0 处，不写**。负项：`NSPrivacyTracking=false`、`NSPrivacyCollectedDataTypes=[]`、`NSPrivacyTrackingDomains=[]`。**别抄用不到的类别** | 清单进包、`plutil -p` 能读；公证工具的 required-reason 检查不报 |
 
