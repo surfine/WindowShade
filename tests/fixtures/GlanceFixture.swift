@@ -118,7 +118,10 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     // 全屏探针要进出两次全屏（主屏幕、带刘海的屏各一次），多留一点时间。
     // 到点自己退出：还在全屏也没关系，那张全屏桌面随窗口一起消失，系统回到原来的桌面。
-    let lifetime: Double = CommandLine.arguments.contains("--fullscreen") ? 180 : 90
+    // 长会话探针（--soak）要跑几分钟，用 --lifetime <秒> 延长；默认 90 秒后自己退出，免得留下孤儿进程。
+    let requested = CommandLine.arguments.firstIndex(of: "--lifetime")
+      .flatMap { CommandLine.arguments.indices.contains($0 + 1) ? Double(CommandLine.arguments[$0 + 1]) : nil }
+    let lifetime: Double = requested ?? (CommandLine.arguments.contains("--fullscreen") ? 180 : 90)
     DispatchQueue.main.asyncAfter(deadline: .now() + lifetime) { NSApp.terminate(nil) }
   }
 

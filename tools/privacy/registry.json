@@ -7296,6 +7296,13 @@
    "symbol": "UserDefaults",
    "source": "let defaults = UserDefaults.standard",
    "signal": "settings"
+  },
+  {
+   "path": "prototype/App/GlanceProbe.swift",
+   "line": 601,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "guard AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &closeRef) == .success,",
+   "signal": "window-ax"
   }
  ],
  "groups": [

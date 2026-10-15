@@ -49,7 +49,7 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = CommandLine.arguments.contains("--fold-timing")
+    let foldTiming = ["--fold-timing", "--orphan", "--soak"].contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
     if manyWindows { fixtureArguments.append("--strip") }
@@ -57,6 +57,8 @@ final class GlanceProbe {
     for flag in ["--other-space", "--minimize", "--fullscreen"] where CommandLine.arguments.contains(flag) {
       fixtureArguments.append(flag)
     }
+    // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
+    if CommandLine.arguments.contains("--soak") { fixtureArguments += ["--lifetime", "1800"] }
     process.arguments = fixtureArguments
     do {
       try process.run()
@@ -96,6 +98,16 @@ final class GlanceProbe {
     try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     if CommandLine.arguments.contains("--fold-timing") {
       try await foldTiming(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--orphan") {
+      try await orphanStrip(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--soak") {
+      try await soak(element: element)
       finish(nil)
       return
     }
@@ -578,6 +590,110 @@ final class GlanceProbe {
       fast, animated, median(firstChange), median(stripShown)))
   }
 
+  /// 规格 R10：窗口收起后在别处被关掉（App 还开着），卷帘条要自己消失。
+  /// 用辅助功能按那扇窗的关闭按钮，等卷帘条与收起记录都清掉；销毁通知那条路或定时核对兜底，哪条先到都算。
+  private func orphanStrip(element: AXUIElement) async throws {
+    owner.shade(element, id)
+    try await wait("strip shown") {
+      self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+        && self.owner.duoController.windowEffects.activeCount == 0
+    }
+    let overlay = owner.shaded[id]?.overlay
+    var closeRef: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &closeRef) == .success,
+          let closeRef, CFGetTypeID(closeRef) == AXUIElementGetTypeID() else {
+      throw EffectError.unavailable("fixture window has no close button")
+    }
+    let pressed = AXUIElementPerformAction(closeRef as! AXUIElement, kAXPressAction as CFString)
+    let started = CACurrentMediaTime()
+    print("INFO orphan: pressed close err=\(pressed.rawValue) fixtureRunning=\(fixture?.isRunning ?? false)")
+    try await wait("window gone from window server", timeout: 5) {
+      (CGWindowListCopyWindowInfo(.optionIncludingWindow, self.id) as? [[String: Any]])?.isEmpty == true
+    }
+    try await wait("strip closed by itself", timeout: 25) {
+      self.owner.shaded[self.id] == nil && overlay?.isVisible != true
+    }
+    let elapsed = CACurrentMediaTime() - started
+    guard fixture?.isRunning == true else { throw EffectError.unavailable("fixture quit; not an orphan case") }
+    print(String(format: "PASS orphan: strip closed %.1fs after the window was closed elsewhere (app still running)", elapsed))
+  }
+
+  /// 规格 R39：同一进程里连续收起、展开很多次，看内存足迹与窗口数会不会一路往上走。
+  /// 前 10 轮是热身（缓存、首次分配），之后取中段与末尾比较；线性泄漏会让后半程继续涨。
+  private func soak(element: AXUIElement) async throws {
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
+    let rounds = CommandLine.arguments.firstIndex(of: "--soak-rounds")
+      .flatMap { CommandLine.arguments.indices.contains($0 + 1) ? Int(CommandLine.arguments[$0 + 1]) : nil } ?? 120
+    func footprintMB() -> Double {
+      var info = task_vm_info_data_t()
+      var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
+      let kr = withUnsafeMutablePointer(to: &info) {
+        $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+          task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
+        }
+      }
+      return kr == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : -1
+    }
+    var samples: [(round: Int, mb: Double, windows: Int)] = []
+    let warmup = 10
+    for round in 0..<rounds {
+      owner.shade(element, id)
+      try await wait("fold \(round)") {
+        self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      _ = owner.unshade(id)
+      try await wait("unfold \(round)", timeout: 8) {
+        self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      try await Task.sleep(for: .milliseconds(200), clock: .suspending)
+      if round + 1 == warmup || (round + 1) % 20 == 0 || round + 1 == rounds {
+        let sample = (round + 1, footprintMB(), NSApp.windows.count)
+        samples.append(sample)
+        print(String(format: "SOAK round %d: footprint %.1f MB, windows %d", sample.0, sample.1, sample.2))
+        fflush(stdout)
+      }
+    }
+    guard let first = samples.first, let last = samples.last, samples.count >= 3 else {
+      throw EffectError.unavailable("soak needs at least \(warmup + 20) rounds")
+    }
+    let middle = samples[samples.count / 2]
+    let lateGrowth = last.mb - middle.mb
+    print(String(format: "INFO soak: %d rounds, footprint %.1f -> %.1f -> %.1f MB (warm, middle, end), windows %d -> %d",
+      rounds, first.mb, middle.mb, last.mb, first.windows, last.windows))
+    // 门槛：后半程不应再涨过 4 MB（量级参照：一次收起的截图缓存约 1–3 MB）；窗口数不增加。
+    if lateGrowth > 4 {
+      print(String(format: "FAIL soak: footprint still growing in the second half (+%.1f MB)", lateGrowth))
+    } else {
+      print(String(format: "PASS soak: footprint flat in the second half (%+.1f MB)", lateGrowth))
+    }
+    // 窗口数同样比中段与末尾：第一次用到才建的面板（一次性）不算增长，之后还在涨才算。
+    if last.windows > middle.windows {
+      print("FAIL soak: window count still growing in the second half \(middle.windows) -> \(last.windows)")
+    } else {
+      print("PASS soak: window count flat in the second half (\(middle.windows) -> \(last.windows))")
+    }
+    // 再让系统的 leaks 看一眼自己：数无人引用的内存块。会把本进程暂停几秒，探针此刻没有别的事。
+    let leaks = Process()
+    leaks.executableURL = URL(fileURLWithPath: "/usr/bin/leaks")
+    leaks.arguments = ["\(ProcessInfo.processInfo.processIdentifier)"]
+    let pipe = Pipe()
+    leaks.standardOutput = pipe
+    leaks.standardError = Pipe()
+    if (try? leaks.run()) != nil {
+      let text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+      leaks.waitUntilExit()
+      for line in text.split(separator: "\n") where line.contains("leaks for") || line.contains("nodes malloced") {
+        print("INFO soak leaks: \(line.trimmingCharacters(in: .whitespaces))")
+      }
+    } else {
+      print("INFO soak leaks: could not run /usr/bin/leaks")
+    }
+  }
+
   /// 收起时截图的几种办法各要多久（中位数），以及画面是否完整。
   private func captureBench(size: CGSize) async throws {
     func median(_ xs: [Double]) -> Double { xs.sorted()[xs.count / 2] }
@@ -684,6 +800,18 @@ final class GlanceProbe {
         print("FAIL r46: invisible windows still catching the mouse: "
               + blockers.map { "\(type(of: $0)) \(Int($0.frame.width))x\(Int($0.frame.height))" }.joined(separator: ", "))
       }
+      // 规格 R32：反复收起、展开之后，主菜单与状态栏菜单里不能有同名重复项（WindowMizer 栽过的「窗口菜单重影」）。
+      func duplicates(in menu: NSMenu?, path: String) -> [String] {
+        guard let menu else { return [] }
+        let titles = menu.items.filter { !$0.isSeparatorItem && !$0.isHidden }.map(\.title)
+        var seen = Set<String>(), dupes: [String] = []
+        for title in titles where !seen.insert(title).inserted { dupes.append("\(path)▸\(title)") }
+        return dupes + menu.items.flatMap { duplicates(in: $0.submenu, path: "\(path)▸\($0.title)") }
+      }
+      owner.rebuildMenu()
+      let menuDupes = duplicates(in: NSApp.mainMenu, path: "main") + duplicates(in: owner.statusMenu, path: "status")
+      print(menuDupes.isEmpty ? "PASS r32: no duplicate items in the main or status menu"
+                              : "FAIL r32: duplicate menu items \(menuDupes.prefix(5).joined(separator: ", "))")
       let verdict = error.map { "FAIL \($0)" } ?? "PASS suite\(single ? " (single window)" : "")"
       print("verdict: \(verdict)")
       // open --args 启动时 stdout 不可收：判定同时进产品日志，验收从日志收割。
