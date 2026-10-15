@@ -136,6 +136,21 @@ if CommandLine.arguments.contains("--glance-probe") {
     withExtendedLifetime(probe) { app.run() }
     exit(0)
 }
+if CommandLine.arguments.contains("--export-diagnostics") {
+    // 规格 R35／R13：导出本地诊断包并打印路径（不在访达里显示）。可选：后面跟一个目录。
+    app.setActivationPolicy(.accessory)
+    let index = CommandLine.arguments.firstIndex(of: "--export-diagnostics")!
+    let parent = CommandLine.arguments.count > index + 1 && !CommandLine.arguments[index + 1].hasPrefix("-")
+        ? URL(fileURLWithPath: CommandLine.arguments[index + 1], isDirectory: true) : nil
+    do {
+        let folder = try MainActor.assumeIsolated { try DiagnosticsExport.export(to: parent) }
+        print("diagnostics: \(folder.path)")
+        exit(0)
+    } catch {
+        print("diagnostics: failed \(error.localizedDescription)")
+        exit(1)
+    }
+}
 if CommandLine.arguments.contains("--entitlement-probe") {
     // 规格 C3：hardened runtime 下 Apple Events 与摄像头还能不能用（只查授权、已授权才取 1 秒帧）。
     app.setActivationPolicy(.accessory)
