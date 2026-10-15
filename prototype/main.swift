@@ -136,6 +136,14 @@ if CommandLine.arguments.contains("--glance-probe") {
     withExtendedLifetime(probe) { app.run() }
     exit(0)
 }
+if CommandLine.arguments.contains("--entitlement-probe") {
+    // 规格 C3：hardened runtime 下 Apple Events 与摄像头还能不能用（只查授权、已授权才取 1 秒帧）。
+    app.setActivationPolicy(.accessory)
+    let probe = MainActor.assumeIsolated { EntitlementProbe() }
+    DispatchQueue.main.async { MainActor.assumeIsolated { probe.run() } }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--silent-milestone") {
     app.setActivationPolicy(.accessory)
     let probe = MainActor.assumeIsolated { SilentMilestoneProbe() }
