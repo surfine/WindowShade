@@ -2,26 +2,6 @@ import Cocoa
 
 // 规格 R47：像素函数的越界体检。所有手算下标的函数都喂一遍极端图像（1×1、单行、单列、很宽很扁、
 // 全透明、全不透明、刚过门槛），不许崩；返回 nil 或一个值都行。只拿 PreviewRenderer 本身编，其余给桩。
-func wlog(_ message: String) {}
-let quickLookOriginalTitleBarHeight: CGFloat = 38
-let hoverPreviewMaxPixelSize = CGSize(width: 720, height: 480)
-func fixedNonstandardChromeHeight(pid: pid_t) -> CGFloat? { nil }
-func fallbackControlPaddedChromeHeight(pid: pid_t, minimum _: CGFloat) -> CGFloat? { nil }
-enum TrafficAction { case close, minimize, zoom, fullScreen }
-struct WindowChromeProfile {
-    var standardCropHeight: CGFloat = 28
-    var preciseChrome = false
-    var axBarHeight: CGFloat = 28
-    var isQuickLook = false
-    var standardTitleBarOnly = false
-    var boundaryName = "test"
-}
-enum SystemCornerPath {
-    static func cgPath(in rect: CGRect, radius: CGFloat) -> CGPath {
-        CGPath(roundedRect: rect, cornerWidth: min(radius, rect.width / 2), cornerHeight: min(radius, rect.height / 2), transform: nil)
-    }
-}
-
 func image(_ w: Int, _ h: Int, alpha: (Int, Int) -> UInt8) -> CGImage {
     var buf = [UInt8](repeating: 0, count: w * h * 4)
     for y in 0..<h { for x in 0..<w {
