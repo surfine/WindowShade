@@ -624,6 +624,20 @@ extension AppDelegate {
     // 挪不出屏的 app：可安全整体隐藏时用 ⌘H 式隐藏；否则只最小化当前窗口。
     // 注意：app hide 只是现代 macOS 限制下的实现 fallback。产品语义仍然是
     // “折叠这个窗口”，所以只有当前 app 没有其它可见用户窗口时才允许整体隐藏。
+    /// 收起前的判断：这扇窗是不是一定藏不住（见 shade() 开头的说明）。只看会落到 fallbackHide 的两种策略；
+    /// 便笺走原生收起、快速查看与实时预览各有自己的路，不在此列。
+    func foldCannotHideWindow(_ win: AXUIElement, pid: pid_t) -> Bool {
+        guard SystemIntegrity.fullyEnabled, !isStickies(pid: pid) else { return false }
+        switch shadePolicy(for: pid) {
+        case .hiddenIfSingleWindowElseMinimized, .offscreenThenFallback:
+            break
+        default:
+            return false
+        }
+        guard !isAXButtonEnabled(win, kAXMinimizeButtonAttribute as String) else { return false }
+        return appCurrentUserWindowCount(pid) > 1
+    }
+
     func fallbackHide(_ win: AXUIElement, pid: pid_t, id: CGWindowID?,
                               originalPosition pos: CGPoint, size: CGSize,
                               allowAppHide: Bool) -> HideMethod {

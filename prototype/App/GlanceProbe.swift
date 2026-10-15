@@ -115,7 +115,7 @@ final class GlanceProbe {
       finish(nil)
       return
     }
-    // --fold-unminimizable：另一扇不能最小化——核对收不起来时干净回滚（见 restoreGuard 里的说明）。
+    // --fold-unminimizable：另一扇不能最小化——核对收起前就被拒绝、窗口原位不动（见 restoreGuard 里的说明）。
     if CommandLine.arguments.contains("--restore-guard") || CommandLine.arguments.contains("--fold-unminimizable") {
       try await restoreGuard(element: element, pid: process.processIdentifier)
       finish(nil)
@@ -739,15 +739,20 @@ final class GlanceProbe {
     }
     // --fold-unminimizable：另一扇不能最小化、App 还有别的可见窗口。开着 SIP 的系统上没有办法只藏这一扇
     // （私有停车被静默忽略、辅助功能移到屏外会被系统拉回、最小化不可能、隐藏整个 App 会连另一扇一起藏），
-    // 所以这里核对的是「干净地收不起来」：回滚之后不在收起状态、窗口还在原位、没被挪动。
+    // 所以收起前就拒绝（提示「这个窗口不能收起」）：这里核对没开始收起、没播动画、窗口原位不动。
     if CommandLine.arguments.contains("--fold-unminimizable") {
       let before = bounds(otherID)
       owner.shade(other, otherID)
+      // 收起前就拒绝：调用返回时这扇窗没进入收起流程，也没有动画在播。
+      let refusedUpfront = owner.currentOperationState(otherID) == .normal
+        && owner.shaded[otherID] == nil && owner.duoController.windowEffects.activeCount == 0
       try await Task.sleep(for: .seconds(2.5), clock: .suspending)
       let after = bounds(otherID)
       let clean = owner.shaded[otherID] == nil && onscreen(otherID) && before == after
-      print("INFO restore-guard: unminimizable window before \(String(describing: before)) after \(String(describing: after)) shaded=\(owner.shaded[otherID] != nil)")
-      print(clean ? "PASS fold-unminimizable: a window that cannot be minimized in a multi-window app is left untouched (fold rolled back)"
+      print("INFO restore-guard: unminimizable window before \(String(describing: before)) after \(String(describing: after)) shaded=\(owner.shaded[otherID] != nil) SIP fully on=\(SystemIntegrity.fullyEnabled)")
+      print(refusedUpfront ? "PASS fold-unminimizable: refused before any animation started"
+        : "FAIL fold-unminimizable: the fold started (state \(owner.currentOperationState(otherID)), effects \(owner.duoController.windowEffects.activeCount)) before giving up")
+      print(clean ? "PASS fold-unminimizable: the window is left untouched"
         : "FAIL fold-unminimizable: the window was not left as it was")
       return
     }
