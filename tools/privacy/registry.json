@@ -7282,6 +7282,20 @@
    "symbol": "UserDefaults",
    "source": "UserDefaults.standard.set(uuid, forKey: Self.displayUUIDKey)",
    "signal": "settings"
+  },
+  {
+   "path": "prototype/App/SettingsArchiveIO.swift",
+   "line": 14,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.persistentDomain(forName: domainName) ?? [:]",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/SettingsArchiveIO.swift",
+   "line": 35,
+   "symbol": "UserDefaults",
+   "source": "let defaults = UserDefaults.standard",
+   "signal": "settings"
   }
  ],
  "groups": [

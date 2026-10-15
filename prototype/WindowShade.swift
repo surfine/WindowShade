@@ -541,6 +541,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func migrateDistractingDefaultSounds() {
         let defaults = UserDefaults.standard
         let migrationVersion = defaults.integer(forKey: shadeSoundMigrationVersionDefaultsKey)
+        // 规格 R5：真要迁移时先把整个设置域原样留一份（Application Support/WindowShade/backup/）。
+        if migrationVersion < 2 { SettingsArchiveIO.backupBeforeMigration(label: "sound-v2") }
         let retiredFoldSounds = ["Tink", "WindowShadeSoftFold"]
         if let foldSound = defaults.string(forKey: shadeFoldSoundDefaultsKey),
            retiredFoldSounds.contains(foldSound) {
