@@ -22,4 +22,14 @@ cat > "$FIX/Contents/Info.plist" <<'PLIST'
 PLIST
 codesign --force -s - "$FIX" >/dev/null 2>&1 || true
 APP=.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
-"$APP" --glance-probe --fixture "$FIX/Contents/MacOS/GlanceFixture" "$@"
+# 探针的「verdict」只看有没有抛异常，单项打印的 FAIL 不算数（一项 FAIL 时也会写 PASS suite）。
+# 这里把输出原样打出来，任何一行以 FAIL 开头就判整次失败、非零退出。
+out=$(mktemp -t glance-probe)
+trap 'rm -f "$out"' EXIT
+status=0
+"$APP" --glance-probe --fixture "$FIX/Contents/MacOS/GlanceFixture" "$@" | tee "$out" || status=$?
+if grep -q '^FAIL' "$out"; then
+  echo "FAIL run-glance-probe: $(grep -c '^FAIL' "$out") 项 FAIL（verdict 那一行不算数）" >&2
+  exit 1
+fi
+exit "$status"
