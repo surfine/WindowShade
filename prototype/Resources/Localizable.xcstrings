@@ -30292,6 +30292,190 @@
         }
       }
     },
+    "privacy.diagnostics-export.activation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only the moment you export diagnostics"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只在你导出诊断包的那一次"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只在你匯出診斷資料的那一次"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.combined" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crash reports together show this Mac's model, its macOS version and which apps were open at the time."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "崩溃报告合起来，能看出这台 Mac 的型号、系统版本，和当时同时开着哪些 App。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當機報告合起來，能看出這台 Mac 的型號、系統版本，和當時同時開著哪些 App。"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.destination" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Written only to the activity log folder on this Mac and shown in Finder; never uploaded"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只写进这台 Mac 的运行记录文件夹，并在访达里显示；不上传"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只寫進這台 Mac 的執行記錄資料夾，並在 Finder 中顯示；不上傳"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crash reports"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "崩溃报告"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "當機報告"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.purpose" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bundled into one folder for you to look over before deciding whom to give it to"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打包成一个文件夹，你看过再决定交给谁"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打包成一個資料夾，你看過再決定交給誰"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.reads" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crash reports macOS keeps on this Mac for WindowShade (~/Library/Logs/DiagnosticReports), plus the activity log"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统为 WindowShade 留在这台 Mac 上的崩溃报告（~/Library/Logs/DiagnosticReports），以及运行记录"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系統為 WindowShade 留在這台 Mac 上的當機報告（~/Library/Logs/DiagnosticReports），以及執行記錄"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.subtitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Read only when you export diagnostics"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只在你导出诊断包时读"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "只在你匯出診斷資料時讀取"
+          }
+        }
+      }
+    },
+    "privacy.diagnostics-export.toggle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No switch: nothing is read unless you export"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "没有开关：不导出就不读"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "沒有開關：不匯出就不讀取"
+          }
+        }
+      }
+    },
     "privacy.diagnostics.activation" : {
       "extractionState" : "manual",
       "localizations" : {

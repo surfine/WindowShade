@@ -1043,5 +1043,20 @@ enum WS2PrivacyData {
             interfaces: ["trashItem("],
             subtitle: WSL10n.text("privacy.app-uninstall.subtitle", zh: "删 App 连文件进废纸篓"),
         ),
+        WS2PrivacyRow(
+            id: "diagnostics-export",
+            label: WSL10n.text("privacy.diagnostics-export.label", zh: "崩溃报告"),
+            sensitivity: "private",
+            group: "你同意后才读的",
+            reads: WSL10n.text("privacy.diagnostics-export.reads", zh: "系统为 WindowShade 留在这台 Mac 上的崩溃报告（~/Library/Logs/DiagnosticReports），以及运行记录"),
+            purpose: WSL10n.text("privacy.diagnostics-export.purpose", zh: "打包成一个文件夹，你看过再决定交给谁"),
+            destination: WSL10n.text("privacy.diagnostics-export.destination", zh: "只写进这台 Mac 的运行记录文件夹，并在访达里显示；不上传"),
+            activation: WSL10n.text("privacy.diagnostics-export.activation", zh: "只在你导出诊断包的那一次"),
+            toggle: WSL10n.text("privacy.diagnostics-export.toggle", zh: "没有开关：不导出就不读"),
+            status: "planned",
+            combined: WSL10n.text("privacy.diagnostics-export.combined", zh: "崩溃报告合起来，能看出这台 Mac 的型号、系统版本，和当时同时开着哪些 App。"),
+            interfaces: [],
+            subtitle: WSL10n.text("privacy.diagnostics-export.subtitle", zh: "只在你导出诊断包时读"),
+        ),
     ] }
 }

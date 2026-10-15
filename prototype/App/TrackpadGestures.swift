@@ -1582,7 +1582,8 @@ final class TrackpadGestureController {
             let target = Self.fitting(plan.target, window: win, size: landed.size, area: plan.area)
             owner.cancelRestorePin(for: id)
             announceFlick(action, id: id, at: target, screen: plan.screen,
-                          note: target.size != plan.target.size ? "这个窗口不能改大小，放在了正中" : nil)
+                          note: target.size != plan.target.size
+                              ? WSL10n.text("gesture.note.fixedSizeCentered", zh: "这个窗口不能改大小，放在了正中") : nil)
             moveWindow(win, drag: drag, source: source, from: landed, to: target, velocity: velocity) { [weak self] observed in
                 guard let self else { return }
                 // 撤销回到按住标题栏之前的样子，不是松手的地方。
