@@ -366,6 +366,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         logIfSlow("launch onboarding", threshold: 0.1) { showPermissionOnboardingIfNeeded(force: false) }
         logIfSlow("launch eventTap", threshold: 0.1) { setupEventTapWhenTrusted() }
         startWakeRecovery()
+        SystemLog.lifecycle.notice("launch version=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?", privacy: .public) build=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?", privacy: .public) accessibility=\(AXIsProcessTrusted(), privacy: .public)")
         logIfSlow("launch gestures", threshold: 0.1) {
             MainActor.assumeIsolated { gestures.refreshMonitors() }
         }
@@ -1017,6 +1018,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         wakeRecoveryWork = WakeRecoveryPlan.delays.enumerated().map { stage, delay in
             let work = DispatchWorkItem {
                 let reenabled = EventTapHealth.shared.sweep(reason: "wake-recovery")
+                SystemLog.input.info("wake-recovery \(reason, privacy: .public) stage \(stage + 1)/\(stages) re-enabled=\(reenabled.count)")
                 wlog("wake-recovery: \(reason) stage \(stage + 1)/\(stages) "
                      + (reenabled.isEmpty ? "all taps running" : "re-enabled \(reenabled)"))
             }
@@ -1050,6 +1052,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // （不重建、不新起线程），与各处 tapDisabledBy* 的处理保持同一形状；主人关掉的不碰。
         let reenabled = EventTapHealth.shared.sweep(reason: "environment")
         if !reenabled.isEmpty {
+            SystemLog.input.notice("event taps disabled silently, re-enabled \(reenabled.joined(separator: ","), privacy: .public)")
             tapSilentStops += reenabled.count
             wlog("environment: event taps were disabled silently, re-enabled \(reenabled) (count=\(tapSilentStops))")
         }
@@ -1059,11 +1062,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 菜单顶上另有一行「打开辅助功能…」，权限回来之前一直在（MenuBarController 的动态行）。
         let trusted = AXIsProcessTrusted()
         if lastAccessibilityTrusted, !trusted {
+            SystemLog.permissions.notice("accessibility revoked")
             quietNotice(WSL10n.text("notice.accessibility.revoked", zh: "辅助功能被关掉了，收起和移动窗口暂时不生效"),
                         kind: .needsPermission,
                         log: "environment: accessibility permission was revoked, window actions will no longer take effect")
             rebuildMenu()
         } else if !lastAccessibilityTrusted, trusted {
+            SystemLog.permissions.notice("accessibility back")
             if eventTap == nil { _ = setupEventTap() }
             quietNotice(WSL10n.text("notice.accessibility.back", zh: "辅助功能打开了，收起和移动窗口恢复了"),
                         kind: .done, log: "environment: accessibility permission is back")
