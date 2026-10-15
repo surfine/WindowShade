@@ -433,6 +433,8 @@ if [ "$stage_only" = "1" ]; then
     fi
     echo "==> --self-check 通过：$SELF_CHECK_OUT"
   fi
+  # 性能预算（规格 R44）：常驻系统查询为零。不过就是退步，这个包不能发。
+  bash ../scripts/check-idle-budget.sh "$BIN" || exit 1
 fi
 touch "$APP"
 
