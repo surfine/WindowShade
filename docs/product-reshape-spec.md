@@ -582,12 +582,14 @@
 ---
 
 #### R14 · 成本感知的快照缓存（**先核后用——我们已经有了一半**）
+- **✅ 2026-10-15 核过不改**：其余四个按条目存图的字典（窗口浏览的 App 图标、窗口浏览内容视图的缩略图、文件架、刘海缩略图）都按当前活着的集合过滤或在关闭时清空，不会无界增长；不必套同一套成本账。
 - **依据**：Alcove 的 `cachedSnapshots` ＋ **`cachedSnapshotCost`／`cachedSnapshotCosts`**——不是「都缓存」，而是**按代价决定留哪一个**。
 - **现状（已核实，2026-10-15 更正）**：**窗口浏览那一路已经有了成本账**——`WindowBrowserIdleProbe` 直接读 `controller.thumbnails.cachedCostBytes`（成本字节数）。同一条探针还读 `controller.axQueryCount`（等于 Wins 的 `axReadsMinimum`）。**所以这一条不是「没有」，是「没铺开」。**
 - **改成什么**：核**其余**用到缩略图／快照的面（置顶预览、看一眼、卷帘条那几种）是否也走同一套成本账；没走的接进去。
 - **验收**：多显示器＋多窗口同时要缩略图时，缓存不无界增长；`cachedCostBytes` 在探针里可读且单调可控。
 
 #### R15 · 启动台读系统那份 SQLite
+- **2026-10-15 核过，不做**：本机 macOS 27.0.1 上 `$(getconf DARWIN_USER_DIR)com.apple.dock.launchpad/db/` 不存在（整棵用户临时目录与 `~/Library/Application Support/Dock/` 都搜过）——系统从 macOS 26 起改掉了启动台，这份库只在 14／15 上还有。对 27 的用户无意义；O6 同理。
 - **依据**：LaunchOS 的 `SELECT item_id, title, bundleid, storeid FROM apps`——**正是 Launchpad 数据库的表结构**。
 - **现状**：未记载。**这是一条可查的路**，但要核实当前系统版本上的确切路径与字段，**且系统升级会改 schema，必须有回退**（回退到扫 `/Applications`）。
 - **验收**：列表的顺序／分组／文件夹与原生一致；db 不可读时退化成扫描且功能不崩。
@@ -786,6 +788,7 @@
 **为什么单列这一节**：把[竞品深挖](competitive-deep-dive.md)§二那张 **86 行**的「可借项」表逐行对回本规格，发现**有一批行从来没有变成任务**——「列为可借却从未动手」和「170 提交 0 发布」是同一种病，只是更隐蔽。**这一节把那 96 行每一行都给出处置**，剩下的才立新项。
 
 #### R40 · 下载进度卡（Atoll 那三条）
+- **✅ 2026-10-15**：第①条落地——临时文件消失时，同名正式文件必须非空、修改时间不早于开始追踪（留 2 秒），否则算取消（Firefox 的 0 字节占位、本来就有的同名旧文件）；读取那一侧只给正在追踪的下载对应的正式文件多读大小与修改时间，读不到退回原判据。隐私页「读到什么」三种语言同步改写。第②③条（Safari 包递归加总、按 allocated size 算进度）**不适用**：卡片刻意不显示百分比，只画不定长的弧。
 - **依据**：Atoii `DownloadManager` 的三条——① **完成 vs 取消的判定**：目标档**被写过**、非空、且时间戳**比开始时晚**；② **Safari 的 `.download` 是 bundle**，字节落在子档里，要**递归加总**；③ 用 **allocated size** 而不是 logical size 算进度（否则对预分配整档的浏览器会显示成「瞬间完成」）。另有一条工程做法：**扫描簿记与目录 watcher 分开，测试可注入扫描**。
 - **现状**：`progress-in-notch.md`（进度卡设计）里记着我们自己的规则，**但缺这三条**；这一格是**新表面**。
 - **改动**：按上面四条实现/补齐；验收用 Firefox（占位档）／Safari（bundle）／Chromium 各下一次，中途取消一次——**取消不说「完成」**。
@@ -936,6 +939,7 @@
 #### 新立的四条冻结项（按 §0.3，它们**不进 §0.2 的六条**）
 
 #### R46 · 收起的面板不能挡底下的鼠标
+- **✅ 2026-10-15（静置状态）**：签名构建静置时只有 2 扇在屏窗口：刘海岛（本该接点击）与一条全屏宽 10 点高、压在菜单栏上沿的「肩」窗口——后者初始化就 `ignoresMouseEvents = true`，不挡菜单栏。透明度为 0 仍在屏的窗口：0 扇。面板用过再关之后的状态还没量（要解锁屏幕跑探针）。
 - **依据**：DockMate「Fixed Preview window **blocking mouse events while hidden**」——**收起之后那一块区域点不到下面**，是这一族里最容易被当成 bug 的一条。
 - **现状**：未核。我们的面板/覆盖层很多，**先找出哪些在收起后仍然吃鼠标**。
 - **验收**：面板收起后，那一块能正常点到下面的窗口。
@@ -1086,7 +1090,7 @@
 | **M4** | **✅ 2026-10-15 评估完：现在不走**。用与门禁完全相同的参数（`-O -whole-module-optimization -strict-concurrency=complete -warnings-as-errors`）只加 `-default-isolation MainActor` 编一次：**330 个错误**，App/ 218、根目录 38、Recovery 23、WindowBrowser 21；最多的文件是 NotchShelf 28、WindowShade 22、Rescue 16。八成是「在非隔离上下文里调用主线程的函数」——正是刻意放到后台队列的 AX／程序坞工具／像素分析路径，要把约 150 个辅助函数逐个标 `nonisolated`，等于动一遍线程模型，而现有代码已在最严格检查下零警告。（`-typecheck` 快查模式下基线就有 127 条警告，与门禁不等价，那组数不能用。）原文：**评估 `-default-isolation MainActor`**（SE-0466）：**先在一个分支上打开，把编译错误数出来**，再判断值不值得。这条的产出是**一个数字和一个判断**，不是一次重构 | 一份结论：错误数、集中在哪些文件、是否值得走 |
 | **M5** | **`Span`／`RawSpan` 用在像素路径**（`Capture/PreviewRenderer.swift:104/187/193`）。**与 H1 联动：H1 先定走 Metal 还是 vImage，再决定 M5 要不要做**（走 vImage 就不需要） | 与 H1 一起验收 |
 | **M6** | **2026-10-15 核过，不改**：`DateFormatter`（10 处）与 `NSRegularExpression` 都没被 Apple 标为过时，日志时间戳是写死格式加 `en_US_POSIX`，换 `FormatStyle` 只有风险没有收益——按本节「不该做的」第一条结案。原文：**`NSRegularExpression`（1 处，`Core/CalendarActivity.swift:186`；Swift `Regex` 0 处）与 `FormatStyle`（`DateFormatter` 10 处）**。**注意**：`Support/Diagnostics.swift` 那个日志时间戳显式钉了 `en_US_POSIX`，换 `FormatStyle` 时要保留这个 locale 语义（否则某些区域会变） | 行为不变，尤其日志时间戳格式在非中文区域也不变 |
-| **M7** | **新增纯逻辑测试要follow 现有模式，不引入第二个框架**（**2026-10-15 自纠**：此前写成「`tests/` 为空、只靠探针」，**是错的**）。事实：`tests/` 有 **244 个 Swift 测试档 ＋ 218 支 `run-*.sh` runner**，用的是**自制的 `@main struct XxxTests` ＋ `expect()` 印 `ok`/`FAIL`** 模式（`import XCTest` 与 `import Testing` **各 0**），而且 **`build.sh` 已经把其中几支纳入门禁**（`:125` 的本地化检查、`:184` 的隐私同步、`:187` 的文案 lint）。→ 纯逻辑测试（如 R4 的标签页合并判据）**按这个既有模式写**，不要为了「现代化」引入 Swift Testing | 新测试能进 `build.sh --check` 或对应的 `run-*.sh` |
+| **M7** | **✅ 2026-10-15**：本轮新写的 10 组测试都按 `@main + expect` 与 `tests/run-*.sh` 的既有模式，没有引入 XCTest 或 Swift Testing。原文：**新增纯逻辑测试要follow 现有模式，不引入第二个框架**（**2026-10-15 自纠**：此前写成「`tests/` 为空、只靠探针」，**是错的**）。事实：`tests/` 有 **244 个 Swift 测试档 ＋ 218 支 `run-*.sh` runner**，用的是**自制的 `@main struct XxxTests` ＋ `expect()` 印 `ok`/`FAIL`** 模式（`import XCTest` 与 `import Testing` **各 0**），而且 **`build.sh` 已经把其中几支纳入门禁**（`:125` 的本地化检查、`:184` 的隐私同步、`:187` 的文案 lint）。→ 纯逻辑测试（如 R4 的标签页合并判据）**按这个既有模式写**，不要为了「现代化」引入 Swift Testing | 新测试能进 `build.sh --check` 或对应的 `run-*.sh` |
 
 **不该做的**：不为现代化换掉还能用的旧 API（`TimeInterval` 812 处多数无害）；不用 `@Observable` 硬套纯 AppKit；**不在没有测试网的情况下大改并发**（99 处 `@unchecked Sendable` 是地雷区，M3／M4 都要小步 ＋ 探针回归）；不追每个新特性（`InlineArray`／typed throws／`@concurrent` 遇到合适场景再用）；**迁移类改动行为必须不变，不要和功能改动混在一支提交里**。
 
