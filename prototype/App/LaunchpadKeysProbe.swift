@@ -235,6 +235,22 @@ extension GlanceProbe {
     let cleared = view.query.isEmpty && !view.searching && pad.isShowing && view.pageForProbe == 0
     print("\(cleared ? "PASS" : "FAIL") launchpad-keys: Esc clears the search first and Launchpad stays open (query=“\(view.query)” showing=\(pad.isShowing))")
 
+    // 5b. 规格 R48：文件夹开着时直接打字也能搜——文件夹先关掉，结果里第一个是要找的 App；Esc 清掉搜索。
+    if let folderTile = view.tilesForProbe.first(where: { if case .folder = $0 { return true }; return false }),
+       case .folder(let folder) = folderTile {
+      view.openFolderForProbe(folder.id)
+      try await Task.sleep(for: .milliseconds(700), clock: .suspending)
+      let openedFirst = view.folderForProbe?.folderID == folder.id
+      try await typeText(view, calculator.initials)
+      let folderGone = view.folderForProbe == nil
+      let hit = view.shownForProbe.first?.bundleID == calculator.bundleID
+      print("\(openedFirst && folderGone && hit ? "PASS" : "FAIL") launchpad-keys: typing while a folder is open closes the folder and searches (folder opened=\(openedFirst) closed=\(folderGone) first=\(view.shownForProbe.first?.name ?? "-"))")
+      try await escape(view)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
+    } else {
+      print("INFO launchpad-keys: no folder on the home screen; search-in-folder check skipped")
+    }
+
     // 6. 第一页、什么都没打：Esc 关掉启动台。
     try await escape(view)
     let closedByEsc = (try? await wait("closed by Esc", timeout: 2) { !pad.isShowing }) != nil

@@ -1620,6 +1620,10 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     }
 
     func focusSearch() {
+        // 键盘已经在搜索框里（正在打字）就别再交一次：对正在编辑的文本框再 makeFirstResponder 会把已打的字全选，
+        // 下一个字就把它盖掉。文件夹开着时打字正是这样——第一个字关掉文件夹（closeFolder → 这里），
+        // 第二个字把第一个字覆盖了（「jsj」搜成「sj」，规格 R48，--launchpad-keys 实测）。
+        if let editor = field.currentEditor(), window?.firstResponder === editor { return }
         window?.makeFirstResponder(field)
     }
 

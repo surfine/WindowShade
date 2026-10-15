@@ -154,6 +154,11 @@ for flag in ["--export-settings", "--import-settings"] where CommandLine.argumen
         exit(1)
     }
 }
+if CommandLine.arguments.contains("--launchpad-census") {
+    // 规格 R48：启动台扫到的每个 App 的路径，一行一个，给外面拿 Spotlight 的 App 清单对照有没有漏。
+    for app in AppCatalog.scan() { print("launchpad: \(app.path)") }
+    exit(0)
+}
 if let index = CommandLine.arguments.firstIndex(of: "--chrome-report") {
     // 规格 R11：只读量一量某个 App 每扇窗的工具栏底边与收起时保留的高度（不收起、不写任何东西、不打标题）。
     // 用法：--chrome-report <bundle id>，例如 com.apple.finder。
