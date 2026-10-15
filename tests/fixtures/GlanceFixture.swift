@@ -82,7 +82,10 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     if !CommandLine.arguments.contains("--single") {
       let other = NSWindow(
         contentRect: NSRect(x: 900, y: 120, width: 320, height: 200),
-        styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        // --minimizable-other（R9 探针）：另一扇也能最小化——多窗口 App 收起时走最小化，
+        // 不能最小化的窗口在私有停车失效的机器上收不起来（见规格 R9 的发现）。
+        styleMask: CommandLine.arguments.contains("--minimizable-other")
+          ? [.titled, .closable, .miniaturizable] : [.titled, .closable], backing: .buffered, defer: false)
       other.title = "看一眼 · 另一扇"
       other.isReleasedWhenClosed = false
       other.orderFront(nil)
