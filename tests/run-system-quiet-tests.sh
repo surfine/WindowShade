@@ -9,7 +9,7 @@ mkdir -p "$OUT"
   "$ROOT/prototype/Core/InteractionCoordinator.swift" \
   "$ROOT/prototype/Core/SwitcherOrigin.swift" \
   "$ROOT/prototype/Core/GestureCoach.swift" \
-  "$ROOT/prototype/Core/WSL10n.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" \
   "$ROOT/prototype/Core/HabitRules.swift" \
   "$ROOT/prototype/App/SystemQuietState.swift" \
   "$ROOT/tests/SystemQuietStateTests.swift" -o "$OUT/system-quiet-tests"

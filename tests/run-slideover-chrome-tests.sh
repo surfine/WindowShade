@@ -14,6 +14,6 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
 fi
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
-  prototype/Core/WSL10n.swift prototype/App/SlideOverGlass.swift tests/SlideOverChromeTests.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/App/SlideOverGlass.swift tests/SlideOverChromeTests.swift \
   -framework Cocoa -o .build/slideover-chrome-tests/tests
 .build/slideover-chrome-tests/tests

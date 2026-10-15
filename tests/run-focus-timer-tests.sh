@@ -15,5 +15,5 @@ fi
 BUILD="$ROOT/.build/focus-timer"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/tests/FocusTimerTests.swift" -o "$BUILD/focus-timer-tests"
+  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/tests/FocusTimerTests.swift" -o "$BUILD/focus-timer-tests"
 "$BUILD/focus-timer-tests"

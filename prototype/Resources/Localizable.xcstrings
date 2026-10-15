@@ -38900,19 +38900,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Turn off Accessibility and WindowShade can no longer read windows"
+            "value" : "Turn off Accessibility (Device Control and Data Access from macOS 27) and WindowShade can no longer read windows"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口"
+            "value" : "在系统设置里关掉“辅助功能”（macOS 27 起叫“设备控制和数据访问”），WindowShade 就不能再读窗口"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在系統設定裡關掉“輔助使用”，WindowShade 就不能再讀視窗"
+            "value" : "在系統設定裡關掉“輔助使用”（macOS 27 起叫“裝置控制和資料取用”），WindowShade 就不能再讀視窗"
           }
         }
       }
@@ -57911,6 +57911,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@（收著）"
+          }
+        }
+      }
+    },
+    "system.privacyPane.legacy" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "辅助功能"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助使用"
+          }
+        }
+      }
+    },
+    "system.privacyPane.renamed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Device Control and Data Access"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "设备控制和数据访问"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "裝置控制和資料取用"
           }
         }
       }

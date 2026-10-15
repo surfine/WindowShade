@@ -88,7 +88,7 @@ enum WindowBrowserActionPresentation {
             case .permissionRequired(let kind):
                 enabled = false
                 reason = kind == .accessibility
-                    ? WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限")
+                    ? PrivacyPaneName.adjust(WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限"))
                     : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
             case .busy:
                 enabled = false
@@ -275,7 +275,7 @@ enum WindowBrowserAccessibilityAnnouncement {
         case .awaitingUser(let reason):
             return reason
         case .permissionRequired(let kind):
-            return kind == .accessibility ? WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限") : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
+            return kind == .accessibility ? PrivacyPaneName.adjust(WSL10n.text("notice.browser.needsAccessibility", zh: "需要辅助功能权限")) : WSL10n.text("notice.browser.needsScreenRecording", zh: "需要屏幕录制权限")
         case .failed(let reason), .uncertain(let reason), .unsupported(let reason):
             return reason
         case .busy:

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/notch-minimal-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift prototype/Core/FlickMotion.swift \
   tests/NotchMinimalTests.swift \
   -o .build/notch-minimal-tests/tests

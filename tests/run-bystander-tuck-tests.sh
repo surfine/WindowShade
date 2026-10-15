@@ -5,9 +5,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/bystander-tuck-tests
 swiftc -typecheck -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/BystanderPolicy.swift prototype/Core/PrivateAppList.swift
 swiftc -parse-as-library -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-  prototype/Core/WSL10n.swift prototype/Core/BystanderPolicy.swift prototype/Core/PrivateAppList.swift tests/BystanderTuckTests.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/BystanderPolicy.swift prototype/Core/PrivateAppList.swift tests/BystanderTuckTests.swift \
   -o .build/bystander-tuck-tests/tuck
 .build/bystander-tuck-tests/tuck

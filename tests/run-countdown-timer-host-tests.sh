@@ -5,6 +5,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/countdown-timer-host"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/CountdownTimer.swift" "$ROOT/prototype/App/CountdownTimerHost.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/CountdownTimer.swift" "$ROOT/prototype/App/CountdownTimerHost.swift" \
   "$ROOT/tests/support/WS2TestSupport.swift" "$ROOT/tests/CountdownTimerHostTests.swift" -o "$BUILD/countdown-timer-host-tests"
 "$BUILD/countdown-timer-host-tests"

@@ -4,5 +4,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/origin-guess-tests
 swiftc -parse-as-library prototype/Core/SwitcherOrigin.swift prototype/Core/GestureCoach.swift \
-  prototype/Core/WSL10n.swift prototype/Core/HabitRules.swift tests/OriginGuessTests.swift -o .build/origin-guess-tests/guess
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/HabitRules.swift tests/OriginGuessTests.swift -o .build/origin-guess-tests/guess
 .build/origin-guess-tests/guess

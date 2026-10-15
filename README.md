@@ -87,7 +87,7 @@ Double-click a title bar to roll up; double-click the bar to unroll.
 
 ## Your windows stay on your Mac
 
-WindowShade asks for two permissions. **Accessibility**: finding, moving and restoring windows. **Screen Recording**: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were. WindowShade collects no usage data and does no analytics or reporting; checking for updates goes online. Everything it reads is listed under Privacy in Settings and on the [privacy page](https://windowshade.aaronlau.me/privacy/).
+WindowShade asks for two permissions. **Accessibility** (called Device Control and Data Access in System Settings from macOS 27): finding, moving and restoring windows. **Screen Recording**: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were. WindowShade collects no usage data and does no analytics or reporting; checking for updates goes online. Everything it reads is listed under Privacy in Settings and on the [privacy page](https://windowshade.aaronlau.me/privacy/).
 
 Regular windows all roll up. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use. If something goes wrong, please [report it](https://github.com/surfine/WindowShade/issues) with your macOS version, the app, and the steps.
 
@@ -102,7 +102,7 @@ WindowShade changes one system setting: the Dock’s minimize effect. When it ne
    - `~/Library/Caches/com.windowshade.prototype/`, `~/Library/HTTPStorages/com.windowshade.prototype/`
    - `~/Library/Preferences/com.windowshade.prototype.plist`, `~/Library/Preferences/com.windowshade.prototype.update-guard.plist`
 3. If you used face unlock or the iPhone remote, search Keychain Access for `WindowShade` and delete the `WindowShade.FaceScan.templates` and `WindowShade.Remote.peers` items.
-4. To clear the permissions too, remove WindowShade from Accessibility and Screen Recording in System Settings → Privacy & Security.
+4. To clear the permissions too, remove WindowShade from Accessibility (Device Control and Data Access from macOS 27) and Screen Recording in System Settings → Privacy & Security.
 
 ## In development
 

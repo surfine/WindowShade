@@ -136,7 +136,7 @@ GUARD_SOURCES=()
 # 看护按同一套规则解析语言（读产品的偏好域 + 系统首选语言），译文 Localization/en.lproj 一并拷进看护包。
 # 两者都只依赖 Foundation、自包含，符合"看护共用文件只依赖 Foundation/AppKit 和彼此"的约束。
 for source in Watchdog/main.swift Watchdog/GuardIcon.swift Core/UpdateVersion.swift Core/UpdateModels.swift \
-  Core/UpdateDecisions.swift Core/WSL10n.swift Core/InterfaceLanguage.swift App/UpdaterSystem.swift App/UpdaterCopy.swift; do
+  Core/UpdateDecisions.swift Core/WSL10n.swift Core/PrivacyPaneName.swift Core/InterfaceLanguage.swift App/UpdaterSystem.swift App/UpdaterCopy.swift; do
   GUARD_SOURCES+=("$WORK/$source")
 done
 GUARD_FRAMEWORKS=(-framework AppKit -framework Security -framework ServiceManagement)

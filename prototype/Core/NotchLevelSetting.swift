@@ -33,7 +33,7 @@ struct NotchLevelSettingRow: Equatable, Sendable {
     static var missingSubtitle: String { WSL10n.text("notch.level.missingSubtitle", zh: "系统的提示也会出现") }
     static var allowTitle: String { WSL10n.text("notch.level.allow", zh: "允许…") }
     static var normalInfo: String { WSL10n.text("notch.level.normalInfo", zh: "按音量、亮度、键盘灯键时，刘海两边显示一条，系统自己的提示藏起来。锁屏和调度中心里仍是系统的提示。") }
-    static var missingInfo: String { WSL10n.text("notch.level.missingInfo", zh: "在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。") }
+    static var missingInfo: String { PrivacyPaneName.adjust(WSL10n.text("notch.level.missingInfo", zh: "在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。")) }
     static var unverifiedInfo: String { WSL10n.text("notch.level.unverifiedInfo", zh: "这个 macOS 版本还没核对过，系统的提示会一起出现。") }
 
     /// 三种写法：平时；没允许辅助功能；允许了但版本没核对过。

@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/face-scan-challenge-flow-tests
-swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/FaceScanChallengeFlow.swift prototype/Core/FaceGestureTracker.swift \
+swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FaceScanChallengeFlow.swift prototype/Core/FaceGestureTracker.swift \
   prototype/Core/SessionLockState.swift prototype/Core/FaceScanGuard.swift prototype/Core/FaceTemplateSet.swift prototype/App/FaceObservationSource.swift \
   prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift tests/FaceScanChallengeFlowTests.swift \
   -framework AVFoundation -framework Vision -framework CoreVideo \

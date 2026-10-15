@@ -125,7 +125,7 @@
    "purpose": "收起、放回、排窗口，都要先知道窗口在哪",
    "destination": "只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
    "activation": "收起、放回、排窗口时",
-   "toggle": "在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+   "toggle": "在系统设置里关掉“辅助功能”（macOS 27 起叫“设备控制和数据访问”），WindowShade 就不能再读窗口",
    "status": "current",
    "rule": "AX",
    "verification": "source-inventory-only",
@@ -139,7 +139,7 @@
     "subtitle": "Finds, moves and restores windows",
     "purpose": "Rolling up, putting back and arranging all need to know where windows are",
     "destination": "In memory; rolled-up window titles and positions go into recovery records",
-    "toggle": "Turn off Accessibility and WindowShade can no longer read windows",
+    "toggle": "Turn off Accessibility (Device Control and Data Access from macOS 27) and WindowShade can no longer read windows",
     "activation": "When rolling up, putting back and arranging",
     "combined": "Window titles and positions together show which file you're working on and which page you're reading.",
     "reads": "Window titles, positions and sizes, and which app each belongs to"

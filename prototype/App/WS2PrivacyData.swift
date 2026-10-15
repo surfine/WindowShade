@@ -116,7 +116,7 @@ enum WS2PrivacyData {
             purpose: WSL10n.text("privacy.window-ax.purpose", zh: "收起、放回、排窗口，都要先知道窗口在哪"),
             destination: WSL10n.text("privacy.window-ax.destination", zh: "只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口"),
             activation: WSL10n.text("privacy.window-ax.activation", zh: "收起、放回、排窗口时"),
-            toggle: WSL10n.text("privacy.window-ax.toggle", zh: "在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口"),
+            toggle: WSL10n.text("privacy.window-ax.toggle", zh: "在系统设置里关掉“辅助功能”（macOS 27 起叫“设备控制和数据访问”），WindowShade 就不能再读窗口"),
             status: "current",
             combined: WSL10n.text("privacy.window-ax.combined", zh: "窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。"),
             interfaces: ["AXUIElementCopyAttributeValue", "SLSOffscreenCheckProbe"],

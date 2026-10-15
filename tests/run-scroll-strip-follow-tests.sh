@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/scroll-strip-follow-tests
 swiftc -parse-as-library -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/ScrollStrip.swift prototype/Core/StripWidthMemory.swift prototype/Core/MagicTiling.swift \
   prototype/Core/ArrangeGap.swift prototype/Core/FlickMotion.swift tests/ScrollStripFollowTests.swift \
   -o .build/scroll-strip-follow-tests/run

@@ -1063,14 +1063,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let trusted = AXIsProcessTrusted()
         if lastAccessibilityTrusted, !trusted {
             SystemLog.permissions.notice("accessibility revoked")
-            quietNotice(WSL10n.text("notice.accessibility.revoked", zh: "辅助功能被关掉了，收起和移动窗口暂时不生效"),
+            quietNotice(PrivacyPaneName.adjust(WSL10n.text("notice.accessibility.revoked", zh: "辅助功能被关掉了，收起和移动窗口暂时不生效")),
                         kind: .needsPermission,
                         log: "environment: accessibility permission was revoked, window actions will no longer take effect")
             rebuildMenu()
         } else if !lastAccessibilityTrusted, trusted {
             SystemLog.permissions.notice("accessibility back")
             if eventTap == nil { _ = setupEventTap() }
-            quietNotice(WSL10n.text("notice.accessibility.back", zh: "辅助功能打开了，收起和移动窗口恢复了"),
+            quietNotice(PrivacyPaneName.adjust(WSL10n.text("notice.accessibility.back", zh: "辅助功能打开了，收起和移动窗口恢复了")),
                         kind: .done, log: "environment: accessibility permission is back")
             rebuildMenu()
         }

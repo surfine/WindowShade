@@ -3,6 +3,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/device-battery-tests
-swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/DeviceBattery.swift prototype/Core/BluetoothBatteryParse.swift tests/DeviceBatteryTests.swift \
+swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/DeviceBattery.swift prototype/Core/BluetoothBatteryParse.swift tests/DeviceBatteryTests.swift \
   -o .build/device-battery-tests/battery
 .build/device-battery-tests/battery

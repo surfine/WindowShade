@@ -17,5 +17,5 @@ fi
 BUILD="$ROOT/.build/conductor-capabilities"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/tests/ConductorCapabilitiesTests.swift" -o "$BUILD/conductor-capabilities-tests"
+  "${SOURCES[@]}" "$SUPPORT" "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/tests/ConductorCapabilitiesTests.swift" -o "$BUILD/conductor-capabilities-tests"
 "$BUILD/conductor-capabilities-tests"

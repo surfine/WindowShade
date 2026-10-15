@@ -6,6 +6,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/calendar-presentation-tests"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/CalendarActivity.swift" "$ROOT/prototype/Core/CalendarPresentation.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/Core/CalendarActivity.swift" "$ROOT/prototype/Core/CalendarPresentation.swift" \
   "$ROOT/tests/CalendarPresentationTests.swift" -o "$BUILD/tests"
 "$BUILD/tests"

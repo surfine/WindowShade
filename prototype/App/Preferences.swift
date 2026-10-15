@@ -438,7 +438,7 @@ extension AppDelegate {
         stack.setCustomSpacing(18, after: cover)
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.common.group.permissions", zh: "权限")))
         let permissions = makeUnifiedSettingsCard([
-            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能"),
+            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
                                      subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")),
                                      granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
@@ -647,7 +647,7 @@ extension AppDelegate {
             : WSL10n.setting("settings.shade.levelKeys.sub", zh: shown.subtitle)
         let info: String
         switch shown.info {
-        case NotchLevelSettingRow.missingInfo: info = WSL10n.text("settings.shade.levelKeys.infoMissing", zh: shown.info)
+        case NotchLevelSettingRow.missingInfo: info = PrivacyPaneName.adjust(WSL10n.text("settings.shade.levelKeys.infoMissing", zh: shown.info))
         case NotchLevelSettingRow.unverifiedInfo: info = WSL10n.text("settings.shade.levelKeys.infoUnverified", zh: shown.info)
         default: info = WSL10n.text("settings.shade.levelKeys.info", zh: shown.info)
         }
@@ -669,8 +669,8 @@ extension AppDelegate {
                                  target: self, action: #selector(prefAllowLevelKeys(_:)))
             allow.bezelStyle = .rounded
             allow.controlSize = .small
-            allow.setAccessibilityLabel(WSL10n.text("settings.shade.levelKeys.allowA11y",
-                                                    zh: WSL10n.text("settings.shade.levelKeys.needAccessibility", zh: "允许辅助功能，让\(NotchLevelSettingRow.title)生效"), name.shown))
+            allow.setAccessibilityLabel(PrivacyPaneName.adjust(WSL10n.text("settings.shade.levelKeys.allowA11y",
+                                                    zh: WSL10n.text("settings.shade.levelKeys.needAccessibility", zh: "允许辅助功能，让\(NotchLevelSettingRow.title)生效"), name.shown)))
             allow.setContentHuggingPriority(.required, for: .horizontal)
             trailing.append(allow)
         }
@@ -1261,7 +1261,7 @@ extension AppDelegate {
             $0.removeFromSuperview()
         }
         var rows = [
-            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能"),
+            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
                 subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")), granted: ax,
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
@@ -1644,7 +1644,7 @@ extension AppDelegate {
         stack.setCustomSpacing(18, after: appearance)
 
         let permissions = makeUnifiedSettingsCard([
-            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能"),
+            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
                 subtitle: WSL10n.setting("settings.browser.axPerm.sub", zh: "识别 Dock 图标，切换、收起、展开和关闭窗口"),
                 granted: hasAccessibilityPermission(),
                 action: #selector(openAccessibilitySettingsAction)),

@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/input-hook-tests
 swiftc -swift-version 6 -parse-as-library \
-  prototype/Core/WSL10n.swift prototype/Core/Contracts.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/Contracts.swift \
   prototype/Core/SmoothScroll.swift \
   prototype/Core/InputDeviceKind.swift \
   prototype/Core/SiriRemoteButtons.swift \

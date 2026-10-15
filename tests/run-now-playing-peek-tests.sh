@@ -4,7 +4,7 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 mkdir -p "$root/.build/now-playing-peek-tests"
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  prototype/Core/WSL10n.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   "$root/prototype/Core/NowPlayingStreamParser.swift" "$root/prototype/Core/WireJSON.swift" "$root/prototype/Core/UsageReading.swift" "$root/prototype/Core/NotchActivities.swift" "$root/prototype/Core/ReleaseDefaults.swift" \
   "$root/prototype/Core/NowPlayingCardLogic.swift" "$root/prototype/Core/NotchAlerts.swift" \
   "$root/tests/NowPlayingPeekTests.swift" \

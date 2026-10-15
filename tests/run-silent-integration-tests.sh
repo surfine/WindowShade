@@ -49,7 +49,7 @@ run_case() {
     prototype/Core/WS2SilentGates.swift \
     prototype/Core/WS2SilentPhrases.swift \
     prototype/Core/WS2SilentSecurity.swift \
-    prototype/Core/WSL10n.swift \
+    prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
     prototype/Core/WS2SilentCopy.swift \
     prototype/Core/PresenceLock.swift \
     prototype/Core/WS2AwaySimulation.swift \

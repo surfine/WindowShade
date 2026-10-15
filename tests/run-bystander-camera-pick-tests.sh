@@ -5,6 +5,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/bystander-camera-pick-tests
 swiftc -parse-as-library -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
-  prototype/Core/WSL10n.swift prototype/Core/WS2CameraChoice.swift prototype/Core/BystanderCameraPick.swift tests/BystanderCameraPickTests.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/WS2CameraChoice.swift prototype/Core/BystanderCameraPick.swift tests/BystanderCameraPickTests.swift \
   -o .build/bystander-camera-pick-tests/pick
 .build/bystander-camera-pick-tests/pick

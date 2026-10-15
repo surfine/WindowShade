@@ -4,6 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/carplay-tests
 swiftc -swift-version 6 -module-cache-path "$PWD/.build/module-cache" \
-  prototype/Core/WSL10n.swift prototype/Core/WS2CarPlaySession.swift prototype/Core/WS2CarPlaySurfaceModel.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/WS2CarPlaySession.swift prototype/Core/WS2CarPlaySurfaceModel.swift \
   tests/WS2CarPlaySurfaceModelTests.swift -o .build/carplay-tests/surface-model
 .build/carplay-tests/surface-model
