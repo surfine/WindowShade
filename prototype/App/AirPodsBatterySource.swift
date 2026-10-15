@@ -32,7 +32,7 @@ final class AirPodsBatterySource: @unchecked Sendable {
   private var listener: AudioObjectPropertyListenerBlock?
   private var outputDevice: AudioObjectID = 0
   private var outputIsBluetooth = false
-  private var timer: DispatchSourceTimer?
+  private let timer = MaintenanceTimer(name: "airpods-battery", interval: AirPodsBatterySource.refreshInterval, tolerance: 60)
   private var inFlight = false
   private var rerunWanted = false
   private var known: Set<String> = []
@@ -91,21 +91,16 @@ final class AirPodsBatterySource: @unchecked Sendable {
     }
   }
 
+  // 规格 N4：十分钟一次的电量对账不赶时间，交给系统的后台调度（低电量时自然推后）。
   private func startTimer() {
-    cancelTimer()
-    let timer = DispatchSource.makeTimerSource(queue: queue)
-    timer.schedule(deadline: .now() + Self.refreshInterval, repeating: Self.refreshInterval, leeway: .seconds(60))
-    timer.setEventHandler { [weak self] in
+    timer.start(on: queue) { [weak self] in
       guard let self, self.running, self.outputIsBluetooth else { return }
       self.refresh()
     }
-    timer.resume()
-    self.timer = timer
   }
 
   private func cancelTimer() {
-    timer?.cancel()
-    timer = nil
+    timer.stop()
   }
 
   private func refresh() {
