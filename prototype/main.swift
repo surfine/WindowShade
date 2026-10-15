@@ -136,6 +136,24 @@ if CommandLine.arguments.contains("--glance-probe") {
     withExtendedLifetime(probe) { app.run() }
     exit(0)
 }
+for flag in ["--export-settings", "--import-settings"] where CommandLine.arguments.contains(flag) {
+    // 规格 R5：导出／合并导入设置（后面跟文件路径）。只动设置，不动状态与隐私键。
+    let index = CommandLine.arguments.firstIndex(of: flag)!
+    guard CommandLine.arguments.count > index + 1 else { print("settings: \(flag) needs a file path"); exit(2) }
+    let url = URL(fileURLWithPath: CommandLine.arguments[index + 1])
+    do {
+        if flag == "--export-settings" {
+            print("settings: exported \(try SettingsArchiveIO.export(to: url)) key(s) to \(url.path)")
+        } else {
+            let result = try SettingsArchiveIO.importSettings(from: url)
+            print("settings: imported \(result.written) key(s), skipped \(result.skipped)")
+        }
+        exit(0)
+    } catch {
+        print("settings: failed \(error.localizedDescription)")
+        exit(1)
+    }
+}
 if CommandLine.arguments.contains("--export-diagnostics") {
     // 规格 R35／R13：导出本地诊断包并打印路径（不在访达里显示）。可选：后面跟一个目录。
     app.setActivationPolicy(.accessory)
