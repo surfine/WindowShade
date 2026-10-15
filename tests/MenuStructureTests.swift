@@ -62,6 +62,12 @@ struct MenuStructureTests {
         check(StatusMenuLayout.visibleFixedIDs(in: withPins) == ids, "有置顶时顶层仍是同样 9 项")
         check(withPins.items.count == plain.items.count + 2, "置顶行加分隔线")
         check(StatusMenuLayout.pinnedRowTitle(count: 2) == "置顶的窗口（2）", "置顶行名")
+        // 辅助功能没开：最上面多一行，不算在固定 9 项里。
+        let axIDs = StatusMenuLayout.dynamicRowIDs(focusActive: true, waitingCodingSessions: 0, accessibilityOff: true)
+        check(axIDs.first == StatusMenuLayout.accessibilityRowID && axIDs.count == 2, "辅助功能那一行排在动态行最前")
+        let withAX = makeMenu(dynamic: [StatusMenuLayout.accessibilityRowID], hiddenExtras: 2)
+        check(StatusMenuLayout.visibleFixedIDs(in: withAX) == StatusMenuLayout.visibleFixedIDs(in: plain),
+              "辅助功能那一行不占固定 9 项")
 
         // 子菜单里的窗口项仍属于状态栏菜单树（悬停预览依赖这个）。
         let root = NSMenu(), sub = NSMenu(), subsub = NSMenu(), other = NSMenu()

@@ -77,6 +77,14 @@ extension AppDelegate {
     }
     // 进行中才出现的动态行，放在固定 9 项上方，不算在 9 项里。
     var dynamicRowCount = 0
+    let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
+    // 辅助功能没开时最上面多一行，点它去系统设置；权限回来就消失（规格 R2）。
+    if !ax {
+      action(WSL10n.text("menu.accessibilityOff", zh: "打开辅助功能…"), "exclamationmark.triangle",
+             #selector(openAccessibilitySettingsAction), id: StatusMenuLayout.accessibilityRowID)
+      statusMenu.items.last?.toolTip = WSL10n.text("menu.accessibilityOff.help", zh: "辅助功能没开，收起和移动窗口不会生效")
+      dynamicRowCount += 1
+    }
     if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
       action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2ShowFocus),
              id: StatusMenuLayout.focusRowID)
@@ -107,7 +115,6 @@ extension AppDelegate {
     }
     if dynamicRowCount > 0 { statusMenu.addItem(.separator()) }
 
-    let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
     let firstFixed = statusMenu.items.count
     let fold = foldToggleState()
     action(fold.menuTitle, fold.symbol, #selector(toggleAction), .toggleShade, id: "ws.menu.fold")
