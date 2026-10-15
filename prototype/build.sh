@@ -253,6 +253,14 @@ mkdir -p "$APP/Contents/Resources/Localization"
 cp -R "$WORK/Localization/." "$APP/Contents/Resources/Localization/"
 cp ../docs/third-party-lock-overlay.txt "$APP/Contents/Resources/LockOverlay-LICENSE.txt"
 cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
+# 第三方许可（规格 R38）：随包的三份许可合成一份，「关于」面板里的「第三方许可」打开它。
+# 来源就是仓库里那三份文件，不另抄一份；清单见仓库根 THIRD-PARTY-LICENSES.md。
+{
+  printf 'WindowShade bundles the following third-party software.\n\n'
+  printf '== Sparkle 2.10.0 (Contents/Frameworks/Sparkle.framework) ==\n\n'; cat Vendor/Sparkle-LICENSE
+  printf '\n\n== mediaremote-adapter (Contents/Frameworks/MediaRemoteAdapter.framework) ==\n\n'; cat Vendor/mediaremote-adapter/LICENSE
+  printf '\n\n== Lock-space recipe (Glance) ==\n\n'; cat ../docs/third-party-lock-overlay.txt
+} > "$APP/Contents/Resources/THIRD-PARTY-LICENSES.txt"
 rm -rf "$APP/Contents/Resources/ThirdParty"
 # The released bundle historically carries the Swift concurrency runtime in
 # Contents/Frameworks. Preserve that runtime in isolated stage builds too;

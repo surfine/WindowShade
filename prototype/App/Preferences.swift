@@ -151,7 +151,8 @@ extension AppDelegate {
         as? String ?? ""
     let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
     NSApp.orderFrontStandardAboutPanel(options: StandardMenu.aboutPanelOptions(
-        version: version, build: build))
+        version: version, build: build,
+        thirdPartyLicensesURL: Bundle.main.url(forResource: "THIRD-PARTY-LICENSES", withExtension: "txt")))
     NSApp.activate()
 }
 
