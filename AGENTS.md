@@ -41,6 +41,11 @@
 - 面向开发者的构建、签名、发布流程见 [`DEVELOPMENT.md`](DEVELOPMENT.md)。
 - 面向用户的说明见 [`README_CN.md`](README_CN.md) / [`README.md`](README.md)。
 
+## 技能
+
+- 改 Swift 代码先用 `write-swift`（处理 .swift 文件时会自动加载）；菜单栏、面板、控件等原生界面问题先读 `hig-foundations` / `hig-platforms`，再按它们指向的 hig-* 子技能查具体组件。
+- 验收原生界面行为时按 `computer-use-practice` 的观察—输入—复核闭环操作，证据要求见下节。
+
 ## Computer Use 验收
 
 涉及原生界面行为的改动，按 [Computer Use 验收手册](docs/computer-use-qa.md) 选择场景并提交对应构建证据。使用隔离 Mac 和受控资料，执行“观察、确认目标、单步操作、等待变化、重新观察、对照预期”；不能把工具退出 0、AX 写入成功或产品日志成功当作可见效果通过。缺证据写 inconclusive / not_run，保留首次失败与恢复记录。不要把历史签名二进制的结果套给当前源码，也不要用 VM 代替真实硬件矩阵。
