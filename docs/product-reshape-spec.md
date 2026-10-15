@@ -674,6 +674,7 @@
 - **验收**：重启、重接显示器后，某块屏的设置还在那块屏上。
 
 #### R28 · macOS 27 权限改名 + 证书轮换说明
+- **✅ 2026-10-15（a）**：本机 macOS 27.0.1 的 `SecurityPrivacyExtension.appex` 里 `ACCESSIBILITY` 键已是 en「Device Control and Data Access」／zh_CN「设备控制和数据访问」／zh_TW「裝置控制和資料取用」——**隐私与安全性里辅助功能那一栏确实改名了**（「减少动态效果」所在的真正的「辅助功能」设置没改）。`Core/PrivacyPaneName.swift` 按系统版本换名（26 及以前逐字不变），套在 14 句「教人去那一栏开权限」的文案上；新旧名字放在本地化目录里；隐私页那一行与两版 README 两个名字都写。（b）换证书要重新授权的说明：未做，等真的换 Developer ID 那一版再写。
 - **依据**：boring.notch v2.8-rc.0「Accessibility permission references now use the current macOS terminology（**Device Control and Data Access**）」；WindowMizer「Conform to macOS 27（**Golden Gate**）renaming of System Settings: **Accessibility panel -> Device Control and Data Access**」；AeroSpace **两次**「Update codesign certificate due to expiration. **AeroSpace will re-request accessibility permission.**」
 - **现状**：文案按当前系统写；**没有「换证书后要重新授权」的说明**。
 - **改动**：（a）文案与系统设置的分区名一致，旧系统有回退；（b）**换 Developer ID 那一版，欢迎流程里要有一句「要重新授权一次」**，不静默失灵。
@@ -801,6 +802,7 @@
 - **验收**：一个会在后台弹窗的 App（如终端跑一条 `osascript -e 'display dialog'`，或邮件类 App）弹出时，前台与卷轴位置都不动。
 
 #### R42 · 卷轴跟手的完整配方（niri／Paneru 那几条）
+- **✅ 2026-10-15 逐条核过**：松手速度只看最后 150 ms（另加「停住再抬手不甩出去」）、求导下限（< 8 ms 当 0）、按减速率推算落点（指数衰减）、停放 10 点（`ScrollStrip.sliver`）、列宽存比例（预设档与「记住列宽」）——都已在代码里。减速率 niri 是 0.997，我们刻意取 0.998（对齐官网手感），不采纳。唯一的裸数字 0.998 已改成 `ScrollStrip.releaseDecelerationRate`，「张开跟手的概览」直接引用它。未核：#59（写窗口时先停听）、#60（应该在哪／实际在哪分开存）。
 - **依据**：niri 的**手感常量**（手指位移 → 一屏 = **1200 逻辑点**；甩动投影 **150ms** 速度视窗、阻尼 **0.997**）与 Paneru 的**时间步长纪律**（积分上限 `1/30s`、求导下限 `1/1000s`）、**惯性 `v *= exp(-k·dt)` 且故意不设上限**、**停放 10px**（`PARKED_STRIP_SLIVER`）、**binpack 栏内高度**；AeroSpace 的**角外一像素 ＋ 记原位**、**切换时先 unhide 可见的再 hide 不可见的**；PaperWM 的**列宽存比例不存像素**。
 - **现状**：卷轴已改过、**未发布**（[niri.md](niri.md)）；上面这些**多数没进我们的实现或没归档成常量**。
 - **改动**：逐条对：**已经会的标出来**，没会的补上，**手感类一律变成具名常量**（可调、可回归）。
@@ -1050,7 +1052,7 @@
 | **E2** | **✅ 2026-10-15（口径已清）**：同一次测量里 phys_footprint **54 MB**、RSS 125–153 MB；以前的「约 100 MB」是 RSS 一类的数。Wins 自称的「<30 MB」口径未知，不能直接比。原文：**查清内存口径再对比**：先量清我们的 physical footprint 与 RSS，分「空载」与「开了窗口浏览＋几个常驻面」两种状态；再去查 Wins 那 30 MB 的确切含义。**现在这一行是 100 MB vs 它自称的 30 MB，口径不一致就不能下结论** | 一张同口径对照表；不引用对不上的数字 |
 | **E3** | **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 |
 | **E4** | **✅ 2026-10-15（bf73aad）**：两处都设了 10% 容差；窗口浏览那个只在面板开着时跑，**不是常驻**。原文：**补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
-| **E5** | **AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
+| **E5** | **✅ 2026-10-15**：排队中的请求本来就能取消（每个任务开跑前 `demand.execution.begin()`，过时就跳过；每个 App 只一个在途）。真正的缺口是窗口浏览没接熔断：现在问之前看 `AXStallBreaker`，开着就报失败（旧条目保留、标待刷新），问完把耗时记进熔断——卡住的 App 之后 4 秒内收起、救援、窗口浏览都直接跳过它。原文：**AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
 | **E6** | 核 Ice 那两条：**切 App 时菜单栏面 CPU**、**长时间空闲后第一次操作的迟滞** | 各一条探针 |
 
 **H 系列 · Apple 芯片**
@@ -1061,7 +1063,7 @@
 | **H2** | **`pixelAnalysisQueue` 的 QoS 复核**（`WindowShade.swift:170` 现为 `.userInitiated`）。**先量再改**：跑 `--fold-timing` 取基线 → 降 `.utility` → 再跑；关键路径上不能降的那几处单独保留 | 折叠延迟不劣化；非关键路径的 CPU 占比下降 |
 | **H3** | **采集侧色彩与分辨率**（`ScreenCaptureBridge.swift:414-418` 现为 sRGB、未设 `captureResolution`）：按显示器能力选色彩空间（P3 屏用 `displayP3`），显式设 `captureResolution`，macOS 15+ 评估 HDR 档（**连着看功耗**） | 缩略图与系统截图色彩比对；P3 屏上不变淡；采集侧 CPU 不升 |
 | **H4** | **Vision 用到该用的地方**（ANE）：标题栏定位从像素启发式换成 `VNDetectRectangles`／`VNRecognizeText`；缩略图裁剪用 `VNGenerateAttentionBasedSaliency`。**只在「一扇窗一次」的路径上跑，不每帧** | 同一批窗口比较「启发式 vs Vision」的定位；低电量／热压力下能退回启发式 |
-| **H5** | **零拷贝（2026-10-15 自纠：前提要改）**：此前写「`FoldRenderer` 是从 `CGImage` 建、要 CPU 上传」，**不准确**——`Effects/FoldRenderer.swift` **已经有** `CVMetalTextureCache`（`:35`／`:111`／`:291`）并用 `CVMetalTextureCacheCreateTextureFromImage`（`:346`）。→ 改成**核哪些路径还在走 `CGImage` 上传**（静态图/截图那条？），把能走 `CVPixelBuffer` 的都接过去 | 那条路径的 CPU 占比与内存带宽下降；画面一致 |
+| **H5** | **✅ 2026-10-15 核过不改**：实时画面早走 `CVMetalTextureCache`；唯一还从 `CGImage` 建纹理的是收起动画的静图，`FoldStillTexture` 已把色彩转换结果直接写进页对齐的共享 `MTLBuffer` 当纹理用、省掉 `replace` 整图拷贝（有逐像素一致的测试）。没有可以再接零拷贝的路径。原文：**零拷贝（2026-10-15 自纠：前提要改）**：此前写「`FoldRenderer` 是从 `CGImage` 建、要 CPU 上传」，**不准确**——`Effects/FoldRenderer.swift` **已经有** `CVMetalTextureCache`（`:35`／`:111`／`:291`）并用 `CVMetalTextureCacheCreateTextureFromImage`（`:346`）。→ 改成**核哪些路径还在走 `CGImage` 上传**（静态图/截图那条？），把能走 `CVPixelBuffer` 的都接过去 | 那条路径的 CPU 占比与内存带宽下降；画面一致 |
 | **H6** | **新路径进 `App/PowerPolicy.swift`**（低电量／热压力下退回 CPU／降质／跳过非必要推理） | 低电量模式下新路径行为可解释 |
 
 **不该做的**：不为「用上 NPU」引入模型；不做「Metal 重写一切」；不把 Vision 放上关键交互路径；不牺牲色彩正确性换性能。
