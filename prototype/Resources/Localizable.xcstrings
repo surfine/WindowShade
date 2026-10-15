@@ -17803,6 +17803,29 @@
         }
       }
     },
+    "menu.about.thirdPartyLicenses" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Third-Party Licenses"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第三方许可"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "第三方授權"
+          }
+        }
+      }
+    },
     "menu.aboutApp" : {
       "extractionState" : "manual",
       "localizations" : {

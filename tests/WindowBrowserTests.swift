@@ -3617,6 +3617,17 @@ enum WindowBrowserTests {
             value, _, _ in if value != nil { hasLink = true }
         }
         expect(hasLink, "the repository appears as a clickable link")
+        expect(credits?.string.contains("第三方许可") == false,
+               "without a bundled license file the about panel adds no third-party line")
+        let licenses = URL(fileURLWithPath: "/tmp/THIRD-PARTY-LICENSES.txt")
+        let withLicenses = StandardMenu.aboutPanelOptions(version: "1.0.14", build: "14",
+                                                          thirdPartyLicensesURL: licenses)[.credits] as? NSAttributedString
+        var licenseLink: URL?
+        withLicenses?.enumerateAttribute(.link, in: NSRange(location: 0, length: withLicenses?.length ?? 0)) {
+            value, _, _ in if (value as? URL)?.isFileURL == true { licenseLink = value as? URL }
+        }
+        expect(withLicenses?.string.contains("第三方许可") == true && licenseLink == licenses,
+               "the about panel links 第三方许可 to the bundled license file")
 
         // 注入了 target/action 时，“设置…”必须带上 ⌘, 且指向注入的目标。
         let withSettings = StandardMenu.make(appName: "WindowShade", settingsTarget: NSApp,

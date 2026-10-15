@@ -32,9 +32,11 @@ enum StandardMenu {
 
     /// 系统标准“关于”面板的内容：一句用途说明 + 许可与仓库链接。
     /// 纯构造，便于测试；实际展示仍由 `orderFrontStandardAboutPanel` 负责。
+    /// `thirdPartyLicensesURL`：包里合成的第三方许可（规格 R38），有就多一行可点的「第三方许可」。
     static func aboutPanelOptions(applicationName: String = "WindowShade",
                                   version: String,
-                                  build: String)
+                                  build: String,
+                                  thirdPartyLicensesURL: URL? = nil)
         -> [NSApplication.AboutPanelOptionKey: Any] {
         let credits = NSMutableAttributedString(
             string: WSL10n.text("menu.about.credits",
@@ -45,6 +47,12 @@ enum StandardMenu {
             string: "MIT License · github.com/surfine/WindowShade",
             attributes: [.font: NSFont.systemFont(ofSize: 11),
                          .link: URL(string: "https://github.com/surfine/WindowShade")!]))
+        if let thirdPartyLicensesURL {
+            credits.append(NSAttributedString(string: "\n"))
+            credits.append(NSAttributedString(
+                string: WSL10n.text("menu.about.thirdPartyLicenses", zh: "第三方许可"),
+                attributes: [.font: NSFont.systemFont(ofSize: 11), .link: thirdPartyLicensesURL]))
+        }
         return [
             .applicationName: applicationName,
             .applicationVersion: version,
