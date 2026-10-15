@@ -1,6 +1,7 @@
 import AVFoundation
 import Cocoa
 import ScreenCaptureKit
+import Synchronization
 
 enum ShareableContentLoader {
     static func current() async throws -> SCShareableContent {
@@ -19,6 +20,12 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     /// 实测 SCK 的 desktopIndependentWindow 仍会擷取 sharingType == .none 的窗口。
     /// 生产路径永远为 false，不受影响。
     nonisolated(unsafe) static var probeDropAllFrames = false
+
+    /// 只给探针用（规格 H3）：换掉采集色彩空间（nil＝照常用 sRGB），并数收到几帧、其中几帧认出并修掉了录屏胶囊。
+    /// 用来核对换成 displayP3 之后胶囊还认不认得出来。生产路径不设、不读。
+    nonisolated(unsafe) static var probeColorSpaceName: CFString?
+    static let probeIndicatorStats = Mutex((frames: 0, cleaned: 0))
+    private static let countsIndicatorFrames = CommandLine.arguments.contains("--capsule-color")
 
     // 菜单/面板缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时
     // 缩略图，不新建 capture、不轮询。弱引用，视图销毁后自动断开。
@@ -360,7 +367,7 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
 
     private func configureBase(display: SCDisplay?) {
         configuration.pixelFormat = kCVPixelFormatType_32BGRA
-        configuration.colorSpaceName = CGColorSpace.sRGB
+        configuration.colorSpaceName = Self.probeColorSpaceName ?? CGColorSpace.sRGB
         configuration.showsCursor = false
         configuration.queueDepth = isPreviewStream ? 2 : 3
         configuration.scalesToFit = true
@@ -422,8 +429,11 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         // 探针的零帧注入：本路流收到的帧全丢，验证“没有首帧就不搬窗口”。
         guard !Self.probeDropAllFrames else { return }
         // 这扇窗正被我们的流捕获，系统在它的红绿灯处画了录屏胶囊：交给画面之前修掉。
-        CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate },
-                                      tracker: indicatorTracker)
+        let cleaned = CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate },
+                                                    tracker: indicatorTracker)
+        if Self.countsIndicatorFrames {
+            Self.probeIndicatorStats.withLock { $0.frames += 1; if cleaned { $0.cleaned += 1 } }
+        }
         mirrorFrameIndex &+= 1
         // 主画面按源流帧率全量投递（15/30fps 已由流本身自适应）；镜像层取
         // 约 8~10fps 的子集：15fps 源隔帧投（≈8fps），30fps 源每 3 帧投（10fps）。
