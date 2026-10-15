@@ -176,11 +176,14 @@ struct PrivacyPaneTests {
   // MARK: 文案
 
   static func copyTests() {
-    precondition(WS2PrivacyCopy.headerSubtitle(showingNetworkPromise: false) == "WindowShade 读到的每一样都列在这里。")
-    precondition(WS2PrivacyCopy.showsNetworkPromise == false, "联网实测之前，第二句不上页头")
-    precondition(WS2PrivacyCopy.headerSubtitle() == WS2PrivacyCopy.headerLead)
+    precondition(WS2PrivacyCopy.headerSubtitle(showingNetworkPromise: false)
+      == "WindowShade 读到的每一样都列在这里。不收集使用数据，也不做任何统计或上报。")
+    precondition(WS2PrivacyCopy.showsNetworkPromise == false, "联网实测之前，“不离开这台 Mac”不上页头")
+    precondition(WS2PrivacyCopy.headerSubtitle() == WS2PrivacyCopy.headerLead + WS2PrivacyCopy.noReporting)
     precondition(WS2PrivacyCopy.headerSubtitle(showingNetworkPromise: true)
-      == "WindowShade 读到的每一样都列在这里。除了检查更新，都不离开这台 Mac。")
+      == "WindowShade 读到的每一样都列在这里。不收集使用数据，也不做任何统计或上报。除了检查更新，都不离开这台 Mac。")
+    precondition(WS2PrivacyCopy.joinSentences(["Listed here.", "No analytics."]) == "Listed here. No analytics.",
+                 "英文句子之间留一个空格")
 
     var calendar = Calendar(identifier: .gregorian)
     calendar.timeZone = TimeZone(identifier: "Asia/Shanghai")!

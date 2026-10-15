@@ -11,8 +11,20 @@ enum WS2PrivacyCopy {
     static let showsNetworkPromise = false
     static var networkPromise: String { WSL10n.text("settings.privacy.networkPromise", zh: "除了检查更新，都不离开这台 Mac。") }
 
+    /// 总说（规格 R37）：没有统计 SDK，Sparkle 的系统信息上报关着（SUEnableSystemProfiling=false），
+    /// 导出只存成本地文件。这一句代码里核得到，不依赖联网实测；“不离开这台 Mac”那句仍等 P2。
+    static var noReporting: String { WSL10n.text("settings.privacy.noReporting", zh: "不收集使用数据，也不做任何统计或上报。") }
+
     static func headerSubtitle(showingNetworkPromise: Bool = showsNetworkPromise) -> String {
-        showingNetworkPromise ? headerLead + networkPromise : headerLead
+        joinSentences([headerLead, noReporting] + (showingNetworkPromise ? [networkPromise] : []))
+    }
+
+    /// 中文句号后直接接下一句；英文句号后加一个空格。
+    static func joinSentences(_ parts: [String]) -> String {
+        parts.reduce("") { text, part in
+            guard let last = text.last else { return part }
+            return text + (last.isASCII ? " " : "") + part
+        }
     }
 
     static var readAtPrefix: String { WSL10n.text("settings.privacy.readAtPrefix", zh: "打开这一页时读的 · ") }

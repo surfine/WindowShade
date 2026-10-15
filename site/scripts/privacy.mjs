@@ -8,7 +8,8 @@ const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 const registry = JSON.parse(readFileSync(`${repoRoot}tools/privacy/registry.json`, 'utf8'));
 const swiftSource = readFileSync(`${repoRoot}prototype/App/WS2PrivacyData.swift`, 'utf8');
 
-export const privacyIntro = 'WindowShade 读到的每一样都列在这里。';
+// 第二句和 App 页头同一句（WS2PrivacyCopy.noReporting，规格 R37）；“不离开这台 Mac”仍等联网实测。
+export const privacyIntro = 'WindowShade 读到的每一样都列在这里。不收集使用数据，也不做任何统计或上报。';
 const FIELDS = ['label', 'subtitle', 'reads', 'purpose', 'destination', 'activation', 'toggle', 'combined'];
 const FORBIDDEN = /\b(P\d|A2[ab]|IPC|L1|Sparkle)\b|待验证|待核|磁盘行为待/;
 const escape = (s) => s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
