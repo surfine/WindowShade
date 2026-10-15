@@ -65,12 +65,14 @@
 | 序 | 任务 | 为什么这个序 | 预估 |
 | --- | --- | --- | --- |
 | 1 | **N5 `PrivacyInfo.xcprivacy`** | **公证硬门槛**；纯新增文件、零回归面 | 半到一小时 |
-| 2 | **C3 主程序补 `-o runtime`**（本轮研究新增，**并入 N5 同批**：都是发布链路） | `build.sh:373` 一行；消掉「验过的包 ≠ 要发的包」 | 几分钟＋重过 Phase 0 |
+| 2 | **C3 主程序补 `-o runtime`**（本轮研究新增，**并入 N5 同批**：都是发布链路）**✅ 2026-10-15 已改 `build.sh`，配 `prototype/WindowShade.entitlements`（Apple Events／摄像头／音频输入／日历四项例外，缺了它们 runtime 会静默拒绝）；Apple Events 与摄像头的真机行为未验** | `build.sh:373` 一行；消掉「验过的包 ≠ 要发的包」 | 几分钟＋重过 Phase 0 |
 | 3 | **R34 版本号纪律** | 挡「同版本号十一次重发」复发 | 十几分钟 |
 | 4 | **R33 CI（只做 `ci.yml`）** | 门禁开始强制——「以后不再退步」的唯一机制 | 半天内 |
 | 5 | **R2 权限被撤要告诉用户** | 复用 R1；用户感知最强 | 小 |
 | 6 | **R38 第三方许可** | 我们批评过别人、自己却没做的那件事 | 十几分钟 |
 | 7 | **R37 隐私声明** | 发布材料；呈现用 loupe 三档（§1.8） | S/M |
+
+**2026-10-15 这 7 行已全部落地并本地提交**（R1 a49ddb3、R33 6b51679、R34 f1e82d8、N5＋C3 cb10408、R38 6cac384、R2 f38d183、R37 866b2a7；分支 `codex/ws2-remote-gpt6-handoff-20261007`，未推送）。证据：全量 `build.sh --check` EXIT=0；`--stage` EXIT=0（runtime 标志、四项 entitlement、`--self-check build=16 ok`）；菜单、隐私页、窗口浏览三组单测与官网构建通过。**还没做的**：R2 运行中关权限、C3 的 Apple Events 与摄像头、CI 在 runner 上的第一次运行，三样都要真机或推送后才能验；R37 的「不离开这台 Mac」仍等 P2。**顺带发现（不在这批）**：`prototype/Vendor/mediaremote-adapter/build-adapter.sh` 在 git 里是 100644，构建时 Permission denied，1.0.16 包里也没有这个适配器——正在播放推送流从没进过包。
 
 （上表 7 行＝在飞 6 条＋C3 并批；**批不清空不开新项**的规矩照旧。**C3 没有独立条目**：它只是 `build.sh:373` 主程序 `codesign` 漏了 `-o runtime`（:367–372 的嵌套件都有），见 §1.5 最后一行与[竞品深挖](competitive-deep-dive.md)§五 C3。）
 
@@ -91,11 +93,11 @@
 
 ### 0.2.2 开箱前置（2026-10-15 研究阶段顺手做完的侦察；13:00 可直接动手）
 
-**N5 隐私清单——审计已完，只差落文件**：见 §2 的 N5 行（4 类理由码＋负项声明＋逐文件归位，全部双查过）。
+**N5 隐私清单——✅ 2026-10-15 已落 `prototype/PrivacyInfo.xcprivacy`，构建放进 `Contents/Resources/`，三种模式都 `plutil -lint`。更正**：它**不是公证门槛**（公证不查隐私清单，那是 App Store 的要求）；对我们是如实申报。FileTimestamp 的两个读取点（下载文件夹的临时文件、`~/Library/KeyBindings`）没有一条理由码严丝合缝，按 3B52.1 申报。原文：见 §2 的 N5 行（4 类理由码＋负项声明＋逐文件归位，全部双查过）。
 
 **R34 版本号纪律——版本流已查明**：`prototype/Info.plist` 是**版本的唯一来源**（build.sh `:343–347` 只把 `CFBundleShortVersionString`／`CFBundleVersion` 两个键同步进包，注释明写「源码树拥有发布版本」）。最小动作两条：① build.sh `--stage` 加一条**发行前守卫**——若 `site/public/appcast.xml` 已存在同版本号则报错退出（照 CodexBar 三查的第 3 条）；② runbook 写明：**重发必须递增 `CFBundleVersion`**，不再 `Set` 同一个数上去。
 
-**R33 CI——零地基，骨架如下**：仓库**没有任何 `.github/workflows`**；门禁命令＝`prototype/build.sh --check`（隔离编译＋链接，不签名）。`ci.yml` 最小内容：`checkout` → macOS runner（需要 **Xcode 27**，本机是 27.0／Swift 6.4——**先确认 runner 镜像有没有 27，没有就先用可用最新并标注差异**）→ `xcode-select` → `prototype/build.sh --check`。**已知坑**：`--check` 在缺 `Vendor/Sparkle.framework` 时「什么都不编也返回成功」（build.sh `:44` 的兜底）——CI 上要么预拉 Sparkle、要么把这条兜底改成显式跳过并留日志，**不能让它静默变绿**。
+**R33 CI——✅ 2026-10-15 已写 `.github/workflows/ci.yml`（未推送，未在 runner 上跑过）。更正**：`prototype/Vendor/Sparkle.framework` **在 git 里**（87 个文件），checkout 就带上，不用预拉；下面「缺 Sparkle 时静默变绿」也已过时——`build.sh` 现在总是传 `-framework Sparkle`，缺了就链接失败（见它第 10–12 行注释）。原文留作记录：仓库**没有任何 `.github/workflows`**；门禁命令＝`prototype/build.sh --check`（隔离编译＋链接，不签名）。`ci.yml` 最小内容：`checkout` → macOS runner（需要 **Xcode 27**，本机是 27.0／Swift 6.4——**先确认 runner 镜像有没有 27，没有就先用可用最新并标注差异**）→ `xcode-select` → `prototype/build.sh --check`。**已知坑**：`--check` 在缺 `Vendor/Sparkle.framework` 时「什么都不编也返回成功」（build.sh `:44` 的兜底）——CI 上要么预拉 Sparkle、要么把这条兜底改成显式跳过并留日志，**不能让它静默变绿**。
 
 ### 0.3 冻结与准入（防止队列再长）
 
@@ -400,13 +402,13 @@
 
 ---
 
-#### R1 · 事件通道的周期体检 ✅ **代码已写、尚未提交（2026-10-15 核）**
+#### R1 · 事件通道的周期体检 ✅ **2026-10-15 已提交（a49ddb3）**
 
 - **依据**：DockDoor 的 5 秒看门狗里有一项 `CGEvent.tapIsEnabled(tap:)`、为假则重建；**Wins 把 `missionControl.tapDisabled` 当成一个专门的埋点**。两家独立印证。
 - **为什么**：系统在**回调超时**或**输入洪泛**时会把 tap **静默停掉**——没有通知、没有报错，只是从此不再送事件。我们原本只在收到 `tapDisabledByTimeout`／`tapDisabledByUserInput` 时重开（五处），**在没有那两个事件的情况下死掉，不查**。
 - **已做**：`prototype/WindowShade.swift` 新增 `startEnvironmentWatch()`／`runEnvironmentCheck()`；装好之后每 5 秒查一次，为假就**重开同一支 port**（不重建、不新起线程），并记 `tapSilentStops` 计数。同一次体检里顺带盯了权限的「有→无／无→有」。
 - **验收**：`CGEvent.tapEnable(tap, false)` 模拟静默失效 → 10 秒内自愈，日志出现 `environment: event tap was disabled silently, re-enabled (count=1)`。
-- **状态（2026-10-15 复核）**：改动**只在工作区**（`git diff prototype/WindowShade.swift`，+48 行），**未提交、未入 `main`**，当前分支是 `codex/ws2-remote-gpt6-handoff-20261007`；`/tmp/bc.log` 已不存在，那次 `EXIT=0` **无法复核**——提交前要重跑一次 `--check`。它的改动方式（重开 port 而不是重建）是后面几条的样板。
+- **状态**：2026-10-15 重跑 `build.sh --check` EXIT=0 后提交（a49ddb3，分支 `codex/ws2-remote-gpt6-handoff-20261007`，未入 `main`）。
 
 ---
 
@@ -421,6 +423,7 @@
 - **验收**：运行中在系统设置关掉辅助功能 → 10 秒内出现说明；重新打开 → 状态恢复且不重复打扰。
 - **风险**：不要做成循环弹窗。一个状态只提示一次，直到状态再次变化为止。
 - **依赖**：R1（复用 `runEnvironmentCheck`）。
+- **✅ 2026-10-15 已做**：「有→无」时走 `quietNotice(.needsPermission)`（刘海能说就在刘海说、点一下去授权；说不了退回菜单栏标题），「无→有」说一句恢复；另在状态栏菜单最上面挂一行「打开辅助功能…」直到权限回来（动态行，不占固定 9 项）。文案 zh／en／zh-Hant 齐。**验**：`run-menu-structure-tests.sh` 通过；**运行中关权限的真机验收未做（not_run）**。
 
 ---
 
@@ -698,6 +701,7 @@
 **先说已经有的（别重造）**：**`Core/ReleaseDefaults.swift` 是一套发布门禁**——唯一开关表，每条「设计上默认开」的新功能带 `deviceVerified`；**没真机验过的一律默认关但功能在**，用户显式设过的值不被覆盖。**这是成熟做法，我们已经在做。** 另有：应用内更新说明链接、`UpdateLaunch` 的自检与启动记录、`Support/Diagnostics.swift` 的卡顿哨兵、`Core/WS2DiagnosticTail.swift`（注解写明「**绝不自动持久化或发送**」）、Sparkle 依赖固定版本、`.gitignore` 已盖住 `*.mp4` 与 `/Topit/`（根目录那几个异物**没有被 git 跟踪**，已核）。
 
 #### R33 · CI：把 `build.sh --check` 挂到每次推送
+- **✅ 2026-10-15**：`.github/workflows/ci.yml`（macos-26、选最新 Xcode、先断言 Sparkle 在、再跑 `--check`）。**本地未推送**，runner 上的 Xcode 是否到 27 未知，日志第一步会打印。
 - **依据**：**OmniWM 有三条流水线**——`ci.yml`（守门）、`release.yml`（发版）、**`canary.yml`（金丝雀通道）**。
 - **现状**：**全仓没有任何 CI**（没有 `.github/workflows/`，也没有其它 CI 配置）。`build.sh --check` 只在本地跑——**门禁存在，但没人强制它。**
 - **改动**：先只做一条 `ci.yml`：推送到分支/PR 时跑 `./build.sh --check`。**不需要任何秘密（不签名、不发布）**，所以是最便宜的一条。
@@ -705,6 +709,7 @@
 - **风险**：低。**不要一次把三条全铺**——release/canary 涉及签名密钥，那是 B 组（Developer ID）之后的事。
 
 #### R34 · 版本号纪律：一个版本号 = 一份不可变的构建
+- **✅ 2026-10-15**：`scripts/check-release-version.sh`（`CFBundleVersion` 不大于 appcast 已发最高 build 号就失败；当前 16＝16，**正确地失败**）；`--stage` 遇到时只警告、包不能发（与「更新器没接齐」同一种处理）；`DEVELOPMENT.md` 发布第 1 步与发布关第 5 项接上它。规则本身 `DEVELOPMENT.md:303` 早就写了，缺的是强制。
 - **依据**：成熟软件通例，也是 Apple 的设计意图——`CFBundleShortVersionString` 是营销版本，**`CFBundleVersion` 是构建号，每次发布递增**。
 - **现状**：**git 历史里出现「第 11 次同版本号重发」**（`e517820 release: 第11次同版本号重发（分割顯示入库）…`，之前还有第 4、7、8、10 次）。**同一个版本号发过十一次不同的构建。** 后果：appcast 分不出新旧、用户说不清自己在哪个构建、回滚无从判断、支持与诊断全部失去分辨力。
 - **改动**：写死规矩——**每次发布（含重发）递增 `CFBundleVersion`**；营销版本号只在不兼容或功能节点时改。
@@ -726,6 +731,7 @@
 - **风险**：低。**不要让这一项变成「自动收集」。**
 
 #### R37 · 面向用户的隐私声明
+- **✅ 2026-10-15（部分）**：App「隐私」页头、官网 `/privacy/`、两版 README 加同一句「不收集使用数据，也不做任何统计或上报」（代码核得到：无统计 SDK、`SUEnableSystemProfiling=false`、导出只存本地）。**「除了检查更新，都不离开这台 Mac」没有放出**：它挂在 [privacy-page.md](privacy-page.md) 的 P2（`nettop` 实测）后面，而且 `MKLocalSearch`／`MKDirections`（`App/NotchActivityController.swift:656`–`:664`）会连 Apple 的服务器，这句很可能本身不成立。**更正现状**：App 与官网早有逐项隐私页（「隐私」一栏＋`/privacy/`），README 也有隐私一节。
 - **依据**：我们要**辅助功能 ＋ 屏幕录制**，而**「凭什么要录屏」正是[北极星](north-star.md)§二第 4 项列的攻击点**。成熟软件对此的答案是一份**面向用户的**声明，不是内部登记表。
 - **现状**：有 `docs/privacy-page.md`（**内部登记，65 个条目**，给我们自己和律师看的）；**README 里没有给用户的隐私说法**。
 - **改动**：写一份**用户能读懂**的隐私声明：读什么、为什么、存在哪、**哪些绝不出本机**、**「没有任何网络上报」要明写**（已定案）、怎么验证（指向登记表）。与 R29 的降级清单互相引用。**顺带把常驻可见面的三条内容规矩写进用户能看见的地方**（紧凑区不放描述性文字／不放旁人可能看到的敏感信息／不放推广文字与无关动作）——这三条现在只在[生产成熟度](production-maturity.md) 的动作清单里。
@@ -733,6 +739,7 @@
 - **风险**：低。**声明必须与实现一致**——不一致比没有更糟。
 
 #### R38 · 第三方许可声明（**我们夸过别人、自己却没做的那件事**）
+- **✅ 2026-10-15**：构建把三份许可（`Vendor/Sparkle-LICENSE`、`Vendor/mediaremote-adapter/LICENSE`、`docs/third-party-lock-overlay.txt`）合成 `Contents/Resources/THIRD-PARTY-LICENSES.txt`；「关于」面板多一行「第三方许可」打开它；仓库根 `THIRD-PARTY-LICENSES.md` 是索引。**更正**：Sparkle 的许可一直在 `prototype/Vendor/Sparkle-LICENSE`，缺的是没进包。
 - **依据**：我们在[竞品深挖](competitive-deep-dive.md)里把 ChainYourMac 的 MIT 合规写成「**做得又正确又可查的样例**」——随包发行 MIT 二进位 → 用自己凭证重签 → **在产品内给署名与许可**。**而我们自己随包带着 Sparkle（MIT），`Vendor/Sparkle.framework` 里找不到 LICENSE，仓库根也没有 `NOTICE`／`THIRD-PARTY-LICENSES`。**
 - **现状**：`LICENSE` 只有我们自己的（MIT）。MIT 条款要求**版权声明与许可全文随所有副本或实质性部分一起提供**。
 - **改动**：加一份 `THIRD-PARTY-LICENSES`（Sparkle 的版权与许可全文），并让它**随发行包可见**（设置里一个「许可」项，或关于页里一行）。
