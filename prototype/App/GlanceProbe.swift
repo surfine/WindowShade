@@ -22,9 +22,10 @@ final class GlanceProbe {
     print("INFO glance: accessibility=\(AXIsProcessTrusted()) screenRecording=\(hasScreenRecordingPermission())")
     GlanceController.probeOverride = true
     owner.ownsGlobalInput = false
+    // 在虚拟机里经 open 启动时工作目录是只读的 /：用 WINDOWSHADE_PROBE_ROOT 指定一个可写的根目录。
+    let probeRoot = ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_ROOT"] ?? FileManager.default.currentDirectoryPath
     owner.recoveryJournalOverride = DurableShadeJournal(
-      url: URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(
-        ".build/glance-tests/journal.plist"))
+      url: URL(fileURLWithPath: probeRoot).appendingPathComponent(".build/glance-tests/journal.plist"))
     owner.setupStatusItem()
     owner.statusItem.isVisible = false
     owner.appearanceMode = .nativeScreenshot
