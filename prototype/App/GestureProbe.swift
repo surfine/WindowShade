@@ -1222,6 +1222,13 @@ extension GlanceProbe {
     let source = CGEventSource(stateID: .hidSystemState)
 
     // 6. 点 Dock 上最前面那个 App 的图标：它让开（隐藏）；再显示回来。
+    // 这个功能新装默认关，按下时先看设置：探针临时打开、跑完原样恢复（原来没设过就删掉键）。
+    let storedDockClick = UserDefaults.standard.object(forKey: DockClickHide.key)
+    DockClickHide.isEnabled = true
+    defer {
+        if let storedDockClick { UserDefaults.standard.set(storedDockClick, forKey: DockClickHide.key) }
+        else { UserDefaults.standard.removeObject(forKey: DockClickHide.key) }
+    }
     owner.dockClick.start()
     NSRunningApplication(processIdentifier: pid)?.activate()
     try await wait("fixture frontmost again", timeout: 3) { NSWorkspace.shared.frontmostApplication?.processIdentifier == pid }
