@@ -1,4 +1,5 @@
 import Cocoa
+import Synchronization
 
 /// 正在播放的推送流（计划 2-1）：所有播放器，换曲、播放、暂停时系统推过来，不用定时去问。
 ///
@@ -253,18 +254,22 @@ extension NowPlayingStream {
 
 /// 读管道那一侧的状态：切行、解析，只把每块数据里最后一份现状交出去。
 /// readabilityHandler 在系统的后台队列上串行调用；锁只为满足 Sendable，不会争用。
-private final class NowPlayingStreamReader: @unchecked Sendable {
-    private let lock = NSLock()
-    private var buffer = NowPlayingLineBuffer()
-    private var parser = NowPlayingStreamParser()
+private final class NowPlayingStreamReader: Sendable {
+    private struct State {
+        var buffer = NowPlayingLineBuffer()
+        var parser = NowPlayingStreamParser()
+    }
+    // 规格 M3：切行与解析的状态放进一把 Mutex，去掉 @unchecked Sendable。
+    private let state = Mutex(State())
 
     /// 这块数据里有有效行就返回最后一份现状（外层 nil 表示没有可交付的更新）。
     func feed(_ chunk: Data) -> NowPlayingInfo?? {
-        lock.lock(); defer { lock.unlock() }
-        var result: NowPlayingInfo?? = nil
-        for line in buffer.append(chunk) {
-            if case .update(let info) = parser.consume(line) { result = .some(info) }
+        state.withLock { state in
+            var result: NowPlayingInfo?? = nil
+            for line in state.buffer.append(chunk) {
+                if case .update(let info) = state.parser.consume(line) { result = .some(info) }
+            }
+            return result
         }
-        return result
     }
 }

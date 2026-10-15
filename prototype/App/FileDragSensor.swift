@@ -6,6 +6,7 @@
 // 2. FileDragSensor：只在你拖东西的时候看一眼“系统的拖动剪贴板换没换”，不轮询。
 // 3. FileDropIslandView：落点小岛里那三格和两耳的字。
 import AppKit
+import Synchronization
 import Foundation
 
 // MARK: - 拖的是哪一类
@@ -348,27 +349,29 @@ enum FileShelfPromises {
     }()
 
     /// 汇总每个承诺的结果；全部回来后只调一次 finish。
-    final class Collector: @unchecked Sendable {
-        private let lock = NSLock()
-        private var remaining: Int
-        private var urls: [URL] = []
-        private var failed = 0
+    final class Collector: Sendable {
+        private struct Tally {
+            var remaining: Int
+            var urls: [URL] = []
+            var failed = 0
+        }
+        // 规格 M3：三份计数同进同出，放进一把 Mutex，去掉 @unchecked Sendable。
+        private let tally: Mutex<Tally>
         private let finish: @Sendable ([URL], Int) -> Void
 
         init(expected: Int, finish: @escaping @Sendable ([URL], Int) -> Void) {
-            remaining = expected
+            tally = Mutex(Tally(remaining: expected))
             self.finish = finish
             if expected <= 0 { finish([], 0) }
         }
 
         func record(url: URL?) {
-            lock.lock()
-            if let url { urls.append(url) } else { failed += 1 }
-            remaining -= 1
-            let done = remaining == 0
-            let result = (urls, failed)
-            lock.unlock()
-            if done { finish(result.0.sorted { $0.path < $1.path }, result.1) }
+            let (done, urls, failed) = tally.withLock { tally in
+                if let url { tally.urls.append(url) } else { tally.failed += 1 }
+                tally.remaining -= 1
+                return (tally.remaining == 0, tally.urls, tally.failed)
+            }
+            if done { finish(urls.sorted { $0.path < $1.path }, failed) }
         }
     }
 
