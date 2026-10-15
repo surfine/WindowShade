@@ -21,7 +21,8 @@ cat > "$FIX/Contents/Info.plist" <<'PLIST'
 </dict></plist>
 PLIST
 codesign --force -s - "$FIX" >/dev/null 2>&1 || true
-APP=.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
+# PROBE_APP 可指向别的构建做对照（例如装好的正式版），默认是 --stage 的签名构建。
+APP=${PROBE_APP:-.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade}
 # 探针的「verdict」只看有没有抛异常，单项打印的 FAIL 不算数（一项 FAIL 时也会写 PASS suite）。
 # 这里把输出原样打出来，任何一行以 FAIL 开头就判整次失败、非零退出。
 out=$(mktemp -t glance-probe)

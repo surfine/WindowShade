@@ -674,13 +674,24 @@ final class GlanceProbe {
     owner.duoController.stop()
     fixture?.terminate()
     fixture = nil
-    let verdict = error.map { "FAIL \($0)" } ?? "PASS suite\(single ? " (single window)" : "")"
-    print("verdict: \(verdict)")
-    // open --args 启动时 stdout 不可收：判定同时进产品日志，验收从日志收割。
-    wlog("glance-probe verdict: \(verdict)")
-    WindowShadeLogger.shared.flushAndClose()
-    fflush(stdout)
-    exit(error == nil ? 0 : 1)
+    // 规格 R46：这一组里各种面板开过又关了，等退场动画走完，清点我们自己还挡着鼠标的隐形窗口——
+    // 在屏、透明度近 0、又没设成让鼠标穿过的那种，点下去会被它吃掉。
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [self] in
+      let blockers = NSApp.windows.filter { $0.isVisible && $0.alphaValue < 0.01 && !$0.ignoresMouseEvents }
+      if blockers.isEmpty {
+        print("PASS r46: no invisible window of ours is still catching the mouse (\(NSApp.windows.filter(\.isVisible).count) visible)")
+      } else {
+        print("FAIL r46: invisible windows still catching the mouse: "
+              + blockers.map { "\(type(of: $0)) \(Int($0.frame.width))x\(Int($0.frame.height))" }.joined(separator: ", "))
+      }
+      let verdict = error.map { "FAIL \($0)" } ?? "PASS suite\(single ? " (single window)" : "")"
+      print("verdict: \(verdict)")
+      // open --args 启动时 stdout 不可收：判定同时进产品日志，验收从日志收割。
+      wlog("glance-probe verdict: \(verdict)")
+      WindowShadeLogger.shared.flushAndClose()
+      fflush(stdout)
+      exit(error == nil ? 0 : 1)
+    }
   }
 }
 

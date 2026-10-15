@@ -637,7 +637,10 @@ extension GlanceProbe {
     try await wait("recovery fixture is offscreen", timeout: 3) { self.bounds(self.id).map { abs($0.minX - parkedX()) < 4 } == true }
     SlideOverRecovery.recoverAbandoned(directoryOverride: recoveryDir)
     try await wait("abandoned side window recovered", timeout: 3) { self.bounds(self.id).map { self.closeTo($0, docked) } == true }
-    try await wait("recovery record clears only after restoration", timeout: 2) { (try? recovery.load()?.isEmpty) == true }
+    // 清空后记录文件会被删掉（规格 R31）；文件不在、或在但内容为空，都算清掉了。
+    try await wait("recovery record clears only after restoration", timeout: 2) {
+      !FileManager.default.fileExists(atPath: recovery.url.path) || (try? recovery.load()?.isEmpty) == true
+    }
     print("PASS slide-over: abandoned-owner recovery restores only the identified fixture and clears verified record")
     owner.pinnedPreviewController.startPreview(targetWindowID: id, pid: pid, axWindow: element) { _ in }
     try await wait("original user pin", timeout: 4) { pinned() }
