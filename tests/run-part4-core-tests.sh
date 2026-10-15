@@ -6,8 +6,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT="$ROOT/.build/part4-core"
 mkdir -p "$OUT"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/Contracts.swift" \
-  "$ROOT/prototype/Core/CodexWire.swift" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/Core/Contracts.swift" \
+  "$ROOT/prototype/Core/CodexWire.swift" "$ROOT/prototype/Core/WireJSON.swift" \
   "$ROOT/prototype/Core/WS2StrictJSON.swift" \
   "$ROOT/prototype/Core/FocusTimer.swift" \
   "$ROOT/prototype/Core/WS2CompanionFrame.swift" \
