@@ -11,7 +11,8 @@ cd "$(dirname "$0")/.."
 if [ -n "${PROBE_SHOTS:-}" ]; then mkdir -p "$PROBE_SHOTS"; fi
 FIX=.build/glance-tests/GlanceFixture.app
 mkdir -p "$FIX/Contents/MacOS"
-swiftc tests/fixtures/GlanceFixture.swift -o "$FIX/Contents/MacOS/GlanceFixture"
+# 按支持的最低系统编（DEVELOPMENT.md「支持的系统版本」），否则默认按本机系统编，拿进 macOS 15 虚拟机就起不来。
+swiftc -target arm64-apple-macos15.0 tests/fixtures/GlanceFixture.swift -o "$FIX/Contents/MacOS/GlanceFixture"
 cat > "$FIX/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -20,7 +21,7 @@ cat > "$FIX/Contents/Info.plist" <<'PLIST'
 <key>CFBundleName</key><string>GlanceFixture</string>
 <key>CFBundleExecutable</key><string>GlanceFixture</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>LSMinimumSystemVersion</key><string>14.0</string>
+<key>LSMinimumSystemVersion</key><string>15.0</string>
 </dict></plist>
 PLIST
 codesign --force -s - "$FIX" >/dev/null 2>&1 || true
