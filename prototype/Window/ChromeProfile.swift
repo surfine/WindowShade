@@ -1,6 +1,7 @@
 // 窗口外框画像：Adobe 工作区识别、标准标题栏裁切高度、画像缓存与解析。
 
 import Cocoa
+import Synchronization
 
 func adobeChromeProfile(for win: AXUIElement,
                         pid: pid_t,
@@ -212,25 +213,23 @@ final class ChromeProfileCache {
                       size: CGSize, pid: pid_t, title: String)]
     ) -> [CGWindowID: WindowChromeProfile] {
         guard requests.count > 1 else { return [:] }
-        // 各次写入都在下面的 NSLock 里；编译器看不见这把锁。
-        nonisolated(unsafe) var resolved = [WindowChromeProfile?](repeating: nil, count: requests.count)
+        // 规格 M3：各次写入都在 Mutex 里，不再需要 nonisolated(unsafe)。
+        let resolved = Mutex([WindowChromeProfile?](repeating: nil, count: requests.count))
         // Snapshot AppKit geometry before entering the concurrent AX reads.
         let localHeights = requests.map { localWindowChromeHeight(id: $0.id, pid: $0.pid) }
-        let lock = NSLock()
         DispatchQueue.concurrentPerform(iterations: requests.count) { index in
             let request = requests[index]
             let profile = resolveWindowChromeProfileUncached(
                 win: request.win, id: request.id, pos: request.pos,
                 size: request.size, pid: request.pid, title: request.title,
                 localChromeHeight: localHeights[index])
-            lock.lock()
-            resolved[index] = profile
-            lock.unlock()
+            resolved.withLock { $0[index] = profile }
         }
+        let resolvedProfiles = resolved.withLock { $0 }
         let now = CFAbsoluteTimeGetCurrent()
         var warmed: [CGWindowID: WindowChromeProfile] = [:]
         for (index, request) in requests.enumerated() {
-            guard let profile = resolved[index] else { continue }
+            guard let profile = resolvedProfiles[index] else { continue }
             entries[request.id] = Entry(element: request.win, profile: profile,
                                         size: request.size, resolvedAt: now)
             warmed[request.id] = profile

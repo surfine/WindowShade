@@ -9,6 +9,7 @@
 // 把设备叫醒。设备是进程级共享的，所以预热一次，后面的音效就是 0ms 起播。
 
 import AppKit
+import Synchronization
 
 /// 收起 / 展开音效总开关的默认值（Aaron 2026-10-09 裁定：默认关）。
 /// 键里没有值才用默认；人显式开过或关过的值原样保留。
@@ -24,17 +25,15 @@ enum ShadeSoundPreference {
 final class ShadeSoundPlayer: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.windowshade.sounds", qos: .userInitiated)
     private var cache: [String: NSSound] = [:]
-    private let lock = NSLock()
-    private var plays = 0
-    private var lastMilliseconds = 0
+    // 规格 M3：两个计数进 Mutex；类仍靠串行队列保护 cache，@unchecked Sendable 保留。
+    private let counters = Mutex((plays: 0, lastMilliseconds: 0))
 
     /// 播放音量。默认 1；测试把它设成 0，走同一条路径但不出声。
     var volume: Float = 1
 
     /// 诊断 / 测试用：后台真正播了几次、最后一次在队列上花了多久。
     var stats: (plays: Int, lastMilliseconds: Int) {
-        lock.lock(); defer { lock.unlock() }
-        return (plays, lastMilliseconds)
+        counters.withLock { ($0.plays, $0.lastMilliseconds) }
     }
 
     /// 真正要听到的那一次：排队播，不在主线程等设备起来。
@@ -47,7 +46,7 @@ final class ShadeSoundPlayer: @unchecked Sendable {
             sound.play()
             // 设备冷启动的那一下会在这里花掉 250–500ms——记一行，证明它花在后台队列上而不是主线程。
             let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - started) * 1000)
-            lock.lock(); plays += 1; lastMilliseconds = elapsedMilliseconds; lock.unlock()
+            counters.withLock { $0.plays += 1; $0.lastMilliseconds = elapsedMilliseconds }
             if elapsedMilliseconds >= 50 {
                 wlog("perf: sound \(name) play \(elapsedMilliseconds)ms on the sound queue (audio device cold start)")
             }

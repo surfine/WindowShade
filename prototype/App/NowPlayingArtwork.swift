@@ -1,5 +1,6 @@
 import Cocoa
 import ImageIO
+import Synchronization
 
 /// 正在播放的封面（设计稿《正在播放》工作包 NP-1）。
 ///
@@ -191,29 +192,32 @@ final class NowPlayingArtwork {
 }
 
 /// 子进程输出的有上限收集器。readabilityHandler 在系统后台队列串行调用；锁只为满足 Sendable。
-private final class ArtworkOutputCollector: @unchecked Sendable {
-    private let lock = NSLock()
+// 规格 M3：数据与超限标记进 Mutex，去掉 @unchecked Sendable。
+private final class ArtworkOutputCollector: Sendable {
+    private struct State {
+        var data = Data()
+        var overflow = false
+    }
+    private let state = Mutex(State())
     private let limit: Int
-    private var data = Data()
-    private var overflow = false
 
     init(limit: Int) { self.limit = limit }
 
     /// 还能继续收返回 true；超限返回 false（之后 `result()` 为 nil）。
     func append(_ chunk: Data) -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        guard !overflow else { return false }
-        if data.count + chunk.count > limit {
-            overflow = true
-            data = Data()
-            return false
+        state.withLock { s in
+            guard !s.overflow else { return false }
+            if s.data.count + chunk.count > limit {
+                s.overflow = true
+                s.data = Data()
+                return false
+            }
+            s.data.append(chunk)
+            return true
         }
-        data.append(chunk)
-        return true
     }
 
     func result() -> Data? {
-        lock.lock(); defer { lock.unlock() }
-        return overflow ? nil : data
+        state.withLock { $0.overflow ? nil : $0.data }
     }
 }

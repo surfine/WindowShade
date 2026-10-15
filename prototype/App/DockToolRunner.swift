@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Dock 偏好相关的小工具调用（defaults / killall）。带时限：超时先 SIGTERM，
 /// 1 秒内不退就 SIGKILL 并回收，所以退出路径不会被卡死的子进程无限挂住。
@@ -46,11 +47,11 @@ struct DockToolRunner: Sendable {
         return group.wait(timeout: .now() + timeout) == .success
     }
 
-    private final class Buffer: @unchecked Sendable {
-        private var data = Data()
-        private let lock = NSLock()
-        func append(_ chunk: Data) { lock.lock(); data.append(chunk); lock.unlock() }
-        var text: String { lock.lock(); defer { lock.unlock() }; return String(decoding: data, as: UTF8.self) }
+    // 规格 M3：数据进 Mutex，去掉 @unchecked Sendable。
+    private final class Buffer: Sendable {
+        private let data = Mutex(Data())
+        func append(_ chunk: Data) { data.withLock { $0.append(chunk) } }
+        var text: String { data.withLock { String(decoding: $0, as: UTF8.self) } }
     }
 
     @Sendable
