@@ -4,9 +4,23 @@
 
 ## 环境要求
 
-- macOS 14 或更新版本
+- macOS 15 或更新版本（构建目标是 macOS 15，见下面的支持政策）
 - Xcode Command Line Tools
 - 用于签名的 Apple Development 证书（构建脚本强制要求，拒绝 ad-hoc 签名）
+
+## 支持的系统版本
+
+只支持**最近三个大版本**的 macOS（2026-10-16 定，与 Homebrew 的 Apple Silicon 一级支持、Safari Technology Preview 同一口径）：
+现在是 macOS 15、26、27；下一个 macOS 的测试版尽力而为、不承诺。每年 9 月新版 macOS 正式推出时往前滚一版
+（2027 年 9 月起最低是 26）。
+
+- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](docs/releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
+- **从 1.0.17 起最低 macOS 15**：`build.sh` 的构建目标与 `prototype/Info.plist` 的 `LSMinimumSystemVersion` 已经改好；
+  发 1.0.17 时那一项 appcast 的 `minimumSystemVersion` 写 `15.0.0`（旧项保持 `14.0.0`，留在 14 的人停在 1.0.16），
+  README（三份）、官网与宣传片里的「macOS 14 及以上」在 1.0.17 发布时一起改，**不要提前改**（会把 1.0.16 说错）。
+- 不再为低于最低版本的系统写 `#available` 分支；最低版本前滚时，把随之恒真的判断一并删掉。
+- 宣称支持就要验过：所有真机证据都在最新那一版上，发版前在另外两个支持的版本上各跑一轮核心探针
+  （系统版本差异可以用 Apple Silicon 虚拟机，硬件差异不行）。
 
 ## 模块结构
 
