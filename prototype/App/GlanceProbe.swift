@@ -49,7 +49,8 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak"].contains { CommandLine.arguments.contains($0) }
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal"]
+      .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
     if manyWindows { fixtureArguments.append("--strip") }
@@ -103,6 +104,16 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--orphan") {
       try await orphanStrip(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--menubar-owner") {
+      try await menuBarOwner(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--focus-steal") {
+      try await focusSteal(element: element)
       finish(nil)
       return
     }
@@ -616,6 +627,100 @@ final class GlanceProbe {
     let elapsed = CACurrentMediaTime() - started
     guard fixture?.isRunning == true else { throw EffectError.unavailable("fixture quit; not an orphan case") }
     print(String(format: "PASS orphan: strip closed %.1fs after the window was closed elsewhere (app still running)", elapsed))
+  }
+
+  /// 规格 R22：收起、展开时菜单栏归谁。每 10 毫秒记一次「菜单栏属于哪个 App」，
+  /// 不该出现空（菜单栏留空）也不该出现我们自己（菜单栏闪成 WindowShade 的菜单）。
+  private func menuBarOwner(element: AXUIElement) async throws {
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
+    let fixturePID = fixture?.processIdentifier ?? 0
+    if let app = NSRunningApplication(processIdentifier: fixturePID) { app.activate() }
+    try await wait("fixture in front", timeout: 4) {
+      NSWorkspace.shared.menuBarOwningApplication?.processIdentifier == fixturePID
+    }
+    var samples: [(t: Double, pid: pid_t?)] = []
+    let started = CACurrentMediaTime()
+    let sampler = Timer(timeInterval: 0.01, repeats: true) { _ in
+      MainActor.assumeIsolated {
+        samples.append((CACurrentMediaTime() - started, NSWorkspace.shared.menuBarOwningApplication?.processIdentifier))
+      }
+    }
+    RunLoop.main.add(sampler, forMode: .common)
+    defer { sampler.invalidate() }
+    for round in 0..<5 {
+      owner.shade(element, id)
+      try await wait("fold \(round)") {
+        self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
+      _ = owner.unshade(id)
+      try await wait("unfold \(round)", timeout: 8) {
+        self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
+    }
+    sampler.invalidate()
+    let me = ProcessInfo.processInfo.processIdentifier
+    func name(_ pid: pid_t?) -> String {
+      guard let pid else { return "none" }
+      if pid == me { return "WindowShade" }
+      if pid == fixturePID { return "fixture" }
+      return NSRunningApplication(processIdentifier: pid)?.localizedName ?? "pid\(pid)"
+    }
+    // 连续相同的合成一段，打印「谁、从几毫秒到几毫秒」。
+    var runs: [(name: String, from: Double, to: Double)] = []
+    for sample in samples {
+      let n = name(sample.pid)
+      if let last = runs.last, last.name == n { runs[runs.count - 1].to = sample.t } else { runs.append((n, sample.t, sample.t)) }
+    }
+    print("INFO menubar: \(samples.count) samples, \(runs.count) runs: " + runs.map {
+      String(format: "%@ %.0f-%.0fms", $0.name, $0.from * 1000, $0.to * 1000) }.joined(separator: ", "))
+    let ours = samples.filter { $0.pid == me }.count
+    let blank = samples.filter { $0.pid == nil }.count
+    print(ours == 0 ? "PASS menubar: never switched to WindowShade's own menus"
+      : "FAIL menubar: WindowShade owned the menu bar in \(ours) samples (~\(ours * 10) ms total)")
+    print(blank == 0 ? "PASS menubar: never blank" : "FAIL menubar: no owner in \(blank) samples")
+  }
+
+  /// 规格 R41：后台进程弹对话框时，我们不抢焦点、不挪卷帘条。
+  /// 收起临时窗口，再让第二个临时 App 在后台弹一个 3 秒自动消失的提示框（它还会试着把自己调到前面）。
+  private func focusSteal(element: AXUIElement) async throws {
+    owner.shade(element, id)
+    try await wait("strip shown") {
+      self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+        && self.owner.duoController.windowEffects.activeCount == 0
+    }
+    // 别把收起的临时 App 调到前面：把被收起窗口的 App 叫回前台本来就会展开它（那是设计）。
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
+    let stripBefore = owner.shaded[id]?.overlay?.frame
+    var activations: [String] = []
+    let me = ProcessInfo.processInfo.processIdentifier
+    let observer = NSWorkspace.shared.notificationCenter.addObserver(
+      forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { note in
+        let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+        let label = app.map { $0.processIdentifier == me ? "WindowShade" : ($0.localizedName ?? "?") } ?? "?"
+        MainActor.assumeIsolated { activations.append(label) }
+    }
+    defer { NSWorkspace.shared.notificationCenter.removeObserver(observer) }
+    // 第二个临时 App 进程在后台弹一个提示框（还会试着把自己调到前面），3 秒后自己退出。
+    guard let fixturePath = fixture?.executableURL else { throw EffectError.unavailable("no fixture path") }
+    let dialog = Process()
+    dialog.executableURL = fixturePath
+    dialog.arguments = ["--dialog"]
+    try dialog.run()
+    try await Task.sleep(for: .seconds(4.5), clock: .suspending)
+    if dialog.isRunning { dialog.terminate() }
+    let stripAfter = owner.shaded[id]?.overlay?.frame
+    print("INFO focus-steal: activations during dialog \(activations)")
+    print(activations.contains("WindowShade") ? "FAIL focus-steal: WindowShade activated itself while a background dialog came up"
+      : "PASS focus-steal: WindowShade did not take focus")
+    print(stripBefore == stripAfter && stripBefore != nil ? "PASS focus-steal: strip did not move"
+      : "FAIL focus-steal: strip moved \(String(describing: stripBefore)) -> \(String(describing: stripAfter))")
+    _ = owner.unshade(id)
   }
 
   /// 规格 R39：同一进程里连续收起、展开很多次，看内存足迹与窗口数会不会一路往上走。
