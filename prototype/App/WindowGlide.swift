@@ -8,6 +8,7 @@
 
 import Cocoa
 import ApplicationServices
+import Synchronization
 
 final class WindowGlide: @unchecked Sendable {
     struct Report {
@@ -40,8 +41,8 @@ final class WindowGlide: @unchecked Sendable {
     let id: CGWindowID
     let path: FlickGlidePath
     private let element: AXUIElement
-    private let lock = NSLock()
-    private var isCancelled = false
+    // 规格 M3：取消标记进 Mutex；类还存着 AXUIElement，@unchecked Sendable 保留。
+    private let isCancelled = Mutex(false)
     /// 同一扇窗上一次还没停手的滑行：开跑前在自己的队列上等它停下，主线程不用等。
     private let predecessor: WindowGlide?
     private let running = DispatchGroup()
@@ -57,9 +58,7 @@ final class WindowGlide: @unchecked Sendable {
 
     /// 停在当下的位置，不再校准到终点。
     func cancel() {
-        lock.lock()
-        isCancelled = true
-        lock.unlock()
+        isCancelled.withLock { $0 = true }
     }
 
     /// 停下，并等滑行线程真的停手再返回：之后马上要设窗口位置时用，免得滑行线程再补一帧把它挪走。
@@ -71,9 +70,7 @@ final class WindowGlide: @unchecked Sendable {
     }
 
     private var cancelled: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return isCancelled
+        isCancelled.withLock { $0 }
     }
 
     /// completion 在主线程上回调。

@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// 低电量模式与热状态的降级档（R01）。只给「看不出来的参数」让路，交互期间不降。
 ///
@@ -41,8 +42,8 @@ final class PowerPolicy: @unchecked Sendable {
     static let shared = PowerPolicy()
     static let tierDidChange = Notification.Name("WindowShade.PowerPolicy.tierDidChange")
 
-    private let lock = NSLock()
-    private var _tier: PowerTier
+    // 规格 M3：档位进 Mutex；observers 仍是可变属性，@unchecked Sendable 保留。
+    private let currentTier: Mutex<PowerTier>
     private var observers: [NSObjectProtocol] = []
     private let center: NotificationCenter
     private let readState: @Sendable () -> (Bool, ProcessInfo.ThermalState)
@@ -56,7 +57,7 @@ final class PowerPolicy: @unchecked Sendable {
         self.systemCenter = systemCenter
         self.readState = readState
         let (low, thermal) = readState()
-        _tier = PowerPolicyRules.tier(lowPowerMode: low, thermal: thermal)
+        currentTier = Mutex(PowerPolicyRules.tier(lowPowerMode: low, thermal: thermal))
         let names: [Notification.Name] = [.NSProcessInfoPowerStateDidChange, ProcessInfo.thermalStateDidChangeNotification]
         observers = names.map { name in
             systemCenter.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in self?.refresh() }
@@ -67,15 +68,15 @@ final class PowerPolicy: @unchecked Sendable {
 
     deinit { observers.forEach { systemCenter.removeObserver($0) } }
 
-    var tier: PowerTier { lock.withLock { _tier } }
+    var tier: PowerTier { currentTier.withLock { $0 } }
 
     /// 重读系统状态；档变了才发通知。通知回调和测试都走这里。
     func refresh() {
         let (low, thermal) = readState()
         let next = PowerPolicyRules.tier(lowPowerMode: low, thermal: thermal)
-        let changed = lock.withLock { () -> Bool in
-            guard next != _tier else { return false }
-            _tier = next
+        let changed = currentTier.withLock { current -> Bool in
+            guard next != current else { return false }
+            current = next
             return true
         }
         if changed { center.post(name: Self.tierDidChange, object: self, userInfo: ["tier": next.rawValue]) }

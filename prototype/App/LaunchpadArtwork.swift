@@ -1,5 +1,6 @@
 // 启动台的异步图像缓存：一代对应一套尺寸，旧任务只能结算自己，不能覆盖新屏幕的图。
 import Cocoa
+import Synchronization
 
 @MainActor
 final class LaunchpadArtwork {
@@ -79,8 +80,8 @@ final class LaunchpadArtwork {
                                            completion: @escaping ([Drawing]) -> Void) {
         renderQueue.async {
             let workers = min(4, apps.count)
-            let lock = NSLock()
-            var results: [Drawing] = []
+            // 规格 M3：各批结果收进局部 Mutex。
+            let results = Mutex<[Drawing]>([])
             DispatchQueue.concurrentPerform(iterations: workers) { worker in
                 var batch: [Drawing] = []
                 for index in stride(from: worker, to: apps.count, by: workers) {
@@ -91,9 +92,9 @@ final class LaunchpadArtwork {
                                              label: AppCatalog.label(app.name, width: width, scale: scale)))
                     }
                 }
-                lock.lock(); results += batch; lock.unlock()
+                results.withLock { $0 += batch }
             }
-            completion(results)
+            completion(results.withLock { $0 })
         }
     }
 }

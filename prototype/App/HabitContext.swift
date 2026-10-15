@@ -10,6 +10,7 @@
 import Cocoa
 import Carbon
 import ApplicationServices
+import Synchronization
 
 // MARK: - AX 小工具（每个元素都设 0.3 秒上限，不动全局的 2 秒）
 
@@ -1102,8 +1103,8 @@ final class HabitCenter {
     private var observers: [NSObjectProtocol] = []
     private var workspaceObservers: [NSObjectProtocol] = []
     private var defaultsObserver: NSObjectProtocol?
-    nonisolated private static let switchesLock = NSLock()
-    nonisolated(unsafe) private static var lastSwitches: (Bool, Bool)?
+    // 规格 M3：上次开关进 Mutex，去掉 nonisolated(unsafe)。
+    nonisolated private static let lastSwitches = Mutex<(Bool, Bool)?>(nil)
     private var settings = HabitWorker.Settings()
     private var shade = HabitShadeWatch()
     private var shadedAtPress: Set<CGWindowID> = []
@@ -1155,9 +1156,8 @@ final class HabitCenter {
             MainActor.assumeIsolated { HabitCenter.shared.apply() }
         })
         // 刘海、教学的开关：设置一变就对一次（很便宜：只比两个布尔值，变了才回主线程）。
-        Self.switchesLock.lock()
-        Self.lastSwitches = (NotchController.isEnabled, NotchController.teachEnabled)
-        Self.switchesLock.unlock()
+        let switches = (NotchController.isEnabled, NotchController.teachEnabled)
+        Self.lastSwitches.withLock { $0 = switches }
         defaultsObserver = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil,
                                                                   queue: nil) { _ in
             HabitCenter.switchesMayHaveChanged()
@@ -1183,10 +1183,11 @@ final class HabitCenter {
 
     nonisolated private static func switchesMayHaveChanged() {
         let now = (NotchController.isEnabled, NotchController.teachEnabled)
-        switchesLock.lock()
-        let changed = lastSwitches.map { $0 != now } ?? true
-        lastSwitches = now
-        switchesLock.unlock()
+        let changed = lastSwitches.withLock { last -> Bool in
+            let differs = last.map { $0 != now } ?? true
+            last = now
+            return differs
+        }
         guard changed else { return }
         DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.apply() } }
     }

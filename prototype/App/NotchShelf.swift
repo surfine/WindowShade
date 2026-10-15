@@ -9,6 +9,7 @@
 // 在原处看一眼；点一下带着这扇窗切过去。挑哪几扇、写“桌面几”见 Core/ElsewhereWindows.swift。
 
 import Cocoa
+import Synchronization
 
 struct NotchShelfItem: Equatable {
     enum Kind { case minimized, hiddenApp, elsewhere }
@@ -218,11 +219,11 @@ final class NotchShelf {
     }
 
     /// 每次“去”领一张号；还在等的旧一轮看到号不是最新的就停，不去提一扇早就不要了的窗。
-    private final class GoTicket: @unchecked Sendable {
-        private static let lock = NSLock()
-        nonisolated(unsafe) private static var latest = 0
-        static func next() -> Int { lock.lock(); defer { lock.unlock() }; latest += 1; return latest }
-        static func isCurrent(_ ticket: Int) -> Bool { lock.lock(); defer { lock.unlock() }; return ticket == latest }
+    // 规格 M3：号码进 Mutex，去掉 @unchecked Sendable 与 nonisolated(unsafe)。
+    private final class GoTicket: Sendable {
+        private static let latest = Mutex(0)
+        static func next() -> Int { latest.withLock { $0 += 1; return $0 } }
+        static func isCurrent(_ ticket: Int) -> Bool { latest.withLock { ticket == $0 } }
     }
 
     /// forceKeys：激活没把人带过去（切桌面动画还没完时再激活，系统会不理），改走快捷键。
