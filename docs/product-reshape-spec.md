@@ -58,6 +58,8 @@
 
 **第三批（2026-10-15，Aaron 指定「不需要真机或本人验收的优先」）**：R43 ✅、R45 ✅（010775c）；R7 ✅（68825c8）；R47 ✅（5c2a0d1）；E4 ✅（bf73aad）；M2 ✅（c66967d）；M6 核过不改。全量 `--check` EXIT=0。**顺带发现**：`tests/run-duo-tests.sh`、`run-owned-codex-phase1.sh`、`run-remote-host-tests.sh` 在 HEAD 上就编不过（漏编 `WSL10n.swift` 等）。**已修**：补齐依赖（duo 与遥控接收端补 `WSL10n.swift`；owned-codex 补原生模块 `WS2ProcessNative`、`WireJSON.swift`、`WS2StrictJSON.swift`），duo 全 PASS、遥控 55 条断言 0 失败、owned-codex 只验到能编过（执行会真跑 codex、耗额度，留给 Aaron）。**更正**：先前说「这几支 runner 不把编译失败当失败」是我测错了——循环里的 `$?` 取到的是 `$(basename …)` 的结果；三支本来就会非零退出。
 
+**第四批（2026-10-15，Aaron 不在电脑前，授权代做真机验收）**：R31 ✅、H1 ✅、R44 ✅、R27 ✅、E1 ✅、E2 ✅；真机代跑：V2 ✅、V3 ✅、`--wins`／`--mc-keys` 空闲重跑 ✅（`--wins` 的程序坞一步原是探针没打开设置，已修）；**R3 屏幕睡醒** ✅（三档按时出现，tap 全在跑；整机睡眠未测）；**C3 Apple Events** ✅（签名构建里音乐读取经脚本子进程照常；对照组同样能读，所以这条路不依赖那项 entitlement）；**C3 摄像头** not_run（这个签名还没被问过授权，要本人点同意）；R39 第一轮 `leaks`：静置 45 秒 418 处共 20 KB，根都是系统的 XPC 连接循环与 1 个 CFString，不在我们的代码里，长会话观察仍待做。**不能代做**：R2、R29（要改系统安全设置）、V1／V5／V6（要真手）。另修：探针单项 FAIL 被「PASS suite」盖掉（a200cb1）。
+
 **原排的下一版（这一批不清空就不开新项）**：**R3**（唤醒三档）、**R4**（原生标签页——窗口浏览落后 Wins 1 分的直接原因）、**R29**（录屏降级清单）、**V1／V4／V5／V6**（最便宜的四条真机证据）。
 
 ### 0.2.1 实质阶段起步清单（2026-10-15 研究阶段收口，给 13:00 的实质阶段）
@@ -663,6 +665,7 @@
 - **验收**：不崩；拒绝后也能继续（见 R2）。
 
 #### R27 · 按显示器落盘的键过一遍 UUID
+- **✅ 2026-10-15（e884fa2）**：落盘的显示器编号只有两处。「锁定程序坞到某块屏」改成同时存 UUID、先认 UUID 再退回编号（旧设置无缝迁移）；收起的恢复记录不改（只在异常退出后的下次启动用，同一次开机编号不变）。
 - **依据（2026-10-15 自纠）**：**三家已核实**——DockDoor（`CGDisplayCreateUUIDFromDisplayID`，读源码）、OmniWM（更新日志原文「Stable display UUIDs…」）、**Wins（`dockDisplayLock.targetUUID`／`targetUUIDs`，函数级命名空间，从命名推断）**；**Alcove 未核实**（我先前把它算进「四家」，但它的件里只有 Foundation 的 `UUID` 类型，**没有 `CGDisplayCreateUUIDFromDisplayID`**）。
 - **现状**：`App/NotchSpaceGate.swift:174` 已用 UUID；**其余「按屏落盘」的键没有系统过一遍**。
 - **改动**：把按显示器存的设置/状态**逐个核**，键必须是 UUID 而不是 `CGDirectDisplayID`，并留迁移路径。
@@ -703,6 +706,7 @@
 - **风险**：**不要因为别人要求就要求**——我们的实现不同，照抄会把用户吓跑。
 
 #### R31 · 我们自己改过的系统设置：退出/崩溃要恢复，卸载要干净
+- **✅ 2026-10-15（433a3ba）**：全表核过只写一个系统键（程序坞 `mineffect`），写前落盘原值与「原本有没有」，正常退出与异常退出后的下次启动都还原；程序坞其它键只读。顺带修了两处越积越多的残留：侧拉恢复记录清空后不删文件（本机积了 132 个），测试 suite 只清内容不删文件。两版 README 加「怎么彻底删掉」。
 - **依据**：这是用户装之前的常见一问（「它改了我的系统设置吗？关了/删了会恢复吗？」）。**我们确实会写系统设置**：`WindowShade.swift:752` 写 `com.apple.dock mineffect`。
 - **现状**：**这一条我们做得比多数人好**——有持久化会话：`originalDockMinimizeEffect` ＋ 把「原本有没有这个键」与「原值」落盘（`dockMineffectHadOriginalDefaultsKey`／`dockMineffectOriginalDefaultsKey`，`:763`–`:768`），崩溃后也能恢复（`:781` 的 `restoreDockMinimizeEffect`）。
 - **改动**：（a）**把它变成一条通用规矩并核一遍**——凡是写过的系统键，都要「记原值（含「原本不存在」）→ 可恢复 → 崩溃后仍能恢复」，逐键核；（b）**「怎么彻底删掉它」要有答案**（登入项、系统键、我们建的文件与目录各在哪、怎么删）。
@@ -883,6 +887,7 @@
 - **风险**：低。**不要照抄目录树**——要按「什么时候读」分区，否则等于没有索引。
 
 #### R44 · 性能预算进门禁（**从「我们测了」升级成「我们保证」**）
+- **✅ 2026-10-15（62dd419）**：`scripts/check-idle-budget.sh` 接进 `build.sh --stage`：程序坞悬停关着时 AX 查询、在途缩略图、缓存都要为 0 且设置恢复，否则包不能发（原探针只打印、永远退出 0）。真实签名构建上 PASS。
 - **依据**：成熟项目把预算写死并让 CI 拦；**Wins 官网专门自述「<30 MB、CPU ~0.1%」**，说明这是对外的战场。我们**有数、有仪器，但超了不会红**——这就是「测过」与「保证」的差别。
 - **现状**：静置 0.31%／0.45%、轮询间隔的两次定案、三套仪器都在（[性能与能效](perf-energy.md)§一）；**`build.sh` 里没有任何性能阈值**（本机 `grep` 复核）。
 - **改动**：定义**少量、可自动判定的**预算（不要多）：如「静置 CPU ≤ 一个阈值」「空闲时 AX 查询 = 0」「bundle 体积 ≤ 阈值」；把 `--window-browser-idle-probe` 那类探针接进门禁或 CI。
@@ -965,8 +970,8 @@
 | 编号 | 去验什么 | 依据 / 现状 | 通过的样子 |
 | --- | --- | --- | --- |
 | **V1** | **盒盖动画的手感** | scorecard「**手感还要 Aaron 亲手确认**，确认前不到 90」 | 亲手确认过，记一行 |
-| **V2** | **刘海在签名构建上重跑 `notch` / `home`** | scorecard 真机列原话；两套探针都有 | 跑过、结果记录 |
-| **V3** | **`--shelf-glance` 在 build 16 上跑** | scorecard「刘海那几种 `--shelf-glance` 还没在 build 16 上跑」 | 跑过 |
+| **V2** | **✅ 2026-10-15 代跑**：`--notch`、`--home` 在签名构建上全过 ｜ **刘海在签名构建上重跑 `notch` / `home`** | scorecard 真机列原话；两套探针都有 | 跑过、结果记录 |
+| **V3** | **✅ 2026-10-15 代跑**：`--shelf-glance --minimize` 全过（它必须带 `--minimize`）｜ **`--shelf-glance` 在 build 16 上跑** | scorecard「刘海那几种 `--shelf-glance` 还没在 build 16 上跑」 | 跑过 |
 | **V4** | **在装着 Rectangle 的机器上点一次「换过来」** | 现在 90 : Rectangle 90 **同分**，而「没在装着 Rectangle 的 Mac 上点过一次」 | 点过一次，动作对得上；这一行才可能拉开 |
 | **V5** | **真三指 / 真触控板**（甩一下、卷轴跟手） | scorecard「真三指没人上手试过」「真触控板没人试」 | 拿真手指跑 |
 | **V6** | **Magic Mouse / 罗技滚轮** | scorecard「Magic Mouse、罗技滚轮没人上手试过」 | 各跑一遍 |
@@ -1037,8 +1042,8 @@
 
 | 编号 | 动作 | 验收 |
 | --- | --- | --- |
-| **E1** | **把 60 秒静置实测做成例行项**（每版必跑，数字进 [scorecard](scorecard.md)）。口径固定：无操作、无手势、屏幕不锁不灭、同一台机、**跑三次取中位**。**做成脚本，不是手抄的仪式**——照 OmniWM `Scripts/energy-profile.sh` 的形状 | 每次发版有一行数字，可跨版本对比 |
-| **E2** | **查清内存口径再对比**：先量清我们的 physical footprint 与 RSS，分「空载」与「开了窗口浏览＋几个常驻面」两种状态；再去查 Wins 那 30 MB 的确切含义。**现在这一行是 100 MB vs 它自称的 30 MB，口径不一致就不能下结论** | 一张同口径对照表；不引用对不上的数字 |
+| **E1** | **✅ 2026-10-15**：`scripts/energy-profile.sh`；本机（Mac17,4、macOS 27.0.1、build 16 签名构建）静置 CPU **0.10%**（3×60 秒中位数）。原文：**把 60 秒静置实测做成例行项**（每版必跑，数字进 [scorecard](scorecard.md)）。口径固定：无操作、无手势、屏幕不锁不灭、同一台机、**跑三次取中位**。**做成脚本，不是手抄的仪式**——照 OmniWM `Scripts/energy-profile.sh` 的形状 | 每次发版有一行数字，可跨版本对比 |
+| **E2** | **✅ 2026-10-15（口径已清）**：同一次测量里 phys_footprint **54 MB**、RSS 125–153 MB；以前的「约 100 MB」是 RSS 一类的数。Wins 自称的「<30 MB」口径未知，不能直接比。原文：**查清内存口径再对比**：先量清我们的 physical footprint 与 RSS，分「空载」与「开了窗口浏览＋几个常驻面」两种状态；再去查 Wins 那 30 MB 的确切含义。**现在这一行是 100 MB vs 它自称的 30 MB，口径不一致就不能下结论** | 一张同口径对照表；不引用对不上的数字 |
 | **E3** | **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 |
 | **E4** | **✅ 2026-10-15（bf73aad）**：两处都设了 10% 容差；窗口浏览那个只在面板开着时跑，**不是常驻**。原文：**补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
 | **E5** | **AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
@@ -1048,7 +1053,7 @@
 
 | 编号 | 动作 | 验收 |
 | --- | --- | --- |
-| **H1** | **`mirrorRoundCorners` 换掉标量循环**（`Capture/PreviewRenderer.swift:183`，另有 14 处同类循环）。优先走 Metal（`Effects/FoldRenderer.swift` 已有 device／纹理／缓存），退一步用 `vImageVerticalReflect` ＋ `vImagePremultiplyData` | 同一张 4K Retina 图**单次调用耗时前后对比**；**输出逐像素一致**（等价替换，不许改画面） |
+| **H1** | **✅ 2026-10-15（4da4e93）**：没走 Metal／vImage，换成算法上的省：只处理「镜像行不全不透明」的几行；45 张图与旧实现逐字节相同，4K 一张 37.4 → 21.0 ms。原文：**`mirrorRoundCorners` 换掉标量循环**（`Capture/PreviewRenderer.swift:183`，另有 14 处同类循环）。优先走 Metal（`Effects/FoldRenderer.swift` 已有 device／纹理／缓存），退一步用 `vImageVerticalReflect` ＋ `vImagePremultiplyData` | 同一张 4K Retina 图**单次调用耗时前后对比**；**输出逐像素一致**（等价替换，不许改画面） |
 | **H2** | **`pixelAnalysisQueue` 的 QoS 复核**（`WindowShade.swift:170` 现为 `.userInitiated`）。**先量再改**：跑 `--fold-timing` 取基线 → 降 `.utility` → 再跑；关键路径上不能降的那几处单独保留 | 折叠延迟不劣化；非关键路径的 CPU 占比下降 |
 | **H3** | **采集侧色彩与分辨率**（`ScreenCaptureBridge.swift:414-418` 现为 sRGB、未设 `captureResolution`）：按显示器能力选色彩空间（P3 屏用 `displayP3`），显式设 `captureResolution`，macOS 15+ 评估 HDR 档（**连着看功耗**） | 缩略图与系统截图色彩比对；P3 屏上不变淡；采集侧 CPU 不升 |
 | **H4** | **Vision 用到该用的地方**（ANE）：标题栏定位从像素启发式换成 `VNDetectRectangles`／`VNRecognizeText`；缩略图裁剪用 `VNGenerateAttentionBasedSaliency`。**只在「一扇窗一次」的路径上跑，不每帧** | 同一批窗口比较「启发式 vs Vision」的定位；低电量／热压力下能退回启发式 |
@@ -1078,7 +1083,7 @@
 | **M1** | **时间基准**：`ProcessInfo.systemUptime`（**108 处**）与 `CFAbsoluteTimeGetCurrent`（**88 处**）换成 `ContinuousClock`／`Instant`／`Duration`。**一石二鸟：`systemUptime` 是 required-reason API，换掉之后 N5 的申明范围直接变小。**语义要点：两者都单调，**别换成 `Date()`**（会因用户改系统时间而跳）。最密的几处：`App/NotchActivityController.swift` 23、`App/HabitContext.swift` 12、`App/Notch.swift` 7 | 行为不变（探针回归）；`systemUptime` 归零后 N5 去掉 BootTime 一类 |
 | **M2** | **✅ 2026-10-15（c66967d）**：325 处全改，309 处字面量逐对核过纳秒数相等。**更正写法**：必须写 `Task.sleep(for: …, clock: .suspending)`——旧写法按开机时间计时（睡着不走），默认的 `ContinuousClock` 睡着也走，直接换会让跨过睡眠的等待在醒来那刻立刻结束。原文：**`Task.sleep(nanoseconds:)` → `Task.sleep(for: .milliseconds(…))`**（**325 处**）。现写法要人肉数零（**数错一个零就是十倍差**）且负数直接崩；`Duration` 类型安全。**按文件分批，每批跑一次 `--check`** | `nanoseconds:` 归零；行为不变 |
 | **M3** | **同步原语小步迁移**（`NSLock` 66 ＋ `os_unfair_lock` 31）。**新代码一律 `Mutex`／`@MainActor`，不新增旧锁**；旧代码**从「一个 `Mutex` 包一个值、无嵌套加锁」的文件开始**，有嵌套或跨对象不变量的先不动。`DispatchSemaphore`（14 处）**不是换 `Mutex`，是换 `withCheckedContinuation`／`AsyncStream`** | 每个迁移的文件能去掉 `@unchecked Sendable` 就去掉（去不掉要写明理由）；探针全跑 |
-| **M4** | **评估 `-default-isolation MainActor`**（SE-0466）：**先在一个分支上打开，把编译错误数出来**，再判断值不值得。这条的产出是**一个数字和一个判断**，不是一次重构 | 一份结论：错误数、集中在哪些文件、是否值得走 |
+| **M4** | **✅ 2026-10-15 评估完：现在不走**。用与门禁完全相同的参数（`-O -whole-module-optimization -strict-concurrency=complete -warnings-as-errors`）只加 `-default-isolation MainActor` 编一次：**330 个错误**，App/ 218、根目录 38、Recovery 23、WindowBrowser 21；最多的文件是 NotchShelf 28、WindowShade 22、Rescue 16。八成是「在非隔离上下文里调用主线程的函数」——正是刻意放到后台队列的 AX／程序坞工具／像素分析路径，要把约 150 个辅助函数逐个标 `nonisolated`，等于动一遍线程模型，而现有代码已在最严格检查下零警告。（`-typecheck` 快查模式下基线就有 127 条警告，与门禁不等价，那组数不能用。）原文：**评估 `-default-isolation MainActor`**（SE-0466）：**先在一个分支上打开，把编译错误数出来**，再判断值不值得。这条的产出是**一个数字和一个判断**，不是一次重构 | 一份结论：错误数、集中在哪些文件、是否值得走 |
 | **M5** | **`Span`／`RawSpan` 用在像素路径**（`Capture/PreviewRenderer.swift:104/187/193`）。**与 H1 联动：H1 先定走 Metal 还是 vImage，再决定 M5 要不要做**（走 vImage 就不需要） | 与 H1 一起验收 |
 | **M6** | **2026-10-15 核过，不改**：`DateFormatter`（10 处）与 `NSRegularExpression` 都没被 Apple 标为过时，日志时间戳是写死格式加 `en_US_POSIX`，换 `FormatStyle` 只有风险没有收益——按本节「不该做的」第一条结案。原文：**`NSRegularExpression`（1 处，`Core/CalendarActivity.swift:186`；Swift `Regex` 0 处）与 `FormatStyle`（`DateFormatter` 10 处）**。**注意**：`Support/Diagnostics.swift` 那个日志时间戳显式钉了 `en_US_POSIX`，换 `FormatStyle` 时要保留这个 locale 语义（否则某些区域会变） | 行为不变，尤其日志时间戳格式在非中文区域也不变 |
 | **M7** | **新增纯逻辑测试要follow 现有模式，不引入第二个框架**（**2026-10-15 自纠**：此前写成「`tests/` 为空、只靠探针」，**是错的**）。事实：`tests/` 有 **244 个 Swift 测试档 ＋ 218 支 `run-*.sh` runner**，用的是**自制的 `@main struct XxxTests` ＋ `expect()` 印 `ok`/`FAIL`** 模式（`import XCTest` 与 `import Testing` **各 0**），而且 **`build.sh` 已经把其中几支纳入门禁**（`:125` 的本地化检查、`:184` 的隐私同步、`:187` 的文案 lint）。→ 纯逻辑测试（如 R4 的标签页合并判据）**按这个既有模式写**，不要为了「现代化」引入 Swift Testing | 新测试能进 `build.sh --check` 或对应的 `run-*.sh` |
