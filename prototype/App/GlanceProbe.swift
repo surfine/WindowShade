@@ -49,7 +49,7 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal"]
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
@@ -59,7 +59,9 @@ final class GlanceProbe {
       fixtureArguments.append(flag)
     }
     // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
-    if CommandLine.arguments.contains("--soak") { fixtureArguments += ["--lifetime", "1800"] }
+    if ["--soak", "--idle-first-op", "--browser-identity"].contains(where: { CommandLine.arguments.contains($0) }) {
+      fixtureArguments += ["--lifetime", "1800"]
+    }
     process.arguments = fixtureArguments
     do {
       try process.run()
@@ -109,6 +111,16 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--menubar-owner") {
       try await menuBarOwner(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--switch-cpu") {
+      try await switchCPU()
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--idle-first-op") {
+      try await idleFirstOperation(element: element)
       finish(nil)
       return
     }
@@ -230,6 +242,13 @@ final class GlanceProbe {
     if CommandLine.arguments.contains("--thumbnail") {
       adoptFixture(pid: process.processIdentifier)
       try await exerciseThumbnail(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--browser-identity") {
+      adoptFixture(pid: process.processIdentifier)
+      guard let path = process.executableURL else { throw EffectError.unavailable("no fixture path") }
+      try await exerciseBrowserIdentity(pid: process.processIdentifier, fixturePath: path)
       finish(nil)
       return
     }
@@ -684,6 +703,95 @@ final class GlanceProbe {
     print(ours == 0 ? "PASS menubar: never switched to WindowShade's own menus"
       : "FAIL menubar: WindowShade owned the menu bar in \(ours) samples (~\(ours * 10) ms total)")
     print(blank == 0 ? "PASS menubar: never blank" : "FAIL menubar: no owner in \(blank) samples")
+  }
+
+  /// 本进程到目前为止用掉的 CPU 时间（用户态＋内核态，毫秒）。
+  private func cpuMilliseconds() -> Double {
+    var usage = rusage()
+    getrusage(RUSAGE_SELF, &usage)
+    func ms(_ t: timeval) -> Double { Double(t.tv_sec) * 1000 + Double(t.tv_usec) / 1000 }
+    return ms(usage.ru_utime) + ms(usage.ru_stime)
+  }
+
+  /// 规格 E6（Ice 的一条）：在两个 App 之间来回切前台时，我们自己用掉多少 CPU。
+  /// 先静置同样长的时间量一次作对照，再来回切 20 次（每次隔 0.4 秒）。
+  private func switchCPU() async throws {
+    guard let fixturePath = fixture?.executableURL else { throw EffectError.unavailable("no fixture path") }
+    let second = Process()
+    second.executableURL = fixturePath
+    second.arguments = ["--toolbar"]
+    try second.run()
+    defer { if second.isRunning { second.terminate() } }
+    try await Task.sleep(for: .seconds(1.5), clock: .suspending)
+    guard let a = fixture.flatMap({ NSRunningApplication(processIdentifier: $0.processIdentifier) }),
+          let b = NSRunningApplication(processIdentifier: second.processIdentifier) else {
+      throw EffectError.unavailable("fixture apps not running")
+    }
+    let rounds = 20, gap = 0.4
+    var cpu = cpuMilliseconds()
+    try await Task.sleep(for: .seconds(Double(rounds) * gap), clock: .suspending)
+    let idle = cpuMilliseconds() - cpu
+    var switched = 0
+    cpu = cpuMilliseconds()
+    for round in 0..<rounds {
+      let target = round.isMultiple(of: 2) ? b : a
+      target.activate()
+      try await Task.sleep(for: .seconds(gap), clock: .suspending)
+      if NSWorkspace.shared.frontmostApplication?.processIdentifier == target.processIdentifier { switched += 1 }
+    }
+    let busy = cpuMilliseconds() - cpu
+    let perSwitch = (busy - idle) / Double(max(switched, 1))
+    print(String(format: "INFO switch-cpu: idle %.1f ms CPU over %.0f s; %d/%d switches took %.1f ms CPU (%.2f ms per switch above idle)",
+      idle, Double(rounds) * gap, switched, rounds, busy, perSwitch))
+    guard switched >= rounds / 2 else { throw EffectError.unavailable("only \(switched) switches took effect") }
+    // 门槛：每次切换多花不到 10 ms CPU（切换间隔 400 ms，相当于 2.5% 以内）。
+    print(perSwitch < 10 ? String(format: "PASS switch-cpu: %.2f ms per switch", perSwitch)
+      : String(format: "FAIL switch-cpu: %.2f ms per switch", perSwitch))
+  }
+
+  /// 规格 E6（Ice 的另一条）：长时间什么都不做之后，第一次收起会不会明显慢。
+  /// 先暖机收放一次，静置 --idle-seconds（默认 300）秒，量第一次收起，再量 3 次暖的作对照。
+  private func idleFirstOperation(element: AXUIElement) async throws {
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
+    let idleSeconds = CommandLine.arguments.firstIndex(of: "--idle-seconds")
+      .flatMap { CommandLine.arguments.indices.contains($0 + 1) ? Double(CommandLine.arguments[$0 + 1]) : nil } ?? 300
+    func fold() async throws -> (changed: Double, shown: Double) {
+      let started = CACurrentMediaTime()
+      owner.shade(element, id)
+      try await wait("fold started") { self.owner.shaded[self.id] != nil }
+      let changed = (CACurrentMediaTime() - started) * 1000
+      try await wait("strip shown") {
+        self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      let shown = (CACurrentMediaTime() - started) * 1000
+      _ = owner.unshade(id)
+      try await wait("restored", timeout: 8) {
+        self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      return (changed, shown)
+    }
+    _ = try await fold()
+    print(String(format: "INFO idle-first-op: idling %.0f s", idleSeconds))
+    fflush(stdout)
+    try await Task.sleep(for: .seconds(idleSeconds), clock: .suspending)
+    let first = try await fold()
+    var warm: [Double] = []
+    for _ in 0..<3 {
+      try await Task.sleep(for: .seconds(1), clock: .suspending)
+      warm.append(try await fold().shown)
+    }
+    let warmMedian = warm.sorted()[1]
+    print(String(format: "INFO idle-first-op: after idle first change %.0f ms, strip %.0f ms; warm strip median %.0f ms",
+      first.changed, first.shown, warmMedian))
+    // 门槛：空闲后第一次比暖的慢不超过 2 倍，且多出来的不到 300 ms（人能察觉的量级）。
+    let slower = first.shown - warmMedian
+    print(first.shown <= warmMedian * 2 || slower < 300
+      ? String(format: "PASS idle-first-op: first after idle +%.0f ms vs warm", slower)
+      : String(format: "FAIL idle-first-op: first after idle +%.0f ms vs warm", slower))
   }
 
   /// 规格 R41：后台进程弹对话框时，我们不抢焦点、不挪卷帘条。

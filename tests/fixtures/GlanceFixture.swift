@@ -13,6 +13,7 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   var tick = 0
   var habitsWindow: NSWindow?
   var saves = 0
+  var orderOutSource: DispatchSourceSignal?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     if CommandLine.arguments.contains("--toolbar") {
@@ -27,7 +28,7 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       window.toolbarStyle = CommandLine.arguments.contains("--expanded") ? .expanded : .unified
       window.makeKeyAndOrderFront(nil)
       NSApp.activate()
-      DispatchQueue.main.asyncAfter(deadline: .now() + 20) { NSApp.terminate(nil) }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 30) { NSApp.terminate(nil) }
       return
     }
     if CommandLine.arguments.contains("--dialog") {
@@ -147,6 +148,12 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       .flatMap { CommandLine.arguments.indices.contains($0 + 1) ? Double(CommandLine.arguments[$0 + 1]) : nil }
     let lifetime: Double = requested ?? (CommandLine.arguments.contains("--fullscreen") ? 180 : 90)
     DispatchQueue.main.asyncAfter(deadline: .now() + lifetime) { NSApp.terminate(nil) }
+    // 规格 R20 探针：收到 SIGUSR1 就把最后开的那扇窗 orderOut（像日历那样「关窗」却不销毁窗口）。
+    signal(SIGUSR1, SIG_IGN)
+    let orderOut = DispatchSource.makeSignalSource(signal: SIGUSR1, queue: .main)
+    orderOut.setEventHandler { [weak self] in self?.windows.last?.orderOut(nil) }
+    orderOut.resume()
+    orderOutSource = orderOut
   }
 
   /// 菜单栏：App 菜单（空）和“文件 › 新建窗口 ⌘N”。

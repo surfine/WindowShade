@@ -159,6 +159,38 @@ if CommandLine.arguments.contains("--launchpad-census") {
     for app in AppCatalog.scan() { print("launchpad: \(app.path)") }
     exit(0)
 }
+if CommandLine.arguments.contains("--window-census") {
+    // 规格 R20：只读普查本机每个 App 的辅助功能窗口，看窗口浏览的过滤收进了哪些「不像真窗口」的东西。
+    // 每扇窗一行：App、角色／子角色、有没有标题（不打标题本身）、层、尺寸、关闭与全屏按钮、过滤结论。
+    for app in NSWorkspace.shared.runningApplications where app.processIdentifier != getpid() {
+        let pid = app.processIdentifier
+        let element = AXUIElementCreateApplication(pid)
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &ref) == .success,
+              let windows = ref as? [AXUIElement], !windows.isEmpty else { continue }
+        let bundle = app.bundleIdentifier ?? "-"
+        for window in windows {
+            let role = axRole(window)
+            let id = windowID(of: window) ?? 0
+            let layer = id == 0 ? -1 : (cgWindowLayer(id) ?? -1)
+            let size = axSize(window)
+            let included = isWindowLikeRole(role, pid: pid) && id != 0 && WindowBrowserDiscoveryFilter.shouldInclude(
+                WindowBrowserDiscoveryFilter.Input(
+                    pid: pid, ownPID: getpid(), bundleIdentifier: bundle, excludedBundleIDs: [],
+                    overlayWindowIDs: [], windowID: id, layer: layer, role: role,
+                    isDesktopWidget: isDesktopWidgetWindow(id: id), allowsLayoutAreaRole: isAdobeApp(pid: pid)))
+            print(String(format: "census: %@ policy=%ld role=%@ subrole=%@ titled=%@ layer=%d size=%@ close=%@ fullscreen=%@ minimized=%@ included=%@",
+                bundle, app.activationPolicy.rawValue, role ?? "-", axSubrole(window) ?? "-",
+                axTitle(window).isEmpty ? "no" : "yes", layer,
+                size.map { String(format: "%.0fx%.0f", $0.width, $0.height) } ?? "-",
+                axButtonFrame(window, kAXCloseButtonAttribute as String) != nil ? "yes" : "no",
+                axButtonFrame(window, kAXFullScreenButtonAttribute as String) != nil ? "yes" : "no",
+                axBoolAttribute(window, kAXMinimizedAttribute as String) ? "yes" : "no",
+                included ? "yes" : "no"))
+        }
+    }
+    exit(0)
+}
 if let index = CommandLine.arguments.firstIndex(of: "--chrome-report") {
     // 规格 R11：只读量一量某个 App 每扇窗的工具栏底边与收起时保留的高度（不收起、不写任何东西、不打标题）。
     // 用法：--chrome-report <bundle id>，例如 com.apple.finder。
