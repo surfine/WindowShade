@@ -2179,6 +2179,7 @@ final class PinchEventTap: @unchecked Sendable {
         defer { lock.unlock() }
         if let port {
             CGEvent.tapEnable(tap: port, enable: true)
+            EventTapHealth.shared.register(port, label: "trackpad-pinch")
             return true
         }
         guard AXIsProcessTrusted() else { return false }
@@ -2189,6 +2190,7 @@ final class PinchEventTap: @unchecked Sendable {
                                            userInfo: Unmanaged.passUnretained(self).toOpaque())
         else { return false }
         self.port = port
+        EventTapHealth.shared.register(port, label: "trackpad-pinch")
         let thread = Thread {
             let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port, 0)
             CFRunLoopAddSource(CFRunLoopGetCurrent(), source, .commonModes)
@@ -2204,10 +2206,21 @@ final class PinchEventTap: @unchecked Sendable {
     func setEnabled(_ enabled: Bool) {
         lock.lock()
         defer { lock.unlock() }
-        if let port { CGEvent.tapEnable(tap: port, enable: enabled) }
+        guard let port else { return }
+        CGEvent.tapEnable(tap: port, enable: enabled)
+        if enabled {
+            EventTapHealth.shared.register(port, label: "trackpad-pinch")
+        } else {
+            EventTapHealth.shared.unregister(port)
+        }
     }
 
-    fileprivate func reenable() { setEnabled(true) }
+    /// 被系统停掉后重开：主人的意图没变，不动登记表。
+    fileprivate func reenable() {
+        lock.lock()
+        defer { lock.unlock() }
+        if let port { CGEvent.tapEnable(tap: port, enable: true) }
+    }
 
     fileprivate func deliverDoubleTap(_ location: CGPoint) {
         DispatchQueue.main.async { [weak self] in

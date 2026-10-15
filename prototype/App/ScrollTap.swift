@@ -109,6 +109,7 @@ final class ScrollTap: @unchecked Sendable {
         self.port = created
         self.source = source
         self.installedMask = mask
+        EventTapHealth.shared.register(created, label: "scroll")
         let thread = Thread { [weak self] in
             guard let self else { return }
             let runLoop = CFRunLoopGetCurrent()
@@ -143,6 +144,7 @@ final class ScrollTap: @unchecked Sendable {
             return current
         }
         guard let created else { return }
+        EventTapHealth.shared.unregister(created)
         CGEvent.tapEnable(tap: created, enable: false)
         let runLoop = withLock { () -> CFRunLoop? in
             let current = threadRunLoop

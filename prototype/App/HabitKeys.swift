@@ -137,6 +137,7 @@ final class HabitKeys: @unchecked Sendable {
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port, 0)
         self.port = port
         self.source = source
+        EventTapHealth.shared.register(port, label: "habit-keys")
         let thread = Thread { [weak self] in
             guard let self, let source = self.source else { return }
             let runLoop = CFRunLoopGetCurrent()
@@ -159,7 +160,10 @@ final class HabitKeys: @unchecked Sendable {
 
     func uninstall() {
         guard installed else { return }
-        if let port { CGEvent.tapEnable(tap: port, enable: false) }
+        if let port {
+            EventTapHealth.shared.unregister(port)
+            CGEvent.tapEnable(tap: port, enable: false)
+        }
         if let threadRunLoop { CFRunLoopStop(threadRunLoop) }
         if let port { CFMachPortInvalidate(port) }
         port = nil

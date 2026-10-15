@@ -55,6 +55,7 @@ final class MiddleTitlebarTap: @unchecked Sendable {
         let loopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, created, 0)
         port = created
         source = loopSource
+        EventTapHealth.shared.register(created, label: "middle-titlebar")
         let worker = Thread { [weak self] in
             guard let self else { return }
             let runLoop = CFRunLoopGetCurrent()
@@ -84,7 +85,10 @@ final class MiddleTitlebarTap: @unchecked Sendable {
             source = nil
             return current
         }
-        if let created { CGEvent.tapEnable(tap: created, enable: false) }
+        if let created {
+            EventTapHealth.shared.unregister(created)
+            CGEvent.tapEnable(tap: created, enable: false)
+        }
         if let loop = withLock({ threadRunLoop }) {
             CFRunLoopStop(loop)
         }
