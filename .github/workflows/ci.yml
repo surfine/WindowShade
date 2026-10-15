@@ -1,0 +1,34 @@
+# Gate (spec R33): every push and pull request runs the same check as local development.
+# No secrets, no signing, no release. Sparkle.framework is tracked under prototype/Vendor,
+# so checkout alone brings the dependency; the guard step fails loudly if it ever goes missing.
+name: ci
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: |
+          newest=$(ls -d /Applications/Xcode_*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$newest" ]; then sudo xcode-select -s "$newest/Contents/Developer"; fi
+          xcodebuild -version
+          swift --version
+          # Local development uses Xcode 27 / Swift 6.4. If the runner is older, the log above says so.
+
+      - name: Sparkle is present
+        run: test -f prototype/Vendor/Sparkle.framework/Versions/B/Sparkle
+
+      - name: build.sh --check
+        working-directory: prototype
+        run: ./build.sh --check
