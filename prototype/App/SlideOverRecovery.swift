@@ -33,7 +33,13 @@ enum SlideOverRecovery {
     static func clear(id: CGWindowID) { clear(id: Int(id), from: journal) }
     private static func clear(id: Int, from stored: DurableShadeJournal) {
         guard let entries = try? stored.load() else { return }
-        try? stored.save(entries.filter { ($0["id"] as? Int) != id })
+        let remaining = entries.filter { ($0["id"] as? Int) != id }
+        // 记录清空就连文件一起删（规格 R31）：每个进程一个文件，以前清空后留下 42 字节的空记录，越积越多。
+        if remaining.isEmpty {
+            try? FileManager.default.removeItem(at: stored.url)
+        } else {
+            try? stored.save(remaining)
+        }
     }
     static func clamped(_ frame: CGRect) -> CGRect {
         let screen = NSScreen.screens.first { frame.intersects($0.visibleFrame) } ?? NSScreen.main
@@ -48,6 +54,11 @@ enum SlideOverRecovery {
         for url in urls where url.lastPathComponent.hasPrefix("SlideOver-") && url.pathExtension == "plist" {
             let stored = DurableShadeJournal(url: url)
             guard let entries = try? stored.load() else { continue }
+            // 别的进程留下的空记录（以前清空后不删文件）：没东西可恢复，直接删掉。
+            if entries.isEmpty, url.lastPathComponent != "SlideOver-\(getpid()).plist" {
+                try? FileManager.default.removeItem(at: url)
+                continue
+            }
             for entry in entries {
             guard
                   let owner = entry["owner"] as? Int, let ownerTime = entry["ownerLaunched"] as? String,

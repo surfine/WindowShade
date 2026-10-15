@@ -91,6 +91,19 @@ WindowShade 要两项权限。**辅助功能**：找到、移动、恢复窗口�
 
 普通窗口都能收起。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。碰到问题欢迎[反馈](https://github.com/surfine/WindowShade/issues)，写上 macOS 版本、应用名和操作步骤。
 
+### 怎么彻底删掉
+
+WindowShade 只改过一项系统设置：程序坞的「最小化效果」。用到时改成「缩放」，改之前记下原值；正常退出时还原，意外退出后下次启动先还原。删掉之前先在菜单里退出 WindowShade，这一项就已经回到原样。其余要删的：
+
+1. 把 `WindowShade.app` 拖到废纸篓；如果开过「登录时自动启动」，到“系统设置 → 通用 → 登录项”里把它移掉。
+2. 删掉它在你账户里建的文件：
+   - `~/Library/Application Support/WindowShade/`（恢复记录、文件架、设备密钥）
+   - `~/Library/Logs/WindowShade/`（运行记录）
+   - `~/Library/Caches/com.windowshade.prototype/`、`~/Library/HTTPStorages/com.windowshade.prototype/`
+   - `~/Library/Preferences/com.windowshade.prototype.plist`、`~/Library/Preferences/com.windowshade.prototype.update-guard.plist`
+3. 如果用过刷脸解锁或 iPhone 遥控器，在“钥匙串访问”里搜 `WindowShade`，删掉 `WindowShade.FaceScan.templates` 和 `WindowShade.Remote.peers` 两类条目。
+4. 想连授权一起清掉：“系统设置 → 隐私与安全性”的“辅助功能”和“屏幕录制”里把 WindowShade 移掉。
+
 ## 开发中
 
 当前下载版是 **1.0.16**——上面那段刘海功能都在里面，另有三步欢迎窗口、“WindowShade 读到的”隐私页和界面语言开关。新安装时，刘海及其实时活动、文件架、配件电量提醒、音量亮度提示和“让开这个 App”默认关闭，需要时在设置里打开。[发布说明](docs/releases/v1.0.16.md) · [默认值](docs/releases/v1.0.16-defaults.md) · [验收报告](docs/releases/v1.0.16-acceptance/gate-0B-verification.md)
