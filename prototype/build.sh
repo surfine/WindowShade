@@ -121,6 +121,8 @@ done
 cp Effects/Duo.metal "$WORK/Duo.metal"
 # 刘海文案译文（R19）：先查键齐全、中文源句和代码一致（缺键就在这里失败），再用 xcstringstool 编成
 # en.lproj / zh-Hans.lproj。--check、--stage 和普通构建都编；只有后两者把结果放进包。
+# 隐私清单（规格 N5）与主程序 entitlements（规格 C3）：格式坏了就在这里失败，三种模式都查。
+plutil -lint PrivacyInfo.xcprivacy WindowShade.entitlements >/dev/null || exit 1
 echo "==> 本地化检查与编译"
 python3 ../tests/check-localizable.py --repo .. || exit 1
 xcrun xcstringstool compile Resources/Localizable.xcstrings -o "$WORK/Localization"
@@ -250,6 +252,7 @@ rm -rf "$APP/Contents/Resources/Localization"
 mkdir -p "$APP/Contents/Resources/Localization"
 cp -R "$WORK/Localization/." "$APP/Contents/Resources/Localization/"
 cp ../docs/third-party-lock-overlay.txt "$APP/Contents/Resources/LockOverlay-LICENSE.txt"
+cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
 rm -rf "$APP/Contents/Resources/ThirdParty"
 # The released bundle historically carries the Swift concurrency runtime in
 # Contents/Frameworks. Preserve that runtime in isolated stage builds too;
@@ -363,14 +366,15 @@ fi
 echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
 # 从里往外逐个签，全部同一个身份，不用 --deep：Sparkle 的安装器、Updater.app、看护都要和 App 同一个 Team，
 # 否则安装器和 App 之间的连接校验不过，新版替换自己也会被“App 管理”拦下。
-# 主程序照旧：不加新标志（不加 hardened runtime），标识符不变，DR 不变。
+# 主程序也开 hardened runtime（规格 C3：公证的前提，且让验过的包就是要发的包），例外只开 WindowShade.entitlements
+# 里那四项。标识符与证书不变，所以 DR 不变，已有的辅助功能/屏幕录制授权不受影响。
 codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW/Versions/B/Autoupdate"
 codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW/Versions/B/Updater.app"
 codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW"
 codesign --force -s "$IDENTITY" -o runtime -i com.windowshade.prototype.update-guard "$GUARD_APP"
 codesign --force -s "$IDENTITY" -o runtime -i com.windowshade.prototype.hook "$HOOK_BIN"
 if [ -d "$ADAPTER_FW" ]; then codesign --force -s "$IDENTITY" -o runtime "$ADAPTER_FW"; fi
-codesign --force -s "$IDENTITY" "$APP"
+codesign --force -s "$IDENTITY" -o runtime --entitlements WindowShade.entitlements "$APP"
 codesign --verify --deep --strict "$APP"
 
 if [ "$stage_only" = "1" ]; then
