@@ -60,6 +60,18 @@
 
 **第四批（2026-10-15，Aaron 不在电脑前，授权代做真机验收）**：R31 ✅、H1 ✅、R44 ✅、R27 ✅、E1 ✅、E2 ✅；真机代跑：V2 ✅、V3 ✅、`--wins`／`--mc-keys` 空闲重跑 ✅（`--wins` 的程序坞一步原是探针没打开设置，已修）；**R3 屏幕睡醒** ✅（三档按时出现，tap 全在跑；整机睡眠未测）；**C3 Apple Events** ✅（签名构建里音乐读取经脚本子进程照常；对照组同样能读，所以这条路不依赖那项 entitlement）；**C3 摄像头** not_run（这个签名还没被问过授权，要本人点同意）；R39 第一轮 `leaks`：静置 45 秒 418 处共 20 KB，根都是系统的 XPC 连接循环与 1 个 CFString，不在我们的代码里，长会话观察仍待做。**不能代做**：R2、R29（要改系统安全设置）、V1／V5／V6（要真手）。另修：探针单项 FAIL 被「PASS suite」盖掉（a200cb1）。
 
+**第五、六批（2026-10-15，Aaron 不在，锁屏下继续）**：R15 核过不做、R14 核过不改、R46（静置）、R40、N2、M7；R28（macOS 27 隐私权限栏改名）、R42、H5、E5；R24 已量待文案决定。
+
+**到这里停下：剩下的都要 Aaron（2026-10-15 盘点）**
+- **要解锁屏幕跑界面探针**（R3 测完后屏幕锁着）：H2（`--fold-timing` 前后对比）、N3（关键路径签名区间）、R46（面板用过再关之后）、R39 长会话、V8、E3、E6，以及 R6／R9／R10／R11／R18／R20／R21／R22／R23／R32／R41／R48／R49 的复现与验收。
+- **要改系统设置，我不能代做**：R2、R29（收回权限）、R19／V10（台前调度）、R30（桌面排列开关）、V11（显示缩放）。
+- **要真手**：V1、V5、V6、R25；整机睡眠（R3 只测了屏幕睡醒）。
+- **要本人点同意**：C3 摄像头（这个签名还没被问过授权）。
+- **要下载、需同意**：R13（PLCrashReporter）、V7（iPadOS 模拟器约 8 GB）、V4（装 Rectangle）。
+- **要设计或文案决定**：R24 截断文案、R37 隐私页版面、R8／R12／R16／R17／R35／R36（都要新增界面表面，先过设计准入）、R5（设置导出导入的入口）。
+- **要准入决定**：O 系列 15 条、A 系列 14 条。
+- **大块，宜单独开**：M1（时间基准 196 处，语义要按 suspending 保持）、M3（锁迁移；部署目标 14 用不了 Mutex）、N1（App Intents 需要 Xcode 的元数据步骤）、H4、R5。
+
 **原排的下一版（这一批不清空就不开新项）**：**R3**（唤醒三档）、**R4**（原生标签页——窗口浏览落后 Wins 1 分的直接原因）、**R29**（录屏降级清单）、**V1／V4／V5／V6**（最便宜的四条真机证据）。
 
 ### 0.2.1 实质阶段起步清单（2026-10-15 研究阶段收口，给 13:00 的实质阶段）
@@ -649,6 +661,10 @@
 - **验收**：两条各验一次。
 
 #### R24 · 多语言下的布局裁切
+- **2026-10-15 已量，待文案决定**：用 `--settings-shots` 加启动参数 `-WindowShade.InterfaceLanguage en|zh|zhHant` 渲染三种语言各 32 张（只覆盖这一个进程，不写偏好），锁屏下也能跑。设置页的副标题是单行、超宽就截断：
+  - **英文约 10 处**：隐私页页头「Everything Windo」、快捷键页页头「Works in any app. Record… then…」、收起页「Only when something changed while…」「Track name and artwork at the…」「The dots on the notch's right ear…」、窗口浏览页页头「All of an app's windows on its…」「⌘W closes the window under the…」「Hold and press Tab to pick a…」、指挥模式页「See Claude Code running or…」、快捷键页「The window stays; glance from…」。
+  - **简体 2 处**：隐私页页头「WindowShade 读到的每」（原来那一句就超宽，不是 R37 加的第二句造成的）、指挥模式页「在刘海里看 Claude Cod」——这一处连省略号都没有，是硬切。
+  - 修法是缩短文案，英文是第 27 批定过案的，**改哪几句、怎么改等 Aaron 定**。
 - **依据**：Wins 3.1.1「设置面板在**西班牙语、德语、中文、日语**等语言环境下无法完整显示的布局问题」；LaunchOS v2.3.1「text could be **clipped in some languages**」；boring.notch 专门做了一遍「locale-aware formatting across settings, battery, OSD, progress indicators, and **accessibility labels**」。
 - **现状**：英语适配在做（[BATCH27](handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)）；**布局在长语言下会不会裁切、格式化与读屏标签是否在范围内，都没验过**。
 - **改动**：**德语最长，最容易撑破**——按最长的那一门验；格式（数字/日期/时间）与**读屏标签**都要进范围，不只是文案。
@@ -759,6 +775,7 @@
 - **风险**：低。**不要让这一项变成「自动收集」。**
 
 #### R37 · 面向用户的隐私声明
+- **2026-10-15 补记**：App 隐私页的页头副标题是单行、超宽截断（R24），所以 R37 加的第二句「不收集使用数据…」在 App 里只能点 ⓘ 才看得到；官网与 README 上是可见的。要在 App 里看得见，得给隐私页另找位置——**版面决定，等 Aaron**。
 - **✅ 2026-10-15（部分）**：App「隐私」页头、官网 `/privacy/`、两版 README 加同一句「不收集使用数据，也不做任何统计或上报」（代码核得到：无统计 SDK、`SUEnableSystemProfiling=false`、导出只存本地）。**「除了检查更新，都不离开这台 Mac」没有放出**：它挂在 [privacy-page.md](privacy-page.md) 的 P2（`nettop` 实测）后面，而且 `MKLocalSearch`／`MKDirections`（`App/NotchActivityController.swift:656`–`:664`）会连 Apple 的服务器，这句很可能本身不成立。**更正现状**：App 与官网早有逐项隐私页（「隐私」一栏＋`/privacy/`），README 也有隐私一节。
 - **依据**：我们要**辅助功能 ＋ 屏幕录制**，而**「凭什么要录屏」正是[北极星](north-star.md)§二第 4 项列的攻击点**。成熟软件对此的答案是一份**面向用户的**声明，不是内部登记表。
 - **现状**：有 `docs/privacy-page.md`（**内部登记，65 个条目**，给我们自己和律师看的）；**README 里没有给用户的隐私说法**。
