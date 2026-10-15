@@ -59,6 +59,7 @@ final class GlanceProbe {
       fixtureArguments.append(flag)
     }
     // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
+    if CommandLine.arguments.contains("--restore-guard") { fixtureArguments.append("--minimizable-other") }
     if ["--soak", "--idle-first-op", "--browser-identity"].contains(where: { CommandLine.arguments.contains($0) }) {
       fixtureArguments += ["--lifetime", "1800"]
     }
@@ -111,6 +112,11 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--menubar-owner") {
       try await menuBarOwner(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--restore-guard") {
+      try await restoreGuard(element: element, pid: process.processIdentifier)
       finish(nil)
       return
     }
@@ -713,6 +719,56 @@ final class GlanceProbe {
     print(ours == 0 ? "PASS menubar: never switched to WindowShade's own menus"
       : "FAIL menubar: WindowShade owned the menu bar in \(ours) samples (~\(ours * 10) ms total)")
     print(blank == 0 ? "PASS menubar: never blank" : "FAIL menubar: no owner in \(blank) samples")
+  }
+
+  /// 规格 R9：同一个 App 的两扇窗都收起，只展开其中一扇——展开时 App 会被叫回前台（取消隐藏、还原最小化），
+  /// 另一扇不能跟着冒出来，展开的那扇要在这个 App 的最前面。需要临时 App 开着默认的两扇窗（不带 --single）。
+  private func restoreGuard(element: AXUIElement, pid: pid_t) async throws {
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
+    try await wait("second fixture window", timeout: 6) {
+      appWindows(pid: pid).contains { windowID(of: $0).map { $0 != self.id && self.onscreen($0) } == true }
+    }
+    guard let other = appWindows(pid: pid).first(where: { windowID(of: $0).map { $0 != self.id && self.onscreen($0) } == true }),
+          let otherID = windowID(of: other) else { throw EffectError.unavailable("no second fixture window") }
+    func folded(_ wid: CGWindowID) -> Bool {
+      owner.shaded[wid]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+        && owner.duoController.windowEffects.activeCount == 0
+    }
+    owner.shade(other, otherID)
+    do {
+      try await wait("other folded", timeout: 6) { folded(otherID) }
+    } catch {
+      let state = owner.shaded[otherID]
+      print("INFO restore-guard: second window \(otherID) size=\(String(describing: axSize(other))) shaded=\(state != nil) hide=\(state?.hide.rawValue ?? "-") overlay=\(state?.overlay.map { "visible=\($0.isVisible) alpha=\($0.alphaValue)" } ?? "none") op=\(owner.currentOperationState(otherID)) effects=\(owner.duoController.windowEffects.activeCount) onscreen=\(onscreen(otherID))")
+      throw error
+    }
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
+    owner.shade(element, id)
+    try await wait("reference folded") { folded(self.id) }
+    let strategies = "reference=\(owner.shaded[id]?.hide.rawValue ?? "-") other=\(owner.shaded[otherID]?.hide.rawValue ?? "-")"
+    try await Task.sleep(for: .milliseconds(500), clock: .suspending)
+    _ = owner.unshade(id)
+    try await wait("reference restored", timeout: 8) {
+      self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+        && self.owner.duoController.windowEffects.activeCount == 0
+    }
+    // 给 App 一点时间做它自己的「叫回前台后把窗都摆出来」。
+    try await Task.sleep(for: .seconds(2), clock: .suspending)
+    let otherStillFolded = owner.shaded[otherID] != nil
+    let otherVisible = cgWindowIsVisible(id: otherID, fallbackSize: .zero) == true && onscreen(otherID)
+    // 这个 App 在屏上的窗口里，最前面的应当是刚展开的那扇（CG 列表按前后排）。
+    let ordered = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? [])
+      .filter { ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid && ($0[kCGWindowLayer as String] as? NSNumber)?.intValue == 0 }
+      .compactMap { ($0[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) } }
+    print("INFO restore-guard: hide strategies \(strategies); app windows front to back \(ordered)")
+    print(otherStillFolded && !otherVisible ? "PASS restore-guard: the other folded window stays folded while one is restored"
+      : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible))")
+    print(ordered.first == id ? "PASS restore-guard: the restored window is the app's front window"
+      : "FAIL restore-guard: the app's front window is \(ordered.first.map(String.init) ?? "none"), not the restored one")
+    _ = owner.unshade(otherID)
+    try? await wait("other restored", timeout: 8) { self.owner.shaded[otherID] == nil }
   }
 
   /// 规格 V9（多显示器矩阵里「接着两块」那一类）：把临时窗口挪到不是主屏的那块上收起，
