@@ -52,7 +52,7 @@ Newlearner 这样的人推荐一个要辅助功能和屏幕录制的工具之前
 | 步 | 做什么 | 算完成 | 状态（2026-10-09，据 [v1.0.16 ledger](releases/v1.0.16-ledger.md) C05、R15） |
 | --- | --- | --- | --- |
 | P1 | 修日志：换位置、改权限、去掉窗口标题 | 另一个账户读不到；日志里搜不到窗口标题；旧的 `/tmp/windowshade.log` 已删 | **代码与单测已做，待实测**：`tests/run-privacy-pane-tests.sh` 覆盖旧日志清理（普通文件删、符号链接拒绝、只做一次）；另一账户读不到、日志搜窗口标题、真机首次启动清理还没人看 |
-| P2 | 联网实测：“自动检查更新”开、关各跑一天 | `nettop` 记录里只有更新地址；关掉后为零 | **未做**。页头第二句“除了检查更新，都不离开这台 Mac”因此仍关着（`WS2PrivacyCopy.showsNetworkPromise` 默认关） |
+| P2 | 联网实测：“自动检查更新”开、关各跑一天 | `nettop` 记录里只有更新地址；关掉后为零 | **未做**。**2026-10-15 代码复查**：出网点不只更新——`MKLocalSearch`／`MKDirections`（`prototype/App/NotchActivityController.swift:656`–`:664`）连 Apple 的服务器，另有 CarPlay 接收端 WebSocket 与局域网遥控的 Bonjour 监听；实测前先确认这句要不要改写。页头已加的第二句是「不收集使用数据，也不做任何统计或上报」（规格 R37），不依赖本项。页头第二句“除了检查更新，都不离开这台 Mac”因此仍关着（`WS2PrivacyCopy.showsNetworkPromise` 默认关） |
 | P3 | 登记表 + 构建检查 | 登记表 458 个词法点；新增读取点未登记就失败；页面数据由同一份生成 | **已做**：`tools/privacy/registry.json`，`tests/run-privacy-registry-check.sh` 失败即挡；`tests/run-privacy-page-sync.sh` 防跑偏 |
 | P4 | 设置里的“隐私”一栏 | 读一次、再读一次、planned 行默认不显示、两项授权与登录启动并入 | **已做，待真机看外观**：`bash tests/run-privacy-pane-tests.sh` 与 `bash tests/run-appkit-tests.sh SettingsNavigationTests` 通过；空闲 CPU 与唤醒次数按 [performance.md](performance.md) 第七节还没测 |
 | P5 | 逐句核对 | 核对表每行都是“已核” | **未完成**：核对表里“已核”只有读取次数、旧日志清理和生成同步几行；其余多为“待核”或“代码已写明，待实测” |

@@ -46530,6 +46530,29 @@
         }
       }
     },
+    "settings.privacy.noReporting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No usage data is collected, and nothing is counted or reported."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不收集使用数据，也不做任何统计或上报。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "不收集使用資料，也不做任何統計或回報。"
+          }
+        }
+      }
+    },
     "settings.privacy.notRead" : {
       "extractionState" : "manual",
       "localizations" : {

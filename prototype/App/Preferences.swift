@@ -416,11 +416,11 @@ extension AppDelegate {
 
     /// 隐私一栏（原「权限与启动」）：先摊开读到的每一样（内容从 tools/privacy/registry.json 生成），
     /// 再把两项系统授权、登录时启动和更新并进同一页——开关全都还是原来那一个，不复制。
-    /// 页头只保留第一句；"除了检查更新，都不离开这台 Mac"要等联网实测核过再开（WS2PrivacyCopy.showsNetworkPromise）。
+    /// 页头两句：列在这里 + 不做统计或上报；"除了检查更新，都不离开这台 Mac"要等联网实测核过再开（WS2PrivacyCopy.showsNetworkPromise）。
     func makePermissionsSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
-            title: WSL10n.text("settings.privacy.title", zh: "隐私"), subtitle: WSL10n.setting("settings.privacy.headerLead", zh: "WindowShade 读到的每一样都列在这里。"), symbolName: "lock.shield"))
+            title: WSL10n.text("settings.privacy.title", zh: "隐私"), subtitle: WS2PrivacyCopy.headerSubtitle(), symbolName: "lock.shield"))
         let pane = MainActor.assumeIsolated { WS2PrivacyPane(owner: self) }
         stack.addArrangedSubview(pane)
         pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
