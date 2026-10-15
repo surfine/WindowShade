@@ -56,6 +56,8 @@
 
 **第二批（2026-10-15 已做）**：R3 ✅（a60c1da）；R4 核实为不用改（ce2d9a3）；R29 代码核对完、降级清单在 R29 条目里，真机 not_run；V1／V4／V5／V6 步骤已写好，等 Aaron 真机跑（V4 要先装 Rectangle，V6 要借鼠标）。
 
+**第三批（2026-10-15，Aaron 指定「不需要真机或本人验收的优先」）**：R43 ✅、R45 ✅（010775c）；R7 ✅（68825c8）；R47 ✅（5c2a0d1）；E4 ✅（bf73aad）；M2 ✅（c66967d）；M6 核过不改。全量 `--check` EXIT=0。**顺带发现**：`tests/run-duo-tests.sh`、`run-owned-codex-phase1.sh`、`run-remote-host-tests.sh` 在 HEAD 上就编不过（漏编 `WSL10n.swift` 等），这几支 runner 本身也不把编译失败当失败。
+
 **原排的下一版（这一批不清空就不开新项）**：**R3**（唤醒三档）、**R4**（原生标签页——窗口浏览落后 Wins 1 分的直接原因）、**R29**（录屏降级清单）、**V1／V4／V5／V6**（最便宜的四条真机证据）。
 
 ### 0.2.1 实质阶段起步清单（2026-10-15 研究阶段收口，给 13:00 的实质阶段）
@@ -490,6 +492,7 @@
 ---
 
 #### R7 · 几何读取的四级回退链
+- **✅ 2026-10-15（68825c8）**：`Core/WindowFrameResolver.swift`＋`Window/AXWindow.swift` 的 `axWindowFrameWithFallback`。**与规格原文的主次相反**：AX 两项都读到时照旧只用 AX（结果与原来逐字相同，不改已有行为），缺了才用窗口服务器补；四级都没有返回 nil 并记一行用了哪一层。先接到魔法平铺里「读不到就放弃」的两处（撤回、移到另一块屏）；其余约 180 处 `axPosition`／`axSize` 调用没改，撞到再接。**验**：判据单测；`tests/run-window-frame-probe.sh` 用 `kill -STOP` 冻住夹具，AX 0.5 秒后报 -25204，回退给出的外框与冻住前一致（本机 PASS）。
 
 - **依据**：**Wins 的 `drag.*` 里就是这么一条链**——`windowServerRect` → `axWindowRect` → `axWindowRectFallback` → `windowListRectFallback`。顺序说明了主次：**先 WindowServer，再 AX，再两层回退**。
 - **现状**：未记载，各处各自读。
@@ -872,6 +875,7 @@
 **这一节的判据**：上表**每一行都有处置**；`不采纳` 的都有理由。新立的只有 **R40／R41／R42** 三条。**R6 要按第 11 行加强**：不是「先判断能不能改大小」，而是 **先试 → settling pass → 才判定被 AX 夹住 → 再提示**（Rectangle 的形状）——直接改 R6 的「改动」那一段。
 
 #### R43 · `docs/` 的索引（**86 份顶层 md，没有入口**）
+- **✅ 2026-10-15（010775c）**：`docs/README.md`，86 份顶层文档与 8 个子目录全部收录、链接全在（脚本逐条核过）；`AGENTS.md` 指向它。
 - **依据**：成熟项目都有文档索引——**新人和 agent 都从一处进来**。这一条不是理论：**我这一轮差点让整批工作对新 session 不可见**（`AGENTS.md` 当时对竞品与重塑零命中，我补了一节才接上）。
 - **现状**：`docs/` 有 **86 份顶层 md**（含本份），**没有 `README.md`／`INDEX.md`**（本机 `ls` 复核）；`AGENTS.md` 现在只挂了关键的几份。
 - **改动**：写 `docs/README.md`，**按用途分区**（蓝图与方向／设计与文案／验收与探针／竞品与重塑／出货与发布／交接），每条一句话说明它是什么、什么时候该读。
@@ -886,6 +890,7 @@
 - **风险**：**阈值不要定得太紧**——定紧了会因为机器差异频繁误报，最后被绕过；**先只上一条最稳的（空闲 AX 查询 = 0）**。
 
 #### R45 · 代码地图放到规范位置
+- **✅ 2026-10-15（010775c）**：`docs/code-map.md`，并核实「Core 管判断、App 管副作用」（Core 182 个文件只有 1 个引 AppKit）；与 §2.0.2 互相引用。
 - **依据**：成熟项目有一份「哪段代码负责什么」的地图。我们的**散在测试包与评审包里**：`tests/part8/sources/code-map.md`、`docs/handoff/chatgpt-review-2/part7|8/sources/code-map.md`（本机 `find` 复核）。
 - **现状**：`docs/blueprint.md` 是总图（方向与硬要求），**但没有一份「目录 → 职责」的代码地图**在 `docs/` 下、被 `AGENTS.md` 指向。
 - **改动**：写 `docs/code-map.md`：`prototype/` 下每个目录与关键文件**负责什么、改动时要注意什么**（例如 `FoldTransaction.swift` 的不变量、`AXWindow.swift` 的熔断）。
@@ -932,6 +937,7 @@
 - **风险**：低（先测）。**与 R41（不抢焦点）同族**，一起验更省。
 
 #### R47 · 长时运行与越界：两个「跑很久才出问题」的失效
+- **✅ 2026-10-15（5c2a0d1）**：（a）全表搜过：没有把时间塞进 32 位以下整数的地方；唯一长期累加的帧计数 `mirrorFrameIndex` 用 `&+=` 回绕安全；两处「负数秒转 `UInt64`」会崩，已随 M2 改成 `.seconds(x)`。（b）`tests/run-preview-renderer-bounds-tests.sh`：44 种极端图像 × 所有手算下标的像素函数与 `prepareNativeStrip`，全部不崩。
 - **依据**：niri「Fixed a panic **after ~50 days of uptime due to an integer overflow**」；AeroSpace 两次栽在 `CGPoint.findIn` 这类**越界查找**上（#164／#1490）。
 - **现状**：**未核**。我们是常驻应用，且几何代码里手算下标的地方不少（`Capture/PreviewRenderer.swift` 一带尤其）。
 - **改动**：**先核**——（a）用假时钟把 uptime 推到 60 天量级，看计数器/时间差有没有溢出；（b）过一遍几何查找的边界（空数组、零尺寸、越界索引）。
@@ -1034,7 +1040,7 @@
 | **E1** | **把 60 秒静置实测做成例行项**（每版必跑，数字进 [scorecard](scorecard.md)）。口径固定：无操作、无手势、屏幕不锁不灭、同一台机、**跑三次取中位**。**做成脚本，不是手抄的仪式**——照 OmniWM `Scripts/energy-profile.sh` 的形状 | 每次发版有一行数字，可跨版本对比 |
 | **E2** | **查清内存口径再对比**：先量清我们的 physical footprint 与 RSS，分「空载」与「开了窗口浏览＋几个常驻面」两种状态；再去查 Wins 那 30 MB 的确切含义。**现在这一行是 100 MB vs 它自称的 30 MB，口径不一致就不能下结论** | 一张同口径对照表；不引用对不上的数字 |
 | **E3** | **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 |
-| **E4** | **补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
+| **E4** | **✅ 2026-10-15（bf73aad）**：两处都设了 10% 容差；窗口浏览那个只在面板开着时跑，**不是常驻**。原文：**补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
 | **E5** | **AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
 | **E6** | 核 Ice 那两条：**切 App 时菜单栏面 CPU**、**长时间空闲后第一次操作的迟滞** | 各一条探针 |
 
@@ -1070,11 +1076,11 @@
 | 编号 | 动作 | 验收 |
 | --- | --- | --- |
 | **M1** | **时间基准**：`ProcessInfo.systemUptime`（**108 处**）与 `CFAbsoluteTimeGetCurrent`（**88 处**）换成 `ContinuousClock`／`Instant`／`Duration`。**一石二鸟：`systemUptime` 是 required-reason API，换掉之后 N5 的申明范围直接变小。**语义要点：两者都单调，**别换成 `Date()`**（会因用户改系统时间而跳）。最密的几处：`App/NotchActivityController.swift` 23、`App/HabitContext.swift` 12、`App/Notch.swift` 7 | 行为不变（探针回归）；`systemUptime` 归零后 N5 去掉 BootTime 一类 |
-| **M2** | **`Task.sleep(nanoseconds:)` → `Task.sleep(for: .milliseconds(…))`**（**325 处**）。现写法要人肉数零（**数错一个零就是十倍差**）且负数直接崩；`Duration` 类型安全。**按文件分批，每批跑一次 `--check`** | `nanoseconds:` 归零；行为不变 |
+| **M2** | **✅ 2026-10-15（c66967d）**：325 处全改，309 处字面量逐对核过纳秒数相等。**更正写法**：必须写 `Task.sleep(for: …, clock: .suspending)`——旧写法按开机时间计时（睡着不走），默认的 `ContinuousClock` 睡着也走，直接换会让跨过睡眠的等待在醒来那刻立刻结束。原文：**`Task.sleep(nanoseconds:)` → `Task.sleep(for: .milliseconds(…))`**（**325 处**）。现写法要人肉数零（**数错一个零就是十倍差**）且负数直接崩；`Duration` 类型安全。**按文件分批，每批跑一次 `--check`** | `nanoseconds:` 归零；行为不变 |
 | **M3** | **同步原语小步迁移**（`NSLock` 66 ＋ `os_unfair_lock` 31）。**新代码一律 `Mutex`／`@MainActor`，不新增旧锁**；旧代码**从「一个 `Mutex` 包一个值、无嵌套加锁」的文件开始**，有嵌套或跨对象不变量的先不动。`DispatchSemaphore`（14 处）**不是换 `Mutex`，是换 `withCheckedContinuation`／`AsyncStream`** | 每个迁移的文件能去掉 `@unchecked Sendable` 就去掉（去不掉要写明理由）；探针全跑 |
 | **M4** | **评估 `-default-isolation MainActor`**（SE-0466）：**先在一个分支上打开，把编译错误数出来**，再判断值不值得。这条的产出是**一个数字和一个判断**，不是一次重构 | 一份结论：错误数、集中在哪些文件、是否值得走 |
 | **M5** | **`Span`／`RawSpan` 用在像素路径**（`Capture/PreviewRenderer.swift:104/187/193`）。**与 H1 联动：H1 先定走 Metal 还是 vImage，再决定 M5 要不要做**（走 vImage 就不需要） | 与 H1 一起验收 |
-| **M6** | **`NSRegularExpression`（1 处，`Core/CalendarActivity.swift:186`；Swift `Regex` 0 处）与 `FormatStyle`（`DateFormatter` 10 处）**。**注意**：`Support/Diagnostics.swift` 那个日志时间戳显式钉了 `en_US_POSIX`，换 `FormatStyle` 时要保留这个 locale 语义（否则某些区域会变） | 行为不变，尤其日志时间戳格式在非中文区域也不变 |
+| **M6** | **2026-10-15 核过，不改**：`DateFormatter`（10 处）与 `NSRegularExpression` 都没被 Apple 标为过时，日志时间戳是写死格式加 `en_US_POSIX`，换 `FormatStyle` 只有风险没有收益——按本节「不该做的」第一条结案。原文：**`NSRegularExpression`（1 处，`Core/CalendarActivity.swift:186`；Swift `Regex` 0 处）与 `FormatStyle`（`DateFormatter` 10 处）**。**注意**：`Support/Diagnostics.swift` 那个日志时间戳显式钉了 `en_US_POSIX`，换 `FormatStyle` 时要保留这个 locale 语义（否则某些区域会变） | 行为不变，尤其日志时间戳格式在非中文区域也不变 |
 | **M7** | **新增纯逻辑测试要follow 现有模式，不引入第二个框架**（**2026-10-15 自纠**：此前写成「`tests/` 为空、只靠探针」，**是错的**）。事实：`tests/` 有 **244 个 Swift 测试档 ＋ 218 支 `run-*.sh` runner**，用的是**自制的 `@main struct XxxTests` ＋ `expect()` 印 `ok`/`FAIL`** 模式（`import XCTest` 与 `import Testing` **各 0**），而且 **`build.sh` 已经把其中几支纳入门禁**（`:125` 的本地化检查、`:184` 的隐私同步、`:187` 的文案 lint）。→ 纯逻辑测试（如 R4 的标签页合并判据）**按这个既有模式写**，不要为了「现代化」引入 Swift Testing | 新测试能进 `build.sh --check` 或对应的 `run-*.sh` |
 
 **不该做的**：不为现代化换掉还能用的旧 API（`TimeInterval` 812 处多数无害）；不用 `@Observable` 硬套纯 AppKit；**不在没有测试网的情况下大改并发**（99 处 `@unchecked Sendable` 是地雷区，M3／M4 都要小步 ＋ 探针回归）；不追每个新特性（`InlineArray`／typed throws／`@concurrent` 遇到合适场景再用）；**迁移类改动行为必须不变，不要和功能改动混在一支提交里**。
