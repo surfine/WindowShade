@@ -7303,6 +7303,13 @@
    "symbol": "AXUIElementCopyAttributeValue",
    "source": "guard AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &closeRef) == .success,",
    "signal": "window-ax"
+  },
+  {
+   "path": "prototype/main.swift",
+   "line": 169,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "guard AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &ref) == .success,",
+   "signal": "window-ax"
   }
  ],
  "groups": [
