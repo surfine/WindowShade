@@ -1356,12 +1356,20 @@ final class WindowBrowserController: NSObject {
         var missingPIDs = Set<pid_t>()
         var missingKeys: [WindowKey] = []
         let byPID = Dictionary(grouping: contentView.records, by: { $0.key.application.pid })
+        // 规格 R20：有的 App 关窗只是 orderOut（日历一类），窗口在 WindowServer 里还在，光看「在不在」永远发现不了。
+        // 查到时在屏上、现在不在屏上的（不是最小化、不是我们自己收起的），也重新问一次它的应用；去留仍由那次查询定。
+        let onScreen = WindowListCache.shared.onScreenIDs()
         for (pid, records) in byPID {
             let alive = Set(WindowListCache.shared.allWindows(ofPID: pid).compactMap {
                 ($0[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) }
             })
-            for record in records where !alive.contains(record.key.originalWindowID)
-                && !livenessAsked.contains(record.key) {
+            func vanished(_ record: WindowRecord) -> Bool {
+                let id = record.key.originalWindowID
+                if !alive.contains(id) { return true }
+                return record.isOnScreen && !record.isMinimized && !record.isFoldedOffscreen && !record.isManaged
+                    && !onScreen.contains(id)
+            }
+            for record in records where vanished(record) && !livenessAsked.contains(record.key) {
                 livenessAsked.insert(record.key)
                 missingPIDs.insert(pid)
                 missingKeys.append(record.key)
