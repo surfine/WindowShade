@@ -175,6 +175,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var isRescuingOffscreenWindows = false
     var isRescueQueued = false
     private var tapSetupTimer: Timer?
+    // 装好之后的周期体检，见 startEnvironmentWatch()：
+    private var environmentWatch: Timer?
+    private var tapSilentStops = 0
+    private var lastAccessibilityTrusted = true
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
     var axReadGate = AXReadGate<pid_t, [WS2FoldCallbackStamp]>()
@@ -945,6 +949,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func setupEventTapWhenTrusted() {
         if setupEventTap() {
             rescueOffscreenWindows(silent: true, announceRestored: true)
+            startEnvironmentWatch()
             return
         }
         tapSetupTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] t in
@@ -953,6 +958,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let installed = MainActor.assumeIsolated { () -> Bool in
                 guard self?.setupEventTap() == true else { return false }
                 self?.rescueOffscreenWindows(silent: true, announceRestored: true)
+                self?.startEnvironmentWatch()
                 return true
             }
             if installed { t.invalidate() }
@@ -981,6 +987,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         thread.qualityOfService = .userInteractive
         thread.start()
         return true
+    }
+
+    // MARK: 装好之后的周期体检
+
+    /// 事件通道与权限的周期体检（5 秒一次）。
+    ///
+    /// 为什么需要它：系统会在**回调超时**或**输入洪泛**时把 tap 静默停掉——没有通知、没有报错，
+    /// 只是从此不再送事件。我们现在只在收到 `tapDisabledByTimeout`／`tapDisabledByUserInput`
+    /// 时才重开（GlobalInputFilter、ScrollTap、WindowSwitcher、TrackpadGestures、
+    /// NotchLevelObserver 五处），所以**在没有那两个事件的情况下死掉，我们不查**。
+    ///
+    /// 这一条是照着两家成熟实现补的：DockDoor 的 5 秒看门狗里就有一项 `CGEvent.tapIsEnabled`
+    /// 检查、为假则重建；Wins 把 `missionControl.tapDisabled` 当成一个专门的埋点。
+    /// 间隔取 5 秒：够快能自愈，够慢不打扰。
+    private func startEnvironmentWatch() {
+        guard environmentWatch == nil else { return }
+        environmentWatch = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.runEnvironmentCheck() }
+        }
+        lastAccessibilityTrusted = AXIsProcessTrusted()
+    }
+
+    private func runEnvironmentCheck() {
+        // 一、通道还活着吗。这里只重开同一支 port（不重建、不新起线程），
+        // 与五处 tapDisabledBy* 的处理保持同一形状。
+        if let tap = eventTap, !CGEvent.tapIsEnabled(tap: tap) {
+            tapSilentStops += 1
+            CGEvent.tapEnable(tap: tap, enable: true)
+            wlog("environment: event tap was disabled silently, re-enabled (count=\(tapSilentStops))")
+        }
+        // 二、权限还在吗。从「有」变「无」要留下痕迹：此刻所有窗口动作都还在跑，
+        // 但没有一件能生效，且不报错——这种「静默失灵」是最难排查的一类。
+        // （WindowMizer 的更新史里专门有一条：运行时关掉辅助功能要弹提示。用户可见的
+        // 那一句要走本地化文案，列在 docs/product-reshape.md 第 2 条，此处先记状态。）
+        let trusted = AXIsProcessTrusted()
+        if lastAccessibilityTrusted, !trusted {
+            wlog("environment: accessibility permission was revoked, window actions will no longer take effect")
+        } else if !lastAccessibilityTrusted, trusted {
+            wlog("environment: accessibility permission is back")
+            if eventTap == nil { _ = setupEventTap() }
+        }
+        lastAccessibilityTrusted = trusted
     }
 
 }
