@@ -66,10 +66,12 @@
 
 **第八批（2026-10-15 晚，「先做不需要本人介入的」）**：R6 核过 ✅、R10 ✅（803375a，真机 `--orphan` 过）、R32 ✅、R39 ✅（300 轮内存平）；R35／R13 本地导出（0c9e5cd）与 R5 导出导入底层（78b6f50）做完、入口待 Aaron；探针三组（0d72706）。另修：手势排布一句写死的中文改走本地化。
 
+**第九批（2026-10-16）**：R11 核过 ✅（原本就读工具栏）、R22 ✅、R41 ✅、N4 ✅（含一处修补）；R18 核过、结论与规格相反（开关挡不住平铺），剩一次按键验证待 Aaron。
+
 **到这里停下：剩下的都要 Aaron（2026-10-15 盘点）**
-- **要解锁屏幕跑界面探针**（R3 测完后屏幕锁着）：H2（`--fold-timing` 前后对比）、N3（关键路径签名区间）、R46（面板用过再关之后）、V8、E3、E6，以及 R9／R11／R18／R20／R21／R22／R23／R41／R48／R49 的复现与验收（R6／R10／R32 已在第八批做完）。
+- **要解锁屏幕跑界面探针**（R3 测完后屏幕锁着）：H2（`--fold-timing` 前后对比）、N3（关键路径签名区间）、R46（面板用过再关之后）、V8、E3、E6，以及 R9／R20／R21／R23／R48／R49 的复现与验收（R6／R10／R32 第八批、R11／R22／R41 第九批已做完）。
 - **要改系统设置，我不能代做**：R2、R29（收回权限）、R19／V10（台前调度）、R30（桌面排列开关）、V11（显示缩放）。
-- **要真手**：V1、V5、V6、R25；整机睡眠（R3 只测了屏幕睡醒）。
+- **要真手**：V1、V5、V6、R25、R18（启动台开着按 fn＋Control＋←）；整机睡眠（R3 只测了屏幕睡醒）。
 - **要本人点同意**：C3 摄像头（这个签名还没被问过授权）。
 - **要下载、需同意**：R13（PLCrashReporter；纯本地那一半已随 R35 做完）、V7（iPadOS 模拟器约 8 GB）、V4（装 Rectangle）。
 - **要设计或文案决定**：R24 截断文案、R37 隐私页版面、R8／R12／R16／R17／R36（都要新增界面表面，先过设计准入）、R35 诊断导出与 R5 设置导出导入的入口（底层已做好）。
@@ -574,6 +576,7 @@
 - **改动**：在算收起高度时，把 AX 工具条高度也纳入（有工具条的 App 才有值）。
 - **验收**：有工具条的 App（访达带工具栏、Safari 等）收起高度正确。
 - **风险**：多一次 AX 往返，放后台队列；拿不到就退回现有常量。
+- **✅ 2026-10-16 核过（1e428fe）**：「没读工具栏高度」不成立——通用路径早就按工具栏底边算（`Window/AXWindow.swift` 的 `chromeHeight` → `firstToolbar`），访达、Safari 都走通用路径。新加只读的 `--chrome-report <bundle id>`；签名构建对一扇系统工具栏窗口实测：统一样式工具栏底边 52、保留 52，展开样式 68／68。本机当时访达与 Safari 在这张桌面上没有窗口，没有拿它们本身量（不替你开窗）。
 
 ---
 
@@ -629,6 +632,7 @@
 - **依据**：WindowMizer 给占位条设了 `collectionBehavior` 三个开关（`fullScreenNone`、**`disallowsTiling`**、`canJoinAllSpaces`）；而**我们自己的 `App/Thumbnail.swift:35` 已经用了 `fullScreenDisallowsTiling`**。
 - **现状（2026-10-15 自纠）**：此前写「`fullScreenDisallowsTiling` 只在 `Thumbnail.swift:35`」，**是错的**——本机复核是**三处**：`App/Thumbnail.swift:35` ＋ **`App/OverlayFactory.swift:21`／`:56`／`:186`**（覆盖层工厂，说明多数覆盖层已经带上了）。其余面板各写各的（`App/SlideOver.swift:943`／`:1076`、`App/Carry.swift:18`、`App/PictureInPicture.swift:575`／`:667`、`App/SplitView.swift:644`、`App/SlideOverDropHint.swift:124`、`App/PictureInPictureViews.swift:364`、`PinnedPreviewPanel.swift:14`）。
 - **改动**：**逐个核**它在 macOS 15+ 上会不会被系统平铺管到；**该加的加，不该加的别动**。这不是批量替换。
+- **核过，结论与规格相反（2026-10-16）**：独立小程序实测，系统「移动与调整大小 › 左」（`_zoomLeft:`）对 key 窗口一律生效——无边框、`.transient`、`canJoinAllSpaces`、**连带着 `.fullScreenDisallowsTiling` 的也照样被挪走**。所以「补齐这个开关」挡不住平铺，**不加**。我们的面板都靠自己 `setFrame` 移动，没有一处用系统拖动（`performDrag` 0 处），拖到屏幕边的平铺碰不到；剩下唯一的入口是我们自己的面板是 key 时按平铺快捷键。能成为 key、又没带开关的有：收起取画面时临时停焦点的 1×1 窗、启动台、CarPlay、刘海（验证或专注时）、卷轴概览、窗口浏览（键盘模式）。合成按键连对照组（普通窗口）都挪不动，自动验证不了。**待 Aaron（一分钟）**：打开启动台，按 fn＋Control＋←，看它会不会被挪到左半边；会的话再定怎么挡（截住那几个动作），不会就结案。
 
 ---
 
@@ -661,6 +665,7 @@
 - **现状**：菜单栏面在 `App/MenuBarController.swift` ＋ `App/MenuBarCoverRetry.swift`；**没有针对收放瞬间的验收**。
 - **改动**：先复现（连续收起 5 个不同 App 的窗口，看菜单栏），有则修。
 - **验收**：连续收起/还原时，菜单栏一直是当前 App 的名字，不闪「Application」、不留空。
+- **✅ 2026-10-16（b4254ff）**：复现不出。`--menubar-owner`（签名构建）收起展开 5 轮、每 10 毫秒采一次「菜单栏归谁」共 613 个样本：只在临时 App 与它后面的 App 之间切换，**从没留空、从没切到 WindowShade 自己的菜单**（收起取画面时那次临时停焦点也没被采到）。只测了同一个 App 的窗口，5 个不同 App 连续收起没测。
 
 #### R23 · Finder 两个坑
 - **依据**：WindowMizer **两次**修「Finder window **column sizes** to change after window-shading a window」（Name／Size／Date 列宽在收放后变了）；另有一条「Double-clicking a **Finder folder alias** no longer performs a window action」。
@@ -828,6 +833,7 @@
 - **现状**：我们多处注释写着「不抢焦点」（`WS2SilentProductPort.swift:440`、`FoldTransaction.swift:822`），**但没有一条是针对「后台 App 弹窗」这个具体场景验过的**。
 - **改动**：**先验**——后台 App 弹窗时，前台 App 不变、卷轴不滚；有问题再修。
 - **验收**：一个会在后台弹窗的 App（如终端跑一条 `osascript -e 'display dialog'`，或邮件类 App）弹出时，前台与卷轴位置都不动。
+- **✅ 2026-10-16（b4254ff）**：`--focus-steal`（签名构建）：收起后让第二个临时 App 在后台弹提示框、还试着把自己调到前面；期间没有任何 App 被激活（我们没有，系统也没让它抢走前台），卷帘条原位。
 
 #### R42 · 卷轴跟手的完整配方（niri／Paneru 那几条）
 - **✅ 2026-10-15 逐条核过**：松手速度只看最后 150 ms（另加「停住再抬手不甩出去」）、求导下限（< 8 ms 当 0）、按减速率推算落点（指数衰减）、停放 10 点（`ScrollStrip.sliver`）、列宽存比例（预设档与「记住列宽」）——都已在代码里。减速率 niri 是 0.997，我们刻意取 0.998（对齐官网手感），不采纳。唯一的裸数字 0.998 已改成 `ScrollStrip.releaseDecelerationRate`，「张开跟手的概览」直接引用它。未核：#59（写窗口时先停听）、#60（应该在哪／实际在哪分开存）。
@@ -1104,7 +1110,7 @@
 | **N1** | **App Intents（已定案：最小切口）**：**先做 5–8 个最常用动作**（收起／全部收进刘海／打开窗口浏览／恢复全部／切到某扇窗…），**不铺满**。**这一条改写「扩展面」那一行的结论**——Apple 的原生答案，免费得到快捷指令／Spotlight／Siri，不必自造 CLI 或 URL scheme。**Intent 是用户可见的公开契约，先按[固定词汇表](copy-guide.md)定名再实现** | 快捷指令里能搜到、能跑通、能串成自动化；Spotlight 能搜到 |
 | **N2** | **`os.Logger`**：面向系统的诊断（启动、权限、通道体检、自愈）走统一记录，带 `subsystem` ＋ `category`；**涉及用户数据的字段标 `privacy:`，与隐私登记（[privacy-page.md](privacy-page.md)）逐条对齐**。文件日志保留（探针依赖它） | `log stream --predicate 'subsystem == …'` 看得到关键路径；隐私字段默认 `<private>` |
 | **N3** | **✅ 2026-10-15（c6f8dac）**：收起与窗口浏览两条已加；真机上 `--notch` 期间收起 4 开 4 合（2 folded、2 abandoned），`--browser-more` 期间会话 begin → 各阶段事件 → end(closed)。原文：**`OSSignposter`**：先给**折叠**与**窗口浏览**两条关键路径加区间与事件，让性能工作在 Instruments 里可见。E／H 系列的量测统一走这条 | Instruments 的 os_signpost 轨道能看到阶段划分；一次折叠的耗时分解可读 |
-| **N4** | **`NSBackgroundActivityScheduler`**：非延迟敏感的周期工作改走它（**更新检查** `App/Updater.swift:137` 的 10s 等）。**延迟敏感的不换**——R1 那个 5 秒通道体检必须保持 `Timer` | 功能行为不变；低电量下由系统自然推迟 |
+| **N4** | **✅ 2026-10-16（3d67442、d73496a）**：外设电量（2 分钟）与 AirPods 电量（10 分钟）两条周期刷新改走 `NSBackgroundActivityScheduler`（`Support/MaintenanceTimer.swift`）。**更正规格**：`Updater.swift:137` 的 10 秒不是更新检查，是装后自查——被推迟会让看护 60 秒后当成卡住换回，必须留在计时器；定期查更新由 Sparkle 自己调度。其余重复计时器都是界面开着才跑或延迟敏感。**实测**：系统调度一开始会立刻跑一次、间隔可能拉到近两倍（60 秒档出现 115 秒）；已跳过立刻那一次，重测 77、144 秒。原文：**`NSBackgroundActivityScheduler`**：非延迟敏感的周期工作改走它（**更新检查** `App/Updater.swift:137` 的 10s 等）。**延迟敏感的不换**——R1 那个 5 秒通道体检必须保持 `Timer` | 功能行为不变；低电量下由系统自然推迟 |
 | **N5** | **`PrivacyInfo.xcprivacy`**：我们用了 Apple 的 required-reason API 却没有这张清单——**这是公证与上架的门槛**。**2026-10-15 逐类审计（源码＋二进制符号双查）**：① **SystemBootTime**（`systemUptime`／`mach_absolute_time`，43 个文件）→ `35F9.1`；② **UserDefaults**（85 个文件）→ `CA92.1`；③ **FileTimestamp**（7 个文件：`DownloadActivitySource`／`UpdaterSystem`／`FileShelfStore`／`HabitContext`／`Watchdog`／`WS2LocalLaunchProfile`／`WS2ProjectDirectory`；符号 `stat/lstat/getattrlist` 5 处）→ `C617.1`＋`3B52.1`（按站点归位）；④ **DiskSpace**（`UpdaterSystem.swift:616` 更新前探 `volumeAvailableCapacityForImportantUsage`）→ `E174.1`；⑤ ActiveKeyboards **0 处，不写**。负项：`NSPrivacyTracking=false`、`NSPrivacyCollectedDataTypes=[]`、`NSPrivacyTrackingDomains=[]`。**别抄用不到的类别** | 清单进包、`plutil -p` 能读；公证工具的 required-reason 检查不报 |
 
 **两条纪律**：新 API **一律 `#available` gate ＋ 旧系统退回**（已在做，保持）；**不用新 API 换掉还能用的旧 API**——只有 Apple 已标记过时的（如 `CVDisplayLink`）才换。
