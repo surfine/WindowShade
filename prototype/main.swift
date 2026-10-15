@@ -8,9 +8,12 @@ UpdateLaunch.recordLaunch()
 InterfaceLanguagePreference.applyAtLaunch()
 
 if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-") || $0 == "--silent-milestone" || $0 == "--silent-cover-probe" || $0 == "--sls-offscreen-check"}) {
-    let log=FileManager.default.currentDirectoryPath+"/.build/duo-tests/native-\(getpid()).log"
-    try? FileManager.default.createDirectory(atPath:URL(fileURLWithPath:log).deletingLastPathComponent().path,withIntermediateDirectories:true)
-    setenv("WINDOWSHADE_LOG_PATH",log,1)
+    // 外面已经指定了日志路径（例如在虚拟机里经 open 启动，工作目录是只读的 /）就照用。
+    if getenv("WINDOWSHADE_LOG_PATH") == nil {
+        let log=FileManager.default.currentDirectoryPath+"/.build/duo-tests/native-\(getpid()).log"
+        try? FileManager.default.createDirectory(atPath:URL(fileURLWithPath:log).deletingLastPathComponent().path,withIntermediateDirectories:true)
+        setenv("WINDOWSHADE_LOG_PATH",log,1)
+    }
 }
 let app = NSApplication.shared
 if CommandLine.arguments.contains("--window-browser-dock-probe") {
