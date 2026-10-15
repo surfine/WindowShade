@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// 不赶时间的周期工作（规格 N4）：交给系统的后台活动调度，低电量、发热或机器正忙时系统会自然往后推，
 /// 并和别的 App 的后台活动合并唤醒。延迟敏感的（事件 tap 体检、装后自查）不走这里，仍用计时器。
@@ -11,8 +12,8 @@ final class MaintenanceTimer: @unchecked Sendable {
     private let identifier: String
     private let interval: TimeInterval
     private let tolerance: TimeInterval
-    private let lock = NSLock()
-    private var scheduler: NSBackgroundActivityScheduler?
+    /// 规格 M3：新代码不新增 NSLock；部署目标 14 用不了 Mutex，用 OSAllocatedUnfairLock（同 EventTapHealth）。
+    private let scheduler = OSAllocatedUnfairLock<NSBackgroundActivityScheduler?>(uncheckedState: nil)
 
     init(name: String, interval: TimeInterval, tolerance: TimeInterval) {
         identifier = "\(Bundle.main.bundleIdentifier ?? "WindowShade").maintenance.\(name)"
@@ -27,10 +28,10 @@ final class MaintenanceTimer: @unchecked Sendable {
         next.interval = interval
         next.tolerance = tolerance
         next.qualityOfService = .utility
-        lock.lock()
-        let previous = scheduler
-        scheduler = next
-        lock.unlock()
+        let previous = scheduler.withLockUnchecked { current in
+            defer { current = next }
+            return current
+        }
         previous?.invalidate()
         let startedAt = ContinuousClock.now
         let earliest = Duration.milliseconds(Int((interval - tolerance) * 1000))
@@ -41,10 +42,10 @@ final class MaintenanceTimer: @unchecked Sendable {
     }
 
     func stop() {
-        lock.lock()
-        let current = scheduler
-        scheduler = nil
-        lock.unlock()
+        let current = scheduler.withLockUnchecked { current in
+            defer { current = nil }
+            return current
+        }
         current?.invalidate()
     }
 }
