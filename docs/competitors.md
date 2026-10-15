@@ -3,6 +3,11 @@
 更新于 2026-10-05。Wins 单独写在 [竞品调研：Wins](competitive-analysis.md)，各家分数与依据在
 [每个领域的分数](scorecard.md)。这一份补上 Aaron 9/27 深夜点名的另外四家，以及 10 月 5 日纳入追赶的 Alcove。
 机制层（它怎么做到）的深挖另见 [竞品深挖](competitive-deep-dive.md)：读开源码、各家更新日志推出的 bug 史、以及量我们自己的构建。
+包层面（DMG 版面／bundle 组成／语言覆盖／更新机制／体积构成）见 [竞品包装与发行面](competitive-packaging.md)；
+站层面（站点结构／定价模式／文案定位／FAQ／开发者面）见 [竞品官网与对表面](competitive-websites.md)；
+**失败层（626 个 release 的更新日志按失效类别归好，逐条对到我们的代码）**见 [更新日志里的 real-world know-how](changelog-knowhow.md)；
+**目标与判据（「全世界最好」怎么定义、缺什么）**见 [北极星](north-star.md)；**工程与营运的成熟度自评**见 [成熟度自评](maturity.md)；**要动手重塑产品时**读 [重塑执行规格](product-reshape-spec.md)（R／E／H／N／M／V 六个系列，带现状行号、验收、工作量与风险），能效与 Apple 芯片见 [性能与能效](perf-energy.md)，Apple API 立场见 [Apple 原生优先](apple-native.md)，写法现代化见 [现代化](modernization.md)，「碾压」的定义与逐格矩阵见 [功能碾压](dominance.md)；
+把这些变成能一直跑下去的动作与长效机制的，见 [向生产级成熟演进](production-maturity.md)。
 
 功能清单只取各家自己的页面、仓库和商店页，没有下载试用；取不到一手来源的照写"取不到"，不靠二手描述补。
 

@@ -24,6 +24,18 @@
 
 写产品代码、测试、界面、官网、README 或宣传之前，先打开 [`docs/design-drafts/README.md`](docs/design-drafts/README.md)，对上那一张稿。形状、弹簧、开口和收起以稿里的画面为准，不要凭现在画出来的尺寸现编。书面令牌仍是 [`docs/design-system.md`](docs/design-system.md)。稿和令牌不一致时，画面照稿，不顺便改设计系统；对不上的记进 [`docs/design-grammar.md`](docs/design-grammar.md) 的对照账。新表面先过那份文法的准入。稿是画面，不是源码，不嵌进工程。
 
+## 竞品与重塑（2026-10-15，动手前先读这两份）
+
+这一批工作有一整套文档，**入口在这两份**：
+
+- **[北极星：公认范畴下的全面超越](docs/north-star.md)** ——「全世界最好」被定义成什么（不是「别人没有的东西」，是**众人都认可的十一项每一项都赢**），我们已有的结构优势、还缺什么、**四条已定案**（扩展面只做最小切口／录屏当增强不当核心／诊断纯本地永不上网／发布由 Aaron 点头）。
+- **[成熟度自评](docs/maturity.md)** —— 我们作为**产品／工程／长期项目**在哪、差多远、怎么补（逐维度带证据，含「工程质量高于多数竞品、出货成熟度低于所有竞品」这句结论）。
+- **[重塑执行规格](docs/product-reshape-spec.md)** —— **要动手就执行这一份**。**先读它的 §0.2：那一版只做 6 条；队列只置换、不增长**（冻结区有 74 条，解冻只有两种情形：上一批清空，或它在真机上被撞到）。每条带**依据、现状（文件与行号）、改动要点、验收、风险、依赖**；§1 是执行前提与铁律，§7 是 11 条自纠。
+
+支撑材料（按需回查，不必通读）：[竞品深挖](docs/competitive-deep-dive.md)（机制层 ＋ 函数级证据）、[更新日志里的 real-world know-how](docs/changelog-knowhow.md)（626 个 release 归成 13 个失效家族，逐条标我们暴露在哪）、[功能碾压](docs/dominance.md)（逐格矩阵）、[性能与能效](docs/perf-energy.md)、[Apple 原生优先](docs/apple-native.md)、[现代化](docs/modernization.md)、[竞品包装](docs/competitive-packaging.md)／[官网](docs/competitive-websites.md)。
+
+**一条纪律**：那批文档里**任何要写进文档的数字，都要在本轮用绝对路径、可重复的命令重新数一次**；**断言「没有」的成本比说「有」高一个数量级**——说「有」给一个例子就行，说「没有」要把全表过一遍（§7 的 13 条自纠里有 8 条栽在这）。
+
 ## 其它
 
 - 面向开发者的构建、签名、发布流程见 [`DEVELOPMENT.md`](DEVELOPMENT.md)。
