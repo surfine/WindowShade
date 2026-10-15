@@ -11,6 +11,8 @@ import Cocoa
 final class DockLock {
     nonisolated static let enabledKey = "Dock.lockDisplay"
     nonisolated static let displayKey = "Dock.lockDisplayID"
+    /// 同一块屏的 UUID（规格 R27）：编号重接后可能变，UUID 不变。读取先认它，见 DisplayKeyResolver。
+    nonisolated static let displayUUIDKey = "Dock.lockDisplayUUID"
     nonisolated static var isEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
@@ -35,6 +37,7 @@ final class DockLock {
         }
         if UserDefaults.standard.object(forKey: Self.displayKey) == nil, let screen = Self.dockScreen() {
             UserDefaults.standard.set(Int(Self.displayID(screen)), forKey: Self.displayKey)
+            UserDefaults.standard.set(Self.displayUUID(Self.displayID(screen)), forKey: Self.displayUUIDKey)
         }
         guard monitor == nil else { return }
         watchLayout()
@@ -48,6 +51,7 @@ final class DockLock {
     /// 打开时重新记一次 Dock 在哪块屏。
     func relock() {
         UserDefaults.standard.removeObject(forKey: Self.displayKey)
+        UserDefaults.standard.removeObject(forKey: Self.displayUUIDKey)
         apply()
     }
 
@@ -58,8 +62,16 @@ final class DockLock {
               dockAtBottom else { return }
         let screens = NSScreen.screens
         guard screens.count > 1 else { return }
-        let lockedID = CGDirectDisplayID(UserDefaults.standard.integer(forKey: Self.displayKey))
-        guard let locked = screens.first(where: { Self.displayID($0) == lockedID }) else { return }
+        let stored = UserDefaults.standard.object(forKey: Self.displayKey) as? Int
+        guard let lockedID = DisplayKeyResolver.resolve(
+                storedUUID: UserDefaults.standard.string(forKey: Self.displayUUIDKey),
+                storedID: stored.flatMap { UInt32(exactly: $0) },
+                among: screens.map { DisplayKeyResolver.Display(id: Self.displayID($0), uuid: Self.displayUUID(Self.displayID($0))) }),
+              let locked = screens.first(where: { Self.displayID($0) == lockedID }) else { return }
+        // 旧设置只存了编号：这次按编号认出来了，把 UUID 补上，以后按 UUID 认（规格 R27 的迁移）。
+        if UserDefaults.standard.string(forKey: Self.displayUUIDKey) == nil, let uuid = Self.displayUUID(lockedID) {
+            UserDefaults.standard.set(uuid, forKey: Self.displayUUIDKey)
+        }
         guard DockLockRule.shouldNudge(point, screens: screens.map(\.frame), locked: locked.frame),
               let screen = screens.first(where: { $0.frame.minX <= point.x && point.x < $0.frame.maxX
                   && abs(point.y - $0.frame.minY) < 2 }) else { return }
@@ -106,6 +118,11 @@ final class DockLock {
     /// Dock 现在在哪块屏：底下让出了地方的那块（Dock 自动隐藏时拿不准，就用主屏）。
     static func dockScreen() -> NSScreen? {
         NSScreen.screens.first { $0.visibleFrame.minY > $0.frame.minY + 1 } ?? NSScreen.screens.first
+    }
+
+    static func displayUUID(_ id: CGDirectDisplayID) -> String? {
+        guard let uuid = CGDisplayCreateUUIDFromDisplayID(id)?.takeRetainedValue() else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String?
     }
 
     static func displayID(_ screen: NSScreen) -> CGDirectDisplayID {

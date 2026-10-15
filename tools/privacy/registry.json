@@ -7191,6 +7191,69 @@
    "symbol": "osascript",
    "source": "process.executableURL = URL(fileURLWithPath: \"/usr/bin/osascript\")",
    "signal": "music"
+  },
+  {
+   "path": "prototype/App/GestureProbe.swift",
+   "line": 1226,
+   "symbol": "UserDefaults",
+   "source": "let storedDockClick = UserDefaults.standard.object(forKey: DockClickHide.key)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/GestureProbe.swift",
+   "line": 1229,
+   "symbol": "UserDefaults",
+   "source": "if let storedDockClick { UserDefaults.standard.set(storedDockClick, forKey: DockClickHide.key) }",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/GestureProbe.swift",
+   "line": 1230,
+   "symbol": "UserDefaults",
+   "source": "else { UserDefaults.standard.removeObject(forKey: DockClickHide.key) }",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/DockLock.swift",
+   "line": 40,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.set(Self.displayUUID(Self.displayID(screen)), forKey: Self.displayUUIDKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/DockLock.swift",
+   "line": 54,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.removeObject(forKey: Self.displayUUIDKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/DockLock.swift",
+   "line": 65,
+   "symbol": "UserDefaults",
+   "source": "let stored = UserDefaults.standard.object(forKey: Self.displayKey) as? Int",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/DockLock.swift",
+   "line": 67,
+   "symbol": "UserDefaults",
+   "source": "storedUUID: UserDefaults.standard.string(forKey: Self.displayUUIDKey),",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/DockLock.swift",
+   "line": 72,
+   "symbol": "UserDefaults",
+   "source": "if UserDefaults.standard.string(forKey: Self.displayUUIDKey) == nil, let uuid = Self.displayUUID(lockedID) {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/DockLock.swift",
+   "line": 73,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.set(uuid, forKey: Self.displayUUIDKey)",
+   "signal": "settings"
   }
  ],
  "groups": [
