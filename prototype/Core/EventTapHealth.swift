@@ -91,6 +91,7 @@ final class EventTapHealth: Sendable {
         for entry in result.reenable { CGEvent.tapEnable(tap: entry.port, enable: true) }
         if !result.dropped.isEmpty {
             wlog("event-tap-health: \(reason) dropped invalid taps \(result.dropped)")
+            SystemLog.input.error("\(reason, privacy: .public) dropped invalid taps \(result.dropped.joined(separator: ","), privacy: .public)")
         }
         return result.reenable.map(\.label)
     }
