@@ -68,8 +68,10 @@
 
 **第九批（2026-10-16）**：R11 核过 ✅（原本就读工具栏）、R22 ✅、R41 ✅、N4 ✅（含一处修补）；R18 核过、结论与规格相反（开关挡不住平铺），剩一次按键验证待 Aaron。
 
+**第十批（2026-10-16）**：R48 ✅（修了「文件夹开着时打字吞第一个字」）、E6 ✅；R20 部分（强杀与多实例过，orderOut 关窗在开着的面板里会留卡，18 类没凑齐）；M3 起步。
+
 **到这里停下：剩下的都要 Aaron（2026-10-15 盘点）**
-- **要解锁屏幕跑界面探针**（R3 测完后屏幕锁着）：H2（`--fold-timing` 前后对比）、N3（关键路径签名区间）、R46（面板用过再关之后）、V8、E3、E6，以及 R9／R20／R21／R23／R48／R49 的复现与验收（R6／R10／R32 第八批、R11／R22／R41 第九批已做完）。
+- **要解锁屏幕跑界面探针**（R3 测完后屏幕锁着）：H2（`--fold-timing` 前后对比）、N3（关键路径签名区间）、R46（面板用过再关之后）、V8、E3、E6，以及 R9／R20（余项）／R21／R23／R49 的复现与验收（R6／R10／R32 第八批、R11／R22／R41 第九批已做完）。
 - **要改系统设置，我不能代做**：R2、R29（收回权限）、R19／V10（台前调度）、R30（桌面排列开关）、V11（显示缩放）。
 - **要真手**：V1、V5、V6、R25、R18（启动台开着按 fn＋Control＋←）；整机睡眠（R3 只测了屏幕睡醒）。
 - **要本人点同意**：C3 摄像头（这个签名还没被问过授权）。
@@ -653,6 +655,7 @@
 - **改动**：把 OmniWM 的 18 个夹具**当验收清单**逐条过；缺哪类规则补哪类。**这是「窗口浏览」那一格的地基**——分类错了，上面的动作全错。
 - **验收**：18 个夹具各自的期望分类与我们的实际一致；`kill -9` 一个 App 后条目不残留；两个终端实例并存时关一个不影响另一个。
 - **风险**：误判比不判更糟（DockDoor 那条「Office/Chrome Web App 切视图会先关再开窗口」会导致**误退出 App**）——所以「确认没窗口了」这一步必须要收口。
+- **部分（2026-10-16，877ca09）**：`--browser-identity`（签名构建）：同一 App 两个实例都列出来后 `kill -9` 第二份，1.1 秒内条目全清、第一份不动 ✅（窗口浏览按进程号记账，退出通知到了整组清；迟到的旧结果按「是不是同一个 App 实例」丢掉）。**发现**：App 用 orderOut「关窗」（不销毁）时，**开着的面板里那张卡还在，重开面板才消失**——没改，等定要不要在面板开着时重新问。`--window-census` 只读普查本机全部辅助功能窗口：当时 17 扇，收进的 8 扇都是真窗口，排除的 9 扇是菜单栏条、通知中心小组件、一个无标题无关闭按钮的 Freeform 对话框，没有误收漏收。**还没做**：OmniWM 那 18 类没凑齐（PiP、Chrome 弹出条、别的刘海 App 浮层、锁屏遮蔽、Word 搜索条要那些 App 当场开着）；按我们的过滤（只收 AX 窗口角色、普通层、非桌面小组件）推，PiP／刘海浮层／锁屏遮蔽在高层会被排除，Chrome 与 Word 的普通层无标题条目最可能被误收，要拿真 App 验。
 
 #### R21 · 退出策略按 App 分类
 - **依据**：**一对相反的需求**——Wins 3.2「**IM 应用在关闭最后一个窗口后将不会自动退出**，而是保持后台运行」；WindowMizer「**Single-window apps now quit** when closing the placeholder – if that's what they normally do（Ex: App Store, Calculator）」。
@@ -996,6 +999,7 @@
 - **改动**：三条各验一次（重启后的设置窗口／冷门 App 是否都在／文件夹开着能不能搜）。
 - **验收**：三条各一条记录。
 - **风险**：低。**F4 那条只在我们引入可配置触发键时才有意义**——当前先记着。
+- **✅ 2026-10-16（aefc2b4）**：（1）没有任何设置需要重启 App（设置相关代码里唯一的 exit 是关侧拉），不适用。（2）`--launchpad-census` 对照 Spotlight 同几个目录下的 App：201 个一致，差的 7 个都有原因（别的 App 包里的辅助程序、旧备份里的、两个标了只在后台运行的）。（3）**修了一个真问题**：文件夹开着时打字，第一个字被吞（打「jsj」搜成「sj」，第一个结果是「书籍」）——关文件夹时又把键盘交给正在编辑的搜索框一次，系统会全选已打的字。修后 `--launchpad-keys` 18 项全 PASS。
 
 #### R49 · 第三方 App 预览不出来（逐 App 例外表的实战入口）
 - **依据**：Wins 3.1.1「修复 **ToDesk、QQ 音乐**等第三方应用无法正常预览窗口的问题」——**这正落在 R8 那张 41 项名单上**。
@@ -1088,7 +1092,7 @@
 | **E3** | **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 |
 | **E4** | **✅ 2026-10-15（bf73aad）**：两处都设了 10% 容差；窗口浏览那个只在面板开着时跑，**不是常驻**。原文：**补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
 | **E5** | **✅ 2026-10-15**：排队中的请求本来就能取消（每个任务开跑前 `demand.execution.begin()`，过时就跳过；每个 App 只一个在途）。真正的缺口是窗口浏览没接熔断：现在问之前看 `AXStallBreaker`，开着就报失败（旧条目保留、标待刷新），问完把耗时记进熔断——卡住的 App 之后 4 秒内收起、救援、窗口浏览都直接跳过它。原文：**AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
-| **E6** | 核 Ice 那两条：**切 App 时菜单栏面 CPU**、**长时间空闲后第一次操作的迟滞** | 各一条探针 |
+| **E6** | **✅ 2026-10-16（877ca09）**：签名构建：`--switch-cpu` 两个 App 之间切 20 次，我们比静置多花的 CPU ≈ 0（静置 8 秒 48.9 ms，切换期间 29.3 ms）；`--idle-first-op` 静置 5 分钟后第一次收起，卷帘条 448 ms，暖的中位数 442 ms（+6 ms）。原文：核 Ice 那两条：**切 App 时菜单栏面 CPU**、**长时间空闲后第一次操作的迟滞** | 各一条探针 |
 
 **H 系列 · Apple 芯片**
 
@@ -1123,7 +1127,7 @@
 | --- | --- | --- |
 | **M1** | **时间基准**：`ProcessInfo.systemUptime`（**108 处**）与 `CFAbsoluteTimeGetCurrent`（**88 处**）换成 `ContinuousClock`／`Instant`／`Duration`。**一石二鸟：`systemUptime` 是 required-reason API，换掉之后 N5 的申明范围直接变小。**语义要点：两者都单调，**别换成 `Date()`**（会因用户改系统时间而跳）。最密的几处：`App/NotchActivityController.swift` 23、`App/HabitContext.swift` 12、`App/Notch.swift` 7 | 行为不变（探针回归）；`systemUptime` 归零后 N5 去掉 BootTime 一类 |
 | **M2** | **✅ 2026-10-15（c66967d）**：325 处全改，309 处字面量逐对核过纳秒数相等。**更正写法**：必须写 `Task.sleep(for: …, clock: .suspending)`——旧写法按开机时间计时（睡着不走），默认的 `ContinuousClock` 睡着也走，直接换会让跨过睡眠的等待在醒来那刻立刻结束。原文：**`Task.sleep(nanoseconds:)` → `Task.sleep(for: .milliseconds(…))`**（**325 处**）。现写法要人肉数零（**数错一个零就是十倍差**）且负数直接崩；`Duration` 类型安全。**按文件分批，每批跑一次 `--check`** | `nanoseconds:` 归零；行为不变 |
-| **M3** | **同步原语小步迁移**（`NSLock` 66 ＋ `os_unfair_lock` 31）。**新代码一律 `Mutex`／`@MainActor`，不新增旧锁**；旧代码**从「一个 `Mutex` 包一个值、无嵌套加锁」的文件开始**，有嵌套或跨对象不变量的先不动。`DispatchSemaphore`（14 处）**不是换 `Mutex`，是换 `withCheckedContinuation`／`AsyncStream`** | 每个迁移的文件能去掉 `@unchecked Sendable` 就去掉（去不掉要写明理由）；探针全跑 |
+| **M3** | **起步（2026-10-16，d4c00f4）**：本轮新写的 `MaintenanceTimer` 用的 NSLock 换成 OSAllocatedUnfairLock；旧代码未动。原文：**同步原语小步迁移**（`NSLock` 66 ＋ `os_unfair_lock` 31）。**新代码一律 `Mutex`／`@MainActor`，不新增旧锁**；旧代码**从「一个 `Mutex` 包一个值、无嵌套加锁」的文件开始**，有嵌套或跨对象不变量的先不动。`DispatchSemaphore`（14 处）**不是换 `Mutex`，是换 `withCheckedContinuation`／`AsyncStream`** | 每个迁移的文件能去掉 `@unchecked Sendable` 就去掉（去不掉要写明理由）；探针全跑 |
 | **M4** | **✅ 2026-10-15 评估完：现在不走**。用与门禁完全相同的参数（`-O -whole-module-optimization -strict-concurrency=complete -warnings-as-errors`）只加 `-default-isolation MainActor` 编一次：**330 个错误**，App/ 218、根目录 38、Recovery 23、WindowBrowser 21；最多的文件是 NotchShelf 28、WindowShade 22、Rescue 16。八成是「在非隔离上下文里调用主线程的函数」——正是刻意放到后台队列的 AX／程序坞工具／像素分析路径，要把约 150 个辅助函数逐个标 `nonisolated`，等于动一遍线程模型，而现有代码已在最严格检查下零警告。（`-typecheck` 快查模式下基线就有 127 条警告，与门禁不等价，那组数不能用。）原文：**评估 `-default-isolation MainActor`**（SE-0466）：**先在一个分支上打开，把编译错误数出来**，再判断值不值得。这条的产出是**一个数字和一个判断**，不是一次重构 | 一份结论：错误数、集中在哪些文件、是否值得走 |
 | **M5** | **`Span`／`RawSpan` 用在像素路径**（`Capture/PreviewRenderer.swift:104/187/193`）。**与 H1 联动：H1 先定走 Metal 还是 vImage，再决定 M5 要不要做**（走 vImage 就不需要） | 与 H1 一起验收 |
 | **M6** | **2026-10-15 核过，不改**：`DateFormatter`（10 处）与 `NSRegularExpression` 都没被 Apple 标为过时，日志时间戳是写死格式加 `en_US_POSIX`，换 `FormatStyle` 只有风险没有收益——按本节「不该做的」第一条结案。原文：**`NSRegularExpression`（1 处，`Core/CalendarActivity.swift:186`；Swift `Regex` 0 处）与 `FormatStyle`（`DateFormatter` 10 处）**。**注意**：`Support/Diagnostics.swift` 那个日志时间戳显式钉了 `en_US_POSIX`，换 `FormatStyle` 时要保留这个 locale 语义（否则某些区域会变） | 行为不变，尤其日志时间戳格式在非中文区域也不变 |
