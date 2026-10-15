@@ -9,4 +9,10 @@ enum SystemLog {
     static let lifecycle = Logger(subsystem: subsystem, category: "lifecycle")
     static let permissions = Logger(subsystem: subsystem, category: "permissions")
     static let input = Logger(subsystem: subsystem, category: "input")
+
+    /// 关键路径的区间标记（规格 N3）：Instruments 的 os_signpost 轨道、或
+    /// `log stream --signpost --predicate 'subsystem == "com.windowshade.prototype"'` 看得到。
+    /// 收起：从开始到收尾（成功或放弃）；窗口浏览：从输入到达到面板关上，中间每个阶段一个事件。
+    static let foldSignposter = OSSignposter(subsystem: subsystem, category: "fold")
+    static let windowBrowserSignposter = OSSignposter(subsystem: subsystem, category: "window-browser")
 }

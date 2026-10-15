@@ -14,6 +14,7 @@
 // 编译与运行见 prototype/build.sh（自动收集源文件，签名身份走环境变量）。
 
 import Cocoa
+import os
 import Carbon.HIToolbox
 import ApplicationServices
 import ScreenCaptureKit
@@ -182,6 +183,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 睡醒后的三档恢复（规格 R3），见 startWakeRecovery()。
     private var wakeRecoveryObservers: [NSObjectProtocol] = []
     private var wakeRecoveryWork: [DispatchWorkItem] = []
+    /// 收起的区间标记（规格 N3）：按窗口号存，在 settleFoldWaiters 里结束。
+    var foldSignposts: [CGWindowID: OSSignpostIntervalState] = [:]
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
     var axReadGate = AXReadGate<pid_t, [WS2FoldCallbackStamp]>()

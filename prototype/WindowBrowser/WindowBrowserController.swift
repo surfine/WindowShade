@@ -5,6 +5,7 @@
 // 走 discoveryQueue / metadataQueue；系统截图与截屏流走各自现成的异步路径。
 
 import Cocoa
+import os
 import ApplicationServices
 import ScreenCaptureKit
 
@@ -208,7 +209,13 @@ final class WindowBrowserController: NSObject {
     private var didMarkFirstThumbnail = false
     private var didMarkLiveFirstFrame = false
 
+    /// 规格 N3：一次面板会话一个区间（输入到达 → 面板关上），各阶段打事件。
+    private var browserSignpost: OSSignpostIntervalState?
+
     private func markInputArrival(_ source: String) {
+        if let browserSignpost { SystemLog.windowBrowserSignposter.endInterval("session", browserSignpost, "superseded") }
+        browserSignpost = SystemLog.windowBrowserSignposter.beginInterval(
+            "session", id: SystemLog.windowBrowserSignposter.makeSignpostID(), "source=\(source, privacy: .public)")
         perfSessionID &+= 1
         perfMarks.removeAll()
         perfMarks["input-\(source)"] = CFAbsoluteTimeGetCurrent()
@@ -221,6 +228,7 @@ final class WindowBrowserController: NSObject {
     /// 记录阶段并输出相对“输入到达”的耗时，便于区分端到端与扣除意图延迟后的处理时间。
     private func mark(_ stage: String) {
         let now = CFAbsoluteTimeGetCurrent()
+        SystemLog.windowBrowserSignposter.emitEvent("stage", "\(stage, privacy: .public)")
         perfMarks[stage] = now
         let base = perfMarks.first(where: { $0.key.hasPrefix("input-") })?.value ?? now
         wlog(String(format: "perf: %@ +%.1fms session=%llu", stage,
@@ -2581,6 +2589,10 @@ final class WindowBrowserController: NSObject {
     }
 
     private func closePanel(reason: String) {
+        if let browserSignpost {
+            SystemLog.windowBrowserSignposter.endInterval("session", browserSignpost, "closed \(reason, privacy: .public)")
+            self.browserSignpost = nil
+        }
         dispatchPrecondition(condition: .onQueue(.main))
         if menuTracking.requestClose(reason: reason) {
             // 菜单跟踪使用嵌套事件循环：此时释放面板可能带走菜单锚点视图。

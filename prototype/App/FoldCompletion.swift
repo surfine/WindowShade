@@ -1,5 +1,6 @@
 #if canImport(Cocoa)
 import Cocoa
+import os
 #else
 import Foundation
 #endif
@@ -40,6 +41,9 @@ import Foundation
     }
 
     func settleFoldWaiters(id: CGWindowID, tokens: [UUID], success: Bool) {
+        if let signpost = foldSignposts.removeValue(forKey: id) {
+            SystemLog.foldSignposter.endInterval("fold", signpost, "\(success ? "folded" : "abandoned", privacy: .public)")
+        }
         guard var waiting = foldWaiters[id] else { return }
         var callbacks: [(callback: (Bool) -> Void, stamp: WS2FoldCallbackStamp?)] = []
         for token in tokens {
