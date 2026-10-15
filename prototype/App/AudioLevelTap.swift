@@ -28,7 +28,7 @@ enum AudioCaptureAccess {
 
     /// 现在有没有授权。不弹窗；要跨进程问一次系统，别在每帧里调。
     static func current() -> AudioCapturePermission {
-        guard #available(macOS 14.2, *), let raw = symbol("TCCAccessPreflight") else { return .unavailable }
+        guard let raw = symbol("TCCAccessPreflight") else { return .unavailable }
         let preflight = unsafeBitCast(raw, to: Preflight.self)
         switch preflight(service as CFString, nil) {
         case 0: return .granted
@@ -39,7 +39,7 @@ enum AudioCaptureAccess {
 
     /// 请系统弹窗问一次。回调在任意线程上；没有这个接口时直接回 false。
     static func request(_ done: @escaping @Sendable (Bool) -> Void) {
-        guard #available(macOS 14.2, *), let raw = symbol("TCCAccessRequest") else { done(false); return }
+        guard let raw = symbol("TCCAccessRequest") else { done(false); return }
         let request = unsafeBitCast(raw, to: Request.self)
         request(service as CFString, nil) { granted in done(granted) }
     }
@@ -189,7 +189,6 @@ private final class AudioLevelSink: @unchecked Sendable {
 }
 
 /// CoreAudio 进程 tap + 私有聚合设备。建、拆都在 control 队列上；样本在 io 队列上（CoreAudio 同步派发）。
-@available(macOS 14.2, *)
 final class AudioProcessTap: AudioLevelTapping, @unchecked Sendable {
     private let control = DispatchQueue(label: "com.windowshade.audio-levels.control", qos: .utility)
     private let io = DispatchQueue(label: "com.windowshade.audio-levels.io", qos: .userInitiated)
@@ -379,8 +378,7 @@ final class AudioLevelController {
 
     nonisolated static func systemTap(deliver: @escaping @Sendable ([Double]) -> Void,
                                       failed: @escaping @Sendable () -> Void) -> AudioLevelTapping? {
-        guard #available(macOS 14.2, *) else { return nil }
-        return AudioProcessTap(deliver: deliver, failed: failed)
+        AudioProcessTap(deliver: deliver, failed: failed)
     }
 
     var followSound: Bool { defaults.bool(forKey: Self.enabledKey) }

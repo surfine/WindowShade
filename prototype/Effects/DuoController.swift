@@ -370,8 +370,8 @@ final class DuoController: NSObject {
         session = effect
         // Allocate the window number before enumeration; otherwise SCK cannot exclude it.
         let windowID = CGWindowID(effect.panel.windowNumber)
-        // 第二次只需要本进程的窗口：14.4+ 用 currentProcess（含已 orderOut 的面板，不碰别的 App 的窗口），
-        // 14.0–14.3 或拿不到可用的过滤器时仍走完整枚举。
+        // 第二次只需要本进程的窗口：用 currentProcess（含已 orderOut 的面板，不碰别的 App 的窗口），
+        // 拿不到可用的过滤器时仍走完整枚举。
         var refreshed = try await OwnWindowContent.fetch()
         var filter = Self.desktopFilter(
           display: display, content: refreshed, effectWindowID: windowID)
@@ -541,8 +541,8 @@ final class DuoController: NSObject {
 }
 
 /// 只要本进程自己的窗口时的 ScreenCaptureKit 枚举。
-/// macOS 14.4+ 的 `currentProcess` 只带本进程的窗口（实测含已 orderOut 的面板，且不含别的 App 的窗口，
-/// 也不需要全系统枚举的几百毫秒），显示器和本应用条目也都在；更早的系统退回完整枚举。
+/// `currentProcess` 只带本进程的窗口（实测含已 orderOut 的面板，且不含别的 App 的窗口，
+/// 也不需要全系统枚举的几百毫秒），显示器和本应用条目也都在；取不到时退回完整枚举。
 enum OwnWindowContent {
   struct Fetched {
     let content: SCShareableContent
@@ -551,7 +551,7 @@ enum OwnWindowContent {
   }
 
   static func fetch() async throws -> Fetched {
-    if #available(macOS 14.4, *), let own = try? await SCShareableContent.currentProcess {
+    if let own = try? await SCShareableContent.currentProcess {
       return Fetched(content: own, isCurrentProcessOnly: true)
     }
     return Fetched(
@@ -563,7 +563,7 @@ enum OwnWindowContent {
   @MainActor
   static func content(requiring ids: Set<CGWindowID>) async throws -> SCShareableContent {
     let wanted = ids.filter { $0 != 0 }
-    if #available(macOS 14.4, *), !wanted.isEmpty,
+    if !wanted.isEmpty,
       wanted.allSatisfy({ NSApp.window(withWindowNumber: Int($0)) != nil }),
       let own = try? await SCShareableContent.currentProcess,
       wanted.allSatisfy({ id in own.windows.contains { $0.windowID == id } })

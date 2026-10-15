@@ -14,7 +14,6 @@ private struct ShareableSnapshot: @unchecked Sendable {
     let content: SCShareableContent
 }
 
-@available(macOS 14.0, *)
 @MainActor
 final class ShareableContentCache {
     static let shared = ShareableContentCache()

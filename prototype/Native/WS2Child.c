@@ -70,7 +70,7 @@ int ws2_child_spawn(const char *executable, char *const argv[], char *const envp
     if ((error = posix_spawnattr_init(&attrs))) goto fail;
     attrs_ready = 1;
     // Never change the app's global cwd. macOS 26 起 _np 版本被弃用、正式名字要求 26+：
-    // 部署目标是 14，所以运行时用 @available 选路，旧路用 pragma 明确接受弃用（否则 -Werror 会挡）。
+    // 部署目标是 15，所以运行时用 @available 选路，旧路用 pragma 明确接受弃用（否则 -Werror 会挡）。
 #if defined(__APPLE__)
     // 纯 C 用 __builtin_available（@available 只在 ObjC 里可用）。
     if (__builtin_available(macOS 26.0, *)) {

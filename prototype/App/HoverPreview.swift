@@ -177,7 +177,6 @@ extension AppDelegate {
 
     func requestCachedPreview(_ id: CGWindowID, reason: String,
                                       completion: @escaping () -> Void) {
-        guard #available(macOS 14.0, *) else { return }
         guard !previewCapturePendingIDs.contains(id),
               let state = shaded[id] else { return }
         previewCapturePendingIDs.insert(id)

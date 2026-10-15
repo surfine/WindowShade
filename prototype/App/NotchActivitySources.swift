@@ -462,7 +462,7 @@ final class NotchActivitySources {
             audioCache.store(airPods)
             result.append(contentsOf: airPods)
         }
-        if #available(macOS 14.2, *), voiceMemos {
+        if voiceMemos {
             var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyProcessObjectList,
                 mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
             var size: UInt32 = 0

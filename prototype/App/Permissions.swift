@@ -9,10 +9,7 @@ func hasAccessibilityPermission() -> Bool {
 }
 
 func hasScreenRecordingPermission() -> Bool {
-    if #available(macOS 10.15, *) {
-        return CGPreflightScreenCaptureAccess()
-    }
-    return true
+    CGPreflightScreenCaptureAccess()
 }
 
 /// 打开“系统设置”的隐私面板。

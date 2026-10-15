@@ -434,8 +434,7 @@ final class PinnedPreviewController {
             guard let self else { return }
             do {
                 let content: SCShareableContent
-                if #available(macOS 14.0, *),
-                   let cached = await ShareableContentCache.shared.content(requiring: id) {
+                if let cached = await ShareableContentCache.shared.content(requiring: id) {
                     content = cached
                 } else {
                     content = try await ShareableContentLoader.current()
@@ -955,9 +954,9 @@ final class PinnedPreviewController {
             guard let self else { return }
             do {
                 // 折叠/预热之后紧接着置顶，多数情况下 ShareableContentCache 已经是热的，
-                // 走它省掉一次全系统枚举；缓存未命中或系统低于 14 时退回原始直接调用。
+                // 走它省掉一次全系统枚举；缓存未命中时退回原始直接调用。
                 let content: SCShareableContent
-                if #available(macOS 14.0, *), let cached = await ShareableContentCache.shared.content(requiring: id) {
+                if let cached = await ShareableContentCache.shared.content(requiring: id) {
                     content = cached
                 } else {
                     content = try await ShareableContentLoader.current()
