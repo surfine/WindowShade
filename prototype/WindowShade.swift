@@ -1017,16 +1017,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             CGEvent.tapEnable(tap: tap, enable: true)
             wlog("environment: event tap was disabled silently, re-enabled (count=\(tapSilentStops))")
         }
-        // 二、权限还在吗。从「有」变「无」要留下痕迹：此刻所有窗口动作都还在跑，
-        // 但没有一件能生效，且不报错——这种「静默失灵」是最难排查的一类。
-        // （WindowMizer 的更新史里专门有一条：运行时关掉辅助功能要弹提示。用户可见的
-        // 那一句要走本地化文案，列在 docs/product-reshape.md 第 2 条，此处先记状态。）
+        // 二、权限还在吗。从「有」变「无」时所有窗口动作都还在跑，但没有一件能生效，且不报错——
+        // 这种「静默失灵」最难排查，所以要告诉人（规格 R2，对照 WindowMizer 的同一条）。
+        // 只在状态变化的那一拍说一次：刘海能说就在刘海说，点一下去授权；说不了就退回菜单栏标题。
+        // 菜单顶上另有一行「打开辅助功能…」，权限回来之前一直在（MenuBarController 的动态行）。
         let trusted = AXIsProcessTrusted()
         if lastAccessibilityTrusted, !trusted {
-            wlog("environment: accessibility permission was revoked, window actions will no longer take effect")
+            quietNotice(WSL10n.text("notice.accessibility.revoked", zh: "辅助功能被关掉了，收起和移动窗口暂时不生效"),
+                        kind: .needsPermission,
+                        log: "environment: accessibility permission was revoked, window actions will no longer take effect")
+            rebuildMenu()
         } else if !lastAccessibilityTrusted, trusted {
-            wlog("environment: accessibility permission is back")
             if eventTap == nil { _ = setupEventTap() }
+            quietNotice(WSL10n.text("notice.accessibility.back", zh: "辅助功能打开了，收起和移动窗口恢复了"),
+                        kind: .done, log: "environment: accessibility permission is back")
+            rebuildMenu()
         }
         lastAccessibilityTrusted = trusted
     }

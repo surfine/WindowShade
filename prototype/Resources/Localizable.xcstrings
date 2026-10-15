@@ -17849,6 +17849,52 @@
         }
       }
     },
+    "menu.accessibilityOff" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn On Accessibility…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开辅助功能…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟輔助使用…"
+          }
+        }
+      }
+    },
+    "menu.accessibilityOff.help" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility is off, so rolling up and moving windows won’t work"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "辅助功能没开，收起和移动窗口不会生效"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助使用沒開，收起和移動視窗不會生效"
+          }
+        }
+      }
+    },
     "menu.arrange" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -21939,6 +21985,52 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "收成縮圖的視窗"
+          }
+        }
+      }
+    },
+    "notice.accessibility.back" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility is on again, so rolling up and moving windows works again"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "辅助功能打开了，收起和移动窗口恢复了"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助使用開啟了，收起和移動視窗恢復了"
+          }
+        }
+      }
+    },
+    "notice.accessibility.revoked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility was turned off, so rolling up and moving windows won’t work for now"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "辅助功能被关掉了，收起和移动窗口暂时不生效"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "輔助使用被關掉了，收起和移動視窗暫時不會生效"
           }
         }
       }

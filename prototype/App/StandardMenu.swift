@@ -212,6 +212,8 @@ enum StatusMenuLayout {
     static let focusRowID = "ws.menu.dynamic.focus"
     static let codingRowID = "ws.menu.dynamic.coding"
     static let pinnedRowID = "ws.menu.dynamic.pinned"
+    /// 辅助功能没开时最上面那一行（规格 R2）。
+    static let accessibilityRowID = "ws.menu.dynamic.accessibility"
     /// “整理▸”里的卷轴概览（子菜单项，不算顶层 9 项）。
     static let stripOverviewRowID = "ws.menu.arrange.stripOverview"
 
@@ -256,8 +258,10 @@ enum StatusMenuLayout {
 
     /// 动态行：番茄钟进行中一行，编程会话每个等你的会话一行；都没有就一行也没有。
     /// 有置顶窗口时再加一行「置顶的窗口（N）▸」。
-    static func dynamicRowIDs(focusActive: Bool, waitingCodingSessions: Int, pinnedCount: Int = 0) -> [String] {
-        (focusActive ? [focusRowID] : []) + Array(repeating: codingRowID, count: max(0, waitingCodingSessions))
+    static func dynamicRowIDs(focusActive: Bool, waitingCodingSessions: Int, pinnedCount: Int = 0,
+                              accessibilityOff: Bool = false) -> [String] {
+        (accessibilityOff ? [accessibilityRowID] : [])
+            + (focusActive ? [focusRowID] : []) + Array(repeating: codingRowID, count: max(0, waitingCodingSessions))
             + (pinnedCount > 0 ? [pinnedRowID] : [])
     }
 
