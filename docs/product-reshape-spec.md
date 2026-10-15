@@ -56,7 +56,7 @@
 
 **第二批（2026-10-15 已做）**：R3 ✅（a60c1da）；R4 核实为不用改（ce2d9a3）；R29 代码核对完、降级清单在 R29 条目里，真机 not_run；V1／V4／V5／V6 步骤已写好，等 Aaron 真机跑（V4 要先装 Rectangle，V6 要借鼠标）。
 
-**第三批（2026-10-15，Aaron 指定「不需要真机或本人验收的优先」）**：R43 ✅、R45 ✅（010775c）；R7 ✅（68825c8）；R47 ✅（5c2a0d1）；E4 ✅（bf73aad）；M2 ✅（c66967d）；M6 核过不改。全量 `--check` EXIT=0。**顺带发现**：`tests/run-duo-tests.sh`、`run-owned-codex-phase1.sh`、`run-remote-host-tests.sh` 在 HEAD 上就编不过（漏编 `WSL10n.swift` 等），这几支 runner 本身也不把编译失败当失败。
+**第三批（2026-10-15，Aaron 指定「不需要真机或本人验收的优先」）**：R43 ✅、R45 ✅（010775c）；R7 ✅（68825c8）；R47 ✅（5c2a0d1）；E4 ✅（bf73aad）；M2 ✅（c66967d）；M6 核过不改。全量 `--check` EXIT=0。**顺带发现**：`tests/run-duo-tests.sh`、`run-owned-codex-phase1.sh`、`run-remote-host-tests.sh` 在 HEAD 上就编不过（漏编 `WSL10n.swift` 等）。**已修**：补齐依赖（duo 与遥控接收端补 `WSL10n.swift`；owned-codex 补原生模块 `WS2ProcessNative`、`WireJSON.swift`、`WS2StrictJSON.swift`），duo 全 PASS、遥控 55 条断言 0 失败、owned-codex 只验到能编过（执行会真跑 codex、耗额度，留给 Aaron）。**更正**：先前说「这几支 runner 不把编译失败当失败」是我测错了——循环里的 `$?` 取到的是 `$(basename …)` 的结果；三支本来就会非零退出。
 
 **原排的下一版（这一批不清空就不开新项）**：**R3**（唤醒三档）、**R4**（原生标签页——窗口浏览落后 Wins 1 分的直接原因）、**R29**（录屏降级清单）、**V1／V4／V5／V6**（最便宜的四条真机证据）。
 

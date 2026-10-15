@@ -8,7 +8,7 @@ mkdir -p "$OUT/module-cache"
 P="$ROOT/prototype"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   -D WS2_REMOTE_HOST_TESTING -module-cache-path "$OUT/module-cache" \
-  "$P/Core/Contracts.swift" "$P/Core/PairingTLV.swift" "$P/Core/PairingAttemptWindow.swift" \
+  "$P/Core/Contracts.swift" "$P/Core/WSL10n.swift" "$P/Core/PairingTLV.swift" "$P/Core/PairingAttemptWindow.swift" \
   "$P/Core/WS2OPACK.swift" "$P/Core/WS2CompanionFrame.swift" "$P/Core/WS2BoundedOutbox.swift" \
   "$P/Core/WS2ConnectionBudget.swift" "$P/Core/CompanionHIDMap.swift" "$P/Core/RemoteMode.swift" \
   "$P/Core/ConductorSession.swift" "$P/Core/ConductorCapabilities.swift" "$P/Core/ConductorGesture.swift" \
