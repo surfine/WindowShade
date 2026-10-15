@@ -75,11 +75,11 @@ extension GlanceProbe {
     }
     setAXPosition(element, CGPoint(x: area.minX + 40, y: area.minY + 30))
     AXUIElementPerformAction(element, kAXRaiseAction as CFString)
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     try abortIfFocusLost("arranging")
     arranged = gestures.magicTile(main: id, element: element, announce: false)
     try await wait("strip on", timeout: 3) { strips.isActive }
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     try await wait("settled", timeout: 3) { strips.isSettledForProbe }
     guard let strip = strips.strip, let sliver = strip.slivers(gap: ArrangeGap.points).first(where: { $0.side == .right }) else {
       print("FAIL strip-peek: the strip has no column parked on the right")
@@ -110,10 +110,10 @@ extension GlanceProbe {
     // 路过：停不够就移开，不开。
     pointer = onSliver
     peek.pointerMoved()
-    try await Task.sleep(nanoseconds: 100_000_000)
+    try await Task.sleep(for: .milliseconds(100), clock: .suspending)
     pointer = away
     peek.pointerMoved()
-    try await Task.sleep(nanoseconds: 450_000_000)
+    try await Task.sleep(for: .milliseconds(450), clock: .suspending)
     print("\(peek.shownIDForProbe == nil && !peek.isPendingForProbe ? "PASS" : "FAIL") strip-peek: passing over the sliver without stopping opens nothing")
 
     guard hasScreenRecordingPermission() else {
@@ -136,7 +136,7 @@ extension GlanceProbe {
     } ?? "nothing (desktop in the gap)"
     pointer = onSliver
     peek.pointerMoved()
-    try await Task.sleep(nanoseconds: UInt64((StripPeek.dwell + 0.5) * 1_000_000_000))
+    try await Task.sleep(for: .seconds(StripPeek.dwell + 0.5), clock: .suspending)
     let openedForReal = peek.shownIDForProbe != nil
     print("INFO strip-peek: gap \(Int(ArrangeGap.points)) pt; on top at the sliver: \(topLabel); opened=\(openedForReal) refusal=\(peek.lastRefusal ?? "-")")
     if byOther {
@@ -148,7 +148,7 @@ extension GlanceProbe {
     }
     pointer = away
     peek.pointerMoved()
-    try await Task.sleep(nanoseconds: 250_000_000)
+    try await Task.sleep(for: .milliseconds(250), clock: .suspending)
     // 下面只按几何判断：临时 App 的几扇窗叠在一起，谁在上层不一定。
     peek.checksTopWindow = false
 
@@ -188,7 +188,7 @@ extension GlanceProbe {
     }
     peek.pointerMoved()
     let gone = (try? await wait("peek gone", timeout: 1.5) { peek.shownIDForProbe == nil }) != nil
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     print("\(gone && capture?.isRunning != true ? "PASS" : "FAIL") strip-peek: leaving the sliver, even onto the card, puts the card away and stops capturing")
 
     // 换桌面、切到别的 App：指针还在那一条上也收，流也停（不真的换桌面，走通知来了的那一步）。
@@ -199,7 +199,7 @@ extension GlanceProbe {
     let interrupted = peek.captureForProbe
     let wasOpen = peek.shownIDForProbe != nil
     peek.interruptForProbe("space changed (probe)")
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     print("\(wasOpen && peek.shownIDForProbe == nil && interrupted?.isRunning != true ? "PASS" : "FAIL") strip-peek: a space change or app switch puts the card away and stops capturing, pointer still on the sliver")
 
     // 在那一条上按下去：卡片立刻收；停靠的那扇拿到焦点（真点下去就是这样），卷轴把它整列滑出来，其间不再冒卡片。
@@ -218,7 +218,7 @@ extension GlanceProbe {
       strips.isSettledForProbe && strips.strip.flatMap { s in s.column(of: sliver.id).map { s.revealing($0) == s.offset } } == true
     }) != nil
     let stayedShut = peek.opens == opensBeforePress
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let onScreen = bounds(sliver.id).map { $0.maxX <= area.maxX + 3 && $0.minX >= area.minX - 3 } == true
     print("\(shutAtOnce && stayedShut && revealed && onScreen ? "PASS" : "FAIL") strip-peek: pressing on the sliver puts the card away at once, and the parked window, once focused, slides its column into view")
     pointer = away
@@ -227,7 +227,7 @@ extension GlanceProbe {
     try await exerciseOverhangingEdge(pid: pid, strips: strips, peek: peek)
 
     // 整批放回原处。
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     restore()
     let back = (try? await wait("strip ends", timeout: 5) { !strips.isActive }) != nil
     print("\(back ? "PASS" : "FAIL") strip-peek: one pinch puts every window back and ends the strip")
@@ -253,7 +253,7 @@ extension GlanceProbe {
       }
     }
     let inPlace = (try? await wait("windows in place before the overview", timeout: 3) { strips.isSettledForProbe && laidOut() }) != nil
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     // 露在屏幕上、临时 App 在最上面的那扇的标题栏上张开。
     let visibleIDs = strip.columns.indices.filter { strip.revealing($0) == strip.offset }.flatMap { strip.columns[$0].ids }
     let bar = visibleIDs.lazy.compactMap { id in self.bounds(id).map { CGPoint(x: $0.midX, y: $0.minY + 14) } }
@@ -269,7 +269,7 @@ extension GlanceProbe {
       gestures.magnify(phase: .began, delta: 0, location: bar, ownWindow: nil)
       for _ in 0..<10 {
         gestures.magnify(phase: .changed, delta: 0.035, location: bar, ownWindow: nil)
-        try await Task.sleep(nanoseconds: 8_000_000)
+        try await Task.sleep(for: .milliseconds(8), clock: .suspending)
       }
       gestures.magnify(phase: .ended, delta: 0, location: bar, ownWindow: nil)
       viaGesture = (try? await wait("overview via spread", timeout: 1.5) { strips.overview != nil }) != nil
@@ -283,7 +283,7 @@ extension GlanceProbe {
       return
     }
     // 机器忙时铺开、定位要一会儿才定下来；等它稳定再比。
-    try await Task.sleep(nanoseconds: 900_000_000)
+    try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     let listed = Set(overview.idsForProbe) == Set(strip.ids) && overview.columnsForProbe == strip.columns.count
     // 铺开的框对着“卷轴自己用的那块区域”比：概览是按 strip.area 摆的，契约是两者一致。
     // 卷轴的区域是建卷轴那一刻量的 visibleFrame；Dock 在这中间动过（放大、显示/隐藏）时，它和此刻的
@@ -312,7 +312,7 @@ extension GlanceProbe {
     let openAtEsc = strips.overview === overview
     overview.keyForProbe(53)
     let closed = (try? await wait("overview closed", timeout: 1.5) { strips.overview == nil }) != nil
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let moved = frames().compactMap { id, now -> String? in
       guard let was = settled[id] else { return "\(id) appeared" }
       return abs(was.minX - now.minX) < 1 && abs(was.minY - now.minY) < 1 ? nil
@@ -331,11 +331,11 @@ extension GlanceProbe {
       print("FAIL strip-peek: the overview did not open a second time")
       return
     }
-    try await Task.sleep(nanoseconds: 250_000_000)
+    try await Task.sleep(for: .milliseconds(250), clock: .suspending)
     again.pickForProbe(target)
-    try await Task.sleep(nanoseconds: 150_000_000)
+    try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     try await wait("picked column settles", timeout: 3) { strips.isSettledForProbe }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     let shown = strips.strip.map { $0.offset == $0.revealing(0) } == true
       && bounds(target).map { abs($0.minX - area.minX) <= 20 } == true
     print("\(shown && strips.overview == nil ? "PASS" : "FAIL") strip-peek: picking a window in the overview slides its column into view")
@@ -363,7 +363,7 @@ extension GlanceProbe {
     raiseAXWindow(element)
     focusAXWindow(element, pid: pid)
     // 对账每半秒一次：等它记下焦点换到了这扇（整列露着，不滑），再加宽第一列。
-    try await Task.sleep(nanoseconds: 800_000_000)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     guard strips.isSettledForProbe, strips.offsetForProbe == 0, strips.resize(first, wider: true), let wide = strips.strip,
           wide.overhanging(.right) == 1, let sliver = wide.slivers(gap: ArrangeGap.points).first(where: { $0.side == .right }) else {
       print("INFO strip-peek: widening the first column did not leave the second one running past the right edge (offset \(strips.offsetForProbe.map { "\(Int($0))" } ?? "-")); the overhanging-edge check was skipped")
@@ -388,10 +388,10 @@ extension GlanceProbe {
     func rest(at point: CGPoint) async throws -> Bool {
       pointer = away
       peek.pointerMoved()
-      try await Task.sleep(nanoseconds: 150_000_000)
+      try await Task.sleep(for: .milliseconds(150), clock: .suspending)
       pointer = NSPoint(x: point.x, y: coordinateBaselineY() - point.y)
       peek.pointerMoved()
-      try await Task.sleep(nanoseconds: UInt64((StripPeek.dwell + 0.5) * 1_000_000_000))
+      try await Task.sleep(for: .seconds(StripPeek.dwell + 0.5), clock: .suspending)
       return peek.shownIDForProbe == sliver.id
     }
     let openedInside = try await rest(at: inside)

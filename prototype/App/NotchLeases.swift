@@ -150,7 +150,7 @@ final class NotchLeaseHub {
         panel.setInteraction(content, animated: animated)
         panel.makeKeyAndOrderFront(nil)
         contentDeadline = Task { [weak self] in
-            do { try await Task.sleep(nanoseconds: 120 * WS2.Duration.second) } catch { return }
+            do { try await Task.sleep(for: .nanoseconds(120 * WS2.Duration.second), clock: .suspending) } catch { return }
             guard let self, self.contentHandle == lease else { return }
             _ = self.coordinator.snapshots(at: self.clock.now())
         }

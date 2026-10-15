@@ -871,7 +871,7 @@ final class WindowStreamPathProbe {
             let framesBeforeMirrorRelease = capture.deliveredFrameCount
             let mirroredBeforeRelease = capture.mirroredFrameCount
             capture.mirrorLayer = nil
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            try? await Task.sleep(for: .milliseconds(500), clock: .suspending)
             print("stream-probe: afterMirrorRelease running=\(capture.isRunning) "
                   + "mirrorFrames=\(mirroredBeforeRelease)->\(capture.mirroredFrameCount) "
                   + "frames=\(framesBeforeMirrorRelease)->\(capture.deliveredFrameCount)")
@@ -882,7 +882,7 @@ final class WindowStreamPathProbe {
             }
             let errorText = stopError.map { "\($0)" } ?? "none"
             let framesAfterStop = capture.deliveredFrameCount
-            try? await Task.sleep(nanoseconds: 600_000_000)
+            try? await Task.sleep(for: .milliseconds(600), clock: .suspending)
             let stable = framesAfterStop == capture.deliveredFrameCount
             print("stream-probe: stopError=\(errorText) "
                   + "framesAfterStop=\(framesAfterStop) "
@@ -910,12 +910,12 @@ final class WindowStreamPathProbe {
                 firstFrameMS = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
                 break
             }
-            try? await Task.sleep(nanoseconds: 50_000_000)
+            try? await Task.sleep(for: .milliseconds(50), clock: .suspending)
         }
         guard let firstFrameMS else { return nil }
         let countAtMark = capture.deliveredFrameCount
         let mark = CFAbsoluteTimeGetCurrent()
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        try? await Task.sleep(for: .seconds(1), clock: .suspending)
         let elapsed = max(0.001, CFAbsoluteTimeGetCurrent() - mark)
         let frames = capture.deliveredFrameCount - countAtMark
         return (firstFrameMS, frames, Int(elapsed * 1000))

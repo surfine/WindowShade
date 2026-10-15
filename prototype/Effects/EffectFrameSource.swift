@@ -223,7 +223,7 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
     return await EffectFrameAwaiter<EffectFrame>.first(
       timeout: timeout, now: CACurrentMediaTime,
       isCurrent: { self.lock.withLock { self.slot.accepts(generation) } }, latest: { self.frame() },
-      pause: { try? await Task.sleep(nanoseconds: 8_000_000) })
+      pause: { try? await Task.sleep(for: .milliseconds(8), clock: .suspending) })
   }
 
   static func contentUV(_ raw: Any?, scaleFactor: CGFloat, buffer: CVPixelBuffer) -> CGRect {

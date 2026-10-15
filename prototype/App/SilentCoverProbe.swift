@@ -113,7 +113,7 @@ final class SilentCoverProbe {
         let deadline = CACurrentMediaTime() + timeout
         while CACurrentMediaTime() < deadline {
             if condition() { return true }
-            try? await Task.sleep(nanoseconds: 60_000_000)
+            try? await Task.sleep(for: .milliseconds(60), clock: .suspending)
         }
         return condition()
     }

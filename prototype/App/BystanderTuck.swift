@@ -259,7 +259,7 @@ final class BystanderGuard {
             // 镜头列表是系统异步给的，刚启动时可能还空着：隔一秒只再试一次，不轮询。
             guard !retrying, retryTask == nil else { return }
             retryTask = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                try? await Task.sleep(for: .seconds(1), clock: .suspending)
                 guard !Task.isCancelled, let self else { return }
                 self.retryTask = nil
                 self.startCamera(retrying: true)

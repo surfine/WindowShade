@@ -52,7 +52,7 @@ extension GlanceProbe {
           + "on the notch with the menu's own word (\(copyTip?.title ?? "nothing"); \(lastVerdicts(center)))")
     try await wait("copy tip gone", timeout: 9) { !notch.isAlerting }
     try postHabitKey(8, .maskControl, to: fixture)
-    try await Task.sleep(nanoseconds: 2_000_000_000)
+    try await Task.sleep(for: .seconds(2), clock: .suspending)
     print("\(!notch.isAlerting && center.memory.ledger.shown["copy"] == 1 ? "PASS" : "FAIL") habits: pressing ⌃C again right away "
           + "stays quiet (shown \(center.memory.ledger.shown["copy"] ?? 0) time(s))")
 
@@ -60,9 +60,9 @@ extension GlanceProbe {
     center.resetForProbe()
     let savesBefore = savedCount(fixture)
     try postHabitKey(1, .maskControl, to: fixture)
-    try await Task.sleep(nanoseconds: 250_000_000)
+    try await Task.sleep(for: .milliseconds(250), clock: .suspending)
     try postHabitKey(1, .maskCommand, to: fixture)
-    try await Task.sleep(nanoseconds: 2_000_000_000)
+    try await Task.sleep(for: .seconds(2), clock: .suspending)
     let learned = center.memory.ledger.used.contains("save")
     print("\(!notch.isAlerting && learned ? "PASS" : "FAIL") habits: ⌘S within the grace period after ⌃S is silent and counts as learned "
           + "(saved \(savesBefore) → \(savedCount(fixture)); \(lastVerdicts(center)))")
@@ -71,7 +71,7 @@ extension GlanceProbe {
     center.resetForProbe()
     try await focusHabitsText(fixture, description: HabitExclusions.webTerminalDescription)
     try postHabitKey(8, .maskControl, to: fixture)
-    try await Task.sleep(nanoseconds: 2_000_000_000)
+    try await Task.sleep(for: .seconds(2), clock: .suspending)
     let excluded = center.verdicts.contains { $0.rule == .copy && $0.verdict == "silent(excluded)" }
     print("\(!notch.isAlerting && excluded ? "PASS" : "FAIL") habits: ⌃C in a terminal input stays quiet (\(lastVerdicts(center)))")
 
@@ -93,7 +93,7 @@ extension GlanceProbe {
     try await focusHabitsText(fixture, description: "正文")
     try postHabitKey(8, .maskControl, to: fixture)
     try await wait("copy tip again", timeout: 4) { notch.announcementForProbe?.demo == .habit }
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let rect = NotchDemoView.closeRectForProbe
     let onButton = rect.map { NotchDemoView.closeHit(NSPoint(x: $0.midX, y: $0.midY)) } ?? false
     let farAway = rect.map { NotchDemoView.closeHit(NSPoint(x: $0.minX - 120, y: $0.midY - 40)) } ?? true
@@ -130,7 +130,7 @@ extension GlanceProbe {
       return AXUIElementCopyAttributeValue(text, kAXFocusedAttribute as CFString, &value) == .success
         && (value as? Bool) == true
     }
-    try await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(for: .milliseconds(200), clock: .suspending)
   }
 
   private func findHabitsText(in element: AXUIElement, description: String, depth: Int) -> AXUIElement? {

@@ -177,7 +177,7 @@ final class LaunchpadUninstallOverlay: NSView {
             let deadline = Date().addingTimeInterval(8)
             while Date() < deadline {
                 if runningApp.isTerminated { break }
-                try? await Task.sleep(nanoseconds: 200_000_000)
+                try? await Task.sleep(for: .milliseconds(200), clock: .suspending)
             }
             await MainActor.run { [weak self] in
                 self?.enterReview()

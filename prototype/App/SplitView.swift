@@ -84,10 +84,10 @@ final class SplitViewController {
         guard seams.indices.contains(index) else { return }
         let seam = seams[index], divider = dividers[index]
         beginDrag(divider)
-        for _ in 0..<40 where drag?.ready != true { try? await Task.sleep(nanoseconds: 25_000_000) }
+        for _ in 0..<40 where drag?.ready != true { try? await Task.sleep(for: .milliseconds(25), clock: .suspending) }
         let along = position - seam.position
         updateDrag(divider, seam.axis == .vertical ? CGVector(dx: along, dy: 0) : CGVector(dx: 0, dy: -along))
-        try? await Task.sleep(nanoseconds: 150_000_000)
+        try? await Task.sleep(for: .milliseconds(150), clock: .suspending)
         endDrag(divider, velocity: seam.axis == .vertical ? CGVector(dx: velocity, dy: 0) : CGVector(dx: 0, dy: -velocity))
     }
 

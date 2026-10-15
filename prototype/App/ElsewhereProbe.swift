@@ -55,7 +55,7 @@ extension GlanceProbe {
     }
     let stayed = !cgWindowIsCurrentlyOnScreen(id) && PrivateSLSWindowMover.shared.windowSpaces(id: id) == spaceBefore
     let before = glance.pixelFrames(id)
-    try await Task.sleep(nanoseconds: 1_000_000_000)
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
     let perSecond = glance.pixelFrames(id) - before
     print(String(format: "%@ elsewhere: resting on the tile shows the window live from its desktop (shown %.0fms, live %.0fms, %d updates/s), at its own place %@ (card=%@ wanted=%@), frontmost kept=%@, window stayed=%@",
                  placed && frontKept && stayed ? "PASS" : "FAIL", shownMs, liveMs, Int(perSecond),
@@ -86,7 +86,7 @@ extension GlanceProbe {
       print(String(format: "PASS elsewhere: clicking the tile switches to its desktop with the window in front (%.0fms)", goMs))
       if let back {
         // 切桌面的动画还在走时再激活，系统会不理：等它停稳再回去。
-        try await Task.sleep(nanoseconds: 700_000_000)
+        try await Task.sleep(for: .milliseconds(700), clock: .suspending)
         // 回去用同一套办法（原来那个 App 在临时 App 的桌面上没有窗口：激活就切回去）。
         NotchShelf.goTo(id: back.id, pid: back.pid)
         try await wait("back on the original desktop", timeout: 5) { !cgWindowIsCurrentlyOnScreen(self.id) }
@@ -117,10 +117,10 @@ extension GlanceProbe {
           event?.flags = CGEventFlags(rawValue: key.flags)
           event?.post(tap: .cghidEventTap)
         }
-        try await Task.sleep(nanoseconds: 120_000_000)
+        try await Task.sleep(for: .milliseconds(120), clock: .suspending)
       }
       for _ in 0..<40 where sls.desktopRows().first(where: { $0.spaces.contains { $0.id == target } })?.current != target {
-        try await Task.sleep(nanoseconds: 100_000_000)
+        try await Task.sleep(for: .milliseconds(100), clock: .suspending)
       }
       let backHome = sls.desktopRows().first(where: { $0.spaces.contains { $0.id == target } })?.current == target
       print("\(backHome ? "INFO" : "FAIL") elsewhere: walked back to the desktop you were on (space \(target)): \(backHome ? "yes" : "no — please switch back by hand")")

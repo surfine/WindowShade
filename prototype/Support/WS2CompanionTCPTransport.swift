@@ -237,7 +237,7 @@ struct WS2TransportCloseSnapshot: Codable, Equatable, Sendable {
         let delay = max(0,deadline-now)
         guard delay.isFinite, delay < 300 else { close(cause: .protocolDeadline); return }
         timeout = Task { [weak self] in
-            do { try await Task.sleep(nanoseconds:UInt64(delay*1_000_000_000)) } catch { return }
+            do { try await Task.sleep(for: .seconds(delay), clock: .suspending) } catch { return }
             self?.deadlineFired(generation: generation)
         }
     }

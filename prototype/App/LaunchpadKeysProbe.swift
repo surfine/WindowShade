@@ -51,7 +51,7 @@ extension GlanceProbe {
     func present() async throws -> LaunchpadView {
       if !pad.isShowing { pad.show() }
       try await wait("launchpad shown", timeout: 3) { pad.viewForProbe?.window?.isVisible == true }
-      try await Task.sleep(nanoseconds: 1_800_000_000)
+      try await Task.sleep(for: .milliseconds(1800), clock: .suspending)
       guard let view = pad.viewForProbe else {
         // 出来了又被收掉：这段时间探针没发任何输入。reason=dismiss 是点空白处、Esc、滑动这类真输入，有人在用这台 Mac。
         throw EffectError.unavailable("launchpad-keys: Launchpad closed right after opening (reason=\(pad.hideReasonForProbe ?? "-")\(pointerNote()))")
@@ -100,7 +100,7 @@ extension GlanceProbe {
         }
         NSApp.sendEvent(event)
       }
-      try await Task.sleep(nanoseconds: 180_000_000)
+      try await Task.sleep(for: .milliseconds(180), clock: .suspending)
     }
     // 真键盘上的方向键总带着 numericPad 和 function 两个标志。
     let arrowFlags: NSEvent.ModifierFlags = [.numericPad, .function]
@@ -119,9 +119,9 @@ extension GlanceProbe {
       }
       for character in text {
         editor.insertText(String(character), replacementRange: NSRange(location: NSNotFound, length: 0))
-        try await Task.sleep(nanoseconds: 60_000_000)
+        try await Task.sleep(for: .milliseconds(60), clock: .suspending)
       }
-      try await Task.sleep(nanoseconds: 250_000_000)
+      try await Task.sleep(for: .milliseconds(250), clock: .suspending)
     }
 
     // 1. 打开：不用先点搜索框，键盘就在里面。
@@ -132,7 +132,7 @@ extension GlanceProbe {
 
     // 2. 主屏幕第一页：方向键一格一格走，上下一行；第一格再往左不动（不会滑到负一屏）。
     view.homePageForProbe()
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     let tiles = view.tiles
     let grid = view.grid
     guard tiles.count >= 2 else { throw EffectError.unavailable("launchpad-keys: fewer than two icons on the home screen") }
@@ -167,7 +167,7 @@ extension GlanceProbe {
       arrows = (first && second, below, above, stop, trail)
       if arrows.right && arrows.down && arrows.up && arrows.stop { break }
       // 后台重扫落地时会清掉选中：第一次没对上，等一下再走一遍。
-      if attempt == 0 { try await Task.sleep(nanoseconds: 1_500_000_000) }
+      if attempt == 0 { try await Task.sleep(for: .milliseconds(1500), clock: .suspending) }
     }
     print("\(arrows.right && arrows.down && arrows.up && arrows.stop ? "PASS" : "FAIL") launchpad-keys: on the home screen the arrow keys move one icon at a time and a row up or down; ← on the first icon stays put (selected \(arrows.trail), \(grid.columns) columns\(pointerNote()))")
 
@@ -202,7 +202,7 @@ extension GlanceProbe {
        case .folder(let folder) = tiles[folderIndex] {
       try await select(view, tile: folderIndex)
       try await enter(view)
-      try await Task.sleep(nanoseconds: 700_000_000)
+      try await Task.sleep(for: .milliseconds(700), clock: .suspending)
       let opened = view.folderForProbe?.folderID == folder.id
       var inside = false
       var launchedInside = false
@@ -214,7 +214,7 @@ extension GlanceProbe {
         launchedInside = inside && log.opened == [first]
       }
       try await escape(view)
-      try await Task.sleep(nanoseconds: 700_000_000)
+      try await Task.sleep(for: .milliseconds(700), clock: .suspending)
       let closed = view.folderForProbe == nil && pad.isShowing
       print("\(opened && inside && launchedInside && closed ? "PASS" : "FAIL") launchpad-keys: Return opens the selected folder, arrows and Return work inside it, Esc closes just the folder (opened=\(opened) selected inside=\(inside) opened app=\(launchedInside) closed=\(closed))")
     } else {
@@ -244,12 +244,12 @@ extension GlanceProbe {
     _ = try? await wait("previous app back in front", timeout: 1.5) {
       NSWorkspace.shared.frontmostApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier
     }
-    try await Task.sleep(nanoseconds: 600_000_000)
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
 
     // 7. ⌘→ ⌘← 翻页；第一页再 ⌘← 到负一屏。
     view = try await present()
     view.homePageForProbe()
-    try await Task.sleep(nanoseconds: 300_000_000)
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     try await select(view, tile: 0)  // 先选中第一格：到了负一屏再按 Return，不该把它打开。
     let command: NSEvent.ModifierFlags = [.command, .numericPad, .function]
     try await press(view, 124, "\u{F703}", command)
@@ -263,7 +263,7 @@ extension GlanceProbe {
     if !paged {
       // 诊断：同一下 ⌘→ 去掉方向键自带的两个标志行不行（看是不是修饰键判断太严）。
       view.homePageForProbe()
-      try await Task.sleep(nanoseconds: 300_000_000)
+      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
       try await press(view, 124, "\u{F703}", .command)
       bareNote = view.pageForProbe == 1
         ? "; the same ⌘→ without numericPad/function does turn the page, so the modifier check rejects real arrow keys"
@@ -272,7 +272,7 @@ extension GlanceProbe {
     print("\(paged ? "PASS" : "FAIL") launchpad-keys: ⌘→ and ⌘← turn pages, and ⌘← on the first page goes to the Today page (after ⌘→ page=\(forwardPage), after ⌘← page=\(backPage), again today=\(today))\(bareNote)")
     if !view.onToday {
       view.settle(to: -1)
-      try await Task.sleep(nanoseconds: 600_000_000)
+      try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     }
 
     // 8. 负一屏：Return 不打开第一页上选中过的 App（这里看不见它）；Esc 回第一页。
@@ -287,7 +287,7 @@ extension GlanceProbe {
     // 9. App 资料库：方向键移动选中、Return 打开选中的；Tab 之后键盘还在；打字出列表，↓ 在列表里走，Return 打开，Esc 收起列表。
     view.libraryForProbe()
     _ = try? await wait("App Library", timeout: 3) { view.onLibrary && view.pillAtTop }
-    try await Task.sleep(nanoseconds: 700_000_000)
+    try await Task.sleep(for: .milliseconds(700), clock: .suspending)
     // 搜索框换到资料库的玻璃底板上（挪了父视图）：键盘还在它里面。
     print("\(searchHasKeyboard(view) ? "PASS" : "FAIL") launchpad-keys: turning to the App Library keeps the keyboard in the search field (responder=\(responder(view)))")
     let items = view.library.accessibilityItems()
@@ -307,7 +307,7 @@ extension GlanceProbe {
         let chosen = items[chosenIndex]
         log.clear()
         try await enter(view)
-        try await Task.sleep(nanoseconds: 700_000_000)
+        try await Task.sleep(for: .milliseconds(700), clock: .suspending)
         var ok = false
         switch chosen.2 {
         case .app(let app, _):
@@ -315,7 +315,7 @@ extension GlanceProbe {
         case .cluster(let category, _):
           ok = view.folderForProbe?.source == .category(category.id)
           try await escape(view)
-          try await Task.sleep(nanoseconds: 700_000_000)
+          try await Task.sleep(for: .milliseconds(700), clock: .suspending)
           ok = ok && view.folderForProbe == nil && view.onLibrary
         }
         print("\(ok ? "PASS" : "FAIL") launchpad-keys: Return in the App Library opens the selected item (“\(chosen.1)”; asked to open \(log.opened.map(\.name)) folder=\(view.folderForProbe?.title ?? "-")\(pointerNote()))")
@@ -345,7 +345,7 @@ extension GlanceProbe {
       try await enter(view)
       let pickOpened = secondPick.map { log.opened == [$0] } == true
       try await escape(view)
-      try await Task.sleep(nanoseconds: 500_000_000)
+      try await Task.sleep(for: .milliseconds(500), clock: .suspending)
       let listClosed = !view.listActive && view.query.isEmpty && view.onLibrary && pad.isShowing
       print("\(listOpen && walked && pickOpened && listClosed ? "PASS" : "FAIL") launchpad-keys: typing “\(letter)” in the App Library opens the list, ↓ moves down it, Return opens the selected app, Esc puts the list away (open=\(listOpen) \(firstPick?.name ?? "-")→\(secondPick?.name ?? "-") asked to open \(log.opened.map(\.name)) closed=\(listClosed))")
     } else {
@@ -355,7 +355,7 @@ extension GlanceProbe {
     // 10. Esc 一层层退回：App 资料库 → 第一页 → 关掉。
     if !view.onLibrary {
       view.libraryForProbe()
-      try await Task.sleep(nanoseconds: 600_000_000)
+      try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     }
     try await escape(view)
     let backHome = view.pageForProbe == 0 && pad.isShowing
@@ -369,7 +369,7 @@ extension GlanceProbe {
 
     // 结束：用户存下的排列一个字没动。
     if pad.isShowing { pad.hide(reason: "probe") }
-    try await Task.sleep(nanoseconds: 400_000_000)
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     guard UserDefaults.standard.data(forKey: layoutKey) == savedLayout else {
       throw EffectError.unavailable("launchpad-keys: the stored layout for \(layoutKey) changed during the probe")
     }

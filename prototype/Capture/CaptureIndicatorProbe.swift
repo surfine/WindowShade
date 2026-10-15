@@ -46,7 +46,7 @@ final class CaptureIndicatorProbe {
         window.makeKeyAndOrderFront(nil)
         self.window = window
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 600_000_000)
+            try? await Task.sleep(for: .milliseconds(600), clock: .suspending)
             await self.capture(window: window)
             exit(0)
         }
@@ -66,13 +66,13 @@ final class CaptureIndicatorProbe {
             try await source.start(filter: filter, size: CGSize(width: 480 * scale, height: 330 * scale))
         } catch { print("indicator-probe: stream failed \(error)"); return }
         for (delay, label) in [(0.2, "0.2s"), (1.0, "1.0s")] {
-            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(delay), clock: .suspending)
             if let frame = source.frame()?.stillImage() { save(frame, "stream-frame-\(label)") }
             if rawFrame == nil, let buffer = source.frame()?.buffer { rawFrame = Self.copy(buffer) }
             await shot(filter: filter, scale: scale, name: "shot-during-stream-\(label)")
         }
         source.stop()
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        try? await Task.sleep(for: .seconds(1), clock: .suspending)
         await shot(filter: filter, scale: scale, name: "shot-1s-after-stop")
 
         // 生产路径：收起动画的流打开修补后，帧里不应再有胶囊。
@@ -81,7 +81,7 @@ final class CaptureIndicatorProbe {
         do {
             try await cleaning.start(filter: filter, size: CGSize(width: 480 * scale, height: 330 * scale))
         } catch { print("indicator-probe: cleaning stream failed \(error)"); return }
-        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        try? await Task.sleep(for: .seconds(1), clock: .suspending)
         if let frame = cleaning.frame() {
             if let image = frame.stillImage() { save(image, "stream-frame-cleaned") }
             // 底片：流开始前那张（没有胶囊），贴回同一帧的原始画面上。

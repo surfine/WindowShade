@@ -38,7 +38,7 @@ extension GlanceProbe {
         print("INFO browser-more: the panel closed while its list was filling (a click elsewhere?); opened it once more")
         guard browser.openKeyboardPanel() else { break }
       }
-      try await Task.sleep(nanoseconds: 50_000_000)
+      try await Task.sleep(for: .milliseconds(50), clock: .suspending)
     }
     let everything = browser.probeListedKeys
     let appsListed = Set(everything.map { $0.application.pid }).count
@@ -98,6 +98,6 @@ extension GlanceProbe {
     if let window = appWindows(pid: pid).first(where: { windowID(of: $0) == created }) {
       _ = pressAXButton(window, kAXCloseButtonAttribute as String)
     }
-    try? await Task.sleep(nanoseconds: 400_000_000)
+    try? await Task.sleep(for: .milliseconds(400), clock: .suspending)
   }
 }

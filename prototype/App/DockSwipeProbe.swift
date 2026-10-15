@@ -63,7 +63,7 @@ extension GlanceProbe {
       let middle = CGPoint(x: screen.frame.midX, y: coordinateBaselineY() - screen.frame.midY)
       dockProbeFeed(swipe, at: middle, up: 8)
     }
-    try? await Task.sleep(nanoseconds: 700_000_000)
+    try? await Task.sleep(for: .milliseconds(700), clock: .suspending)
     let after = swipe.lastAction.map { "\($0.direction.rawValue)-\($0.pid)" }
     print("\(exposed == nil && before == after && !fixture.isHidden ? "PASS" : "FAIL") dock-gestures: a sideways swipe on the icon and a swipe in the middle of the screen do nothing")
     // 打开的叠放（比如以网格显示的“应用程序”）要动用户自己的 Dock，探针不做，留给人手试。
@@ -86,7 +86,7 @@ extension GlanceProbe {
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline {
       if condition() { return true }
-      try? await Task.sleep(nanoseconds: 50_000_000)
+      try? await Task.sleep(for: .milliseconds(50), clock: .suspending)
     }
     return condition()
   }

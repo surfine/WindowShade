@@ -206,7 +206,7 @@ final class SLSOffscreenCheckProbe {
         let deadline = CACurrentMediaTime() + timeout
         while CACurrentMediaTime() < deadline {
             if condition() { return true }
-            try? await Task.sleep(nanoseconds: 40_000_000)
+            try? await Task.sleep(for: .milliseconds(40), clock: .suspending)
         }
         return condition()
     }

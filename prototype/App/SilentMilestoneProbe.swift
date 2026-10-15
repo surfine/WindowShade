@@ -136,7 +136,7 @@ final class SilentMilestoneProbe {
         }
         host.offer("nav.cancel")
         host.confirm()
-        try? await Task.sleep(nanoseconds: 400_000_000)
+        try? await Task.sleep(for: .milliseconds(400), clock: .suspending)
         let afterCancel = await stableFrame(target)
         // “没动”以 AX 位置为准：CG 读数会被并行动画带着走，AX 也要等它稳定下来再读。
         if !host.hasPendingForProbe, let parked, let afterCancel, Self.close(parked, afterCancel) {
@@ -166,7 +166,7 @@ final class SilentMilestoneProbe {
             return
         }
         host.confirm()
-        try? await Task.sleep(nanoseconds: 400_000_000)
+        try? await Task.sleep(for: .milliseconds(400), clock: .suspending)
         let afterSwitch = await stableFrame(target)
         let otherAfter = await stableFrame(other)
         if let beforeSwitch, let afterSwitch, Self.close(beforeSwitch, afterSwitch),
@@ -182,7 +182,7 @@ final class SilentMilestoneProbe {
             return
         }
         DistributedNotificationCenter.default().post(name: Notification.Name("com.windowshade.fixture.unshare"), object: nil)
-        try? await Task.sleep(nanoseconds: 300_000_000)
+        try? await Task.sleep(for: .milliseconds(300), clock: .suspending)
         let home = await stableFrame(target)
         let homeCG = bounds(targetID)
         pipID = targetID
@@ -197,7 +197,7 @@ final class SilentMilestoneProbe {
                 seenFrames = max(seenFrames, owner.pip.framesForProbe(targetID))
                 return seenFrames > 0 || owner.pip.isInPictureInPicture(targetID) == false
             }
-            try? await Task.sleep(nanoseconds: 200_000_000)
+            try? await Task.sleep(for: .milliseconds(200), clock: .suspending)
             seenFrames = max(seenFrames, owner.pip.framesForProbe(targetID))
         }
         WindowStreamCapture.probeDropAllFrames = false
@@ -283,7 +283,7 @@ final class SilentMilestoneProbe {
             print("INFO head: 未运行。相机没有开始 \(error)")
             return
         }
-        try? await Task.sleep(nanoseconds: 10_000_000_000)
+        try? await Task.sleep(for: .seconds(10), clock: .suspending)
         let counters = await source.pipelineCounters()
         source.stop()
         // R04：授权成功≠采集成功；按阶段计数定位零样本。
@@ -468,7 +468,7 @@ final class SilentMilestoneProbe {
         }
         let failMark = CACurrentMediaTime()
         host.confirm()
-        try? await Task.sleep(nanoseconds: 500_000_000)
+        try? await Task.sleep(for: .milliseconds(500), clock: .suspending)
         let guardedAfter = await stableFrame(target)
         let stillHome = guardedBefore.flatMap { before in guardedAfter.map { Self.close(before, $0) } } ?? true
         // 上一步 pin 的成功回执会留在这里，只能看 confirm 之后有没有新的成功回执。
@@ -509,7 +509,7 @@ final class SilentMilestoneProbe {
                let focused = focusedWindow(), identity(focused, pid: pid) == id {
                 return true
             }
-            try? await Task.sleep(nanoseconds: 80_000_000)
+            try? await Task.sleep(for: .milliseconds(80), clock: .suspending)
         }
         return false
     }
@@ -529,7 +529,7 @@ final class SilentMilestoneProbe {
         var last = liveFrame(element)
         let deadline = CACurrentMediaTime() + timeout
         while CACurrentMediaTime() < deadline {
-            try? await Task.sleep(nanoseconds: 80_000_000)
+            try? await Task.sleep(for: .milliseconds(80), clock: .suspending)
             let now = liveFrame(element)
             if let a = last, let b = now, Self.close(a, b) { return b }
             last = now
@@ -549,7 +549,7 @@ final class SilentMilestoneProbe {
             _ = await focus(target, pid: pid, id: targetID)
             _ = await stableFrame(target)
             host.offer(commandID)
-            try? await Task.sleep(nanoseconds: 100_000_000)
+            try? await Task.sleep(for: .milliseconds(100), clock: .suspending)
             if frozen() { return true }
         }
         return frozen()
@@ -559,7 +559,7 @@ final class SilentMilestoneProbe {
         let deadline = CACurrentMediaTime() + timeout
         while CACurrentMediaTime() < deadline {
             if condition() { return true }
-            try? await Task.sleep(nanoseconds: 40_000_000)
+            try? await Task.sleep(for: .milliseconds(40), clock: .suspending)
         }
         return condition()
     }

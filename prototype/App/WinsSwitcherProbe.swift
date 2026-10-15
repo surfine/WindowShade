@@ -103,7 +103,7 @@ extension GlanceProbe {
       }
     }
     flags(.maskAlternate)
-    try await Task.sleep(nanoseconds: 60_000_000)
+    try await Task.sleep(for: .milliseconds(60), clock: .suspending)
     // 按住 ⌥ 的这一下里前台换了（有人点了别的 App）：松开 ⌥ 就停，不把 Tab 发给它。
     guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid else {
       flags([])
@@ -122,7 +122,7 @@ extension GlanceProbe {
     func cancel() async throws {
       // Esc 取消（还按着 ⌥），再松开 ⌥，不切过去。
       if switcher.isOpen { key(53, held: .maskAlternate) }
-      try await Task.sleep(nanoseconds: 60_000_000)
+      try await Task.sleep(for: .milliseconds(60), clock: .suspending)
       flags([])
     }
     guard let picked, picked.pid == pid else {

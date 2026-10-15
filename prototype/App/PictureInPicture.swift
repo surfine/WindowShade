@@ -150,7 +150,7 @@ final class PictureInPictureController {
                         displayReady: session.capture.presentsFrame,
                         sessionMatches: self.sessions[id] === session,
                         observedWindow: UInt64(id))
-                    if decided == nil { try await Task.sleep(nanoseconds: 15_000_000) }
+                    if decided == nil { try await Task.sleep(for: .milliseconds(15), clock: .suspending) }
                 }
                 arrival = decided ?? .failed
             } catch is CancellationError {

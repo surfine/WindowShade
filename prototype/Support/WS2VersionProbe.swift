@@ -35,7 +35,7 @@ import Foundation
     func start() throws {
         do { try channel.start();launched=true } catch { finish(false);throw error }
         timeout=Task { [weak self] in
-            do { try await Task.sleep(nanoseconds:4_000_000_000) } catch { return }
+            do { try await Task.sleep(for: .seconds(4), clock: .suspending) } catch { return }
             guard let self else { return };self.invalid=true;self.channel.stop()
             // Retain the pending probe until its own child is reaped; timeout is not an exit receipt.
         }

@@ -698,7 +698,7 @@ extension AppDelegate {
             let shouldParkFocus = preparedImage == nil && !profile.isQuickLook
             if shouldParkFocus {
                 parkFocusForInactiveCapture()
-                try? await Task.sleep(nanoseconds: 35_000_000)       // 等 WindowServer 把整条 toolbar 重绘成非活跃态
+                try? await Task.sleep(for: .milliseconds(35), clock: .suspending)       // 等 WindowServer 把整条 toolbar 重绘成非活跃态
             }
             let captureStartedAt = CFAbsoluteTimeGetCurrent()
             let capturedImage: CGImage?
