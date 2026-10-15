@@ -15,6 +15,30 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
   var saves = 0
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    if CommandLine.arguments.contains("--toolbar") {
+      // 规格 R11：一扇带系统工具栏（统一样式，像访达、Safari）的窗口，给 --chrome-report 量收起高度。
+      let window = NSWindow(contentRect: NSRect(x: 200, y: 300, width: 640, height: 420),
+                            styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
+      window.title = "Toolbar"
+      let toolbar = NSToolbar(identifier: "probe")
+      toolbar.delegate = toolbarDelegate
+      toolbar.displayMode = .iconOnly
+      window.toolbar = toolbar
+      window.toolbarStyle = CommandLine.arguments.contains("--expanded") ? .expanded : .unified
+      window.makeKeyAndOrderFront(nil)
+      NSApp.activate()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 20) { NSApp.terminate(nil) }
+      return
+    }
+    if CommandLine.arguments.contains("--dialog") {
+      // 规格 R41 探针：模拟「后台 App 弹出对话框、还想把自己调到前面」，3 秒后自己退出，不开参考窗。
+      let alert = NSAlert()
+      alert.messageText = "WindowShade probe"
+      alert.window.orderFrontRegardless()
+      NSApp.activate()
+      DispatchQueue.main.asyncAfter(deadline: .now() + 3) { NSApp.terminate(nil) }
+      return
+    }
     installMenu()
     let window = NSWindow(
       contentRect: NSRect(x: 160, y: 260, width: 640, height: 420),
@@ -291,6 +315,15 @@ func moveToAnotherDesktop(_ window: NSWindow) {
   print("FIXTURE other-space: no other desktop"); fflush(stdout)
 }
 
+final class ToolbarDelegate: NSObject, NSToolbarDelegate {
+  func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { [.flexibleSpace, .init("search")] }
+  func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { [.flexibleSpace, .init("search")] }
+  func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier id: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+    let item = NSSearchToolbarItem(itemIdentifier: id)
+    return item
+  }
+}
+let toolbarDelegate = ToolbarDelegate()
 let app = NSApplication.shared
 let delegate = FixtureDelegate()
 app.delegate = delegate

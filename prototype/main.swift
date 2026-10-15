@@ -154,6 +154,32 @@ for flag in ["--export-settings", "--import-settings"] where CommandLine.argumen
         exit(1)
     }
 }
+if let index = CommandLine.arguments.firstIndex(of: "--chrome-report") {
+    // 规格 R11：只读量一量某个 App 每扇窗的工具栏底边与收起时保留的高度（不收起、不写任何东西、不打标题）。
+    // 用法：--chrome-report <bundle id>，例如 com.apple.finder。
+    guard CommandLine.arguments.count > index + 1 else { print("chrome-report: needs a bundle id"); exit(2) }
+    let bundle = CommandLine.arguments[index + 1]
+    let apps = NSRunningApplication.runningApplications(withBundleIdentifier: bundle)
+    guard !apps.isEmpty else { print("chrome-report: \(bundle) is not running"); exit(1) }
+    for app in apps {
+        let windows = appWindows(pid: app.processIdentifier)
+        if windows.isEmpty {
+            print("chrome-report: \(bundle) pid=\(app.processIdentifier) no windows (accessibility trusted=\(AXIsProcessTrusted()))")
+        }
+        for window in windows {
+            guard let position = axPosition(window), let size = axSize(window) else { continue }
+            let toolbarBottom = firstToolbar(window).flatMap { toolbar -> CGFloat? in
+                guard let p = axPosition(toolbar), let s = axSize(toolbar) else { return nil }
+                return p.y + s.height - position.y
+            }
+            let kept = chromeHeight(of: window, winTop: position.y, winSize: size, pid: app.processIdentifier)
+            print(String(format: "chrome-report: %@ window=%u size=%.0fx%.0f toolbarBottom=%@ kept=%.1f",
+                         bundle, windowID(of: window) ?? 0, size.width, size.height,
+                         toolbarBottom.map { String(format: "%.1f", $0) } ?? "none", kept))
+        }
+    }
+    exit(0)
+}
 if CommandLine.arguments.contains("--export-diagnostics") {
     // 规格 R35／R13：导出本地诊断包并打印路径（不在访达里显示）。可选：后面跟一个目录。
     app.setActivationPolicy(.accessory)
