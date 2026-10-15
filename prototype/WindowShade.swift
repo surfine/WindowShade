@@ -581,14 +581,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
             // NSEvent 全局 monitor 仍在主线程回调；连 WindowServer 的标题栏预过滤
             // 也可能很慢。预热整体放到后台，连续点击至多留一份工作，过时结果直接丢弃。
-            if #available(macOS 14.0, *), event.type == .leftMouseDown {
+            if event.type == .leftMouseDown {
                 self?.scheduleTitlebarPrefetch(clickState: event.clickCount)
             }
             self?.schedulePinnedPreviewTargetRefresh()
         }
     }
 
-    @available(macOS 14.0, *)
     private func scheduleTitlebarPrefetch(clickState: Int) {
         // 只在第一下点击时做：第二下落地时内容已就绪，或本来就会强制刷新。
         guard clickState == 1 else { return }

@@ -143,20 +143,12 @@ extension AppDelegate {
             mode = .proxyTitleBar
             reason = "screen-recording-missing"
         }
-        if options.forcedAppearanceMode == nil && needsScreenshot {
-            if #unavailable(macOS 14.0) {
-                mode = .proxyTitleBar
-                reason = "screencapturekit-unavailable"
-            }
-        }
         if options.forcedAppearanceMode == nil,
            adobeProfile.kind != .none,
            mode == .proxyTitleBar,
            hasScreenRecordingPermission() {
-            if #available(macOS 14.0, *) {
-                mode = .nativeScreenshot
-                reason = "adobe-\(adobeProfile.kind.rawValue)-native-chrome"
-            }
+            mode = .nativeScreenshot
+            reason = "adobe-\(adobeProfile.kind.rawValue)-native-chrome"
         }
         return ShadePlan(mode: mode, policy: policy, reason: reason)
     }
@@ -626,16 +618,6 @@ extension AppDelegate {
             let canProxyResize = stalled ? false : allowsProxyHorizontalResize(win, pid: pid)
             let windowManagementCapability: WindowManagementCapability =
                 stalled ? .none : realWindowManagementCapability(win)
-            guard #available(macOS 14.0, *) else {
-                let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: barH,
-                                               pid: pid, appName: appName, title: title, id: id,
-                                               canResize: canProxyResize,
-                                               windowManagement: windowManagementCapability,
-                                               trafficLights: profile.trafficLights)
-                wlog("    proxy finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) preview=-")
-                installOverlay(overlay, mode: mode, previewImage: nil)
-                return
-            }
             let quickPreview = preparedImage.map { NSImage(cgImage: $0, size: size) }
                 ?? quickWindowPreviewImage(id: id, logicalSize: size)
             if quickPreview != nil || !options.capturePreview || stalled {
@@ -682,10 +664,6 @@ extension AppDelegate {
             return
         }
 
-        guard #available(macOS 14.0, *) else {
-            quietNotice(WSL10n.text("notice.shade.systemTooOld", zh: "系统版本不支持"), kind: .problem, log: "shade: ScreenCaptureKit unavailable on this macOS")
-            return
-        }
         handedToAsyncCapture = true
         let captureTaskQueuedAt = CFAbsoluteTimeGetCurrent()
         Task { @MainActor in

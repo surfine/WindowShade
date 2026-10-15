@@ -150,14 +150,14 @@ HOOK_SOURCES=("$WORK/Support/WS2AtomicConfiguration.swift" "$WORK/Support/WS2Hoo
 # Original C process supervisor is compiled from the SAME isolated snapshot as Swift.
 mkdir -p "$WORK/Native"
 cp Native/WS2Child.c Native/WS2Child.h Native/module.modulemap "$WORK/Native/"
-xcrun -sdk macosx clang -std=c11 -O2 -Wall -Wextra -Werror -target "$ARCH-apple-macosx14.0" \
+xcrun -sdk macosx clang -std=c11 -O2 -Wall -Wextra -Werror -target "$ARCH-apple-macosx15.0" \
   -c "$WORK/Native/WS2Child.c" -o "$WORK/WS2Child.o"
 NATIVE_FLAGS=(-I "$WORK/Native" "$WORK/WS2Child.o")
 
 # Shader checks and normal builds use the same source and deployment target.
 METAL_BUILD="$(cd .. && pwd)/.build/duo-metal"
 mkdir -p "$METAL_BUILD"
-xcrun -sdk macosx metal -mmacosx-version-min=14.0 -fmodules-cache-path="$MODULE_CACHE" -c "$WORK/Duo.metal" -o "$WORK/Duo.air"
+xcrun -sdk macosx metal -mmacosx-version-min=15.0 -fmodules-cache-path="$MODULE_CACHE" -c "$WORK/Duo.metal" -o "$WORK/Duo.air"
 xcrun -sdk macosx metallib "$WORK/Duo.air" -o "$WORK/Duo.metallib"
 cp "$WORK/Duo.metallib" "$METAL_BUILD/Duo.metallib"
 
@@ -168,14 +168,14 @@ if [ "$check_only" = "1" ]; then
   echo "==> 编译验证（--check，和发布构建同样的优化参数；不签名、不修改 app bundle）"
   mkdir -p "$MODULE_CACHE"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
+    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
       "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
       "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
+    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
       "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -parse-as-library \
+    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -parse-as-library \
       -o "$WORK/WindowShadeHook-check" "${HOOK_SOURCES[@]}"
   echo "==> 编译验证通过"
   # 隐私登记门禁：新增的读取点必须先登记，隐私页数据必须与登记表一致；任一失败即非零退出。
@@ -225,16 +225,16 @@ echo "==> 编译"
 mkdir -p "$MODULE_CACHE"
 mkdir -p "$WORK/compiler-tmp"
 env TMPDIR="$WORK/compiler-tmp" CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" \
+  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" \
     "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
     "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
 echo "==> 编译看护（WindowShadeUpdateGuard）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard" \
+  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -o "$WORK/WindowShadeUpdateGuard" \
     "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
 echo "==> 编译编程会话的 hook（WindowShadeHook）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -parse-as-library \
+  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -parse-as-library \
     -o "$WORK/WindowShadeHook" "${HOOK_SOURCES[@]}"
 
 if [ "$stage_only" != "1" ]; then
@@ -340,7 +340,7 @@ cat > "$GUARD_APP/Contents/Info.plist" <<PLIST
 	<key>CFBundleVersion</key>
 	<string>${GUARD_BUILD}</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>15.0</string>
 	<key>LSUIElement</key>
 	<true/>
 </dict>

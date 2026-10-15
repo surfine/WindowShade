@@ -48,7 +48,7 @@ final class WS2CarPlayVideoDecoder {
     }
 
     func flush() {
-        layer.flush()
+        layer.sampleBufferRenderer.flush()
         configured = false
         formatDescription = nil
     }
@@ -82,13 +82,14 @@ final class WS2CarPlayVideoDecoder {
             return false
         }
         // 上游没有可靠时间戳：尽快解码，画不画由层自己按队列决定。
-        if layer.status == .failed {
-            layer.flush()
+        let renderer = layer.sampleBufferRenderer
+        if renderer.status == .failed {
+            renderer.flush()
         }
-        layer.enqueue(sampleBuffer)
-        lastError = layer.status == .failed
-                ? WSL10n.text("carplay.decode.decoderError", zh: "解码器错误（%@）", String(describing: layer.error)) : nil
-        return layer.status != .failed
+        renderer.enqueue(sampleBuffer)
+        lastError = renderer.status == .failed
+                ? WSL10n.text("carplay.decode.decoderError", zh: "解码器错误（%@）", String(describing: renderer.error)) : nil
+        return renderer.status != .failed
     }
 
     // MARK: Annex B → AVCC

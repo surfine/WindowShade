@@ -419,12 +419,8 @@ final class SlideOverHandleView: NSView {
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
     override func resetCursorRects() {
-        if #available(macOS 15, *) {
-            addCursorRect(bounds, cursor: NSCursor.frameResize(position: corner == .bottomLeft ? .bottomLeft : .bottomRight,
-                                                               directions: .all))
-        } else {
-            addCursorRect(bounds, cursor: .crosshair)
-        }
+        addCursorRect(bounds, cursor: NSCursor.frameResize(position: corner == .bottomLeft ? .bottomLeft : .bottomRight,
+                                                           directions: .all))
     }
     override func mouseDown(with event: NSEvent) {
         down = NSEvent.mouseLocation

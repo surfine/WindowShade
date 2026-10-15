@@ -127,9 +127,7 @@ final class DeviceAuthorizationKey: ProtectedKeySigning, @unchecked Sendable {
     let context = LAContext()
     var error: NSError?
     guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else { return nil }
-    let raw: Data?
-    if #available(macOS 15.0, *) { raw = context.domainState.biometry.stateHash }
-    else { raw = context.evaluatedPolicyDomainState }
+    let raw: Data? = context.domainState.biometry.stateHash
     return raw.map { Data(SHA256.hash(data: $0)) }
   }
 

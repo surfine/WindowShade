@@ -58,10 +58,8 @@ extension AppDelegate {
             overlay.maxSize = effectiveWindowManagement == .fullScreen
                 ? NSSize(width: 10000, height: 10000)
                 : NSSize(width: 10000, height: frame.height)
-            if #available(macOS 11.0, *) {
-                overlay.titlebarSeparatorStyle = .none
-                overlay.toolbarStyle = .unifiedCompact
-            }
+            overlay.titlebarSeparatorStyle = .none
+            overlay.toolbarStyle = .unifiedCompact
 
             let iv = TitleStripView(frame: NSRect(origin: .zero, size: frame.size))
             iv.image = NSImage(cgImage: image, size: frame.size)
@@ -198,10 +196,8 @@ extension AppDelegate {
             overlay.minSize = NSSize(width: frame.width, height: frame.height)
             overlay.maxSize = NSSize(width: frame.width, height: frame.height)
         }
-        if #available(macOS 11.0, *) {
-            overlay.titlebarSeparatorStyle = .none
-            overlay.toolbarStyle = .unifiedCompact
-        }
+        overlay.titlebarSeparatorStyle = .none
+        overlay.toolbarStyle = .unifiedCompact
 
         if let content = overlay.contentView {
             content.wantsLayer = true

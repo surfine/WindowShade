@@ -831,28 +831,22 @@ extension AppDelegate {
     }
 
     func launchAtLoginEnabled() -> Bool {
-        if #available(macOS 13.0, *) {
-            return SMAppService.mainApp.status == .enabled
-        }
-        return false
+        SMAppService.mainApp.status == .enabled
     }
 
     func launchAtLoginSubtitle() -> String {
-        if #available(macOS 13.0, *) {
-            switch SMAppService.mainApp.status {
-            case .enabled:
-                return WSL10n.text("settings.privacy.launchAtLogin.running", zh: "WindowShade 会在登录后自动运行")
-            case .requiresApproval:
-                return WSL10n.text("settings.privacy.launchAtLogin.needsApproval", zh: "需要在系统设置中批准登录项")
-            case .notRegistered:
-                return WSL10n.text("settings.privacy.launchAtLogin.willRun", zh: "开机后自动运行 WindowShade")
-            case .notFound:
-                return WSL10n.text("settings.privacy.launchAtLogin.unsupportedBundle", zh: "当前 app bundle 不支持登录项")
-            @unknown default:
-                return WSL10n.text("settings.privacy.launchAtLogin.willRun", zh: "开机后自动运行 WindowShade")
-            }
+        switch SMAppService.mainApp.status {
+        case .enabled:
+            return WSL10n.text("settings.privacy.launchAtLogin.running", zh: "WindowShade 会在登录后自动运行")
+        case .requiresApproval:
+            return WSL10n.text("settings.privacy.launchAtLogin.needsApproval", zh: "需要在系统设置中批准登录项")
+        case .notRegistered:
+            return WSL10n.text("settings.privacy.launchAtLogin.willRun", zh: "开机后自动运行 WindowShade")
+        case .notFound:
+            return WSL10n.text("settings.privacy.launchAtLogin.unsupportedBundle", zh: "当前 app bundle 不支持登录项")
+        @unknown default:
+            return WSL10n.text("settings.privacy.launchAtLogin.willRun", zh: "开机后自动运行 WindowShade")
         }
-        return WSL10n.text("settings.privacy.launchAtLogin.unsupportedSystem", zh: "当前系统不支持")
     }
 
     @objc func prefToggleTitlebarDoubleClick(_ sender: NSSwitch) {
@@ -1075,11 +1069,6 @@ extension AppDelegate {
     }
 
     @objc func prefToggleLaunchAtLogin(_ sender: NSSwitch) {
-        guard #available(macOS 13.0, *) else {
-            sender.state = .off
-            quietNotice(WSL10n.text("notice.loginAtLaunch.unsupportedSystem", zh: "系统不支持"), kind: .problem, log: "launch-at-login: unsupported macOS")
-            return
-        }
         do {
             if sender.state == .on {
                 try SMAppService.mainApp.register()

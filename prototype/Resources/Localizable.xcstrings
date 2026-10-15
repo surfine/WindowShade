@@ -22978,29 +22978,6 @@
         }
       }
     },
-    "notice.loginAtLaunch.unsupportedSystem" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This system doesn't support it"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "系统不支持"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "系統不支援"
-          }
-        }
-      }
-    },
     "notice.notch.cannotFold" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -23411,29 +23388,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這個桌面沒有可以收起的視窗"
-          }
-        }
-      }
-    },
-    "notice.shade.systemTooOld" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This system version isn't supported"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "系统版本不支持"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "系統版本不支援"
           }
         }
       }
@@ -46549,29 +46503,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "當前 app bundle 不支援登入項"
-          }
-        }
-      }
-    },
-    "settings.privacy.launchAtLogin.unsupportedSystem" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Not supported on this system"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当前系统不支持"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "當前系統不支援"
           }
         }
       }
