@@ -2,7 +2,7 @@
 # 看一眼真机探针：需要先 `cd prototype && ./build.sh --stage`（签名隔离构建，已授权辅助功能与屏幕录制）。
 # 会在屏幕上短暂出现测试窗口；不操作用户自己的窗口。
 # 每次跑一项，例如 --gesture、--launchpad-keys、--fullscreen（会进一次系统全屏再退出）；完整列表见 prototype/App/GlanceProbe.swift 的调度。
-# --fold-timing、--orphan（R10 孤儿卷帘条）、--soak [--soak-rounds N]（R39 长会话内存）会自行只开一扇临时窗（不必再加 --single）。
+# --fold-timing、--orphan（R10）、--soak [--soak-rounds N]（R39）、--menubar-owner（R22）、--focus-steal（R41）会自行只开一扇临时窗（不必再加 --single）。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 if [ -n "${PROBE_SHOTS:-}" ]; then mkdir -p "$PROBE_SHOTS"; fi
