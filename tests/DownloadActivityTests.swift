@@ -17,6 +17,7 @@ import Foundation
         testFinishedVersusCancelled()
         testStaleLeftoversIgnored()
         testQuantityNeverInvented()
+        testFinishNeedsWrittenFreshFile()
         print("DownloadActivityTests ok")
     }
 
@@ -99,5 +100,26 @@ import Foundation
         var store = NotchActivityStore()
         expect(store.upsert(working, now: 5), "能放进 store")
         expect(store.selected == nil && store.activities.first?.progress == .indeterminate, "store 里没有编出来的百分比")
+    }
+
+    /// 规格 R40：正式文件空的、或比开始下载还旧，消失的临时文件算取消，不说「下好了」。
+    static func testFinishNeedsWrittenFreshFile() {
+        var tracker = DownloadTracker()
+        _ = tracker.update([DownloadFileEntry(name: "ok.zip.crdownload", modifiedAt: 100),
+                            DownloadFileEntry(name: "ff.zip.part", modifiedAt: 100),
+                            DownloadFileEntry(name: "old.pdf.download", modifiedAt: 100)], now: 100)
+        expect(tracker.watchedFinalNames == ["ok.zip", "ff.zip", "old.pdf"], "追踪中的正式文件名交给读取那一侧")
+        let update = tracker.update([
+            DownloadFileEntry(name: "ok.zip", modifiedAt: 130, size: 2048),
+            DownloadFileEntry(name: "ff.zip", modifiedAt: 131, size: 0),          // Firefox 的 0 字节占位
+            DownloadFileEntry(name: "old.pdf", modifiedAt: 50, size: 9000),       // 本来就有的同名旧文件
+        ], now: 131)
+        expect(update.finished == ["ok.zip"], "只有写过、非空、比开始晚的才算下好")
+        expect(update.cancelled == 2, "空占位与旧文件都算取消")
+
+        var edge = DownloadTracker()
+        _ = edge.update([DownloadFileEntry(name: "e.zip.crdownload", modifiedAt: 200)], now: 200)
+        let slack = edge.update([DownloadFileEntry(name: "e.zip", modifiedAt: 199, size: 1)], now: 201)
+        expect(slack.finished == ["e.zip"], "早 1 秒在余量里，仍算下好")
     }
 }

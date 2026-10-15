@@ -1259,7 +1259,7 @@
    "label": "下载文件夹里没下完的文件",
    "sensitivity": "private",
    "group": "你同意后才读的",
-   "reads": "下载文件夹里没下完的临时文件（.crdownload、.download、.part）的名字和修改时间",
+   "reads": "下载文件夹里没下完的临时文件（.crdownload、.download、.part）的名字和修改时间；临时文件消失时，再看一眼同名文件的大小和修改时间，分清下好了还是取消了",
    "purpose": "显示正在下载的个数和下好了的提示；不读文件内容，不编进度",
    "destination": "只在内存里；不发送，不写运行记录",
    "activation": "只在你打开“浏览器下载”之后；文件夹有变化时才读，没有轮询",
@@ -1281,7 +1281,7 @@
     "toggle": "Browser downloads in Live activities (off by default)",
     "activation": "Only after you turn on Browser downloads; read on folder changes, never by polling",
     "combined": "Filenames of downloads together show what you've been downloading and roughly from where; contents stay invisible.",
-    "reads": "Names and modification times of unfinished temporary downloads (.crdownload, .download, .part) in the Downloads folder"
+    "reads": "Names and modification times of unfinished temporary downloads (.crdownload, .download, .part) in the Downloads folder; when one disappears, the size and modification time of the file with the same name, to tell a finished download from a cancelled one"
    }
   },
   {

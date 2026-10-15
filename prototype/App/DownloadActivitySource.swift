@@ -64,13 +64,17 @@ final class DownloadActivitySource {
         guard !scanning else { scanAgain = true; return }
         scanning = true
         let token = epoch
+        let watched = tracker.watchedFinalNames
         queue.async { [weak self] in
             let names = (try? FileManager.default.contentsOfDirectory(atPath: path)) ?? []
-            // 只有临时文件才取修改时间，别的文件一概不碰。
+            // 只有临时文件、和正在追踪的下载对应的正式文件才读属性，别的文件一概不碰。
             let entries = names.map { name -> DownloadFileEntry in
-                guard DownloadTempName.finalName(of: name) != nil else { return DownloadFileEntry(name: name, modifiedAt: nil) }
-                let date = (try? FileManager.default.attributesOfItem(atPath: path + "/" + name))?[.modificationDate] as? Date
-                return DownloadFileEntry(name: name, modifiedAt: date?.timeIntervalSince1970)
+                let isTemp = DownloadTempName.finalName(of: name) != nil
+                guard isTemp || watched.contains(name) else { return DownloadFileEntry(name: name, modifiedAt: nil) }
+                let attributes = try? FileManager.default.attributesOfItem(atPath: path + "/" + name)
+                let date = attributes?[.modificationDate] as? Date
+                let size = isTemp ? nil : (attributes?[.size] as? NSNumber)?.int64Value
+                return DownloadFileEntry(name: name, modifiedAt: date?.timeIntervalSince1970, size: size)
             }
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {

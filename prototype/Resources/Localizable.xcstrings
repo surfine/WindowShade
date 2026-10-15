@@ -30597,19 +30597,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Names and modification times of unfinished temporary downloads (.crdownload, .download, .part) in the Downloads folder"
+            "value" : "Names and modification times of unfinished temporary downloads (.crdownload, .download, .part) in the Downloads folder; when one disappears, the size and modification time of the file with the same name, to tell a finished download from a cancelled one"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下载文件夹里没下完的临时文件（.crdownload、.download、.part）的名字和修改时间"
+            "value" : "下载文件夹里没下完的临时文件（.crdownload、.download、.part）的名字和修改时间；临时文件消失时，再看一眼同名文件的大小和修改时间，分清下好了还是取消了"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "下載資料夾裡沒下完的臨時檔案（.crdownload、.download、.part）的名字和修改時間"
+            "value" : "下載資料夾裡沒下完的臨時檔案（.crdownload、.download、.part）的名字和修改時間；臨時檔案消失時，再看一眼同名檔案的大小和修改時間，分清下載好了還是取消了"
           }
         }
       }
