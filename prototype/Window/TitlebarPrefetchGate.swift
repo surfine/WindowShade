@@ -1,6 +1,7 @@
 // 可截屏内容列表预热的门控真值表与预过滤计数（纯逻辑，无系统依赖）。
 
 import Foundation
+import Synchronization
 
 enum TitlebarPrefetchGate {
     /// 没有画像时的标题栏带高。
@@ -19,21 +20,22 @@ enum TitlebarPrefetchGate {
 }
 
 /// tap 线程上预过滤结果计数。hit=确定不在标题栏带（放行）、miss=可能在（交主线程）、nil=资格不清。
-final class PrefilterStats: @unchecked Sendable {
+final class PrefilterStats: Sendable {
     enum Outcome { case hit, miss, unknown }
     struct Counts: Equatable { var hit = 0, miss = 0, unknown = 0 }
 
     static let shared = PrefilterStats()
-    private let lock = NSLock()
-    private var counts = Counts()
+    // 规格 M3：一把锁只护一份计数，换成 Mutex，去掉 @unchecked Sendable。
+    private let counts = Mutex(Counts())
 
     func note(_ outcome: Outcome) -> Counts {
-        lock.lock(); defer { lock.unlock() }
-        switch outcome {
-        case .hit: counts.hit += 1
-        case .miss: counts.miss += 1
-        case .unknown: counts.unknown += 1
+        counts.withLock { counts in
+            switch outcome {
+            case .hit: counts.hit += 1
+            case .miss: counts.miss += 1
+            case .unknown: counts.unknown += 1
+            }
+            return counts
         }
-        return counts
     }
 }

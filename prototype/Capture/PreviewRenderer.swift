@@ -3,6 +3,7 @@
 // 全部为纯函数/纯类型，可在任意线程执行，不依赖 AppDelegate 状态。
 
 import Cocoa
+import Synchronization
 import CoreText
 import Darwin
 
@@ -462,15 +463,15 @@ func quickWindowPreviewImage(id: CGWindowID, logicalSize: CGSize,
 
 /// 快速预览所依赖的旧接口只报一次可用性，便于未来系统移除时定位。
 enum LegacyQuickCapture {
-    private static let lock = NSLock()
-    /// 只在持有 `lock` 时读写。
-    nonisolated(unsafe) private static var reported = false
+    /// 规格 M3：Mutex 护着这一个标记，不再需要 nonisolated(unsafe)。
+    private static let reported = Mutex(false)
 
     static func reportUnavailableOnce() {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !reported else { return }
-        reported = true
+        let first = reported.withLock { reported in
+            defer { reported = true }
+            return !reported
+        }
+        guard first else { return }
         wlog("capture: CGWindowListCreateImage unavailable; quick preview falls back "
              + "(folded strip → proxy title bar, hover preview → none)")
     }
