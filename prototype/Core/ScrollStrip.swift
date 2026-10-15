@@ -50,6 +50,9 @@ struct ScrollStrip: Equatable {
     enum Centering: String, Equatable, CaseIterable { case edge, always, overflow }
     /// 停在屏幕外的列露出来的那一条（macOS 不让窗口整个离开屏幕，露一条边也让人知道那边还有）。
     static let sliver: CGFloat = 10
+    /// 松手推算停点的减速率（规格 R42：手感常量要具名）。和官网一致：像普通滚动，滑得远、停得柔；
+    /// 0.995 停得太急。niri 用 0.997，我们刻意取 0.998。
+    static let releaseDecelerationRate = 0.998
     /// 列宽按屏幕宽度取整，两列加起来可能比屏幕宽一两点：边沿伸出屏幕这么一点也算正好贴着屏幕边。
     static let flush: CGFloat = 2
     /// 那一条被伸过屏幕边的那一列盖着（它在上层）时，屏幕边最外面这几点仍算那一条：指针甩到屏幕边就停在这里。
@@ -834,7 +837,7 @@ enum StripOverviewSpread {
     static let stiffness: CGFloat = 0.5
     static let limit: CGFloat = 0.05
     /// 推算停点的减速率，和卷轴松手一致（0.998，约速度 × 0.5 秒）。
-    static let decelerationRate = 0.998
+    static let decelerationRate = ScrollStrip.releaseDecelerationRate
 
     /// 张开走满要多少缩放量：今天走满就开的门槛（arm）落在一半上。手停住再松手时，开不开和从前一模一样。
     static func full(arm: CGFloat) -> CGFloat { max(0.0001, 2 * arm) }

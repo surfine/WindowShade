@@ -243,8 +243,8 @@ final class ScrollStripController {
     func endScroll(at time: TimeInterval) {
         guard let strip else { return }
         let velocity = ScrollStrip.releaseVelocity(samples: samples, releaseTime: time)
-        // 减速率和官网一致（0.998，像普通滚动，滑得远、停得柔）；原来 0.995 停得太急。
-        let projected = scrollNow + CGFloat(FluidMotion.projection(velocity: Double(velocity), decelerationRate: 0.998))
+        let projected = scrollNow + CGFloat(FluidMotion.projection(velocity: Double(velocity),
+                                                                    decelerationRate: ScrollStrip.releaseDecelerationRate))
         let target = strip.snapped(projected)
         animate(from: scrollNow, to: target, velocity: velocity, focusVisible: true)
         wlog("strip: release offset=\(Int(scrollNow)) velocity=\(Int(velocity)) → \(Int(target))")
