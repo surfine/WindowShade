@@ -72,7 +72,7 @@
 | 6 | **R38 第三方许可** | 我们批评过别人、自己却没做的那件事 | 十几分钟 |
 | 7 | **R37 隐私声明** | 发布材料；呈现用 loupe 三档（§1.8） | S/M |
 
-**2026-10-15 这 7 行已全部落地并本地提交**（R1 a49ddb3、R33 6b51679、R34 f1e82d8、N5＋C3 cb10408、R38 6cac384、R2 f38d183、R37 866b2a7；分支 `codex/ws2-remote-gpt6-handoff-20261007`，未推送）。证据：全量 `build.sh --check` EXIT=0；`--stage` EXIT=0（runtime 标志、四项 entitlement、`--self-check build=16 ok`）；菜单、隐私页、窗口浏览三组单测与官网构建通过。**还没做的**：R2 运行中关权限、C3 的 Apple Events 与摄像头、CI 在 runner 上的第一次运行，三样都要真机或推送后才能验；R37 的「不离开这台 Mac」仍等 P2。**顺带发现（不在这批）**：`prototype/Vendor/mediaremote-adapter/build-adapter.sh` 在 git 里是 100644，构建时 Permission denied，1.0.16 包里也没有这个适配器——正在播放推送流从没进过包。
+**2026-10-15 这 7 行已全部落地并本地提交**（R1 a49ddb3、R33 6b51679、R34 f1e82d8、N5＋C3 cb10408、R38 6cac384、R2 f38d183、R37 866b2a7；分支 `codex/ws2-remote-gpt6-handoff-20261007`，未推送）。证据：全量 `build.sh --check` EXIT=0；`--stage` EXIT=0（runtime 标志、四项 entitlement、`--self-check build=16 ok`）；菜单、隐私页、窗口浏览三组单测与官网构建通过。**还没做的**：R2 运行中关权限、C3 的 Apple Events 与摄像头、CI 在 runner 上的第一次运行，三样都要真机或推送后才能验；R37 的「不离开这台 Mac」仍等 P2。**顺带发现（不在这批）**：`prototype/Vendor/mediaremote-adapter/build-adapter.sh` 在 git 里是 100644，构建时 Permission denied，1.0.16 包里也没有这个适配器——正在播放推送流从没进过包。**已修**：build.sh 改用 `bash` 调它，`--stage` 后适配器与 perl 脚本进包、签名通过。
 
 （上表 7 行＝在飞 6 条＋C3 并批；**批不清空不开新项**的规矩照旧。**C3 没有独立条目**：它只是 `build.sh:373` 主程序 `codesign` 漏了 `-o runtime`（:367–372 的嵌套件都有），见 §1.5 最后一行与[竞品深挖](competitive-deep-dive.md)§五 C3。）
 
