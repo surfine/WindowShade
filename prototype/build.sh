@@ -302,7 +302,9 @@ echo "==> Sparkle.framework：${SPARKLE_KB_BEFORE} KB → $(du -sk "$EMBED_FW" |
 # App 找不到适配器就照旧问 Music / Spotify。
 ADAPTER_FW="$APP/Contents/Frameworks/MediaRemoteAdapter.framework"
 rm -rf "$ADAPTER_FW" "$APP/Contents/Resources/mediaremote-adapter.pl" "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
-if Vendor/mediaremote-adapter/build-adapter.sh "$WORK/mediaremote-adapter" "$ARCH"; then
+# 用 bash 调，不靠文件的可执行位：它在 git 里是 100644，直接执行会 Permission denied，
+# 1.0.16 及以前的包因此都没带上适配器。
+if bash Vendor/mediaremote-adapter/build-adapter.sh "$WORK/mediaremote-adapter" "$ARCH"; then
   ditto "$WORK/mediaremote-adapter/MediaRemoteAdapter.framework" "$ADAPTER_FW"
   cp "$WORK/mediaremote-adapter/mediaremote-adapter.pl" "$APP/Contents/Resources/mediaremote-adapter.pl"
   cp Vendor/mediaremote-adapter/LICENSE "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
