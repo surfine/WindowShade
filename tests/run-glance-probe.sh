@@ -4,6 +4,7 @@
 # 每次跑一项，例如 --gesture、--launchpad-keys、--fullscreen（会进一次系统全屏再退出）；完整列表见 prototype/App/GlanceProbe.swift 的调度。
 # --fold-timing、--orphan（R10）、--soak [--soak-rounds N]（R39）、--menubar-owner（R22）、--focus-steal（R41）、--switch-cpu、--idle-first-op [--idle-seconds N]（E6）会自行只开一扇临时窗（不必再加 --single）。
 # --browser-identity（R20）：再开一个临时 App 实例，核对 orderOut 关窗与 kill -9 之后窗口浏览的列表。
+# --second-display（V9）：把临时窗挪到非主屏收起再展开；--finder-columns（R23）：开一扇临时访达窗口量列表列宽，用完关掉、删掉临时文件夹。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 if [ -n "${PROBE_SHOTS:-}" ]; then mkdir -p "$PROBE_SHOTS"; fi

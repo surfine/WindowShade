@@ -49,7 +49,7 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op"]
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
@@ -111,6 +111,11 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--menubar-owner") {
       try await menuBarOwner(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--second-display") {
+      try await secondDisplay(element: element)
       finish(nil)
       return
     }
@@ -242,6 +247,11 @@ final class GlanceProbe {
     if CommandLine.arguments.contains("--thumbnail") {
       adoptFixture(pid: process.processIdentifier)
       try await exerciseThumbnail(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--finder-columns") {
+      try await exerciseFinderColumns()
       finish(nil)
       return
     }
@@ -703,6 +713,56 @@ final class GlanceProbe {
     print(ours == 0 ? "PASS menubar: never switched to WindowShade's own menus"
       : "FAIL menubar: WindowShade owned the menu bar in \(ours) samples (~\(ours * 10) ms total)")
     print(blank == 0 ? "PASS menubar: never blank" : "FAIL menubar: no owner in \(blank) samples")
+  }
+
+  /// 规格 V9（多显示器矩阵里「接着两块」那一类）：把临时窗口挪到不是主屏的那块上收起，
+  /// 卷帘条要落在同一块屏、记下的显示器是它；展开后窗口回到那块屏。只有一块屏时跳过。
+  private func secondDisplay(element: AXUIElement) async throws {
+    let main = NSScreen.screens.first { $0.frame.origin == .zero }
+    guard let other = NSScreen.screens.first(where: { $0 !== main }) else {
+      print("SKIP second-display: only one display is connected")
+      return
+    }
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
+    func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
+      (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber).map { CGDirectDisplayID($0.uint32Value) }
+    }
+    // AX 坐标原点在主屏左上角、y 向下；Cocoa 原点在主屏左下角、y 向上。
+    let mainHeight = main?.frame.height ?? 0
+    let target = CGPoint(x: other.visibleFrame.minX + 80, y: mainHeight - other.visibleFrame.maxY + 80)
+    setAXPosition(element, target)
+    try await wait("window on the other display", timeout: 4) {
+      guard let frame = self.bounds(self.id) else { return false }
+      let cocoa = CGRect(x: frame.minX, y: mainHeight - frame.maxY, width: frame.width, height: frame.height)
+      return other.frame.intersects(cocoa) && !(main?.frame.intersects(cocoa) ?? false)
+    }
+    try await Task.sleep(for: .milliseconds(400), clock: .suspending)
+    owner.shade(element, id)
+    try await wait("strip shown") {
+      self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+        && self.owner.duoController.windowEffects.activeCount == 0
+    }
+    let state = owner.shaded[id]
+    let stripScreen = state?.overlay?.screen
+    let recorded = state?.sourceDisplayID
+    // NSScreen 物件每次都可能重新建立，比顯示器編號，不比物件身份。
+    let sameScreen = stripScreen.flatMap(displayID) == displayID(other)
+    let sameDisplay = recorded == displayID(other)
+    print("INFO second-display: strip frame \(String(describing: state?.overlay?.frame)) on \(stripScreen?.localizedName ?? "-"), recorded display \(recorded.map(String.init) ?? "-"), target \(other.localizedName) \(displayID(other).map(String.init) ?? "-")")
+    print(sameScreen ? "PASS second-display: the strip lands on the display the window was on"
+      : "FAIL second-display: the strip landed on \(stripScreen?.localizedName ?? "no display") instead of \(other.localizedName)")
+    print(sameDisplay ? "PASS second-display: the fold remembers that display"
+      : "FAIL second-display: the fold remembered display \(recorded.map(String.init) ?? "-")")
+    _ = owner.unshade(id)
+    try await wait("restored", timeout: 8) {
+      self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+        && self.owner.duoController.windowEffects.activeCount == 0
+    }
+    let back = bounds(id).map { CGRect(x: $0.minX, y: mainHeight - $0.maxY, width: $0.width, height: $0.height) }
+    print(back.map { other.frame.intersects($0) } == true ? "PASS second-display: the window comes back on that display"
+      : "FAIL second-display: the window came back at \(String(describing: back))")
   }
 
   /// 本进程到目前为止用掉的 CPU 时间（用户态＋内核态，毫秒）。
