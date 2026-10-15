@@ -726,7 +726,7 @@ enum WS2PrivacyData {
             label: WSL10n.text("privacy.download-files.label", zh: "下载文件夹里没下完的文件"),
             sensitivity: "private",
             group: "你同意后才读的",
-            reads: WSL10n.text("privacy.download-files.reads", zh: "下载文件夹里没下完的临时文件（.crdownload、.download、.part）的名字和修改时间"),
+            reads: WSL10n.text("privacy.download-files.reads", zh: "下载文件夹里没下完的临时文件（.crdownload、.download、.part）的名字和修改时间；临时文件消失时，再看一眼同名文件的大小和修改时间，分清下好了还是取消了"),
             purpose: WSL10n.text("privacy.download-files.purpose", zh: "显示正在下载的个数和下好了的提示；不读文件内容，不编进度"),
             destination: WSL10n.text("privacy.download-files.destination", zh: "只在内存里；不发送，不写运行记录"),
             activation: WSL10n.text("privacy.download-files.activation", zh: "只在你打开“浏览器下载”之后；文件夹有变化时才读，没有轮询"),

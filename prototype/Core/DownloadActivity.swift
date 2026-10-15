@@ -9,6 +9,8 @@ struct DownloadFileEntry: Equatable, Sendable {
     let name: String
     /// 修改时间（Unix 秒）；读不到就是 nil。
     let modifiedAt: Double?
+    /// 字节数；只给正在追踪的下载对应的正式文件读，其余是 nil。
+    var size: Int64? = nil
 }
 
 enum DownloadTempName {
@@ -50,8 +52,14 @@ struct DownloadTracker {
     /// 启动时就躺在目录里、很久没动过的临时文件视为上次遗留，不当成正在下。
     static let staleAfter: Double = 3600
 
-    /// 临时文件名 -> 最终文件名。
-    private var known: [String: String] = [:]
+    /// 判「下好了」时正式文件的修改时间可以比开始追踪早这么多（文件系统时间精度、扫描先后）。
+    static let finishSlack: Double = 2
+
+    /// 临时文件名 -> 最终文件名、开始追踪的时刻。
+    private var known: [String: (final: String, since: Double)] = [:]
+
+    /// 正在追踪的下载对应的正式文件名：读取那一侧只给这些名字读大小和修改时间（规格 R40）。
+    var watchedFinalNames: Set<String> { Set(known.values.map(\.final)) }
     private var ignored: Set<String> = []
     private var seeded = false
 
@@ -76,15 +84,25 @@ struct DownloadTracker {
 
         var finished = Set<String>()
         var cancelled = 0
-        for (temp, final) in known where activeNames[temp] == nil {
+        let byName = Dictionary(listing.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+        for (temp, record) in known where activeNames[temp] == nil {
             // 同名的最终文件在，才算下好；它自己不能又是一个临时文件。
-            if present.contains(final), DownloadTempName.finalName(of: final) == nil {
+            // 再加两条（规格 R40，对照 Atoll）：正式文件不能是空的，修改时间不能早于开始追踪——
+            // Firefox 一开始就建 0 字节的占位，目录里也可能本来躺着同名旧文件，那两种消失都是取消。
+            // 读不到大小或时间时退回只看「在不在」。
+            let final = record.final
+            let entry = byName[final]
+            let written = (entry?.size).map { $0 > 0 } ?? true
+            let fresh = (entry?.modifiedAt).map { $0 >= record.since - Self.finishSlack } ?? true
+            if present.contains(final), DownloadTempName.finalName(of: final) == nil, written, fresh {
                 finished.insert(final)
             } else {
                 cancelled += 1
             }
         }
-        known = activeNames
+        known = activeNames.reduce(into: [:]) { result, item in
+            result[item.key] = (item.value, known[item.key]?.since ?? now)
+        }
 
         // 同一个最终文件名只算一个（比如两家浏览器同时下同名文件）。
         let names = Set(activeNames.values).sorted()
