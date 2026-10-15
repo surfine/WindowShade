@@ -272,7 +272,13 @@ import Foundation
     static func testDefaults() {
         let name = "com.windowshade.tests.nowplaying-card.\(ProcessInfo.processInfo.processIdentifier)"
         guard let suite = UserDefaults(suiteName: name) else { expect(false, "造不出测试用的 defaults"); return }
-        defer { suite.removePersistentDomain(forName: name) }
+        defer {
+            suite.removePersistentDomain(forName: name)
+            // removePersistentDomain 只清内容，~/Library/Preferences 里的空文件会留下，每跑一次多一个。
+            let file = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Preferences/\(name).plist")
+            try? FileManager.default.removeItem(at: file)
+        }
         typealias D = NotchNowPlayingDefaults
         expect(D.musicKey == "Notch.activities.musicEnabled" && D.streamKey == "Notch.activities.nowPlayingStream", "键名不变")
 

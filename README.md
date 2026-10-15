@@ -91,6 +91,19 @@ WindowShade asks for two permissions. **Accessibility**: finding, moving and res
 
 Regular windows all roll up. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use. If something goes wrong, please [report it](https://github.com/surfine/WindowShade/issues) with your macOS version, the app, and the steps.
 
+### Removing it completely
+
+WindowShade changes one system setting: the Dock’s minimize effect. When it needs to, it switches it to Scale and writes down the old value first; it puts the old value back when you quit, and after an unexpected quit it does so on the next launch. Quit WindowShade from its menu before deleting it and that setting is already back. Then:
+
+1. Drag `WindowShade.app` to the Trash. If you turned on “Open at login”, remove it in System Settings → General → Login Items.
+2. Delete the files it created in your account:
+   - `~/Library/Application Support/WindowShade/` (recovery records, file shelf, device key)
+   - `~/Library/Logs/WindowShade/` (activity log)
+   - `~/Library/Caches/com.windowshade.prototype/`, `~/Library/HTTPStorages/com.windowshade.prototype/`
+   - `~/Library/Preferences/com.windowshade.prototype.plist`, `~/Library/Preferences/com.windowshade.prototype.update-guard.plist`
+3. If you used face unlock or the iPhone remote, search Keychain Access for `WindowShade` and delete the `WindowShade.FaceScan.templates` and `WindowShade.Remote.peers` items.
+4. To clear the permissions too, remove WindowShade from Accessibility and Screen Recording in System Settings → Privacy & Security.
+
 ## In development
 
 The current download is **1.0.16** — tucked windows and the rest of the notch page above are in it, plus a three-step welcome, a “What WindowShade reads” privacy page and an interface-language switch. On a new installation, the notch, live activities, file shelf, accessory notices, volume/brightness display and Dock click-to-hide are off until enabled in Settings. [Release notes](docs/releases/v1.0.16.md) · [defaults](docs/releases/v1.0.16-defaults.md) · [gate report](docs/releases/v1.0.16-acceptance/gate-0B-verification.md)
