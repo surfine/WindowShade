@@ -411,6 +411,8 @@ extension AppDelegate {
         var skipped = skippedForStall
         var restored = restoredAny
         let pending = shaded.keys.filter { !skipped.contains($0) }.sorted()
+        // 规格 R10：串行还原队列的深度与剩余数要能从日志读出来。
+        wlog("restoreAll: batch generation=\(generation) queueDepth=\(pending.count) skipped=\(skipped.count)")
         suppressUnshadeSounds = true
         duoController.windowEffects.suppressedForBulkOperation = true
         var next = pending.count
@@ -429,7 +431,7 @@ extension AppDelegate {
         duoController.windowEffects.suppressedForBulkOperation = false
         suppressUnshadeSounds = false
         if next < pending.count {
-            wlog("restoreAll: batch budget spent; \(pending.count - next) windows continue next turn")
+            wlog("restoreAll: batch budget spent; remaining=\(pending.count - next) continue next turn")
             let carriedSkipped = skipped
             let carriedRestored = restored
             DispatchQueue.main.async { [weak self] in

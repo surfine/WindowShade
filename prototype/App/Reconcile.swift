@@ -71,6 +71,8 @@ extension AppDelegate {
     func shouldLogReconcileInvalidCount(_ count: Int) -> Bool {
         count == 1 || count == 3 || count == 10 || count % 60 == 0
     }
+    /// 连续几轮查不到窗口才算孤儿（每轮间隔见 shadedWindowReconcileInterval）。
+    var orphanStripConfirmRounds: Int { 2 }
     func sourceWindowMissingShouldCleanup(id: CGWindowID, state: ShadeState) -> Bool {
         guard runningApp(pid: state.pid) != nil else {
             wlog("reconcile: source app gone id=\(id) app=\(state.appName)")
@@ -79,6 +81,18 @@ extension AppDelegate {
 
         let count = (reconcileInvalidCounts[id] ?? 0) + 1
         reconcileInvalidCounts[id] = count
+
+        // 孤儿卷帘条（规格 R10）：App 还在，但窗口服务器已经查不到这扇窗——隐藏、最小化、移到屏外的窗口
+        // 都还查得到，查不到只能是被关掉了。窗口编号不会复用回来，连续两轮（约 10 秒）都查不到才收掉卷帘条。
+        // 和销毁通知那条路一样严格：查询本身成功、且结果为空，才算查不到（FoldTransaction.handleAXNotification）。
+        // 那条路只在通知到达时查一次；通知丢了或窗口服务器还没删干净，就靠这里兜底。
+        // 快速查看的收起本来就是把窗口关掉（.quickLookClosed），不算孤儿。
+        if count >= orphanStripConfirmRounds, state.hide != .quickLookClosed,
+           let windows = CGWindowListCopyWindowInfo(.optionIncludingWindow, state.sourceWindowID) as? [[String: Any]],
+           windows.isEmpty {
+            wlog("reconcile: orphan strip id=\(id) app=\(state.appName) hide=\(state.hide.rawValue) count=\(count); window closed elsewhere, closing strip")
+            return true
+        }
 
         switch state.hide {
         case .hidden, .minimized, .offscreen, .privateOffscreen, .privateAlpha, .ownWindowOrderedOut, .quickLookClosed:
