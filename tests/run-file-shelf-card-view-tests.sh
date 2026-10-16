@@ -20,7 +20,7 @@ GLASS_DEFINE=()
 if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h" ]; then
   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)
 fi
-swiftc -module-cache-path "$(pwd)/.build/module-cache" -whole-module-optimization -target "$(uname -m)-apple-macosx14.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
+swiftc -module-cache-path "$(pwd)/.build/module-cache" -whole-module-optimization -target "$(uname -m)-apple-macosx15.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
   -I prototype/Native "$NATIVE_DIR/WS2Child.o" \
   "${SOURCES[@]}" "$WORK/FileShelfCardViewTests.swift" \
   -framework Cocoa -framework Carbon -framework ApplicationServices -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \

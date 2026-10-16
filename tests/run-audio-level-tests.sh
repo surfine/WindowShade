@@ -7,6 +7,6 @@ mkdir -p "$out"
 flags=(-swift-version 6 -strict-concurrency=complete -warnings-as-errors -O)
 swiftc "${flags[@]}" "$root/prototype/Core/AudioLevelBands.swift" "$root/tests/AudioLevelBandsTests.swift" -o "$out/bands"
 "$out/bands"
-swiftc "${flags[@]}" -target arm64-apple-macosx14.0 "$root/prototype/Core/AudioLevelBands.swift" "$root/prototype/App/AudioLevelTap.swift" \
+swiftc "${flags[@]}" -target arm64-apple-macosx15.0 "$root/prototype/Core/AudioLevelBands.swift" "$root/prototype/App/AudioLevelTap.swift" \
   "$root/tests/AudioLevelControllerTests.swift" -o "$out/controller"
 "$out/controller"

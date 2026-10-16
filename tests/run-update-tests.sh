@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/update-tests .build/module-cache
 tmp="$(mktemp -d "$PWD/.build/update-tests/tmp.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
-swiftc -target "$(uname -m)-apple-macosx14.0" -parse-as-library \
+swiftc -target "$(uname -m)-apple-macosx15.0" -parse-as-library \
     -module-cache-path .build/module-cache \
     -o .build/update-tests/UpdateTests \
     prototype/Core/UpdateVersion.swift prototype/Core/UpdateModels.swift prototype/Core/UpdateDecisions.swift \

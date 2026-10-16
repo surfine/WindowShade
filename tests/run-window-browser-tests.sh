@@ -10,7 +10,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
   GLASS_DEFINE="-DWINDOWSHADE_SDK_HAS_GLASS"
 fi
 
-swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
+swiftc -target "$(uname -m)-apple-macosx15.0" $GLASS_DEFINE \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/App/StandardMenu.swift \
   prototype/App/GlobalShortcuts.swift \
@@ -47,13 +47,13 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   -o .build/window-browser-tests/core
 .build/window-browser-tests/core
 
-swiftc -target "$(uname -m)-apple-macosx14.0" \
+swiftc -target "$(uname -m)-apple-macosx15.0" \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/WindowBrowser/WindowBrowserPreviewStartup.swift \
   tests/WindowBrowserPreviewStartupTests.swift \
   -o .build/window-browser-tests/preview-startup
 .build/window-browser-tests/preview-startup
 
-swiftc -target "$(uname -m)-apple-macosx14.0" \
+swiftc -target "$(uname -m)-apple-macosx15.0" \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/WindowBrowser/WindowBrowserMetadataQueue.swift \
   tests/MetadataQueueTests.swift \
   -o .build/window-browser-tests/metadata-queue
