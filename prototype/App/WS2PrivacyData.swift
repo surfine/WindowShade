@@ -1053,7 +1053,7 @@ enum WS2PrivacyData {
             destination: WSL10n.text("privacy.diagnostics-export.destination", zh: "只写进这台 Mac 的运行记录文件夹，并在访达里显示；不上传"),
             activation: WSL10n.text("privacy.diagnostics-export.activation", zh: "只在你导出诊断包的那一次"),
             toggle: WSL10n.text("privacy.diagnostics-export.toggle", zh: "没有开关：不导出就不读"),
-            status: "planned",
+            status: "current",
             combined: WSL10n.text("privacy.diagnostics-export.combined", zh: "崩溃报告合起来，能看出这台 Mac 的型号、系统版本，和当时同时开着哪些 App。"),
             interfaces: [],
             subtitle: WSL10n.text("privacy.diagnostics-export.subtitle", zh: "只在你导出诊断包时读"),
