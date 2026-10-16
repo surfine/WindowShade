@@ -252,6 +252,13 @@ extension AppDelegate {
                                  isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:))),
             // 音量和亮度：开关未验前默认关；没允许辅助功能时副标题改说系统的提示也会出现，并带"允许…"。
             LevelRowHost { [weak self] in self?.makeLevelKeysRow() ?? NSView() },
+            // 改回用系统的提示（R12）：开着只旁听、不拦键，系统自己的音量、亮度提示照出，刘海跟着画。默认关。
+            makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.setting("settings.shade.levelKeys.systemPopups.name", zh: "改回用系统的提示"),
+                                                           subtitle: WSL10n.setting("settings.shade.levelKeys.systemPopups.sub", zh: "按键时出系统的提示，刘海只跟着显示"),
+                                                           symbol: "speaker.wave.3"),
+                                 accessibleName: WSL10n.setting("settings.shade.levelKeys.systemPopups.name", zh: "改回用系统的提示").shown,
+                                 minHeight: 48, isOn: NotchLevelSetting.usesSystemPopups(),
+                                 enabled: true, action: #selector(prefToggleLevelSystemPopups(_:))),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.mergedRow.name", zh: "合成一排"),
                                  subtitle: WSL10n.setting("settings.shade.mergedRow.sub", zh: "窗口和正在进行的事排在同一排"),
                                  isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
@@ -690,6 +697,11 @@ extension AppDelegate {
 
     @objc func prefToggleLevelKeys(_ sender: NSSwitch) {
         NotchLevelSetting.setEnabled(sender.state == .on)
+        NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
+    }
+
+    @objc func prefToggleLevelSystemPopups(_ sender: NSSwitch) {
+        NotchLevelSetting.setUsesSystemPopups(sender.state == .on)
         NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
     }
 

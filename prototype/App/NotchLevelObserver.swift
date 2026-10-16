@@ -50,6 +50,8 @@ final class NotchLevelObserver {
     private var output: NotchLevelEars.Output = .speaker
     /// 设置里“音量和亮度”开着没有（默认开）；通知更新，回调里只读这个值。
     private var settingEnabled = true
+    /// 设置里“改回用系统的提示”开着没有（R12，默认关）：开着就不装拦键监听，只旁听；刘海照样跟着画。
+    private var useSystemPopups = false
     private var settingToken: NSObjectProtocol?
     private var accessibilityToken: NSObjectProtocol?
     private var accessibilityRecheck: DispatchWorkItem?
@@ -99,9 +101,10 @@ final class NotchLevelObserver {
         guard !started else { return }
         started = true
         settingEnabled = NotchLevelSetting.isEnabled()
+        useSystemPopups = NotchLevelSetting.usesSystemPopups()
         settingToken = NotificationCenter.default.addObserver(
             forName: NotchLevelSetting.didChange, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.settingEnabled = NotchLevelSetting.isEnabled() }
+            MainActor.assumeIsolated { self?.settingsChanged() }
         }
         // 辅助功能被允许或撤销时系统会发这条；只在它来的时候重看，不轮询。
         accessibilityToken = DistributedNotificationCenter.default().addObserver(
@@ -261,6 +264,15 @@ final class NotchLevelObserver {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
+    /// 设置变了：开关照最新值；“改回用系统的提示”开了就拆掉拦键监听（回到只旁听），关了再装。
+    private func settingsChanged() {
+        settingEnabled = NotchLevelSetting.isEnabled()
+        let before = useSystemPopups
+        useSystemPopups = NotchLevelSetting.usesSystemPopups()
+        guard started, before != useSystemPopups else { return }
+        if useSystemPopups { removeTap() } else { installTapIfAllowed() }
+    }
+
     private func reconcileAccessibility() {
         guard started else { return }
         if tap != nil, !AXIsProcessTrusted() {
@@ -275,7 +287,7 @@ final class NotchLevelObserver {
     /// 能拦时换成主动监听。辅助功能没允许、版本没核对过就什么都不换（只旁听）。
     /// 允许辅助功能之后可以再调一次（设置那一行的“允许…”那一路，LV5 接）。
     func installTapIfAllowed() {
-        guard started, tap == nil else { return }
+        guard started, tap == nil, !useSystemPopups else { return }
         versionVerified = Self.currentVersionVerified()
         guard versionVerified, NotchLevelControl.installsTap(accessibilityTrusted: AXIsProcessTrusted(),
                                             versionVerified: versionVerified) else { return }
@@ -354,6 +366,7 @@ final class NotchLevelObserver {
         input.foreignHUDRunning = cachedForeignHUD
         input.locked = cachedLocked
         input.settingEnabled = settingEnabled
+        input.useSystemPopups = useSystemPopups
         // 全屏桌面、调度中心：走判定表。全屏而且面板在这张桌面上确认过看得见才可能拦；查不到按看不见（不拦）。
         if let spaceGate, let display = pointerDisplay() {
             let fullScreen = Self.bool(spaceGate.fullScreenFact(on: display))

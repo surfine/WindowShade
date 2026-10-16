@@ -5184,6 +5184,20 @@
    "signal": "settings"
   },
   {
+   "path": "prototype/Core/NotchLevelSetting.swift",
+   "line": 26,
+   "symbol": "UserDefaults",
+   "source": "static func usesSystemPopups(in defaults: UserDefaults = .standard) -> Bool {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/Core/NotchLevelSetting.swift",
+   "line": 30,
+   "symbol": "UserDefaults",
+   "source": "static func setUsesSystemPopups(_ on: Bool, in defaults: UserDefaults = .standard) {",
+   "signal": "settings"
+  },
+  {
    "path": "prototype/Core/NotchRow.swift",
    "line": 19,
    "symbol": "UserDefaults",
