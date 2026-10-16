@@ -83,6 +83,8 @@
 **第十七批（2026-10-16）**：N1 ✅ 代码（4a8551f，7 个捷径动作，元数据随包；在「快捷指令」里看得到待 Aaron 空闲时验）；R35／R5／R36 入口 ✅（08b62d3，「高级」页底「关于」四行）；公证流程打通（Developer ID、`scripts/notarize.sh`、发布关脚本）。
 
 **第十八批（2026-10-16，多线）**：R21 ✅ 代码（4dd8593，单窗口工具关窗即退出、聊天类永不退出；本机已装的微信／QQ／信息／Discord 核过 bundle ID；真机待整合构建后验）；H4 量过不采用、H6 随之不适用（7922ebd）；R16 小样（95d6c0b，[私有页](https://claude.ai/artifact/6ShtJuF4UJnQKxpWXPcsFt)，待 Aaron 定三件事）；O／A 29 条清单（0456817，待 Aaron）。R49 本机没装 ToDesk／QQ 音乐，要下载需同意。
+**第十八批续（2026-10-17）**：R12 ✅ 代码（979ffed：开关开着只旁听、不拦键，系统的提示照出、刘海跟着显示；子代理初稿做成「刘海也不显示」，与总开关重复，主代理按定案改）；R17／R8 ✅ 代码（6baac1f，合入时收紧成同一个开启安全输入的 App 一次运行只说一次；两条都没法在真机上人为触发，靠单测）；R26 ✅（1e0d179，辅助功能晚于启动才给时补装窗口切换与 Mission Control 键）；M3 第四轮（22f1cd8）；V8 能驱动的 4 条 ✅（fad1726）。**整合构建真机 14 组全过**（签名构建，含以上全部）：close-quit（R21：App Store 关条即退出 ✅、夹具不退）、capsule-color、browser-more、browser-identity、dock-scenarios、wins、habits、fold-timing、restore-guard、fold-unminimizable、pins、grid、home、carry。H3：存下来的「完整」帧整帧颜色与 alpha 全是 0，探针改成跳过全 0 帧并打印录屏授权，下一轮再看。
+
 
 **Aaron 拍板（2026-10-16 第十六批后）**：
 - **R21** 按类别分：计算器、App Store 这类单窗口工具关掉卷帘条就退出 App；微信、QQ 等聊天类永远不退出；其余照现状只关窗口。
