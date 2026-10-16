@@ -9,6 +9,7 @@
 // `begin()` 必然失败，所以「已放行」与「迟到折叠」不可能同时发生。
 
 import Foundation
+import Synchronization
 
 enum TapAdmission: Equatable {
     case pending
@@ -17,31 +18,30 @@ enum TapAdmission: Equatable {
     case finished
 }
 
-final class TapDecision: @unchecked Sendable {
-    private let lock = NSLock()
+// 规格 M3：状态与结果一起进 Mutex（同一把锁、同样的临界区），去掉 @unchecked Sendable。
+final class TapDecision: Sendable {
+    private struct Box { var state = TapAdmission.pending; var result = false }
+    private let box = Mutex(Box())
     private let done = DispatchSemaphore(value: 0)
-    private var state = TapAdmission.pending
-    private var result = false
 
     /// 主线程动折叠前的原子占用。已被作废（或已结束）时返回 false——迟到任务不得再折叠。
     func begin() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        guard state == .pending else { return false }
-        state = .admitted
-        return true
+        box.withLock {
+            guard $0.state == .pending else { return false }
+            $0.state = .admitted
+            return true
+        }
     }
 
     /// 主线程完成判定并记录结果；只有已占用的任务能记录并唤醒等待方。
     func finish(swallow: Bool) {
-        lock.lock()
-        guard state == .admitted else {
-            lock.unlock()
-            return
+        let recorded = box.withLock {
+            guard $0.state == .admitted else { return false }
+            $0.state = .finished
+            $0.result = swallow
+            return true
         }
-        state = .finished
-        result = swallow
-        lock.unlock()
+        guard recorded else { return }
         done.signal()
     }
 
@@ -49,11 +49,11 @@ final class TapDecision: @unchecked Sendable {
     /// 返回 false 表示主线程已经占用（或已给出结果），此时不能再单方面放行。
     @discardableResult
     func abandon() -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        guard state == .pending else { return false }
-        state = .abandoned
-        return true
+        box.withLock {
+            guard $0.state == .pending else { return false }
+            $0.state = .abandoned
+            return true
+        }
     }
 
     /// 等待结果；到点未定案返回 false（绝无无界等待）。
@@ -63,14 +63,10 @@ final class TapDecision: @unchecked Sendable {
 
     /// 判定结果是否要求吞掉事件。只在 `waitForResult` 成功或状态为 `finished` 时可读。
     var swallow: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return result
+        box.withLock { $0.result }
     }
 
     var admission: TapAdmission {
-        lock.lock()
-        defer { lock.unlock() }
-        return state
+        box.withLock { $0.state }
     }
 }

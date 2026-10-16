@@ -1,6 +1,7 @@
 // 应用窗口枚举（事务级备忘、并发枚举）、应用元数据与窗口显示标题。
 
 import Cocoa
+import Synchronization
 
 // app 当前有几个窗口（用于决定：单窗口可整体隐藏，多窗口只能最小化单个）
 func appWindowCount(_ pid: pid_t) -> Int {
@@ -118,14 +119,13 @@ func concurrentQuickPreviews(_ ids: [CGWindowID]) -> [CGWindowID: CGImage] {
     guard ids.count > 1 else {
         return ids.reduce(into: [:]) { $0[$1] = quickWindowPreviewCGImage(id: $1) }
     }
-    var images = [CGImage?](repeating: nil, count: ids.count)
-    let lock = NSLock()
+    // 规格 M3：各窗口的预览图收进局部 Mutex。
+    let collected = Mutex([CGImage?](repeating: nil, count: ids.count))
     DispatchQueue.concurrentPerform(iterations: ids.count) { index in
         guard let image = quickWindowPreviewCGImage(id: ids[index]) else { return }
-        lock.lock()
-        images[index] = image
-        lock.unlock()
+        collected.withLock { $0[index] = image }
     }
+    let images = collected.withLock { $0 }
     var result: [CGWindowID: CGImage] = [:]
     for (index, id) in ids.enumerated() where images[index] != nil {
         result[id] = images[index]

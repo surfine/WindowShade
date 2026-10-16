@@ -11,6 +11,7 @@
 
 import Foundation
 import os
+import Synchronization
 
 /// 单调时钟（秒）。系统时间被改不影响；用于预算和熔断，不用于展示。
 func axMonotonicNow() -> TimeInterval {
@@ -18,7 +19,8 @@ func axMonotonicNow() -> TimeInterval {
 }
 
 /// 按进程熔断。所有入口线程安全（os_unfair_lock），可以从救援队列或主线程调用。
-final class AXStallBreaker: @unchecked Sendable {
+// 规格 M3：熔断表进 Mutex，去掉 @unchecked Sendable。
+final class AXStallBreaker: Sendable {
     /// 单次调用超过这个时长记为卡住。
     static let stallThreshold: TimeInterval = 1.0
     /// 调用失败且等了至少这么久：等满了 1 秒的单元素预算（见 prepareBudgeted），同样记为卡住。
@@ -30,24 +32,10 @@ final class AXStallBreaker: @unchecked Sendable {
     static let shared = AXStallBreaker()
 
     private let now: @Sendable () -> TimeInterval
-    private let lock: os_unfair_lock_t
-    private var openUntil: [pid_t: TimeInterval] = [:]
+    private let openUntil = Mutex<[pid_t: TimeInterval]>([:])
 
     init(now: @escaping @Sendable () -> TimeInterval = { axMonotonicNow() }) {
         self.now = now
-        lock = os_unfair_lock_t.allocate(capacity: 1)
-        lock.initialize(to: os_unfair_lock())
-    }
-
-    deinit {
-        lock.deinitialize(count: 1)
-        lock.deallocate()
-    }
-
-    private func withLock<T>(_ body: () -> T) -> T {
-        os_unfair_lock_lock(lock)
-        defer { os_unfair_lock_unlock(lock) }
-        return body()
     }
 
     static func isStall(duration: TimeInterval, timedOut: Bool) -> Bool {
@@ -60,7 +48,7 @@ final class AXStallBreaker: @unchecked Sendable {
     func record(pid: pid_t, duration: TimeInterval, timedOut: Bool = false) -> Bool {
         guard pid > 0, Self.isStall(duration: duration, timedOut: timedOut) else { return false }
         let until = now() + Self.cooldown
-        withLock { openUntil[pid] = max(openUntil[pid] ?? 0, until) }
+        openUntil.withLock { $0[pid] = max($0[pid] ?? 0, until) }
         return true
     }
 
@@ -68,10 +56,10 @@ final class AXStallBreaker: @unchecked Sendable {
     func shouldSkip(_ pid: pid_t) -> Bool {
         guard pid > 0 else { return false }
         let t = now()
-        return withLock {
-            guard let until = openUntil[pid] else { return false }
+        return openUntil.withLock {
+            guard let until = $0[pid] else { return false }
             if t >= until {
-                openUntil[pid] = nil
+                $0[pid] = nil
                 return false
             }
             return true
@@ -79,7 +67,7 @@ final class AXStallBreaker: @unchecked Sendable {
     }
 
     /// 还开着的进程数（含尚未被清的过期记录）。只给日志和测试用。
-    var trackedCount: Int { withLock { openUntil.count } }
+    var trackedCount: Int { openUntil.withLock { $0.count } }
 }
 
 /// 一批工作按单调时钟限时。至少做一件（保证每批都有进展）；
@@ -116,26 +104,16 @@ struct AXBatchBudget {
 }
 
 /// 只允许一方领取结果的标记。两个赛跑的 Task 不在同一个执行上下文，需要真正的互斥。
-final class ResumeOnce: @unchecked Sendable {
-    private let lock: os_unfair_lock_t
-    private var claimed = false
-
-    init() {
-        lock = os_unfair_lock_t.allocate(capacity: 1)
-        lock.initialize(to: os_unfair_lock())
-    }
-
-    deinit {
-        lock.deinitialize(count: 1)
-        lock.deallocate()
-    }
+// 规格 M3：领取标记进 Mutex，去掉 @unchecked Sendable。
+final class ResumeOnce: Sendable {
+    private let claimed = Mutex(false)
 
     func claim() -> Bool {
-        os_unfair_lock_lock(lock)
-        defer { os_unfair_lock_unlock(lock) }
-        guard !claimed else { return false }
-        claimed = true
-        return true
+        claimed.withLock {
+            guard !$0 else { return false }
+            $0 = true
+            return true
+        }
     }
 }
 

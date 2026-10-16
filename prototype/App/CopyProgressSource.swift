@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// 拷贝进度的来源（实验，默认关：defaults 键 `Activities.copyProgress`）。
 ///
@@ -75,12 +76,10 @@ private final class CopyProgressWatcher: NSObject, @unchecked Sendable {
         case ended(id: Int, snapshot: CopyProgressSnapshot, cancelled: Bool)
     }
 
-    private static let idLock = NSLock()
-    nonisolated(unsafe) private static var idCounter = 0
+    // 规格 M3：编号计数器进 Mutex，去掉 nonisolated(unsafe)。
+    private static let idCounter = Mutex(0)
     private static func makeID() -> Int {
-        idLock.lock(); defer { idLock.unlock() }
-        idCounter += 1
-        return idCounter
+        idCounter.withLock { $0 += 1; return $0 }
     }
 
     private let id = CopyProgressWatcher.makeID()
@@ -88,9 +87,9 @@ private final class CopyProgressWatcher: NSObject, @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.windowshade.activities.copy", qos: .utility)
     private let progress: Progress
     private let send: @Sendable (Event) -> Void
-    private let lock = NSLock()
-    private var scheduled = false
-    private var finished = false
+    // 规格 M3：合并标记与结束标记进 Mutex。
+    private struct Flags { var scheduled = false; var finished = false }
+    private let flags = Mutex(Flags())
     private var observations: [NSKeyValueObservation] = []
 
     init(progress: Progress, send: @escaping @Sendable (Event) -> Void) {
@@ -118,16 +117,18 @@ private final class CopyProgressWatcher: NSObject, @unchecked Sendable {
 
     /// 合并：0.25 秒内的多次变化只发一次。
     private func schedule() {
-        lock.lock()
-        guard !scheduled, !finished else { lock.unlock(); return }
-        scheduled = true
-        lock.unlock()
+        let proceed = flags.withLock { f -> Bool in
+            guard !f.scheduled, !f.finished else { return false }
+            f.scheduled = true
+            return true
+        }
+        guard proceed else { return }
         queue.asyncAfter(deadline: .now() + CopyProgressSource.coalesce) { [weak self] in
             guard let self else { return }
-            self.lock.lock()
-            self.scheduled = false
-            let done = self.finished
-            self.lock.unlock()
+            let done = self.flags.withLock { f -> Bool in
+                f.scheduled = false
+                return f.finished
+            }
             guard !done else { return }
             self.send(.changed(id: self.id, snapshot: self.snapshot()))
         }
@@ -135,10 +136,12 @@ private final class CopyProgressWatcher: NSObject, @unchecked Sendable {
 
     /// 系统收回了这件进度：拷完、被取消或中途停了。
     func finish() {
-        lock.lock()
-        guard !finished else { lock.unlock(); return }
-        finished = true
-        lock.unlock()
+        let first = flags.withLock { f -> Bool in
+            guard !f.finished else { return false }
+            f.finished = true
+            return true
+        }
+        guard first else { return }
         observations.removeAll()
         queue.async { [self] in
             send(.ended(id: id, snapshot: snapshot(), cancelled: progress.isCancelled))

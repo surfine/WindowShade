@@ -11,6 +11,7 @@
 // - 读不到、字段语义不明时一律当成 **unknown**，而 unknown **不许**当成“解锁了”；
 // - 新增的锁屏相关能力遇到 unknown 就不显示，不猜。
 import Cocoa
+import Synchronization
 
 /// 不是 @MainActor：调用方（DuoController 及其通知回调）不都在主线程隔离域里。
 /// 状态很小，用一把锁护住，和 AppleSPUAccelerometer 里 published 的做法一致；
@@ -27,12 +28,11 @@ enum EffectEnvironment {
         var lastQuery: CFTimeInterval = 0
     }
 
-    private static let mutex = NSLock()
-    /// 只经由下面持有 `mutex` 的 read/write 访问。
-    nonisolated(unsafe) private static var state = State()
+    // 规格 M3：状态进 Mutex，去掉 nonisolated(unsafe)。
+    private static let state = Mutex(State())
 
-    private static func read<T>(_ body: (State) -> T) -> T { mutex.withLock { body(state) } }
-    private static func write(_ body: (inout State) -> Void) { mutex.withLock { body(&state) } }
+    private static func read<T>(_ body: (State) -> T) -> T { state.withLock { body($0) } }
+    private static func write(_ body: (inout State) -> Void) { state.withLock { body(&$0) } }
 
     /// 能不能在屏幕上画效果。锁着、不知道锁没锁、正在睡、显示器睡了——都不行。
     static var allowsDisplay: Bool {

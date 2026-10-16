@@ -8,6 +8,7 @@
 // 五分钟的间隔按两边里最近的那一次算（CoachPacing）；两边的记录各存各的（Notch.coach、Notch.habits），不互相覆盖。
 
 import Foundation
+import Synchronization
 
 enum CoachTip: String, CaseIterable, Codable {
     /// 标题栏上两指左右滑：半屏。
@@ -116,16 +117,18 @@ struct GestureCoach: Codable, Equatable {
 /// 把会抢在它前面的普通提示（收起后的 .shade、.shake）压住。压住有时限，到点自己放开，不会一直压着。
 /// 哪个线程都能读写（手势提示在主线程，卡住判断在自己的队列）。
 enum CoachPacing {
-    private static let lock = NSLock()
-    nonisolated(unsafe) private static var last: TimeInterval?
-    nonisolated(unsafe) private static var held: Set<CoachTip> = []
-    /// 压到什么时候（开机后的秒数）。
-    nonisolated(unsafe) private static var heldUntil: TimeInterval = 0
+    // 规格 M3：三份状态整组进 Mutex，去掉 nonisolated(unsafe)。
+    private struct State {
+        var last: TimeInterval?
+        var held: Set<CoachTip> = []
+        /// 压到什么时候（开机后的秒数）。
+        var heldUntil: TimeInterval = 0
+    }
+    private static let state = Mutex(State())
 
     /// 两边里最近的一次开口。
     static var lastShownAt: TimeInterval? {
-        lock.lock(); defer { lock.unlock() }
-        return last
+        state.withLock { $0.last }
     }
 
     /// 自己记的那次和共用的那次里较晚的一个。
@@ -141,35 +144,38 @@ enum CoachPacing {
 
     /// 某一边开口了（或启动时读回了上一次）：只往后挪，不往前挪。
     static func note(_ at: TimeInterval) {
-        lock.lock(); defer { lock.unlock() }
-        last = max(last ?? at, at)
+        state.withLock { $0.last = max($0.last ?? at, at) }
     }
 
     /// 卡住时的提示正在看一件事：这几条普通提示压 duration 秒。再压一次只往后延，不会把还没到点的提前放开。
     static func hold(_ tips: Set<CoachTip>, for duration: TimeInterval) {
-        lock.lock(); defer { lock.unlock() }
-        held = tips
-        heldUntil = max(heldUntil, ProcessInfo.processInfo.systemUptime + duration)
+        let until = ProcessInfo.processInfo.systemUptime + duration
+        state.withLock {
+            $0.held = tips
+            $0.heldUntil = max($0.heldUntil, until)
+        }
     }
 
     /// 马上放开。
     static func release() {
-        lock.lock(); defer { lock.unlock() }
-        held = []
-        heldUntil = 0
+        state.withLock {
+            $0.held = []
+            $0.heldUntil = 0
+        }
     }
 
     static func isHeld(_ tip: CoachTip) -> Bool {
-        lock.lock(); defer { lock.unlock() }
-        return held.contains(tip) && ProcessInfo.processInfo.systemUptime < heldUntil
+        let now = ProcessInfo.processInfo.systemUptime
+        return state.withLock { $0.held.contains(tip) && now < $0.heldUntil }
     }
 
     /// 测试和探针用：清掉共用的那份（不碰任何记录）。
     static func reset() {
-        lock.lock(); defer { lock.unlock() }
-        last = nil
-        held = []
-        heldUntil = 0
+        state.withLock {
+            $0.last = nil
+            $0.held = []
+            $0.heldUntil = 0
+        }
     }
 }
 
