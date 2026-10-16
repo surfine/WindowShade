@@ -1,0 +1,336 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "intent.toggleShade.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll Up or Unroll Front Window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起或展开当前窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起或展開當前視窗"
+          }
+        }
+      }
+    },
+    "intent.toggleShade.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rolls the front window up into its strip, or unrolls it if it’s already rolled up."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把最前面的窗口收成卷帘条；已经收起的就展开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把最前面的視窗收成捲簾條；已經收起的就展開。"
+          }
+        }
+      }
+    },
+    "intent.unrollAll.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unroll All"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部展开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部展開"
+          }
+        }
+      }
+    },
+    "intent.unrollAll.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Puts every rolled-up window back where it was."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把所有收起的窗口放回原来的位置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把所有收起的視窗放回原來的位置。"
+          }
+        }
+      }
+    },
+    "intent.tuckAll.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck Everything into the Notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部收进刘海"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "全部收進瀏海"
+          }
+        }
+      }
+    },
+    "intent.tuckAll.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tucks every window on this display into the notch. Run it again to bring them back."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把这块屏上的窗口全部收进刘海；再做一次就放回来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把這塊螢幕上的視窗全部收進瀏海；再做一次就放回來。"
+          }
+        }
+      }
+    },
+    "intent.chooseWindow.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a Window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择窗口…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇視窗…"
+          }
+        }
+      }
+    },
+    "intent.chooseWindow.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opens the window browser so you can pick any window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开窗口浏览，从所有窗口里挑一扇。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開窗口瀏覽，從所有視窗裡挑一扇。"
+          }
+        }
+      }
+    },
+    "intent.togglePin.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pin or Unpin Front Window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "置顶或取消置顶当前窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "置頂或取消置頂當前視窗"
+          }
+        }
+      }
+    },
+    "intent.togglePin.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keeps the front window floating above the others, or unpins it if it’s already pinned."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让最前面的窗口一直浮在最上面；已经置顶的就取消。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讓最前面的視窗一直浮在最上面；已經置頂的就取消。"
+          }
+        }
+      }
+    },
+    "intent.suspendPins.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unpin Everything for Now or Restore Pins"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂时取消全部置顶 / 恢复全部置顶"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暫時取消全部置頂 / 恢復全部置頂"
+          }
+        }
+      }
+    },
+    "intent.suspendPins.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moves every pinned window out of the way. Run it again to put them back in the same order."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一下让开所有置顶的窗口；再做一次按原来的前后顺序放回。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一下讓開所有置頂的視窗；再做一次按原來的前後順序放回。"
+          }
+        }
+      }
+    },
+    "intent.openLaunchpad.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Launchpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开启动台"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟啟動台"
+          }
+        }
+      }
+    },
+    "intent.openLaunchpad.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows all your apps, or closes Launchpad if it’s already open."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列出所有 App；已经打开就收起来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列出所有 App；已經打開就收起來。"
+          }
+        }
+      }
+    },
+    "intent.error.notRunning": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade isn’t ready yet. Try again in a moment."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade 还没准备好，请稍后再试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade 還沒準備好，請稍後再試。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -143,6 +143,24 @@ for source in $SOURCES; do
   COMPILE_SOURCES+=("$WORK/$source")
 done
 cp Effects/Duo.metal "$WORK/Duo.metal"
+# App Intents（规格 N1）：编译时让 swiftc 吐出这些协议的常量值，再用 Xcode 自带的 appintentsmetadataprocessor
+# 生成 Metadata.appintents（Xcode 工程会自动做这两步；我们直接用 swiftc，就照它的做法手动接上）。
+printf '%s\n' '["AppIntent","EntityQuery","AppEntity","TransientEntity","AppEnum","AppShortcutProviding","AppShortcutsProvider","AnyResolverProviding","AppIntentsPackage","DynamicOptionsProvider","_IntentValueRepresentable","IntentValueQuery","Resolver"]' > "$WORK/appintents-protocols.json"
+INTENT_FLAGS=(-module-name windowshade -emit-const-values-path "$WORK/windowshade.swiftconstvalues"
+  -Xfrontend -const-gather-protocols-file -Xfrontend "$WORK/appintents-protocols.json")
+extract_app_intents() {
+  local binary="$1"
+  printf '%s\n' "${COMPILE_SOURCES[@]}" > "$WORK/appintents-sources.txt"
+  printf '%s\n' "$WORK/windowshade.swiftconstvalues" > "$WORK/appintents-constvals.txt"
+  local swiftc_path; swiftc_path=$(xcrun --find swiftc)
+  xcrun appintentsmetadataprocessor --output "$WORK/appintents" \
+    --toolchain-dir "$(dirname "$(dirname "$(dirname "$swiftc_path")")")" --module-name windowshade \
+    --sdk-root "$(xcrun --show-sdk-path --sdk macosx)" --xcode-version "$(xcodebuild -version | awk '/Build version/ {print $3}')" \
+    --platform-family macOS --deployment-target 15.0 --target-triple "$ARCH-apple-macos15.0" \
+    --source-file-list "$WORK/appintents-sources.txt" --swift-const-vals-list "$WORK/appintents-constvals.txt" \
+    --binary-file "$binary" --quiet-warnings > "$WORK/appintents.log" 2>&1 || { cat "$WORK/appintents.log" >&2; return 1; }
+  [ -d "$WORK/appintents/Metadata.appintents" ] || { echo "ERROR: 没有生成 Metadata.appintents" >&2; cat "$WORK/appintents.log" >&2; return 1; }
+}
 # 刘海文案译文（R19）：先查键齐全、中文源句和代码一致（缺键就在这里失败），再用 xcstringstool 编成
 # en.lproj / zh-Hans.lproj。--check、--stage 和普通构建都编；只有后两者把结果放进包。
 # 隐私清单（规格 N5）与主程序 entitlements（规格 C3）：格式坏了就在这里失败，三种模式都查。
@@ -150,6 +168,8 @@ plutil -lint PrivacyInfo.xcprivacy WindowShade.entitlements >/dev/null || exit 1
 echo "==> 本地化检查与编译"
 python3 ../tests/check-localizable.py --repo .. || exit 1
 xcrun xcstringstool compile Resources/Localizable.xcstrings -o "$WORK/Localization"
+# 捷径动作（规格 N1）的标题单独一张表：系统在别的进程里按包根的 .lproj 读它（见 App/WindowShadeIntents.swift）。
+xcrun xcstringstool compile Resources/AppIntents.xcstrings -o "$WORK/AppIntentsStrings"
 # 看护：Watchdog/ 下的源码（入口和它自己的菜单栏图标）加上和 App 共用的更新代码（日志、判断、换回、文案），
 # 单独成一个可执行文件。共用的只有 Core/Update*.swift、App/UpdaterSystem.swift、App/UpdaterCopy.swift，
 # 它们只能依赖 Foundation/AppKit 和彼此；别的 App 文件不进看护，改它们不会让 --check 的第二次类型检查失败。
@@ -193,8 +213,10 @@ if [ "$check_only" = "1" ]; then
   mkdir -p "$MODULE_CACHE"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
     swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
-      "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
+      "${INTENT_FLAGS[@]}" "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
       "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
+  extract_app_intents "$WORK/windowshade-check" || exit 1
+  echo "==> 捷径动作的元数据已生成（Metadata.appintents）"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
     swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
       "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
@@ -250,8 +272,9 @@ mkdir -p "$MODULE_CACHE"
 mkdir -p "$WORK/compiler-tmp"
 env TMPDIR="$WORK/compiler-tmp" CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" \
-    "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
+    "${INTENT_FLAGS[@]}" "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
     "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
+extract_app_intents "$TMP_BIN" || exit 1
 echo "==> 编译看护（WindowShadeUpdateGuard）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -o "$WORK/WindowShadeUpdateGuard" \
@@ -275,6 +298,13 @@ cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
 rm -rf "$APP/Contents/Resources/Localization"
 mkdir -p "$APP/Contents/Resources/Localization"
 cp -R "$WORK/Localization/." "$APP/Contents/Resources/Localization/"
+# 捷径动作：元数据与标题译文放在包根的 Resources 下（系统按这里读）；只有 AppIntents.strings，不放 Localizable。
+rm -rf "$APP/Contents/Resources/Metadata.appintents"
+cp -R "$WORK/appintents/Metadata.appintents" "$APP/Contents/Resources/"
+for lproj in "$WORK/AppIntentsStrings/"*.lproj; do
+  mkdir -p "$APP/Contents/Resources/$(basename "$lproj")"
+  cp "$lproj/AppIntents.strings" "$APP/Contents/Resources/$(basename "$lproj")/"
+done
 cp ../docs/third-party-lock-overlay.txt "$APP/Contents/Resources/LockOverlay-LICENSE.txt"
 cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
 # 第三方许可（规格 R38）：随包的三份许可合成一份，「关于」面板里的「第三方许可」打开它。
