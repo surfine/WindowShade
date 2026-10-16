@@ -4,6 +4,10 @@ import Cocoa
 if let code = UpdateLaunch.handleEarlyArguments() { exit(code) }
 UpdateLaunch.recordLaunch()
 
+// 崩溃报告只落本地（规格 R13）：尽早启用，并把上次的报告存下来；探针崩溃要同时带参数和环境变量。
+CrashReporting.startAtLaunch()
+CrashReporting.crashForProbeIfRequested()
+
 // 界面语言（第27批）：跟随系统或用户在设置里的选择；只在启动时读这一次，切换由设置里的语言行即时生效。
 InterfaceLanguagePreference.applyAtLaunch()
 

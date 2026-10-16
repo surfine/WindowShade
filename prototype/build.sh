@@ -197,6 +197,9 @@ cp Native/WS2Child.c Native/WS2Child.h Native/module.modulemap "$WORK/Native/"
 xcrun -sdk macosx clang -std=c11 -O2 -Wall -Wextra -Werror -target "$ARCH-apple-macosx15.0" \
   -c "$WORK/Native/WS2Child.c" -o "$WORK/WS2Child.o"
 NATIVE_FLAGS=(-I "$WORK/Native" "$WORK/WS2Child.o")
+# 崩溃报告（规格 R13）：PLCrashReporter 1.12.0 静态库直接链进主程序（不是框架，不进 Contents/Frameworks，随主程序一起签）。
+# 见 Vendor/PLCrashReporter/UPSTREAM.md。
+NATIVE_FLAGS+=(-I "$(pwd)/Vendor/PLCrashReporter/include" "$(pwd)/Vendor/PLCrashReporter/libCrashReporter-MacOSX-Static.a" -Xlinker -lc++ -Xlinker -lz)
 
 # Shader checks and normal builds use the same source and deployment target.
 METAL_BUILD="$(cd .. && pwd)/.build/duo-metal"
@@ -313,6 +316,7 @@ cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
   printf 'WindowShade bundles the following third-party software.\n\n'
   printf '== Sparkle 2.10.0 (Contents/Frameworks/Sparkle.framework) ==\n\n'; cat Vendor/Sparkle-LICENSE
   printf '\n\n== mediaremote-adapter (Contents/Frameworks/MediaRemoteAdapter.framework) ==\n\n'; cat Vendor/mediaremote-adapter/LICENSE
+  printf '\n\n== PLCrashReporter 1.12.0 (statically linked into the main executable) ==\n\n'; cat Vendor/PLCrashReporter/LICENSE
   printf '\n\n== Lock-space recipe (Glance) ==\n\n'; cat ../docs/third-party-lock-overlay.txt
 } > "$APP/Contents/Resources/THIRD-PARTY-LICENSES.txt"
 rm -rf "$APP/Contents/Resources/ThirdParty"

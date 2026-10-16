@@ -49,9 +49,19 @@ enum DiagnosticsExport {
                 try? files.copyItem(at: crashReportsDirectory.appendingPathComponent(name), to: reports.appendingPathComponent(name))
             }
         }
-        let summary = DiagnosticsBundle.summary(facts(), crashReports: reportNames, logFiles: logNames, exportedAt: now)
+        // 我们自己落的文本报告（PLCrashReporter，只在本机）。
+        let ownNames = ((try? files.contentsOfDirectory(atPath: CrashReporting.reportsDirectory.path)) ?? [])
+            .filter(DiagnosticsBundle.isOwnCrashReport).sorted(by: >)
+        if !ownNames.isEmpty {
+            let reports = folder.appendingPathComponent("crash-reports", isDirectory: true)
+            try files.createDirectory(at: reports, withIntermediateDirectories: true)
+            for name in ownNames {
+                try? files.copyItem(at: CrashReporting.reportsDirectory.appendingPathComponent(name), to: reports.appendingPathComponent(name))
+            }
+        }
+        let summary = DiagnosticsBundle.summary(facts(), crashReports: reportNames + ownNames, logFiles: logNames, exportedAt: now)
         try summary.write(to: folder.appendingPathComponent("summary.txt"), atomically: true, encoding: .utf8)
-        wlog("diagnostics: exported \(logNames.count) log file(s) and \(reportNames.count) crash report(s)")
+        wlog("diagnostics: exported \(logNames.count) log file(s) and \(reportNames.count + ownNames.count) crash report(s)")
         return folder
     }
 

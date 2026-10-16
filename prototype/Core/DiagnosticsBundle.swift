@@ -2,7 +2,8 @@ import Foundation
 
 // 一键导出诊断包（规格 R35）与本地崩溃报告（规格 R13）：纯逻辑部分。
 // 定案：纯本地，永不上网、不做任何计数。包里是运行记录、版本与机器信息，以及 macOS 自己为
-// WindowShade 留在这台 Mac 上的崩溃报告（~/Library/Logs/DiagnosticReports）——不另嵌崩溃库。
+// WindowShade 留在这台 Mac 上的崩溃报告（~/Library/Logs/DiagnosticReports），加上 PLCrashReporter 在本机落的文本报告
+// （~/Library/Logs/WindowShade/crash-reports，见 Support/CrashReporting.swift）。
 // 导出后在访达里显示，由用户自己看过再决定交给谁。
 enum DiagnosticsBundle {
     struct Facts: Equatable {
@@ -24,6 +25,24 @@ enum DiagnosticsBundle {
         let c = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
         return String(format: "WindowShade-Diagnostics-%04d%02d%02d-%02d%02d%02d",
                       c.year ?? 0, c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0, c.second ?? 0)
+    }
+
+    /// 我们自己（PLCrashReporter）落的文本报告：windowshade-crash-时间.txt，时间用 UTC，名字倒序即新到旧。
+    static func ownCrashReportName(at date: Date) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC") ?? .gmt
+        let c = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        return String(format: "windowshade-crash-%04d%02d%02d-%02d%02d%02dZ.txt",
+                      c.year ?? 0, c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0, c.second ?? 0)
+    }
+
+    static func isOwnCrashReport(_ name: String) -> Bool {
+        name.hasPrefix("windowshade-crash-") && name.hasSuffix(".txt")
+    }
+
+    /// 超过 keep 份时要删的（旧的）。别的文件不动。
+    static func ownCrashReportsToDelete(in names: [String], keep: Int) -> [String] {
+        Array(names.filter(isOwnCrashReport).sorted(by: >).dropFirst(max(0, keep)))
     }
 
     /// 崩溃报告目录里属于我们的：主程序与更新看护的 .ips／.crash／.hang。按名字倒序（时间戳在名字里），最多 limit 份。

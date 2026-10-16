@@ -30321,19 +30321,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only the moment you export diagnostics"
+            "value": "After a crash, one is saved the next time the app opens (on this Mac only); it is read out only when you export diagnostics"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "只在你导出诊断包的那一次"
+            "value": "崩溃后下次打开时存一份（只存在这台 Mac 上）；导出诊断包时才读出来"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "只在你匯出診斷資料的那一次"
+            "value": "當機後下次開啟時存一份（只存在這台 Mac 上）；匯出診斷資料時才讀出來"
           }
         }
       }
@@ -30436,19 +30436,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Crash reports macOS keeps on this Mac for WindowShade (~/Library/Logs/DiagnosticReports), plus the activity log"
+            "value": "Crash reports macOS keeps on this Mac for WindowShade (~/Library/Logs/DiagnosticReports), the reports WindowShade itself writes after a crash (only in the activity log folder on this Mac, at most 10), plus the activity log"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "系统为 WindowShade 留在这台 Mac 上的崩溃报告（~/Library/Logs/DiagnosticReports），以及运行记录"
+            "value": "系统为 WindowShade 留在这台 Mac 上的崩溃报告（~/Library/Logs/DiagnosticReports）、WindowShade 自己在崩溃后记下的报告（只在这台 Mac 的运行记录文件夹里，最多 10 份），以及运行记录"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "系統為 WindowShade 留在這台 Mac 上的當機報告（~/Library/Logs/DiagnosticReports），以及執行記錄"
+            "value": "系統為 WindowShade 留在這台 Mac 上的當機報告（~/Library/Logs/DiagnosticReports）、WindowShade 自己在當機後記下的報告（只在這台 Mac 的執行記錄檔案夾裡，最多 10 份），以及執行記錄"
           }
         }
       }
