@@ -246,6 +246,7 @@ struct SettingsNavigationTests {
       for gone in ["离开就锁", "随身设备", BystanderTuckRow.title] {
         precondition(!privacy.contains(gone), "隐私页不该再有：\(gone)")
       }
+      precondition(!privacy.contains("编程助手的事件"), "旗标关：隐私页不列 WindowShade 2 的登记")
       let effects = await texts(.effects)
       precondition(effects.filter { $0 == "锁屏开合效果" }.count == 1, "效果页多一行锁屏开合效果")
       let advanced = await texts(.advanced)

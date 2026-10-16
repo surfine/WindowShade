@@ -342,6 +342,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.agent-hooks.combined", zh: "编程助手的事件合起来，能看出你在做哪个项目、什么时候在写代码。"),
             interfaces: [],
             subtitle: WSL10n.text("privacy.agent-hooks.subtitle", zh: "编程助手的状态放到刘海"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "conductor-ipc",
@@ -540,6 +541,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.authorization-key.combined", zh: "授权密钥的使用次数和时间合起来，能看出你什么时候批准过操作。"),
             interfaces: ["LAContext", "SecAccessControlCreateWithFlags", "SecureEnclave", "biometryState", "evaluatedPolicyDomainState", "stateHash"],
             subtitle: WSL10n.text("privacy.authorization-key.subtitle", zh: "每次授权只管一件事"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "agent-voice-proof",
@@ -615,6 +617,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.pair-verify-identity.combined", zh: "对端的公钥合起来，能认出你配对过哪台设备。"),
             interfaces: ["LAContext", "SecItemAdd", "SecItemCopyMatching", "SecItemUpdate"],
             subtitle: WSL10n.text("privacy.pair-verify-identity.subtitle", zh: "只让配对过的设备进入"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "input-scroll",
@@ -798,6 +801,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.remote-lan.combined", zh: "遥控连接合起来，能看出你什么时候在用 iPhone 遥控这台 Mac、在同一个网络里。"),
             interfaces: ["NWConnection", "NWListener"],
             subtitle: WSL10n.text("privacy.remote-lan.subtitle", zh: "iPhone 当遥控器"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "private-app-list",
@@ -828,6 +832,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.remote-advertise.combined", zh: "宣告的名字和遥控连接合起来，同一个网络里的人能看出这台 Mac 开着遥控模式、大概什么时候在用。"),
             interfaces: ["NWListener"],
             subtitle: WSL10n.text("privacy.remote-advertise.subtitle", zh: "iPhone 能找到这台 Mac"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "remote-volume",
@@ -843,6 +848,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.remote-volume.combined", zh: "遥控器调过几次音量，合上连接的时段，能看出你什么时候在用遥控器；看不出你在听什么。"),
             interfaces: ["AVAudioEngine", "AudioObjectSetPropertyData"],
             subtitle: WSL10n.text("privacy.remote-volume.subtitle", zh: "遥控器的音量键"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "system-quiet",
@@ -1012,6 +1018,7 @@ enum WS2PrivacyData {
             combined: WSL10n.text("privacy.carplay-receiver.combined", zh: "接收器连接合起来，能看出你什么时候把手机画面放到这台 Mac 的全屏里。"),
             interfaces: ["URLSession"],
             subtitle: WSL10n.text("privacy.carplay-receiver.subtitle", zh: "iPhone 的画面从接收器来"),
+            appearsWith: "ws2-preview",
         ),
         WS2PrivacyRow(
             id: "presence-bluetooth",

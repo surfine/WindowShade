@@ -545,7 +545,8 @@
     "activation": "After turning on Coding sessions and pasting the configuration into Claude Code; off by default",
     "combined": "Coding assistant events show which project you're on and when you write code.",
     "reads": "Claude Code session ids, folder names, tool names in use and events, and which terminal it runs in (app name, pane number, terminal device name) so one click can jump back to it; command contents and conversations are not read"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "conductor-ipc",
@@ -912,7 +913,8 @@
     "activation": "Each time you explicitly approve; locking and the like void older approvals",
     "combined": "How often and when the authorization key is used shows when you've approved things.",
     "reads": "The public half of a key the Mac's security chip protects, the result of its use, and a one-off challenge; the private key can't be exported"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "agent-voice-proof",
@@ -1056,7 +1058,8 @@
     "activation": "Read from the keychain only while Remote mode is on; a new pairing needs Touch ID at the notch first",
     "combined": "The other side's public keys together reveal which devices you've paired.",
     "reads": "The paired iPhone's public key, version and self-reported device name, and this connection's session key"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "input-scroll",
@@ -1395,7 +1398,8 @@
     "activation": "Announces and accepts connections only after Remote mode is on; off by default",
     "combined": "Remote connections show when you're driving this Mac from an iPhone on the same network.",
     "reads": "Connection state, key and touch commands from the remote app on an iPhone on the same local network; other devices aren't read"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "private-app-list",
@@ -1451,7 +1455,8 @@
     "activation": "Announces while Remote mode is on, stopping when it's off",
     "combined": "The announced name with remote connections shows anyone on the same network that this Mac has Remote mode on and roughly when it's in use.",
     "reads": "Reads nothing; announces this Mac's name to devices on the same local network"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "remote-volume",
@@ -1479,7 +1484,8 @@
     "activation": "With Remote mode on, an iPhone connected and a volume key pressed; nothing is read or written without a press",
     "combined": "How often you changed volume from the remote, with the times it was connected, shows when you use it; never what you listen to.",
     "reads": "The current output volume; a volume key adds or removes one step and writes it back"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "system-quiet",
@@ -1791,7 +1797,8 @@
     "activation": "Connects only with CarPlay full screen on and a receiver address entered; off by default",
     "combined": "Receiver connections show when you put a phone's picture full screen on this Mac.",
     "reads": "The iPhone picture sent by the receiver you entered, its picture parameters and the session state"
-   }
+   },
+   "appears_with": "ws2-preview"
   },
   {
    "id": "presence-bluetooth",
