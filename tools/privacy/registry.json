@@ -1859,7 +1859,7 @@
    "destination": "只写进这台 Mac 的运行记录文件夹，并在访达里显示；不上传",
    "activation": "只在你导出诊断包的那一次",
    "toggle": "没有开关：不导出就不读",
-   "status": "planned",
+   "status": "current",
    "rule": "FILES",
    "verification": "source-inventory-only",
    "retention": "see destination; no new polling or telemetry",

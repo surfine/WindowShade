@@ -1,4 +1,5 @@
 import Cocoa
+import UniformTypeIdentifiers
 import ScreenCaptureKit
 
 enum WindowShadeSettingsSection: Int, CaseIterable {
@@ -678,9 +679,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     makeActionRow(labels: settingsContent(title: title, subtitle: subtitle), button: button)
   }
 
-  /// 迁移过的行（第27批）。
-  private func makeActionRow(title: SettingsText, subtitle: SettingsText, button: NSButton) -> NSView {
-    makeActionRow(labels: settingsContent(title: title, subtitle: subtitle), button: button)
+  /// 迁移过的行（第27批）。symbol 不给时按名字查表；给了就用它（新行直接给，免得往查表里加中文字面量）。
+  private func makeActionRow(title: SettingsText, subtitle: SettingsText, symbol: String? = nil, button: NSButton) -> NSView {
+    makeActionRow(labels: WS2SettingsCopy.content(name: title, subtitle: subtitle, symbol: symbol).view, button: button)
   }
 
   private func makeActionRow(labels: NSStackView, button: NSButton) -> NSView {
@@ -892,8 +893,91 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.setCustomSpacing(6, after: infoSection)
     stack.addArrangedSubview(infoCard)
     infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(18, after: infoCard)
+
+    // 关于（Aaron 2026-10-16 定：规格 R35／R5 的入口与 R36 报告问题放这里）。都只在本机做事，没有一样自动发出去。
+    func aboutButton(_ title: String, _ symbol: String, _ action: Selector) -> NSButton {
+      let button = NSButton(title: title, target: self, action: action)
+      button.bezelStyle = .rounded
+      button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+      button.imagePosition = .imageLeading
+      return button
+    }
+    let aboutSection = makeSectionLabel(WSL10n.text("settings.about.section", zh: "关于"))
+    stack.addArrangedSubview(aboutSection)
+    stack.setCustomSpacing(6, after: aboutSection)
+    let aboutCard = makeSettingsCard([
+      makeActionRow(
+        title: WSL10n.setting("settings.about.diagnostics.name", zh: "导出诊断信息"),
+        subtitle: WSL10n.setting("settings.about.diagnostics.sub", zh: "存成文件夹给你过目，不会自动发出"),
+        symbol: "shippingbox",
+        button: aboutButton(WSL10n.text("settings.about.diagnostics.button", zh: "导出…"), "shippingbox",
+                            #selector(exportDiagnosticsAction))),
+      makeActionRow(
+        title: WSL10n.setting("settings.about.exportSettings.name", zh: "导出设置"),
+        subtitle: WSL10n.setting("settings.about.exportSettings.sub", zh: "备份成一个文件，换电脑时导回去"),
+        symbol: "square.and.arrow.up",
+        button: aboutButton(WSL10n.text("settings.about.exportSettings.button", zh: "导出…"), "square.and.arrow.up",
+                            #selector(exportSettingsAction))),
+      makeActionRow(
+        title: WSL10n.setting("settings.about.importSettings.name", zh: "导入设置"),
+        subtitle: WSL10n.setting("settings.about.importSettings.sub", zh: "合并回来，不清空现有设置"),
+        symbol: "square.and.arrow.down",
+        button: aboutButton(WSL10n.text("settings.about.importSettings.button", zh: "导入…"), "square.and.arrow.down",
+                            #selector(importSettingsAction))),
+      makeActionRow(
+        title: WSL10n.setting("settings.about.report.name", zh: "报告问题"),
+        subtitle: WSL10n.setting("settings.about.report.sub", zh: "在 GitHub 上新建一条，可附诊断信息"),
+        symbol: "exclamationmark.bubble",
+        button: aboutButton(WSL10n.text("settings.about.report.button", zh: "报告…"), "exclamationmark.bubble",
+                            #selector(reportProblemAction))),
+    ])
+    stack.addArrangedSubview(aboutCard)
+    aboutCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     load(controller.settings)
     return root
+  }
+
+  @objc private func exportDiagnosticsAction() {
+    DiagnosticsExport.exportAndReveal()
+  }
+
+  @objc private func exportSettingsAction() {
+    let panel = NSSavePanel()
+    panel.nameFieldStringValue = "WindowShade-Settings.plist"
+    panel.allowedContentTypes = [.propertyList]
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    do {
+      _ = try SettingsArchiveIO.export(to: url)
+      NSWorkspace.shared.activateFileViewerSelecting([url])
+    } catch {
+      showAboutAlert(WSL10n.text("settings.about.exportSettings.failed", zh: "设置没能导出"), detail: error.localizedDescription)
+    }
+  }
+
+  @objc private func importSettingsAction() {
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.propertyList]
+    panel.allowsMultipleSelection = false
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    do {
+      let result = try SettingsArchiveIO.importSettings(from: url)
+      (NSApp.delegate as? AppDelegate)?.refreshPreferencesWindowIfOpen()
+      showAboutAlert(String(format: WSL10n.text("settings.about.importSettings.done", zh: "已导入 %d 项设置"), result.written), detail: nil)
+    } catch {
+      showAboutAlert(WSL10n.text("settings.about.importSettings.failed", zh: "这个文件导入不了"), detail: error.localizedDescription)
+    }
+  }
+
+  @objc private func reportProblemAction() {
+    if let url = URL(string: "https://github.com/surfine/WindowShade/issues/new") { NSWorkspace.shared.open(url) }
+  }
+
+  private func showAboutAlert(_ message: String, detail: String?) {
+    let alert = NSAlert()
+    alert.messageText = message
+    if let detail { alert.informativeText = detail }
+    alert.runModal()
   }
 
   /// 语言行（第27批；繁体第39批）：跟随系统 / 简体中文 / 繁體中文 / English；语言名用各自的写法（不进目录表）。
