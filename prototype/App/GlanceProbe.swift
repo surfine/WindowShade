@@ -867,6 +867,10 @@ final class GlanceProbe {
       owner.pinnedPreviewController.startPreview(targetWindowID: id, pid: pid, axWindow: element) { _ in }
       // 流起来 2 秒后存一帧修补前的整帧，给人看系统到底画没画胶囊。
       try await Task.sleep(for: .seconds(2), clock: .suspending)
+      // 先看屏幕上真的置顶预览面板（以及源窗口本身）有没有画面：分清「产品空白」还是「探针读缓冲读到 0」。
+      if ProcessInfo.processInfo.environment["CAPSULE_SKIP_ONSCREEN"] == nil {
+        capsuleOnscreenCheck(sourceID: id, sourcePID: pid, label: name)
+      }
       let shot = URL(fileURLWithPath: ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_ROOT"] ?? FileManager.default.currentDirectoryPath)
         .appendingPathComponent(".build/glance-tests/capsule-raw-\(name).png")
       WindowStreamCapture.probeRawFrameURL.withLock { $0 = shot }
@@ -889,6 +893,55 @@ final class GlanceProbe {
     }
     print(p3.2 > 0 ? "PASS capsule-color: the capsule is still recognised when capturing in displayP3"
       : "FAIL capsule-color: the capsule is recognised in sRGB (\(srgb.2) frames) but not in displayP3")
+  }
+
+  /// H3 胶囊探针的旁证：用 screencapture -l 抓我们自己的置顶预览面板与源窗口，量像素。
+  private func capsuleOnscreenCheck(sourceID: CGWindowID, sourcePID: pid_t, label: String) {
+    let list = (CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]]) ?? []
+    let me = ProcessInfo.processInfo.processIdentifier
+    var targets: [(CGWindowID, String)] = []
+    for info in list {
+      guard let owner = info[kCGWindowOwnerPID as String] as? pid_t,
+            let wid = info[kCGWindowNumber as String] as? CGWindowID else { continue }
+      let onscreen = info[kCGWindowIsOnscreen as String] as? Bool ?? false
+      let alpha = info[kCGWindowAlpha as String] as? Double ?? -1
+      let layer = info[kCGWindowLayer as String] as? Int ?? 0
+      let bounds = (info[kCGWindowBounds as String] as? [String: Any]).flatMap { CGRect(dictionaryRepresentation: $0 as CFDictionary) } ?? .zero
+      let title = info[kCGWindowName as String] as? String ?? ""
+      if owner == me || wid == sourceID {
+        print("INFO capsule-color: \(label) window \(wid) owner=\(owner == me ? "us" : "fixture") onscreen=\(onscreen) alpha=\(alpha) layer=\(layer) bounds=\(bounds) title=\(title)")
+      }
+      if wid == sourceID { targets.append((wid, "source")) }
+      else if owner == me, onscreen, bounds.width > 60, bounds.height > 60 { targets.append((wid, "ours-\(wid)")) }
+    }
+    for (wid, tag) in targets {
+      let path = FileManager.default.temporaryDirectory.appendingPathComponent("capsule-onscreen-\(label)-\(tag).png").path
+      let task = Process()
+      task.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+      task.arguments = ["-l", "\(wid)", "-o", "-x", path]
+      try? task.run(); task.waitUntilExit()
+      guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil),
+            let image = CGImageSourceCreateImageAtIndex(src, 0, nil),
+            var pixels = RGBAPixels(image) else {
+        print("INFO capsule-color: \(label) on-screen \(tag) capture failed (exit \(task.terminationStatus))")
+        continue
+      }
+      pixels.withView { view in
+        var sum = [0, 0, 0], n = 0, dark = 0, maxC = 0, purple = 0
+        for y in stride(from: 0, to: view.height, by: 4) {
+          for x in stride(from: 0, to: view.width, by: 4) {
+            let p = view.pixel(x: x, y: y)
+            let c = (Int(p.r), Int(p.g), Int(p.b))
+            sum[0] += c.0; sum[1] += c.1; sum[2] += c.2; n += 1
+            maxC = max(maxC, c.0, c.1, c.2)
+            if c.0 + c.1 + c.2 < 30 { dark += 1 }
+            if view.isIndicatorPurple(x: x, y: y) { purple += 1 }
+          }
+        }
+        let mean = sum.map { n > 0 ? $0 / n : 0 }
+        print("INFO capsule-color: \(label) on-screen \(tag) \(view.width)x\(view.height) mean rgb \(mean) max \(maxC) near-black \(n > 0 ? dark * 100 / n : 0)% purple samples \(purple) file \(path)")
+      }
+    }
   }
 
   /// 规格 V9（多显示器矩阵里「接着两块」那一类）：把临时窗口挪到不是主屏的那块上收起，
