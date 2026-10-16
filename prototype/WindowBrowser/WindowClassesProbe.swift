@@ -84,7 +84,7 @@ extension GlanceProbe {
           WindowBrowserDiscoveryFilter.Input(
             pid: pid, ownPID: getpid(), bundleIdentifier: bundle, excludedBundleIDs: [], overlayWindowIDs: [],
             windowID: wid, layer: layer, role: role, isDesktopWidget: isDesktopWidgetWindow(id: wid),
-            allowsLayoutAreaRole: false, subrole: axSubrole(element), isTitled: !axTitle(element).isEmpty))
+            allowsLayoutAreaRole: false))
         verdictInput = " filter=\(verdict ? "include" : "exclude")"
         detail = "in-AX=yes role=\(role ?? "-") subrole=\(axSubrole(element) ?? "-") titled=\(axTitle(element).isEmpty ? "no" : "yes") layer=\(layer) size=\(size.map { String(format: "%.0fx%.0f", $0.width, $0.height) } ?? "-")"
       }
