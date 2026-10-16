@@ -15,6 +15,7 @@ enum TerminalBinding {
         case "iTerm.app": return ["com.googlecode.iterm2"]
         case "ghostty": return ["com.mitchellh.ghostty"]
         case "WarpTerminal": return ["dev.warp.Warp-Stable"]
+        case "kitty": return ["net.kovidgoyal.kitty"]
         case "WezTerm": return ["com.github.wez.wezterm"]
         case "vscode": return ["com.microsoft.VSCode", "com.microsoft.VSCodeInsiders", "com.todesktop.230313mzl4w4u92", "com.exafunction.windsurf", "com.vscodium"]
         default: return []
@@ -47,6 +48,9 @@ enum TerminalBinding {
     }
 
     static func best(identity: TerminalIdentity?, cwd: String, among candidates: [AgentSessionWindowMatch.Candidate], home: String) -> AgentSessionWindowMatch.Candidate? {
+        // tty 是这个会话独有的身份，比目录更精确：先在所有窗口里找 tty 命中的，找不到才按目录比强度。
+        if let tty = identity?.tty, !tty.isEmpty,
+           let hit = candidates.first(where: { titleHasTTY($0.title, tty: tty) }) { return hit }
         var best: (AgentSessionWindowMatch.Candidate, AgentSessionWindowMatch.Strength)?
         for candidate in candidates {
             guard let value = strength(identity: identity, cwd: cwd, title: candidate.title, document: candidate.document, home: home) else { continue }
@@ -55,10 +59,12 @@ enum TerminalBinding {
         return best?.0
     }
 
-    /// tmux：把那个窗格所在的窗口、再把窗格本身选到前面。窗格编号全局唯一，所以只要 -t %N。
-    /// 编号没过白名单就没有命令（nil），不拼任何用户给的字符串。
+    /// tmux：把那个窗格所在的窗口、再把窗格本身选到前面。窗格编号只在一个 tmux 服务器内唯一，
+    /// 所以身份里有 socket 路径时带上 -S，选的就是那一台；没有才走默认 socket。
+    /// 编号和路径没过白名单就没有命令（nil）或不带 -S，不拼任何用户给的字符串。
     static func tmuxSelectArguments(for identity: TerminalIdentity?) -> [[String]]? {
         guard let pane = identity?.tmuxPane, TerminalIdentity.validTmuxPane(pane) else { return nil }
-        return [["select-window", "-t", pane], ["select-pane", "-t", pane]]
+        let socket = identity.map { TerminalIdentity.validTmuxSocket($0.tmuxSocket) ? ["-S", $0.tmuxSocket] : [] } ?? []
+        return [socket + ["select-window", "-t", pane], socket + ["select-pane", "-t", pane]]
     }
 }

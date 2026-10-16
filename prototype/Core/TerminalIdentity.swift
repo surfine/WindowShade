@@ -10,12 +10,14 @@ struct TerminalIdentity: Equatable, Sendable {
     var itermSession: String = ""
     /// TMUX_PANE，例如 %12。
     var tmuxPane: String = ""
+    /// tmux 服务器的 socket 路径（$TMUX 的第一段）；用 -L／-S 起了别的服务器时，只有带上它才选得对窗格。
+    var tmuxSocket: String = ""
     /// 终端设备，例如 /dev/ttys003。
     var tty: String = ""
 
-    static let wireKeys: Set<String> = ["program", "itermSession", "tmuxPane", "tty"]
+    static let wireKeys: Set<String> = ["program", "itermSession", "tmuxPane", "tmuxSocket", "tty"]
 
-    var isEmpty: Bool { program.isEmpty && itermSession.isEmpty && tmuxPane.isEmpty && tty.isEmpty }
+    var isEmpty: Bool { program.isEmpty && itermSession.isEmpty && tmuxPane.isEmpty && tmuxSocket.isEmpty && tty.isEmpty }
 
     private static func matches(_ value: String, _ allowed: (Character) -> Bool, limit: Int, prefix: String = "") -> Bool {
         guard !value.isEmpty, value.utf8.count <= limit, value.hasPrefix(prefix) else { return false }
@@ -27,6 +29,9 @@ struct TerminalIdentity: Equatable, Sendable {
     static func validProgram(_ v: String) -> Bool { matches(v, word, limit: 64) }
     static func validITermSession(_ v: String) -> Bool { matches(v, { word($0) || $0 == ":" }, limit: 128) }
     static func validTmuxPane(_ v: String) -> Bool { matches(v, digit, limit: 10, prefix: "%") && v.count > 1 }
+    static func validTmuxSocket(_ v: String) -> Bool {
+        v.hasPrefix("/") && v.utf8.count <= 104 && v.utf8.allSatisfy { $0 >= 0x20 && $0 < 0x7f }
+    }
     static func validTTY(_ v: String) -> Bool {
         guard v.hasPrefix("/dev/tty") else { return false }
         let rest = v.dropFirst("/dev/tty".count)
@@ -36,11 +41,12 @@ struct TerminalIdentity: Equatable, Sendable {
     }
 
     /// 原始字符串（来自环境变量）→ 身份。不合格的字段当作没有；全空返回 nil。
-    static func sanitized(program: String?, itermSession: String?, tmuxPane: String?, tty: String?) -> TerminalIdentity? {
+    static func sanitized(program: String?, itermSession: String?, tmuxPane: String?, tmuxSocket: String? = nil, tty: String?) -> TerminalIdentity? {
         var result = TerminalIdentity()
         if let v = program, validProgram(v) { result.program = v }
         if let v = itermSession, validITermSession(v) { result.itermSession = v }
         if let v = tmuxPane, validTmuxPane(v) { result.tmuxPane = v }
+        if let v = tmuxSocket, validTmuxSocket(v) { result.tmuxSocket = v }
         if let v = tty, validTTY(v) { result.tty = v }
         return result.isEmpty ? nil : result
     }
@@ -55,6 +61,7 @@ struct TerminalIdentity: Equatable, Sendable {
             case "program": guard validProgram(value) else { return nil }; result.program = value
             case "itermSession": guard validITermSession(value) else { return nil }; result.itermSession = value
             case "tmuxPane": guard validTmuxPane(value) else { return nil }; result.tmuxPane = value
+            case "tmuxSocket": guard validTmuxSocket(value) else { return nil }; result.tmuxSocket = value
             default: guard validTTY(value) else { return nil }; result.tty = value
             }
         }
@@ -66,6 +73,7 @@ struct TerminalIdentity: Equatable, Sendable {
         if !program.isEmpty { result["program"] = program }
         if !itermSession.isEmpty { result["itermSession"] = itermSession }
         if !tmuxPane.isEmpty { result["tmuxPane"] = tmuxPane }
+        if !tmuxSocket.isEmpty { result["tmuxSocket"] = tmuxSocket }
         if !tty.isEmpty { result["tty"] = tty }
         return result
     }
