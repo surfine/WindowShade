@@ -33,8 +33,11 @@ func controllingTTY() -> String? {
             for key in ["cwd","tool_name","tool_input"] { if let v = input[key] { payload[key] = v } }
             // 终端身份（A1）：本进程继承的四个环境变量加所在终端设备；每个值过白名单，不合格的丢掉，不转送别的环境变量。
             let env = ProcessInfo.processInfo.environment
-            if let terminal = TerminalIdentity.sanitized(program: env["TERM_PROGRAM"], itermSession: env["ITERM_SESSION_ID"],
-                                                         tmuxPane: env["TMUX_PANE"], tty: controllingTTY()) {
+            // kitty 不设 TERM_PROGRAM，只设 KITTY_WINDOW_ID；$TMUX 的第一段是 tmux 服务器的 socket 路径。
+            let program = env["TERM_PROGRAM"] ?? (env["KITTY_WINDOW_ID"] != nil ? "kitty" : nil)
+            let tmuxSocket = env["TMUX"].flatMap { $0.split(separator: ",", omittingEmptySubsequences: false).first.map(String.init) }
+            if let terminal = TerminalIdentity.sanitized(program: program, itermSession: env["ITERM_SESSION_ID"],
+                                                         tmuxPane: env["TMUX_PANE"], tmuxSocket: tmuxSocket, tty: controllingTTY()) {
                 payload["terminal"] = terminal.wire
             }
             let deadline = ProcessInfo.processInfo.systemUptime + (event == "PermissionRequest" ? 119 : 1)

@@ -55,7 +55,16 @@ import Foundation
             .init(windowID: 2, pid: 10, title: "zsh ttys003", document: nil),
             .init(windowID: 3, pid: 10, title: "other", document: nil),
         ]
-        expect(B.best(identity: tty, cwd: "/Users/a/p", among: candidates, home: home)?.windowID == 1, "同强度取前面的")
+        expect(B.best(identity: tty, cwd: "/Users/a/p", among: candidates, home: home)?.windowID == 2, "tty 命中的窗口压过目录命中的窗口，不看先后")
+        expect(B.best(identity: nil, cwd: "/Users/a/p", among: candidates, home: home)?.windowID == 1, "没有 tty 时目录同强度取前面的")
+        expect(B.searchBundleIDs(for: I(program: "kitty")) == ["net.kovidgoyal.kitty"], "kitty")
+        let sock = "/private/tmp/tmux-501/work"
+        expect(I.sanitized(program: nil, itermSession: nil, tmuxPane: "%4", tmuxSocket: sock, tty: nil)?.tmuxSocket == sock, "socket 路径收下")
+        expect(I.sanitized(program: nil, itermSession: nil, tmuxPane: "%4", tmuxSocket: "rel/x", tty: nil)?.tmuxSocket == "", "相对路径丢掉")
+        expect(!I.validTmuxSocket("/tmp/a\nb") && !I.validTmuxSocket("/" + String(repeating: "a", count: 110)), "含换行或过长的路径不收")
+        expect(B.tmuxSelectArguments(for: I(tmuxPane: "%4", tmuxSocket: sock))?.first == ["-S", sock, "select-window", "-t", "%4"], "带 socket 就带 -S")
+        expect(B.tmuxSelectArguments(for: I(tmuxPane: "%4"))?.last == ["select-pane", "-t", "%4"], "没有 socket 走默认")
+        expect(I.parse(wire: I(tmuxPane: "%4", tmuxSocket: sock).wire)?.tmuxSocket == sock, "socket 过线来回一致")
         expect(B.best(identity: tty, cwd: "", among: candidates, home: home)?.windowID == 2, "同一目录开了两扇窗时，tty 能挑出对的那扇")
         expect(B.best(identity: I(tty: "/dev/ttys099"), cwd: "/Users/a/none", among: candidates, home: home) == nil, "都对不上是 nil：如实说跳不了")
 
