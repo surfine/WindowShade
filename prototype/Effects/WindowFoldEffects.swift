@@ -67,6 +67,13 @@ final class WindowFoldEffects {
 
   private func prepareFold(_ element: AXUIElement, id: CGWindowID,
                            options: ShadeInvocationOptions?, tracking: Bool) -> Bool {
+    // 规格 R29：盖板要窗口的画面（快速截图或 ScreenCaptureKit），没有屏幕录制时两条都必然失败。
+    // 以前照样起任务、等一次注定失败的全系统窗口枚举再退回普通收起——收起被推迟，
+    // 窗口外框也改在退回那一刻才读。现在直接走普通收起（结果相同，只是不等）。
+    guard hasScreenRecordingPermission() else {
+      wlog("duo-window: skip cover id=\(id); screen recording not granted")
+      return false
+    }
     guard options == nil, let owner, owner.shaded[id] == nil,
       !owner.shadeOperationIDs.contains(id),
       let pos = axPosition(element), let size = axSize(element),

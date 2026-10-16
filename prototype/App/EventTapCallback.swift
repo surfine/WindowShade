@@ -105,7 +105,12 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     if decision.waitForResult(timeout: .now() + tapDecisionTimeout) {
         return decision.swallow ? nil : Unmanaged.passUnretained(event)
     }
-    if decision.abandon() { return Unmanaged.passUnretained(event) }
+    if decision.abandon() {
+        // 规格 R29：这一下交给了 App 自己（标题栏双击通常是「缩放／铺满」）。留一行，
+        // 事后才分得清「窗口被铺满」是 App 收到了双击，还是我们的收起／展开放错了位置。
+        wlog("titlebar-tap: decision timed out; passed click to app clickState=\(clickState) at=(\(Int(location.x)),\(Int(location.y)))")
+        return Unmanaged.passUnretained(event)
+    }
     // 作废失败说明主线程已占用：再看一眼是不是刚好完成，否则按已提交吞下。
     if decision.waitForResult(timeout: .now()) {
         return decision.swallow ? nil : Unmanaged.passUnretained(event)
