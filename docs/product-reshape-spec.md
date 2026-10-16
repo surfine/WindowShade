@@ -482,7 +482,7 @@
 - **验收**：运行中在系统设置关掉辅助功能 → 10 秒内出现说明；重新打开 → 状态恢复且不重复打扰。
 - **风险**：不要做成循环弹窗。一个状态只提示一次，直到状态再次变化为止。
 - **依赖**：R1（复用 `runEnvironmentCheck`）。
-- **✅ 2026-10-15 已做**：「有→无」时走 `quietNotice(.needsPermission)`（刘海能说就在刘海说、点一下去授权；说不了退回菜单栏标题），「无→有」说一句恢复；另在状态栏菜单最上面挂一行「打开辅助功能…」直到权限回来（动态行，不占固定 9 项）。文案 zh／en／zh-Hant 齐。**验**：`run-menu-structure-tests.sh` 通过；**运行中关权限的真机验收未做（not_run）**。
+- **✅ 2026-10-15 已做**：「有→无」时走 `quietNotice(.needsPermission)`（刘海能说就在刘海说、点一下去授权；说不了退回菜单栏标题），「无→有」说一句恢复；另在状态栏菜单最上面挂一行「打开辅助功能…」直到权限回来（动态行，不占固定 9 项）。文案 zh／en／zh-Hant 齐。**验**：`run-menu-structure-tests.sh` 通过；**运行中关权限的真机验收未做（not_run）**。（2026-10-17 在虚拟机副本里试过：`tccutil reset` 撤不掉已在跑的进程的辅助功能，模拟不成立，仍 not_run，见 V 系列后面的「要改系统设置的验收」。）
 
 ---
 
@@ -680,7 +680,7 @@
 - **依据**：**19 条**独立记录——DockDoor 七条（「Fixed blank/transparent preview thumbnails under Stage Manager」「Snapped windows leave room for Stage Manager」等）、Rectangle 七条（「fix **multi-space**」「fix **multi-screen**」「footprint window workaround」）、Loop 五条；而且 Rectangle 有一条是**把功能撤到 Terminal flag 后面**，因为「it was causing app instability」。
 - **现状**：**基本空白**。全仓只有一条注释借了 Wins 的经验——`WindowBrowser/WindowBrowserController.swift:1704`「台前调度里窗口外框被缩放、捕获尺寸和真实比例对不上时，只留边，不变形」。**没有任何台前调度专门的适配或验收。**
 - **改动**：**先验收，后适配**。开台前调度，把已有探针重跑一遍：收起、窗口浏览、分屏、贴边、多屏各一条；把失败的记成问题再逐个修。**别一上来就写适配代码**——19 条里大部分是「系统缩放导致外框与捕获尺寸不一致」，一条尺度修正可能就解决多条。
-- **验收**：台前调度开着，上述五类各一条通过；关掉后行为不变。
+- **验收**：台前调度开着，上述五类各一条通过；关掉后行为不变。（2026-10-17 虚拟机里试过：探针的临时 App 窗口在台前调度下被收进缩略条，CG 外框 83×97 对辅助功能 640×452，探针进不了测试，五类 not_run；见 V 系列后面的「要改系统设置的验收」。）
 - **风险**：Rectangle 那条「功能被撤到 flag 后面」说明**这里的适配可能引入不稳**——所以每条适配都要能单独关掉。
 
 #### R20 · 窗口身份边界（orderOut／无标题浮层／静默退出／多实例）
@@ -786,6 +786,7 @@
   | 「拒绝一次后不再反复问」 | **已满足**：启动引导只在首次自动出现；更新后的提醒只在「更新前有、更新后没了」时出现；系统授权框只在未决定时弹 | `App/Preferences.swift:1124`–`:1127`、`App/Updater.swift:160` |
 
   **可对外引用的一句（真机核过再放进 README）**：「不开屏幕录制也能用：收起、还原、手势、分屏和窗口浏览的列表与动作都照常；窗口缩略图、置顶预览、看一眼、侧拉和画中画需要它。」
+- **2026-10-17 虚拟机验（部分）**：没有屏幕录制时收起走 `mode=proxyTitleBar plan=screen-recording-missing`、卷帘条照常出、展开照常；其余项 not_run，细节见 V 系列后面的「要改系统设置的验收」。
 - **一条可选的实现路子（别人的 know-how）**：Alcove 把权限相关的工作隔离进一个 **`PermissionHelper`**（XPC），另有一个 `batteryHelper`——**按能力切分进程**。若我们要让主 App 完全不问屏幕录制，可以考虑把捕获放进独立 helper，由它自己持有那份权限。**但这是一次架构选择（多一个进程、多一份签名与 TCC 身份），不要为了「少问一次权限」就上**——先做完上面的核实再判断值不值。
 
 #### R30 · 系统的「Mac 设置检查」（**先核实用不用得上，别照抄**）
@@ -1080,6 +1081,21 @@
 | **V9** | **部分（2026-10-16）**：「接着两块」那一类——本机内建屏 ＋ Studio Display，`--second-display`（签名构建）把临时窗挪到 Studio Display 收起：卷帘条落在同一块屏、收起记下的是那块屏、展开后窗口回到那块屏，三项 PASS。插拔、改分辨率、两块同型号要真手或另一块屏，待 Aaron。原文：**多显示器矩阵**：接一块／拔掉／改分辨率／**两块同型号** | WindowMizer 三条（crash on display change、wrong monitor's snapshot、**monitors share the same size and resolution**）；四家都用 UUID | 四类各一条 |
 | **V10** | **台前调度**（与 R19 配套） | 见 R19 | 五类各一条 |
 | **V11** | **图标在异常分辨率/缩放下不变形** | LaunchOS **两次**修这个：v2.1.0「app icons would display **abnormally at different resolutions**」、v2.1.3「icons could appear **enlarged**」。我们窗口浏览有 `placeholderIcon`（`WindowBrowserCardView.swift:41`）、启动台按 `backingScaleFactor` 取图，**但没在异常缩放档下验过** | 换缩放档/分辨率后两处图标都正常；取不到真图标时**有确定性的兜底**（不留空白、不留错图） |
+
+#### 2026-10-16/17 · 要改系统设置的验收，只在 QA 虚拟机里做（Aaron 2026-10-17 同意：只动虚拟机，不动本机）
+
+**环境**：`wsqa-manual`（macOS 26.6.2，1280×800@2x，2 核 4 GB），签名构建 `.build/duo-validation`（HEAD d2464e1，2026-10-17 01:17 编的），经 `tests/vm/run-core-probes.sh`／`~/wsqa-run/run-in-guest.sh` 跑。收回权限（TCC）只在 `wsqa-scratch`（`lume clone` 出来的副本，APFS 克隆 3 秒）里做，用完已删；底盘上只做了可逆的 `defaults write`（台前调度、程序坞自动隐藏），已删回原样（`GloballyEnabled`、`autohide` 都回到「键不存在」），`wsqa-manual` 照原样留在运行中。证据都在 `/private/tmp/claude-501/-Users-aaron-Documents-WindowShade/e20dabbb-f268-4ba8-9581-ffaab367e5e6/scratchpad/vmset/`（截图与日志）。**重要的限定：这一整段时间宿主机的负载平均数是 130–730（别的代理在编译），虚拟机里的探针常常等不到临时 App 的窗口（`fixture window` 12 秒超时）。同一组探针在台前调度关闭、自动隐藏关闭的对照里也同样超时，所以下面所有「探针超时」都不能算产品失败。**
+
+| 项 | 结果 | 证据与说明 |
+| --- | --- | --- |
+| **R2** 辅助功能被撤要告诉用户 | **not_run（模拟不成立）** | 在运行中的 App（副本）里 `tccutil reset Accessibility com.windowshade.prototype`：撤销写进了 TCC（重开 App 就弹系统授权框，`r2-0-before.png`），**但已经在跑的进程仍保有辅助功能**：3 分钟后双击标题栏照样收起（`r2-after-reset-fold.png`），日志里没有 `environment: accessibility permission was revoked`；`killall tccd`、`notifyutil -p com.apple.accessibility.api` 都没让它变（`r2-after-tccd.png`、`r2-after-notify.png`）。所以 `tccutil` 不等于在系统设置里关开关，R2 的 5 秒体检从没看见状态变化，产品代码这一支没被测到。真开关要管理员认证，不能代做；待 Aaron 在真机上关一次。恢复提示「无→有」同理没测（重新授权也要认证）。 |
+| **R29** 没有屏幕录制 | **部分 PASS：收起／还原 ✅，其余 not_run** | 副本里 `tccutil reset ScreenCapture com.windowshade.prototype` 后重开 App。对照（有录屏）：`shade ... mode=nativeScreenshot plan=user-mode`（`r29a-1-fold-attempt.png`）。没有录屏：`shade ... mode=proxyTitleBar plan=screen-recording-missing`、`capture: shareable-content fetch failed`，卷帘条（统一标题栏样式「Untitled」）照常画出，双击展开后窗口回来（`r29b-1-fold.png`、`r29b-2-restore.png`）。重开后约 2 分钟没出现任何系统授权框（`r29b-0-launch.png`）。**线索，没隔离出来**：这一次无录屏的展开把窗口放回了 (8,38 1280×696)（整屏），不是收起前的 (118,74 603×505)；日志里这次双击的处理花了 762 ms、主线程停了 2 秒，同一下双击很可能也被 TextEdit 自己当成了「缩放」（对照那次有录屏的收放是对的）。宿主负载下的竞态或无录屏路径的真问题，现在分不开，等负载低时在同一状态下重跑。**没测到**：窗口浏览列表与动作、手势、分屏（窗口浏览的菜单入口默认没出现；探针要辅助功能，而副本里的辅助功能后来被我收回了；菜单项用合成点击点不动）。置顶预览／看一眼的「需要屏幕录制权限」提示也没测。清单里除「收起／还原照常、不反复问」外的承诺仍是代码核对，不是真机验过。 |
+| **R19／V10** 台前调度，五类各一条 | **not_run（探针在台前调度下进不了测试）** | 台前调度要 `defaults write com.apple.WindowManager GloballyEnabled -bool true` **再** `killall cfprefsd WindowManager Dock` 才生效（只重启 Dock 不够）。开着它跑 fold-timing、restore-guard、browser-more、split、edge-park、dock-scenarios：六组全在「fixture window」超时。**有一条可用的事实**：探针起的临时 App 的窗口被台前调度收进左侧缩略条，CG 外框是 83×97（(32,367)），辅助功能却报 640×452（(190,88)）——正是 R19 说的「外框被缩放、捕获尺寸和真实比例对不上」（`sm-run.log`）。用 cua 的 `bring_to_front` 把临时 App 提到前台后，CG 外框变回 640×452，但探针仍超时（它还要 `onscreen(id)`，列表里有窗口 `is_on_screen:false`），而且同时宿主负载很高，没法下结论。手动起临时 App 再提到前台：两扇窗口都是原尺寸、在屏上（`sm-manual-1.png`）。**所以收起／窗口浏览／分屏／贴边在台前调度下的真实行为没验成；多屏本来就验不了（虚拟机只有一块屏）。**探针若要在台前调度下跑，需要先把临时 App 激活成「当前舞台」再等窗口（探针侧改，不动产品代码）。 |
+| **V8（f）** 台前调度缩略图 | **not_run** | 同上；`--dock-scenarios` 在台前调度下进不了测试。 |
+| **V8（b）** 程序坞自动隐藏 | **not_run** | `defaults write com.apple.dock autohide -bool true; killall Dock` 后跑 `--dock-scenarios`：打出 `SKIP (b) Dock autohide ... never changes the Dock's autohide setting`、`SKIP ... no Dock icon on screen (Dock hidden or tucked away)`，只有 r46／r32 两条 PASS，`verdict: PASS suite`——这组什么也没在自动隐藏下测。要测得有真指针从屏幕下沿划出程序坞再悬停图标，探针自己不会，cua 的 `move_cursor` 只动它自己的光标。 |
+| **V11** 缩放档下图标不变形 | **not_run（只验证了「能换档」）** | 来宾里能换显示模式：用一个自己编的小工具（`CGDisplaySetDisplayMode`，打成 `.app` 经 `open` 在图形会话里跑）列出 1280×800@2x（默认）、1280×800@1x、1024×640@2x、960×600@2x 等，已成功切到 1280×800@1x（`v11-1x-desktop.png`，缩放系数 1.0）。**图标本身没看到**：启动台探针（`--launchpad`，`PROBE_SHOTS` 存图）在 1x 下多次卡在「fixture window」超时；从菜单栏点「Launchpad」也点不动（菜单跟踪里合成点击与按键进不去，`v11-1x-launchpad-menu.png`）；窗口浏览入口默认没出现。要补：在宿主负载低时重跑 `--launchpad` 的 1x／1024×640 两档并看 PNG，窗口浏览那边按真机步骤手点。 |
+
+**顺带的 QA 经验**（下次别再踩）：①副本（`lume clone`）第一次开机会冒「登录 Apple 账户」的设置助理，盖住桌面；杀掉它（会掉登录）、等约 90 秒、`lume stop` 再 `run` 一次才回到桌面；这套要重复多次，一次完整约 10 分钟，宿主负载高时更久。②来宾里 SSH 会话里 `screencapture` 不行，要用 `CuaDriver.app` 起 `serve`（`open -a`），再 `cua-driver call get_desktop_state`（回 base64 PNG）；点击要先 `start_session`、再用 `scope:desktop` ＋ 刚取到的 `capture_id`；菜单与系统对话框里合成鼠标点击不生效，键盘 `press_key` 带 `pid` 对模态对话框有效。③来宾里不要跑 `python3`（会弹命令行开发者工具安装框）。④HostKey 变了的新 IP 要用 `-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null`。
 
 #### V1／V4／V5／V6 的真机步骤（2026-10-15 写，等 Aaron 跑）
 
