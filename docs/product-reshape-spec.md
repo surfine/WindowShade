@@ -797,6 +797,7 @@
 
   **可对外引用的一句（真机核过再放进 README）**：「不开屏幕录制也能用：收起、还原、手势、分屏和窗口浏览的列表与动作都照常；窗口缩略图、置顶预览、看一眼、侧拉和画中画需要它。」
 - **2026-10-17 虚拟机验（部分）**：没有屏幕录制时收起走 `mode=proxyTitleBar plan=screen-recording-missing`、卷帘条照常出、展开照常；其余项 not_run，细节见 V 系列后面的「要改系统设置的验收」。
+- **2026-10-17 「展开回到整屏」的源码诊断**：**展开路径没有丢原位**。证据是截图本身：收起前 `r29b-0-launch.png` 里 TextEdit 在 (118,74 603×505)，而收起后 `r29b-1-fold.png` 的卷帘条已经是整屏宽、贴在 (8,38)——统一标题栏的卷帘条按收起那一刻读到的外框画（`makeProxyOverlay(axPos: pos, width: size.width …)`），所以**收起时读到的就已经是铺满后的外框**；展开按卷帘条位置加记下的尺寸放回（`FoldExit.swift` `unshadeReturningElement` → `applyRestoredGeometry`，没有别的写入者），放回整屏是忠实还原。窗口是在收起**之前**被铺满的，源码里能做到这一点的只有两条：①标题栏双击的判定 500 ms 没等到主线程（当时主线程停了 2 秒），钩子放行，TextEdit 自己执行了「双击＝铺满」，之后再一次双击才收起；②三击（双击后紧跟一下）按设计是「收起再铺满」，之后又双击收起。两条都要两次手势，都不是无录屏路径的错；哪一条，旧日志分不出。**顺手修的一处（只在开了「收起窗口时的动画」时生效）**：卷帘动画的盖板没有屏幕录制时必然拿不到画面，以前仍起异步任务、先等一次注定失败的全系统窗口枚举再退回普通收起，收起被推迟、外框也改在退回时才读；现在没有录屏直接走普通收起（`WindowFoldEffects.prepareFold`，结果相同、不等；`tests/duo-integration-check.py` 守着）。**下次在虚拟机重跑时看这三行**：`>>> shade … frame=(x,y wxh)`（收起读到的外框，新加）、`titlebar-tap: decision timed out; passed click to app`（放行给 App 的那一下，新加）、`titlebar-triple-click:`（三击铺满）；再配合 `geometry: restore immediate target=…`。
 - **一条可选的实现路子（别人的 know-how）**：Alcove 把权限相关的工作隔离进一个 **`PermissionHelper`**（XPC），另有一个 `batteryHelper`——**按能力切分进程**。若我们要让主 App 完全不问屏幕录制，可以考虑把捕获放进独立 helper，由它自己持有那份权限。**但这是一次架构选择（多一个进程、多一份签名与 TCC 身份），不要为了「少问一次权限」就上**——先做完上面的核实再判断值不值。
 
 #### R30 · 系统的「Mac 设置检查」（**先核实用不用得上，别照抄**）
