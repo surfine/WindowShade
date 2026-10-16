@@ -9,12 +9,15 @@ func appWindowCount(_ pid: pid_t) -> Int {
 }
 
 func appCurrentUserWindowCount(_ pid: pid_t) -> Int {
-    appWindows(pid: pid).filter { win in
-        guard !axBoolAttribute(win, kAXMinimizedAttribute as String) else { return false }
-        guard let size = axSize(win), size.width > 40, size.height > 40 else { return false }
-        guard let pos = axPosition(win) else { return true }
-        return windowIsVisible(pos: pos, size: size)
-    }.count
+    appWindows(pid: pid).filter(isCurrentUserWindow).count
+}
+
+/// appCurrentUserWindowCount 对单扇窗的判定（拆出来给 R20 探针逐扇核对，行为不变）。
+func isCurrentUserWindow(_ win: AXUIElement) -> Bool {
+    guard !axBoolAttribute(win, kAXMinimizedAttribute as String) else { return false }
+    guard let size = axSize(win), size.width > 40, size.height > 40 else { return false }
+    guard let pos = axPosition(win) else { return true }
+    return windowIsVisible(pos: pos, size: size)
 }
 
 // Adobe AE/Premiere 的 AX 树把工作区窗口的 role 报成 AXLayoutArea（非标准），

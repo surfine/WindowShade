@@ -62,7 +62,14 @@ final class GlanceProbe {
     }
     // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
     if CommandLine.arguments.contains("--restore-guard") { fixtureArguments.append("--minimizable-other") }
-    if ["--soak", "--idle-first-op", "--browser-identity", "--dock-scenarios"].contains(where: { CommandLine.arguments.contains($0) }) {
+    // 规格 R20：--window-classes 让临时 App 额外开出 PiP／弹出条／刘海浮层／遮蔽／搜索条几类窗，编号写进这个文件。
+    if CommandLine.arguments.contains("--window-classes") {
+      fixtureArguments += ["--single", "--classes", WindowClassesProbe.reportPath]
+      let reportDir = (WindowClassesProbe.reportPath as NSString).deletingLastPathComponent
+      try? FileManager.default.createDirectory(atPath: reportDir, withIntermediateDirectories: true)
+      try? FileManager.default.removeItem(atPath: WindowClassesProbe.reportPath)
+    }
+    if ["--soak", "--idle-first-op", "--browser-identity", "--dock-scenarios", "--window-classes"].contains(where: { CommandLine.arguments.contains($0) }) {
       fixtureArguments += ["--lifetime", "1800"]
     }
     process.arguments = fixtureArguments
@@ -278,6 +285,12 @@ final class GlanceProbe {
       adoptFixture(pid: process.processIdentifier)
       guard let path = process.executableURL else { throw EffectError.unavailable("no fixture path") }
       try await exerciseBrowserIdentity(pid: process.processIdentifier, fixturePath: path)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--window-classes") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseWindowClasses(pid: process.processIdentifier)
       finish(nil)
       return
     }

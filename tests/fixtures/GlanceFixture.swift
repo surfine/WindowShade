@@ -74,10 +74,10 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       window.title = "看一眼 · 参考 · 不截取"
       let note = "hit \(marker.path) sharing=\(window.sharingType.rawValue) bundle=\(Bundle.main.bundleURL.path)\n"
       try? note.write(to: marker.deletingLastPathComponent().appendingPathComponent("share-state.txt"), atomically: true, encoding: .utf8)
-      try? note.write(to: URL(fileURLWithPath: "/Users/aaron/Documents/WindowShade/.build/glance-tests/share-state.txt"), atomically: true, encoding: .utf8)
+      try? note.write(to: URL(fileURLWithPath: FileManager.default.currentDirectoryPath + "/.build/glance-tests/share-state.txt"), atomically: true, encoding: .utf8)
     } else {
       let note = markerCandidates.map { "\($0.path) exists=\(FileManager.default.fileExists(atPath: $0.path)) bundle=\(Bundle.main.bundleURL.path)" }.joined(separator: "\n")
-      try? note.write(to: URL(fileURLWithPath: "/Users/aaron/Documents/WindowShade/.build/glance-tests/share-state.txt"), atomically: true, encoding: .utf8)
+      try? note.write(to: URL(fileURLWithPath: FileManager.default.currentDirectoryPath + "/.build/glance-tests/share-state.txt"), atomically: true, encoding: .utf8)
     }
     if !CommandLine.arguments.contains("--single") {
       let other = NSWindow(
@@ -117,6 +117,9 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       windows.append(long)
     }
     if CommandLine.arguments.contains("--fullscreen") { addFullScreenWindow() }
+    if let index = CommandLine.arguments.firstIndex(of: "--classes"), CommandLine.arguments.indices.contains(index + 1) {
+      addWindowClasses(report: CommandLine.arguments[index + 1])
+    }
     // 刘海探针要一扇「真的被藏起来」的窗口（和按 ⌘H 一样）。被前的 App 不能由别的进程调
     // AX 藏起来（实测 setAXHidden 返回成功但不生效），所以由临时 App 自己藏自己。
     DistributedNotificationCenter.default().addObserver(
@@ -227,6 +230,67 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     saves += 1
     habitsWindow?.title = "习惯 · 已存储 \(saves)"
     print("FIXTURE habits: saved \(saves)"); fflush(stdout)
+  }
+
+  /// 规格 R20（--window-classes）：在进程内模拟 OmniWM 夹具里「不是真窗口」的几类，各开一扇，
+  /// 把名字对窗口编号写进 report（JSON），探针据此逐类核对窗口浏览与「还剩几扇用户窗口」的判定。
+  /// 只有 doc（有标题的普通窗，带着 word-search 子窗）与参考窗是真窗口。
+  func addWindowClasses(report: String) {
+    var numbers: [String: Int] = [:]
+    let screen = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
+    // 画中画：浮动层的无标题面板，不抢焦点。
+    let pip = NSPanel(contentRect: NSRect(x: screen.maxX - 380, y: screen.minY + 80, width: 320, height: 180),
+                      styleMask: [.nonactivatingPanel, .borderless], backing: .buffered, defer: false)
+    pip.level = .floating
+    pip.isReleasedWhenClosed = false
+    pip.ignoresMouseEvents = true
+    pip.orderFrontRegardless()
+    numbers["pip"] = pip.windowNumber
+    // Chrome 弹出条：普通层、无标题、无边框的工具条（高度刚过 40 点）。
+    let strip = NSWindow(contentRect: NSRect(x: 300, y: screen.maxY - 300, width: 480, height: 56),
+                         styleMask: [.borderless], backing: .buffered, defer: false)
+    strip.isReleasedWhenClosed = false
+    strip.backgroundColor = .windowBackgroundColor
+    strip.orderFront(nil)
+    numbers["chrome-strip"] = strip.windowNumber
+    // 别的刘海 App 的浮层：状态栏层、不抢焦点，贴在屏幕顶部正中。
+    let notch = NSPanel(contentRect: NSRect(x: screen.midX - 110, y: screen.maxY - 38, width: 220, height: 38),
+                        styleMask: [.nonactivatingPanel, .borderless], backing: .buffered, defer: false)
+    notch.level = .statusBar
+    notch.isReleasedWhenClosed = false
+    notch.ignoresMouseEvents = true
+    notch.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
+    notch.orderFrontRegardless()
+    numbers["notch-overlay"] = notch.windowNumber
+    // 锁屏遮蔽：屏保层的无边框窗。为不挡住真屏幕，只做一块小的。
+    let shield = NSWindow(contentRect: NSRect(x: screen.minX + 40, y: screen.minY + 60, width: 260, height: 160),
+                          styleMask: [.borderless], backing: .buffered, defer: false)
+    shield.level = NSWindow.Level(rawValue: Int(CGShieldingWindowLevel()))
+    shield.isReleasedWhenClosed = false
+    shield.backgroundColor = .black
+    shield.ignoresMouseEvents = true
+    shield.orderFrontRegardless()
+    numbers["shield"] = shield.windowNumber
+    // Word：有标题的文档窗，附一条无标题的搜索条子窗（跟着父窗走，同一层）。
+    let doc = NSWindow(contentRect: NSRect(x: 360, y: 200, width: 520, height: 360),
+                       styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false)
+    doc.title = "文档 · 类别"
+    doc.isReleasedWhenClosed = false
+    doc.orderFront(nil)
+    let search = NSPanel(contentRect: NSRect(x: 400, y: 520, width: 300, height: 48),
+                         styleMask: [.nonactivatingPanel, .borderless], backing: .buffered, defer: false)
+    search.isReleasedWhenClosed = false
+    search.backgroundColor = .controlBackgroundColor
+    doc.addChildWindow(search, ordered: .above)
+    search.orderFront(nil)
+    numbers["doc"] = doc.windowNumber
+    numbers["word-search"] = search.windowNumber
+    windows += [pip, strip, notch, shield, doc, search]
+    numbers["reference"] = windows.first?.windowNumber ?? 0
+    if let data = try? JSONSerialization.data(withJSONObject: numbers) {
+      try? data.write(to: URL(fileURLWithPath: report), options: .atomic)
+    }
+    print("FIXTURE classes: \(numbers)"); fflush(stdout)
   }
 
   /// ⌘N：开一扇普通的、能改大小的新窗口，放到最前面。
