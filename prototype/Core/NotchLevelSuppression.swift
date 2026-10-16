@@ -3,8 +3,8 @@
 // 一句话：拦键 = 能写 且 看得见 且 没有别的主人。三者缺一就不拦，按键原样交给系统。
 // 拦下来的键由我们照系统的步长写回（NotchLevelStep），再画两耳；这里只做判定，不写任何数值、不碰 AppKit。
 //
-// 判定顺序（前面的先赢）：设置关 → 改回用系统的提示 → 锁屏 → 放行 → 手势层 → 调度中心 → 全屏但面板看不见 →
-// 别的 App 在管 → 其它修饰键 → 设备不能调 → 亮度对着外接屏 → 监听被暂停 → 没允许辅助功能 →
+// 判定顺序（前面的先赢）：设置关 → 锁屏 → 放行 → 手势层 → 调度中心 → 全屏但面板看不见 →
+// 别的 App 在管 → 改回用系统的提示 → 其它修饰键 → 设备不能调 → 亮度对着外接屏 → 监听被暂停 → 没允许辅助功能 →
 // 版本没核对过 → 这一类键写回失败过 → 拦。
 
 import Foundation
@@ -105,7 +105,6 @@ struct NotchLevelSuppression: Equatable, Sendable {
         }
 
         if !input.settingEnabled { return system(.settingOff) }
-        if input.useSystemPopups { return both(.systemPopups) }
         if input.locked { return system(.locked) }
         if input.authorizationRelease { return system(.authorizationRelease) }
         if input.gestureInFlight { return system(.gestureInFlight) }
@@ -114,6 +113,8 @@ struct NotchLevelSuppression: Equatable, Sendable {
         if input.foreignHUDRunning {
             return Decision(action: .passThrough, writer: .other, visible: .otherApp, reason: .foreignHUD)
         }
+        // 放在锁屏、调度中心、别的 App 在管之后：那些情形刘海本来就不画，开关不该让它画出来。
+        if input.useSystemPopups { return both(.systemPopups) }
         if input.modifiers == .other { return system(.otherModifiers) }
         if !input.deviceAdjustable {
             switch kind {
