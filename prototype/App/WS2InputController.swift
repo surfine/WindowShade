@@ -63,6 +63,15 @@ final class WS2InputController {
         WS2GamepadDesktopControl.shared.applyPreferences()
     }
 
+    /// 辅助功能晚于启动才给：滚动与中键钩子若因没有权限而创建失败，这里解开并补装一次（规格 R26 后续）。
+    /// 没有这种停住的钩子时什么都不做。
+    func accessibilityGranted() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        let scrollReset = scrollTap.accessibilityGranted()
+        let middleReset = middleTap.accessibilityGranted()
+        if scrollReset || middleReset { apply() }
+    }
+
     /// 遥控模式是总开关，指挥模式跟着它。
     private func applyRemote(on: Bool, conductor: Bool) -> Bool {
         if on, remoteHost == nil {

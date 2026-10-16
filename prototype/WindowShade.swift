@@ -977,10 +977,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// 辅助功能晚于启动才给（首次启动时系统弹窗还开着，用户后点「允许」）：启动那一刻因没有授权而没装上的
     /// 键盘钩子（⌥Tab 窗口切换、Mission Control 键）此前只在改设置时才会重装，授权后要重开 App 才生效。
-    /// 两者的 apply 都是幂等的（已装的只是重开）。规格 R26。
+    /// 两者的 apply 都是幂等的（已装的只是重开）；滚动与中键钩子因没权限创建失败的，在这里解开再装。规格 R26。
     func reinstallAccessibilityHooks() {
         switcher.applySetting()
         missionControlKeys.applySetting()
+        inputController.accessibilityGranted()
     }
 
     // tap 因输入洪泛被系统禁用时退避重启用，避免反复禁用/启用和系统打架。

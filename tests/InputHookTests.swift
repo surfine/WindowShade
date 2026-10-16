@@ -11,6 +11,7 @@ struct InputHookTests {
         hookDoesNotLeak()
         systemStopDoesNotReinstall()
         noCallbackWhileOff()
+        accessibilityGrantedRetriesOnlyOpenFailures()
         policyBlocksUntilFactsExist()
         yieldNames()
         scrollPassesUnverifiedEvents()
@@ -75,6 +76,24 @@ struct InputHookTests {
         driver.openFailed()
         expect(!driver.onEvent() && driver.installs == driver.removals,
                "if the port never opens, events are not received and the counts balance")
+    }
+
+    static func accessibilityGrantedRetriesOnlyOpenFailures() {
+        var driver = HookDriver()
+        _ = driver.plan(wanted: true, isOpen: false)
+        driver.openFailed()
+        expect(driver.phase == .stoppedBySystem && driver.plan(wanted: true, isOpen: false) == .keep,
+               "a failed open stays stopped until something changes")
+        expect(driver.accessibilityGranted() && driver.phase == .absent, "granting accessibility clears a failed open")
+        expect(driver.plan(wanted: true, isOpen: false) == .open && driver.installs == 2 && driver.removals == 1,
+               "after the grant the switch being on installs again")
+        expect(!driver.accessibilityGranted() && driver.phase == .installed, "an installed hook is not touched by the grant")
+        var sys = HookDriver()
+        _ = sys.plan(wanted: true, isOpen: false)
+        _ = sys.systemDisabled(isOpen: true)
+        expect(!sys.accessibilityGranted() && sys.phase == .stoppedBySystem, "a hook the system stopped is not retried")
+        var off = HookDriver()
+        expect(!off.accessibilityGranted() && off.phase == .absent, "a disabled hook is not touched by the grant")
     }
 
     static func policyBlocksUntilFactsExist() {
