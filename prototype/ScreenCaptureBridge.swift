@@ -1,6 +1,7 @@
 import AVFoundation
 import Cocoa
 import ScreenCaptureKit
+import CoreImage
 import ImageIO
 import Synchronization
 
@@ -39,6 +40,23 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         return SCFrameStatus(rawValue: raw) == .complete
     }
 
+    /// 只给探针用：全 0 帧的旁证——帧信息、IOSurface，以及走 GPU（Core Image）读同一块缓冲是不是也全 0。
+    private static func describeEmptyFrame(_ sampleBuffer: CMSampleBuffer, buffer: CVPixelBuffer) {
+        let info = (CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false)
+            as? [[SCStreamFrameInfo: Any]])?.first ?? [:]
+        let surface = CVPixelBufferGetIOSurface(buffer)?.takeUnretainedValue()
+        let keys = info.map { "\($0.key.rawValue)=\($0.value)" }.sorted().joined(separator: " ")
+        print("INFO capsule-color: empty frame \(CVPixelBufferGetWidth(buffer))x\(CVPixelBufferGetHeight(buffer)) planar=\(CVPixelBufferIsPlanar(buffer)) iosurface=\(surface.map { "\(IOSurfaceGetID($0)) inUse=\(IOSurfaceIsInUse($0))" } ?? "nil") info: \(keys)")
+        let image = CIImage(cvPixelBuffer: buffer)
+        let w = 64, h = 64
+        var out = [UInt8](repeating: 0, count: w * h * 4)
+        let scaled = image.transformed(by: CGAffineTransform(scaleX: CGFloat(w) / image.extent.width,
+                                                              y: CGFloat(h) / image.extent.height))
+        CIContext().render(scaled, toBitmap: &out, rowBytes: w * 4, bounds: CGRect(x: 0, y: 0, width: w, height: h),
+                           format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB))
+        print("INFO capsule-color: empty frame via Core Image max alpha \(stride(from: 3, to: out.count, by: 4).map { out[$0] }.max() ?? 0) max colour \(out.enumerated().filter { $0.offset % 4 != 3 }.map(\.element).max() ?? 0)")
+    }
+
     /// 返回 false：这帧整帧全 0，没存（留给下一帧）。
     @discardableResult
     private static func saveRawFrame(_ sampleBuffer: CMSampleBuffer, to url: URL) -> Bool {
@@ -59,7 +77,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
             }
         }
         guard maxAlpha > 0 || maxColor > 0 else {
-            probeEmptyFrames.withLock { $0 += 1 }
+            let n = probeEmptyFrames.withLock { $0 += 1; return $0 }
+            if n <= 2 { describeEmptyFrame(sampleBuffer, buffer: buffer) }
             return false
         }
         print("INFO capsule-color: raw frame \(width)x\(height) max alpha \(maxAlpha) max colour \(maxColor) format \(CVPixelBufferGetPixelFormatType(buffer))")
