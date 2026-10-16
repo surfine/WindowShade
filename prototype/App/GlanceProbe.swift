@@ -7,6 +7,12 @@ import Cocoa
 /// --single 让临时 App 只开一扇窗：收起会走整体隐藏。
 /// 其余参数各跑一项，见下面的调度（例如 --launchpad-keys、--fullscreen、--thumbnail、--habits、--quiet-defaults、--notch-shape；别的包写的 --strip-peek、--browser-more、
 /// --dock-gestures 见 ProbeEntries.swift）。
+/// 探针等待上限的放宽倍数，读环境变量 WINDOWSHADE_PROBE_TIMEOUT_SCALE，夹在 1…8；没设或读不懂就是 1（行为不变）。
+let glanceProbeTimeoutScale: Double = {
+  let raw = ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_TIMEOUT_SCALE"].flatMap(Double.init) ?? 1
+  return min(8, max(1, raw))
+}()
+
 @MainActor
 final class GlanceProbe {
   let owner = AppDelegate()
@@ -1356,12 +1362,22 @@ final class GlanceProbe {
   }
 
   func wait(_ label: String, timeout: Double = 5, condition: () -> Bool) async throws {
-    let deadline = CACurrentMediaTime() + timeout
+    // 宿主负载高时（虚拟机里尤其）等待会拉长：WINDOWSHADE_PROBE_TIMEOUT_SCALE 只放宽探针自己的等待上限（1–8 倍），
+    // 产品里的时间常数不动；超时与明显变慢的等待都打印实际用时，判断「慢」还是「真没出现」。
+    let scale = glanceProbeTimeoutScale
+    let started = CACurrentMediaTime()
+    let deadline = started + timeout * scale
     while !Task.isCancelled, CACurrentMediaTime() < deadline {
-      if condition() { return }
+      if condition() {
+        let elapsed = CACurrentMediaTime() - started
+        if scale > 1, elapsed > timeout { print("INFO probe-wait \(label): \(String(format: "%.1f", elapsed)) s (nominal limit \(timeout) s, scale \(scale))") }
+        return
+      }
       try await Task.sleep(for: .milliseconds(8), clock: .suspending)
     }
-    throw EffectError.unavailable("timeout: \(label) \(label == "fixture window" ? lastLookup : "")")
+    let elapsed = CACurrentMediaTime() - started
+    throw EffectError.unavailable(
+      "timeout: \(label) after \(String(format: "%.1f", elapsed)) s (limit \(String(format: "%.1f", timeout * scale)) s, scale \(scale)) \(label == "fixture window" ? lastLookup : "")")
   }
 
   private func finish(_ error: String?) {
