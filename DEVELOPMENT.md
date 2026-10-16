@@ -38,6 +38,14 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 2026-10-16 在 macOS 26.6.2 上首跑：前五组全过，browser-more 三次里一次全过、两次在不同步骤等满 5 秒（记 inconclusive）。
 同日 macOS 15.6.1（`wsqa-15`，4 核）首跑：六组全过；计时与本机相近（第一次画面变化 168 ms、卷帘条 391 ms）。
 
+### 第一个 Developer ID 版（1.0.17）
+
+1.0.16 及以前是开发证书签的（Team `FVGLY6W6S4`），Developer ID 的 Team 是 `DQ45KFVHJ8`，DR 一定不同，所以 1.0.17 是
+[docs/update.md](docs/update.md) 里的「换证书的一版」：appcast 那一项标 `sparkle:informationalUpdate` 配 `belowVersion=17`
+（1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
+用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
+同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
+
 ## 模块结构
 
 ```text
@@ -338,21 +346,25 @@ cd prototype
    它会写入 `SUFeedURL`，检查链接了 Sparkle、嵌套代码同一个 Team、`SUPublicEDKey` 没变，并试跑 `--self-check`。
    **输出里出现“更新器没接齐，这个包不能发布”就停下**：少了 `main.swift` 里的 `UpdateLaunch.handleEarlyArguments()` /
    `UpdateLaunch.recordLaunch()` 或 `WindowShade.swift` 里的 `UpdaterController.shared.start()` 等，安装前的试跑会拉起整个 App、
-   新版写不了 healthy，每次更新都会被换回。然后运行相关回归检查。
-3. 打包（`ditto` 保留框架里的符号链接）：
+   新版写不了 healthy，每次更新都会被换回。然后运行相关回归检查（真机探针、虚拟机回归都用这个开发证书签的包）。
+3. **发布包用 Developer ID 签、公证、钉票据**（2026-10-16 起；账号 Team `DQ45KFVHJ8`）：
+   `./build.sh --release` 做和 `--stage` 同样的检查（idle-budget 除外，同源由 `--stage` 把关），产物在 `.build/release/WindowShade.app`，
+   所有嵌套代码用同一张 Developer ID 签、带 Apple 时间戳；再 `bash scripts/notarize.sh` 送公证、钉票据、用 Gatekeeper 核
+   （凭证是本人用 `xcrun notarytool store-credentials windowshade-notary …` 存进钥匙串的，脚本不碰密码）。
+   然后打包（`ditto` 保留框架里的符号链接）：
 
    ```sh
    cd prototype
    VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
    mkdir -p dist
-   ditto -c -k --sequesterRsrc --keepParent ../.build/duo-validation/WindowShade.app "dist/WindowShade-v${VERSION}.zip"
+   ditto -c -k --sequesterRsrc --keepParent ../.build/release/WindowShade.app "dist/WindowShade-v${VERSION}.zip"
    (cd dist && shasum -a 256 "WindowShade-v${VERSION}.zip" > "WindowShade-v${VERSION}.zip.sha256")
    ```
 
 4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 还没写，先按下面手动做：
    1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
    2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
-   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="=<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
+   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
    4. `WindowShade.app/Contents/MacOS/WindowShade --self-check` 返回 0，输出里有这次的 build 号（`build=N`），1 秒左右返回。
    5. `CFBundleVersion` 大于上一版（`bash scripts/check-release-version.sh` PASS）。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。

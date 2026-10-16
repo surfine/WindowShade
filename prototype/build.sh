@@ -4,7 +4,9 @@
 # 用法：
 #   ./build.sh            构建 + 签名（需要签名身份，见下）
 #   ./build.sh --check    隔离优化编译与链接验证，不签名、不修改 app bundle
-#   ./build.sh --stage    隔离构建到 .build/duo-validation/（发布包从这里打），写入更新清单地址 SUFeedURL
+#   ./build.sh --stage    隔离构建到 .build/duo-validation/，写入更新清单地址 SUFeedURL；用开发证书签，给探针与发布关验证
+#   ./build.sh --release  和 --stage 同样的发布前检查，但构建到 .build/release/、用 Developer ID 证书签并带 Apple 时间戳；
+#                         发布包从这里打，再用 scripts/notarize.sh 公证（见 DEVELOPMENT.md 的发布流程）
 #   ./build.sh --local-parallel  本地全模块优化，使用四个后端线程；发布仍用 --stage
 #
 # 应用内更新（docs/update.md）：主程序链接 prototype/Vendor/Sparkle.framework（2.10.0，已删 XPCServices），
@@ -23,18 +25,24 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 stage_only=0
+release=0
 if [ "${1:-}" = "--stage" ]; then stage_only=1; fi
+# --release 是带 Developer ID 签名的 --stage：同样的检查，换输出目录、换证书、加时间戳。
+if [ "${1:-}" = "--release" ]; then stage_only=1; release=1; fi
 OPTIMIZATION_FLAGS=(-O -whole-module-optimization)
 # Toolchain version is not the language mode. Keep all four Swift builds identical.
 SWIFT_LANGUAGE_FLAGS=(-swift-version 6 -strict-concurrency=complete -warnings-as-errors)
 if [ "${1:-}" = "--local-parallel" ]; then OPTIMIZATION_FLAGS+=(-num-threads 4); fi
 APP="WindowShade.app"
+STAGE_DIR="$(cd .. && pwd)/.build/duo-validation"
+# 发布构建放在单独的目录：Developer ID 签出来的 DR 和开发证书不同，放进 duo-validation 会让探针丢掉本机已给的授权。
+if [ "$release" = "1" ]; then STAGE_DIR="$(cd .. && pwd)/.build/release"; fi
 if [ "$stage_only" = "1" ]; then
-  APP="$(cd .. && pwd)/.build/duo-validation/WindowShade.app"
+  APP="$STAGE_DIR/WindowShade.app"
 fi
 BIN="$APP/Contents/MacOS/WindowShade"
 TMP_BIN="windowshade"
-if [ "$stage_only" = "1" ]; then TMP_BIN="$(cd .. && pwd)/.build/duo-validation/windowshade"; fi
+if [ "$stage_only" = "1" ]; then TMP_BIN="$STAGE_DIR/windowshade"; fi
 MODULE_CACHE="$(cd .. && pwd)/.build/module-cache"
 # 更新清单地址与 EdDSA 公钥：只由 --stage 写进发布包；公钥必须和仓库 Info.plist 里的一致。
 FEED_URL="https://windowshade.aaronlau.me/appcast.xml"
@@ -95,6 +103,22 @@ if [ "$check_only" != "1" ] && [ -z "$IDENTITY" ] && [ -f local-codesign.env ]; 
   # shellcheck disable=SC1091
   source local-codesign.env
   IDENTITY="${WINDOWSHADE_CODESIGN_IDENTITY:-}"
+fi
+# 发布构建用 Developer ID：WINDOWSHADE_RELEASE_IDENTITY 指定；没指定就取钥匙串里唯一一张 Developer ID Application。
+# 签名都带 Apple 安全时间戳（公证要求；证书过期后已签的版本照样能跑也靠它）。开发构建不带，离线也能签。
+TIMESTAMP_FLAGS=()
+if [ "$release" = "1" ]; then
+  IDENTITY="${WINDOWSHADE_RELEASE_IDENTITY:-}"
+  if [ -z "$IDENTITY" ]; then
+    DEVELOPER_IDS=$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Developer ID Application: [^"]*\)".*/\1/p' | sort -u)
+    if [ "$(printf '%s\n' "$DEVELOPER_IDS" | grep -c .)" != "1" ]; then
+      echo "ERROR: --release 要一张 Developer ID Application 证书（钥匙串里找到：${DEVELOPER_IDS:-无}）。" >&2
+      echo "       多于一张时用 WINDOWSHADE_RELEASE_IDENTITY 指定。" >&2
+      exit 1
+    fi
+    IDENTITY="$DEVELOPER_IDS"
+  fi
+  TIMESTAMP_FLAGS=(--timestamp)
 fi
 
 SOURCES="main.swift $(collect_sources | grep -v '^main.swift$')"
@@ -262,15 +286,11 @@ cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
   printf '\n\n== Lock-space recipe (Glance) ==\n\n'; cat ../docs/third-party-lock-overlay.txt
 } > "$APP/Contents/Resources/THIRD-PARTY-LICENSES.txt"
 rm -rf "$APP/Contents/Resources/ThirdParty"
-# The released bundle historically carries the Swift concurrency runtime in
-# Contents/Frameworks. Preserve that runtime in isolated stage builds too;
-# otherwise the stage zip differs from the known-good app bundle and can fail
-# before application code starts on systems without the matching toolchain.
-SOURCE_FRAMEWORKS="$(pwd)/WindowShade.app/Contents/Frameworks"
-if [ "$stage_only" = "1" ] && [ -d "$SOURCE_FRAMEWORKS" ]; then
-  mkdir -p "$APP/Contents/Frameworks"
-  cp -R "$SOURCE_FRAMEWORKS/." "$APP/Contents/Frameworks/"
-fi
+# 以前发布包里带一份 Swift 并发运行库（从 WindowShade.app 模板拷来的 libswift_Concurrency.dylib）。
+# 主程序链接的一直是系统的 /usr/lib/swift/libswift_Concurrency.dylib（1.0.16 也是），那一份从没被用到；
+# 最低系统到 macOS 15 之后系统本来就有它。公证还会因为它没有 Developer ID 签名与时间戳而判 Invalid（2026-10-16 实测），
+# 所以 --stage 与 --release 都不再拷它；包是原地更新的，旧构建留下的那一份也删掉。
+rm -f "$APP/Contents/Frameworks/libswift_Concurrency.dylib"
 
 # Sparkle：每次从 Vendor/ 重新放一份（ditto 保留符号链接），再按发布需要裁掉用不到的部分。
 # 没开沙盒不需要 XPCServices；头文件和模块只给编译用；只留发布架构和 Base、zh_CN 两份本地化。
@@ -373,18 +393,22 @@ else
   plutil -remove SUFeedURL "$APP/Contents/Info.plist" 2>/dev/null || true
 fi
 
-echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
+if [ "$release" = "1" ]; then
+  echo "==> 用 Developer ID 签名并加 Apple 时间戳：$IDENTITY"
+else
+  echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
+fi
 # 从里往外逐个签，全部同一个身份，不用 --deep：Sparkle 的安装器、Updater.app、看护都要和 App 同一个 Team，
 # 否则安装器和 App 之间的连接校验不过，新版替换自己也会被“App 管理”拦下。
 # 主程序也开 hardened runtime（规格 C3：公证的前提，且让验过的包就是要发的包），例外只开 WindowShade.entitlements
 # 里那四项。标识符与证书不变，所以 DR 不变，已有的辅助功能/屏幕录制授权不受影响。
-codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW/Versions/B/Autoupdate"
-codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW/Versions/B/Updater.app"
-codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW"
-codesign --force -s "$IDENTITY" -o runtime -i com.windowshade.prototype.update-guard "$GUARD_APP"
-codesign --force -s "$IDENTITY" -o runtime -i com.windowshade.prototype.hook "$HOOK_BIN"
-if [ -d "$ADAPTER_FW" ]; then codesign --force -s "$IDENTITY" -o runtime "$ADAPTER_FW"; fi
-codesign --force -s "$IDENTITY" -o runtime --entitlements WindowShade.entitlements "$APP"
+codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime "$EMBED_FW/Versions/B/Autoupdate"
+codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime "$EMBED_FW/Versions/B/Updater.app"
+codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime "$EMBED_FW"
+codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime -i com.windowshade.prototype.update-guard "$GUARD_APP"
+codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime -i com.windowshade.prototype.hook "$HOOK_BIN"
+if [ -d "$ADAPTER_FW" ]; then codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime "$ADAPTER_FW"; fi
+codesign --force -s "$IDENTITY" ${TIMESTAMP_FLAGS[@]+"${TIMESTAMP_FLAGS[@]}"} -o runtime --entitlements WindowShade.entitlements "$APP"
 codesign --verify --deep --strict "$APP"
 
 if [ "$stage_only" = "1" ]; then
@@ -434,7 +458,12 @@ if [ "$stage_only" = "1" ]; then
     echo "==> --self-check 通过：$SELF_CHECK_OUT"
   fi
   # 性能预算（规格 R44）：常驻系统查询为零。不过就是退步，这个包不能发。
-  bash ../scripts/check-idle-budget.sh "$BIN" || exit 1
+  # 发布构建不跑：它的 DR 是 Developer ID，本机没给过授权，跑起来可能弹系统询问；同一份源码已由 --stage 验过。
+  if [ "$release" = "1" ]; then
+    echo "==> 跳过 idle-budget：发布构建与 --stage 同源，预算由 --stage 把关"
+  else
+    bash ../scripts/check-idle-budget.sh "$BIN" || exit 1
+  fi
 fi
 touch "$APP"
 
