@@ -781,7 +781,7 @@ extension AppDelegate {
             let ms = { (a: CFAbsoluteTime, b: CFAbsoluteTime) in Int((b - a) * 1000) }
             wlog("    fold-capture timing id=\(id) queued=\(ms(captureTaskQueuedAt, captureTaskStartedAt))ms park=\(ms(captureTaskStartedAt, captureStartedAt))ms capture=\(ms(captureStartedAt, capturedAt))ms prepare=\(ms(capturedAt, CFAbsoluteTimeGetCurrent()))ms")
             let barH = preparation.barH
-            wlog("    capture full=\(full.width)x\(full.height) scale=\(preparation.scale) fixedBarH=\(preparation.fixedBarH.map { String(format: "%.1f", $0) } ?? "-") visualBarH=\(preparation.visualBarH.map { String(Int($0)) } ?? "-") fallbackBarH=\(Int(preparation.fallbackBarH)) standardBarH=\(String(format: "%.1f", preparation.standardBarH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(max(1, Int(ceil(barH * preparation.scale)))) boundary=\(preparation.boundary)")
+            wlog("    capture full=\(full.width)x\(full.height) scale=\(preparation.scale) fixedBarH=\(preparation.fixedBarH.map { String(format: "%.1f", $0) } ?? "-") fallbackBarH=\(Int(preparation.fallbackBarH)) standardBarH=\(String(format: "%.1f", preparation.standardBarH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(max(1, Int(ceil(barH * preparation.scale)))) boundary=\(preparation.boundary)")
             guard let strip = preparation.strip else {
                 activateApp(pid: pid)
                 quietNotice(WSL10n.text("notice.shade.cropFailed", zh: "没能收起这个窗口"), kind: .problem, log: "shade: crop failed")
