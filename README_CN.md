@@ -41,9 +41,10 @@
 
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新的 ZIP，解压，把 `WindowShade.app` 拖进“应用程序”打开，按提示给权限。它住在菜单栏里，不占 Dock 位置。
 
-- **要 macOS 14 以上、Apple Silicon。** 没有 Intel 版。
+- **要 macOS 15 以上、Apple Silicon。** 没有 Intel 版。
 - **1.0.16 下载包：** ZIP 9.83 MB，解压后的应用文件合计 25.37 MB（十进制；文件系统实际占用可能不同）。包里多了更新器，所以比上一版大。
-- **安装包还没公证。** 第一次打开如果被系统拦住，去“系统设置 → 隐私与安全性”点“仍要打开”。不用关掉系统的安全检查。
+- **已通过 Apple 公证。** 第一次打开时系统会自己检查，不用再手动放行。
+- **从 1.0.16 及以前升级：** 这一版要手动下载一次，装好后在“系统设置 → 隐私与安全性”里重新打开辅助功能和屏幕录制。之后就能在菜单里更新。
 - 每次发布都附 SHA-256 校验文件。每个版本改了什么，见 [更新记录](https://github.com/surfine/WindowShade/releases)。
 
 ## 它能做什么
@@ -119,7 +120,7 @@ WindowShade 只改过一项系统设置：程序坞的「最小化效果」。�
 
 ## 构建与参与
 
-需要 macOS 14+、包含 Metal 编译器的 Xcode command line tools，以及 Apple Development 签名证书。
+需要 macOS 15+、包含 Metal 编译器的 Xcode command line tools，以及 Apple Development 签名证书。
 
 ```sh
 git clone https://github.com/surfine/WindowShade.git
