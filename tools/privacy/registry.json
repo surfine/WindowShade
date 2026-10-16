@@ -4107,7 +4107,21 @@
   },
   {
    "path": "prototype/App/SecureInputNotice.swift",
-   "line": 47,
+   "line": 52,
+   "symbol": "CGSSessionScreenIsLocked",
+   "source": "return (state?[\"CGSSessionScreenIsLocked\"] as? Bool) == true",
+   "signal": "lock-state"
+  },
+  {
+   "path": "prototype/App/SecureInputNotice.swift",
+   "line": 51,
+   "symbol": "CGSessionCopyCurrentDictionary",
+   "source": "let state = CGSessionCopyCurrentDictionary() as? [String: Any]",
+   "signal": "lock-state"
+  },
+  {
+   "path": "prototype/App/SecureInputNotice.swift",
+   "line": 57,
    "symbol": "CGSessionCopyCurrentDictionary",
    "source": "let state = CGSessionCopyCurrentDictionary() as? [String: Any]",
    "signal": "lock-state"
