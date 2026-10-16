@@ -1,5 +1,7 @@
 import Cocoa
-/// 插入既有卷帘设置页。新硬件能力未取得准入证明时，不能让开关伪装成可用。
+/// 插入既有卷帘设置页（只在 WindowShade 2 预览旗标打开时）。新硬件能力未取得准入证明时，不能让开关伪装成可用。
+/// 1.0.17：「开始番茄钟」「打开实时活动」两个按钮去掉（菜单、快捷键、刘海和实时活动开关已有同一入口）；
+/// 「锁屏开合效果」搬到效果页，「欢迎使用 WindowShade…」搬到 高级 → 关于。
 @MainActor final class WS2SupplementPane: NSStackView {
     private weak var owner: AppDelegate?
     init(owner: AppDelegate) {
@@ -7,11 +9,6 @@ import Cocoa
         orientation = .vertical; alignment = .leading; spacing = 12
         let heading = NSTextField(labelWithString: WSL10n.text("settings.shade.supplement.heading", zh: "专注与输入"))
         heading.font = .systemFont(ofSize:13,weight:.semibold); addArrangedSubview(heading)
-        let focus = NSButton(title: WSL10n.text("settings.shade.supplement.focus", zh: "开始番茄钟"),
-                             target: owner, action: #selector(AppDelegate.ws2OpenFocus))
-        focus.bezelStyle = .rounded; focus.isEnabled = NotchController.isEnabled && NotchActivityController.isEnabled
-        focus.toolTip = WSL10n.text("settings.shade.supplement.focusTip", zh: "打开番茄钟。快捷键可在快捷键设置中录制。")
-        addArrangedSubview(focus)
         let coding = NSButton(title: WSL10n.text("settings.shade.supplement.coding", zh: "编程会话…"),
                               target: owner, action: #selector(AppDelegate.ws2OpenOwned))
         coding.bezelStyle = .rounded; coding.isEnabled = NotchController.isEnabled
@@ -45,15 +42,6 @@ import Cocoa
             let note = NSTextField(wrappingLabelWithString:reason); note.font = .systemFont(ofSize:11); note.textColor = .secondaryLabelColor
             row.addArrangedSubview(toggle); row.addArrangedSubview(note); addArrangedSubview(row)
         }
-        let activity = NSButton(title: WSL10n.text("settings.shade.supplement.activities", zh: "打开实时活动"),
-                                target: owner, action: #selector(AppDelegate.openActivitiesAction))
-        activity.bezelStyle = .rounded; addArrangedSubview(activity)
-        let overlay = NSButton(checkboxWithTitle: WSL10n.text("settings.shade.supplement.lockOverlay", zh: "锁屏开合效果"),
-                               target: owner, action: #selector(AppDelegate.toggleLockOverlayAction))
-        overlay.state = owner.duoController.lockOverlay.enabled ? .on : .off; addArrangedSubview(overlay)
-        let welcome = NSButton(title: WSL10n.text("settings.shade.supplement.welcome", zh: "欢迎使用 WindowShade…"),
-                               target: owner, action: #selector(AppDelegate.showWelcomeGuide))
-        welcome.bezelStyle = .rounded; addArrangedSubview(welcome)
     }
     required init?(coder:NSCoder) { nil }
 }

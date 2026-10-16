@@ -5639,17 +5639,31 @@
    "signal": "window-image"
   },
   {
-   "path": "prototype/Effects/DuoSettingsWindow.swift",
-   "line": 9,
+   "path": "prototype/App/SettingsSections.swift",
+   "line": 21,
    "symbol": "UserDefaults",
    "source": "static func lastViewed(in defaults: UserDefaults = .standard) -> Self {",
    "signal": "settings"
   },
   {
-   "path": "prototype/Effects/DuoSettingsWindow.swift",
-   "line": 15,
+   "path": "prototype/App/SettingsSections.swift",
+   "line": 32,
    "symbol": "UserDefaults",
    "source": "func remember(in defaults: UserDefaults = .standard) {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/SettingsSections.swift",
+   "line": 96,
+   "symbol": "UserDefaults",
+   "source": "static func isOn(in store: UserDefaults) -> Bool { store.bool(forKey: defaultsKey) }",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2PreviewLive.swift",
+   "line": 9,
+   "symbol": "UserDefaults",
+   "source": "let store = UserDefaults.standard",
    "signal": "settings"
   },
   {

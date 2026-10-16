@@ -2,52 +2,7 @@ import Cocoa
 import UniformTypeIdentifiers
 import ScreenCaptureKit
 
-enum WindowShadeSettingsSection: Int, CaseIterable {
-  case effects, shade, gesture, browser, shortcuts, permissions, advanced, pointer, remote, conductor
-
-  private static let lastViewedKey = "WindowShade.Settings.LastViewedSection"
-
-  static func lastViewed(in defaults: UserDefaults = .standard) -> Self {
-    guard let rawValue = defaults.object(forKey: lastViewedKey) as? Int,
-          let section = Self(rawValue: rawValue) else { return .shade }
-    return section
-  }
-
-  func remember(in defaults: UserDefaults = .standard) {
-    defaults.set(rawValue, forKey: Self.lastViewedKey)
-  }
-
-  /// 侧栏与外框的分节名（第27批）：按当前语言取；语义身份是分节本身，不是中文两个字。
-  var title: String {
-    switch self {
-    case .effects: return WSL10n.text("settings.section.effects", zh: "效果")
-    case .shade: return WSL10n.text("settings.section.shade", zh: "卷帘")
-    case .gesture: return WSL10n.text("settings.section.gesture", zh: "手势")
-    case .browser: return WSL10n.text("settings.section.browser", zh: "窗口浏览")
-    case .shortcuts: return WSL10n.text("settings.section.shortcuts", zh: "快捷键")
-    case .permissions: return WSL10n.text("settings.section.permissions", zh: "隐私")
-    case .advanced: return WSL10n.text("settings.section.advanced", zh: "高级")
-    case .pointer: return WSL10n.text("settings.section.pointer", zh: "鼠标与触控板")
-    case .remote: return WSL10n.text("settings.section.remote", zh: "遥控器")
-    case .conductor: return WSL10n.text("settings.section.conductor", zh: "指挥模式")
-    }
-  }
-
-  var symbolName: String {
-    switch self {
-    case .effects: return "sparkles"
-    case .shade: return "rectangle.compress.vertical"
-    case .gesture: return "hand.tap"
-    case .browser: return "rectangle.on.rectangle"
-    case .shortcuts: return "command"
-    case .permissions: return "lock.shield"
-    case .advanced: return "slider.horizontal.3"
-    case .pointer: return "computermouse"
-    case .remote: return "appletvremote.gen4"
-    case .conductor: return "switch.2"
-    }
-  }
-}
+// 分节枚举与预览旗标在 App/SettingsSections.swift。
 
 /// 设置页内容列宽度上限，各分页共用。
 let settingsContentWidth: CGFloat = 640
@@ -93,6 +48,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private let desktop = NSSwitch()
   private let windows = NSSwitch()
   private let live = NSSwitch()
+  /// 锁屏开合效果（1.0.17 从卷帘页的「专注与输入」搬来；键还是 lockOverlay.enabled）。
+  private let lockOverlay = NSSwitch()
   private let pause = NSButton(title: WSL10n.text("settings.effects.pause.name", zh: "暂停效果"), target: nil, action: nil)
   private let permission = NSButton(title: WSL10n.text("settings.effects.openScreenRecording", zh: "打开屏幕录制设置…"), target: nil, action: nil)
   private let scrubber = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
@@ -110,6 +67,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private let splitController = NSSplitViewController()
   private var activePageConstraints: [NSLayoutConstraint] = []
   private var currentSection: WindowShadeSettingsSection = .effects
+  /// 侧栏这次放的页（预览旗标 + 已经开着的 WindowShade 2 开关算出来）；行号只在这里查，不拿 rawValue 当行号。
+  private var visibleSections: [WindowShadeSettingsSection] = WindowShadeSettingsSection.allCases
   /// 语言重建期间挂起侧栏选择事件：reloadData 在 allowsEmptySelection=false 的
   /// sourceList 上会同步触发 tableViewSelectionDidChange（第27批卡点 A）。
   private var isRebuildingLocalCopy = false
@@ -175,13 +134,27 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     window?.subtitle = currentSection.title
     // 侧栏表格的读屏标签是建表时设的，reloadData 不会更新，这里随语言重建。
     sidebarTable.setAccessibilityLabel(WSL10n.text("settings.shell.sidebar.label", zh: "设置侧边栏"))
+    visibleSections = WS2Preview.sections
     sidebarTable.reloadData()
     pages.removeAll()
     rebuildAllPages()
     refreshControlCopy()
     // 同一分节也要真的换页：先清掉 pageHost 上的旧内容，绕开“同页不重装”的守卫。
     pageHost?.subviews.forEach { $0.removeFromSuperview() }
-    select(section: currentSection)
+    select(section: WindowShadeSettingsSection.restored(lastViewed: currentSection, visible: visibleSections))
+  }
+
+  /// 重新打开设置窗口时按当前的预览旗标与开关重算侧栏（窗口不随关闭释放）。没变就什么也不做。
+  func refreshVisibleSections() {
+    let sections = WS2Preview.sections
+    guard sections != visibleSections else { return }
+    isRebuildingLocalCopy = true
+    visibleSections = sections
+    sidebarTable.reloadData()
+    isRebuildingLocalCopy = false
+    let target = WindowShadeSettingsSection.restored(lastViewed: currentSection, visible: sections)
+    pageHost?.subviews.forEach { $0.removeFromSuperview() }
+    select(section: target)
   }
 
   /// 建（或重建）全部页面。build() 与语言切换都走这里，保证两处一致。
@@ -190,6 +163,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.effects] = makeEffectsPage(controller: controller)
     pages[.advanced] = makeAdvancedPage(controller: controller)
     pages[.shade] = controller.owner?.makeShadeSettingsPage()
+    pages[.notch] = controller.owner?.makeNotchSettingsPage()
     pages[.gesture] = controller.owner?.makeGestureSettingsPage()
     pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
     pages[.shortcuts] = controller.owner?.makeShortcutsSettingsPage()
@@ -273,8 +247,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     toolbar.isVisible = true
     splitController.splitView.setPosition(214, ofDividerAt: 0)
 
+    visibleSections = WS2Preview.sections
     rebuildAllPages()
-    select(section: controller.isDesignPreview ? .effects : .lastViewed())
+    // 上次看的页被预览旗标藏着时回到「卷帘」（rawValue 是存档编号，行号在 visibleSections 里查）。
+    select(section: controller.isDesignPreview ? .effects
+      : WindowShadeSettingsSection.restored(lastViewed: .lastViewed(), visible: visibleSections))
 
     // 时钟只为实时预览的推帧服务。静态示意图不会自己变化，参数一改就已经
     // 显式 render() 过了——设置窗口开着的时候没有理由每秒画 60 帧。
@@ -359,11 +336,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   func numberOfRows(in tableView: NSTableView) -> Int {
-    WindowShadeSettingsSection.allCases.count
+    visibleSections.count
   }
 
   func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-    let section = WindowShadeSettingsSection.allCases[row]
+    guard let section = WindowShadeSettingsSection.section(atRow: row, in: visibleSections) else { return nil }
     let cell = NSTableCellView()
     let icon = NSImageView(image: NSImage(systemSymbolName: section.symbolName,
                                         accessibilityDescription: nil) ?? NSImage())
@@ -389,7 +366,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   func tableViewSelectionDidChange(_ notification: Notification) {
     if isRebuildingLocalCopy { return }
-    guard let section = WindowShadeSettingsSection(rawValue: sidebarTable.selectedRow),
+    guard let section = WindowShadeSettingsSection.section(atRow: sidebarTable.selectedRow, in: visibleSections),
           section != currentSection else { return }
     select(section: section)
   }
@@ -446,8 +423,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
     window?.subtitle = section.title
-    if sidebarTable.selectedRow != section.rawValue {
-      sidebarTable.selectRowIndexes(IndexSet(integer: section.rawValue), byExtendingSelection: false)
+    // 藏着的页（只有探针会点名打开）没有对应的行，侧栏选中不动。
+    if let row = WindowShadeSettingsSection.row(of: section, in: visibleSections), sidebarTable.selectedRow != row {
+      sidebarTable.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
     }
     if section == .effects {
       previewChanged()
@@ -502,6 +480,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       previewChanged()
     } else if let owner = controller?.owner {
       pages[.shade] = owner.makeShadeSettingsPage()
+      pages[.notch] = owner.makeNotchSettingsPage()
       pages[.gesture] = owner.makeGestureSettingsPage()
       pages[.browser] = owner.makeWindowBrowserSettingsPage()
       pages[.shortcuts] = owner.makeShortcutsSettingsPage()
@@ -509,6 +488,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       pages[.pointer] = owner.makePointerSettingsPage()
       pages[.remote] = owner.makeRemoteSettingsPage()
       pages[.conductor] = owner.makeConductorSettingsPage()
+      // 高级页的「实验」一组也是 AppDelegate 的开关（离开就锁要等选了随身设备才可用），一起重建。
+      if let controller { pages[.advanced] = makeAdvancedPage(controller: controller) }
       select(section: currentSection)
     }
   }
@@ -547,12 +528,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   /// 迁移过的行（第34批）：行标题/副标题走 `SettingsText`，和设置面板其它页共用同一套
   /// 行长机制（英文用 shortEn/34 字预算 + 单个 ⓘ 承载全文），不再走中文 16 字硬截。
-  private func makeToggleRow(name: SettingsText, subtitle: SettingsText, control: NSSwitch, action: Selector) -> NSView {
+  private func makeToggleRow(name: SettingsText, subtitle: SettingsText, symbol: String? = nil, control: NSSwitch, action: Selector) -> NSView {
     control.controlSize = .regular
     control.target = self
     control.action = action
     control.setAccessibilityLabel(name.shown)
-    let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
+    let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol).view
     WS2SettingsCopy.pinInfoTrailing(labels)
     return makeRow(labels: labels, control: control)
   }
@@ -737,6 +718,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),                    control: desktop, action: #selector(changed)),
       makeToggleRow(name: WSL10n.setting("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.setting("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
                     control: windows, action: #selector(changed)),
+      makeToggleRow(name: WSL10n.setting("settings.effects.lockOverlay.name", zh: "锁屏开合效果"),
+                    subtitle: WSL10n.setting("settings.effects.lockOverlay.sub", zh: "锁屏时开合盖子，锁屏画面跟着动。"),
+                    symbol: "arrow.2.squarepath", control: lockOverlay, action: #selector(lockOverlayChanged)),
       makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "所有效果先停一停，开关保持原样。"), button: pause),
     ])
     stack.addArrangedSubview(automatic)
@@ -929,6 +913,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         symbol: "square.and.arrow.down",
         button: aboutButton(WSL10n.text("settings.about.importSettings.button", zh: "导入…"), "square.and.arrow.down",
                             #selector(importSettingsAction))),
+      // 欢迎窗口的入口（1.0.17 从卷帘页搬来；菜单里没有这一项，这里是唯一入口）。
+      makeActionRow(
+        title: WSL10n.setting("settings.about.welcome.name", zh: "欢迎使用 WindowShade"),
+        subtitle: WSL10n.setting("settings.about.welcome.sub", zh: "再看一遍第一次打开时的说明"),
+        symbol: "hand.wave",
+        button: aboutButton(WSL10n.text("settings.about.welcome.button", zh: "打开…"), "hand.wave",
+                            #selector(showWelcomeAction))),
       makeActionRow(
         title: WSL10n.setting("settings.about.report.name", zh: "报告问题"),
         subtitle: WSL10n.setting("settings.about.report.sub", zh: "在 GitHub 上新建一条，可附诊断信息"),
@@ -938,8 +929,27 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     ])
     stack.addArrangedSubview(aboutCard)
     aboutCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+    // 实验（1.0.17）：还在试的开关都住这里，默认都关着。每项还是原来那一个键，只是换了位置。
+    if let experiments = controller.owner?.makeExperimentalSettingsCard() {
+      stack.setCustomSpacing(18, after: aboutCard)
+      let experimentsSection = makeSectionLabel(WSL10n.text("settings.shade.group.experiments", zh: "实验"))
+      stack.addArrangedSubview(experimentsSection)
+      stack.setCustomSpacing(6, after: experimentsSection)
+      let caption = NSTextField(wrappingLabelWithString: WSL10n.text("settings.advanced.experiments.caption", zh: "还在试的功能，默认都关着。"))
+      caption.font = SystemAppearancePolicy.font(relativeToBody: -1)
+      caption.textColor = .secondaryLabelColor
+      stack.addArrangedSubview(caption)
+      stack.setCustomSpacing(8, after: caption)
+      stack.addArrangedSubview(experiments)
+      experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    }
     load(controller.settings)
     return root
+  }
+
+  @objc private func showWelcomeAction() {
+    controller?.owner?.showWelcomeGuide()
   }
 
   @objc private func exportDiagnosticsAction() {
@@ -1046,9 +1056,17 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func load(_ settings: DuoSettings) {
+    lockOverlay.state = controller?.lockOverlay.enabled == true ? .on : .off
     desktop.state = settings.desktopEnabled ? .on : .off
     windows.state = settings.windowsEnabled ? .on : .off
     preset.selectedSegment = DuoPreset.allCases.firstIndex(of: settings.preset) ?? 1
+  }
+
+  @objc private func lockOverlayChanged() {
+    guard let controller else { return }
+    controller.lockOverlay.setEnabled(lockOverlay.state == .on)
+    controller.settingsChanged()
+    controller.owner?.scheduleMenuRebuild()
   }
 
   @objc private func changed() {
@@ -1253,6 +1271,7 @@ extension AppDelegate {
     if duoController.settingsWindow == nil {
       duoController.settingsWindow = DuoSettingsWindow(controller: duoController)
     }
+    duoController.settingsWindow?.refreshVisibleSections()
     duoController.settingsWindow?.showWindow(nil)
     if let section { duoController.settingsWindow?.select(section: section) }
     NSApp.activate()

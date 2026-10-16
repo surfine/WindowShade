@@ -15,6 +15,15 @@ struct SettingsNavigationTests {
     defaults.set(999, forKey: "WindowShade.Settings.LastViewedSection")
     precondition(WindowShadeSettingsSection.lastViewed(in: defaults) == .shade)
 
+    // 1.0.17 精简：下面这些断言照旧看全部页和行，所以先打开 WindowShade 2 预览旗标；
+    // 旗标关着的样子在最后单独看一遍。
+    let previewSaved = UserDefaults.standard.object(forKey: WS2Preview.defaultsKey)
+    defer {
+      if let previewSaved { UserDefaults.standard.set(previewSaved, forKey: WS2Preview.defaultsKey) }
+      else { UserDefaults.standard.removeObject(forKey: WS2Preview.defaultsKey) }
+    }
+    UserDefaults.standard.set(true, forKey: WS2Preview.defaultsKey)
+
     _ = NSApplication.shared
     let owner = AppDelegate()
     let controller = owner.duoController
@@ -197,6 +206,53 @@ struct SettingsNavigationTests {
       try! bitmap.representation(using: .png, properties: [:])!.write(
         to: directory.appendingPathComponent("\(section)-\(appearance.rawValue).png"))
     }
+    }
+    // 旗标关着（这个测试进程里 WindowShade 2 的开关都没开）：侧栏 8 页，WindowShade 2 的行不见，
+    // 搬走的行在新位置各出现一次。
+    do {
+      UserDefaults.standard.set(false, forKey: WS2Preview.defaultsKey)
+      precondition(WS2Preview.live == .none, "这个测试假设 WindowShade 2 的开关都没开")
+      settings.refreshLocalizedCopy()
+      await drainLayout()
+      guard let sidebar = descendants(root).compactMap({ $0 as? NSTableView }).first
+      else { preconditionFailure("找不到设置侧栏") }
+      precondition(sidebar.numberOfRows == 8, "旗标关：侧栏 8 页，实际 \(sidebar.numberOfRows)")
+      func texts(_ section: WindowShadeSettingsSection) async -> [String] {
+        settings.select(section: section)
+        await drainLayout()
+        let views = descendants(root)
+        return views.compactMap { ($0 as? NSTextField)?.stringValue } + views.compactMap { ($0 as? NSButton)?.title }
+      }
+      // 点侧栏第 3 行到的是「刘海」（行号查可见列表，不拿 rawValue 当行号）。
+      sidebar.selectRowIndexes(IndexSet(integer: 2), byExtendingSelection: false)
+      await drainLayout()
+      precondition(settings.window?.subtitle == WindowShadeSettingsSection.notch.title, "侧栏第 3 行是刘海")
+      let shade = await texts(.shade)
+      for gone in ["专注与输入", "编程会话…", "静音口令", "把 iPhone 的画面放到整块屏", "有变化时提醒", "拷贝进度"] {
+        precondition(!shade.contains(gone), "卷帘页不该再有：\(gone)")
+      }
+      let notch = await texts(.notch)
+      for here in ["有变化时提醒", "实时活动", "番茄钟", "计时器到时间响一声", "改回用系统的提示", "文件架", "之前常用"] {
+        precondition(notch.filter { $0 == here }.count == 1, "刘海页应有且只有一处：\(here)")
+      }
+      for gone in ["回来时说一下离开期间的事", "跟着声音跳", "专注时把聊天收进刘海"] {
+        precondition(!notch.contains(gone), "刘海页不该有：\(gone)")
+      }
+      let gesture = await texts(.gesture)
+      precondition(!gesture.contains("中键收起窗口"), "旗标关：手势页不放中键")
+      let browser = await texts(.browser)
+      precondition(!browser.contains("普通窗口实时预览"), "实时预览搬到了 高级 → 实验")
+      let privacy = await texts(.permissions)
+      for gone in ["离开就锁", "随身设备", BystanderTuckRow.title] {
+        precondition(!privacy.contains(gone), "隐私页不该再有：\(gone)")
+      }
+      let effects = await texts(.effects)
+      precondition(effects.filter { $0 == "锁屏开合效果" }.count == 1, "效果页多一行锁屏开合效果")
+      let advanced = await texts(.advanced)
+      for here in ["欢迎使用 WindowShade", "普通窗口实时预览", "跟着声音跳", "回来时说一下离开期间的事", "拷贝进度",
+                   "猜你从哪来", "设备的电量", "离开就锁", "随身设备", BystanderTuckRow.title] {
+        precondition(advanced.filter { $0 == here }.count == 1, "高级页应有且只有一处：\(here)")
+      }
     }
     settings.window?.close()
     print("PASS: settings navigation and 820pt light/dark row clearance; screenshots saved")

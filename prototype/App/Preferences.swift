@@ -212,62 +212,6 @@ extension AppDelegate {
         trigger.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: trigger)
 
-        let notchCard = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.notchAlerts.name", zh: "有变化时提醒"),
-                                 subtitle: WSL10n.setting("settings.shade.notchAlerts.sub", zh: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你"),
-                                 isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.awaySummary.name", zh: "回来时说一下离开期间的事"),
-                                 subtitle: WSL10n.setting("settings.shade.awaySummary.sub", zh: "锁屏或睡眠时有变化才说"),
-                                 isOn: AwaySummaryController.isEnabled, action: #selector(prefToggleAwaySummary(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.activities.name", zh: "实时活动"),
-                                 subtitle: WSL10n.setting("settings.shade.activities.sub", zh: "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线"),
-                                 isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:))),
-            // 正在播放未验前默认关（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.nowPlaying.name", zh: "正在播放"),
-                                 subtitle: WSL10n.setting("settings.shade.nowPlaying.sub", zh: "歌名和封面显示在刘海上"),
-                                 isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:))),
-            // 跟着声音跳（NP-6）：默认关；打开时系统才问"系统音频录制"。拒绝过的，副标题写原因，再打开带去系统设置。
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.followSound.name", zh: "跟着声音跳"),
-                                 subtitle: followSoundSubtitle(),
-                                 isOn: AudioLevelController.isEnabled, action: #selector(prefToggleFollowSound(_:))),
-            // 番茄钟的设置属于"实时活动"这一栏（R09：从「专注与输入」挪过来）。
-            MainActor.assumeIsolated { WS2FocusSettingsRows(runtime: ws2Runtime) },
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.timerChime.name", zh: "计时器到时间响一声"),
-                                 subtitle: WSL10n.setting("settings.shade.timerChime.sub", zh: "响一次系统提示音，不循环；系统静音时不响"),
-                                 isOn: CountdownTimerSettings.chimeEnabled, action: #selector(prefToggleTimerChime(_:))),
-            // 日程：开关加提前量（CAL-4）。没有权限时副标题这么写，点一下去系统设置。
-            makeCalendarSettingsRow(),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.downloads.name", zh: "浏览器下载"),
-                                 subtitle: WSL10n.setting("settings.shade.downloads.sub", zh: "读取「下载」文件夹，看有没有没下完的文件"),
-                                 isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:))),
-            // 音量和亮度：开关未验前默认关；没允许辅助功能时副标题改说系统的提示也会出现，并带"允许…"。
-            LevelRowHost { [weak self] in self?.makeLevelKeysRow() ?? NSView() },
-            // 改回用系统的提示（R12）：开着只旁听、不拦键，系统自己的音量、亮度提示照出，刘海跟着画。默认关。
-            makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.setting("settings.shade.levelKeys.systemPopups.name", zh: "改回用系统的提示"),
-                                                           subtitle: WSL10n.setting("settings.shade.levelKeys.systemPopups.sub", zh: "按键时出系统的提示，刘海只跟着显示"),
-                                                           symbol: "speaker.wave.3"),
-                                 accessibleName: WSL10n.setting("settings.shade.levelKeys.systemPopups.name", zh: "改回用系统的提示").shown,
-                                 minHeight: 48, isOn: NotchLevelSetting.usesSystemPopups(),
-                                 enabled: true, action: #selector(prefToggleLevelSystemPopups(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.mergedRow.name", zh: "合成一排"),
-                                 subtitle: WSL10n.setting("settings.shade.mergedRow.sub", zh: "窗口和正在进行的事排在同一排"),
-                                 isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
-            makeUnifiedToggleRow(name: WSL10n.text("settings.hoverGuard.name", zh: "悬停不误触"),
-                                 subtitle: WSL10n.text("settings.hoverGuard.sub", zh: "指针在刘海上停一下才展开，路过不展开"),
-                                 isOn: NotchController.hoverGuardEnabled, action: #selector(prefToggleHoverGuard(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.fileShelf.name", zh: "文件架"),
-                                 subtitle: WSL10n.setting("settings.shade.fileShelf.sub", zh: "拖到刘海暂存的文件放在这里；关掉后清空"),
-                                 isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:))),
-            // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
-            makeUnifiedControlRow(name: WSL10n.setting("settings.shade.origin.name", zh: "之前常用"),
-                                  subtitle: WSL10n.setting("settings.shade.origin.sub", zh: "卡住时，刘海按你原来的习惯提示 Mac 上怎么做"),
-                                  control: SwitcherOriginControl.make()),
-        ])
-        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.notch", zh: "刘海")))
-        stack.addArrangedSubview(notchCard)
-        notchCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(18, after: notchCard)
-
         let gapSeg = NSSegmentedControl(labels: [WSL10n.text("settings.shade.gap.none", zh: "不留"),
                                                  WSL10n.text("settings.shade.gap.narrow", zh: "窄"),
                                                  WSL10n.text("settings.shade.gap.wide", zh: "宽")],
@@ -314,9 +258,13 @@ extension AppDelegate {
         appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
 
-        let ws2Pane = MainActor.assumeIsolated { WS2SupplementPane(owner: self) }
-        stack.addArrangedSubview(ws2Pane)
-        ws2Pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        // 「专注与输入」里剩下的是 WindowShade 2 的入口（编程会话、静音操作、指挥）：预览旗标打开才出现。
+        let previewOn = WS2Preview.isOn
+        if previewOn {
+            let ws2Pane = MainActor.assumeIsolated { WS2SupplementPane(owner: self) }
+            stack.addArrangedSubview(ws2Pane)
+            ws2Pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        }
 
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.sound", zh: "声音")))
         let sound = makeUnifiedSettingsCard([
@@ -329,33 +277,109 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(sound)
         sound.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(18, after: sound)
 
-        // 实验：每项都默认关，开关只管自己那一个键。
-        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.experiments", zh: "实验")))
-        let experiments = makeUnifiedSettingsCard([
+        // 拷贝进度、猜你从哪来、设备的电量搬到了 高级 → 实验（makeExperimentalSettingsCard）。
+        // 留在这里的 CarPlay 两行和静音口令属于 WindowShade 2：预览旗标打开才出现；CarPlay 已经开着的照样露出来好关掉。
+        if WS2Preview.shows(previewOn: previewOn, alreadyOn: CarPlaySurfaceController.isEnabled) {
+            stack.setCustomSpacing(18, after: sound)
+            stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.experiments", zh: "实验")))
+            let experiments = makeUnifiedSettingsCard([
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.carplay.name", zh: "把 iPhone 的画面放到整块屏"),
+                                     subtitle: WSL10n.setting("settings.shade.carplay.sub", zh: "长按刘海进入全屏；再长按或按 Esc 回到桌面"),
+                                     isOn: CarPlaySurfaceController.isEnabled, action: #selector(prefToggleCarPlaySurface(_:))),
+                makeUnifiedControlRow(name: WSL10n.setting("settings.shade.carplayEndpoint.name", zh: "接收器地址"),
+                                      subtitle: WSL10n.setting("settings.shade.carplayEndpoint.sub", zh: "ws:// 开头并带令牌；不填时全屏只显示示意画面"),
+                                      control: makeCarPlayEndpointField()),
+            ])
+            stack.addArrangedSubview(experiments)
+            experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        }
+
+        if previewOn {
+            stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
+            stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.silentPhrase", zh: "静音口令")))
+            stack.addArrangedSubview(makeSilentPhraseCard())
+        }
+        return root
+    }
+
+    /// 「刘海」一页（1.0.17 从卷帘页拆出来）：刘海里显示什么、什么时候展开。开关都还是原来那一个键。
+    func makeNotchSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: WSL10n.text("settings.section.notch", zh: "刘海"),
+            subtitle: WSL10n.setting("settings.notch.sub", zh: "刘海里显示什么、什么时候展开。"),
+            symbolName: "macwindow.on.rectangle"))
+        // 回来时说一下离开期间的事、跟着声音跳搬到了 高级 → 实验；计时器到时间响一声并进番茄钟那一行，
+        // 改回用系统的提示并进音量和亮度那一行（同一件事不占两行）。
+        let notchCard = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.notchAlerts.name", zh: "有变化时提醒"),
+                                 subtitle: WSL10n.setting("settings.shade.notchAlerts.sub", zh: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你"),
+                                 isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.activities.name", zh: "实时活动"),
+                                 subtitle: WSL10n.setting("settings.shade.activities.sub", zh: "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线"),
+                                 isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:))),
+            // 正在播放未验前默认关（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.nowPlaying.name", zh: "正在播放"),
+                                 subtitle: WSL10n.setting("settings.shade.nowPlaying.sub", zh: "歌名和封面显示在刘海上"),
+                                 isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:))),
+            // 番茄钟的设置属于"实时活动"这一栏（R09：从「专注与输入」挪过来）；到点响一声也在这一行。
+            MainActor.assumeIsolated { WS2FocusSettingsRows(runtime: ws2Runtime) },
+            // 日程：开关加提前量（CAL-4）。没有权限时副标题这么写，点一下去系统设置。
+            makeCalendarSettingsRow(),
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.downloads.name", zh: "浏览器下载"),
+                                 subtitle: WSL10n.setting("settings.shade.downloads.sub", zh: "读取「下载」文件夹，看有没有没下完的文件"),
+                                 isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:))),
+            // 音量和亮度：开关未验前默认关；没允许辅助功能时副标题改说系统的提示也会出现，并带"允许…"。
+            // 下面跟一项「改回用系统的提示」（R12）：开着只旁听、不拦键，系统自己的提示照出，刘海跟着画。默认关。
+            LevelRowHost { [weak self] in self?.makeLevelKeysGroup() ?? NSView() },
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.mergedRow.name", zh: "合成一排"),
+                                 subtitle: WSL10n.setting("settings.shade.mergedRow.sub", zh: "窗口和正在进行的事排在同一排"),
+                                 isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
+            makeUnifiedToggleRow(name: WSL10n.text("settings.hoverGuard.name", zh: "悬停不误触"),
+                                 subtitle: WSL10n.text("settings.hoverGuard.sub", zh: "指针在刘海上停一下才展开，路过不展开"),
+                                 isOn: NotchController.hoverGuardEnabled, action: #selector(prefToggleHoverGuard(_:))),
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.fileShelf.name", zh: "文件架"),
+                                 subtitle: WSL10n.setting("settings.shade.fileShelf.sub", zh: "拖到刘海暂存的文件放在这里；关掉后清空"),
+                                 isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:))),
+            // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
+            makeUnifiedControlRow(name: WSL10n.setting("settings.shade.origin.name", zh: "之前常用"),
+                                  subtitle: WSL10n.setting("settings.shade.origin.sub", zh: "卡住时，刘海按你原来的习惯提示 Mac 上怎么做"),
+                                  control: SwitcherOriginControl.make()),
+        ])
+        stack.addArrangedSubview(notchCard)
+        notchCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return root
+    }
+
+    /// 高级 → 实验：还在试的开关，默认都关着。每项还是原来那一个键（位置换了，键名、默认值、已存的值都不变）。
+    func makeExperimentalSettingsCard() -> NSView {
+        makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(
+                name: WSL10n.setting("settings.experiments.livePreview.name", zh: "普通窗口实时预览"),
+                subtitle: WSL10n.setting("settings.experiments.livePreview.sub", zh: "窗口浏览里选中的窗口播放实时画面"),
+                isOn: WindowBrowserSettings.livePreviewEnabled,
+                action: #selector(prefToggleWindowBrowserLive(_:))),
+            // 跟着声音跳（NP-6）：默认关；打开时系统才问"系统音频录制"。拒绝过的，副标题写原因，再打开带去系统设置。
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.followSound.name", zh: "跟着声音跳"),
+                                 subtitle: followSoundSubtitle(),
+                                 isOn: AudioLevelController.isEnabled, action: #selector(prefToggleFollowSound(_:))),
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.awaySummary.name", zh: "回来时说一下离开期间的事"),
+                                 subtitle: WSL10n.setting("settings.shade.awaySummary.sub", zh: "锁屏或睡眠时有变化才说"),
+                                 isOn: AwaySummaryController.isEnabled, action: #selector(prefToggleAwaySummary(_:))),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.copyProgress.name", zh: "拷贝进度"),
                                  subtitle: WSL10n.setting("settings.shade.copyProgress.sub", zh: "Finder 拷贝时在刘海上显示拷到哪了"),
                                  isOn: CopyProgressSource.isEnabled, action: #selector(prefToggleCopyProgress(_:))),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.originGuess.name", zh: "猜你从哪来"),
                                  subtitle: WSL10n.setting("settings.shade.originGuess.sub", zh: "按出别的系统的习惯时问一次"),
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.carplay.name", zh: "把 iPhone 的画面放到整块屏"),
-                                 subtitle: WSL10n.setting("settings.shade.carplay.sub", zh: "长按刘海进入全屏；再长按或按 Esc 回到桌面"),
-                                 isOn: CarPlaySurfaceController.isEnabled, action: #selector(prefToggleCarPlaySurface(_:))),
-            makeUnifiedControlRow(name: WSL10n.setting("settings.shade.carplayEndpoint.name", zh: "接收器地址"),
-                                  subtitle: WSL10n.setting("settings.shade.carplayEndpoint.sub", zh: "ws:// 开头并带令牌；不填时全屏只显示示意画面"),
-                                  control: makeCarPlayEndpointField()),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.deviceBattery.name", zh: "设备的电量"),
                                  subtitle: WSL10n.setting("settings.shade.deviceBattery.sub", zh: "耳机、手机这些设备连上或电量低时，刘海说一声"),
                                  isOn: DeviceBatteryController.isEnabled, action: #selector(prefToggleDeviceBattery(_:))),
+            makePresenceLockRow(),
+            makePresenceDeviceRow(),
+            BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },
         ])
-        stack.addArrangedSubview(experiments)
-        experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-
-        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.silentPhrase", zh: "静音口令")))
-        stack.addArrangedSubview(makeSilentPhraseCard())
-        return root
     }
 
     /// 六口令的个人词（2.1 前半）。词只存这台 Mac；认不认得出还得看实验里的嘴形模板。
@@ -414,9 +438,8 @@ extension AppDelegate {
         pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: pane)
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.privacy.group.privateWindows", zh: "私人窗口")))
-        let bystanderRow = BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() }
+        // 有人在看时收起私人窗口、离开就锁与随身设备搬到了 高级 → 实验（makeExperimentalSettingsCard）。
         let cover = makeUnifiedSettingsCard([
-            bystanderRow,
             makeUnifiedControlRow(name: WSL10n.setting("settings.privateApps.rowTitle", zh: PrivateAppListPanel.rowTitle),
                                   subtitle: WSL10n.setting("settings.privateApps.rowSubtitle", zh: PrivateAppListPanel.rowSubtitle),
                                   control: NSButton(title: WSL10n.text("settings.privacy.manage", zh: "管理…"), target: self, action: #selector(prefOpenPrivateApps(_:)))),
@@ -437,12 +460,6 @@ extension AppDelegate {
         stack.addArrangedSubview(permissions)
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
-        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.privacy.group.lockScreen", zh: "锁屏")))
-        let presence = makeUnifiedSettingsCard([makePresenceLockRow(),
-        makePresenceDeviceRow()])
-        stack.addArrangedSubview(presence)
-        presence.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(18, after: presence)
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.privacy.group.launch", zh: "启动")))
         let launch = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: WSL10n.text("settings.privacy.launchAtLogin.name", zh: "登录时自动启动"), subtitle: launchAtLoginSubtitle(),
@@ -674,6 +691,31 @@ extension AppDelegate {
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
+    }
+
+    /// 「音量和亮度」一行加上它下面的「改回用系统的提示」（1.0.17 并成一行：同一主题不占两行）。键不变。
+    fileprivate func makeLevelKeysGroup() -> NSView {
+        let name = WSL10n.setting("settings.shade.levelKeys.systemPopups.name", zh: "改回用系统的提示")
+        let popups = NSButton(checkboxWithTitle: name.shown, target: self, action: #selector(prefCheckLevelSystemPopups(_:)))
+        popups.state = NotchLevelSetting.usesSystemPopups() ? .on : .off
+        popups.font = SystemAppearancePolicy.font(relativeToBody: -1)
+        popups.toolTip = WSL10n.setting("settings.shade.levelKeys.systemPopups.sub", zh: "按键时出系统的提示，刘海只跟着显示").shown
+        popups.setAccessibilityHelp(popups.toolTip)
+        let indented = NSStackView(views: [popups])
+        indented.orientation = .horizontal
+        // 和上面那行的文字对齐（符号块 28 + 间距 10，见 WS2SettingsCopy.content）。
+        indented.edgeInsets = NSEdgeInsets(top: 0, left: 38, bottom: 10, right: 0)
+        let group = NSStackView(views: [makeLevelKeysRow(), indented])
+        group.orientation = .vertical
+        group.alignment = .leading
+        group.spacing = 0
+        group.arrangedSubviews.first?.widthAnchor.constraint(equalTo: group.widthAnchor).isActive = true
+        return group
+    }
+
+    @objc func prefCheckLevelSystemPopups(_ sender: NSButton) {
+        NotchLevelSetting.setUsesSystemPopups(sender.state == .on)
+        NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
     }
 
     @objc func prefToggleLevelKeys(_ sender: NSSwitch) {
@@ -1538,7 +1580,9 @@ extension AppDelegate {
             ],
             note: WSL10n.setting("settings.gesture.table.note", zh: "只读对照，来自现有手势表，不是新开关。"))
 
-        group(WSL10n.text("settings.gesture.group.fold", zh: "收起与展开"), [
+        // 中键收起窗口属于 WindowShade 2 的输入设备实验：预览旗标关着时藏起来，已经打开的照样露出来好关掉。
+        let showsMiddleFold = WS2Preview.shows(previewOn: WS2Preview.isOn, alreadyOn: prefs.middleFold)
+        var foldRows: [NSView] = [
             GestureRows.decorate(
                 makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.trackpad.name", zh: "标题栏手势"),
                                      subtitle: trackpadGesturePreferenceSubtitle(),
@@ -1550,15 +1594,18 @@ extension AppDelegate {
                                      subtitle: titlebarDoubleClickPreferenceSubtitle(),
                                      isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
                 fingers: WSL10n.setting("settings.gesture.chip.doubleClick", zh: "双击 · 标题栏"), kind: .primitive),
-            GestureRows.decorate(
+        ]
+        if showsMiddleFold {
+            foldRows.append(GestureRows.decorate(
                 inputRow(name: WSL10n.setting("settings.input.middleFold.name", zh: "中键收起窗口"),
                          subtitle: middleSubtitle(prefs),
                          detail: WSL10n.setting("settings.input.middleFold.detail", zh: "在标题栏上用中键点一下收起或展开；往上拖也是收起，往下拖展开。默认关，打开才装钩子。"),
                          symbol: "rectangle.compress.vertical",
                          control: inputSwitch(on: prefs.middleFold, enabled: true,
                                               action: #selector(prefInputMiddleFold(_:)), name: WSL10n.text("settings.input.middleFold.name", zh: "中键收起窗口"))),
-                fingers: WSL10n.setting("settings.gesture.chip.middle", zh: "中键 · 标题栏 · 点一下 / 上下拖"), kind: .primitive),
-        ])
+                fingers: WSL10n.setting("settings.gesture.chip.middle", zh: "中键 · 标题栏 · 点一下 / 上下拖"), kind: .primitive))
+        }
+        group(WSL10n.text("settings.gesture.group.fold", zh: "收起与展开"), foldRows)
         group(WSL10n.text("settings.shade.group.notch", zh: "刘海"), [
             GestureRows.decorate(
                 makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.tuckNotch.name", zh: "收进刘海"),
@@ -1657,12 +1704,8 @@ extension AppDelegate {
         switcherCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: switcherCard)
 
+        // 普通窗口实时预览搬到了 高级 → 实验（makeExperimentalSettingsCard），键不变。
         let preview = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(
-                name: WSL10n.setting("settings.browser.livePreview.name", zh: "普通窗口实时预览（实验）"),
-                subtitle: WSL10n.setting("settings.browser.livePreview.sub", zh: "选中窗口 0.4 秒后开始播放实时画面"),
-                isOn: WindowBrowserSettings.livePreviewEnabled,
-                action: #selector(prefToggleWindowBrowserLive(_:))),
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.browser.open.name", zh: "打开窗口浏览"),
                 subtitle: nil,
