@@ -3,7 +3,7 @@ import UniformTypeIdentifiers
 import ScreenCaptureKit
 
 enum WindowShadeSettingsSection: Int, CaseIterable {
-  case effects, shade, browser, shortcuts, permissions, advanced, pointer, remote, conductor
+  case effects, shade, gesture, browser, shortcuts, permissions, advanced, pointer, remote, conductor
 
   private static let lastViewedKey = "WindowShade.Settings.LastViewedSection"
 
@@ -22,6 +22,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     switch self {
     case .effects: return WSL10n.text("settings.section.effects", zh: "效果")
     case .shade: return WSL10n.text("settings.section.shade", zh: "卷帘")
+    case .gesture: return WSL10n.text("settings.section.gesture", zh: "手势")
     case .browser: return WSL10n.text("settings.section.browser", zh: "窗口浏览")
     case .shortcuts: return WSL10n.text("settings.section.shortcuts", zh: "快捷键")
     case .permissions: return WSL10n.text("settings.section.permissions", zh: "隐私")
@@ -36,6 +37,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     switch self {
     case .effects: return "sparkles"
     case .shade: return "rectangle.compress.vertical"
+    case .gesture: return "hand.tap"
     case .browser: return "rectangle.on.rectangle"
     case .shortcuts: return "command"
     case .permissions: return "lock.shield"
@@ -188,6 +190,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.effects] = makeEffectsPage(controller: controller)
     pages[.advanced] = makeAdvancedPage(controller: controller)
     pages[.shade] = controller.owner?.makeShadeSettingsPage()
+    pages[.gesture] = controller.owner?.makeGestureSettingsPage()
     pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
     pages[.shortcuts] = controller.owner?.makeShortcutsSettingsPage()
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
@@ -499,6 +502,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       previewChanged()
     } else if let owner = controller?.owner {
       pages[.shade] = owner.makeShadeSettingsPage()
+      pages[.gesture] = owner.makeGestureSettingsPage()
       pages[.browser] = owner.makeWindowBrowserSettingsPage()
       pages[.shortcuts] = owner.makeShortcutsSettingsPage()
       pages[.permissions] = owner.makePermissionsSettingsPage()

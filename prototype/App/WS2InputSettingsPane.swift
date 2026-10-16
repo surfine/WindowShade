@@ -35,12 +35,6 @@ extension AppDelegate {
                                                                     decision: inputController.scrollDecision)),
                      detail: WSL10n.setting("settings.input.sideButtons.detail", zh: "侧键 4、5 准备用作这个 App 的后退和前进。要和平滑滚动或鼠标滚动方向一起开。"),
                      symbol: nil, control: inputSwitch(on: prefs.sideButtons, enabled: true, action: #selector(prefInputSide(_:)), name: WSL10n.text("settings.input.sideButtons.name", zh: "侧键后退、前进"))),
-            inputRow(name: WSL10n.setting("settings.input.middleFold.name", zh: "中键收起窗口"),
-                     subtitle: middleSubtitle(prefs),
-                     detail: WSL10n.setting("settings.input.middleFold.detail", zh: "在标题栏上用中键点一下收起或展开；往上拖也是收起，往下拖展开。默认关，打开才装钩子。"),
-                     symbol: "rectangle.compress.vertical",
-                     control: inputSwitch(on: prefs.middleFold, enabled: true,
-                                          action: #selector(prefInputMiddleFold(_:)), name: WSL10n.text("settings.input.middleFold.name", zh: "中键收起窗口"))),
             inputRow(name: WSL10n.setting("settings.input.threeFinger.name", zh: "三指轻点是中键"),
                      subtitle: WSL10n.setting("settings.input.notChecked", zh: "还没核对，先不用"),
                      detail: WSL10n.setting("settings.input.threeFinger.detail", zh: "三指轻点还没核对，先不能开。"),
@@ -267,7 +261,7 @@ extension AppDelegate {
         return inputState(inputController.scrollStatus(prefersChange: true))
     }
 
-    private func middleSubtitle(_ prefs: WS2InputPreferences.Value) -> SettingsText {
+    func middleSubtitle(_ prefs: WS2InputPreferences.Value) -> SettingsText {
         if inputController.middleTap.waitingForAccessibility, !AXIsProcessTrusted() { return WSL10n.setting("settings.input.middleFold.needAccessibility", zh: "需要先允许辅助功能") }
         if inputController.middleTap.systemStopped { return WSL10n.setting("settings.input.middleFold.systemStopped", zh: "被系统停掉了，先关掉再开") }
         if prefs.middleFold {
@@ -322,7 +316,7 @@ extension AppDelegate {
         return popup
     }
 
-    private func inputSwitch(on: Bool, enabled: Bool, action: Selector?, name: String) -> NSSwitch {
+    func inputSwitch(on: Bool, enabled: Bool, action: Selector?, name: String) -> NSSwitch {
         let toggle = NSSwitch()
         toggle.state = on ? .on : .off
         toggle.isEnabled = enabled
@@ -373,7 +367,7 @@ extension AppDelegate {
         return (root, stack)
     }
 
-    private func inputRow(name: SettingsText, subtitle: SettingsText, detail: SettingsText,
+    func inputRow(name: SettingsText, subtitle: SettingsText, detail: SettingsText,
                           symbol: String?, control: NSView, indent: Bool = false) -> NSView {
         let content = WS2SettingsCopy.content(name: name, subtitle: subtitle, detail: detail, symbol: symbol)
         WS2SettingsCopy.pinInfoTrailing(content)

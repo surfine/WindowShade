@@ -203,16 +203,9 @@ extension AppDelegate {
             symbolName: "rectangle.compress.vertical"))
 
         let trigger = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"),
-                                 subtitle: titlebarDoubleClickPreferenceSubtitle(),
-                                 isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.glance.name", zh: "看一眼"),
                                  subtitle: WSL10n.setting("settings.shade.glance.sub", zh: "指针停在卷帘条上，窗口在原处出现，移开就收回"),
                                  isOn: GlanceController.isEnabled, action: #selector(prefToggleGlance(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.trackpad.name", zh: "标题栏手势"),
-                                 subtitle: trackpadGesturePreferenceSubtitle(),
-                                 isOn: TrackpadGestureController.isEnabled,
-                                 action: #selector(prefToggleTrackpadGestures(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.trigger", zh: "触发")))
         stack.addArrangedSubview(trigger)
@@ -220,9 +213,6 @@ extension AppDelegate {
         stack.setCustomSpacing(18, after: trigger)
 
         let notchCard = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.tuckNotch.name", zh: "收进刘海"),
-                                 subtitle: WSL10n.setting("settings.shade.tuckNotch.sub", zh: "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"),
-                                 isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.notchAlerts.name", zh: "有变化时提醒"),
                                  subtitle: WSL10n.setting("settings.shade.notchAlerts.sub", zh: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你"),
                                  isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
@@ -296,9 +286,6 @@ extension AppDelegate {
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.splitHandle.name", zh: "分屏把手"),
                                  subtitle: WSL10n.setting("settings.shade.splitHandle.sub", zh: "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉"),
                                  isOn: SplitViewController.isEnabled, action: #selector(prefToggleSplitDivider(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排"),
-                                 subtitle: WSL10n.setting("settings.shade.dropSplit.sub", zh: "把窗口拖到另一扇上，两扇并排"),
-                                 isOn: TrackpadGestureController.dropSplitEnabled, action: #selector(prefToggleDropSplit(_:))),
             makeUnifiedControlRow(name: WSL10n.setting("settings.shade.centering.name", zh: "走到一列时"),
                                   subtitle: WSL10n.setting("settings.shade.centering.sub", zh: "贴边：挪得最少。居中：永远在正中"),
                                   control: centeringPopup),
@@ -308,12 +295,6 @@ extension AppDelegate {
             makeUnifiedToggleRow(name: WSL10n.text("settings.stripWidths.name", zh: "记住每个 App 的列宽"),
                                  subtitle: WSL10n.text("settings.stripWidths.sub", zh: "改过宽度的 App，下次开在卷轴里还是那个宽度"),
                                  isOn: StripWidthMemory.isEnabled(), action: #selector(prefToggleStripWidths(_:))),
-            makeUnifiedToggleRow(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
-                                 subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
-                                 isOn: StripTitleDrag.isEnabled(), action: #selector(prefToggleStripTitleDrag(_:))),
-            makeUnifiedToggleRow(name: WSL10n.text("settings.stripNotch.name", zh: "卷轴概览能收进刘海"),
-                                 subtitle: WSL10n.text("settings.stripNotch.sub", zh: "在卷轴概览里把窗口拖到刘海，松手就收进去"),
-                                 isOn: ScrollStripController.notchLinkEnabled(), action: #selector(prefToggleStripNotch(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.arrange", zh: "排布")))
         stack.addArrangedSubview(arrangeCard)
@@ -1521,6 +1502,99 @@ extension AppDelegate {
         refreshPreferencesWindowIfOpen()
     }
 
+    /// 「手势」页（规格 R16）：十条手指、中键、拖动触发的设置按用户在做的事分四组。
+    /// 行、键、动作、默认值都沿用原来的；只多一行「手指」，标题栏手势下多一张只读对照表。
+    /// 三指、四指轻点还没核对，留在「鼠标与触控板」，核对完再露出。
+    func makeGestureSettingsPage() -> NSView {
+        inputController.apply()
+        let prefs = inputController.preferences
+        let (root, stack) = makeSettingsPageRoot()
+
+        func group(_ title: String, _ rows: [NSView]) {
+            let card = makeUnifiedSettingsCard(rows)
+            stack.addArrangedSubview(makePrefGroupLabel(title))
+            stack.addArrangedSubview(card)
+            card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+            stack.setCustomSpacing(18, after: card)
+        }
+
+        let titleBarTable = GestureTableDisclosure(
+            title: WSL10n.setting("settings.gesture.table.toggle", zh: "这个手势都会做什么"),
+            gestureColumn: WSL10n.setting("settings.gesture.table.col.gesture", zh: "手指"),
+            effectColumn: WSL10n.setting("settings.gesture.table.col.effect", zh: "效果"),
+            lines: [
+                .init(gesture: WSL10n.setting("settings.gesture.table.up.gesture", zh: "往上滑"),
+                      effect: WSL10n.setting("settings.gesture.table.up.effect", zh: "收起窗口；已铺满的窗口先撤销上次排布")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.down.gesture", zh: "往下滑"),
+                      effect: WSL10n.setting("settings.gesture.table.down.effect", zh: "铺满屏幕")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.side.gesture", zh: "往左 / 往右滑"),
+                      effect: WSL10n.setting("settings.gesture.table.side.effect", zh: "左半屏 / 右半屏，再推一下沿梯子走一格")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.spread.gesture", zh: "张开"),
+                      effect: WSL10n.setting("settings.gesture.table.spread.effect", zh: "魔法平铺")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.pinch.gesture", zh: "捏合"),
+                      effect: WSL10n.setting("settings.gesture.table.pinch.effect", zh: "撤销上次排布")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.strip.gesture", zh: "卷帘条上往下拉"),
+                      effect: WSL10n.setting("settings.gesture.table.strip.effect", zh: "展开窗口")),
+            ],
+            note: WSL10n.setting("settings.gesture.table.note", zh: "只读对照，来自现有手势表，不是新开关。"))
+
+        group(WSL10n.text("settings.gesture.group.fold", zh: "收起与展开"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.trackpad.name", zh: "标题栏手势"),
+                                     subtitle: trackpadGesturePreferenceSubtitle(),
+                                     isOn: TrackpadGestureController.isEnabled,
+                                     action: #selector(prefToggleTrackpadGestures(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.titleBar", zh: "两指 · 标题栏 · 滑动 / 张合 / 滚轮"), kind: .primitive, table: titleBarTable),
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"),
+                                     subtitle: titlebarDoubleClickPreferenceSubtitle(),
+                                     isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.doubleClick", zh: "双击 · 标题栏"), kind: .primitive),
+            GestureRows.decorate(
+                inputRow(name: WSL10n.setting("settings.input.middleFold.name", zh: "中键收起窗口"),
+                         subtitle: middleSubtitle(prefs),
+                         detail: WSL10n.setting("settings.input.middleFold.detail", zh: "在标题栏上用中键点一下收起或展开；往上拖也是收起，往下拖展开。默认关，打开才装钩子。"),
+                         symbol: "rectangle.compress.vertical",
+                         control: inputSwitch(on: prefs.middleFold, enabled: true,
+                                              action: #selector(prefInputMiddleFold(_:)), name: WSL10n.text("settings.input.middleFold.name", zh: "中键收起窗口"))),
+                fingers: WSL10n.setting("settings.gesture.chip.middle", zh: "中键 · 标题栏 · 点一下 / 上下拖"), kind: .primitive),
+        ])
+        group(WSL10n.text("settings.shade.group.notch", zh: "刘海"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.tuckNotch.name", zh: "收进刘海"),
+                                     subtitle: WSL10n.setting("settings.shade.tuckNotch.sub", zh: "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"),
+                                     isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.tuck", zh: "甩一下标题栏 → 刘海"), kind: .combination),
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.text("settings.stripNotch.name", zh: "卷轴概览能收进刘海"),
+                                     subtitle: WSL10n.text("settings.stripNotch.sub", zh: "在卷轴概览里把窗口拖到刘海，松手就收进去"),
+                                     isOn: ScrollStripController.notchLinkEnabled(), action: #selector(prefToggleStripNotch(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.overviewNotch", zh: "拖 · 卷轴概览 → 刘海"), kind: .combination),
+        ])
+        group(WSL10n.text("settings.shade.group.arrange", zh: "排布"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排"),
+                                     subtitle: WSL10n.setting("settings.shade.dropSplit.sub", zh: "把窗口拖到另一扇上，两扇并排"),
+                                     isOn: TrackpadGestureController.dropSplitEnabled, action: #selector(prefToggleDropSplit(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.dropSplit", zh: "拖 · 窗口 → 另一扇窗口"), kind: .combination),
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
+                                     subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
+                                     isOn: StripTitleDrag.isEnabled(), action: #selector(prefToggleStripTitleDrag(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.stripDrag", zh: "拖 · 卷轴里的标题栏"), kind: .combination),
+        ])
+        group(WSL10n.text("settings.section.browser", zh: "窗口浏览"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(
+                    name: WSL10n.setting("settings.browser.dockSwipe.name", zh: "在 Dock 图标上两指上下滑"),
+                    subtitle: WSL10n.setting("settings.browser.dockSwipe.sub", zh: "往上滑看这个 App 的所有窗口，往下滑让开这个 App"),
+                    isOn: DockSwipeController.isEnabled,
+                    action: #selector(prefToggleDockSwipe(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.dockSwipe", zh: "两指 · Dock 图标 · 上滑 / 下滑"), kind: .primitive),
+        ])
+        return root
+    }
+
     func makeWindowBrowserSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
@@ -1539,11 +1613,6 @@ extension AppDelegate {
                 subtitle: WSL10n.setting("settings.browser.dockClick.sub", zh: "它已经在最前、窗口露着时才这样（和 Windows 任务栏一样）；再点一下回来"),
                 isOn: DockClickHide.isEnabled,
                 action: #selector(prefToggleDockClickHide(_:))),
-            makeUnifiedToggleRow(
-                name: WSL10n.setting("settings.browser.dockSwipe.name", zh: "在 Dock 图标上两指上下滑"),
-                subtitle: WSL10n.setting("settings.browser.dockSwipe.sub", zh: "往上滑看这个 App 的所有窗口，往下滑让开这个 App"),
-                isOn: DockSwipeController.isEnabled,
-                action: #selector(prefToggleDockSwipe(_:))),
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.browser.dockStay.name", zh: "Dock 留在现在这块屏上"),
                 subtitle: WSL10n.setting("settings.browser.dockStay.sub", zh: "指针碰到别的屏的底边时 Dock 不跟过去（只管放在底部的 Dock）；打开时记下 Dock 现在在哪"),
