@@ -24,10 +24,6 @@ struct PreviewRendererBoundsTests {
         for (w, h) in sizes {
             for (_, alpha) in alphas {
                 let img = image(w, h, alpha: alpha)
-                for scale in [0.5, 1.0, 2.0, 3.0] as [CGFloat] {
-                    _ = preciseVisualChromeHeight(of: img, scale: scale, minimum: 0)
-                    _ = preciseVisualChromeHeight(of: img, scale: scale, minimum: 1000)
-                }
                 _ = mirrorRoundCorners(img)
                 for logical in [0, 1, 28, 10_000] as [CGFloat] { _ = nativeTitleStripLooksBroken(img, logicalHeight: logical) }
                 _ = estimatedCornerRadiusPixels(from: img)

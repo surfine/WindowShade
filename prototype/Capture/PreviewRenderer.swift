@@ -90,95 +90,6 @@ struct ProxyTitleLayoutMetrics {
     }
 }
 
-// Elpass / WeChat 这类窗口的 AX 树不给稳定 toolbar：
-// - Elpass 会把内容区控件混进顶部扫描，AX 高度偏大；
-// - WeChat 只暴露交通灯，AX 高度偏小。
-// 这条只在白名单 app 上使用：从截图上找搜索框/顶部控件的浅色填充行，
-// 用控件上 padding 推出对称下 padding，得到“刚好包住顶部控件”的裁切高度。
-func preciseVisualChromeHeight(of image: CGImage, scale: CGFloat, minimum: CGFloat) -> CGFloat? {
-    let w = image.width, h = image.height
-    guard w > 20, h > 20, scale > 0 else { return nil }
-    let maxScan = min(h, Int(ceil(130 * scale)))
-    guard let top = image.cropping(to: CGRect(x: 0, y: 0, width: w, height: maxScan)) else { return nil }
-
-    let bpr = w * 4
-    var buf = [UInt8](repeating: 0, count: bpr * maxScan)
-    guard let ctx = CGContext(data: &buf, width: w, height: maxScan, bitsPerComponent: 8,
-                              bytesPerRow: bpr, space: CGColorSpaceCreateDeviceRGB(),
-                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-    ctx.draw(top, in: CGRect(x: 0, y: 0, width: w, height: maxScan))
-
-    let step = max(1, w / 1200)
-    let edgeInset = max(Int(18 * scale), min(w / 18, 96))
-    let minRunWidth = max(Int(52 * scale), min(w / 14, 160))
-    let maxRunWidth = Int(CGFloat(w) * 0.72)
-    var controlRows: [(Int, Int)] = []
-
-    for y in 0..<maxScan {
-        var currentRunStart: Int?
-        var bestRun = 0
-        var x = 0
-        while x < w {
-            let i = y * bpr + x * 4
-            let r = Int(buf[i]), g = Int(buf[i + 1]), b = Int(buf[i + 2]), a = Int(buf[i + 3])
-            let lum = (r + g + b) / 3
-            let saturation = max(r, max(g, b)) - min(r, min(g, b))
-            let blueBias = b - max(r, g)
-            let isLightControl = a > 170 && lum > 232 && saturation < 26
-            let isFocusRing = a > 150 && blueBias > 26 && b > 150 && r < 190
-            let isControlPixel = isLightControl || isFocusRing
-
-            if isControlPixel {
-                if currentRunStart == nil { currentRunStart = x }
-            } else if let start = currentRunStart {
-                let width = x - start
-                if start > edgeInset && x < w - edgeInset &&
-                   width >= minRunWidth && width <= maxRunWidth {
-                    bestRun = max(bestRun, width)
-                }
-                currentRunStart = nil
-            }
-
-            if x + step >= w, let start = currentRunStart {
-                let end = min(w, x + step)
-                let width = end - start
-                if start > edgeInset && end < w - edgeInset &&
-                   width >= minRunWidth && width <= maxRunWidth {
-                    bestRun = max(bestRun, width)
-                }
-                currentRunStart = nil
-            }
-            x += step
-        }
-        if bestRun > 0 { controlRows.append((y, bestRun)) }
-    }
-
-    let maxGap = max(2, Int(ceil(2 * scale)))
-    let minRows = max(12, Int(ceil(12 * scale)))
-    var clusters: [[(Int, Int)]] = []
-    for row in controlRows {
-        if clusters.isEmpty || row.0 - (clusters[clusters.count - 1].last?.0 ?? row.0) > maxGap {
-            clusters.append([])
-        }
-        clusters[clusters.count - 1].append(row)
-    }
-
-    let maxControlTop = Int(ceil(70 * scale))
-    guard let cluster = clusters.first(where: {
-        guard $0.count >= minRows, let first = $0.first, let last = $0.last else { return false }
-        let height = last.0 - first.0
-        return first.0 <= maxControlTop && height >= Int(12 * scale) && height <= Int(58 * scale)
-    }), let first = cluster.first, let last = cluster.last else { return nil }
-
-    let controlTop = CGFloat(first.0)
-    let controlBottom = CGFloat(last.0)
-    let topPadding = max(6 * scale, min(controlTop, 26 * scale))
-    let candidate = (controlBottom + topPadding) / scale
-    let minH = max(minimum, 32)
-    guard candidate >= minH, candidate <= 96 else { return nil }
-    return candidate
-}
-
 // 把截图底部两角裁成和顶部两角完全一样的形状：每个像素的 alpha 与其「垂直镜像」位置取 min。
 // 顶部本就有原生圆角的透明缺口，镜像到底部就得到对称、同半径同曲线的底部圆角——不靠猜半径。
 func mirrorRoundCorners(_ image: CGImage) -> CGImage? {
@@ -511,13 +422,11 @@ struct NativeStripPreparation {
     let brokenHealth: (Bool, String)
     let scale: CGFloat
     let fixedBarH: CGFloat?
-    let visualBarH: CGFloat?
     let fallbackBarH: CGFloat
     let standardBarH: CGFloat
 }
 
-// 纯 CPU 计算，可在任意线程执行：决定标题栏裁切高度（visual/precise chrome
-// 像素扫描）、裁切、原生条健康检查、底部圆角镜像。不触碰 AppKit/AX 状态，
+// 纯 CPU 计算，可在任意线程执行：决定标题栏裁切高度、裁切、原生条健康检查、底部圆角镜像。不触碰 AppKit/AX 状态，
 // 因此可以安全地在 pixelAnalysisQueue 上跑。
 func prepareNativeStrip(full: CGImage, logicalSize: CGSize,
                         profile: WindowChromeProfile, pid: pid_t) -> NativeStripPreparation {
@@ -525,9 +434,6 @@ func prepareNativeStrip(full: CGImage, logicalSize: CGSize,
     let minimumBarH = profile.standardCropHeight
     let standardBarH = profile.standardCropHeight
     let fixedBarH = fixedNonstandardChromeHeight(pid: pid)
-    let visualBarH = fixedBarH == nil && profile.preciseChrome
-        ? preciseVisualChromeHeight(of: full, scale: scale, minimum: minimumBarH)
-        : nil
     let fallbackBarH = fixedBarH
         ?? (profile.preciseChrome
             ? (fallbackControlPaddedChromeHeight(pid: pid, minimum: minimumBarH) ?? profile.axBarHeight)
@@ -538,20 +444,20 @@ func prepareNativeStrip(full: CGImage, logicalSize: CGSize,
     } else if profile.standardTitleBarOnly {
         barH = standardBarH
     } else {
-        barH = min(visualBarH ?? fallbackBarH, min(logicalSize.height, 300))
+        barH = min(fallbackBarH, min(logicalSize.height, 300))
     }
     let cropHeight = max(1, Int(ceil(barH * scale)))
     let boundary = fixedBarH == nil ? profile.boundaryName : "fixed"
     guard let rawStrip = full.cropping(to: CGRect(x: 0, y: 0, width: full.width, height: cropHeight)) else {
         return NativeStripPreparation(barH: barH, boundary: boundary, strip: nil,
                                       brokenHealth: (false, ""), scale: scale,
-                                      fixedBarH: fixedBarH, visualBarH: visualBarH,
+                                      fixedBarH: fixedBarH,
                                       fallbackBarH: fallbackBarH, standardBarH: standardBarH)
     }
     let health = nativeTitleStripLooksBroken(rawStrip, logicalHeight: barH)
     let strip = health.0 ? rawStrip : (mirrorRoundCorners(rawStrip) ?? rawStrip)
     return NativeStripPreparation(barH: barH, boundary: boundary, strip: strip,
                                   brokenHealth: health, scale: scale,
-                                  fixedBarH: fixedBarH, visualBarH: visualBarH,
+                                  fixedBarH: fixedBarH,
                                   fallbackBarH: fallbackBarH, standardBarH: standardBarH)
 }
