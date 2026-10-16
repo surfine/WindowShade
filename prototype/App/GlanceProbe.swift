@@ -1,5 +1,11 @@
 import Cocoa
 
+/// 探针等待上限的放宽倍数，读环境变量 WINDOWSHADE_PROBE_TIMEOUT_SCALE，夹在 1…8；没设或读不懂就是 1（行为不变）。
+let glanceProbeTimeoutScale: Double = {
+  let raw = ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_TIMEOUT_SCALE"].flatMap(Double.init) ?? 1
+  return min(8, max(1, raw))
+}()
+
 /// 看一眼的真机探针。另起一个临时窗口进程（画面每 50ms 变一次），走生产收起路径，
 /// 再模拟指针：路过、停留、移到画面上、移开、单击卷帘条、单击画面展开。
 /// 核对位置、实时画面、前台 App 不变、真窗口不动、收回与展开之间不露空，并打印耗时。
@@ -7,12 +13,6 @@ import Cocoa
 /// --single 让临时 App 只开一扇窗：收起会走整体隐藏。
 /// 其余参数各跑一项，见下面的调度（例如 --launchpad-keys、--fullscreen、--thumbnail、--habits、--quiet-defaults、--notch-shape；别的包写的 --strip-peek、--browser-more、
 /// --dock-gestures 见 ProbeEntries.swift）。
-/// 探针等待上限的放宽倍数，读环境变量 WINDOWSHADE_PROBE_TIMEOUT_SCALE，夹在 1…8；没设或读不懂就是 1（行为不变）。
-let glanceProbeTimeoutScale: Double = {
-  let raw = ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_TIMEOUT_SCALE"].flatMap(Double.init) ?? 1
-  return min(8, max(1, raw))
-}()
-
 @MainActor
 final class GlanceProbe {
   let owner = AppDelegate()
