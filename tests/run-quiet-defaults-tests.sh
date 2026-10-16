@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/quiet-defaults-tests
-swiftc -parse-as-library -target "$(uname -m)-apple-macosx14.0" \
+swiftc -parse-as-library -target "$(uname -m)-apple-macosx15.0" \
   prototype/App/GlobalShortcuts.swift prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/DockClickGuard.swift prototype/Core/ReleaseDefaults.swift prototype/Core/SwitcherOrigin.swift \
   tests/QuietDefaultsTests.swift -o .build/quiet-defaults-tests/quiet
 .build/quiet-defaults-tests/quiet
