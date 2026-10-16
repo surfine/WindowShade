@@ -45,7 +45,7 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 （1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
 用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
 同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
-**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 占位条目、三份 README 与官网）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
+**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目草稿在 docs/releases/appcast-item-1.0.17.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
 
 ## 模块结构
 
