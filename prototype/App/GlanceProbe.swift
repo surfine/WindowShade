@@ -858,10 +858,12 @@ final class GlanceProbe {
 
   private func capsuleColor(element: AXUIElement, pid: pid_t) async throws {
     let screenP3 = NSScreen.main?.canRepresent(.p3) == true
+    print("INFO capsule-color: screen recording preflight=\(CGPreflightScreenCaptureAccess())")
     var results: [(String, Int, Int)] = []
     for (name, space) in [("sRGB", CGColorSpace.sRGB), ("displayP3", CGColorSpace.displayP3)] {
       WindowStreamCapture.probeColorSpaceName = space
       WindowStreamCapture.probeIndicatorStats.withLock { $0 = (0, 0) }
+      WindowStreamCapture.probeEmptyFrames.withLock { $0 = 0 }
       owner.pinnedPreviewController.startPreview(targetWindowID: id, pid: pid, axWindow: element) { _ in }
       // 流起来 2 秒后存一帧修补前的整帧，给人看系统到底画没画胶囊。
       try await Task.sleep(for: .seconds(2), clock: .suspending)
@@ -869,7 +871,8 @@ final class GlanceProbe {
         .appendingPathComponent(".build/glance-tests/capsule-raw-\(name).png")
       WindowStreamCapture.probeRawFrameURL.withLock { $0 = shot }
       try await Task.sleep(for: .seconds(2), clock: .suspending)
-      print("INFO capsule-color: raw frame saved to \(shot.path) exists=\(FileManager.default.fileExists(atPath: shot.path))")
+      WindowStreamCapture.probeRawFrameURL.withLock { $0 = nil }
+      print("INFO capsule-color: raw frame saved to \(shot.path) exists=\(FileManager.default.fileExists(atPath: shot.path)) all-zero complete frames skipped=\(WindowStreamCapture.probeEmptyFrames.withLock { $0 })")
       let stats = WindowStreamCapture.probeIndicatorStats.withLock { $0 }
       owner.pinnedPreviewController.stopPreviews(forPID: pid, reason: "probe")
       try await Task.sleep(for: .seconds(1.5), clock: .suspending)
