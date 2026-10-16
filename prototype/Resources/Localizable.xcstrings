@@ -42715,7 +42715,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Saved to a folder for you to check. Nothing is sent."
+            "value": "Saved to a folder. Nothing is sent."
           }
         },
         "zh-Hans": {
@@ -42803,7 +42803,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Back up to a file you can bring to another Mac."
+            "value": "Back up to a file."
           }
         },
         "zh-Hans": {
@@ -42913,7 +42913,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Merges a saved file in without clearing your settings."
+            "value": "Merges in; nothing is cleared."
           }
         },
         "zh-Hans": {
@@ -42979,7 +42979,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Opens a new issue on GitHub. You can attach diagnostics."
+            "value": "Opens a new issue on GitHub."
           }
         },
         "zh-Hans": {
