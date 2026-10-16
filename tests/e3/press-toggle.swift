@@ -27,9 +27,20 @@ func post(_ down: Bool) {
 let app = NSRunningApplication(processIdentifier: pid)
 for i in 1...count {
     app?.activate()
+    // 等夹具真的在最前；不在最前就不发键，免得 ⌃⌘C 落到别人的窗口上
+    var waited = 0.0
+    while NSWorkspace.shared.frontmostApplication?.processIdentifier != pid && waited < 1.5 {
+        Thread.sleep(forTimeInterval: 0.1); waited += 0.1
+    }
     Thread.sleep(forTimeInterval: 0.25)
     let before = fixtureState()
     let t0 = Date()
+    if NSWorkspace.shared.frontmostApplication?.processIdentifier != pid {
+        print(String(format: "press %2d t=%.1f before[%@] after[%@] UNCHANGED (fixture not frontmost, key not sent)", i, t0.timeIntervalSince1970.truncatingRemainder(dividingBy: 1000), before, before))
+        fflush(stdout)
+        Thread.sleep(forTimeInterval: interval)
+        continue
+    }
     post(true); Thread.sleep(forTimeInterval: 0.03); post(false)
     Thread.sleep(forTimeInterval: 1.0)
     let after = fixtureState()
