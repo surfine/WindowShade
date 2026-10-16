@@ -100,7 +100,7 @@ for suite in "$@"; do
   while kill -0 "$opid" 2>/dev/null; do
     if (( SECONDS - t0 > limit )); then
       timed_out=1; echo "TIMEOUT $suite after $((SECONDS - t0)) s (limit $limit s); stopping the probe"
-      pkill -x WindowShade; pkill -x GlanceFixture; break
+      if is_vm; then pkill -x WindowShade; pkill -x GlanceFixture; fi; break
     fi
     sleep 2
   done
