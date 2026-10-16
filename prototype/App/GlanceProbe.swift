@@ -88,6 +88,9 @@ final class GlanceProbe {
   private func exercise(_ process: Process) async throws {
     let glance = owner.glance
     var element: AXUIElement?
+    // 规格 R19／V10：台前调度开着时，新起的临时 App 默认被收进左侧缩略条（CG 外框 83×97、不是当前舞台），
+    // 后面所有探针都会在 "fixture window" 超时。先把它激活成当前舞台再等窗口。台前调度没开时什么都不做。
+    try await bringFixtureToCurrentStage(process)
     try await wait("fixture window", timeout: 12) {
       // 直接问辅助功能：appWindows 的按进程缓存可能存着临时程序刚启动时的空列表。
       var ref: CFTypeRef?
@@ -1287,6 +1290,56 @@ final class GlanceProbe {
     print(String(format: "EXP unhide: hidden again after %.0fms, frontmost %@",
       (CACurrentMediaTime() - h) * 1000,
       NSWorkspace.shared.frontmostApplication?.processIdentifier == front ? "unchanged" : "CHANGED"))
+  }
+
+  /// 台前调度（com.apple.WindowManager GloballyEnabled，只读）是否开着。
+  private var stageManagerEnabled: Bool {
+    (CFPreferencesCopyAppValue("GloballyEnabled" as CFString, "com.apple.WindowManager" as CFString) as? Bool) == true
+  }
+
+  /// 临时 App 是否已是最前，且在屏上有一扇“真尺寸”的窗口（缩略条里的外框只有几十点宽）。
+  private func fixtureOnCurrentStage(pid: pid_t) -> Bool {
+    guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid,
+          let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] else { return false }
+    return list.contains { info in
+      (info[kCGWindowOwnerPID as String] as? Int32) == pid
+        && (info[kCGWindowLayer as String] as? Int) == 0
+        && (cgWindowBounds(info).map { $0.width >= 300 && $0.height >= 100 } ?? false)
+    }
+  }
+
+  /// 台前调度开着时：激活临时 App、抬起它的窗口，直到它是最前且窗口在屏上（CG 外框是真尺寸），最多等 8 秒。
+  /// 等不到只打印 INFO 然后照旧往下走（后面的 "fixture window" 等待会给出超时原因）。台前调度没开时立刻返回，行为不变。
+  private func bringFixtureToCurrentStage(_ process: Process) async throws {
+    guard stageManagerEnabled else { return }
+    let pid = process.processIdentifier
+    print("INFO stage-manager: Stage Manager is on; activating the fixture app (pid \(pid)) so its windows are on the current stage")
+    let started = CACurrentMediaTime()
+    let deadline = started + 8
+    var attempt = 0
+    while !Task.isCancelled, CACurrentMediaTime() < deadline {
+      if fixtureOnCurrentStage(pid: pid) {
+        print(String(format: "INFO stage-manager: the fixture app is frontmost with an on-screen window after %.0f ms (%d activations)",
+          (CACurrentMediaTime() - started) * 1000, attempt))
+        return
+      }
+      // 每 ~1 秒重新激活一次：刚启动时窗口还没建好，早一步的激活会落空。
+      if attempt == 0 || Int((CACurrentMediaTime() - started) * 1000) / 1000 > attempt - 1 {
+        attempt += 1
+        NSRunningApplication(processIdentifier: pid)?.activate(options: [])
+        let app = AXUIElementCreateApplication(pid)
+        AXUIElementSetAttributeValue(app, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
+        var ref: CFTypeRef?
+        if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,
+           let windows = ref as? [AXUIElement] {
+          for window in windows { AXUIElementPerformAction(window, kAXRaiseAction as CFString) }
+        }
+      }
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
+    }
+    let front = NSWorkspace.shared.frontmostApplication
+    print("INFO stage-manager: the fixture app did not reach the current stage within 8 s (frontmost=\(front?.localizedName ?? "-") pid=\(front?.processIdentifier ?? 0)); "
+      + "continuing, so a following 'fixture window' timeout means the checks never ran (SKIP, not a product result)")
   }
 
   func onscreen(_ id: CGWindowID) -> Bool {
