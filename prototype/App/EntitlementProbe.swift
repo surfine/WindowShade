@@ -4,6 +4,7 @@
 // 摄像头：只在已经授权时开 1 秒取帧，数收到几帧；没授权就只报状态，不请求授权。
 import AVFoundation
 import Cocoa
+import Synchronization
 
 @MainActor
 final class EntitlementProbe {
@@ -74,11 +75,10 @@ final class EntitlementProbe {
 }
 
 /// 只在采集队列上加一，主线程读一次；用锁保护计数。
-private final class FrameCounter: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
-    private let lock = NSLock()
-    private var value = 0
-    var count: Int { lock.lock(); defer { lock.unlock() }; return value }
+private final class FrameCounter: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, Sendable {
+    private let value = Mutex(0)
+    var count: Int { value.withLock { $0 } }
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        lock.lock(); value += 1; lock.unlock()
+        value.withLock { $0 += 1 }
     }
 }

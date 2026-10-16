@@ -2,6 +2,7 @@ import Cocoa
 @preconcurrency import AVFoundation
 @preconcurrency import Vision
 import CoreML
+import Synchronization
 
 struct FaceCameraDescriptor: Sendable, Hashable {
     let id: String
@@ -889,24 +890,26 @@ private enum FaceLandmarkComputeDevice {
 }
 
 /// 相机列表缓存：枚举放在后台，主线程只读。
-private final class CameraList: @unchecked Sendable {
+private final class CameraList: Sendable {
     static let shared = CameraList()
-    private let lock = NSLock()
-    private var cameras: [FaceCameraDescriptor] = []
-    private var started = false
+    private struct State {
+        var cameras: [FaceCameraDescriptor] = []
+        var started = false
+    }
+    private let state = Mutex(State())
     private let queue = DispatchQueue(label: "WindowShade.camera-list", qos: .utility)
 
     func current() -> [FaceCameraDescriptor] {
         start()
-        lock.lock(); defer { lock.unlock() }
-        return cameras
+        return state.withLock { $0.cameras }
     }
 
     func start() {
-        lock.lock()
-        let first = !started
-        started = true
-        lock.unlock()
+        let first = state.withLock { state -> Bool in
+            let first = !state.started
+            state.started = true
+            return first
+        }
         guard first else { return }
         refresh()
         for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {
@@ -921,7 +924,7 @@ private final class CameraList: @unchecked Sendable {
                                      transportType: $0.transportType, deviceType: $0.deviceType.rawValue)
             }
             guard let self else { return }
-            self.lock.lock(); self.cameras = found; self.lock.unlock()
+            self.state.withLock { $0.cameras = found }
         }
     }
 }

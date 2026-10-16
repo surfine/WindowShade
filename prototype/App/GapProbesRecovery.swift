@@ -1,4 +1,5 @@
 import Cocoa
+import Synchronization
 
 // 强制结束 WindowShade 之后，下次启动把窗口还回来（--kill-recovery，要手动跑）：
 // v1.0.16 清单里“画中画、刘海没覆盖；没做过真的强制结束”。入口 exerciseKillRecovery(pid:)。
@@ -15,19 +16,12 @@ import Cocoa
 // 用法：tests/run-glance-probe.sh --kill-recovery --stage-app "$PWD/.build/duo-validation/WindowShade.app"
 
 /// 读另一份 WindowShade 的输出（后台线程写，主线程读）。
-final class GapOutputCollector: @unchecked Sendable {
-  private let lock = NSLock()
-  private var text = ""
+final class GapOutputCollector: Sendable {
+  private let text = Mutex("")
   func append(_ data: Data) {
-    lock.lock()
-    text += String(decoding: data, as: UTF8.self)
-    lock.unlock()
+    text.withLock { $0 += String(decoding: data, as: UTF8.self) }
   }
-  var all: String {
-    lock.lock()
-    defer { lock.unlock() }
-    return text
-  }
+  var all: String { text.withLock { $0 } }
   func line(startingWith prefix: String) -> String? {
     all.split(separator: "\n").first { $0.hasPrefix(prefix) }.map(String.init)
   }
