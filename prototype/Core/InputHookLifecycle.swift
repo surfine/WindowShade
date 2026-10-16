@@ -12,12 +12,15 @@ struct InputHookLifecycle: Equatable, Sendable {
     private(set) var installs = 0
     private(set) var removals = 0
     private(set) var callbacks = 0
+    /// 停住的原因是端口没创建出来（多半是辅助功能还没给），不是系统把它停掉。
+    private(set) var openFailedPending = false
 
     /// 用户把开关拨到这个位置。拨开只会从「没装」变成「装上」；停在「被系统停掉」时不会再装。
     mutating func userSet(enabled: Bool) {
         if !enabled {
             if phase == .installed { removals += 1 }
             phase = .absent
+            openFailedPending = false
             return
         }
         if phase == .absent {
@@ -30,6 +33,7 @@ struct InputHookLifecycle: Equatable, Sendable {
     mutating func systemDisabled() {
         guard phase == .installed else { return }
         phase = .stoppedBySystem
+        openFailedPending = false
         removals += 1
     }
 
@@ -37,7 +41,17 @@ struct InputHookLifecycle: Equatable, Sendable {
     mutating func openFailed() {
         guard phase == .installed else { return }
         phase = .stoppedBySystem
+        openFailedPending = true
         removals += 1
+    }
+
+    /// 辅助功能给了：只把「端口没创建出来」而停住的解开，回到「没装」，下一次按开关装一次。
+    /// 被系统停掉的不动。返回有没有解开。
+    mutating func accessibilityGranted() -> Bool {
+        guard phase == .stoppedBySystem, openFailedPending else { return false }
+        phase = .absent
+        openFailedPending = false
+        return true
     }
 
     /// 只有「装上」才算一次回调。
@@ -69,6 +83,8 @@ struct HookDriver: Equatable, Sendable {
     }
 
     mutating func openFailed() { life.openFailed() }
+
+    mutating func accessibilityGranted() -> Bool { life.accessibilityGranted() }
 
     mutating func systemDisabled(isOpen: Bool) -> HookAction {
         life.systemDisabled()
