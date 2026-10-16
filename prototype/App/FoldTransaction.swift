@@ -392,8 +392,24 @@ extension AppDelegate {
     // terminate() 会让 App 自己决定要不要问保存，不强杀；聊天类与其余 App 不会走到这里。
     func quitAfterForwardedCloseIfNeeded(pid: pid_t, id: CGWindowID) {
         let bundle = appBundleID(pid: pid)
-        let remaining = appCurrentUserWindowCount(pid)
-        guard CloseQuitPolicy.shouldQuit(bundleID: bundle, remainingUserWindows: remaining) else { return }
+        guard CloseQuitPolicy.action(bundleID: bundle) == .quitApp else { return }
+        // 同一个 App 还有别的窗口被我们收着（在屏外、最小化或整 App 隐藏）：不算没窗口。
+        guard !shaded.contains(where: { $0.key != id && $0.value.pid == pid }) else { return }
+        // 不按“在屏上”过滤地数：最小化、在别的桌面、全屏的窗口也算。两个来源都说没有才退出，
+        // 辅助功能读空（失败或超时）时窗口服务器那边还在，就不会误退。
+        let axRemaining = appWindows(pid: pid).filter { windowID(of: $0) != id }.count
+        let serverRemaining = ((CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]]) ?? []).filter { info in
+            (info[kCGWindowOwnerPID as String] as? Int).map(pid_t.init) == pid
+                && (info[kCGWindowLayer as String] as? Int) == 0
+                && (info[kCGWindowNumber as String] as? Int).map(CGWindowID.init) != id
+                && ((info[kCGWindowBounds as String] as? [String: CGFloat]).map { ($0["Width"] ?? 0) > 40 && ($0["Height"] ?? 0) > 40 } ?? false)
+        }.count
+        let remaining = max(axRemaining, serverRemaining)
+        guard CloseQuitPolicy.shouldQuit(bundleID: bundle, remainingUserWindows: remaining) else {
+            wlog("traffic: close kept app bundle=\(bundle) id=\(id) ax=\(axRemaining) server=\(serverRemaining)")
+            return
+        }
         guard let app = NSRunningApplication(processIdentifier: pid) else { return }
         wlog("traffic: close quit app bundle=\(bundle) id=\(id) remaining=\(remaining)")
         app.terminate()
