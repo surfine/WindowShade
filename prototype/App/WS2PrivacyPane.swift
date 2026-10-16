@@ -536,6 +536,10 @@ enum WS2PrivacyValues {
         if UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey) {
             snapshot.features.insert(WS2PrivacyCopy.faceUnlockFeature)
         }
+        // WindowShade 2 那几行（appears_with: ws2-preview）：预览旗标打开，或其中会读东西的开关已经开着，才列出来。
+        if WS2Preview.shows(previewOn: WS2Preview.isOn, alreadyOn: WS2Preview.live.readsSomething) {
+            snapshot.features.insert(WS2Preview.privacyFeature)
+        }
         snapshot.permissions[PrivacyPaneName.adjust(WSL10n.text("settings.common.accessibility", zh: "辅助功能"))] = hasAccessibilityPermission()
         snapshot.permissions[WSL10n.text("settings.common.screenRecording", zh: "屏幕录制")] = hasScreenRecordingPermission()
         for row in WS2PrivacyData.rows where row.status != "planned" {
