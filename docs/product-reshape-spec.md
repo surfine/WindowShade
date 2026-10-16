@@ -80,6 +80,10 @@
 
 **第十五批（2026-10-16）**：M3 第三轮（见 M3，含一处因崩溃退回）；测试 runner 编译目标提到 15，补上 N4 漏改的 runner；H3 探针在 26 虚拟机上同样 inconclusive。
 
+**第十七批（2026-10-16）**：N1 ✅ 代码（4a8551f，7 个捷径动作，元数据随包；在「快捷指令」里看得到待 Aaron 空闲时验）；R35／R5／R36 入口 ✅（08b62d3，「高级」页底「关于」四行）；公证流程打通（Developer ID、`scripts/notarize.sh`、发布关脚本）。
+
+**第十八批（2026-10-16，多线）**：R21 ✅ 代码（4dd8593，单窗口工具关窗即退出、聊天类永不退出；本机已装的微信／QQ／信息／Discord 核过 bundle ID；真机待整合构建后验）；H4 量过不采用、H6 随之不适用（7922ebd）；R16 小样（95d6c0b，[私有页](https://claude.ai/artifact/6ShtJuF4UJnQKxpWXPcsFt)，待 Aaron 定三件事）；O／A 29 条清单（0456817，待 Aaron）。R49 本机没装 ToDesk／QQ 音乐，要下载需同意。
+
 **Aaron 拍板（2026-10-16 第十六批后）**：
 - **R21** 按类别分：计算器、App Store 这类单窗口工具关掉卷帘条就退出 App；微信、QQ 等聊天类永远不退出；其余照现状只关窗口。
 - **R35／R5 入口** 放在设置的「关于」页：导出诊断信息、导出设置、导入设置三个按钮。**R36** 同页加「报告问题」（打开 GitHub Issues 新建页、提示可附诊断包，不上传）。
@@ -1121,9 +1125,9 @@
 | **H1** | **✅ 2026-10-15（4da4e93）**：没走 Metal／vImage，换成算法上的省：只处理「镜像行不全不透明」的几行；45 张图与旧实现逐字节相同，4K 一张 37.4 → 21.0 ms。原文：**`mirrorRoundCorners` 换掉标量循环**（`Capture/PreviewRenderer.swift:183`，另有 14 处同类循环）。优先走 Metal（`Effects/FoldRenderer.swift` 已有 device／纹理／缓存），退一步用 `vImageVerticalReflect` ＋ `vImagePremultiplyData` | 同一张 4K Retina 图**单次调用耗时前后对比**；**输出逐像素一致**（等价替换，不许改画面） |
 | **H2** | **✅ 2026-10-15 核过不降**：基线（签名构建、3 次 `--fold-timing`，各取暖机后 3 轮中位数）第一次画面变化 156／163／217 ms、卷帘条出现 406／413／463 ms。队列上的三件事（截图、裁标题栏条与红绿灯命中区、缩略图）**全在收起的关键路径上，主线程原地等结果**——降到 `.utility` 就是在系统忙时主动让收起变慢，正是本条说的「关键路径上不能降」。原文：**`pixelAnalysisQueue` 的 QoS 复核**（`WindowShade.swift:170` 现为 `.userInitiated`）。**先量再改**：跑 `--fold-timing` 取基线 → 降 `.utility` → 再跑；关键路径上不能降的那几处单独保留 | 折叠延迟不劣化；非关键路径的 CPU 占比下降 |
 | **H3** | **核过，暂不改（2026-10-16）**：那条流的帧交给 `AVSampleBufferDisplayLayer`，它按帧上的色彩空间显示，换成 `displayP3` 显示端是对的；**但上屏前的录屏胶囊修补按 sRGB 数值认蓝紫色、并把 sRGB 底片原样贴回**——直接换会让胶囊认不出、补丁偏色（可见的回退）。前提：先让胶囊检测与底片按帧的色彩空间换算，再换采集色彩空间。**第十五批**：同一探针在 macOS 26.6.2 虚拟机上也是 0 次认出（sRGB 24 帧、P3 57 帧）；本机与 26 都认不出，要分清「系统没画」还是「我们认不出」，下一步让探针把修补前的原始帧存成 PNG 直接看。**第十四批**：加了 `--capsule-color` 探针（sRGB 与 displayP3 各开 4 秒置顶预览，数认出胶囊的帧）；首跑两种都收到 40 多帧但连 sRGB 都没认出胶囊——系统没在临时窗口上画，inconclusive，仍不改。原文：**采集侧色彩与分辨率**（`ScreenCaptureBridge.swift:414-418` 现为 sRGB、未设 `captureResolution`）：按显示器能力选色彩空间（P3 屏用 `displayP3`），显式设 `captureResolution`，macOS 15+ 评估 HDR 档（**连着看功耗**） | 缩略图与系统截图色彩比对；P3 屏上不变淡；采集侧 CPU 不升 |
-| **H4** | **Vision 用到该用的地方**（ANE）：标题栏定位从像素启发式换成 `VNDetectRectangles`／`VNRecognizeText`；缩略图裁剪用 `VNGenerateAttentionBasedSaliency`。**只在「一扇窗一次」的路径上跑，不每帧** | 同一批窗口比较「启发式 vs Vision」的定位；低电量／热压力下能退回启发式 |
+| **H4** | **✅ 2026-10-16 量过，不采用**（[h4-vision-eval.md](h4-vision-eval.md)）：15 张真窗口里像素启发式对 6、Vision 文字对 3、矩形对 6；显著性 20 张里 18 张框住整窗、没有裁剪价值；一扇窗多花 35–80 ms（H2 基线第一次画面变化约 156 ms）。另查明像素启发式 `preciseVisualChromeHeight`（`Capture/PreviewRenderer.swift:528`）两个条件取自同一个值、永远不执行，一般窗口走 AX。原文：**Vision 用到该用的地方**（ANE）：标题栏定位从像素启发式换成 `VNDetectRectangles`／`VNRecognizeText`；缩略图裁剪用 `VNGenerateAttentionBasedSaliency`。**只在「一扇窗一次」的路径上跑，不每帧** | 同一批窗口比较「启发式 vs Vision」的定位；低电量／热压力下能退回启发式 |
 | **H5** | **✅ 2026-10-15 核过不改**：实时画面早走 `CVMetalTextureCache`；唯一还从 `CGImage` 建纹理的是收起动画的静图，`FoldStillTexture` 已把色彩转换结果直接写进页对齐的共享 `MTLBuffer` 当纹理用、省掉 `replace` 整图拷贝（有逐像素一致的测试）。没有可以再接零拷贝的路径。原文：**零拷贝（2026-10-15 自纠：前提要改）**：此前写「`FoldRenderer` 是从 `CGImage` 建、要 CPU 上传」，**不准确**——`Effects/FoldRenderer.swift` **已经有** `CVMetalTextureCache`（`:35`／`:111`／`:291`）并用 `CVMetalTextureCacheCreateTextureFromImage`（`:346`）。→ 改成**核哪些路径还在走 `CGImage` 上传**（静态图/截图那条？），把能走 `CVPixelBuffer` 的都接过去 | 那条路径的 CPU 占比与内存带宽下降；画面一致 |
-| **H6** | **新路径进 `App/PowerPolicy.swift`**（低电量／热压力下退回 CPU／降质／跳过非必要推理） | 低电量模式下新路径行为可解释 |
+| **H6** | **2026-10-16 不适用**：H4 不采用，没有新路径要退回。原文：**新路径进 `App/PowerPolicy.swift`**（低电量／热压力下退回 CPU／降质／跳过非必要推理） | 低电量模式下新路径行为可解释 |
 
 **不该做的**：不为「用上 NPU」引入模型；不做「Metal 重写一切」；不把 Vision 放上关键交互路径；不牺牲色彩正确性换性能。
 
