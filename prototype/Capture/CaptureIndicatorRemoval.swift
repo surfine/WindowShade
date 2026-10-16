@@ -20,6 +20,7 @@ import CoreMedia
 import CoreVideo
 import Foundation
 import ScreenCaptureKit
+import Synchronization
 
 enum CaptureIndicatorRemoval {
     /// 检测区域：内容左上角 170 × 64 pt，覆盖各种标题栏高度下的红绿灯组。
@@ -200,8 +201,8 @@ enum CaptureIndicatorRemoval {
 /// 一条捕获流的检测缓存：胶囊位置基本不动，没必要每帧扫整块搜索区。
 /// 开流后前 3 帧、源窗口尺寸/内容区/缩放变化后强制全量；其余每 1 s 全量一次，
 /// 中间的帧只抽检缓存位置的 4 个像素（缓存为“无胶囊”时直接沿用）。
-final class CaptureIndicatorTracker: @unchecked Sendable {
-    struct Key: Equatable {
+final class CaptureIndicatorTracker: Sendable {
+    struct Key: Equatable, Sendable {
         let width: Int, height: Int
         let content: CGRect
         let scale: CGFloat
@@ -209,29 +210,34 @@ final class CaptureIndicatorTracker: @unchecked Sendable {
     static let warmupFrames = 3
     static let fullInterval: Double = 1
 
-    private let lock = NSLock()
-    private var key: Key?
-    private var frames = 0
-    private var lastFull = -Double.infinity
-    private var cached: CaptureIndicatorRemoval.Detection?
-    private var _fullScans = 0
+    // 规格 M3：一把锁护的整组状态进 Mutex，去掉 @unchecked Sendable。
+    private struct State {
+        var key: Key?
+        var frames = 0
+        var lastFull = -Double.infinity
+        var cached: CaptureIndicatorRemoval.Detection?
+        var fullScans = 0
+    }
+    private let state = Mutex(State())
 
     /// 已做过的全量检测次数（测试与诊断用）。
-    var fullScans: Int { lock.withLock { _fullScans } }
+    var fullScans: Int { state.withLock { $0.fullScans } }
 
     func reset() {
-        lock.withLock { key = nil; frames = 0; lastFull = -.infinity; cached = nil }
+        state.withLock { s in
+            s.key = nil; s.frames = 0; s.lastFull = -.infinity; s.cached = nil
+        }
     }
 
     func locate(in view: PixelView, origin: CGPoint, scale: CGFloat, key newKey: Key,
                 now: Double) -> CaptureIndicatorRemoval.Detection? {
-        lock.withLock {
-            if key != newKey {
-                key = newKey; frames = 0; lastFull = -.infinity; cached = nil
+        state.withLock { s in
+            if s.key != newKey {
+                s.key = newKey; s.frames = 0; s.lastFull = -.infinity; s.cached = nil
             }
-            frames = min(frames + 1, Self.warmupFrames + 1)
-            if frames > Self.warmupFrames, now - lastFull < Self.fullInterval {
-                guard let cached else { return nil }
+            s.frames = min(s.frames + 1, Self.warmupFrames + 1)
+            if s.frames > Self.warmupFrames, now - s.lastFull < Self.fullInterval {
+                guard let cached = s.cached else { return nil }
                 let intact = !cached.probes.isEmpty && cached.probes.allSatisfy { p in
                     let x = Int(p.x), y = Int(p.y)
                     return x >= 0 && x < view.width && y >= 0 && y < view.height
@@ -239,10 +245,10 @@ final class CaptureIndicatorTracker: @unchecked Sendable {
                 }
                 if intact { return cached }
             }
-            cached = CaptureIndicatorRemoval.detect(in: view, origin: origin, scale: scale)
-            lastFull = now
-            _fullScans += 1
-            return cached
+            s.cached = CaptureIndicatorRemoval.detect(in: view, origin: origin, scale: scale)
+            s.lastFull = now
+            s.fullScans += 1
+            return s.cached
         }
     }
 }

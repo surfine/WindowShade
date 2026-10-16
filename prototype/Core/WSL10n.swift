@@ -5,6 +5,7 @@
 // 译文随 App 编成 Contents/Resources/Localization/en.lproj（build.sh 用 xcstringstool 生成），
 // 不放在 App 根目录的 .lproj 里，免得改变系统给这个 App 选的界面语言。
 import Foundation
+import Synchronization
 
 enum WSLanguage: String, Sendable, Equatable, CaseIterable {
     case zh, zhHant, en
@@ -19,51 +20,64 @@ enum WSLanguage: String, Sendable, Equatable, CaseIterable {
     }
 }
 
-private final class WSL10nState: @unchecked Sendable {
-    private let lock = NSLock()
-    private var languageValue: WSLanguage = .zh
-    private var bundles: [WSLanguage: Bundle] = [:]
-    private var bundleResolved = false
+private final class WSL10nState: Sendable {
+    private struct Store {
+        var language: WSLanguage = .zh
+        var bundles: [WSLanguage: Bundle] = [:]
+        var bundleResolved = false
+    }
+    // 规格 M3：一把锁护的整组状态进 Mutex，去掉 @unchecked Sendable。
+    private let store = Mutex(Store())
 
     var language: WSLanguage {
-        get { lock.lock(); defer { lock.unlock() }; return languageValue }
-        set { lock.lock(); languageValue = newValue; lock.unlock() }
+        get { store.withLock { $0.language } }
+        set { store.withLock { $0.language = newValue } }
     }
 
     /// 当前语言译文所在的目录；没设过就去 App 资源里找一次。
     var currentBundle: Bundle? {
         get {
-            lock.lock(); defer { lock.unlock() }
-            let language = languageValue
-            if let cached = bundles[language] { return cached }
-            guard let name = language.lprojName, !bundleResolved else { return nil }
-            bundleResolved = true
-            if let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/\(name).lproj", isDirectory: true),
-               FileManager.default.fileExists(atPath: url.path) {
-                let bundle = Bundle(url: url)
-                bundles[language] = bundle
-                return bundle
+            store.withLock { s in
+                let language = s.language
+                if let cached = s.bundles[language] { return cached }
+                guard let name = language.lprojName, !s.bundleResolved else { return nil }
+                s.bundleResolved = true
+                if let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/\(name).lproj", isDirectory: true),
+                   FileManager.default.fileExists(atPath: url.path) {
+                    let bundle = Bundle(url: url)
+                    s.bundles[language] = bundle
+                    return bundle
+                }
+                return nil
             }
-            return nil
         }
     }
 
     /// 英文译文所在的目录（测试与检查用）。
     var englishBundle: Bundle? {
         get {
-            lock.lock(); defer { lock.unlock() }
-            guard let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/en.lproj", isDirectory: true),
-                  FileManager.default.fileExists(atPath: url.path) else { return bundles[.en] }
-            let bundle = Bundle(url: url)
-            bundles[.en] = bundle
-            return bundle
+            store.withLock { s in
+                guard let url = Bundle.main.resourceURL?.appendingPathComponent("Localization/en.lproj", isDirectory: true),
+                      FileManager.default.fileExists(atPath: url.path) else { return s.bundles[.en] }
+                let bundle = Bundle(url: url)
+                s.bundles[.en] = bundle
+                return bundle
+            }
         }
-        set { lock.lock(); if let newValue { bundles[.en] = newValue }; bundleResolved = true; lock.unlock() }
+        set {
+            store.withLock { s in
+                if let newValue { s.bundles[.en] = newValue }
+                s.bundleResolved = true
+            }
+        }
     }
 
     /// 测试与检查用：指定某个语言的译文目录。
     func setBundle(_ bundle: Bundle?, for language: WSLanguage) {
-        lock.lock(); bundles[language] = bundle; bundleResolved = true; lock.unlock()
+        store.withLock { s in
+            s.bundles[language] = bundle
+            s.bundleResolved = true
+        }
     }
 }
 

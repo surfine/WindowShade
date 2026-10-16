@@ -14,6 +14,7 @@
 
 import Cocoa
 import CoreGraphics
+import Synchronization
 
 enum WindowSnapshotVariant: String, Hashable {
     case preview        // 预览/悬停路径：请求带 maxPixelSize 上限
@@ -44,23 +45,19 @@ struct WindowSnapshotKey: Hashable {
 final class WindowSnapshotInFlightSlot {
     let key: WindowSnapshotKey
     var task: Task<CGImage?, Never>?
-    private let completionLock = NSLock()
-    private var completed = false
+    // 规格 M3：一个标记一把锁，换 Mutex。
+    private let completed = Mutex(false)
 
     init(key: WindowSnapshotKey) {
         self.key = key
     }
 
     func markCompleted() {
-        completionLock.lock()
-        completed = true
-        completionLock.unlock()
+        completed.withLock { $0 = true }
     }
 
     var isCompleted: Bool {
-        completionLock.lock()
-        defer { completionLock.unlock() }
-        return completed
+        completed.withLock { $0 }
     }
 }
 

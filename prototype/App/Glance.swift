@@ -176,7 +176,7 @@ final class GlanceController {
 
     /// 被整体隐藏的 App 在画面下面临时取消隐藏以拿到实时画面。
     /// 实测（macOS 27.0）：辅助功能取消隐藏 23ms 回到原处、前台不变；首帧 104ms；藏回 13ms。
-    nonisolated(unsafe) static var unhideForLiveEnabled = true
+    nonisolated static let unhideForLiveEnabled = true
     /// 取消隐藏后出现前台切换的 App：不再对它这样做。
     private var activatesOnUnhide: Set<String> = []
     /// 这段时间内“App 又显示出来”是看一眼自己造成的，不当作用户唤回。
