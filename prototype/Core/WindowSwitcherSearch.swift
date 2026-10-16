@@ -42,6 +42,12 @@ enum WindowSwitcherSearch {
     }
 
     /// 0 = 没命中；3 词首；2 连续子串；1 依次出现。
+    /// 数字键 N（1 起）在当前过滤结果里对应的原始下标；超出过滤结果返回 nil。编号永远相对过滤后的列表。
+    static func index(forNumber number: Int, query: String, entries: [Entry]) -> Int? {
+        let visible = filter(query: query, entries: entries)
+        return number >= 1 && number <= visible.count ? visible[number - 1] : nil
+    }
+
     static func score(token: String, in field: String) -> Int {
         guard !token.isEmpty, !field.isEmpty else { return 0 }
         let needle = Array(token), hay = Array(field)
