@@ -51091,6 +51091,52 @@
         }
       }
     },
+    "settings.shade.levelKeys.systemPopups.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use the System’s Volume and Brightness Pop-ups"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改回用系统的提示"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改回用系統的提示"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.systemPopups.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The system shows them; the notch just follows along"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按键时出系统的提示，刘海只跟着显示"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按鍵時出系統的提示，瀏海只跟著顯示"
+          }
+        }
+      }
+    },
     "settings.shade.levelKeys.sub": {
       "extractionState": "manual",
       "localizations": {

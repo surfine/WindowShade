@@ -148,6 +148,16 @@ import Foundation
     static func settingOffAndGesture() {
         expect(decision { $0.settingEnabled = false }, .passThrough, .system, .systemOnly, .settingOff, "setting off")
         expect(decision { $0.gestureInFlight = true }, .passThrough, .system, .systemOnly, .gestureInFlight, "gesture")
+        // R12 改回用系统的提示：能拦的情形下也不拦；系统的提示照出，刘海跟着画；三类键都一样。
+        for kind in [NotchLevelKind.volume, .brightness, .keyboardLight] {
+            let d = decision(kind) { $0.useSystemPopups = true }
+            expect(d, .passThrough, .system, .both, .systemPopups, "system popups \(kind)")
+            precondition(d.notchDraws && !d.intercepts, "system popups \(kind): 不拦，刘海跟着画")
+        }
+        // 默认（没开）还是拦：行为不变。
+        expect(decision { _ in }, .intercept, .us, .notchOnly, .ready, "default unchanged")
+        // 总开关关着比它先判，原因仍是 settingOff。
+        expect(decision { $0.settingEnabled = false; $0.useSystemPopups = true }, .passThrough, .system, .systemOnly, .settingOff, "setting off first")
     }
 
     // 几条同时成立时谁先赢。

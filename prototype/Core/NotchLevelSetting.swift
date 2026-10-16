@@ -16,6 +16,18 @@ enum NotchLevelSetting {
     static func setEnabled(_ on: Bool, in defaults: UserDefaults = .standard) {
         defaults.set(on, forKey: key)
     }
+
+    /// 「改回用系统的提示」（R12）。开着：只旁听、不拦键，系统的音量、亮度提示照出，刘海跟着画。
+    /// 默认关；没写过这个键就是关，行为和以前一样。
+    static let useSystemPopupsKey = "Notch.levelKeys.useSystemPopups"
+
+    static func usesSystemPopups(in defaults: UserDefaults = .standard) -> Bool {
+        defaults.bool(forKey: useSystemPopupsKey)
+    }
+
+    static func setUsesSystemPopups(_ on: Bool, in defaults: UserDefaults = .standard) {
+        defaults.set(on, forKey: useSystemPopupsKey)
+    }
 }
 
 /// 这一行现在怎么写。

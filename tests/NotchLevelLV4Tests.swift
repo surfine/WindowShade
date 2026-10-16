@@ -153,6 +153,12 @@ import Foundation
         precondition(!NotchLevelSetting.isEnabled(in: defaults))
         NotchLevelSetting.setEnabled(true, in: defaults)
         precondition(NotchLevelSetting.isEnabled(in: defaults))
+        // R12：没写过这个键就是关；写了再读得回来。
+        precondition(!NotchLevelSetting.usesSystemPopups(in: defaults), "改回用系统的提示：默认关")
+        NotchLevelSetting.setUsesSystemPopups(true, in: defaults)
+        precondition(NotchLevelSetting.usesSystemPopups(in: defaults))
+        NotchLevelSetting.setUsesSystemPopups(false, in: defaults)
+        precondition(!NotchLevelSetting.usesSystemPopups(in: defaults))
     }
 
     // MARK: 点“允许…”之后

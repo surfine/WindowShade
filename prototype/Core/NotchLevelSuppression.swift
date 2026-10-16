@@ -3,7 +3,7 @@
 // 一句话：拦键 = 能写 且 看得见 且 没有别的主人。三者缺一就不拦，按键原样交给系统。
 // 拦下来的键由我们照系统的步长写回（NotchLevelStep），再画两耳；这里只做判定，不写任何数值、不碰 AppKit。
 //
-// 判定顺序（前面的先赢）：设置关 → 锁屏 → 放行 → 手势层 → 调度中心 → 全屏但面板看不见 →
+// 判定顺序（前面的先赢）：设置关 → 改回用系统的提示 → 锁屏 → 放行 → 手势层 → 调度中心 → 全屏但面板看不见 →
 // 别的 App 在管 → 其它修饰键 → 设备不能调 → 亮度对着外接屏 → 监听被暂停 → 没允许辅助功能 →
 // 版本没核对过 → 这一类键写回失败过 → 拦。
 
@@ -26,6 +26,8 @@ struct NotchLevelSuppression: Equatable, Sendable {
     struct Input: Equatable, Sendable {
         /// 设置里“音量和亮度”开着。
         var settingEnabled = true
+        /// 设置里“改回用系统的提示”开着（R12）：只旁听、不拦；系统的提示照出，刘海跟着画。
+        var useSystemPopups = false
         var listener: Listener = .active
         /// 这个 macOS 版本核对过。
         var versionVerified = true
@@ -56,6 +58,7 @@ struct NotchLevelSuppression: Equatable, Sendable {
         case ready                   // 能写、看得见：拦
         case fullScreenVisible       // 原生全屏且面板可见：拦
         case settingOff
+        case systemPopups            // 用户改回用系统的提示（R12）
         case locked                  // 锁屏、登录窗口、屏保
         case authorizationRelease
         case gestureInFlight
@@ -102,6 +105,7 @@ struct NotchLevelSuppression: Equatable, Sendable {
         }
 
         if !input.settingEnabled { return system(.settingOff) }
+        if input.useSystemPopups { return both(.systemPopups) }
         if input.locked { return system(.locked) }
         if input.authorizationRelease { return system(.authorizationRelease) }
         if input.gestureInFlight { return system(.gestureInFlight) }
