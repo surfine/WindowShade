@@ -8,4 +8,5 @@ About panel opens from its “Third-Party Licenses” link.
 | --- | --- | --- |
 | Sparkle 2.10.0 | `Contents/Frameworks/Sparkle.framework` | [prototype/Vendor/Sparkle-LICENSE](prototype/Vendor/Sparkle-LICENSE) |
 | mediaremote-adapter | `Contents/Frameworks/MediaRemoteAdapter.framework` | [prototype/Vendor/mediaremote-adapter/LICENSE](prototype/Vendor/mediaremote-adapter/LICENSE) |
+| PLCrashReporter 1.12.0 | statically linked into the main executable (local crash reports only) | [prototype/Vendor/PLCrashReporter/LICENSE](prototype/Vendor/PLCrashReporter/LICENSE) |
 | Lock-space recipe (Glance) | compiled into WindowShade | [docs/third-party-lock-overlay.txt](docs/third-party-lock-overlay.txt) |

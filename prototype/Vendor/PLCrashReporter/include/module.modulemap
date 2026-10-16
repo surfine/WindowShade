@@ -1,0 +1,4 @@
+module PLCrashReporterNative {
+    header "CrashReporter.h"
+    export *
+}

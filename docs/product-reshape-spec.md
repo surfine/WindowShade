@@ -631,6 +631,7 @@
 - **验收**：人为触发一次崩溃，本地有报告且带机器信息；「不发送」时不外发。
 - **风险**：**隐私是最高的那条线**——上报内容必须对照隐私登记（[privacy-page.md](privacy-page.md)，65 个登记项）逐项筛；默认关闭外发。
 - **✅ 2026-10-15（部分，0c9e5cd）**：纯本地那一半随 R35 落地——诊断包会带上系统已记下的、我们自己的崩溃报告（最新 10 份），不上网。**待 Aaron**：接 PLCrashReporter 要下载第三方库（需同意）。
+- **✅ 2026-10-17（代码，PLCrashReporter 1.12.0）**：Aaron 同意下载后接上。官方发布页最新带预编译包的是 1.12.0（1.12.1／1.12.2 只有源码标签），取 `PLCrashReporter-Static-1.12.0.zip`（SHA-256 `36a00c3d…9b8a`，发布页不提供校验和或签名，值为下载后自算，全文在 `prototype/Vendor/PLCrashReporter/UPSTREAM.md`）。**选静态库而不是 XCFramework**：静态链进主程序，不进 Contents/Frameworks，没有新的嵌套代码要签、公证面不变。启动时启用（Mach 异常方式；被调试器附着时不启用），崩溃后下次启动把报告转成文本存到 `~/Library/Logs/WindowShade/crash-reports/`（最多 10 份）并从崩溃库清掉；诊断包导出时一并带上。全工程原本没有别的崩溃信号或未捕获异常处理（只有一处忽略 SIGPIPE），不冲突；没有任何联网代码。许可已并入 THIRD-PARTY-LICENSES。探针崩溃要同时带 `--probe-crash` 与环境变量 `WINDOWSHADE_ALLOW_CRASH_PROBE`。**本机证据（签名 --stage 构建）**：`--check` 退出 0；`codesign --verify --deep --strict` 通过；`WINDOWSHADE_ALLOW_CRASH_PROBE=1 … --probe-crash` 崩溃（退出 133，SIGTRAP），再启动一次，`crash-reports/` 里出现 `windowshade-crash-…Z.txt`（带 Hardware Model Mac17,4、系统版本、应用版本、崩溃线程栈），崩溃库里的待处理报告随即清掉（第三次启动不再重复保存）；`--export-diagnostics` 的包里带上这份。新增代码里没有 URLSession／网络调用。**待 Aaron**：真机常驻运行时的崩溃（非探针）还没遇到过，下次发布后自然会有；Mach 异常处理器与调试器同时附着会冲突，已在被调试时跳过启用。
 
 ---
 
