@@ -15,6 +15,7 @@
 `prototype/build.sh` 加 `-I Vendor/PLCrashReporter/include`、链接这个 .a 以及 `-lc++ -lz`。
 App 端见 `Support/CrashReporting.swift`：启动时启用（Mach 异常方式）、下次启动把上次的报告转成文本存本地。
 **没有任何联网代码**：崩溃库只写本机缓存目录，我们只把文本放进 `~/Library/Logs/WindowShade/crash-reports/`。
+- 隐私声明：上游 1.12.0 的 Resources/PrivacyInfo.xcprivacy 不声明任何必要理由 API（只列 CrashData／OtherDiagnosticData 两项收集，而我们只落本地、不上传）；已核对并写进 `prototype/PrivacyInfo.xcprivacy` 的注释，该清单无需新增条目（`systemUptime` 已被 SystemBootTime 35F9.1 覆盖）。
 
 ## 升级
 
