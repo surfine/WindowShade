@@ -968,10 +968,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 guard self?.setupEventTap() == true else { return false }
                 self?.rescueOffscreenWindows(silent: true, announceRestored: true)
                 self?.startEnvironmentWatch()
+                self?.reinstallAccessibilityHooks()
                 return true
             }
             if installed { t.invalidate() }
         }
+    }
+
+    /// 辅助功能晚于启动才给（首次启动时系统弹窗还开着，用户后点「允许」）：启动那一刻因没有授权而没装上的
+    /// 键盘钩子（⌥Tab 窗口切换、Mission Control 键）此前只在改设置时才会重装，授权后要重开 App 才生效。
+    /// 两者的 apply 都是幂等的（已装的只是重开）。规格 R26。
+    func reinstallAccessibilityHooks() {
+        switcher.applySetting()
+        missionControlKeys.applySetting()
     }
 
     // tap 因输入洪泛被系统禁用时退避重启用，避免反复禁用/启用和系统打架。
@@ -1074,6 +1083,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else if !lastAccessibilityTrusted, trusted {
             SystemLog.permissions.notice("accessibility back")
             if eventTap == nil { _ = setupEventTap() }
+            reinstallAccessibilityHooks()
             quietNotice(PrivacyPaneName.adjust(WSL10n.text("notice.accessibility.back", zh: "辅助功能打开了，收起和移动窗口恢复了")),
                         kind: .done, log: "environment: accessibility permission is back")
             rebuildMenu()

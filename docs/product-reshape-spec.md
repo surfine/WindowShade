@@ -719,6 +719,12 @@
 #### R26 · 权限弹窗还开着时启动
 - **依据**：WindowMizer「Fixed a crash that could occur **during first launch while macOS is asking for Accessibility or Screen Recording permission**」。
 - **现状**：未核。
+- **2026-10-16 代码核过（没在全新机器上跑）**：顺着 `applicationDidFinishLaunching`（`WindowShade.swift:355-400` 一带）逐个看了启动期用到辅助功能／屏幕录制的地方。
+  - 不会崩：所有 `CGEvent.tapCreate`（10 处）都是 `guard let`，失败只记日志；启动路径上没有 `try!`、对 tap／AX／`SCShareableContent` 结果的强解包，也没有等权限的同步阻塞或无界重试。`ensureAccessibility` 带提示参数调用，不阻塞。截图路径先过 `CGPreflightScreenCaptureAccess`（`Capture/WindowSnapshot.swift:54`），`SCShareableContent` 都是 `try`／`try?`。
+  - 授权晚于启动也能接上的：标题栏点击 tap（`WindowShade.swift` 的 `setupEventTapWhenTrusted`，2 秒轮询）、捏合 tap（3 秒重试）、刘海音量亮度键（听 `com.apple.accessibility.api`）、窗口浏览（自带 `lastAccessibility`）、全局输入过滤（建不起来就退回 NSEvent 监听）、Dock 点击（每次事件现查）。
+  - **查到一处「授权后不恢复」**：`switcher.applySetting()`（⌥Tab 窗口切换，默认开）启动时没授权就当作「关」，`missionControlKeys.applySetting()`（默认开）tap 建不起来就放弃；两者此前只在改设置时才重试，所以首次启动「弹窗开着、用户后点允许」之后要重开 App 才生效。已改：轮询装上标题栏 tap 的那一刻、以及 R2 体检发现「权限回来了」时，调用 `reinstallAccessibilityHooks()` 把这两个再应用一遍（都幂等）。不涉及文案。
+  - 没动：滚动／中键 tap 在 `openFailed` 后停住，但它们默认关，首次启动用不到；留作后续。
+  - **not_run**：真正的全新机器首次启动（点弹窗、拒绝、中途允许）。以上是读代码的结论，不是运行证据。
 - **改动**：全新机器第一次启动，逐个点权限弹窗，看会不会崩。
 - **验收**：不崩；拒绝后也能继续（见 R2）。
 
