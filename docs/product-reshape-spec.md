@@ -690,6 +690,19 @@
 - **风险**：误判比不判更糟（DockDoor 那条「Office/Chrome Web App 切视图会先关再开窗口」会导致**误退出 App**）——所以「确认没窗口了」这一步必须要收口。
 - **部分（2026-10-16，877ca09）**：`--browser-identity`（签名构建）：同一 App 两个实例都列出来后 `kill -9` 第二份，1.1 秒内条目全清、第一份不动 ✅（窗口浏览按进程号记账，退出通知到了整组清；迟到的旧结果按「是不是同一个 App 实例」丢掉）。**发现**：App 用 orderOut「关窗」（不销毁）时，开着的面板里那张卡原本还在、重开面板才消失；**第十一批已修**：面板开着时的存活检查对「查到时在屏上、现在不在屏上」的窗口也重新问一次它的应用，复测 PASS。`--window-census` 只读普查本机全部辅助功能窗口：当时 17 扇，收进的 8 扇都是真窗口，排除的 9 扇是菜单栏条、通知中心小组件、一个无标题无关闭按钮的 Freeform 对话框，没有误收漏收。**还没做**：OmniWM 那 18 类没凑齐（PiP、Chrome 弹出条、别的刘海 App 浮层、锁屏遮蔽、Word 搜索条要那些 App 当场开着）；按我们的过滤（只收 AX 窗口角色、普通层、非桌面小组件）推，PiP／刘海浮层／锁屏遮蔽在高层会被排除，Chrome 与 Word 的普通层无标题条目最可能被误收，要拿真 App 验。
 
+- **R20 续（2026-10-17，窗口分类夹具）**：`GlanceFixture` 加 `--classes`，在临时 App 里各开一扇「不是真窗口」的类；新探针 `--window-classes`（`WindowClassesProbe.swift`）逐类核对「窗口浏览列不列」与 `appCurrentUserWindowCount`（拆出 `isCurrentUserWindow`，行为不变）数不数，期望只有参考窗和带搜索条的文档窗两扇真窗口被列出并数到。构建 `--check` 退出 0（含自测）、签名 `--stage` 成功。
+
+  | 类 | 夹具怎么做 | 期望（列出／数到） | 实测 | 修了吗 |
+  | --- | --- | --- | --- | --- |
+  | 画中画 | 浮动层、无标题、不抢焦点面板 | 否／否 | **not_run** | 按过滤规则推：非 0 层，排除 |
+  | Chrome 弹出条 | 普通层、无标题、无边框的 56 点高条 | 否／否 | **not_run** | 按规则推会被列出，已知开口：与自绘窗口分不开，探针记 INFO 不判失败；真 Chrome 弹窗是有标题的标准窗口，未实测 |
+  | 别的刘海 App 浮层 | 状态栏层、顶部正中、不抢焦点 | 否／否 | **not_run** | 非 0 层，排除 |
+  | 锁屏遮蔽 | 屏保层小块无边框窗 | 否／否 | **not_run** | 非 0 层，排除 |
+  | Word 搜索条 | 文档窗的无标题子窗 | 否／否 | **not_run** | 加了一条窄规则：普通层、无标题、子角色 `AXSystemDialog` 不收（只影响窗口浏览，不会让计数变多；有标题或别的子角色照收，纯逻辑测试已加）。**这条没有真 Word 的证据支持，夹具也造不出该子角色，属推测，没有真机证据前可以整条撤掉** |
+  | 参考窗、文档窗 | 真窗口 | 是／是 | **not_run** | — |
+
+  **没跑的原因**：探针要在真屏幕上开窗口，本机使用者在操作（空闲 0 秒）；协调者指定的 macOS 26 虚拟机 192.168.64.3 在跑时已连不上（超时，虚拟机地址已换），且 `vm.lock` 被别的会话占用了一个多小时（已清）。`--browser-identity` 没有改动分类之外的代码路径，同样没重跑。**待补**：在空闲的本机或可达的虚拟机上跑 `tests/run-glance-probe.sh --window-classes` 与 `--browser-identity`（虚拟机里用 `tests/vm/run-core-probes.sh lume@<地址> window-classes browser-identity`，探针已读 `WINDOWSHADE_PROBE_ROOT`）；真 Chrome／Word 的当场验证也未做（没开它们，以免打扰使用者的会话）。
+
 #### R21 · 退出策略按 App 分类
 - **依据**：**一对相反的需求**——Wins 3.2「**IM 应用在关闭最后一个窗口后将不会自动退出**，而是保持后台运行」；WindowMizer「**Single-window apps now quit** when closing the placeholder – if that's what they normally do（Ex: App Store, Calculator）」。
 - **现状**：未记载。
