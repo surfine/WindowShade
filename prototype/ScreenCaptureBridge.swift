@@ -1,6 +1,7 @@
 import AVFoundation
 import Cocoa
 import ScreenCaptureKit
+import ImageIO
 import Synchronization
 
 enum ShareableContentLoader {
@@ -26,6 +27,31 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     nonisolated(unsafe) static var probeColorSpaceName: CFString?
     static let probeIndicatorStats = Mutex((frames: 0, cleaned: 0))
     private static let countsIndicatorFrames = CommandLine.arguments.contains("--capsule-color")
+    /// 只给探针用：设了路径就把下一帧（修胶囊之前）整帧存成 PNG，存一张就清掉，用来亲眼看系统画没画胶囊。
+    static let probeRawFrameURL = Mutex<URL?>(nil)
+
+    private static func isCompleteFrame(_ sampleBuffer: CMSampleBuffer) -> Bool {
+        guard let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false)
+                as? [[SCStreamFrameInfo: Any]],
+              let raw = attachments.first?[.status] as? Int else { return false }
+        return SCFrameStatus(rawValue: raw) == .complete
+    }
+
+    private static func saveRawFrame(_ sampleBuffer: CMSampleBuffer, to url: URL) {
+        guard let buffer = sampleBuffer.imageBuffer,
+              CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return }
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        let space = CVImageBufferGetColorSpace(buffer)?.takeUnretainedValue() ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        guard let base = CVPixelBufferGetBaseAddress(buffer),
+              let context = CGContext(data: base, width: CVPixelBufferGetWidth(buffer), height: CVPixelBufferGetHeight(buffer),
+                                      bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: space,
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue),
+              let full = context.makeImage(),
+              let destination = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else { return }
+        // 整帧存：缩放后的内容在帧里的位置不固定，裁左上角会裁到留白（第一次就是一片白）。
+        CGImageDestinationAddImage(destination, full, nil)
+        CGImageDestinationFinalize(destination)
+    }
 
     // 菜单/面板缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时
     // 缩略图，不新建 capture、不轮询。弱引用，视图销毁后自动断开。
@@ -429,9 +455,14 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         // 探针的零帧注入：本路流收到的帧全丢，验证“没有首帧就不搬窗口”。
         guard !Self.probeDropAllFrames else { return }
         // 这扇窗正被我们的流捕获，系统在它的红绿灯处画了录屏胶囊：交给画面之前修掉。
+        // 探针只看「完整」帧：SCK 会穿插送「画面没变」「空白」状态的帧，那些没有内容（第一次存下来的整帧 alpha 全是 0）。
+        let probeComplete = Self.countsIndicatorFrames && Self.isCompleteFrame(sampleBuffer)
+        if probeComplete, let url = Self.probeRawFrameURL.withLock({ url in defer { url = nil }; return url }) {
+            Self.saveRawFrame(sampleBuffer, to: url)
+        }
         let cleaned = CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate },
                                                     tracker: indicatorTracker)
-        if Self.countsIndicatorFrames {
+        if probeComplete {
             Self.probeIndicatorStats.withLock { $0.frames += 1; if cleaned { $0.cleaned += 1 } }
         }
         mirrorFrameIndex &+= 1

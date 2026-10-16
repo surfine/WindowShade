@@ -806,12 +806,18 @@ final class GlanceProbe {
       WindowStreamCapture.probeColorSpaceName = space
       WindowStreamCapture.probeIndicatorStats.withLock { $0 = (0, 0) }
       owner.pinnedPreviewController.startPreview(targetWindowID: id, pid: pid, axWindow: element) { _ in }
-      try await Task.sleep(for: .seconds(4), clock: .suspending)
+      // 流起来 2 秒后存一帧修补前的整帧，给人看系统到底画没画胶囊。
+      try await Task.sleep(for: .seconds(2), clock: .suspending)
+      let shot = URL(fileURLWithPath: ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_ROOT"] ?? FileManager.default.currentDirectoryPath)
+        .appendingPathComponent(".build/glance-tests/capsule-raw-\(name).png")
+      WindowStreamCapture.probeRawFrameURL.withLock { $0 = shot }
+      try await Task.sleep(for: .seconds(2), clock: .suspending)
+      print("INFO capsule-color: raw frame saved to \(shot.path) exists=\(FileManager.default.fileExists(atPath: shot.path))")
       let stats = WindowStreamCapture.probeIndicatorStats.withLock { $0 }
       owner.pinnedPreviewController.stopPreviews(forPID: pid, reason: "probe")
       try await Task.sleep(for: .seconds(1.5), clock: .suspending)
       results.append((name, stats.frames, stats.cleaned))
-      print("INFO capsule-color: \(name) frames=\(stats.frames) capsule recognised and cleaned in \(stats.cleaned)")
+      print("INFO capsule-color: \(name) complete frames=\(stats.frames) capsule recognised and cleaned in \(stats.cleaned)")
     }
     WindowStreamCapture.probeColorSpaceName = nil
     print("INFO capsule-color: main display can represent P3=\(screenP3)")
