@@ -4,6 +4,8 @@
 // - 顺序是最近用过的：屏幕上的窗口按前后次序；卷帘条和刘海里收着的窗口排在后面，挑它就放回来（这是 Wins 没有的）。
 // - 连按 Tab 往后走、加 ⇧ 往回走，←→ 也行；数字键 1–9 直接切到那一扇；⌘W 关掉选中的窗口、⌘Q 退出它的 App（面板留着）；
 //   Esc 取消；鼠标点一张也行。
+// - 打字搜索（O1）：面板开着时直接打字（或先按 / ）就按 App 名和窗口标题过滤，面板顶上显示查询；Delete 删字，Esc 先清查询再关；
+//   搜索态下数字键、卡片角标都按过滤后的列表编号，松开修饰键不再自动切换（回车或点一张才切）。规则与匹配见 Core/WindowSwitcherSearch.swift。
 // - 默认用 ⌥Tab，不碰系统的 ⌘Tab；设置里能换成 ⌘Tab（替换系统的 App 切换）或关掉。
 // - 键盘钩子跑在自己的线程上，只认这几个键；面板没开时别的按键一律原样放过。
 
@@ -12,7 +14,7 @@ import Cocoa
 /// 键盘钩子：认出“按住修饰键 + Tab”和面板开着时的那几个键，吞掉它们，交给主线程。
 final class WindowSwitcherKeys: @unchecked Sendable {
     enum Trigger: String { case off, option, command }
-    enum Event { case open(backward: Bool), step(Int), jump(Int), close, quit, cancel, commit }
+    enum Event { case open(backward: Bool), step(Int), jump(Int), close, quit, cancel, commit, type(String), beginSearch, deleteBackward }
 
     nonisolated static let defaultsKey = "Switcher.trigger"
     static var trigger: Trigger {
@@ -23,12 +25,19 @@ final class WindowSwitcherKeys: @unchecked Sendable {
     var onEvent: ((Event) -> Void)?
     private let lock = NSLock()
     private var active = false
+    private var searching = false
     private var modifier: CGEventFlags = .maskAlternate
     private var tap: CFMachPort?
 
     var isActive: Bool {
         get { lock.lock(); defer { lock.unlock() }; return active }
         set { lock.lock(); active = newValue; lock.unlock() }
+    }
+
+    /// 搜索态（主线程设、钩子线程读）：搜索态下 w、q、空格是普通字符，松开修饰键也不自动切换。
+    var isSearching: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return searching }
+        set { lock.lock(); searching = newValue; lock.unlock() }
     }
 
     /// 按设置装上或拆掉钩子。
@@ -74,6 +83,17 @@ final class WindowSwitcherKeys: @unchecked Sendable {
         wlog("switcher: keyboard tap on (\(trigger.rawValue))")
     }
 
+    /// 这一下按键打出的字（忽略 ⌥ 带来的变体）；方向键、功能键、控制字符不算。
+    private static func typedCharacters(_ event: CGEvent, allowSpace: Bool) -> String? {
+        guard let text = NSEvent(cgEvent: event)?.charactersIgnoringModifiers, !text.isEmpty else { return nil }
+        if text == " " { return allowSpace ? text : nil }
+        for scalar in text.unicodeScalars {
+            if scalar.value < 0x20 || (0xF700...0xF8FF).contains(scalar.value) || scalar.value == 0x7F { return nil }
+            if scalar.properties.isWhitespace { return nil }
+        }
+        return text
+    }
+
     private func post(_ event: Event) {
         DispatchQueue.main.async { [weak self] in self?.onEvent?(event) }
     }
@@ -86,10 +106,11 @@ final class WindowSwitcherKeys: @unchecked Sendable {
         lock.lock()
         let modifier = self.modifier
         let active = self.active
+        let searching = self.searching
         lock.unlock()
         let flags = event.flags
         if type == .flagsChanged {
-            if active, !flags.contains(modifier) { post(.commit) }
+            if active, !searching, !flags.contains(modifier) { post(.commit) }
             return Unmanaged.passUnretained(event)
         }
         let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
@@ -111,10 +132,18 @@ final class WindowSwitcherKeys: @unchecked Sendable {
         case 53: handled = .cancel
         case 123, 50: handled = .step(-1)
         case 124: handled = .step(1)
-        case 13 where flags.contains(.maskCommand) || modifier == .maskAlternate: handled = .close
-        case 12 where flags.contains(.maskCommand) || modifier == .maskAlternate: handled = .quit
+        case 48 where searching: handled = .step(flags.contains(.maskShift) ? -1 : 1)
+        case 51, 117: handled = .deleteBackward
+        case 44 where !searching && flags.intersection(other).isEmpty: handled = .beginSearch
+        case 13 where !searching && (flags.contains(.maskCommand) || modifier == .maskAlternate): handled = .close
+        case 12 where !searching && (flags.contains(.maskCommand) || modifier == .maskAlternate): handled = .quit
         case 36, 76: handled = .commit
-        default: if let digit = digits[keyCode] { handled = .jump(digit) }
+        default:
+            if let digit = digits[keyCode] { handled = .jump(digit) }
+            else if flags.intersection(other).isEmpty, flags.contains(.maskCommand) == (modifier == .maskCommand),
+                    let typed = Self.typedCharacters(event, allowSpace: searching) {
+                handled = .type(typed)
+            }
         }
         guard let handled else { return Unmanaged.passUnretained(event) }
         if type == .keyDown { post(handled) }
@@ -137,7 +166,10 @@ final class WindowSwitcher {
 
     unowned let owner: AppDelegate
     let keys = WindowSwitcherKeys()
+    /// 面板里现在显示的（搜索态下是过滤后的）；编号、选中、数字键都以它为准。
     private(set) var items: [Item] = []
+    private var allItems: [Item] = []
+    private var query = WindowSwitcherQuery()
     private(set) var selected = 0
     private var panel: WindowSwitcherPanel?
     private var showWork: DispatchWorkItem?
@@ -161,15 +193,66 @@ final class WindowSwitcher {
         case .jump(let number): jump(number)
         case .close: closeSelected()
         case .quit: quitSelected()
-        case .cancel: finish(commit: false)
+        case .cancel: escape()
         case .commit: finish(commit: true)
+        case .type(let text): typeQuery(text)
+        case .beginSearch: beginSearch()
+        case .deleteBackward: deleteQuery()
         }
+    }
+
+    // MARK: 搜索
+
+    var queryForProbe: String? { query.isSearching ? query.text : nil }
+
+    private func beginSearch() {
+        guard isOpen else { return }
+        query.enterSearch()
+        searchChanged(resetSelection: true)
+    }
+
+    private func typeQuery(_ text: String) {
+        guard isOpen else { return }
+        query.type(text)
+        searchChanged(resetSelection: true)
+    }
+
+    private func deleteQuery() {
+        guard isOpen, query.deleteBackward() else { return }
+        searchChanged(resetSelection: true)
+    }
+
+    /// Esc：在搜索态先清查询（选中的窗口尽量保留），否则才关面板。
+    private func escape() {
+        guard isOpen else { finish(commit: false); return }
+        switch query.escape() {
+        case .closeSwitcher: finish(commit: false)
+        case .clearedQuery: searchChanged(resetSelection: false)
+        }
+    }
+
+    private func searchChanged(resetSelection: Bool) {
+        keys.isSearching = query.isSearching
+        let keep = items.indices.contains(selected) ? items[selected].id : nil
+        refilter()
+        selected = resetSelection ? 0 : (keep.flatMap { id in items.firstIndex { $0.id == id } } ?? 0)
+        if panel == nil { showWork?.cancel(); showPanel() }
+        panel?.reload(items, selected: selected, query: query.isSearching ? query.text : nil)
+    }
+
+    private func refilter() {
+        guard query.isSearching, !query.text.isEmpty else { items = allItems; return }
+        let entries = allItems.map { WindowSwitcherSearch.Entry(appName: $0.appName, title: $0.title) }
+        items = WindowSwitcherSearch.filter(query: query.text, entries: entries).map { allItems[$0] }
     }
 
     /// 按下：马上算好最近用过的窗口、选中上一扇；0.15 秒后还按着才出面板。
     func open(backward: Bool = false) {
         guard !isOpen else { step(backward ? -1 : 1); return }
-        items = Self.collect(owner: owner)
+        allItems = Self.collect(owner: owner)
+        items = allItems
+        query = WindowSwitcherQuery()
+        keys.isSearching = false
         guard items.count > 1 || items.contains(where: { $0.kind == .shaded }) else {
             keys.isActive = false
             owner.notch.announce(WSL10n.text("switcher.onlyOne", zh: "只有这一扇窗口"), tone: .info)
@@ -205,7 +288,8 @@ final class WindowSwitcher {
                 AXUIElementPerformAction(button, kAXPressAction as CFString)
             }
         }
-        items.remove(at: selected)
+        allItems.removeAll { $0.id == item.id }
+        refilter()
         wlog("switcher: closed window \(item.id)")
         afterRemoval()
     }
@@ -215,15 +299,16 @@ final class WindowSwitcher {
         guard isOpen, items.indices.contains(selected) else { return }
         let pid = items[selected].pid
         NSRunningApplication(processIdentifier: pid)?.terminate()
-        items.removeAll { $0.pid == pid }
+        allItems.removeAll { $0.pid == pid }
+        refilter()
         wlog("switcher: quit pid \(pid)")
         afterRemoval()
     }
 
     private func afterRemoval() {
-        guard !items.isEmpty else { finish(commit: false); return }
-        selected = min(selected, items.count - 1)
-        panel?.reload(items, selected: selected)
+        guard !allItems.isEmpty else { finish(commit: false); return }
+        selected = max(0, min(selected, items.count - 1))
+        panel?.reload(items, selected: selected, query: query.isSearching ? query.text : nil)
     }
 
     /// 松手（或 Return、点一张、按数字）：切到选中的那扇；Esc：什么都不做。
@@ -231,6 +316,7 @@ final class WindowSwitcher {
         guard isOpen else { keys.isActive = false; return }
         isOpen = false
         keys.isActive = false
+        keys.isSearching = false
         showWork?.cancel(); showWork = nil
         panel?.orderOut(nil)
         panel = nil
@@ -299,16 +385,19 @@ final class WindowSwitcher {
 
     /// 窗口画面在后台截，截好一张补一张。
     private func loadPictures() {
-        let targets = items.enumerated().filter { $0.element.kind == .window }.map { ($0.offset, $0.element.id) }
+        let targets = allItems.enumerated().filter { $0.element.kind == .window }.map { ($0.offset, $0.element.id) }
         guard !targets.isEmpty else { return }
-        let generation = items.map(\.id)
+        let generation = allItems.map(\.id)
         DispatchQueue.global(qos: .userInitiated).async {
             let images = concurrentQuickPreviews(targets.map(\.1))
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { [weak self] in
-                    guard let self, self.isOpen, self.items.map(\.id) == generation else { return }
-                    for (index, id) in targets { self.items[index].image = images[id] }
-                    self.panel?.reload(self.items, selected: self.selected)
+                    guard let self, self.isOpen, self.allItems.map(\.id) == generation else { return }
+                    for (index, id) in targets { self.allItems[index].image = images[id] }
+                    let keep = self.items.indices.contains(self.selected) ? self.items[self.selected].id : nil
+                    self.refilter()
+                    self.selected = keep.flatMap { id in self.items.firstIndex { $0.id == id } } ?? 0
+                    self.panel?.reload(self.items, selected: self.selected, query: self.query.isSearching ? self.query.text : nil)
                 }
             }
         }
@@ -319,7 +408,7 @@ final class WindowSwitcher {
         let pointer = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
         guard let screen else { return }
-        let panel = WindowSwitcherPanel(items: items, selected: selected, screen: screen)
+        let panel = WindowSwitcherPanel(items: items, selected: selected, query: query.isSearching ? query.text : nil, screen: screen)
         panel.onPick = { [weak self] index in
             guard let self else { return }
             self.selected = index
@@ -346,11 +435,14 @@ final class WindowSwitcherPanel: NSPanel {
     var onHover: ((Int) -> Void)?
     private let host = NSVisualEffectView()
     private var cards: [WindowSwitcherCard] = []
+    private let queryLabel = NSTextField(labelWithString: "")
+    private let emptyLabel = NSTextField(labelWithString: "")
+    static let queryBar: CGFloat = 36
     private let screenFrame: NSRect
     static let card = NSSize(width: 208, height: 170)
     static let gap: CGFloat = 12
 
-    init(items: [WindowSwitcher.Item], selected: Int, screen: NSScreen) {
+    init(items: [WindowSwitcher.Item], selected: Int, query: String?, screen: NSScreen) {
         screenFrame = screen.visibleFrame
         super.init(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false
@@ -367,27 +459,49 @@ final class WindowSwitcherPanel: NSPanel {
         host.layer?.cornerCurve = .continuous
         host.layer?.masksToBounds = true
         contentView = host
-        reload(items, selected: selected)
+        reload(items, selected: selected, query: query)
     }
 
-    func reload(_ items: [WindowSwitcher.Item], selected: Int) {
+    func reload(_ items: [WindowSwitcher.Item], selected: Int, query: String?) {
         cards.forEach { $0.removeFromSuperview() }
+        queryLabel.removeFromSuperview()
+        emptyLabel.removeFromSuperview()
         let perRow = max(1, min(items.count, Int((screenFrame.width - 80) / (Self.card.width + Self.gap))))
         let rows = Int(ceil(Double(items.count) / Double(perRow)))
-        let width = CGFloat(perRow) * Self.card.width + CGFloat(perRow - 1) * Self.gap + 32
-        let height = CGFloat(rows) * Self.card.height + CGFloat(rows - 1) * Self.gap + 32
+        let top: CGFloat = query == nil ? 0 : Self.queryBar
+        let gridHeight = items.isEmpty ? 56 : CGFloat(rows) * Self.card.height + CGFloat(rows - 1) * Self.gap
+        let width = max(query == nil ? 0 : 360, CGFloat(perRow) * Self.card.width + CGFloat(perRow - 1) * Self.gap + 32)
+        let height = gridHeight + 32 + top
         setFrame(NSRect(x: screenFrame.midX - width / 2, y: screenFrame.midY - height / 2, width: width, height: height),
                  display: false)
         cards = items.enumerated().map { index, item in
             let row = index / perRow, column = index % perRow
             let card = WindowSwitcherCard(item: item, number: index < 9 ? index + 1 : nil)
             card.frame = NSRect(x: 16 + CGFloat(column) * (Self.card.width + Self.gap),
-                                y: height - 16 - CGFloat(row + 1) * Self.card.height - CGFloat(row) * Self.gap,
+                                y: height - 16 - top - CGFloat(row + 1) * Self.card.height - CGFloat(row) * Self.gap,
                                 width: Self.card.width, height: Self.card.height)
             card.onClick = { [weak self] in self?.onPick?(index) }
             card.onHover = { [weak self] in self?.onHover?(index) }
             host.addSubview(card)
             return card
+        }
+        if let query {
+            let placeholder = WSL10n.text("switcher.search.placeholder", zh: "输入以搜索窗口")
+            queryLabel.stringValue = "⌕  " + (query.isEmpty ? placeholder : query)
+            queryLabel.font = .systemFont(ofSize: 15, weight: .medium)
+            queryLabel.textColor = query.isEmpty ? .secondaryLabelColor : .labelColor
+            queryLabel.lineBreakMode = .byTruncatingHead
+            queryLabel.frame = NSRect(x: 20, y: height - 16 - 24, width: width - 40, height: 22)
+            queryLabel.setAccessibilityLabel(WSL10n.text("switcher.search.a11y", zh: "窗口搜索"))
+            host.addSubview(queryLabel)
+            if items.isEmpty {
+                emptyLabel.stringValue = WSL10n.text("switcher.search.noMatch", zh: "没有符合的窗口")
+                emptyLabel.font = .systemFont(ofSize: 13)
+                emptyLabel.textColor = .secondaryLabelColor
+                emptyLabel.alignment = .center
+                emptyLabel.frame = NSRect(x: 16, y: 16 + (gridHeight - 18) / 2, width: width - 32, height: 18)
+                host.addSubview(emptyLabel)
+            }
         }
         select(selected)
     }
