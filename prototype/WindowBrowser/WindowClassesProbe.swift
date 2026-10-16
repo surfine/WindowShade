@@ -16,7 +16,13 @@ enum WindowClassesProbe {
   /// 已知没解决、也不该硬判的类：无标题、子角色 AXUnknown、普通层的无边框条，和自绘窗口的 AX 表现分不开，
   /// 排除它会把真窗口也藏起来（误判比不判更糟）。真 Chrome 的弹出窗口实测是有标题的 AXStandardWindow，不是这一类。
   /// 探针照实打印它现在被列出，但不判失败；哪天有真 App 的证据能分开再收紧。
-  static let knownOpen: Set<String> = ["chrome-strip"]
+  /// 「word-search」（无标题、子角色 AXSystemDialog、普通层的搜索条）同理：只排除它的窄规则（d69547b）没有真 Word 的证据，
+  /// 刻意没合；多列一条只是多一张卡，少列会藏掉真对话框。
+  static let knownOpen: Set<String> = ["chrome-strip", "word-search"]
+  static let knownOpenReason: [String: String] = [
+    "chrome-strip": "an untitled AXUnknown bar cannot be told from custom-drawn windows",
+    "word-search": "an untitled AXSystemDialog bar; the rule that hides it waits for evidence from real Word",
+  ]
 }
 
 extension GlanceProbe {
@@ -93,7 +99,7 @@ extension GlanceProbe {
       let open = WindowClassesProbe.knownOpen.contains(name) && inBrowser
       let ok = (inBrowser == expected || open) && (!expected || counted)
       if !ok { failures += 1 }
-      let note = (open ? " (known open: an untitled AXUnknown bar cannot be told from custom-drawn windows)" : "")
+      let note = (open ? " (known open: \(WindowClassesProbe.knownOpenReason[name] ?? "no rule yet"))" : "")
         + (!expected && counted ? " (over-count, safe side)" : "")
       print("\(open ? "INFO" : ok ? "PASS" : "FAIL") window-classes \(name): expected listed=\(expected) counted=\(expected ? "yes" : "yes-or-no"); actual listed=\(inBrowser) counted=\(counted)\(note); \(detail)\(verdictInput)")
     }
