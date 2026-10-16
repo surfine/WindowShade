@@ -32,7 +32,7 @@ export const copy = {
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
     video: '看介绍视频',
-    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.16 · ZIP 9.83 MB'],
+    facts: ['macOS 15 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.16 · ZIP 9.83 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -215,7 +215,7 @@ export const copy = {
 
     faqTitle: '下载之前，你可能会问',
     faqs: [
-      ['我的 Mac 能用吗？', '要 macOS 14 以上，Apple Silicon，没有 Intel 版。收起、看一眼和手势都不用特别的硬件；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
+      ['我的 Mac 能用吗？', '要 macOS 15 以上，Apple Silicon，没有 Intel 版。收起、看一眼和手势都不用特别的硬件；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
       ['要什么权限？', '两项。辅助功能：找到、移动、恢复窗口。屏幕录制：拍下窗口画面做预览。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。'],
       ['看一眼和手势会动我的窗口吗？', '看一眼不会。手势只在你松手、而且小浮窗的进度条走满时才动窗口；往回拉就取消。'],
       ['窗口浏览会动我的窗口吗？', '不会，除非你按下卡片上的按钮。动手之前，它还会再确认一次“就是这一扇窗口”，确认不了就不做。'],
@@ -223,11 +223,11 @@ export const copy = {
       ['侧拉和置顶有什么不一样？', '置顶只是让窗口一直在最前面，位置不变。侧拉让窗口靠在屏幕边：要用时拉出来，不用时收到边外，换到别的桌面也拉得出来。'],
       ['我装了 Swish，会打架吗？', '不会。Swish 在运行时，标题栏上的手势交给它；卷帘条上的下拉照常。'],
       ['所有窗口都能收起来吗？', '普通窗口都可以。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。'],
-      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包还没公证，第一次打开如果被系统拦住，去“系统设置 → 隐私与安全性”点“仍要打开”。'],
+      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包已通过 Apple 公证。从 1.0.16 及以前升级的人，这一版要手动下载一次，装好后重新打开辅助功能和屏幕录制。'],
     ],
 
     endTitle: '下次窗口挤成一团，<br>先别急着关。',
-    endBody: 'macOS 14 及以上 · Apple Silicon · 免费，MIT 开源',
+    endBody: 'macOS 15 及以上 · Apple Silicon · 免费，MIT 开源',
     footer: '收起窗口，留下位置。一个从九十年代走来的小动作。',
   },
 
@@ -246,7 +246,7 @@ export const copy = {
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
     video: 'Watch the intro (in Chinese)',
-    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.16 · ZIP 9.83 MB'],
+    facts: ['macOS 15 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.16 · ZIP 9.83 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],
@@ -429,7 +429,7 @@ export const copy = {
 
     faqTitle: 'Before you download',
     faqs: [
-      ['Will it work on my Mac?', 'You need macOS 14 or later and Apple Silicon — there’s no Intel build. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
+      ['Will it work on my Mac?', 'You need macOS 15 or later and Apple Silicon — there’s no Intel build. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
       ['What permissions does it need?', 'Two. Accessibility: finding, moving and restoring windows. Screen Recording: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac.'],
       ['Do glances and gestures move my windows?', 'A glance never does. A gesture moves a window only when you let go with the panel’s track full; pull back to cancel.'],
       ['Can I use the notch without a notch?', 'Yes. On an external display there’s an invisible notch in the middle of the menu bar: it stays out of sight until a window is tucked into it, and flicking toward it works the same.'],
@@ -437,11 +437,11 @@ export const copy = {
       ['I use Swish. Will they clash?', 'No. While Swish is running, title-bar gestures are left to it; pulling down on a rolled-up bar still works.'],
       ['Does window browsing move my windows?', 'No — not unless you press a button on a card. Before it acts, it checks once more that the window is still the one you picked. If it can’t be sure, it does nothing.'],
       ['Does it work with every window?', 'With regular windows, yes. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use.'],
-      ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is not notarized yet, so if macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway.'],
+      ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is notarized by Apple. If you’re updating from 1.0.16 or earlier, download this one by hand, then reopen Accessibility and Screen Recording.'],
     ],
 
     endTitle: 'Next time windows pile up,<br>don’t close them just yet.',
-    endBody: 'macOS 14 or later · Apple Silicon · Free and MIT licensed',
+    endBody: 'macOS 15 or later · Apple Silicon · Free and MIT licensed',
     footer: 'Roll it up, keep its place. A small gesture, carried over from the ’90s.',
   },
 };

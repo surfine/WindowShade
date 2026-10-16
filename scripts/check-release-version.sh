@@ -7,7 +7,21 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 build=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" prototype/Info.plist)
 case "$build" in ''|*[!0-9]*) echo "FAIL release-version: CFBundleVersion「$build」不是正整数" >&2; exit 1;; esac
-shipped=$(grep -oE '<sparkle:version>[0-9]+' site/public/appcast.xml | grep -oE '[0-9]+$' | sort -n | tail -1 || true)
+# 占位条目（enclosure 的 url 以 TODO 开头，发布日才填）不算「已发过」。
+shipped=$(python3 -I - site/public/appcast.xml <<'PY'
+import sys, xml.etree.ElementTree as ET
+ns = {'s': 'http://www.andymatuschak.org/xml-namespaces/sparkle'}
+vs = []
+for it in ET.parse(sys.argv[1]).getroot().iter('item'):
+    enc = it.find('enclosure')
+    if enc is not None and (enc.get('url') or '').startswith('TODO'):
+        continue
+    v = (it.findtext('s:version', '', ns) or '').strip()
+    if v.isdigit():
+        vs.append(int(v))
+print(max(vs) if vs else '')
+PY
+)
 if [ -n "$shipped" ] && [ "$build" -le "$shipped" ]; then
   echo "FAIL release-version: CFBundleVersion=$build，appcast 里已发过 $shipped。先在 prototype/Info.plist 升 CFBundleVersion。" >&2
   exit 1

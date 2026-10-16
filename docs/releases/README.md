@@ -3,6 +3,12 @@
 本目录保存每个已发布版本的源码文本，GitHub release 正文由它生成：
 `gh release edit TAG --notes-file docs/releases/TAG.md`。
 
+## 候选（未发布）
+
+| Tag | 主题 |
+| --- | --- |
+| v1.0.17 | 第一个 Developer ID 公证版（macOS 15 起）；发布关见 [v1.0.17-release-gate.md](v1.0.17-release-gate.md)，说明草稿见 [v1.0.17.md](v1.0.17.md) |
+
 ## 已发布
 
 | Tag | 主题 |
