@@ -46,13 +46,66 @@ struct SettingsNavigationTests {
       precondition(settings.window?.subtitle == section.title,
                    "Explicit contextual navigation must still select the target pane")
     }
+    // 「手势」页（R16）：八条手势行只在这一页出现一次，每行有「手指」一行；
+    // 标题栏手势下的只读对照表展开后行变高。
+    do {
+      let gestureNames = ["标题栏手势", "双击标题栏收起窗口", "中键收起窗口", "收进刘海", "卷轴概览能收进刘海",
+                          "拖到窗口上并排", "拖标题栏换位置", "在 Dock 图标上两指上下滑"]
+      func labelsIn(_ section: WindowShadeSettingsSection) async -> [String] {
+        settings.select(section: section)
+        await drainLayout()
+        return descendants(root).compactMap { ($0 as? NSTextField)?.stringValue }
+      }
+      let onGesture = await labelsIn(.gesture)
+      for name in gestureNames {
+        precondition(onGesture.filter { $0 == name }.count == 1, "手势页应有且只有一行: \(name)")
+      }
+      // 八行各一行「手指」，加上对照表的列头（收着也在视图树里）。
+      precondition(onGesture.filter { $0 == "手指" }.count == gestureNames.count + 1,
+                   "每条手势行下面有一行「手指」")
+      for section in [WindowShadeSettingsSection.shade, .browser, .pointer] {
+        let texts = await labelsIn(section)
+        for name in gestureNames {
+          precondition(!texts.contains(name), "\(name) 已搬到手势页，不该还留在 \(section.title)")
+        }
+      }
+      let pointerTexts = await labelsIn(.pointer)
+      precondition(pointerTexts.contains("三指轻点是中键") && pointerTexts.contains("四指轻点打开看不见的窗口"),
+                   "没核对的两行留在鼠标与触控板页")
+      precondition(!onGesture.contains("三指轻点是中键") && !onGesture.contains("四指轻点打开看不见的窗口"),
+                   "没核对的两行不进手势页")
+      _ = await labelsIn(.gesture)
+      GestureTableDisclosure.setExpandedForDiagnostics(false)
+      settings.refreshSettings()
+      await drainLayout()
+      func tableRowHeight() -> CGFloat {
+        guard let title = descendants(root).compactMap({ $0 as? NSTextField }).first(where: { $0.stringValue == "标题栏手势" }),
+              let row = sequence(first: title as NSView, next: { $0.superview }).first(where: { $0 is WS2SettingsRow })
+        else { preconditionFailure("找不到标题栏手势这一行") }
+        row.layoutSubtreeIfNeeded()
+        return row.frame.height
+      }
+      let closedHeight = tableRowHeight()
+      guard let toggle = descendants(root).compactMap({ $0 as? NSButton }).first(where: { $0.title == "这个手势都会做什么" })
+      else { preconditionFailure("找不到对照表的展开按钮") }
+      toggle.performClick(nil)
+      await drainLayout()
+      precondition(tableRowHeight() > closedHeight + 40, "展开对照表后这一行要变高")
+      let opened = descendants(root).compactMap { ($0 as? NSTextField)?.stringValue }
+      for cell in ["往上滑", "往下滑", "往左 / 往右滑", "张开", "捏合", "卷帘条上往下拉"] {
+        precondition(opened.contains(cell), "对照表缺: \(cell)")
+      }
+      toggle.performClick(nil)
+      await drainLayout()
+      precondition(abs(tableRowHeight() - closedHeight) < 1, "合上后回到原高度")
+    }
     // 带说明文字、右侧有控件的行：多行说明不能贴边，也不能压到控件上。
     // 快捷键录制行在“快捷键”分页，窗口浏览页保留菜单开关与外观选项。
     let rowsBySection: [(WindowShadeSettingsSection, [String])] = [
       (.browser, ["在菜单里显示“选择窗口…”", "面板背景", "默认显示方式"]),
       (.shortcuts, ["整理卷帘条", "选择窗口…"]),
-      // 卷轴概览能收进刘海（stripOverviewNotch，默认关）。
-      (.shade, ["卷轴概览能收进刘海"]),
+      // 卷轴概览能收进刘海（stripOverviewNotch，默认关）现在在「手势」页。
+      (.gesture, ["卷轴概览能收进刘海", "标题栏手势", "中键收起窗口"]),
       // 隐私页（原权限与启动）没有“标签 + 右侧控件”的行，这里只为出浅深色截图。
       (.permissions, []),
     ]
@@ -130,7 +183,7 @@ struct SettingsNavigationTests {
         let rect = content.convert(content.bounds, to: row)
         let controlRect = control.convert(control.bounds, to: row)
         precondition(rect.minY >= 7.5 && row.bounds.maxY - rect.maxY >= 7.5,
-                     "Multiline labels need vertical clearance: \(name)")
+                     "Multiline labels need vertical clearance: \(name) content=\(rect) row=\(row.bounds) \(appearance.rawValue)")
         precondition(controlRect.minX - rect.maxX >= 13.5,
                      "Labels must not overlap controls: \(name)")
       }
