@@ -27124,19 +27124,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code session ids, folder names, tool names in use and events; command contents and conversations are not read"
+            "value": "Claude Code session ids, folder names, tool names in use and events, and which terminal it runs in (terminal app name, pane id, terminal device name) so one click can jump back to that terminal; command contents and conversations are not read"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code 的会话编号、所在文件夹的名字、正在用的工具名和事件；不读命令内容和对话"
+            "value": "Claude Code 的会话编号、所在文件夹的名字、正在用的工具名和事件，以及它跑在哪个终端里（终端 App 名、窗格编号、终端设备名），用来一键跳回那个终端；不读命令内容和对话"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "Claude Code 的工作階段編號、所在資料夾的名字、正在用的工具名和事件；不讀命令內容和對話"
+            "value": "Claude Code 的工作階段編號、所在資料夾的名字、正在用的工具名和事件，以及它跑在哪個終端機裡（終端機 App 名、窗格編號、終端機裝置名），用來一鍵跳回那個終端機；不讀命令內容和對話"
           }
         }
       }
