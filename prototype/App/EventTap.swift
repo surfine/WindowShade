@@ -85,6 +85,8 @@ extension AppDelegate {
                         log: "hotkey: registration failed "
                             + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value.status)" }
                                 .joined(separator: ","))
+            // R8：占着它们的是不是一个已知的窗口管理工具；是的话另外提醒一次。
+            remindAboutWindowToolIfNeeded(takenShortcutCount: taken.count)
         }
         registerWindowBrowserHotKey()
     }
@@ -125,6 +127,7 @@ extension AppDelegate {
                             : WSL10n.text("notice.hotkey.registerFailed", zh: "快捷键 %@ 注册失败", name),
                             kind: .problem,
                         log: "window-browser: hotkey registration failed status=\(status)")
+            if status != OSStatus(eventHotKeyExistsErr) { remindAboutWindowToolIfNeeded(takenShortcutCount: 1) }
             return false
         }
         windowBrowserHotKeyRef = ref
@@ -140,6 +143,8 @@ extension AppDelegate {
         }
     }
     func handleHotKey(id: UInt32) {
+        // R17：用户在用快捷键，之后留意安全输入有没有被别的 App 打开。
+        MainActor.assumeIsolated { SecureInputWatch.shared.shortcutUsed() }
         if id == GlobalShortcut.countdownTimer.hotKeyID {
             MainActor.assumeIsolated { notch.activities.countdown.openPicker() }
             return
