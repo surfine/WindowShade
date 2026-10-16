@@ -29,6 +29,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     private static let countsIndicatorFrames = CommandLine.arguments.contains("--capsule-color")
     /// 只给探针用：设了路径就把下一帧（修胶囊之前）整帧存成 PNG，存一张就清掉，用来亲眼看系统画没画胶囊。
     static let probeRawFrameURL = Mutex<URL?>(nil)
+    /// 只给探针用：等着存图时遇到的「整帧全 0」的完整帧数（分清「没权限被遮成空白」还是「偶尔一帧空」）。
+    static let probeEmptyFrames = Mutex(0)
 
     private static func isCompleteFrame(_ sampleBuffer: CMSampleBuffer) -> Bool {
         guard let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false)
@@ -37,20 +39,40 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         return SCFrameStatus(rawValue: raw) == .complete
     }
 
-    private static func saveRawFrame(_ sampleBuffer: CMSampleBuffer, to url: URL) {
+    /// 返回 false：这帧整帧全 0，没存（留给下一帧）。
+    @discardableResult
+    private static func saveRawFrame(_ sampleBuffer: CMSampleBuffer, to url: URL) -> Bool {
         guard let buffer = sampleBuffer.imageBuffer,
-              CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return }
+              CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return true }
         defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
         let space = CVImageBufferGetColorSpace(buffer)?.takeUnretainedValue() ?? CGColorSpace(name: CGColorSpace.sRGB)!
-        guard let base = CVPixelBufferGetBaseAddress(buffer),
-              let context = CGContext(data: base, width: CVPixelBufferGetWidth(buffer), height: CVPixelBufferGetHeight(buffer),
-                                      bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), space: space,
-                                      bitmapInfo: CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue),
+        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return true }
+        // 先量一下这帧本身：alpha 与颜色的最大值（分清「帧是空的」还是「只是 alpha 为 0」）。
+        let width = CVPixelBufferGetWidth(buffer), height = CVPixelBufferGetHeight(buffer)
+        let rowBytes = CVPixelBufferGetBytesPerRow(buffer)
+        let bytes = base.assumingMemoryBound(to: UInt8.self)
+        var maxAlpha: UInt8 = 0, maxColor: UInt8 = 0
+        for y in stride(from: 0, to: height, by: 4) {
+            for x in stride(from: 0, to: width, by: 4) {
+                let p = bytes + y * rowBytes + x * 4
+                maxAlpha = max(maxAlpha, p[3]); maxColor = max(maxColor, p[0], p[1], p[2])
+            }
+        }
+        guard maxAlpha > 0 || maxColor > 0 else {
+            probeEmptyFrames.withLock { $0 += 1 }
+            return false
+        }
+        print("INFO capsule-color: raw frame \(width)x\(height) max alpha \(maxAlpha) max colour \(maxColor) format \(CVPixelBufferGetPixelFormatType(buffer))")
+        // 存图时不看 alpha（noneSkipFirst）：只要颜色在，就看得见画面。
+        guard let context = CGContext(data: base, width: width, height: height,
+                                      bitsPerComponent: 8, bytesPerRow: rowBytes, space: space,
+                                      bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue),
               let full = context.makeImage(),
-              let destination = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else { return }
+              let destination = CGImageDestinationCreateWithURL(url as CFURL, "public.png" as CFString, 1, nil) else { return true }
         // 整帧存：缩放后的内容在帧里的位置不固定，裁左上角会裁到留白（第一次就是一片白）。
         CGImageDestinationAddImage(destination, full, nil)
         CGImageDestinationFinalize(destination)
+        return true
     }
 
     // 菜单/面板缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时
@@ -457,8 +479,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         // 这扇窗正被我们的流捕获，系统在它的红绿灯处画了录屏胶囊：交给画面之前修掉。
         // 探针只看「完整」帧：SCK 会穿插送「画面没变」「空白」状态的帧，那些没有内容（第一次存下来的整帧 alpha 全是 0）。
         let probeComplete = Self.countsIndicatorFrames && Self.isCompleteFrame(sampleBuffer)
-        if probeComplete, let url = Self.probeRawFrameURL.withLock({ url in defer { url = nil }; return url }) {
-            Self.saveRawFrame(sampleBuffer, to: url)
+        if probeComplete, let url = Self.probeRawFrameURL.withLock({ $0 }), Self.saveRawFrame(sampleBuffer, to: url) {
+            Self.probeRawFrameURL.withLock { $0 = nil }
         }
         let cleaned = CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate },
                                                     tracker: indicatorTracker)
