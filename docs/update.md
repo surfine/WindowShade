@@ -553,7 +553,7 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
 4. **发布关** `scripts/release-gate.sh dist/WindowShade-v<版本>.zip`。检查的是要发出去的这个 zip，不是构建目录；有一项不过就停下：
    1. 用 `gh release download` 取上一版发布包，读出它的 DR。
    2. 把新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
-   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="=<上一版 DR>"` 通过。只有加了 `--cert-change` 才允许不同，这时这一版必须走“换证书的一版”。
+   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。只有加了 `--cert-change` 才允许不同，这时这一版必须走“换证书的一版”。
    4. `--self-check` 返回 0，输出里有这次的 build 号。
    5. `CFBundleVersion` 大于上一版。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（先补齐成三段再比：`14.0` 和 `14.0.0` 相等）。系统版本不够的话 App 根本打不开，我们的代码一行都跑不到。
