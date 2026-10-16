@@ -84,6 +84,7 @@ struct InputHookTests {
         driver.openFailed()
         expect(driver.phase == .stoppedBySystem && driver.plan(wanted: true, isOpen: false) == .keep,
                "a failed open stays stopped until something changes")
+        expect(driver.waitingForAccessibility, "a failed open is reported as waiting for accessibility")
         expect(driver.accessibilityGranted() && driver.phase == .absent, "granting accessibility clears a failed open")
         expect(driver.plan(wanted: true, isOpen: false) == .open && driver.installs == 2 && driver.removals == 1,
                "after the grant the switch being on installs again")
@@ -92,6 +93,7 @@ struct InputHookTests {
         _ = sys.plan(wanted: true, isOpen: false)
         _ = sys.systemDisabled(isOpen: true)
         expect(!sys.accessibilityGranted() && sys.phase == .stoppedBySystem, "a hook the system stopped is not retried")
+        expect(!sys.waitingForAccessibility, "a system stop is not reported as waiting for accessibility")
         var off = HookDriver()
         expect(!off.accessibilityGranted() && off.phase == .absent, "a disabled hook is not touched by the grant")
     }

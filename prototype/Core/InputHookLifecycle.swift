@@ -85,6 +85,8 @@ struct HookDriver: Equatable, Sendable {
     mutating func openFailed() { life.openFailed() }
 
     mutating func accessibilityGranted() -> Bool { life.accessibilityGranted() }
+    /// 停住是因为端口没创建出来（缺辅助功能），不是被系统停掉。
+    var waitingForAccessibility: Bool { life.phase == .stoppedBySystem && life.openFailedPending }
 
     mutating func systemDisabled(isOpen: Bool) -> HookAction {
         life.systemDisabled()

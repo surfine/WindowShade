@@ -732,6 +732,7 @@
   - 授权晚于启动也能接上的：标题栏点击 tap（`WindowShade.swift` 的 `setupEventTapWhenTrusted`，2 秒轮询）、捏合 tap（3 秒重试）、刘海音量亮度键（听 `com.apple.accessibility.api`）、窗口浏览（自带 `lastAccessibility`）、全局输入过滤（建不起来就退回 NSEvent 监听）、Dock 点击（每次事件现查）。
   - **查到一处「授权后不恢复」**：`switcher.applySetting()`（⌥Tab 窗口切换，默认开）启动时没授权就当作「关」，`missionControlKeys.applySetting()`（默认开）tap 建不起来就放弃；两者此前只在改设置时才重试，所以首次启动「弹窗开着、用户后点允许」之后要重开 App 才生效。已改：轮询装上标题栏 tap 的那一刻、以及 R2 体检发现「权限回来了」时，调用 `reinstallAccessibilityHooks()` 把这两个再应用一遍（都幂等）。不涉及文案。
   - 没动：滚动／中键 tap 在 `openFailed` 后停住，但它们默认关，首次启动用不到；留作后续。
+  - **2026-10-17 补**：中键折叠行在「端口没创建出来」而停住时，不再说「被系统停掉了」，改说「需要先允许辅助功能」（`settings.input.middleFold.needAccessibility`，三语；`HookDriver.waitingForAccessibility`）。滚动行的同类文案未动。R8 的 Spectacle／AeroSpace 包标识已对上游核过，无需改。
   - **not_run**：真正的全新机器首次启动（点弹窗、拒绝、中途允许）。以上是读代码的结论，不是运行证据。
 - **改动**：全新机器第一次启动，逐个点权限弹窗，看会不会崩。
 - **验收**：不崩；拒绝后也能继续（见 R2）。
