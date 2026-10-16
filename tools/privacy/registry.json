@@ -524,7 +524,7 @@
    "label": "编程助手的事件",
    "sensitivity": "private",
    "group": "你同意后才读的",
-   "reads": "Claude Code 的会话编号、所在文件夹的名字、正在用的工具名和事件；不读命令内容和对话",
+   "reads": "Claude Code 的会话编号、所在文件夹的名字、正在用的工具名和事件，以及它跑在哪个终端里（终端 App 名、窗格编号、终端设备名），用来一键跳回那个终端；不读命令内容和对话",
    "purpose": "在刘海里看 Claude Code 在跑还是在等你",
    "destination": "只经这台 Mac 上的本机连接收，不联网；只在内存里，关掉就忘",
    "activation": "打开“编程会话”、把配置粘贴进 Claude Code 之后；默认关",
@@ -544,7 +544,7 @@
     "toggle": "Coding sessions (in Conductor's settings); turning it off stops receiving and drops the local connection",
     "activation": "After turning on Coding sessions and pasting the configuration into Claude Code; off by default",
     "combined": "Coding assistant events show which project you're on and when you write code.",
-    "reads": "Claude Code session ids, folder names, tool names in use and events; command contents and conversations are not read"
+    "reads": "Claude Code session ids, folder names, tool names in use and events, and which terminal it runs in (app name, pane number, terminal device name) so one click can jump back to it; command contents and conversations are not read"
    }
   },
   {

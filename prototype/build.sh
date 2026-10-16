@@ -189,7 +189,7 @@ GUARD_FRAMEWORKS=(-framework AppKit -framework Security -framework ServiceManage
 mkdir -p "$WORK/ws2-hook"
 cp ../tools/ws2-hook/main.swift "$WORK/ws2-hook/main.swift"
 HOOK_SOURCES=("$WORK/Support/WS2AtomicConfiguration.swift" "$WORK/Support/WS2HookConfiguration.swift"
-  "$WORK/Support/WS2UnixSocket.swift" "$WORK/Support/WS2BoundedInput.swift" "$WORK/ws2-hook/main.swift")
+  "$WORK/Support/WS2UnixSocket.swift" "$WORK/Support/WS2BoundedInput.swift" "$WORK/Core/TerminalIdentity.swift" "$WORK/ws2-hook/main.swift")
 
 # Original C process supervisor is compiled from the SAME isolated snapshot as Swift.
 mkdir -p "$WORK/Native"

@@ -24,10 +24,12 @@ struct WS2HookEvent: Equatable, Sendable {
     /// cwd 原样，只用来判断同一会话是否换了目录；没有时为空。
     let projectPath: String
     let tool: String?
+    /// hook 子进程所在的终端（A1）。没报、或报得不合格的整个事件都拒，所以有值就是合格的。
+    var terminal: TerminalIdentity? = nil
 
     var projectName: String { Self.projectName(projectPath) }
 
-    static let allowedKeys: Set<String> = ["version", "provider", "event", "sessionID", "cwd", "tool_name", "tool_input"]
+    static let allowedKeys: Set<String> = ["version", "provider", "event", "sessionID", "cwd", "tool_name", "tool_input", "terminal"]
 
     /// cwd 的最后一段，去掉控制字符，最多 80 个字。
     static func projectName(_ path: String) -> String {
@@ -64,7 +66,12 @@ struct WS2HookEvent: Equatable, Sendable {
             guard let value = raw as? String, plain(value, limit: 128) else { return nil }
             tool = value
         }
-        return WS2HookEvent(kind: kind, sessionID: session, projectPath: path, tool: tool)
+        var terminal: TerminalIdentity?
+        if let raw = body["terminal"] {
+            guard let value = TerminalIdentity.parse(wire: raw) else { return nil }
+            terminal = value
+        }
+        return WS2HookEvent(kind: kind, sessionID: session, projectPath: path, tool: tool, terminal: terminal)
     }
 
     /// 一行应答（不含换行）。none 是“{}”：hook 什么也不决定，Claude Code 照常自己问。
@@ -95,6 +102,8 @@ struct WS2HookSessions: Sendable {
     private(set) var store = AgentSessions()
     private var meta: [String: Meta] = [:]
     private var waiting: [String: WS2.ApprovalKey] = [:]
+    /// 会话 → 它所在的终端（最近一次报的）。只在内存里；会话被挤掉时一起忘。
+    private var terminals: [String: TerminalIdentity] = [:]
     private var sequence: UInt64 = 0
     private var epochs: UInt64 = 0
 
@@ -108,6 +117,8 @@ struct WS2HookSessions: Sendable {
         guard let id = meta[sessionID]?.projectID, id.hasPrefix("/") else { return "" }
         return id
     }
+    /// 会话所在的终端身份（hook 报过才有）。“过去”按它认 App、切 tmux 窗格。
+    func terminal(of sessionID: String) -> TerminalIdentity? { terminals[sessionID] }
     /// 等你的那一次要执行的东西（工具名）；不在等或没有工具名是空。
     func waitingSummary(of sessionID: String) -> String {
         guard let key = waiting[sessionID] else { return "" }
@@ -144,6 +155,7 @@ struct WS2HookSessions: Sendable {
     private mutating func apply(_ event: WS2HookEvent, at now: WS2.Instant) {
         guard sequence < UInt64.max - 16, epochs < UInt64.max else { return }
         let key = WS2.SessionKey(provider: .claudeCode, id: event.sessionID)
+        if let terminal = event.terminal { terminals[event.sessionID] = terminal }
         let known = meta[event.sessionID]
         let projectID = event.projectPath.isEmpty ? (known?.projectID ?? "claude-code") : event.projectPath
         let current: Meta
@@ -157,7 +169,7 @@ struct WS2HookSessions: Sendable {
             waiting.removeValue(forKey: event.sessionID)
             meta[event.sessionID] = current
             send(context(key, current), .opened(.observed), at: now)
-            guard store.sessions[key] != nil else { meta.removeValue(forKey: event.sessionID); return }
+            guard store.sessions[key] != nil else { meta.removeValue(forKey: event.sessionID); terminals.removeValue(forKey: event.sessionID); return }
         }
         let context = context(key, current)
         // 新事件说明上一次的“等你”已经在终端里处理掉了：交回给助手自己，不替它决定。
@@ -214,7 +226,7 @@ struct WS2HookSessions: Sendable {
             }
             .prefix(Self.keepOnCompact)
         store = AgentSessions()
-        var keptMeta: [String: Meta] = [:], keptWaiting: [String: WS2.ApprovalKey] = [:]
+        var keptMeta: [String: Meta] = [:], keptTerminals: [String: TerminalIdentity] = [:], keptWaiting: [String: WS2.ApprovalKey] = [:]
         for session in keep {
             let id = session.context.session.id
             guard let entry = meta[id] else { continue }
@@ -234,8 +246,9 @@ struct WS2HookSessions: Sendable {
             default: break
             }
             keptMeta[id] = entry
+            keptTerminals[id] = terminals[id]
         }
-        meta = keptMeta; waiting = keptWaiting
+        meta = keptMeta; waiting = keptWaiting; terminals = keptTerminals
     }
 }
 
