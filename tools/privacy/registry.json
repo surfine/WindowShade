@@ -4106,6 +4106,20 @@
    "signal": "input-scroll"
   },
   {
+   "path": "prototype/App/SecureInputNotice.swift",
+   "line": 47,
+   "symbol": "CGSessionCopyCurrentDictionary",
+   "source": "let state = CGSessionCopyCurrentDictionary() as? [String: Any]",
+   "signal": "lock-state"
+  },
+  {
+   "path": "prototype/App/SecureInputNotice.swift",
+   "line": 60,
+   "symbol": "UserDefaults",
+   "source": "let defaults = UserDefaults.standard",
+   "signal": "settings"
+  },
+  {
    "path": "prototype/App/ShadeController.swift",
    "line": 251,
    "symbol": "UserDefaults",

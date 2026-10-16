@@ -23208,6 +23208,52 @@
         }
       }
     },
+    "notice.secureInput.named": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is protecting keyboard input, so shortcuts are paused"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 正在保护键盘输入，快捷键暂时用不了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 正在保護鍵盤輸入，快速鍵暫時無法使用"
+          }
+        }
+      }
+    },
+    "notice.secureInput.unnamed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An app is protecting keyboard input, so shortcuts are paused"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有 App 正在保护键盘输入，快捷键暂时用不了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有 App 正在保護鍵盤輸入，快速鍵暫時無法使用"
+          }
+        }
+      }
+    },
     "notice.shade.cannotRead": {
       "extractionState": "manual",
       "localizations": {
@@ -23526,6 +23572,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "暫時不能側拉這個視窗，請再試一次"
+          }
+        }
+      }
+    },
+    "notice.windowTool.conflict": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ also manages windows, so shortcuts can clash. Turn off the duplicates in its settings or WindowShade's."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也在管窗口，快捷键可能互相抢；在它或 WindowShade 的设置里关掉重复的即可"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也在管視窗，快速鍵可能互相搶；在它或 WindowShade 的設定裡關掉重複的即可"
           }
         }
       }
