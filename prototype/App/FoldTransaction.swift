@@ -317,6 +317,7 @@ extension AppDelegate {
                 if self.forwardedTrafficActionSucceeded(state: state, id: id,
                                                         win: latest, action: action) {
                     wlog("traffic: \(action) AXPress verified id=\(id) attr=\(attr) attempt=\(index)")
+                    if action == .close { self.quitAfterForwardedCloseIfNeeded(pid: state.pid, id: id) }
                     return
                 }
                 retryOrFallback(index, note: "axpress-no-effect")
@@ -329,6 +330,7 @@ extension AppDelegate {
                 if self.forwardedTrafficActionSucceeded(state: state, id: id,
                                                         win: latest, action: action) {
                     wlog("traffic: \(action) pointer-click verified id=\(id) attr=\(attr) attempt=\(index)")
+                    if action == .close { self.quitAfterForwardedCloseIfNeeded(pid: state.pid, id: id) }
                     return
                 }
                 if pressAXButton(latest, attr) {
@@ -384,6 +386,17 @@ extension AppDelegate {
         }
 
         attempt(0)
+    }
+
+    // 规格 R21：单窗口工具（计算器、App Store）的窗口关掉后若再无用户窗口，就请它正常退出。
+    // terminate() 会让 App 自己决定要不要问保存，不强杀；聊天类与其余 App 不会走到这里。
+    func quitAfterForwardedCloseIfNeeded(pid: pid_t, id: CGWindowID) {
+        let bundle = appBundleID(pid: pid)
+        let remaining = appCurrentUserWindowCount(pid)
+        guard CloseQuitPolicy.shouldQuit(bundleID: bundle, remainingUserWindows: remaining) else { return }
+        guard let app = NSRunningApplication(processIdentifier: pid) else { return }
+        wlog("traffic: close quit app bundle=\(bundle) id=\(id) remaining=\(remaining)")
+        app.terminate()
     }
 
     func showRealWindowManagementPopover(_ id: CGWindowID) {
