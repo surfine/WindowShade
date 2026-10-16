@@ -38,6 +38,8 @@ final class SecureInputWatch {
             return
         }
         guard gate.sample(secure: IsSecureEventInputEnabled(), at: now) else { return }
+        // 锁屏时登录窗口会开安全输入：那时刘海也看不见，不说。
+        guard !Self.screenLocked() else { return }
         let owner = Self.secureInputOwnerName()
         guard toldOwners.insert(owner ?? "").inserted else { return }
         let message = owner.map { WSL10n.text("notice.secureInput.named", zh: "%@ 正在保护键盘输入，快捷键暂时用不了", $0) }
@@ -45,11 +47,18 @@ final class SecureInputWatch {
         appDelegate?.quietNotice(message, kind: .info, log: "secure-input: shortcuts paused owner=\(owner ?? "unknown")")
     }
 
+    private static func screenLocked() -> Bool {
+        let state = CGSessionCopyCurrentDictionary() as? [String: Any]
+        return (state?["CGSSessionScreenIsLocked"] as? Bool) == true
+    }
+
     /// 谁开的安全输入：会话字典里记着它的进程号，读不到就不点名。
     private static func secureInputOwnerName() -> String? {
         let state = CGSessionCopyCurrentDictionary() as? [String: Any]
         guard let pid = state?["kCGSSessionSecureInputPID"] as? Int, pid > 0 else { return nil }
-        let name = NSRunningApplication(processIdentifier: pid_t(pid))?.localizedName
+        let app = NSRunningApplication(processIdentifier: pid_t(pid))
+        guard app?.bundleIdentifier != "com.apple.loginwindow" else { return nil }
+        let name = app?.localizedName
         return (name?.isEmpty ?? true) ? nil : name
     }
 }
