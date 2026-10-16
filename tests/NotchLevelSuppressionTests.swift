@@ -158,6 +158,9 @@ import Foundation
         expect(decision { _ in }, .intercept, .us, .notchOnly, .ready, "default unchanged")
         // 总开关关着比它先判，原因仍是 settingOff。
         expect(decision { $0.settingEnabled = false; $0.useSystemPopups = true }, .passThrough, .system, .systemOnly, .settingOff, "setting off first")
+        // 锁屏、调度中心、别的 App 在管仍然先赢：开关开着也不让刘海画出来。
+        expect(decision { $0.locked = true; $0.useSystemPopups = true }, .passThrough, .system, .systemOnly, .locked, "locked before system popups")
+        expect(decision { $0.missionControl = true; $0.useSystemPopups = true }, .passThrough, .system, .systemOnly, .missionControl, "mission control before system popups")
     }
 
     // 几条同时成立时谁先赢。
