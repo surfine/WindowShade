@@ -1074,7 +1074,7 @@
 | **V4** | **在装着 Rectangle 的机器上点一次「换过来」** | 现在 90 : Rectangle 90 **同分**，而「没在装着 Rectangle 的 Mac 上点过一次」 | 点过一次，动作对得上；这一行才可能拉开 |
 | **V5** | **真三指 / 真触控板**（甩一下、卷轴跟手） | scorecard「真三指没人上手试过」「真触控板没人试」 | 拿真手指跑 |
 | **V6** | **Magic Mouse / 罗技滚轮** | scorecard「Magic Mouse、罗技滚轮没人上手试过」 | 各跑一遍 |
-| **V7** | **侧拉的像素级比对** | 需要 iPadOS 27 模拟器（约 8 GB，**待 Aaron 同意下载**） | 比对完成或明确记 not_run |
+| **V7** | **部分（2026-10-17）**：模拟器已下载并能起；确认 Slide Over 只在设置「全萤幕 App」模式下有、Dock 图标拖到边缘进入，侧拉一侧常量已查实；**iPadOS 一侧像素测量 not_run**（机器负载约 400，拖拽手势注入失败），复测办法与并排表见 [v7-slide-over-compare.md](v7-slide-over-compare.md) ｜ **侧拉的像素级比对** | 需要 iPadOS 27 模拟器（已就绪：WS-V7-iPadPro11） | 比对完成或明确记 not_run |
 | **V8** | **DockDoor 那 12 条场景上机**（窗口浏览，**唯一落后的一行**） | [competitive-analysis.md](competitive-analysis.md):33 已列，未上机 | 逐条跑过 |
 | **V9** | **部分（2026-10-16）**：「接着两块」那一类——本机内建屏 ＋ Studio Display，`--second-display`（签名构建）把临时窗挪到 Studio Display 收起：卷帘条落在同一块屏、收起记下的是那块屏、展开后窗口回到那块屏，三项 PASS。插拔、改分辨率、两块同型号要真手或另一块屏，待 Aaron。原文：**多显示器矩阵**：接一块／拔掉／改分辨率／**两块同型号** | WindowMizer 三条（crash on display change、wrong monitor's snapshot、**monitors share the same size and resolution**）；四家都用 UUID | 四类各一条 |
 | **V10** | **台前调度**（与 R19 配套） | 见 R19 | 五类各一条 |
