@@ -6,6 +6,7 @@
 
 import Foundation
 import CoreGraphics
+import Synchronization
 
 // MARK: - 身份
 
@@ -603,74 +604,72 @@ struct WindowBrowserListState {
 // MARK: - 身份分配器
 
 /// 本进程内部的身份代数。纯逻辑，便于 fake 测试；不访问任何系统对象。
-final class WindowIdentityAllocator {
-    private let lock = NSLock()
-    private var applicationInstances: [pid_t: (bundleIdentifier: String, key: ApplicationInstanceKey)] = [:]
-    private var nextApplicationGeneration: UInt64 = 1
-    private var windowGenerations: [ApplicationInstanceKey: [CGWindowID: UInt64]] = [:]
-    private var nextWindowGeneration: UInt64 = 1
+final class WindowIdentityAllocator: Sendable {
+    private struct State {
+        var applicationInstances: [pid_t: (bundleIdentifier: String, key: ApplicationInstanceKey)] = [:]
+        var nextApplicationGeneration: UInt64 = 1
+        var windowGenerations: [ApplicationInstanceKey: [CGWindowID: UInt64]] = [:]
+        var nextWindowGeneration: UInt64 = 1
+    }
+    private let state = Mutex(State())
 
     func applicationInstance(pid: pid_t, bundleIdentifier: String) -> ApplicationInstanceKey {
-        lock.lock()
-        defer { lock.unlock() }
-        if let existing = applicationInstances[pid] {
-            // 元数据缺失（bundle ID 为空）时不要为同一个 PID 造出第二个应用实例；
-            // 后到的可靠 bundle ID 只把现有实例补齐。
-            if existing.bundleIdentifier == bundleIdentifier
-                || bundleIdentifier.isEmpty
-                || existing.bundleIdentifier.isEmpty {
-                if existing.bundleIdentifier.isEmpty, !bundleIdentifier.isEmpty {
-                    applicationInstances[pid] = (bundleIdentifier, existing.key)
+        state.withLock { state in
+            if let existing = state.applicationInstances[pid] {
+                // 元数据缺失（bundle ID 为空）时不要为同一个 PID 造出第二个应用实例；
+                // 后到的可靠 bundle ID 只把现有实例补齐。
+                if existing.bundleIdentifier == bundleIdentifier
+                    || bundleIdentifier.isEmpty
+                    || existing.bundleIdentifier.isEmpty {
+                    if existing.bundleIdentifier.isEmpty, !bundleIdentifier.isEmpty {
+                        state.applicationInstances[pid] = (bundleIdentifier, existing.key)
+                    }
+                    return existing.key
                 }
-                return existing.key
             }
+            let key = ApplicationInstanceKey(pid: pid, generation: state.nextApplicationGeneration)
+            state.nextApplicationGeneration &+= 1
+            state.applicationInstances[pid] = (bundleIdentifier, key)
+            return key
         }
-        let key = ApplicationInstanceKey(pid: pid, generation: nextApplicationGeneration)
-        nextApplicationGeneration &+= 1
-        applicationInstances[pid] = (bundleIdentifier, key)
-        return key
     }
 
     /// 应用终止：同一 PID 再次出现时分配新的应用实例。
     func noteApplicationTerminated(pid: pid_t) {
-        lock.lock()
-        if let existing = applicationInstances.removeValue(forKey: pid) {
-            windowGenerations.removeValue(forKey: existing.key)
+        state.withLock { state in
+            if let existing = state.applicationInstances.removeValue(forKey: pid) {
+                state.windowGenerations.removeValue(forKey: existing.key)
+            }
         }
-        lock.unlock()
     }
 
     func windowKey(pid: pid_t, bundleIdentifier: String,
                    originalWindowID: CGWindowID) -> WindowKey {
         let application = applicationInstance(pid: pid, bundleIdentifier: bundleIdentifier)
-        lock.lock()
-        defer { lock.unlock() }
-        if let existing = windowGenerations[application]?[originalWindowID] {
+        return state.withLock { state in
+            if let existing = state.windowGenerations[application]?[originalWindowID] {
+                return WindowKey(application: application,
+                                 originalWindowID: originalWindowID,
+                                 windowGeneration: existing)
+            }
+            let generation = state.nextWindowGeneration
+            state.nextWindowGeneration &+= 1
+            state.windowGenerations[application, default: [:]][originalWindowID] = generation
             return WindowKey(application: application,
                              originalWindowID: originalWindowID,
-                             windowGeneration: existing)
+                             windowGeneration: generation)
         }
-        let generation = nextWindowGeneration
-        nextWindowGeneration &+= 1
-        windowGenerations[application, default: [:]][originalWindowID] = generation
-        return WindowKey(application: application,
-                         originalWindowID: originalWindowID,
-                         windowGeneration: generation)
     }
 
     /// 确证窗口销毁后才调用。同一数字 ID 再次出现会得到新的窗口代数，
     /// 旧图像与旧 AX 引用都不能被新窗口复用。
     func confirmWindowDestroyed(_ key: WindowKey) {
-        lock.lock()
-        windowGenerations[key.application]?.removeValue(forKey: key.originalWindowID)
-        lock.unlock()
+        state.withLock { _ = $0.windowGenerations[key.application]?.removeValue(forKey: key.originalWindowID) }
     }
 
     func confirmWindowDestroyed(pid: pid_t, bundleIdentifier: String,
                                 originalWindowID: CGWindowID) {
-        lock.lock()
-        let application = applicationInstances[pid]?.key
-        lock.unlock()
+        let application = state.withLock { $0.applicationInstances[pid]?.key }
         guard let application else { return }
         let key = WindowKey(application: application,
                             originalWindowID: originalWindowID,
@@ -679,15 +678,11 @@ final class WindowIdentityAllocator {
     }
 
     func isCurrent(_ key: WindowKey) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return windowGenerations[key.application]?[key.originalWindowID] == key.windowGeneration
+        state.withLock { $0.windowGenerations[key.application]?[key.originalWindowID] == key.windowGeneration }
     }
 
     /// 仅用于测试与目录清理统计。
     func knownApplicationInstance(pid: pid_t) -> ApplicationInstanceKey? {
-        lock.lock()
-        defer { lock.unlock() }
-        return applicationInstances[pid]?.key
+        state.withLock { $0.applicationInstances[pid]?.key }
     }
 }

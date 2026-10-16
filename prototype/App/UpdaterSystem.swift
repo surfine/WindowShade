@@ -9,6 +9,7 @@ import Darwin
 import Foundation
 import Security
 import ServiceManagement
+import Synchronization
 
 // MARK: - 包信息
 
@@ -188,11 +189,10 @@ enum UpdateFiles {
                          output: collected.text, timedOut: timedOut)
     }
 
-    private final class OutputBuffer: @unchecked Sendable {
-        private var data = Data()
-        private let lock = NSLock()
-        func append(_ chunk: Data) { lock.lock(); data.append(chunk); lock.unlock() }
-        var text: String { lock.lock(); defer { lock.unlock() }; return String(decoding: data, as: UTF8.self) }
+    private final class OutputBuffer: Sendable {
+        private let data = Mutex(Data())
+        func append(_ chunk: Data) { data.withLock { $0.append(chunk) } }
+        var text: String { data.withLock { String(decoding: $0, as: UTF8.self) } }
     }
 
     static func ditto(_ arguments: [String]) throws {

@@ -5,25 +5,28 @@
 // 因此 stop/start 或 PID 复用后的旧回调不会影响新任务。
 
 import Foundation
+import Synchronization
 
 /// Only this ticket crosses from the main-thread scheduler to the AX queue.
 /// Cancelled queued jobs cannot begin IPC; already-running calls finish normally.
 final class WindowBrowserMetadataExecution: Equatable {
-    private let lock = NSLock()
-    private var cancelled = false
-    private var started = false
+    private struct Flags {
+        var cancelled = false
+        var started = false
+    }
+    private let flags = Mutex(Flags())
 
-    var isCancelled: Bool { lock.withLock { cancelled } }
+    var isCancelled: Bool { flags.withLock { $0.cancelled } }
 
     func begin() -> Bool {
-        lock.withLock {
-            guard !cancelled, !started else { return false }
-            started = true
+        flags.withLock {
+            guard !$0.cancelled, !$0.started else { return false }
+            $0.started = true
             return true
         }
     }
 
-    func cancel() { lock.withLock { cancelled = true } }
+    func cancel() { flags.withLock { $0.cancelled = true } }
 
     static func == (lhs: WindowBrowserMetadataExecution,
                     rhs: WindowBrowserMetadataExecution) -> Bool { lhs === rhs }
