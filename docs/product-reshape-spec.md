@@ -91,7 +91,7 @@
 - **下载**：R13 可以接 PLCrashReporter（只落本地）；R49 可以装 ToDesk、QQ 音乐来验，验完可删。
 - **O／A 29 条** 照 [清单](oa-admission-checklist.md) 的建议定案：O1（切换器打字搜索）、A1（跳回终端）收进队列；O6、O7 不收；其余 25 条留冻结区。
 - **1.0.17** 这批收完就准备候选包（升版本号、appcast、`--release`＋公证＋发布关），等 Aaron 真机验、Aaron 按发布。
-  - 2026-10-17：候选**源码**已备好（Info.plist 1.0.17／17；appcast 1.0.17 占位条目含 `minimumSystemVersion 15.0.0` 与 `informationalUpdate belowVersion=17`，url／length／签名留 TODO；README 三份与官网改 macOS 15、已公证；[发布说明草稿](releases/v1.0.17.md)；[发布关 runbook](releases/v1.0.17-release-gate.md)）。没构建、没签名、没公证、没打标签。
+  - 2026-10-17：候选**源码**已备好（Info.plist 1.0.17／17；appcast 1.0.17 条目草稿（2026-10-17 复核后移到 `docs/releases/appcast-item-1.0.17.xml`，不留在 `site/public`，避免站点部署带上带 TODO 与旧签名块的清单；README／官网文案须随发布一起上线、不先合 main，见 runbook「顺序纪律」；`docs/update.md` 安装三步旧稿已标注）含 `minimumSystemVersion 15.0.0` 与 `informationalUpdate belowVersion=17`，url／length／签名留 TODO；README 三份与官网改 macOS 15、已公证；[发布说明草稿](releases/v1.0.17.md)；[发布关 runbook](releases/v1.0.17-release-gate.md)）。没构建、没签名、没公证、没打标签。
 
 **Aaron 拍板（2026-10-16 第十六批后）**：
 - **R21** 按类别分：计算器、App Store 这类单窗口工具关掉卷帘条就退出 App；微信、QQ 等聊天类永远不退出；其余照现状只关窗口。

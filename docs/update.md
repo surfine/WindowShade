@@ -335,6 +335,8 @@ Sparkle 调用 `showReadyToInstallAndRelaunch:`（或续装时进入上一节）
 
 ### 官网：点“下载 Mac 版”后在原地展开三步
 
+> 2026-10-17 注：下面是**未公证版本**（1.0.16 及以前）的稿子。1.0.17 起 App 已公证，第 3 步“仍要打开”与尾句“还没公证”都不再适用，README 与官网已去掉；1.0.17 发布后这一节的表按“拖进应用程序 → 双击打开”两步改写。
+
 - 现在按钮链到 GitHub Releases 页（`site/scripts/chrome.mjs:6`），那一页还列着“Source code (zip)”，新人容易点错。
   改成直接下载 App 的 zip：官网构建时按 `Info.plist` 的版本号拼出直链。
 - 页面不跳走，在按钮下方展开下面的内容；“怎么装？”那条问答改成指向这里（`site/scripts/content.mjs` 223、437 行）。
