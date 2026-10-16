@@ -51,7 +51,7 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--dock-scenarios")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color"]
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
@@ -120,6 +120,11 @@ final class GlanceProbe {
     // --fold-unminimizable：另一扇不能最小化——核对收起前就被拒绝、窗口原位不动（见 restoreGuard 里的说明）。
     if CommandLine.arguments.contains("--restore-guard") || CommandLine.arguments.contains("--fold-unminimizable") {
       try await restoreGuard(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--close-quit") {
+      try await closeQuit(element: element, pid: process.processIdentifier)
       finish(nil)
       return
     }
@@ -806,6 +811,51 @@ final class GlanceProbe {
 
   /// 规格 H3 的前提：采集换成 displayP3 后，置顶预览流里的录屏胶囊还认不认得出来。
   /// 先用 sRGB、再用 displayP3 各开一次置顶预览（3 秒），数收到几帧、其中几帧认出并修掉了胶囊。
+  // --close-quit（规格 R21）：收起后从卷帘条关掉。App Store（单窗口工具）随之退出；夹具（不在名单里）照旧只关窗口、进程还在。
+  private func closeQuit(element: AXUIElement, pid: pid_t) async throws {
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
+    func folded(_ wid: CGWindowID) -> Bool {
+      owner.shaded[wid]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+        && owner.duoController.windowEffects.activeCount == 0
+    }
+    // 对照：夹具。
+    owner.shade(element, id)
+    try await wait("fixture folded", timeout: 6) { folded(self.id) }
+    owner.handleTrafficLight(.close, id)
+    try await wait("fixture window closed", timeout: 8) { !self.onscreen(self.id) && self.owner.shaded[self.id] == nil }
+    try await Task.sleep(for: .seconds(2), clock: .suspending)
+    let fixtureAlive = NSRunningApplication(processIdentifier: pid).map { !$0.isTerminated } == true
+    print(fixtureAlive ? "PASS close-quit: an app not on the list keeps running after its strip is closed"
+      : "FAIL close-quit: the fixture quit after its strip was closed")
+    // App Store。
+    let url = URL(fileURLWithPath: "/System/Applications/App Store.app")
+    let config = NSWorkspace.OpenConfiguration()
+    config.activates = true
+    let store = try await NSWorkspace.shared.openApplication(at: url, configuration: config)
+    let storePID = store.processIdentifier
+    var storeWindow: AXUIElement?
+    var storeID: CGWindowID = 0
+    try await wait("App Store window", timeout: 15) {
+      storeWindow = appWindows(pid: storePID).first { windowID(of: $0).map { self.onscreen($0) } == true }
+      storeID = storeWindow.flatMap(windowID(of:)) ?? 0
+      return storeID != 0
+    }
+    try await Task.sleep(for: .seconds(1), clock: .suspending)
+    guard let storeWindow else { throw EffectError.unavailable("no App Store window") }
+    owner.shade(storeWindow, storeID)
+    try await wait("App Store folded", timeout: 8) { folded(storeID) }
+    owner.handleTrafficLight(.close, storeID)
+    do {
+      try await wait("App Store quit", timeout: 10) { store.isTerminated }
+      print("PASS close-quit: App Store quit after its strip was closed")
+    } catch {
+      print("FAIL close-quit: App Store still running after its strip was closed (onscreen=\(onscreen(storeID)))")
+      store.terminate()
+    }
+  }
+
   private func capsuleColor(element: AXUIElement, pid: pid_t) async throws {
     let screenP3 = NSScreen.main?.canRepresent(.p3) == true
     var results: [(String, Int, Int)] = []
