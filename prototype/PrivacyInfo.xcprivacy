@@ -10,6 +10,13 @@
     ~/Library/KeyBindings, project folders, file shelf items (3B52.1).
   - DiskSpace: free-space check before installing an update (E174.1).
   No ActiveKeyboards use. No tracking, no collected data, no tracking domains.
+  PLCrashReporter 1.12.0 (static, prototype/Vendor/PLCrashReporter): its upstream manifest
+  (microsoft/plcrashreporter tag 1.12.0, Resources/PrivacyInfo.xcprivacy) declares NO required-reason API
+  (NSPrivacyAccessedAPITypes is empty), so nothing is added for it here. Cross-checked with
+  nm -u on the .a: no stat/statfs/getattrlist/mach_absolute_time/NSUserDefaults imports; it uses
+  systemUptime (already covered by SystemBootTime 35F9.1 above) and sysctl. Upstream also lists
+  CrashData and OtherDiagnosticData as collected (AppFunctionality, unlinked, no tracking); WindowShade
+  keeps crash reports on this Mac only and sends nothing, so NSPrivacyCollectedDataTypes stays empty.
 -->
 <plist version="1.0">
 <dict>
