@@ -24,9 +24,20 @@ extension GlanceProbe {
       print("SKIP dock-scenarios: the user was active \(Int(idle)) s ago; this suite moves the real pointer, so it only runs when the Mac is idle")
       return
     }
-    print("SKIP dock-scenarios (b) Dock autohide: needs changing the Dock's autohide setting, which the probe never does (not_run)")
+    // (b)(f)：探针从不改系统设置，只读当前状态。虚拟机脚本（tests/vm/run-in-guest.sh WSQA_SETTING=…）会在来宾里先改好设置再跑本组。
+    let dockAutohide = CFPreferencesCopyAppValue("autohide" as CFString, "com.apple.dock" as CFString) as? Bool ?? false
+    let stageManager = CFPreferencesCopyAppValue("GloballyEnabled" as CFString, "com.apple.WindowManager" as CFString) as? Bool ?? false
+    if dockAutohide {
+      print("INFO dock-scenarios (b) Dock autohide is ON: the Dock is revealed from the screen edge before looking for the fixture icon")
+    } else {
+      print("SKIP dock-scenarios (b) Dock autohide: the Dock is not set to autohide; the probe never changes the setting (not_run)")
+    }
     print("SKIP dock-scenarios (e) after wake: needs the machine to sleep and wake (not_run)")
-    print("SKIP dock-scenarios (f) Stage Manager: needs toggling Stage Manager, a system setting (not_run)")
+    if stageManager {
+      print("INFO dock-scenarios (f) Stage Manager is ON: fixture windows may sit in the side strip; results below are Stage Manager results")
+    } else {
+      print("SKIP dock-scenarios (f) Stage Manager: Stage Manager is off; the probe never toggles it (not_run)")
+    }
 
     let savedDockSwitch = WindowBrowserSettings.dockEnabled
     WindowBrowserSettings.dockEnabled = true
@@ -44,6 +55,20 @@ extension GlanceProbe {
     let excluded = WindowBrowserSettings.excludedBundleIDs
     let own = Bundle.main.bundleIdentifier
     func items() -> [DockScenarioItem] { dockScenarioItems() }
+    if dockAutohide {
+      // 自动隐藏时图标在屏外：把指针推到屏幕下沿（Dock 默认在下方）让它滑出来，有界等待，打印用时。
+      let screen = CGDisplayBounds(CGMainDisplayID())
+      let edge = CGPoint(x: screen.midX, y: screen.maxY - 1)
+      let started = CACurrentMediaTime()
+      var shown = false
+      for _ in 0..<3 where !shown {
+        dockScenarioMove(to: CGPoint(x: edge.x, y: edge.y - 40))
+        try? await Task.sleep(for: .milliseconds(150), clock: .suspending)
+        dockScenarioMove(to: edge)
+        shown = await dockScenarioWait(4) { items().contains { $0.bundleID == bundleID } }
+      }
+      print("INFO dock-scenarios (b): Dock \(shown ? "revealed" : "not revealed") after \(String(format: "%.1f", CACurrentMediaTime() - started)) s")
+    }
     guard let mine = items().first(where: { $0.bundleID == bundleID }) else {
       print("SKIP dock-scenarios: the temporary app has no Dock icon on screen (Dock hidden or tucked away)")
       return
@@ -297,7 +322,7 @@ private func dockScenarioGlide(from: CGPoint, to: CGPoint, step: CGFloat, pause:
 
 @MainActor
 private func dockScenarioWait(_ timeout: TimeInterval, _ condition: () -> Bool) async -> Bool {
-  let deadline = CACurrentMediaTime() + timeout
+  let deadline = CACurrentMediaTime() + timeout * glanceProbeTimeoutScale
   while CACurrentMediaTime() < deadline {
     if condition() { return true }
     try? await Task.sleep(for: .milliseconds(50), clock: .suspending)
