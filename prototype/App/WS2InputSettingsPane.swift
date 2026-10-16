@@ -268,7 +268,7 @@ extension AppDelegate {
     }
 
     private func middleSubtitle(_ prefs: WS2InputPreferences.Value) -> SettingsText {
-        if inputController.middleTap.waitingForAccessibility { return WSL10n.setting("settings.input.middleFold.needAccessibility", zh: "需要先允许辅助功能") }
+        if inputController.middleTap.waitingForAccessibility, !AXIsProcessTrusted() { return WSL10n.setting("settings.input.middleFold.needAccessibility", zh: "需要先允许辅助功能") }
         if inputController.middleTap.systemStopped { return WSL10n.setting("settings.input.middleFold.systemStopped", zh: "被系统停掉了，先关掉再开") }
         if prefs.middleFold {
             return inputController.middleListening
