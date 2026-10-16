@@ -8,6 +8,7 @@ import Cocoa
 import os
 import ApplicationServices
 import ScreenCaptureKit
+import Synchronization
 
 enum WindowBrowserNotification {
     static let didChangeSettings = Notification.Name("WindowBrowserDidChangeSettings")
@@ -135,9 +136,9 @@ final class WindowBrowserController: NSObject {
     private var statusOverride: String?
     /// 诊断计数：逻辑发现请求次数与真实 AX 调用次数分开统计，且用锁保护，
     /// 因为后台队列会并发写入。
-    private let counterLock = NSLock()
-    private var discoveryRequestTotal = 0
-    private var axCallTotal = 0
+    // 规格 M3：两个计数进 Mutex。
+    private struct Counters { var discoveryRequests = 0; var axCalls = 0 }
+    private let counters = Mutex(Counters())
     private var environmentSuspended = false
     /// 面板开着时定时看一眼列表里的窗口还在不在；关掉的窗口靠一次成功的重新查询移出列表。
     private var livenessTimer: Timer?
@@ -178,27 +179,19 @@ final class WindowBrowserController: NSObject {
 
     /// 兼容旧探针：AX 真实调用次数（不是包装函数调用次数）。
     var axQueryCount: Int {
-        counterLock.lock()
-        defer { counterLock.unlock() }
-        return axCallTotal
+        counters.withLock { $0.axCalls }
     }
 
     var axDiagnostics: (discoveryRequests: Int, axCalls: Int) {
-        counterLock.lock()
-        defer { counterLock.unlock() }
-        return (discoveryRequestTotal, axCallTotal)
+        counters.withLock { ($0.discoveryRequests, $0.axCalls) }
     }
 
     private func noteDiscoveryRequest() {
-        counterLock.lock()
-        discoveryRequestTotal += 1
-        counterLock.unlock()
+        counters.withLock { $0.discoveryRequests += 1 }
     }
 
     private func noteAXCall() {
-        counterLock.lock()
-        axCallTotal += 1
-        counterLock.unlock()
+        counters.withLock { $0.axCalls += 1 }
     }
 
     // MARK: 阶段计时（§17.1）

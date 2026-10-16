@@ -2,6 +2,7 @@ import Cocoa
 import Carbon
 import CoreAudio
 import ApplicationServices
+import Synchronization
 
 // A snapshot reports evidence, not a guessed recording/transport state.
 struct NotchSourceSnapshot: Sendable, Equatable {
@@ -489,43 +490,47 @@ final class NotchActivitySources {
 }
 
 // Cancellation is read by a serial worker and changed by MainActor.
-private final class ActivitySourceToken: @unchecked Sendable {
-    private let lock = NSLock()
-    private var cancelled = false
-    var valid: Bool { lock.lock(); defer { lock.unlock() }; return !cancelled }
-    func cancel() { lock.lock(); cancelled = true; lock.unlock() }
+// 规格 M3：取消标记进 Mutex，去掉 @unchecked Sendable。
+private final class ActivitySourceToken: Sendable {
+    private let cancelled = Mutex(false)
+    var valid: Bool { cancelled.withLock { !$0 } }
+    func cancel() { cancelled.withLock { $0 = true } }
 }
 
 /// AirPods 那段结果的缓存：CoreAudio 枚举设备一次 1.74ms，2 秒问一次就是常驻约 0.11% 单核。
 /// 设备或默认输出变了（CoreAudio 监听置脏）才重算，另有 `maxAge` 兜底。
-final class AudioDeviceCache: @unchecked Sendable {
-    private let lock = NSLock()
-    private var snapshots: [NotchSourceSnapshot] = []
-    private var at: CFAbsoluteTime = 0
-    private var dirty = true
-    /// 每次置脏加一。store 只在「从 take 到 store 之间没有新的置脏」时才清脏：
-    /// 枚举途中设备又变了，这次结果照存，但下一次仍会重算，而不是等 30 秒兜底。
-    private var generation = 0
-    private var takenGeneration = 0
+// 规格 M3：缓存状态整组进 Mutex，去掉 @unchecked Sendable。
+final class AudioDeviceCache: Sendable {
+    private struct State {
+        var snapshots: [NotchSourceSnapshot] = []
+        var at: CFAbsoluteTime = 0
+        var dirty = true
+        /// 每次置脏加一。store 只在「从 take 到 store 之间没有新的置脏」时才清脏：
+        /// 枚举途中设备又变了，这次结果照存，但下一次仍会重算，而不是等 30 秒兜底。
+        var generation = 0
+        var takenGeneration = 0
+    }
+    private let state = Mutex(State())
 
     func markDirty() {
-        lock.lock(); dirty = true; generation += 1; lock.unlock()
+        state.withLock { $0.dirty = true; $0.generation += 1 }
     }
 
     func take(maxAge: CFTimeInterval) -> [NotchSourceSnapshot]? {
-        lock.lock(); defer { lock.unlock() }
-        guard !dirty, CFAbsoluteTimeGetCurrent() - at < maxAge else {
-            takenGeneration = generation
-            return nil
+        state.withLock { s in
+            guard !s.dirty, CFAbsoluteTimeGetCurrent() - s.at < maxAge else {
+                s.takenGeneration = s.generation
+                return nil
+            }
+            return s.snapshots
         }
-        return snapshots
     }
 
     func store(_ value: [NotchSourceSnapshot]) {
-        lock.lock()
-        snapshots = value
-        at = CFAbsoluteTimeGetCurrent()
-        if generation == takenGeneration { dirty = false }
-        lock.unlock()
+        state.withLock { s in
+            s.snapshots = value
+            s.at = CFAbsoluteTimeGetCurrent()
+            if s.generation == s.takenGeneration { s.dirty = false }
+        }
     }
 }

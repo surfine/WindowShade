@@ -2,6 +2,7 @@ import Accelerate
 import CoreGraphics
 import Foundation
 import Metal
+import Synchronization
 
 enum EffectError: LocalizedError {
   case unavailable(String)
@@ -49,7 +50,7 @@ final class FoldOnce<Value>: @unchecked Sendable {
 /// 管线编译。现在懒加载、只建一次；`scheduleWarmUp` 在启动后几秒于 .utility 队列上用异步编译预热，
 /// 预热期间主线程来取时不等预热，自己同步建（两份里只有先放进来的那份会被用到）。
 /// 会话结束不释放这些对象；会话自己的纹理缓存、纹理照旧每个会话一份。
-final class FoldGPU: @unchecked Sendable {
+final class FoldGPU: Sendable {
   struct Objects: @unchecked Sendable {
     let device: any MTLDevice
     let queue: any MTLCommandQueue
@@ -69,8 +70,8 @@ final class FoldGPU: @unchecked Sendable {
   static let queueCapacity = 256
 
   private let once = FoldOnce<Objects>()
-  private let warmLock = NSLock()
-  private var warmScheduled = false
+  // 规格 M3：预热已排标记进 Mutex，去掉 @unchecked Sendable。
+  private let warmScheduled = Mutex(false)
 
   /// 已经建好的共享对象（没建过就是 nil，不会触发创建）。
   var current: Objects? { once.current }
@@ -82,10 +83,11 @@ final class FoldGPU: @unchecked Sendable {
 
   /// 启动后 `delay` 秒在 .utility 队列上预热一次。只排一次，重复调用无效；不轮询、不常驻。
   func scheduleWarmUp(after delay: TimeInterval = 4) {
-    warmLock.lock()
-    let first = !warmScheduled
-    warmScheduled = true
-    warmLock.unlock()
+    let first = warmScheduled.withLock { scheduled -> Bool in
+      let wasFirst = !scheduled
+      scheduled = true
+      return wasFirst
+    }
     guard first else { return }
     DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + delay) { [self] in
       warmUpNow()
