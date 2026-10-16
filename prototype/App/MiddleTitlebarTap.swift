@@ -21,6 +21,12 @@ final class MiddleTitlebarTap: @unchecked Sendable {
         return withLock { driver.phase == .stoppedBySystem }
     }
 
+    /// 端口没创建出来而停住（多半缺辅助功能）；设置行据此换成「需要允许辅助功能」。
+    var waitingForAccessibility: Bool {
+        dispatchPrecondition(condition: .onQueue(.main))
+        return withLock { driver.waitingForAccessibility }
+    }
+
     /// 辅助功能晚到：因端口没创建出来而停住的解开，调用方随后再 apply 一次。返回有没有解开。
     func accessibilityGranted() -> Bool {
         dispatchPrecondition(condition: .onQueue(.main))

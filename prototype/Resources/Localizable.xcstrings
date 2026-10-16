@@ -45663,6 +45663,29 @@
         }
       }
     },
+    "settings.input.middleFold.needAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs Accessibility"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要先允许辅助功能"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要先允許輔助使用"
+          }
+        }
+      }
+    },
     "settings.input.middleFold.notInstalled": {
       "extractionState": "manual",
       "localizations": {
