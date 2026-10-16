@@ -1573,14 +1573,20 @@ extension AppDelegate {
         ])
         group(WSL10n.text("settings.shade.group.arrange", zh: "排布"), [
             GestureRows.decorate(
-                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排"),
-                                     subtitle: WSL10n.setting("settings.shade.dropSplit.sub", zh: "把窗口拖到另一扇上，两扇并排"),
-                                     isOn: TrackpadGestureController.dropSplitEnabled, action: #selector(prefToggleDropSplit(_:))),
+                makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排"),
+                                                               subtitle: WSL10n.setting("settings.shade.dropSplit.sub", zh: "把窗口拖到另一扇上，两扇并排"),
+                                                               symbol: "rectangle.split.2x1"),
+                                     accessibleName: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排").shown,
+                                     minHeight: 48, isOn: TrackpadGestureController.dropSplitEnabled,
+                                     enabled: true, action: #selector(prefToggleDropSplit(_:))),
                 fingers: WSL10n.setting("settings.gesture.chip.dropSplit", zh: "拖 · 窗口 → 另一扇窗口"), kind: .combination),
             GestureRows.decorate(
-                makeUnifiedToggleRow(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
-                                     subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
-                                     isOn: StripTitleDrag.isEnabled(), action: #selector(prefToggleStripTitleDrag(_:))),
+                makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
+                                                               subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
+                                                               symbol: "arrow.left.and.right"),
+                                     accessibleName: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
+                                     minHeight: 48, isOn: StripTitleDrag.isEnabled(),
+                                     enabled: true, action: #selector(prefToggleStripTitleDrag(_:))),
                 fingers: WSL10n.setting("settings.gesture.chip.stripDrag", zh: "拖 · 卷轴里的标题栏"), kind: .combination),
         ])
         group(WSL10n.text("settings.section.browser", zh: "窗口浏览"), [
