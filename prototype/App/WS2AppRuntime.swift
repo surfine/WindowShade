@@ -195,9 +195,9 @@ import Cocoa
             owner.notch.announceWhenFree(key: "session." + bloom.sessionID, text: bloom.headline, detail: bloom.detail,
                                          tone: .tip,
                                          symbol: bloom.sessionID == CodingSessionActivities.usageBloomID ? "gauge.with.dots.needle.33percent" : "hand.raised.fill",
-                                         onClick: { [weak self] in self?.goToCodingSession(cwd: cwd) })
+                                         onClick: { [weak self] in self?.goToCodingSession(cwd: cwd, sessionID: bloom.sessionID) })
         }
-        activities.onSessionGo = { [weak self] cwd in self?.goToCodingSession(cwd: cwd) }
+        activities.onSessionGo = { [weak self] id, cwd in self?.goToCodingSession(cwd: cwd, sessionID: id) }
         activities.onSessionMenuChange = { [weak self] in self?.owner?.rebuildMenu() }
         // 用量（实验）：随编程会话开关。只吃自己启动的 Codex 会话发来的额度事件。
         owned.onUsage = { [weak self] reading in
@@ -219,8 +219,9 @@ import Cocoa
         activities.ws2ResetSessions()
     }
     /// “过去”：去会话所在的终端窗口；找不到就打开会话页。
-    func goToCodingSession(cwd: String) {
-        WS2AgentSessionWindowFinder.go(cwd: cwd) { [weak self] in self?.openCodingSessions() }
+    func goToCodingSession(cwd: String, sessionID: String) {
+        let terminal = hookServer?.model.terminal(of: sessionID)
+        WS2AgentSessionWindowFinder.go(cwd: cwd, terminal: terminal) { [weak self] in self?.openCodingSessions() }
     }
     /// 菜单里“等你”的几行。
     var codingMenuRows: [CodingSessionActivities.MenuRow] { owner?.notch.activities.sessionMenuRows ?? [] }
@@ -229,7 +230,7 @@ import Cocoa
         guard !sleeping, lockReasons.isEmpty, AuthorizationService.shared.lockState() == .unlocked,
               let server = hookServer else { return }
         showSessions(server.model.sessions, open: { [weak self] context in
-            if context.projectID.hasPrefix("/") { self?.goToCodingSession(cwd: context.projectID) }
+            if context.projectID.hasPrefix("/") { self?.goToCodingSession(cwd: context.projectID, sessionID: context.session.id) }
         }, stop: { [weak self] context in
             // 只停 owned 且正在跑的那条（按钮本来就只在这两种条件都满足时出现）；observed 会话没有这个按钮。
             _ = self?.owned.interruptSession(matching: context)

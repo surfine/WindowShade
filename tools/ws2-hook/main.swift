@@ -1,5 +1,19 @@
 // 独立 helper，不放在 prototype 递归编译范围里。故障时返回无决定，绝非自动 allow。
 import Foundation
+/// 沿父进程往上找第一个有控制终端的进程，返回 /dev/ttysNNN。hook 自己的标准输入输出是管道，所以不能直接 ttyname。
+func controllingTTY() -> String? {
+    var pid = getppid()
+    for _ in 0..<8 where pid > 1 {
+        var info = kinfo_proc()
+        var size = MemoryLayout<kinfo_proc>.size
+        var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+        guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return nil }
+        let device = info.kp_eproc.e_tdev
+        if UInt32(truncatingIfNeeded: device) != UInt32.max, let name = devname(device, S_IFCHR) { return "/dev/" + String(cString: name) }
+        pid = info.kp_eproc.e_ppid
+    }
+    return nil
+}
 @main struct WSHookMain {
     static func main() {
         var reply = Data("{}\n".utf8)
@@ -17,6 +31,12 @@ import Foundation
             var payload: [String:Any] = ["version":1,"provider":"claude","event":event,"sessionID":session]
             // 不转送 transcript 路径，不读取文件内容；最多转送当前工具的已给定参数。
             for key in ["cwd","tool_name","tool_input"] { if let v = input[key] { payload[key] = v } }
+            // 终端身份（A1）：本进程继承的四个环境变量加所在终端设备；每个值过白名单，不合格的丢掉，不转送别的环境变量。
+            let env = ProcessInfo.processInfo.environment
+            if let terminal = TerminalIdentity.sanitized(program: env["TERM_PROGRAM"], itermSession: env["ITERM_SESSION_ID"],
+                                                         tmuxPane: env["TMUX_PANE"], tty: controllingTTY()) {
+                payload["terminal"] = terminal.wire
+            }
             let deadline = ProcessInfo.processInfo.systemUptime + (event == "PermissionRequest" ? 119 : 1)
             try client.sendLine(JSONSerialization.data(withJSONObject:payload,options:[.sortedKeys]),deadline:deadline)
             let response = try client.readLine(deadline:deadline)

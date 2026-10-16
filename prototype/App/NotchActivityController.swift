@@ -144,7 +144,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     /// 进入“等你”时开口一次（主句“\(项目)在等你”，副句“\(助手)想执行 \(摘要)”）。由 App 接到刘海的播报上。
     var onSessionBloom: ((CodingSessionActivities.Bloom) -> Void)?
     /// “过去”：去那个会话所在的终端窗口；找不到时由接手的人打开会话页。参数是会话所在的目录。
-    var onSessionGo: ((String) -> Void)?
+    /// 参数：会话编号、会话所在目录。
+    var onSessionGo: ((String, String) -> Void)?
     /// 等你的会话变了（菜单要重建一行）。
     var onSessionMenuChange: (() -> Void)?
     private(set) var sessions = CodingSessionActivities()
@@ -192,7 +193,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     /// 菜单里点“等你”行。
     func ws2GoToSession(_ id: String) {
         guard let cwd = sessions.cwd(ofSession: id) else { return }
-        onSessionGo?(cwd)
+        onSessionGo?(id, cwd)
     }
 
     /// 把模型对到 store：持续那一条（在跑却 120 秒没消息就过期）、做完那一条（4 秒后自己过期）。
@@ -534,7 +535,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             case .route: if !routeItems.isEmpty { MKMapItem.openMaps(with: routeItems, launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]) }
             case .download, .copy, .remote, .calendar, .timer, .shelf: return
             case .session:
-                if let target = sessions.target(forActivity: selected.id, at: ProcessInfo.processInfo.systemUptime) { onSessionGo?(target.cwd) }
+                if let target = sessions.target(forActivity: selected.id, at: ProcessInfo.processInfo.systemUptime) { onSessionGo?(target.sessionID, target.cwd) }
             case .airPods: NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)
             case .airDrop:
                 let app = URL(fileURLWithPath: "/System/Library/CoreServices/Finder.app/Contents/Applications/AirDrop.app")

@@ -333,7 +333,7 @@ enum WS2PrivacyData {
             label: WSL10n.text("privacy.agent-hooks.label", zh: "编程助手的事件"),
             sensitivity: "private",
             group: "你同意后才读的",
-            reads: WSL10n.text("privacy.agent-hooks.reads", zh: "Claude Code 的会话编号、所在文件夹的名字、正在用的工具名和事件；不读命令内容和对话"),
+            reads: WSL10n.text("privacy.agent-hooks.reads", zh: "Claude Code 的会话编号、所在文件夹的名字、正在用的工具名和事件，以及它跑在哪个终端里（终端 App 名、窗格编号、终端设备名），用来一键跳回那个终端；不读命令内容和对话"),
             purpose: WSL10n.text("privacy.agent-hooks.purpose", zh: "在刘海里看 Claude Code 在跑还是在等你"),
             destination: WSL10n.text("privacy.agent-hooks.destination", zh: "只经这台 Mac 上的本机连接收，不联网；只在内存里，关掉就忘"),
             activation: WSL10n.text("privacy.agent-hooks.activation", zh: "打开“编程会话”、把配置粘贴进 Claude Code 之后；默认关"),

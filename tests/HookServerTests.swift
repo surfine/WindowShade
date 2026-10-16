@@ -68,6 +68,23 @@ struct HookServerTests {
         t.expect(ok?.kind == .preToolUse && ok?.sessionID == "s-1" && ok?.tool == "Bash", "合法事件")
         t.expect(ok?.projectName == "WindowShade", "项目名取 cwd 最后一段")
         t.expect(WS2HookEvent.parse(line(event("Stop", cwd: nil)))?.projectPath == "", "没有 cwd 也收")
+        var withTerminal = event("PreToolUse", tool: "Bash")
+        withTerminal["terminal"] = ["program": "ghostty", "tmuxPane": "%4", "tty": "/dev/ttys007"]
+        let termEvent = WS2HookEvent.parse(line(withTerminal))
+        t.expect(termEvent?.terminal == TerminalIdentity(program: "ghostty", itermSession: "", tmuxPane: "%4", tty: "/dev/ttys007"), "终端身份跟着事件收下")
+        t.expect(ok?.terminal == nil, "不报终端也收")
+        for bad in [["program": "x y"], ["tmuxPane": "4"], ["extra": "x"], [String: String]()] {
+            withTerminal["terminal"] = bad
+            t.expect(WS2HookEvent.parse(line(withTerminal)) == nil, "不合格的终端身份整个事件拒")
+        }
+        var bindingModel = WS2HookSessions()
+        _ = bindingModel.receive(termEvent!, at: sec(1))
+        t.expect(bindingModel.terminal(of: "s-1")?.tmuxPane == "%4", "会话→终端绑定")
+        var newer = withTerminal; newer["terminal"] = ["program": "iTerm.app", "tty": "/dev/ttys009"]
+        _ = bindingModel.receive(WS2HookEvent.parse(line(newer))!, at: sec(2))
+        t.expect(bindingModel.terminal(of: "s-1")?.program == "iTerm.app", "后来报的覆盖旧的")
+        _ = bindingModel.receive(parsed("Stop"), at: sec(3))
+        t.expect(bindingModel.terminal(of: "s-1")?.program == "iTerm.app" && bindingModel.terminal(of: "nope") == nil, "不带身份的事件不清掉绑定")
 
         t.section("H-02", "畸形输入一律拒")
         var bad: [Data] = [Data(), Data("not json".utf8), Data("[1,2]".utf8), Data("{}".utf8)]
