@@ -44099,52 +44099,6 @@
         }
       }
     },
-    "settings.browser.livePreview.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Live preview of regular windows (experimental)"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "普通窗口实时预览（实验）"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "普通視窗即時預覽（實驗）"
-          }
-        }
-      }
-    },
-    "settings.browser.livePreview.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A live picture 0.4 seconds in"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选中窗口 0.4 秒后开始播放实时画面"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選中視窗 0.4 秒後開始播放即時畫面"
-          }
-        }
-      }
-    },
     "settings.browser.menuItem.name": {
       "extractionState": "manual",
       "localizations": {
@@ -46786,29 +46740,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "啟動"
-          }
-        }
-      }
-    },
-    "settings.privacy.group.lockScreen": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lock screen"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "锁屏"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "鎖定畫面"
           }
         }
       }
@@ -51781,29 +51712,6 @@
         }
       }
     },
-    "settings.shade.supplement.activities": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open live activities"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开实时活动"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開啟即時活動"
-          }
-        }
-      }
-    },
     "settings.shade.supplement.coding": {
       "extractionState": "manual",
       "localizations": {
@@ -51892,52 +51800,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "看當前工作階段、模型和草稿。不會傳送，也不會連線遙控器。"
-          }
-        }
-      }
-    },
-    "settings.shade.supplement.focus": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Start a focus timer"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始番茄钟"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開始番茄鍾"
-          }
-        }
-      }
-    },
-    "settings.shade.supplement.focusTip": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open the focus timer. Record a shortcut in Shortcuts."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开番茄钟。快捷键可在快捷键设置中录制。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開啟番茄鍾。快速鍵可在快速鍵設定中錄製。"
           }
         }
       }
@@ -52149,29 +52011,6 @@
         }
       }
     },
-    "settings.shade.supplement.lockOverlay": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lock-screen fold effect"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "锁屏开合效果"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "鎖定畫面開合效果"
-          }
-        }
-      }
-    },
     "settings.shade.supplement.silent": {
       "extractionState": "manual",
       "localizations": {
@@ -52214,29 +52053,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "在瀏海里看清再確認。採用草稿不會傳送。"
-          }
-        }
-      }
-    },
-    "settings.shade.supplement.welcome": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Welcome to WindowShade…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "欢迎使用 WindowShade…"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "歡迎使用 WindowShade…"
           }
         }
       }
@@ -61989,6 +61805,236 @@
           "stringUnit": {
             "state": "translated",
             "value": "唯讀對照，來自現有手勢表，不是新開關。"
+          }
+        }
+      }
+    },
+    "settings.section.notch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瀏海"
+          }
+        }
+      }
+    },
+    "settings.notch.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What shows in the notch, and when."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海里显示什么、什么时候展开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瀏海裡顯示什麼、什麼時候展開。"
+          }
+        }
+      }
+    },
+    "settings.experiments.livePreview.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Preview of Regular Windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "普通窗口实时预览"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "普通視窗即時預覽"
+          }
+        }
+      }
+    },
+    "settings.experiments.livePreview.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plays the selected window live"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口浏览里选中的窗口播放实时画面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗瀏覽裡選中的視窗播放即時畫面"
+          }
+        }
+      }
+    },
+    "settings.effects.lockOverlay.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock Screen Fold Effect"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "锁屏开合效果"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鎖定畫面開合效果"
+          }
+        }
+      }
+    },
+    "settings.effects.lockOverlay.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The lock screen moves with the lid"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "锁屏时开合盖子，锁屏画面跟着动。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鎖定時開合蓋子，鎖定畫面跟著動。"
+          }
+        }
+      }
+    },
+    "settings.about.welcome.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to WindowShade"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欢迎使用 WindowShade"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歡迎使用 WindowShade"
+          }
+        }
+      }
+    },
+    "settings.about.welcome.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See the first-launch guide again"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再看一遍第一次打开时的说明"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再看一遍第一次開啟時的說明"
+          }
+        }
+      }
+    },
+    "settings.about.welcome.button": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟…"
+          }
+        }
+      }
+    },
+    "settings.advanced.experiments.caption": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Features still being tried. All are off by default."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还在试的功能，默认都关着。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還在試的功能，預設都關著。"
           }
         }
       }

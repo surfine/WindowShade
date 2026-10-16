@@ -22,15 +22,16 @@ assert 'windowEffects.cancelAll()' in suspend and 'sensor.stop()' in suspend
 assert 'excludingWindows: excluded' in controller
 menu = (root / 'prototype/App/MenuBarController.swift').read_text()
 settings = (root / 'prototype/Effects/DuoSettingsWindow.swift').read_text()
+sections = (root / 'prototype/App/SettingsSections.swift').read_text()
 assert 'struct MenuState' in menu
 for title in ['屏幕开合角度：', '当前窗口', '设置…']:
     assert title in menu, f'menu state entry missing: {title}'
-welcome = (root / 'prototype/App/WS2SupplementPane.swift').read_text()
-assert '欢迎使用 WindowShade…' in welcome and '#selector(AppDelegate.showWelcomeGuide)' in welcome, 'welcome must remain reachable from settings'
+# 1.0.17：欢迎窗口的入口从卷帘页的「专注与输入」搬到 高级 → 关于（那一块随预览旗标藏起来）。
+assert '"settings.about.welcome.name"' in settings and 'owner?.showWelcomeGuide()' in settings, 'welcome must remain reachable from settings'
 for title in ['启用桌面开合效果', '启用窗口卷帘动画', '预览桌面效果…', '停止所有效果']:
     assert title not in menu, f'redundant menu entry still present: {title}'
 assert 'showDuoSettings(section: .effects)' in settings
 for section in ['效果', '卷帘', '隐私', '高级']:
-    assert section in settings, f'unified settings section missing: {section}'
+    assert section in sections, f'unified settings section missing: {section}'
 assert '打开诊断日志' in settings
 print('PASS: recovery intent precedes hiding, animation follows verification, synchronous restore contract, session teardown and capture exclusion are wired')
