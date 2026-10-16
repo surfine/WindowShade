@@ -48,6 +48,7 @@ final class GlanceProbe {
     process.executableURL = URL(fileURLWithPath: CommandLine.arguments[index + 1])
     let manyWindows = CommandLine.arguments.contains("--strip") || CommandLine.arguments.contains("--wins")
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
+      || CommandLine.arguments.contains("--dock-scenarios")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
     let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color"]
@@ -61,7 +62,7 @@ final class GlanceProbe {
     }
     // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
     if CommandLine.arguments.contains("--restore-guard") { fixtureArguments.append("--minimizable-other") }
-    if ["--soak", "--idle-first-op", "--browser-identity"].contains(where: { CommandLine.arguments.contains($0) }) {
+    if ["--soak", "--idle-first-op", "--browser-identity", "--dock-scenarios"].contains(where: { CommandLine.arguments.contains($0) }) {
       fixtureArguments += ["--lifetime", "1800"]
     }
     process.arguments = fixtureArguments
@@ -284,6 +285,12 @@ final class GlanceProbe {
     if CommandLine.arguments.contains("--dock-gestures") {
       adoptFixture(pid: process.processIdentifier)
       try await exerciseDockGestures(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--dock-scenarios") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseDockScenarios(pid: process.processIdentifier)
       finish(nil)
       return
     }
