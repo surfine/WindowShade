@@ -61,10 +61,20 @@ struct WindowSwitcherSearchTests {
         var idle = WindowSwitcherQuery()
         expect(!idle.deleteBackward(), "Delete outside search does nothing")
 
-        // 编号语义：数字键 N 选过滤后的第 N 项。
-        let visible = f("e")  // 过滤后的下标列表
-        let pickThird = visible.indices.contains(2) ? visible[2] : -1
-        expect(pickThird == visible[2], "digit N addresses the filtered list, not the full one")
+        // 编号语义：数字键 N 选过滤后的第 N 项（相对原始下标）。
+        let visible = f("e")
+        expect(visible.count >= 3, "fixture: 'e' matches at least 3 entries")
+        for n in 1...visible.count {
+            expect(WindowSwitcherSearch.index(forNumber: n, query: "e", entries: entries) == visible[n - 1],
+                   "digit \(n) addresses the filtered list")
+        }
+        expect(WindowSwitcherSearch.index(forNumber: visible.count + 1, query: "e", entries: entries) == nil,
+               "digit past the filtered count does nothing")
+        expect(WindowSwitcherSearch.index(forNumber: 2, query: "", entries: entries) == 1, "empty query numbers the full list")
+        expect(WindowSwitcherSearch.index(forNumber: 0, query: "", entries: entries) == nil, "digit 0 never matches")
+        expect(WindowSwitcherSearch.index(forNumber: 1, query: "inbox", entries: entries) == 1
+               && WindowSwitcherSearch.index(forNumber: 2, query: "inbox", entries: entries) == nil,
+               "single hit is number 1 even though it is entry 1 of the full list")
 
         if failures > 0 { print("\(failures) failures"); exit(1) }
         print("all passed")

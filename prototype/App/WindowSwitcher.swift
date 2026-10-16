@@ -135,8 +135,11 @@ final class WindowSwitcherKeys: @unchecked Sendable {
         case 48 where searching: handled = .step(flags.contains(.maskShift) ? -1 : 1)
         case 51, 117: handled = .deleteBackward
         case 44 where !searching && flags.intersection(other).isEmpty: handled = .beginSearch
-        case 13 where !searching && (flags.contains(.maskCommand) || modifier == .maskAlternate): handled = .close
-        case 12 where !searching && (flags.contains(.maskCommand) || modifier == .maskAlternate): handled = .quit
+        // 搜索态下 ⌥W／⌥Q 是普通字符，但明确按了 ⌘ 的 ⌘W／⌘Q 仍是关窗口／退 App（不放给前台 App）。
+        case 13 where (!searching && (flags.contains(.maskCommand) || modifier == .maskAlternate))
+            || (searching && flags.contains(.maskCommand) && modifier == .maskAlternate): handled = .close
+        case 12 where (!searching && (flags.contains(.maskCommand) || modifier == .maskAlternate))
+            || (searching && flags.contains(.maskCommand) && modifier == .maskAlternate): handled = .quit
         case 36, 76: handled = .commit
         default:
             if let digit = digits[keyCode] { handled = .jump(digit) }
@@ -146,7 +149,14 @@ final class WindowSwitcherKeys: @unchecked Sendable {
             }
         }
         guard let handled else { return Unmanaged.passUnretained(event) }
-        if type == .keyDown { post(handled) }
+        if type == .keyDown {
+            // 在钩子线程上就进搜索态，免得紧接着的松开修饰键抢在主线程处理之前被当成“松手切换”。
+            switch handled {
+            case .type, .beginSearch: lock.lock(); self.searching = true; lock.unlock()
+            default: break
+            }
+            post(handled)
+        }
         return nil
     }
 }
@@ -274,8 +284,11 @@ final class WindowSwitcher {
     }
 
     func jump(_ number: Int) {
-        guard isOpen, items.indices.contains(number - 1) else { return }
-        selected = number - 1
+        guard isOpen else { return }
+        let entries = allItems.map { WindowSwitcherSearch.Entry(appName: $0.appName, title: $0.title) }
+        guard let original = WindowSwitcherSearch.index(forNumber: number, query: query.isSearching ? query.text : "", entries: entries),
+              let position = items.firstIndex(where: { $0.id == allItems[original].id }) else { return }
+        selected = position
         finish(commit: true)
     }
 
