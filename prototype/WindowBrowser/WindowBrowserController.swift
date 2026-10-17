@@ -2054,6 +2054,12 @@ final class WindowBrowserController: NSObject {
             }
         case .awaitingUser(let reason):
             owner?.quietNotice(reason, log: "window-browser: awaiting user \(reason)")
+            if action == .close {
+                // 窗口还在、App 多半弹了保存确认框：把那扇窗口带到前面并收起面板，让人看见确认框。
+                submit(action: .activate, key: key)
+                closePanel(reason: "close-awaiting-user")
+                return
+            }
         case .busy:
             shadeSounds.beep()
         case .uncertain(let reason):
@@ -2090,7 +2096,7 @@ final class WindowBrowserController: NSObject {
         for item in items {
             let menuItem = NSMenuItem(title: item.title,
                                       action: #selector(contextAction(_:)),
-                                      keyEquivalent: WindowBrowserActionPresentation.macShortcut(for: item.action)?.key ?? "")
+                                      keyEquivalent: item.action == .newWindow ? "n" : "")
             menuItem.target = self
             menuItem.representedObject = encoded
             menuItem.identifier = NSUserInterfaceItemIdentifier(item.action.rawValue)
