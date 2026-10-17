@@ -246,6 +246,7 @@ import Foundation
       precondition(results.count == 1, "Verdict is reported once")
     }
 
+    stageStripTests()
     for replacedAt in [0.0, 0.2, 0.7] {
       let stale = Scenario()
       stale.verifier.start()
@@ -258,6 +259,58 @@ import Foundation
                    && stale.rescueProbes == 0 && stale.completions.isEmpty,
                    "Old verification must never mutate, acknowledge or roll back its replacement")
     }
+  }
+  // 规格 R19：台前调度侧条卡片的几何判据与展开后请回来的步骤。
+  static func stageStripTests() {
+    let screen = CGRect(x: 0, y: 0, width: 1280, height: 800)
+    let ax = CGSize(width: 320, height: 232)
+    // VM 实测：AX 320x232，外框 82x100 贴左缘。
+    precondition(StageStrip.looksParked(windowServerBounds: CGRect(x: 16, y: 427, width: 82, height: 100),
+                                        axSize: ax, displays: [screen]))
+    // 程序坞在左时侧条在右缘。
+    precondition(StageStrip.looksParked(windowServerBounds: CGRect(x: 1180, y: 300, width: 82, height: 100),
+                                        axSize: ax, displays: [screen]))
+    // 第二块屏（全局坐标偏移）上贴左缘同样成立：判据跟着所在屏走，不是写死的坐标。
+    let second = CGRect(x: 1280, y: -200, width: 1920, height: 1080)
+    precondition(StageStrip.looksParked(windowServerBounds: CGRect(x: 1296, y: 100, width: 90, height: 110),
+                                        axSize: CGSize(width: 900, height: 600), displays: [screen, second]))
+    // 原样在屏上（外框 = AX 尺寸）：不是。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 900, y: 448, width: 320, height: 232),
+                                         axSize: ax, displays: [screen]))
+    // 贴着左缘、但没缩小（用户把窗口放在左边）：不是。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 0, y: 100, width: 320, height: 232),
+                                         axSize: ax, displays: [screen]))
+    // 缩小了但在屏幕中间（例如动画半途或别的变换）：不是。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 600, y: 400, width: 82, height: 100),
+                                         axSize: ax, displays: [screen]))
+    // 用户自己把窗口拖小：AX 尺寸一起变小，比例不掉，不是。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 16, y: 427, width: 82, height: 100),
+                                         axSize: CGSize(width: 82, height: 100), displays: [screen]))
+    // 只缩了一边：不是。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 16, y: 427, width: 82, height: 232),
+                                         axSize: ax, displays: [screen]))
+    // 不在任何屏上、读数非法、没有屏：判不出就是 false。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: -5000, y: 0, width: 82, height: 100),
+                                         axSize: ax, displays: [screen]))
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 16, y: 427, width: 82, height: 100),
+                                         axSize: CGSize(width: CGFloat.nan, height: 232), displays: [screen]))
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 16, y: 427, width: 0, height: 0),
+                                         axSize: ax, displays: [screen]))
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 16, y: 427, width: 82, height: 100),
+                                         axSize: ax, displays: []))
+
+    let n = StageStrip.restoreCheckDelays.count
+    precondition(StageStrip.restoreCheckDelays.last! < 1.5, "Last nudge precedes restore verification's 1.5 s limit")
+    precondition(zip(StageStrip.restoreCheckDelays, StageStrip.restoreCheckDelays.dropFirst()).allSatisfy { $0 < $1 })
+    for attempt in 0..<n {
+      precondition(StageStrip.restoreStep(parked: false, attempt: attempt) == .done, "Back on stage: stop touching it")
+    }
+    precondition(StageStrip.restoreStep(parked: true, attempt: 0) == .nudge(escalated: false))
+    for attempt in 1..<(n - 1) {
+      precondition(StageStrip.restoreStep(parked: true, attempt: attempt) == .nudge(escalated: true))
+    }
+    precondition(StageStrip.restoreStep(parked: true, attempt: n - 1) == .giveUp, "Bounded: the last check only reports")
+    print("PASS: stage strip thumbnail classification and bounded restore nudges (R19)")
   }
   static func deferredRestoreCompletionTests() {
     let clock = Clock()

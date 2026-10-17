@@ -136,7 +136,8 @@ extension AppDelegate {
         guard pos.x.isFinite, pos.y.isFinite, size.width > 1, size.height > 1 else { return false }
         guard windowIsVisible(pos: pos, size: size), windowID(of: action.win) == action.id,
               let info = cgWindowInfo(action.id), (info[kCGWindowIsOnscreen as String] as? Bool) == true,
-              !axBoolAttribute(action.win, kAXMinimizedAttribute as String) else { return false }
+              !axBoolAttribute(action.win, kAXMinimizedAttribute as String),
+              !windowParkedInStageStrip(id: action.id, axSize: size) else { return false }
         if let alpha = action.targetAlpha {
             guard let actual = PrivateSLSWindowMover.shared.windowAlpha(id: action.id),
                   abs(actual - alpha) < 0.05 else { return false }

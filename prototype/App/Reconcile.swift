@@ -62,7 +62,9 @@ extension AppDelegate {
         case .minimized:
             // AX 快照读取在后台工作队列；没有快照时保守地认为仍不可见，
             // 不能为了确认菜单/定时器状态回到主线程同步 IPC。
-            return sourceIsMinimized.map { !$0 } ?? false
+            guard sourceIsMinimized == false else { return false }
+            // 停在台前调度侧条里的卡片外框也算“在屏上”，但用户没把它叫回来（规格 R19）。
+            return !windowParkedInStageStrip(id: state.sourceWindowID, axSize: size)
         case .ownWindowOrderedOut:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
             return ownWindow(id: state.sourceWindowID)?.isVisible ?? false

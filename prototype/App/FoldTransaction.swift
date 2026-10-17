@@ -158,11 +158,77 @@ extension AppDelegate {
     }
 
     /// 台前调度（com.apple.WindowManager GloballyEnabled，只读）是否开着。先同步一次那个域，
-    /// 运行中切换台前调度也读得到新值；只在最小化的验证里调用，一次收起至多一次。
+    /// 运行中切换台前调度也读得到新值。只在“最小化收起”的验证、展开与对账里、且 AXMinimized 读到 false 时调用。
     func stageManagerGloballyEnabled() -> Bool {
         let domain = "com.apple.WindowManager" as CFString
         CFPreferencesAppSynchronize(domain)
         return (CFPreferencesCopyAppValue("GloballyEnabled" as CFString, domain) as? Bool) == true
+    }
+
+    /// 台前调度开着、且这扇窗被缩成了侧条卡片（规格 R19；判据见 StageStrip）。
+    /// 台前调度关着时恒为 false，也不去问窗口服务器。只在 AXMinimized 读到 false 的那一支调用。
+    func windowParkedInStageStrip(id: CGWindowID, axSize: CGSize) -> Bool {
+        guard stageManagerGloballyEnabled(),
+              let info = cgWindowInfo(id), let bounds = cgWindowBounds(info) else { return false }
+        var count: UInt32 = 0
+        guard CGGetActiveDisplayList(0, nil, &count) == .success, count > 0 else { return false }
+        var displays = [CGDirectDisplayID](repeating: 0, count: Int(count))
+        guard CGGetActiveDisplayList(count, &displays, &count) == .success else { return false }
+        return StageStrip.looksParked(windowServerBounds: bounds, axSize: axSize,
+                                      displays: displays.prefix(Int(count)).map(CGDisplayBounds))
+    }
+
+    /// 展开或回滚之后，把停在台前调度侧条里的窗口请回舞台（规格 R19）。解除最小化在这里是空操作：
+    /// 窗口本来就没“最小化”。按 StageStrip.restoreCheckDelays 看几档，还在侧条就 raise/聚焦，
+    /// 第二档起先激活自己再激活它（同一个 App 已在前台时单独 activate 不起作用）。窗口又被收起就停手。
+    /// 台前调度关着、或不是最小化收起的，什么都不做。
+    func bringOutOfStageStripIfNeeded(_ state: ShadeState, reason: String) {
+        guard state.hide == .minimized, stageManagerGloballyEnabled() else { return }
+        let id = state.sourceWindowID
+        let delays = StageStrip.restoreCheckDelays
+        func check(_ attempt: Int) {
+            guard shaded[id] == nil, !shadeOperationIDs.contains(id) else { return }
+            let win = resolvedWindowElement(for: state)
+            let parked = axSize(win).map { windowParkedInStageStrip(id: id, axSize: $0) } ?? false
+            let step = StageStrip.restoreStep(parked: parked, attempt: attempt, attempts: delays.count)
+            switch step {
+            case .done:
+                if attempt > 0 { wlog("stage-strip: id=\(id) back on stage after \(attempt) nudges reason=\(reason)") }
+                return
+            case .giveUp:
+                wlog("stage-strip: id=\(id) still in strip after \(attempt) nudges; leave to restore verification reason=\(reason)")
+                return
+            case .nudge(let escalated):
+                wlog("stage-strip: id=\(id) in strip; nudge attempt=\(attempt) escalated=\(escalated) reason=\(reason)")
+                let pid = state.pid
+                let bringBack = {
+                    AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
+                    raiseAXWindow(win)
+                    focusAXWindow(win, pid: pid)
+                }
+                if escalated {
+                    // 先让自己成为前台、再交回给它：它本来就在前台时，单独 activate 不会让台前调度换舞台。
+                    NSApp.activate()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                        guard let self, self.shaded[id] == nil else { return }
+                        runningApp(pid: pid)?.activate(options: [])
+                        bringBack()
+                    }
+                } else {
+                    bringBack()
+                }
+            }
+            let next = attempt + 1
+            guard next < delays.count else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + (delays[next] - delays[attempt])) { [weak self] in
+                guard self != nil else { return }
+                check(next)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + delays[0]) { [weak self] in
+            guard self != nil else { return }
+            check(0)
+        }
     }
 
     func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {
@@ -197,6 +263,7 @@ extension AppDelegate {
             }
         case .minimized:
             setAXMinimized(resolvedWindowElement(for: state), false)
+            bringOutOfStageStripIfNeeded(state, reason: "rollback")
         case .privateAlpha:
             let alpha = privateAlphaOriginalValues.removeValue(forKey: id) ?? 1
             _ = PrivateSLSWindowMover.shared.setAlpha(id: id, alpha: alpha)
@@ -831,6 +898,7 @@ extension AppDelegate {
             // hide/minimize 周期后原 AX 元素可能失效（Safari 常见），先重新解析，
             // 否则解除的是无效元素或错误窗口，表现为"恢复失败/几何漂移"。
             setAXMinimized(resolvedWindowElement(for: state), false)
+            bringOutOfStageStripIfNeeded(state, reason: "restore")
         case .ownWindowOrderedOut:
             if let window = ownWindow(id: state.sourceWindowID) {
                 let safePos = safeRestorePosition(for: state, desired: pos)
