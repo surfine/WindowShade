@@ -59,6 +59,11 @@ extension GlanceProbe {
       }
       modifier(63, add: .maskSecondaryFn, down: true)
       modifier(59, add: .maskControl, down: true)
+      // 中途出错也要抬起修饰键，免得 fn、Control 卡在按下。
+      defer {
+        modifier(59, add: .maskControl, down: false)
+        modifier(63, add: .maskSecondaryFn, down: false)
+      }
       var keyFlags = held
       if arrows.contains(code) { keyFlags.insert(.maskNumericPad) }
       for down in [true, false] {
@@ -68,8 +73,6 @@ extension GlanceProbe {
         event.flags = keyFlags
         event.post(tap: .cghidEventTap)
       }
-      modifier(59, add: .maskControl, down: false)
-      modifier(63, add: .maskSecondaryFn, down: false)
     }
 
     func samePlace(_ a: CGRect, _ b: CGRect) -> Bool { closeTo(a, b) }
