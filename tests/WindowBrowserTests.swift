@@ -53,6 +53,7 @@ enum WindowBrowserTests {
         livePreviewMounting()
         iconCacheSharedAcrossRows()
         dockRegionAndDetectionQueue()
+        dockHoverLeaveAfterDockMenu()
         dockPlanUsesOneSourceOfTruth()
         metadataSlots()
         targetEnumerationBatches()
@@ -2372,6 +2373,66 @@ enum WindowBrowserTests {
     // MARK: 新增：Dock 区域与检测排队
 
     /// T21–T29：候选区域、在途合并、过期结果与拓扑变化。
+    /// 规格 V8：右键弹出 Dock 菜单、Esc 关掉、指针一下移出 Dock，再回到同一个图标，预览要能再出来。
+    /// 走一遍真实的状态转移：近/远由 WindowBrowserDockRegion 判断，离开那一下由 DockHoverLeavePolicy 决定。
+    static func dockHoverLeaveAfterDockMenu() {
+        let screen = WindowBrowserDockRegion.ScreenSnapshot(
+            frame: NSRect(x: 0, y: 0, width: 1440, height: 900), displayID: 1)
+        let dockArea = NSRect(x: 400, y: 0, width: 640, height: 70)
+        func near(_ p: NSPoint) -> Bool {
+            WindowBrowserDockRegion.isNearDock(p, screens: [screen], dockAreas: [dockArea],
+                                               edgeBand: 10, tolerance: 24)
+        }
+        // 模拟观察器手里的状态：目标、上一下是否在 Dock 附近。
+        var hasTarget = false
+        var wasNear = false
+        var clears = 0
+        func move(to p: NSPoint, onIcon: Bool, sinceResolved: TimeInterval = 2) {
+            let isNear = near(p)
+            defer { wasNear = isNear }
+            if isNear {
+                if onIcon { hasTarget = true }   // 命中图标：投递（同一目标去重）
+                return
+            }
+            guard DockHoverLeavePolicy.needsLeaveCheck(wasNear: wasNear, isNear: isNear,
+                                                      hasTarget: hasTarget) else { return }
+            // 离开检测的结果：指针已经不在图标上。
+            if DockHoverLeavePolicy.verdictWhenUnconfirmed(
+                source: DockHoverLeavePolicy.leaveSource, secondsSinceResolved: sinceResolved,
+                grace: 0.4) == .clearNow {
+                hasTarget = false
+                clears += 1
+            }
+        }
+        let icon = NSPoint(x: 700, y: 35)
+        let center = NSPoint(x: 720, y: 450)
+        move(to: icon, onIcon: true)
+        expect(hasTarget && wasNear, "hovering the Dock icon holds a target")
+        // 右键、Esc：指针没动，Dock 没再发通知。然后一下跳到屏幕中间。
+        move(to: center, onIcon: false)
+        expect(!hasTarget && clears == 1,
+               "a single jump out of the Dock clears the target without waiting for a Dock notification")
+        move(to: icon, onIcon: true)
+        expect(hasTarget, "coming back to the same icon gets a fresh target (preview can show again)")
+        // 刚命中就离开（宽限期内）也照样清：离开检测不走 0.4 s 宽限。
+        move(to: center, onIcon: false, sinceResolved: 0.05)
+        expect(!hasTarget && clears == 2, "leaving inside the grace period still clears")
+        // 已经在 Dock 外继续移动：不再重复补检测。
+        move(to: NSPoint(x: 900, y: 600), onIcon: false)
+        expect(clears == 2, "moves that stay away from the Dock do not trigger more leave checks")
+        expect(!DockHoverLeavePolicy.needsLeaveCheck(wasNear: true, isNear: false, hasTarget: false),
+               "leaving with no target needs no detection")
+        expect(!DockHoverLeavePolicy.needsLeaveCheck(wasNear: true, isNear: true, hasTarget: true),
+               "moving within the Dock is not a leave")
+        // 其它来源仍按宽限期：Dock 条带里图标之间的抖动不立刻清。
+        expect(DockHoverLeavePolicy.verdictWhenUnconfirmed(source: "mouse-fallback",
+                                                          secondsSinceResolved: 0.1, grace: 0.4) == .recheckLater,
+               "inside the Dock the grace period still applies")
+        expect(DockHoverLeavePolicy.verdictWhenUnconfirmed(source: "ax-notification",
+                                                          secondsSinceResolved: 1, grace: 0.4) == .clearNow,
+               "after the grace period other sources clear as before")
+    }
+
     static func dockRegionAndDetectionQueue() {
         let left = WindowBrowserDockRegion.ScreenSnapshot(
             frame: NSRect(x: -1440, y: 0, width: 1440, height: 900), displayID: 1)
