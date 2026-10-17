@@ -248,6 +248,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     splitController.splitView.setPosition(214, ofDividerAt: 0)
 
     visibleSections = WS2Preview.sections
+    // 侧栏表格在上面接好数据源时可能已经按全部分节读过一次行数；这里按算好的分节重读，
+    // 否则第一次打开会露出被预览旗标藏着的页（之后 refreshVisibleSections 看值没变也不会重读）。
+    isRebuildingLocalCopy = true
+    sidebarTable.reloadData()
+    isRebuildingLocalCopy = false
     rebuildAllPages()
     // 上次看的页被预览旗标藏着时回到「卷帘」（rawValue 是存档编号，行号在 visibleSections 里查）。
     select(section: controller.isDesignPreview ? .effects
