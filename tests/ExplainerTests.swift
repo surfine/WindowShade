@@ -145,6 +145,8 @@ struct ExplainerTests {
         expect(ExplainerScenes.glance.keyState[.windowB]?.h == 104, "glance key frame shows the window hanging down")
         expect(ExplainerPage.shade.pageDefault.id == "glance", "shade page default is the glance")
         if case .options(let list) = ExplainerRow.Shade.centering.kind { expect(list.count == 3, "centering has one scene per option") } else { expect(false, "centering is an options row") }
+    }
+
     /// 快捷键页：键帽从显示名拆出来；排布共用一个场景、只换目标；没录写“还没录”。
     static func shortcutScenes() {
         let caps = ExplainerScenes.keyCaps(displayName: "⌃⌥⌘←")
@@ -167,6 +169,8 @@ struct ExplainerTests {
         if case .loop(let spec) = ExplainerRow.Shortcuts.row(.place(.leftHalf), combo: "⌃⌘←").kind { expect(spec.id == "shortcut.leftHalf.⌃⌘←", "recorded combo loops") } else { expect(false, "recorded combo is a loop") }
         expect(ExplainerRow.Shortcuts.row(.none, combo: "⌃⌘←") == .pageDefault, "an action with no scene follows the page default")
         expect(ExplainerPage.shortcuts.pageDefault.id == "shortcut.leftHalf.⌃⌘←", "shortcuts page default is the left half")
+    }
+
     /// 隐私页：全是静图；授权行按授权状态取已授权或未授权那张；每段都有读屏句。
     static func privacyScenes() {
         let all = [ExplainerScenes.privateWindow, ExplainerScenes.accessibilityOn, ExplainerScenes.accessibilityOff,
@@ -182,6 +186,8 @@ struct ExplainerTests {
                "accessibility on rolls the window, off leaves it")
         expect(ExplainerRow.Privacy.accessibility(granted: true) != ExplainerRow.Privacy.accessibility(granted: false), "the permission row follows the grant state")
         expect(ExplainerScenes.launchAtLogin.initial[.menuBarIcon]?.opacity == 1, "launch at login shows the menu bar icon")
+    }
+
     /// 高级页：三张静图没有帧（减少动态效果是强制摆一帧）；实验各段有关键帧；变体只改了该改的；每段都有读屏句。
     static func advancedScenes() {
         let stills = [ExplainerScenes.advLanguage, ExplainerScenes.advDiagnostics, ExplainerScenes.advReduceMotion]
