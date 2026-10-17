@@ -431,6 +431,11 @@ final class GlanceProbe {
       finish(nil)
       return
     }
+    if CommandLine.arguments.contains("--logitech-scroll") {
+      try await exerciseLogitechScroll(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--gesture") {
       try await exerciseGestures(element: element, original: original, pid: process.processIdentifier)
       finish(nil)

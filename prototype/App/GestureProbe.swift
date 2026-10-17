@@ -2277,6 +2277,43 @@ extension GlanceProbe {
     }
   }
 
+  /// 罗技 Options+ 之类的平滑滚轮的一个事件（CGEventCreateScrollWheelEvent2，按点）：连续
+  /// （kCGScrollWheelEventIsContinuous = 1），不写相位字段；momentum 非 0 时只带惯性阶段（1 开始、2 继续、3 结束）。
+  /// wheel1 = dy、wheel2 = dx，和 wheel(at:lines:count:) 同向：dy > 0 = 滚轮往上推。补上时间戳（合成事件默认是 0）。
+  func smoothWheelEvent(dx: Int32, dy: Int32, momentum: Int64, at point: CGPoint) -> NSEvent? {
+    guard let cg = CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2,
+                           wheel1: dy, wheel2: dx, wheel3: 0) else { return nil }
+    cg.location = point
+    cg.timestamp = clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
+    cg.setIntegerValueField(.scrollWheelEventIsContinuous, value: 1)
+    if momentum != 0 { cg.setIntegerValueField(.scrollWheelEventMomentumPhase, value: momentum) }
+    cg.setIntegerValueField(.scrollWheelEventPointDeltaAxis1, value: Int64(dy))
+    cg.setIntegerValueField(.scrollWheelEventPointDeltaAxis2, value: Int64(dx))
+    cg.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis1, value: Double(dy))
+    cg.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis2, value: Double(dx))
+    return NSEvent(cgEvent: cg)
+  }
+
+  /// 平滑滚轮拨几下：每下 6 个事件、相隔 15 毫秒、一路减速；两下之间停 150 毫秒（够分成两下，
+  /// 又不到滚轮结算的 0.3 秒）。sign > 0 = 滚轮往上推（横向时往右）。每个事件交给 deliver。
+  func smoothFlicks(_ shape: LogitechScrollShape, sign: Int32, flicks: Int,
+                    at point: CGPoint, deliver: (NSEvent) -> Void) async throws {
+    let deltas: [Int32] = [12, 10, 8, 6, 4, 2]
+    for flick in 0..<flicks {
+      if flick > 0 { try await Task.sleep(for: .milliseconds(150), clock: .suspending) }
+      for (i, d) in deltas.enumerated() {
+        let value = d * sign
+        let momentum: Int64 = shape != .momentumOnly ? 0 : (i == 0 ? 1 : (i == deltas.count - 1 ? 3 : 2))
+        guard let event = smoothWheelEvent(dx: shape == .wheel2Only ? value : 0, dy: shape == .wheel2Only ? 0 : value,
+                                           momentum: momentum, at: point) else {
+          throw EffectError.unavailable("cannot synthesize smooth wheel")
+        }
+        deliver(event)
+        try await Task.sleep(for: .milliseconds(15), clock: .suspending)
+      }
+    }
+  }
+
   func magnify(at point: CGPoint, delta: CGFloat, steps: Int,
                inspect: ((Int) async throws -> Void)? = nil) async throws {
     let gestures = owner.gestures
