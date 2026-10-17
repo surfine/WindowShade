@@ -127,7 +127,7 @@ extension GlanceProbe {
   /// 窗口浏览开合：同一个控制器连续开、关键盘面板 `rounds` 次。只开关面板，不对任何窗口发动作。
   func soakBrowser(rounds: Int) async throws {
     guard WindowBrowserSettings.keyboardPanelEnabled else {
-      print("SKIP soak-browser: 窗口浏览在设置里关着，探针不改设置")
+      print("SKIP soak-browser: Window browser is off in Settings; the probe does not change settings")
       return
     }
     AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 2.0)
@@ -169,7 +169,7 @@ extension GlanceProbe {
   /// 悬停看一眼：先收起临时窗口，再让指针进、出卷帘条 `rounds` 次，每次等看一眼出现与收回。
   func soakGlance(element: AXUIElement, rounds: Int) async throws {
     guard GlanceController.isEnabled else {
-      print("SKIP soak-glance: 悬停看一眼在设置里关着，探针不改设置")
+      print("SKIP soak-glance: Glance is off in Settings; the probe does not change settings")
       return
     }
     let glance = owner.glance
