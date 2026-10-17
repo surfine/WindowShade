@@ -359,7 +359,7 @@ Sparkle 调用 `showReadyToInstallAndRelaunch:`（或续装时进入上一节）
 - 不写终端命令、`xattr`，也不教人关掉安全检查。
 - 不提供 Homebrew：官方 cask 从 2026 年 9 月起不收过不了 Gatekeeper 的包（[Homebrew 5.0.0](https://brew.sh/2025/11/12/homebrew-5.0.0/)、
   [Acceptable Casks](https://docs.brew.sh/Acceptable-Casks)），自建 tap 要删隔离标记，正是 Homebrew 在收紧的做法。
-- 首次下载保持 zip，和 Sparkle 用同一个包。
+- 更新只用 zip（Sparkle 照旧）。首次下载另给一个 DMG（`scripts/make-dmg.sh`：已签名、公证、钉票据，里面是已钉票据的 App ＋「应用程序」快捷方式），两者是同一份 build；DMG 不进 appcast。DMG 拖进「应用程序」的做法比 zip 少一步“解压”，zip 仍留在 Release 页给不想用 DMG 的人。
 - 接入 Sparkle 后包里有了符号链接，用不保留符号链接的第三方工具解压，会得到“已损坏”。所以写“双击解开”，并列为实测项。
 
 ### App 第一次打开：需要时多一步“移到‘应用程序’”

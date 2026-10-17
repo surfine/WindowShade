@@ -350,9 +350,11 @@ cd prototype
    新版写不了 healthy，每次更新都会被换回。然后运行相关回归检查（真机探针、虚拟机回归都用这个开发证书签的包）。
 3. **发布包用 Developer ID 签、公证、钉票据**（2026-10-16 起；账号 Team `DQ45KFVHJ8`）：
    `./build.sh --release` 做和 `--stage` 同样的检查（idle-budget 除外，同源由 `--stage` 把关），产物在 `.build/release/WindowShade.app`，
-   所有嵌套代码用同一张 Developer ID 签、带 Apple 时间戳；再 `bash scripts/notarize.sh` 送公证、钉票据、用 Gatekeeper 核
+   所有嵌套代码用同一张 Developer ID 签、带 Apple 时间戳。`--release` 另外带 `-g` 编译（只多调试信息，优化不变）、
+   把符号写进 `.build/release/WindowShade.app.dSYM`（dwarfdump 核 UUID 与主程序一致），再对主程序 `strip -x`（在签名前）。
+   崩溃报告只存地址和 UUID，所以**每个发布版的 dSYM 要留档**（和 zip 一起存，丢了就还原不了那一版的崩溃）。再 `bash scripts/notarize.sh` 送公证、钉票据、用 Gatekeeper 核
    （凭证是本人用 `xcrun notarytool store-credentials windowshade-notary …` 存进钥匙串的，脚本不碰密码）。
-   然后打包（`ditto` 保留框架里的符号链接）：
+   然后打包。更新用 zip（`ditto` 保留框架里的符号链接）；首次安装另做一个 DMG（见下，Sparkle 不用它）：
 
    ```sh
    cd prototype
@@ -360,7 +362,11 @@ cd prototype
    mkdir -p dist
    ditto -c -k --sequesterRsrc --keepParent ../.build/release/WindowShade.app "dist/WindowShade-v${VERSION}.zip"
    (cd dist && shasum -a 256 "WindowShade-v${VERSION}.zip" > "WindowShade-v${VERSION}.zip.sha256")
+   cd .. && bash scripts/make-dmg.sh   # 首次安装用：prototype/dist/WindowShade-v${VERSION}.dmg，已签名、公证、钉票据，并写 .sha256
    ```
+
+   DMG 的图标排版存在 `assets/dmg/DS_Store`；没有它就只是没排版。换背景图（`assets/dmg/background*.png`）或图标位置后，
+   在能开 Finder 的 Mac 上跑一次 `bash scripts/make-dmg.sh --capture-template` 重新取模板并提交。
 
 4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 还没写，先按下面手动做：
    1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
@@ -373,7 +379,9 @@ cd prototype
    8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
    9. 上一版读得懂这一版的状态：新版 `--self-check --write-sample-state <目录>`，上一版 `--self-check --read-state <目录>` 返回 0。
       第一个带更新器的版本没有“上一版”，跳过；从第二个起必做。
-5. 提交并推送实际构建的源文件、版本与发布说明，打新标签，上传 zip 和 `.sha256`，再下载回来核对 SHA-256：
+   10. 有 DMG 时加 `--dmg prototype/dist/WindowShade-v${VERSION}.dmg` 过 `release-gate.sh`（第 12 项）：签名、公证、钉票据，挂载后恰好一个
+      `.app` 加一个指向 `/Applications` 的链接，`codesign --deep --strict` 通过，build 号与 zip 相同。
+5. 提交并推送实际构建的源文件、版本与发布说明，打新标签，上传 zip、DMG 和各自的 `.sha256`（dSYM 另存档，不上传），再下载回来核对 SHA-256：
 
    ```sh
    # 仍在 prototype/ 目录下执行
@@ -381,6 +389,7 @@ cd prototype
    git tag "v${VERSION}" && git push origin "v${VERSION}"
    gh release create "v${VERSION}" \
      "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" \
+     "dist/WindowShade-v${VERSION}.dmg" "dist/WindowShade-v${VERSION}.dmg.sha256" \
      --title "WindowShade v${VERSION}" \
      --notes-file "../docs/releases/v${VERSION}.md"
    curl -L -o /tmp/ws-check.zip "https://github.com/surfine/WindowShade/releases/download/v${VERSION}/WindowShade-v${VERSION}.zip"

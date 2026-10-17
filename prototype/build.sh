@@ -30,8 +30,10 @@ if [ "${1:-}" = "--stage" ]; then stage_only=1; fi
 # --release 是带 Developer ID 签名的 --stage：同样的检查，换输出目录、换证书、加时间戳。
 if [ "${1:-}" = "--release" ]; then stage_only=1; release=1; fi
 OPTIMIZATION_FLAGS=(-O -whole-module-optimization)
+# --release 另加 -g：只多写调试信息（DWARF），不改优化。信息进 dSYM，主程序随后 strip（见下面「剥符号」）。
 # Toolchain version is not the language mode. Keep all four Swift builds identical.
 SWIFT_LANGUAGE_FLAGS=(-swift-version 6 -strict-concurrency=complete -warnings-as-errors)
+if [ "$release" = "1" ]; then OPTIMIZATION_FLAGS+=(-g); fi
 if [ "${1:-}" = "--local-parallel" ]; then OPTIMIZATION_FLAGS+=(-num-threads 4); fi
 APP="WindowShade.app"
 STAGE_DIR="$(cd .. && pwd)/.build/duo-validation"
@@ -278,6 +280,20 @@ env TMPDIR="$WORK/compiler-tmp" CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
     "${INTENT_FLAGS[@]}" "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
     "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
 extract_app_intents "$TMP_BIN" || exit 1
+DSYM="$STAGE_DIR/WindowShade.app.dSYM"
+if [ "$release" = "1" ]; then
+  echo "==> 生成 dSYM（崩溃报告只存地址与 UUID，符号靠它还原；每个发布版要留一份）"
+  rm -rf "$DSYM"
+  # swiftc 带 -g 链接时通常会顺手生成 $TMP_BIN.dSYM；没有就自己跑 dsymutil（必须在 strip 之前）。
+  if [ -d "$TMP_BIN.dSYM" ]; then mv "$TMP_BIN.dSYM" "$DSYM"; else dsymutil "$TMP_BIN" -o "$DSYM"; fi
+  BIN_UUID=$(dwarfdump --uuid "$TMP_BIN" | awk '{print $2}' | head -1)
+  DSYM_UUID=$(dwarfdump --uuid "$DSYM" | awk '{print $2}' | head -1)
+  if [ -z "$BIN_UUID" ] || [ "$BIN_UUID" != "$DSYM_UUID" ]; then
+    echo "ERROR: dSYM 的 UUID（${DSYM_UUID:-无}）和主程序（${BIN_UUID:-无}）对不上。" >&2
+    exit 1
+  fi
+  echo "    UUID $BIN_UUID"
+fi
 echo "==> 编译看护（WindowShadeUpdateGuard）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx15.0" -O -o "$WORK/WindowShadeUpdateGuard" \
@@ -296,6 +312,15 @@ if [ "$stage_only" != "1" ]; then
 fi
 echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"
+if [ "$release" = "1" ]; then
+  # 剥符号：-x 只去局部符号，保留导出符号与 Swift/ObjC 运行时、Sparkle、PLCrash 要用的元数据；必须在 codesign 之前。UUID 不变，dSYM 仍对得上。
+  strip -x "$BIN"
+  if [ "$(dwarfdump --uuid "$BIN" | awk '{print $2}' | head -1)" != "$BIN_UUID" ]; then
+    echo "ERROR: strip 之后主程序 UUID 变了，dSYM 对不上。" >&2
+    exit 1
+  fi
+  echo "==> 已剥符号：$(du -h "$BIN" | cut -f1)（dSYM：$DSYM）"
+fi
 cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
 # 译文放在 Resources/Localization 下，不放 App 根目录的 .lproj，免得改变系统给这个 App 选的界面语言。
 rm -rf "$APP/Contents/Resources/Localization"

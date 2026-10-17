@@ -1,26 +1,29 @@
 #!/bin/bash
 # 发布关（DEVELOPMENT.md「发布流程」第 4 步）：检查要发出去的那个 zip，不是构建目录。有一项不过就非零退出。
 # 用法：
-#   scripts/release-gate.sh <新版 zip> [--previous <上一版 zip 或 .app>] [--appcast <清单>] [--cert-change <Team ID>]
+#   scripts/release-gate.sh <新版 zip> [--previous <上一版 zip 或 .app>] [--appcast <清单>] [--cert-change <Team ID>] [--dmg <首次安装 dmg>]
 #   --previous 不给时用 gh 下载最新 release 的 zip（要联网、要 gh 已登录）。
 #   --appcast 默认 site/public/appcast.xml；清单里要已经有这一版的条目（先写好清单再过关，再上传）。
 #   --cert-change <Team ID>：换证书的那一版（docs/update.md）。第 3 步不比「DR 与上一版逐字相同」，改核
 #   「Developer ID 签名、Team 是这个」；清单那一项还要是 informationalUpdate。
+#   --dmg <路径>：另检查首次安装用的 DMG（第 12 项）：已签名公证并钉票据、挂载后恰好一个 .app 加一个指向 /Applications 的链接、
+#   app 过 codesign --deep --strict、CFBundleVersion 与 zip 里的相同。不给就不查（DMG 不走 Sparkle）。
 # 第 11 项卡顿账只打印 INFO，不影响退出码。
 # 只读：不改清单、不上传、不碰日常运行的 App；会短暂运行新旧两版的 --self-check（无界面、约 1 秒）。
 set -euo pipefail
 cd "$(dirname "$0")/.."
-ZIP=""; PREV=""; APPCAST="site/public/appcast.xml"; CERT_TEAM=""
+ZIP=""; PREV=""; APPCAST="site/public/appcast.xml"; CERT_TEAM=""; DMG=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --previous) PREV="$2"; shift 2 ;;
     --appcast) APPCAST="$2"; shift 2 ;;
     --cert-change) CERT_TEAM="$2"; shift 2 ;;
+    --dmg) DMG="$2"; shift 2 ;;
     -*) echo "unknown option $1" >&2; exit 2 ;;
     *) ZIP="$1"; shift ;;
   esac
 done
-[ -f "$ZIP" ] || { echo "usage: release-gate.sh <新版 zip> [--previous …] [--appcast …] [--cert-change <Team>]" >&2; exit 2; }
+[ -f "$ZIP" ] || { echo "usage: release-gate.sh <新版 zip> [--previous …] [--appcast …] [--cert-change <Team>] [--dmg …]" >&2; exit 2; }
 EXPECTED_FEED="https://windowshade.aaronlau.me/appcast.xml"
 EXPECTED_ED_KEY="D/MZytH+oxawqKQsskoXBdwbvoPentrqfaj7Tj2pnkw="
 
@@ -127,6 +130,29 @@ if [[ "$AUTH" == "Developer ID Application:"* ]]; then
   else fail "10 Developer ID 的包没有公证或没钉票据（scripts/notarize.sh）"; fi
 else
   fail "10 不是 Developer ID 签的（$AUTH）：2026-10-16 起发布包要 build.sh --release ＋ scripts/notarize.sh"
+fi
+
+# 12. 首次安装的 DMG（给了 --dmg 才查）：签名公证、内容、build 号与 zip 一致
+if [ -n "$DMG" ]; then
+  mnt="$work/dmg-mnt"; mkdir -p "$mnt"
+  if [ ! -f "$DMG" ]; then fail "12 找不到 DMG：$DMG"
+  elif ! codesign --verify --strict "$DMG" 2>/dev/null || ! xcrun stapler validate "$DMG" >/dev/null 2>&1 \
+    || ! spctl -a -t open --context context:primary-signature -vv "$DMG" 2>&1 | grep -q 'source=Notarized Developer ID'; then
+    fail "12 DMG 没有签名、公证或钉票据（scripts/make-dmg.sh）"
+  elif ! hdiutil attach -nobrowse -readonly -noverify -mountpoint "$mnt" "$DMG" >/dev/null 2>&1; then
+    fail "12 DMG 挂不上"
+  else
+    dmg_apps=$(find "$mnt" -maxdepth 1 -name '*.app' | wc -l | tr -d ' ')
+    dmg_links=$(find "$mnt" -maxdepth 1 -type l | wc -l | tr -d ' ')
+    DMG_APP="$mnt/WindowShade.app"
+    if [ "$dmg_apps" = "1" ] && [ -d "$DMG_APP" ] && [ "$dmg_links" = "1" ] && [ "$(readlink "$mnt/Applications")" = "/Applications" ] \
+      && codesign --verify --deep --strict "$DMG_APP" 2>/dev/null && [ "$(plist "$DMG_APP" CFBundleVersion)" = "$BUILD" ]; then
+      pass "12 DMG：已公证；只有一个 WindowShade.app 和指向 /Applications 的链接；codesign --deep --strict 通过；build $BUILD 与 zip 相同"
+    else
+      fail "12 DMG 内容不对（.app $dmg_apps 个，链接 $dmg_links 个，build $(plist "$DMG_APP" CFBundleVersion)，zip 是 $BUILD）"
+    fi
+    hdiutil detach -quiet "$mnt" >/dev/null 2>&1 || hdiutil detach -force -quiet "$mnt" >/dev/null 2>&1 || true
+  fi
 fi
 
 # 11. 卡顿账（只报不挡：INFO，不计入 PASS／FAIL）。scripts/perf-report.sh 按 build 号记账，取这个候选 build 最近的一行。
