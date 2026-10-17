@@ -107,6 +107,16 @@
 
 **进度（2026-10-17 拍板后）**：88 条中放弃 5 条，余 83 条：已完成 58、待真机／待 Aaron 18、剩余 7（放弃：V7、R49、R30、H3、V1；完成新增：M3、R25、R36、R37、N1；逐条见 [spec-ledger-2026-10-17.md](handoff/spec-ledger-2026-10-17.md)）
 
+**第二十一批（2026-10-17 下午）**：
+- **R29 ✅**：在 wsqa-manual 的 APFS 克隆里 `tccutil reset ScreenCapture` 后跑 fold-timing、restore-guard、wins、browser-more、browser-identity、window-classes 六组，`screenRecording=false` 下全 PASS（窗口浏览列表与动作、分屏都照常）；证据 `.build/release-acceptance-2026-10-17/r29-clone/`，克隆已删。没测：置顶预览、看一眼「需要屏幕录制」的提示（剩一条提示待真机顺手看）。
+- **V11 ✅，1.0.16 已带着这个 bug 出货**：根因不是缩放——启动台申请刘海显示租约，而刘海关着（1.0.16 起默认关）时屏上没有刘海面板，租约一律被拒，按键没反应。修正 1393b90（没有刘海面板的屏上不拿租约直接开；锁屏仍不开），VM 1280x800@1、1024x640@1、默认分辨率 launchpad 全 PASS。
+- **R19／V10 ✅（带已知限制）**：机制是台前调度把「最小化」做成左侧舞台条里约 82×100 的卡片（CG 外框缩小、AXMinimized 仍 false）。修正 8545421（台前调度下最小化验证多等 2.5 s）与 e6b6d92（按外框比例认出舞台条卡片＝已收起；对账、启动救援不误清；展开时 raise＋activate 请回舞台）。VM：台前调度下两扇都能收起（之前第二扇收不起），fold-timing PASS；restore-guard 剩一项 FAIL「展开一扇时另一扇也跟着回来」——台前调度激活 App 会把同 App 的窗口一起带回舞台，记为台前调度下的已知限制，不再改。
+- **V8 仍剩余**：(b) 自动隐藏的探针问题已修（5395ca2）；同时查出产品 bug：Dock 菜单用 Esc 关掉后回到同一图标预览出不来（离开 Dock 那一下不检测＋同图标去重），修正 9896202。VM 自动隐藏下 (a)(c 右键)(g)(d) PASS，(c) 长按仍 FAIL 一次，待主机连跑三次判定；(e) 睡眠唤醒、(f) 台前调度缩略图 not_run。
+- **R39、E3 仍剩余**：R39 长会话探针已写（`--soak --soak-kind browser|glance`），主机运行待屏幕解锁；E3 脚本定稿，录制待屏幕解锁且机器空闲。
+- **发布关**：候选第四版从 e6b6d92 构建（含启动台修正），公证因屏幕锁着、钥匙串取不到 notarytool 凭证而失败，解锁后自动补跑。
+
+**进度（2026-10-17 第二十一批后）**：83 条中 已完成 62、待真机／待 Aaron 18、剩余 3（R29、V11、R19、V10 → 完成；剩余：V8、R39、E3；逐条见 [spec-ledger-2026-10-17.md](handoff/spec-ledger-2026-10-17.md)）
+
 **Aaron 拍板（2026-10-17 第二十批后）**（选择题，当日在对话里给出）：
 - **放弃 5 条**（「Aaron 拍板（2026-10-17）」）：**V7**（保留 not_run 记录，重开条件：iPadOS 27 正式版交互稳定且手上有 iPad）；**R49**（编号收回，R20 待办记一行「有用户报告某 App 缺图时补一类」）；**R30**（并入 V9，多屏真机时顺手关一次「显示器具有单独空间」看卷轴边缘）；**H3**（记「核过不做」，ΔE 1.08 对阈值 2.3）；**V1**（不再单列，dominance.md 那一格改成「默认关、对 Latch 持平、手感未确认」，做 V5 时顺手开合两遍记一行）。理由见 [drop-or-keep-2026-10-17.md](handoff/drop-or-keep-2026-10-17.md)。
 - **算完成 5 条**（「Aaron 拍板（2026-10-17）」）：**M3**（两条长期纪律写进 §1.3：新代码一律用 Mutex；主 actor 类里会被后台闭包碰到的状态不迁）；**R25**（真手验并入 V5）；**R36**（按无模板定案）；**R37**（剩余部分转冻结区小项：网络承诺改写、loupe 三档分级）；**N1**（发布关里在快捷指令与 Spotlight 搜一次）。
@@ -715,6 +725,7 @@
 - **风险**：Rectangle 那条「功能被撤到 flag 后面」说明**这里的适配可能引入不稳**——所以每条适配都要能单独关掉。
 - **2026-10-17 第二十批**：台前调度开着时 macOS 26.6.2 虚拟机 fold-timing PASS（首次画面变化 962 ms），**restore-guard FAIL**：另一扇 18 s 内没收起（timeout: other folded after 18.0 s）——真发现，待适配，先不改行为。台前调度先把临时 App 激活成当前舞台（2fa27e1）。
 - **「Aaron 拍板（2026-10-17）」**：现在做完（机器项），状态仍为进行中；只留重跑探针（与 V8(f) 合并成一次），适配改成「撞到再做」，做的时候要带可单独关闭的开关。
+- **2026-10-17 第二十一批 ✅ 完成（带已知限制）**：台前调度把「最小化」做成左侧舞台条约 82×100 的卡片（CG 外框缩小、AXMinimized 仍 false）。8545421（台前调度下最小化验证多等 2.5 s）、e6b6d92（按外框比例认出舞台条卡片＝已收起；对账、启动救援不误清；展开时 raise＋activate）。VM 两扇都能收起，fold-timing PASS；restore-guard 剩一项 FAIL「展开一扇时另一扇也跟着回来」——台前调度激活 App 会把同 App 的窗口一起带回舞台，记为已知限制，不再改。
 
 #### R20 · 窗口身份边界（orderOut／无标题浮层／静默退出／多实例）
 - **依据**：OmniWM「Windows that apps such as **Calendar close by ordering out instead of destroying** are now retired from the layout」；DockDoor「**Untitled** toolbar/overlay windows no longer get mistaken for real app windows」「Apps that quit **without a clean termination notice** no longer leave stale entries」「Closed windows from **separate instances** of the same app no longer linger」；**加上 OmniWM 那份 18 个窗口分类夹具**（含 PiP、Chrome 弹窗、**别的刘海 App 的浮层**、登录窗锁屏遮蔽、快速查看、Word 工具条）。
@@ -829,6 +840,7 @@
 - **2026-10-17 虚拟机验（部分）**：没有屏幕录制时收起走 `mode=proxyTitleBar plan=screen-recording-missing`、卷帘条照常出、展开照常；其余项 not_run，细节见 V 系列后面的「要改系统设置的验收」。
 - **2026-10-17 「展开回到整屏」的源码诊断**：**展开路径没有丢原位**。证据是截图本身：收起前 `r29b-0-launch.png` 里 TextEdit 在 (118,74 603×505)，而收起后 `r29b-1-fold.png` 的卷帘条已经是整屏宽、贴在 (8,38)——统一标题栏的卷帘条按收起那一刻读到的外框画（`makeProxyOverlay(axPos: pos, width: size.width …)`），所以**收起时读到的就已经是铺满后的外框**；展开按卷帘条位置加记下的尺寸放回（`FoldExit.swift` `unshadeReturningElement` → `applyRestoredGeometry`，没有别的写入者），放回整屏是忠实还原。窗口是在收起**之前**被铺满的，源码里能做到这一点的只有两条：①标题栏双击的判定 500 ms 没等到主线程（当时主线程停了 2 秒），钩子放行，TextEdit 自己执行了「双击＝铺满」，之后再一次双击才收起；②三击（双击后紧跟一下）按设计是「收起再铺满」，之后又双击收起。两条都要两次手势，都不是无录屏路径的错；哪一条，旧日志分不出。**顺手修的一处（只在开了「收起窗口时的动画」时生效）**：卷帘动画的盖板没有屏幕录制时必然拿不到画面，以前仍起异步任务、先等一次注定失败的全系统窗口枚举再退回普通收起，收起被推迟、外框也改在退回时才读；现在没有录屏直接走普通收起（`WindowFoldEffects.prepareFold`，结果相同、不等；`tests/duo-integration-check.py` 守着）。**下次在虚拟机重跑时看这三行**：`>>> shade … frame=(x,y wxh)`（收起读到的外框，新加）、`titlebar-tap: decision timed out; passed click to app`（放行给 App 的那一下，新加）、`titlebar-triple-click:`（三击铺满）；再配合 `geometry: restore immediate target=…`。
 - **一条可选的实现路子（别人的 know-how）**：Alcove 把权限相关的工作隔离进一个 **`PermissionHelper`**（XPC），另有一个 `batteryHelper`——**按能力切分进程**。若我们要让主 App 完全不问屏幕录制，可以考虑把捕获放进独立 helper，由它自己持有那份权限。**但这是一次架构选择（多一个进程、多一份签名与 TCC 身份），不要为了「少问一次权限」就上**——先做完上面的核实再判断值不值。
+- **2026-10-17 第二十一批 ✅ 完成**：wsqa-manual 的 APFS 克隆里 `tccutil reset ScreenCapture` 后六组（fold-timing、restore-guard、wins、browser-more、browser-identity、window-classes）在 `screenRecording=false` 下全 PASS，窗口浏览列表与动作、分屏都照常；证据 `.build/release-acceptance-2026-10-17/r29-clone/`，克隆已删。没测：置顶预览、看一眼「需要屏幕录制」的提示（待真机顺手看）。
 
 #### R30 · 系统的「Mac 设置检查」（**先核实用不用得上，别照抄**）
 - **依据**：**三方共识**——ChainYourMac 有一个 `MacSetupChecker`，检查 `separateSpacesEnabled`（「显示器具有单独空间」）、`rearrangeSpaces`（「自动依最近使用重新排列 Spaces」**要关**）、`reduceMotion`；而 **Paneru 与 PaperWM 的 README 要求的是同样那两个开关**（[niri.md](niri.md):18 记过 Paneru 那条；PaperWM 的 README 原文见[竞品深挖](competitive-deep-dive.md)§四）。三份独立实现收敛，所以这是**卷轴这一格的入场条件**。
@@ -921,6 +933,7 @@
 
 **不立项但记在案上**：`CHANGELOG.md`／`CONTRIBUTING.md`／`CODE_OF_CONDUCT.md`——**单人项目里这三件可选**（release notes 在 GitHub Releases 与 `docs/releases/`，贡献者文档在 `AGENTS.md` 与 `DEVELOPMENT.md`）。**但建议补 `SECURITY.md`**：我们是要辅助功能与屏幕录制的应用，有一条安全披露通道是这类应用的常规期待（可与 R36 合并成「怎么找到我们」）。
 - **「Aaron 拍板（2026-10-17）」**：现在做完（机器项），状态仍为进行中；窗口浏览开合 100 轮、悬停看一眼 100 轮没跑，✅ 只覆盖收起展开 300 轮。跑之前先确认 GlanceProbe 会不会移动真实鼠标。
+- **2026-10-17 第二十一批（仍剩余）**：长会话探针已写（`--soak --soak-kind browser|glance`），主机运行待屏幕解锁。
 
 ### P3 续 2 · 《竞品深挖》§二 可借项的收口（R40–R42 ＋ 处置表）
 
@@ -1124,10 +1137,10 @@
 | **V5** | **真三指 / 真触控板**（甩一下、卷轴跟手） | scorecard「真三指没人上手试过」「真触控板没人试」 | 拿真手指跑 |
 | **V6** | **Magic Mouse / 罗技滚轮** | scorecard「Magic Mouse、罗技滚轮没人上手试过」 | 各跑一遍 |
 | **V7** | **放弃，「Aaron 拍板（2026-10-17）」**：侧拉已上线；iPadOS 一侧 not_run 记录保留（规格 §V7 原验收「比对完成或明确记 not_run」已满足，iPadOS 26.1 才换成绿色按钮把 Slide Over 带回来，比对对象仍在变）。**重开条件**：iPadOS 27 正式版交互稳定，且 Aaron 手上有 iPad｜ **部分（2026-10-17）**：模拟器已下载并能起；确认 Slide Over 只在设置「全萤幕 App」模式下有、Dock 图标拖到边缘进入，侧拉一侧常量已查实；**iPadOS 一侧像素测量 not_run**（机器负载约 400，拖拽手势注入失败；2026-10-17 第二次尝试：负载降到约 20 后仍进不了 Slide Over，长按菜单吞掉拖拽、改走窗口卡片界面，见 v7-slide-over-compare.md §7，需手动鼠标拖或真机），复测办法与并排表见 [v7-slide-over-compare.md](v7-slide-over-compare.md) ｜ **侧拉的像素级比对** | 需要 iPadOS 27 模拟器（已就绪：WS-V7-iPadPro11） | 比对完成或明确记 not_run |
-| **V8** | **现在做完（机器项），「Aaron 拍板（2026-10-17）」**：状态仍为进行中；其中 (f) 台前调度与 R19 合并成一次重跑，不重复记成本，且「4／12」的分母要先补成 12 行清单｜ **DockDoor 那 12 条场景上机**（窗口浏览，**唯一落后的一行**） | [competitive-analysis.md](competitive-analysis.md):33 已列，未上机 | 逐条跑过 **2026-10-17 第二十批**：(b) 自动隐藏这次因来宾闲置计时被设置改动清零而 SKIP，已修脚本（fa5e96f），待重跑；虚拟机里临时改设置（4f43b2d／ef08c15）。 **2026-10-17 诊断：(b) 自动隐藏的 (c)(g)(d) FAIL 是探针问题，不是产品问题**——Dock 只在开头叫出一次，`reset()` 把指针带回屏中央后 Dock 缩回去，`fixtureIcon()` 因图标在屏外而返回 nil，`hoverFixture()` 直接 false；探针已改成每次悬停前重新叫出 Dock（5395ca2），待虚拟机重跑。 |
+| **V8** | **现在做完（机器项），「Aaron 拍板（2026-10-17）」**：状态仍为进行中；其中 (f) 台前调度与 R19 合并成一次重跑，不重复记成本，且「4／12」的分母要先补成 12 行清单｜ **DockDoor 那 12 条场景上机**（窗口浏览，**唯一落后的一行**） | [competitive-analysis.md](competitive-analysis.md):33 已列，未上机 | 逐条跑过 **2026-10-17 第二十批**：(b) 自动隐藏这次因来宾闲置计时被设置改动清零而 SKIP，已修脚本（fa5e96f），待重跑；虚拟机里临时改设置（4f43b2d／ef08c15）。 **2026-10-17 诊断：(b) 自动隐藏的 (c)(g)(d) FAIL 是探针问题，不是产品问题**——Dock 只在开头叫出一次，`reset()` 把指针带回屏中央后 Dock 缩回去，`fixtureIcon()` 因图标在屏外而返回 nil，`hoverFixture()` 直接 false；探针已改成每次悬停前重新叫出 Dock（5395ca2），待虚拟机重跑。 **2026-10-17 第二十一批（仍剩余）**：(b) 探针问题已修（5395ca2）；另查出产品 bug——Dock 菜单用 Esc 关掉后回到同一图标预览出不来，修正 9896202；VM 自动隐藏下 (a)(c 右键)(g)(d) PASS，(c) 长按仍 FAIL 一次，待主机连跑三次判定；(e) 睡眠唤醒、(f) 台前调度缩略图 not_run。 |
 | **V9** | **部分（2026-10-16）**：「接着两块」那一类——本机内建屏 ＋ Studio Display，`--second-display`（签名构建）把临时窗挪到 Studio Display 收起：卷帘条落在同一块屏、收起记下的是那块屏、展开后窗口回到那块屏，三项 PASS。插拔、改分辨率、两块同型号要真手或另一块屏，待 Aaron。原文：**多显示器矩阵**：接一块／拔掉／改分辨率／**两块同型号** | WindowMizer 三条（crash on display change、wrong monitor's snapshot、**monitors share the same size and resolution**）；四家都用 UUID | 四类各一条 |
-| **V10** | **台前调度**（与 R19 配套） | 见 R19 | 五类各一条 **2026-10-17 第二十批**：台前调度开着时 macOS 26.6.2 虚拟机 fold-timing PASS（首次画面变化 962 ms），restore-guard FAIL（另一扇 18 s 内没收起），见 R19；调度先激活临时 App（2fa27e1）。 |
-| **V11** | **现在做完（机器项），「Aaron 拍板（2026-10-17）」**：状态仍为进行中；先查清 1x 下启动台「did not show」是缩放问题还是环境问题，确认弹不出来就升级｜ **图标在异常分辨率/缩放下不变形** | LaunchOS **两次**修这个：v2.1.0「app icons would display **abnormally at different resolutions**」、v2.1.3「icons could appear **enlarged**」。我们窗口浏览有 `placeholderIcon`（`WindowBrowserCardView.swift:41`）、启动台按 `backingScaleFactor` 取图，**但没在异常缩放档下验过** | 换缩放档/分辨率后两处图标都正常；取不到真图标时**有确定性的兜底**（不留空白、不留错图） **2026-10-17 第二十批**：显示模式 1280x800@1 下 fold-timing PASS，launchpad「did not show」FAIL（待查是缩放还是环境）；还原时记下的 1280x800@2 不在可选列表，已改成退回永久配置（3a674af）。 **2026-10-17 V11 修复**：拒绝的真因不是缩放——租约协调器只认装了刘海面板的屏（`Notch.swift` displays＝panels.keys），刘海关着（1.0.16 起 `Notch.enabled` 默认关）或探针没装面板时 `acquire` 一律拒，启动台按键没反应；改为没有面板的屏不拿租约直接开、锁屏仍不开（cbee2b4，LEASE-H17）；虚拟机 1x 两档待重跑。 |
+| **V10** | **台前调度**（与 R19 配套） | 见 R19 | 五类各一条 **2026-10-17 第二十批**：台前调度开着时 macOS 26.6.2 虚拟机 fold-timing PASS（首次画面变化 962 ms），restore-guard FAIL（另一扇 18 s 内没收起），见 R19；调度先激活临时 App（2fa27e1）。 **2026-10-17 第二十一批 ✅ 完成（带已知限制）**：见 R19，两扇都能收起，fold-timing PASS；restore-guard「另一扇跟着回来」记为台前调度下的已知限制。 |
+| **V11** | **现在做完（机器项），「Aaron 拍板（2026-10-17）」**：状态仍为进行中；先查清 1x 下启动台「did not show」是缩放问题还是环境问题，确认弹不出来就升级｜ **图标在异常分辨率/缩放下不变形** | LaunchOS **两次**修这个：v2.1.0「app icons would display **abnormally at different resolutions**」、v2.1.3「icons could appear **enlarged**」。我们窗口浏览有 `placeholderIcon`（`WindowBrowserCardView.swift:41`）、启动台按 `backingScaleFactor` 取图，**但没在异常缩放档下验过** | 换缩放档/分辨率后两处图标都正常；取不到真图标时**有确定性的兜底**（不留空白、不留错图） **2026-10-17 第二十批**：显示模式 1280x800@1 下 fold-timing PASS，launchpad「did not show」FAIL（待查是缩放还是环境）；还原时记下的 1280x800@2 不在可选列表，已改成退回永久配置（3a674af）。 **2026-10-17 V11 修复**：拒绝的真因不是缩放——租约协调器只认装了刘海面板的屏（`Notch.swift` displays＝panels.keys），刘海关着（1.0.16 起 `Notch.enabled` 默认关）或探针没装面板时 `acquire` 一律拒，启动台按键没反应；改为没有面板的屏不拿租约直接开、锁屏仍不开（cbee2b4，LEASE-H17）；虚拟机 1x 两档待重跑。 **2026-10-17 第二十一批 ✅ 完成**：1.0.16 已带着这个 bug 出货。根因是刘海关着时屏上没有刘海面板、租约一律被拒；修正 1393b90（没有刘海面板的屏上不拿租约直接开，锁屏仍不开），VM 1280x800@1、1024x640@1、默认分辨率 launchpad 全 PASS。 |
 
 #### 2026-10-16/17 · 要改系统设置的验收，只在 QA 虚拟机里做（Aaron 2026-10-17 同意：只动虚拟机，不动本机）
 
@@ -1209,7 +1222,7 @@
 | --- | --- | --- |
 | **E1** | **✅ 2026-10-15**：`scripts/energy-profile.sh`；本机（Mac17,4、macOS 27.0.1、build 16 签名构建）静置 CPU **0.10%**（3×60 秒中位数）。原文：**把 60 秒静置实测做成例行项**（每版必跑，数字进 [scorecard](scorecard.md)）。口径固定：无操作、无手势、屏幕不锁不灭、同一台机、**跑三次取中位**。**做成脚本，不是手抄的仪式**——照 OmniWM `Scripts/energy-profile.sh` 的形状 | 每次发版有一行数字，可跨版本对比 |
 | **E2** | **✅ 2026-10-15（口径已清）**：同一次测量里 phys_footprint **54 MB**、RSS 125–153 MB；以前的「约 100 MB」是 RSS 一类的数。Wins 自称的「<30 MB」口径未知，不能直接比。原文：**查清内存口径再对比**：先量清我们的 physical footprint 与 RSS，分「空载」与「开了窗口浏览＋几个常驻面」两种状态；再去查 Wins 那 30 MB 的确切含义。**现在这一行是 100 MB vs 它自称的 30 MB，口径不一致就不能下结论** | 一张同口径对照表；不引用对不上的数字 |
-| **E3** | **现在做完（机器项），「Aaron 拍板（2026-10-17）」**：状态仍为进行中，不改｜ **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 **2026-10-17 第二十批**：脚本定稿未录（f8f7bf2／0a41594）。 |
+| **E3** | **现在做完（机器项），「Aaron 拍板（2026-10-17）」**：状态仍为进行中，不改｜ **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 **2026-10-17 第二十批**：脚本定稿未录（f8f7bf2／0a41594）。 **2026-10-17 第二十一批（仍剩余）**：脚本定稿，录制待屏幕解锁且机器空闲。 |
 | **E4** | **✅ 2026-10-15（bf73aad）**：两处都设了 10% 容差；窗口浏览那个只在面板开着时跑，**不是常驻**。原文：**补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
 | **E5** | **✅ 2026-10-15**：排队中的请求本来就能取消（每个任务开跑前 `demand.execution.begin()`，过时就跳过；每个 App 只一个在途）。真正的缺口是窗口浏览没接熔断：现在问之前看 `AXStallBreaker`，开着就报失败（旧条目保留、标待刷新），问完把耗时记进熔断——卡住的 App 之后 4 秒内收起、救援、窗口浏览都直接跳过它。原文：**AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
 | **E6** | **✅ 2026-10-16（877ca09）**：签名构建：`--switch-cpu` 两个 App 之间切 20 次，我们比静置多花的 CPU ≈ 0（静置 8 秒 48.9 ms，切换期间 29.3 ms）；`--idle-first-op` 静置 5 分钟后第一次收起，卷帘条 448 ms，暖的中位数 442 ms（+6 ms）。原文：核 Ice 那两条：**切 App 时菜单栏面 CPU**、**长时间空闲后第一次操作的迟滞** | 各一条探针 |
