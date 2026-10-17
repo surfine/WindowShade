@@ -687,6 +687,8 @@ extension AppDelegate {
         controls.spacing = 10
         controls.setContentHuggingPriority(.required, for: .horizontal)
         controls.setContentCompressionResistancePriority(.required, for: .horizontal)
+        // 栈自己的抱紧优先级也要拉满：否则这一列会被行拉宽，开关留在列左边、离右边一大截。
+        controls.setHuggingPriority(.required, for: .horizontal)
         let row = WS2SettingsRow(content: labels, control: controls)
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
@@ -701,10 +703,16 @@ extension AppDelegate {
         popups.font = SystemAppearancePolicy.font(relativeToBody: -1)
         popups.toolTip = WSL10n.setting("settings.shade.levelKeys.systemPopups.sub", zh: "按键时出系统的提示，刘海只跟着显示").shown
         popups.setAccessibilityHelp(popups.toolTip)
-        let indented = NSStackView(views: [popups])
-        indented.orientation = .horizontal
-        // 和上面那行的文字对齐（符号块 28 + 间距 10，见 WS2SettingsCopy.content）。
-        indented.edgeInsets = NSEdgeInsets(top: 0, left: 38, bottom: 10, right: 0)
+        // 和上面那行的文字对齐（符号块 28 + 间距 10，见 WS2SettingsCopy.content）；下面留 10，不贴分隔线。
+        let indented = NSView()
+        popups.translatesAutoresizingMaskIntoConstraints = false
+        indented.addSubview(popups)
+        NSLayoutConstraint.activate([
+            popups.leadingAnchor.constraint(equalTo: indented.leadingAnchor, constant: 38),
+            popups.topAnchor.constraint(equalTo: indented.topAnchor),
+            popups.bottomAnchor.constraint(equalTo: indented.bottomAnchor, constant: -10),
+            popups.trailingAnchor.constraint(lessThanOrEqualTo: indented.trailingAnchor),
+        ])
         let group = NSStackView(views: [makeLevelKeysRow(), indented])
         group.orientation = .vertical
         group.alignment = .leading

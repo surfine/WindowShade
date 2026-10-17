@@ -117,6 +117,8 @@ struct SettingsNavigationTests {
       (.gesture, ["卷轴概览能收进刘海", "标题栏手势", "中键收起窗口"]),
       // 隐私页（原权限与启动）没有“标签 + 右侧控件”的行，这里只为出浅深色截图。
       (.permissions, []),
+      // 刘海页：音量和亮度那一行并进了勾选，开关仍要贴右边（1.0.17 精简后回归过一次）。
+      (.notch, ["有变化时提醒", "音量和亮度"]),
     ]
     // 隐私一栏：四组和每一行都在，且和登记表生成的数据源一致。
     settings.select(section: .permissions)
@@ -174,6 +176,8 @@ struct SettingsNavigationTests {
     }
     for (section, names) in rowsBySection {
     settings.select(section: section)
+    await drainLayout()
+    await drainLayout()
     for appearance in [NSAppearance.Name.aqua, .darkAqua] {
       settings.window?.appearance = NSAppearance(named: appearance)
       await drainLayout()
@@ -191,10 +195,14 @@ struct SettingsNavigationTests {
         }
         let rect = content.convert(content.bounds, to: row)
         let controlRect = control.convert(control.bounds, to: row)
-        precondition(rect.minY >= 7.5 && row.bounds.maxY - rect.maxY >= 7.5,
+        let clearance: CGFloat = section == .notch ? 6.5 : 7.5  // 刘海页单行行高 48，文字块居中，上下 7
+        precondition(rect.minY >= clearance && row.bounds.maxY - rect.maxY >= clearance,
                      "Multiline labels need vertical clearance: \(name) content=\(rect) row=\(row.bounds) \(appearance.rawValue)")
         precondition(controlRect.minX - rect.maxX >= 13.5,
                      "Labels must not overlap controls: \(name)")
+        if section == .notch {
+          precondition(row.bounds.maxX - controlRect.maxX < 2, "刘海页的开关要贴右边：\(name) control=\(controlRect) row=\(row.bounds)")
+        }
       }
       scroll.contentView.setBoundsOrigin(.zero)
       guard let bitmap = root.bitmapImageRepForCachingDisplay(in: root.bounds) else {

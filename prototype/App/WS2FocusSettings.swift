@@ -25,6 +25,7 @@ import Cocoa
     init(runtime: WS2AppRuntime) {
         self.runtime = runtime; super.init(frame: .zero)
         orientation = .vertical; alignment = .leading; spacing = 10
+        edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 10, right: 0)  // 和其它行一样的上下留白，不贴分隔线
         let row = NSStackView(); row.orientation = .horizontal; row.spacing = 12
         row.addArrangedSubview(NSTextField(labelWithString: WSL10n.text("settings.shade.focus.name", zh: "番茄钟")))
         presets.addItems(withTitles: [WSL10n.text("settings.shade.focus.preset25", zh: "25 分钟 / 5 分钟"),
