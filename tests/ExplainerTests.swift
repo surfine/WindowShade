@@ -16,6 +16,7 @@ struct ExplainerTests {
         tokenDurations()
         loopTimings()
         sceneLibrary()
+        shortcutScenes()
         pageAndRowLoops()
         offAndOptions()
         environment()
@@ -89,6 +90,30 @@ struct ExplainerTests {
         // 0.14 + 0.6 + (0.545 + 2.6) + (0.46 + 0.8) = 5.145
         expect(near(say.timeline.loopDuration, 5.145) && say.notchLine != nil && say.device == .text, "notch-says loop is 5.145 s with two lines")
         expect(ExplainerScenes.dockSwipe.trackpadOnly && !ExplainerScenes.dockHover.trackpadOnly, "only the Dock swipe needs a trackpad")
+    }
+
+    /// 快捷键页：键帽从显示名拆出来；排布共用一个场景、只换目标；没录写“还没录”。
+    static func shortcutScenes() {
+        let caps = ExplainerScenes.keyCaps(displayName: "⌃⌥⌘←")
+        expect(caps?.0.symbol == "⌃⌥⌘" && caps?.0.caption == "" && caps?.1.symbol == "←", "key caps split modifiers from the key")
+        expect(ExplainerScenes.keyCaps(displayName: "⌘P")?.0.caption == "command", "a single modifier keeps its English name")
+        expect(ExplainerScenes.keyCaps(displayName: "⌘") == nil && ExplainerScenes.keyCaps(displayName: "P") == nil, "a lone modifier or key is no shortcut")
+        let ids = ExplainerScenes.ShortcutPlacement.allCases.map { ExplainerScenes.shortcutPlace($0, combo: "⌃⌘←") }
+        expect(Set(ids.map(\.id)).count == ids.count, "placement scene ids are unique")
+        expect(ids.allSatisfy { $0.description.zh.hasPrefix("演示：") && $0.keyFrameIndex != nil }, "every placement has a VoiceOver sentence and a key frame")
+        let left = ExplainerScenes.shortcutPlace(.leftHalf, combo: "⌃⌘←")
+        expect(left.keyState[.windowA]?.w == 153 && left.keyState[.windowA]?.x == 2, "left half lands on the left half")
+        expect(near(left.timeline.loopDuration, ExplainerScenes.shortcutPlace(.fill, combo: "⌃⌘F").timeline.loopDuration), "placements share one timing")
+        expect(ExplainerScenes.shortcutPlace(.center, combo: "⌃⌘C").initial[.windowA]?.x == 10, "center starts off to the side")
+        expect(ExplainerScenes.shortcutPlace(.center, combo: "⌃⌘C").arrows.result != "", "center has a move arrow")
+        expect(ExplainerScenes.shortcutPlace(.larger, combo: "⌃⌘=").arrows.result == "", "a tiny move has no arrow")
+        expect(ExplainerScenes.numberExpand.keyState[.windowB]?.rolled == false, "number key unrolls the second bar")
+        expect(ExplainerScenes.shortcutPin(combo: "⌃⌘P").keyState[.windowA]?.highlighted == true, "pin lights the front window")
+        expect(ExplainerScenes.shortcutUnset.isStill && ExplainerScenes.rectangleKeys.isStill, "unset and Rectangle are stills")
+        if case .still(let spec) = ExplainerRow.Shortcuts.row(.place(.leftHalf), combo: nil).kind { expect(spec.id == "shortcut.unset", "no combo shows the unset still") } else { expect(false, "no combo is a still") }
+        if case .loop(let spec) = ExplainerRow.Shortcuts.row(.place(.leftHalf), combo: "⌃⌘←").kind { expect(spec.id == "shortcut.leftHalf.⌃⌘←", "recorded combo loops") } else { expect(false, "recorded combo is a loop") }
+        expect(ExplainerRow.Shortcuts.row(.none, combo: "⌃⌘←") == .pageDefault, "an action with no scene follows the page default")
+        expect(ExplainerPage.shortcuts.pageDefault.id == "shortcut.leftHalf.⌃⌘←", "shortcuts page default is the left half")
     }
 
     static func row(_ id: Int, _ row: ExplainerRow, on: Bool? = true, option: Int? = nil) -> ExplainerDirector.RowState {
