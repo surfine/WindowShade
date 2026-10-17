@@ -258,6 +258,27 @@ final class NotchLeaseHub {
         }
     }
 
+    /// 刘海以外的表面（启动台）开在一块屏上之前，要不要先拿这块屏的展示权（规格 V11）。
+    enum ScreenClaim: Equatable {
+        /// 这块屏有刘海面板在仲裁：照常申请，被授权、指挥占着就不开。
+        case lease
+        /// 这块屏没有刘海面板（刘海关着，或这块屏还没装上）：没有谁会跟它抢，不拿租约直接开。
+        case noArbiter
+        /// 锁着屏：不开。
+        case refused
+    }
+
+    /// 纯判断。只看锁屏和这块屏有没有仲裁者；与缩放、分辨率无关。
+    nonisolated static func screenClaim(locked: Bool, arbitrated: Bool) -> ScreenClaim {
+        if locked { return .refused }
+        return arbitrated ? .lease : .noArbiter
+    }
+
+    /// 这块屏现在该怎么拿展示权。
+    func screenClaim(on display: WS2.DisplayID) -> ScreenClaim {
+        Self.screenClaim(locked: locked(), arbitrated: displays().contains(display))
+    }
+
     /// 这块屏现在是谁的；没有主人返回 nil。
     func owner(of display: WS2.DisplayID) -> Owner? { held[display]?.owner }
 

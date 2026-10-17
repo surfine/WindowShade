@@ -231,13 +231,23 @@ final class LaunchpadController {
         owner.glance.cancelAll(reason: "launchpad")
         owner.notch.prepareForLaunchpad()
         // 启动台层先占这块屏；占不到（授权、指挥正占着）就不开。
+        // 这块屏上没有刘海面板（刘海关着、还没装上）时没有谁来抢，不拿租约直接开（规格 V11）。
         if let id = NotchController.displayID(screen) {
             let display = WS2.DisplayID(value: id)
-            guard owner.notch.leases.acquire(.launchpad, on: display) else {
-                noteShowRefused("display lease refused (display=\(id) frame=\(NSStringFromRect(screen.frame)) scale=\(screen.backingScaleFactor))")
+            let leases = owner.notch.leases
+            switch leases.screenClaim(on: display) {
+            case .lease:
+                guard leases.acquire(.launchpad, on: display) else {
+                    noteShowRefused("display lease refused (display=\(id) owner=\(leases.owner(of: display)?.rawValue ?? "-") frame=\(NSStringFromRect(screen.frame)) scale=\(screen.backingScaleFactor))")
+                    return
+                }
+                shownDisplay = display
+            case .noArbiter:
+                wlog("launchpad: no notch panel on display=\(id); opening without a display lease")
+            case .refused:
+                noteShowRefused("screen locked (display=\(id))")
                 return
             }
-            shownDisplay = display
         }
         previousApp = NSWorkspace.shared.frontmostApplication
         let maybeReused = retainedPanel
