@@ -407,6 +407,8 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .shortcut-list li{display:flex;align-items:center;gap:22px;padding:22px 0;border-top:1px solid var(--line);font-size:15px;color:var(--muted)}
 .keys{display:flex;gap:6px;flex:none;min-width:150px}
 .keys kbd{display:grid;place-items:center;min-width:36px;height:36px;padding:0 9px;border-radius:9px;background:var(--surface);color:var(--ink);box-shadow:0 0 0 .5px var(--hair),0 1px 0 var(--hair),0 2px 0 var(--line),0 3px 6px -2px var(--shadow)}
+.shortcut-note{font-size:14px;line-height:1.8;color:var(--muted);max-width:44em;margin-top:18px}
+.shortcut-list+.shortcut-note{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}
 
 /* Trust and questions */
 .trust{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:88px;align-items:start;border-top:1px solid var(--line)}
