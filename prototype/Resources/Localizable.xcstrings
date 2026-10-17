@@ -10535,6 +10535,581 @@
         }
       }
     },
+    "explainer.shortcut.bottomHalf.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window fills the bottom half of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占下半屏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔下半螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.bottomLeft.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the bottom-left corner."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占左下角。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔左下角。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.bottomRight.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the bottom-right corner."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占右下角。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔右下角。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.browser.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the window browser panel rises."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，窗口浏览的面板升起。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，視窗瀏覽的面板升起。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.center.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window keeps its size and moves to the center."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口大小不变，放到正中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗大小不變，放到正中。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.centerThird.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the middle third of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占中间三分之一。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔中間三分之一。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.fill.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window fills the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口铺满屏幕。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗鋪滿螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.fullHeight.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window stays put sideways and fills the screen top to bottom."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口左右不动、上下占满。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗左右不動、上下佔滿。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.larger.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window grows a little on every side."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口四边各往外一点。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗四邊各往外一點。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.leftHalf.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window fills the left half of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占左半屏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔左半螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.leftThird.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the left third of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占左边三分之一。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔左邊三分之一。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.leftTwoThirds.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the left two thirds of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占左边三分之二。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔左邊三分之二。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.numbered.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press ⌃⌘2 and the second rolled-up bar unrolls."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按 ⌃⌘2，第二条卷帘条展开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按 ⌃⌘2，第二條捲簾條展開。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.pin.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the pin shortcut and the front window stays on top."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下置顶的快捷键，当前窗口留在最前面。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下置頂的快速鍵，目前視窗留在最前面。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.rectangle.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still: Switch to Rectangle's key combinations."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静图：换成 Rectangle 那一套组合键。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靜圖：換成 Rectangle 那一套組合鍵。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.rightHalf.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window fills the right half of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占右半屏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔右半螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.rightThird.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the right third of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占右边三分之一。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔右邊三分之一。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.rightTwoThirds.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the right two thirds of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占右边三分之二。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔右邊三分之二。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.roll.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window rolls up into a bar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口收成卷帘条。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗收成捲簾條。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.smaller.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window shrinks a little on every side."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口四边各往里一点。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗四邊各往裡一點。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.topHalf.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window fills the top half of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占上半屏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔上半螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.topLeft.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the top-left corner."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占左上角。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔左上角。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.topRight.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Press the shortcut you recorded and the front window takes the top-right corner."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按下录好的快捷键，当前窗口占右上角。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按下錄好的快速鍵，目前視窗佔右上角。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.unset.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still: This shortcut isn't recorded yet. Once it is, this shows what it does."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静图：这个快捷键还没录，录好之后这里会演示效果。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靜圖：這個快速鍵還沒錄，錄好之後這裡會示範效果。"
+          }
+        }
+      }
+    },
+    "explainer.shortcut.unset.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No shortcut recorded"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没录快捷键"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒錄快速鍵"
+          }
+        }
+      }
+    },
     "explainer.stripDrag.ax": {
       "extractionState": "manual",
       "localizations": {
