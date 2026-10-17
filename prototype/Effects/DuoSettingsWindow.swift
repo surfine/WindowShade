@@ -657,26 +657,27 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   /// 迁移过的行（第34批）：行标题/副标题走 `SettingsText`，和设置面板其它页共用同一套
   /// 行长机制（英文用 shortEn/34 字预算 + 单个 ⓘ 承载全文），不再走中文 16 字硬截。
-  private func makeToggleRow(name: SettingsText, subtitle: SettingsText, symbol: String? = nil, control: NSSwitch, action: Selector) -> NSView {
+  private func makeToggleRow(name: SettingsText, subtitle: SettingsText, symbol: String? = nil, control: NSSwitch, action: Selector,
+                             explainer: ExplainerRow? = nil) -> NSView {
     control.controlSize = .regular
     control.target = self
     control.action = action
     control.setAccessibilityLabel(name.shown)
     let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol).view
     WS2SettingsCopy.pinInfoTrailing(labels)
-    return makeRow(labels: labels, control: control)
+    return SettingsExplainerHost.tag(makeRow(labels: labels, control: control), explainer)
   }
 
-  private func makeControlRow(name: SettingsText, subtitle: SettingsText, control: NSView) -> NSView {
+  private func makeControlRow(name: SettingsText, subtitle: SettingsText, control: NSView, explainer: ExplainerRow? = nil) -> NSView {
     let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
     WS2SettingsCopy.pinInfoTrailing(labels)
-    return makeRow(labels: labels, control: control)
+    return SettingsExplainerHost.tag(makeRow(labels: labels, control: control), explainer)
   }
 
-  private func makeActionRow(name: SettingsText, subtitle: SettingsText, button: NSButton) -> NSView {
+  private func makeActionRow(name: SettingsText, subtitle: SettingsText, button: NSButton, explainer: ExplainerRow? = nil) -> NSView {
     let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
     WS2SettingsCopy.pinInfoTrailing(labels)
-    return makeRow(labels: labels, control: button)
+    return SettingsExplainerHost.tag(makeRow(labels: labels, control: button), explainer)
   }
 
   private func makeRow(labels: NSStackView, control: NSView) -> NSView {
@@ -826,6 +827,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       stack.topAnchor.constraint(equalTo: root.topAnchor),
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
+    // 页顶的讲解带（设计稿：效果页逐行演开关的样子；页默认是双击收起）。
+    let band = SettingsExplainerBand(page: .effects)
+    band.pageRoot = root
+    stack.addArrangedSubview(band)
+    stack.setCustomSpacing(14, after: band)
 
     status.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
     status.textColor = .secondaryLabelColor
@@ -844,13 +850,17 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.addArrangedSubview(automaticSection)
     stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
-      makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),                    control: desktop, action: #selector(changed)),
+      makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),                    control: desktop, action: #selector(changed),
+                    explainer: ExplainerRow.Effects.desktop),
       makeToggleRow(name: WSL10n.setting("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.setting("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
-                    control: windows, action: #selector(changed)),
+                    control: windows, action: #selector(changed),
+                    explainer: ExplainerRow.Effects.windows),
       makeToggleRow(name: WSL10n.setting("settings.effects.lockOverlay.name", zh: "锁屏开合效果"),
                     subtitle: WSL10n.setting("settings.effects.lockOverlay.sub", zh: "锁屏时开合盖子，锁屏画面跟着动。"),
-                    symbol: "arrow.2.squarepath", control: lockOverlay, action: #selector(lockOverlayChanged)),
-      makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "所有效果先停一停，开关保持原样。"), button: pause),
+                    symbol: "arrow.2.squarepath", control: lockOverlay, action: #selector(lockOverlayChanged),
+                    explainer: ExplainerRow.Effects.lockScreen),
+      makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "所有效果先停一停，开关保持原样。"), button: pause,
+                    explainer: ExplainerRow.Effects.pause),
     ])
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -903,8 +913,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let previewRows = [
       rendererView,
       rangeLabels,
-      makeControlRow(name: WSL10n.setting("settings.effects.previewTarget.name", zh: "预览对象"), subtitle: WSL10n.setting("settings.effects.previewTarget.sub", zh: "看看桌面或单个窗口的效果。"), control: mode),
-      makeControlRow(name: WSL10n.setting("settings.effects.previewStyle.name", zh: "预览样式"), subtitle: WSL10n.setting("settings.effects.previewStyle.sub", zh: "选择效果的观感。"), control: preset),
+      makeControlRow(name: WSL10n.setting("settings.effects.previewTarget.name", zh: "预览对象"), subtitle: WSL10n.setting("settings.effects.previewTarget.sub", zh: "看看桌面或单个窗口的效果。"), control: mode,
+                      explainer: ExplainerRow.Effects.preview),
+      makeControlRow(name: WSL10n.setting("settings.effects.previewStyle.name", zh: "预览样式"), subtitle: WSL10n.setting("settings.effects.previewStyle.sub", zh: "选择效果的观感。"), control: preset,
+                      explainer: ExplainerRow.Effects.preview),
       makeToggleRow(name: WSL10n.setting("settings.effects.live.name", zh: "实时预览"), subtitle: WSL10n.setting("settings.effects.live.sub", zh: "打开后才会用到屏幕录制权限。"),
                     control: live, action: #selector(liveChanged)),
       makeActionRow(name: WSL10n.setting("settings.effects.permission.name", zh: "屏幕录制权限"), subtitle: WSL10n.setting("settings.effects.permission.sub", zh: "实时预览需要此权限。"), button: permission),
