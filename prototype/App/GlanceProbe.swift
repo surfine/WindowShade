@@ -288,6 +288,11 @@ final class GlanceProbe {
       finish(nil)
       return
     }
+    if CommandLine.arguments.contains("--finder-alias") {
+      try await exerciseFinderAlias()
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--browser-identity") {
       adoptFixture(pid: process.processIdentifier)
       guard let path = process.executableURL else { throw EffectError.unavailable("no fixture path") }

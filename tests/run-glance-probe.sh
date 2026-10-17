@@ -4,7 +4,7 @@
 # 每次跑一项，例如 --gesture、--launchpad-keys、--fullscreen（会进一次系统全屏再退出）；完整列表见 prototype/App/GlanceProbe.swift 的调度。
 # --fold-timing、--orphan（R10）、--soak [--soak-rounds N]（R39）、--menubar-owner（R22）、--focus-steal（R41）、--switch-cpu、--idle-first-op [--idle-seconds N]（E6）会自行只开一扇临时窗（不必再加 --single）。
 # --browser-identity（R20）：再开一个临时 App 实例，核对 orderOut 关窗与 kill -9 之后窗口浏览的列表。
-# --second-display（V9）：把临时窗挪到非主屏收起再展开；--finder-columns（R23）：开一扇临时访达窗口量列表列宽，用完关掉、删掉临时文件夹。
+# --second-display（V9）：把临时窗挪到非主屏收起再展开；--finder-columns（R23）：开一扇临时访达窗口量列表列宽，用完关掉、删掉临时文件夹；--finder-alias（R23）：临时目录里建文件夹和指向它的替身，用合成鼠标双击替身，核对访达照常打开它、没被当成窗口动作。
 # --launchpad-tiling（R18）：启动台开着，往系统发 fn＋Control＋←→↑↓／F／C，对照临时 App 的参考窗，看启动台会不会被系统平铺挪动；会发真的合成键，跑的时候别碰键盘。
 # --restore-guard（R9）：临时 App 两扇窗都收起，只展开一扇，另一扇不能冒出来、展开的那扇要在最前；--fold-unminimizable：另一扇不能最小化，核对收起前就被拒绝、没播动画、窗口原位不动。
 set -euo pipefail

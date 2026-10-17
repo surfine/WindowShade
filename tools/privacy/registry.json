@@ -7382,6 +7382,13 @@
    "signal": "window-ax"
   },
   {
+   "path": "prototype/App/FinderAliasProbe.swift",
+   "line": 27,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "return AXUIElementCopyAttributeValue(element, name as CFString, &ref) == .success ? ref : nil",
+   "signal": "window-ax"
+  },
+  {
    "path": "prototype/App/AudioLevelTap.swift",
    "line": 31,
    "symbol": "TCCAccessPreflight",
