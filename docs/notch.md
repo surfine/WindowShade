@@ -8,12 +8,12 @@
 和系统自带的拖边平铺是一回事。**没有人把窗口收进刘海、在刘海里看窗口、从刘海里找回窗口。**
 
 这一格要追的是 Alcove，不是 NotchNook。它把播放、通知、音量和亮度收成一颗会变形的黑胶囊
-（一手核对见 [竞品调研](competitors.md) 的 Alcove 一节）。我们不另做一颗岛：紧凑的左右耳就是正在进行的那一件，
+（一手核对见 竞品调研 的 Alcove 一节）。我们不另做一颗岛：紧凑的左右耳就是正在进行的那一件，
 两件要同时露面时分开再合并，音量和亮度也长在同一颗上。音量、亮度这一轮只走合成事件，系统按键和隐私登记还没接。模拟刘海、锁屏上的日历和天气不追。
-画面在 [一颗岛](design-drafts/一颗岛.html)。
+画面在 一颗岛。
 国内付费的窗口工具 Wins 3.4 也从刘海长出一座“悬浮分屏岛”，外形和我们的落点小岛一样，用途不同：
 它落下去是分屏，我们落下去是收进刘海。它更新日志里修过的坑（拖边改大小时误触发小岛、竖放的外接屏、
-macOS 27 上拖动卡顿）直接当我们的验收用例，见[竞品底稿](competitive-analysis.md)。
+macOS 27 上拖动卡顿）直接当我们的验收用例，见竞品底稿。
 
 来源：[MacNotch 的横评](https://macnotch.io/compare/best-mac-notch-apps)、
 [Notchy 的横评](https://notchy.dev/best-mac-notch-apps/)。
@@ -118,7 +118,7 @@ macOS 27 上拖动卡顿）直接当我们的验收用例，见[竞品底稿](co
 - **位置用公开接口：** `NSScreen.safeAreaInsets`、`auxiliaryTopLeftArea`、`auxiliaryTopRightArea`。
   面板放在菜单栏之上一层，每张桌面、全屏 App 上都在。
 - **形状照硬件（2026-09-29）。** 刘海的底角和肩（刘海竖边和屏幕顶边相接处那段往外弯的曲线）先读系统私有的 `NSScreen.bezelPath`，
-  带守卫和校验，不过就按原生面板像素查机型表，都没有就照原来画（底角 10 / 12、没有肩），详见 [hardware-fit.md](hardware-fit.md)。
+  带守卫和校验，不过就按原生面板像素查机型表，都没有就照原来画（底角 10 / 12、没有肩），详见 hardware-fit.md。
   岛贴着刘海时底角就是刘海自己的底角；比刘海宽时在两个上角画出肩，看起来是刘海自己长宽了。肩在单独一层不接指针的窗口里，
   菜单栏照常能点；紧凑样式的肩从两侧那一段里扣，外沿不比原来宽，扣完不够 26 点就不画，指针停上来时整个往外挪 5 点、肩跟着走；
   落点、提醒、展开不画肩。只有带刘海的屏才去读形状，没有刘海的 Mac 不读。
@@ -135,7 +135,7 @@ macOS 27 上拖动卡顿）直接当我们的验收用例，见[竞品底稿](co
 
 ## 刘海什么时候不开口（2026-09-29）
 
-按 [direction.md](direction.md) 最后一张表，“没人问就开口”和“用对了还要纠正”的几句删掉了：
+按 direction.md 最后一张表，“没人问就开口”和“用对了还要纠正”的几句删掉了：
 
 - 启动时不再自我介绍（原来装好 4 秒，刘海说“点一下刘海回主屏幕；两指往上推，这块屏的窗口全收进来”）。
 - 不再主动推荐“用 Rectangle 的快捷键”（原来发现这台 Mac 装过 Rectangle 就提一句）。入口一直在设置 → 快捷键 → 更多排法 → **换上**。
@@ -144,7 +144,7 @@ macOS 27 上拖动卡顿）直接当我们的验收用例，见[竞品底稿](co
 - 双击标题栏收起之后，不再说“也可以在标题栏上两指往上推收起”，半分钟里收了三扇也不再推晃一晃；⌃⌘P 置顶之后不再提画中画。
   收起了、置顶了就是顺利，按“顺利的时候一声不吐”不开口。双击其实想铺满的人（从 iPad 来的），由卡住时的提示接。
 
-留着的：指针第一次停到空着的刘海上时说一次刘海能做什么（这是他自己找过来的）；卡住时的提示（[stuck-habits.md](stuck-habits.md)）；
+留着的：指针第一次停到空着的刘海上时说一次刘海能做什么（这是他自己找过来的）；卡住时的提示（stuck-habits.md）；
 做完一件事当场说明它（让开了 App 怎么回来、第一次接成卷轴、分屏把手、侧拉的把手）。每条最多三次、两条之间至少隔五分钟、
 点一下就不再出，设置里能关（Core/GestureCoach.swift）。
 
@@ -202,7 +202,7 @@ WWDC25「Meet Liquid Glass」、WWDC23「Animate with springs」，以及 iOS 18
 不展开，看日志里的 `yields to the system` 和 `NotchController.lastAlertYieldForProbe`；`--quiet-defaults`（只读）打印每块屏上
 提醒要盖的那一段有没有系统的东西，以及问到了但不算的 Apple 的东西（带角色和窗口层级）。
 形状：`bash tests/run-display-shape-tests.sh`（纯计算）和 `--notch-shape` 探针（岛和肩贴不贴硬件、不知道形状时和原来逐一相等），
-亲眼校准用 `--notch-calibrate`，见 [hardware-fit.md](hardware-fit.md)。
+亲眼校准用 `--notch-calibrate`，见 hardware-fit.md。
 
 别的桌面上的窗口：`bash tests/run-elsewhere-windows-tests.sh`（挑哪几扇、编号、画面位置），和
 `bash tests/run-glance-probe.sh --elsewhere --other-space`（临时 App 自己挪到另一张桌面，不切你的桌面：那一排列出它、写对桌面、

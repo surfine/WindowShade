@@ -2,7 +2,7 @@
 import hashlib, json, sys, unittest
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0,str(ROOT/'docs/handoff/chatgpt-review-2/part5/reference'))
+sys.path.insert(0,str(ROOT/'tests/fixtures/srp-reference'))
 import srp_reference as s
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF

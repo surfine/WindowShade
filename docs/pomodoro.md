@@ -3,7 +3,7 @@
 2026-10-03。Aaron：“我还打算把番茄钟做进去，灵动岛正好可以显示一下倒计时，请你设计一个优雅的整合方案，同时保持简单（奥卡姆剃刀原则）”，
 参考 [Tomato Ritual 番茄仪式](https://mactomato.com/)（[V2EX 首发帖](https://www.v2ex.com/t/1244621)）。
 
-给 DeepSeek 的提示词：[handoff/deepseek-pomodoro-symbols.md](handoff/deepseek-pomodoro-symbols.md)。
+给 DeepSeek 的提示词：handoff/deepseek-pomodoro-symbols.md。
 设计稿（可交互）：[番茄钟](https://claude.ai/artifact/5fQkwURyoGwZRrFBp2XnWf)
 
 ## 一句话

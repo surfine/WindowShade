@@ -2519,9 +2519,9 @@ sha256 `25af12cea07ae44aa4ed8bdf20672e270e5e3c1e139d43a03be4dc8aeb6b8e31`）与�
 ## 2026-09-22：发版前的设计评审与站点同步
 
 按 `apple-design` 与 `apple-design-hig` 两套标准做了一次发版前评审，报告见
-[设计评审：WindowShade 1.0.14](design-review-1.0.14.md)。应用侧没有发现 Critical，两条 High
+设计评审：WindowShade 1.0.14。应用侧没有发现 Critical，两条 High
 （底 Dock 标签带依赖系统气泡落点、列表行按两行预留高度）记在该报告的改进项里，并同步进
-[复检交接](review-handoff.md) 的 G12 / G13；这一轮不改应用的几何与行为，避免动到已经逐帧验证过的
+复检交接 的 G12 / G13；这一轮不改应用的几何与行为，避免动到已经逐帧验证过的
 面板。
 
 站点这一轮改了四处，改完重新构建、逐页实拍复核：

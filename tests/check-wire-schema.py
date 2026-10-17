@@ -2,7 +2,7 @@
 import hashlib,json,sys
 from pathlib import Path
 import jsonschema
-root=Path(sys.argv[1])/"docs/handoff/reference/codex-app-server-schema-0.153.0/v2"
+root=Path(sys.argv[1])/"tests/fixtures/codex-app-server-schema-0.153.0/v2"
 names={"thread/start":"ThreadStartParams","thread/resume":"ThreadResumeParams","turn/start":"TurnStartParams","model/list":"ModelListParams"}
 results=[]
 for line in Path(sys.argv[2]).read_text().splitlines():

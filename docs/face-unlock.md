@@ -3,11 +3,11 @@
 2026-10-03 定稿。Aaron 四轮问答后，WindowShade **吸收** Glance：刷脸解锁做进自己的刘海，照 Glance 的方式真正解锁，
 和窗口那条线连成一条路——开盖、认出你、桌面从刘海展开、窗口都还在原处。随 1.0.16 一起发。
 
-- 逐项决定：[direction.md“刷脸解锁：吸收 Glance”](direction.md)
+- 逐项决定：direction.md“刷脸解锁：吸收 Glance”
 - 设计稿（可交互，12 步）：[从锁屏到窗口](https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH)
-- 整合路径：[integration-loupe-glance.md](integration-loupe-glance.md)；历史研究：[lock-unlock-plan.md](lock-unlock-plan.md)、
-  [authentication-boundaries.md](authentication-boundaries.md)、[apple-accessory-interoperability.md](apple-accessory-interoperability.md)
-- 本轮准入：[MAIN-MODEL-DECISIONS-2026-10-04.md](handoff/MAIN-MODEL-DECISIONS-2026-10-04.md) **D11**；整改指针见 [FINAL-HANDOFF.md](handoff/FINAL-HANDOFF.md)「当前整改指针」
+- 整合路径：integration-loupe-glance.md；历史研究：lock-unlock-plan.md、
+  authentication-boundaries.md、apple-accessory-interoperability.md
+- 本轮准入：MAIN-MODEL-DECISIONS-2026-10-04.md **D11**；整改指针见 FINAL-HANDOFF.md「当前整改指针」
 
 本文与旧文档冲突时以本文为准。特别是：旧文“Near Lock 式体验需要手机配套 App”作废——Aaron 不做 iPhone / Apple Watch 端 App，
 第二因素只走 iOS、watchOS 自带的蓝牙配件机制。

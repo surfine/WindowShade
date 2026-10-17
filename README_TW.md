@@ -10,11 +10,11 @@
 免費開源的 Mac 視窗小工具。
 
 [![版本](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
-[![macOS](https://img.shields.io/badge/macOS-14%2B-303b49?style=flat-square)](#下載)
+[![macOS](https://img.shields.io/badge/macOS-15%2B-303b49?style=flat-square)](#下載)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下載)
 [![許可](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**下載 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官網**](https://windowshade.aaronlau.me/) · [**介紹影片**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**視窗往事**](https://windowshade.aaronlau.me/history/) · [繁體中文](README_TW.md) · [简体中文](README_CN.md) · [English](README.md)
+[**下載 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官網**](https://windowshade.aaronlau.me/) · [**介紹影片**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**視窗往事**](https://windowshade.aaronlau.me/history/) · [简体中文](README_CN.md) · [English](README.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-dark.png">
@@ -136,7 +136,9 @@ open WindowShade.app
 | [`docs/releases/`](docs/releases/) | 歷次釋出說明 |
 | [`WindowShade.md`](WindowShade.md) | 最初的設計理由與研究筆記 |
 
-修改視窗行為時，請寫明視窗型別、修改前後的表現，以及做過的檢查。
+修改視窗行為時，請寫明視窗類型、修改前後的表現，以及做過的檢查。完整規則見 [CONTRIBUTING.md](CONTRIBUTING.md)；用法問題和想法請到 [Discussions](https://github.com/surfine/WindowShade/discussions)。
+
+覺得好用的話，在 GitHub 按個 ⭐，能讓更多人找到它。
 
 ## 致謝與許可
 

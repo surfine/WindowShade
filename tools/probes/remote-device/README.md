@@ -48,7 +48,7 @@ PYTHONPATH=/tmp/windowshade-srp-research/srptools:/tmp/windowshade-srp-research/
 
 `candidate-interop.py` 验证初始PV兼容通道、超过256条连续记录、fresh PV切换、撤销/过期/错key/重放/发送失败。`socket-interop.py` 和 `pipelined-interop.py` 通过 `--loopback-test` 运行真实127.0.0.1 TCP：固定合成PIN、单连接30秒、不广播Bonjour；覆盖完整成功流程、M5与首记录合批、PS未完成的提前输入、错误key关闭诊断。它们均不是手机测试。
 
-编译自动生成 `.build/remote-device-probe/build-manifest.json`，包含实际27个构建输入的前后SHA与二进制SHA。真机前用 `python3 tools/probes/remote-device/build-manifest.py check` 核对，不在PIN窗口编译。2026-10-08执行记录见 [本轮交接](../../../docs/handoff/ws2-reuse-2026-10-08/README.md)。
+编译自动生成 `.build/remote-device-probe/build-manifest.json`，包含实际27个构建输入的前后SHA与二进制SHA。真机前用 `python3 tools/probes/remote-device/build-manifest.py check` 核对，不在PIN窗口编译。2026-10-08执行记录见 本轮交接。
 
 此前Python单包oracle错误使用HAP nonce，counter0没暴露问题；现按固定上游与生产Companion格式修为 `LE64(counter)+zero4`。完整多包测试明确在非零counter拒绝旧布局，避免自证。
 
@@ -56,4 +56,4 @@ OPACK的UUID/rawTime/F字典补全有固定来源支持，但先前实机unsuppo
 
 第六轮真机已通过systemInfo、sessionStart、TVRC、查询及订阅，之后被未知方法拒绝。根据完整固定源码的fallback行为，本probe改为验证后的协议级兼容应答；未知名称最长128字节、compat连接消息最多2000，继续受AEAD、帧及期限限制。关闭日志只输出 `unhandledMethods` 数量，不输出未知方法名或载荷。
 
-2026-10-08第10轮真机已进入可操作界面，fresh PV认证通道收到235条有效输入事件，120秒窗口正常结束。initial-PV-main在首连接未匹配；成功不能归因到该候选。完整手机观察、按连接日志与产物身份见[本轮执行记录](../../../docs/handoff/ws2-reuse-2026-10-08/README.md)。
+2026-10-08第10轮真机已进入可操作界面，fresh PV认证通道收到235条有效输入事件，120秒窗口正常结束。initial-PV-main在首连接未匹配；成功不能归因到该候选。完整手机观察、按连接日志与产物身份见本轮执行记录。

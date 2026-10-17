@@ -10,7 +10,7 @@
 免费开源的 Mac 窗口小工具。
 
 [![版本](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
-[![macOS](https://img.shields.io/badge/macOS-14%2B-303b49?style=flat-square)](#下载)
+[![macOS](https://img.shields.io/badge/macOS-15%2B-303b49?style=flat-square)](#下载)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下载)
 [![许可](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
@@ -149,7 +149,9 @@ open WindowShade.app
 | [`docs/releases/`](docs/releases/) | 历次发布说明 |
 | [`WindowShade.md`](WindowShade.md) | 最初的设计理由与研究笔记 |
 
-修改窗口行为时，请写明窗口类型、修改前后的表现，以及做过的检查。
+修改窗口行为时，请写明窗口类型、修改前后的表现，以及做过的检查。完整规则见 [CONTRIBUTING.md](CONTRIBUTING.md)；用法问题和想法请到 [Discussions](https://github.com/surfine/WindowShade/discussions)。
+
+觉得好用的话，在 GitHub 点个 ⭐，能让更多人找到它。
 
 ## 致谢与许可
 

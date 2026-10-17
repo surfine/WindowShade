@@ -1,0 +1,45 @@
+name: Bug report / 问题报告
+description: Something doesn't work the way it should. / 有地方不对劲。
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Chinese or English are both fine. / 中文、英文都可以。
+  - type: input
+    id: version
+    attributes:
+      label: WindowShade version / 版本
+      description: Settings → Advanced → About.
+      placeholder: "1.0.17"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac model / macOS 版本与机型
+      placeholder: "macOS 26.1, MacBook Air M3"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do? / 怎么操作的
+      description: Steps to make it happen again. Name the app if it's about one app's windows.
+      placeholder: |
+        1. Open Safari with two windows
+        2. Double-click the title bar
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What happened, and what did you expect? / 看到了什么，本来应该怎样
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots, recordings or diagnostics / 截图、录屏或诊断包
+      description: Settings → Advanced → About → Export diagnostics saves a folder on your Mac; nothing is sent until you attach it. Look through it first and only attach it if you're comfortable sharing it.

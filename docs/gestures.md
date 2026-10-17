@@ -517,7 +517,7 @@
   要那一列就单击那一条本身。跟着看一眼的开关。窗口之间不留缝（默认）时，那一条常被挨着的那一列盖住，这时不出卡片；
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
-  细节见 [niri 对照](niri.md)。
+  细节见 niri 对照。
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
 - 只有屏幕左右两边都空着（没挨着别的显示器）才接成卷轴：macOS 不让窗口整个离开屏幕，停在外面的窗口会被系统挪到

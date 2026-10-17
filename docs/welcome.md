@@ -1,8 +1,8 @@
 # 欢迎使用 WindowShade
 
-首次打开时出现，菜单里的“欢迎使用 WindowShade…”随时能再打开。2026-09-29 按 [direction.md](direction.md) 的决定从七页缩成三步：
+首次打开时出现，菜单里的“欢迎使用 WindowShade…”随时能再打开。2026-09-29 按 direction.md 的决定从七页缩成三步：
 一句话说清它是什么；问“你之前常用哪个？”；授权。收起、看一眼、标题栏手势、刘海、侧拉这些不再在这里一页页讲，交给刘海在他卡住时教
-（规则见 [stuck-habits.md](stuck-habits.md)）。设计要求见 [design-system.md](design-system.md) §5.11。
+（规则见 stuck-habits.md）。设计要求见 [design-system.md](design-system.md) §5.11。
 
 | 步 | 标题 | 一句话 | 舞台上 |
 | --- | --- | --- | --- |
@@ -80,7 +80,7 @@
 ## 发布前提
 
 第一步（导语和那段动画）、第二步的导语（“刘海会按你原来的习惯来提示”）、设置里“之前常用”的副标题，讲的都是卡住时刘海的提示
-（[stuck-habits.md](stuck-habits.md)）。那部分还没做：现在没有模块读 `SwitcherOrigin`，选什么都不改变什么。
+（stuck-habits.md）。那部分还没做：现在没有模块读 `SwitcherOrigin`，选什么都不改变什么。
 这一版欢迎窗口和“之前常用”只能和卡住提示同一版发布（stuck-habits.md 第 4 节“接线”本来就把这一问和这项设置列为卡住提示的一部分）；
 在那之前发布，这三句就是 copy-guide 规则 6 说的“承诺做不到的事”。1.0.16 本来就“先别发，边做边看”（direction.md）。
 
