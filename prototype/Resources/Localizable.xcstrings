@@ -46773,7 +46773,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Everything WindowShade reads"
+            "value": "Everything WindowShade reads is listed here."
           }
         },
         "zh-Hans": {
@@ -46786,6 +46786,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "WindowShade 讀到的每一樣都列在這裡。"
+          }
+        }
+      }
+    },
+    "settings.privacy.headerShort": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everything it reads is listed; nothing is reported"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读到的都列在这里，不统计不上报"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讀到的都列在這裡，不統計不回報"
           }
         }
       }
@@ -53380,13 +53403,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "刘海里选分钟，回车开始；默认不占用任何快捷键"
+            "value": "选分钟，回车开始"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "瀏海里選分鐘，Return開始；預設不佔用任何快速鍵"
+            "value": "選分鐘，Return 開始"
           }
         }
       }
@@ -53610,13 +53633,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "卷轴里用；已经在一列里就拆成一列。默认不占用任何快捷键"
+            "value": "卷轴里用；已在一列就拆成一列"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "卷軸裡用；已經在一列裡就拆成一列。預設不佔用任何快速鍵"
+            "value": "卷軸裡用；已在一列就拆成一列"
           }
         }
       }
@@ -53748,13 +53771,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "展开后用方向键选、Return 打开、Esc 退出；默认不占用任何快捷键"
+            "value": "方向键选、Return 打开、Esc 退出"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "展開後用方向鍵選、Return 開啟、Esc 退出；預設不佔用任何快速鍵"
+            "value": "方向鍵選、Return 開啟、Esc 退出"
           }
         }
       }

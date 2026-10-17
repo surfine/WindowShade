@@ -183,22 +183,45 @@ import Cocoa
         if let mapped = short[subtitle] { return mapped }
         // 繁体：传进来的已经是繁体全文，查繁体短句表（键与 short 对称，用全文）。
         if WSL10n.language == .zhHant, let mapped = shortHant[subtitle] { return mapped }
-        if subtitle.count <= 16 { return subtitle }
+        // 英文走这条老路的只有拼出来的页头（隐私页）：按英文预算在词边界截，隐私页头另有短句。
+        if WSL10n.language == .en, WSL10n.englishBundle != nil {
+            if subtitle == WS2PrivacyCopy.headerSubtitle() {
+                return WSL10n.text("settings.privacy.headerShort", zh: "读到的都列在这里，不统计不上报")
+            }
+            return cutEnglish(subtitle)
+        }
+        if subtitle.count <= cjkLineBudget { return subtitle }
         if let range = subtitle.range(of: "个应用") {
             let head = String(subtitle[..<range.upperBound])
-            if head.count <= 16 { return head }
+            if head.count <= cjkLineBudget { return head }
         }
         return cutAtBudget(subtitle)
     }
 
-    /// 兜底截到 16 字：被截就以省略号收尾，不留半个字（规格 R24）；全文仍在 ⓘ 与 tooltip 里。
+    /// 中文（简体、繁体）一行副标题的字数预算。规格 R24（Aaron 选 B）：原来的 16 字是拍脑袋的，
+    /// 实际一行放得下的远不止——900×680 窗口里，只有开关的行约 35 字，带录制按钮的快捷键行约 13 到 25 字。
+    /// 取 40 作兜底线：超过它的全文才收成「…」并出 ⓘ；40 以内的句子靠布局层省略（label 自己带「…」），
+    /// 放不下的行在 short／shortHant／shortEn 里写短句。逐行的实测见 docs/handoff/R24-copy-proposal-2026-10-17.md。
+    nonisolated static let cjkLineBudget = 48
+
+    /// 兜底截到预算：被截就以省略号收尾，不留半个字（规格 R24）；全文仍在 ⓘ 与 tooltip 里。
     nonisolated private static func cutAtBudget(_ text: String) -> String {
-        text.count <= 16 ? text : String(text.prefix(16)) + "…"
+        text.count <= cjkLineBudget ? text : String(text.prefix(cjkLineBudget)) + "…"
     }
 
-    /// 英文一行里放得下的字符量级（第27批）。值以渲染实测校准（见本批证据），
-    /// 中文的 16 字预算不能套在英文上。
-    nonisolated static let englishLineBudget = 34
+    /// 英文一行里放得下的字符量级（第27批；R24 放宽）。34 是第27批的保守校准，
+    /// 实测只有开关的行约 70 个拉丁字符能放下；放不下的带控件行写在 shortEn 里。
+    nonisolated static let englishLineBudget = 90
+
+    /// 英文超预算时在词边界截断并以「…」收尾，不把单词劈开。
+    nonisolated private static func cutEnglish(_ shown: String) -> String {
+        guard shown.count > englishLineBudget else { return shown }
+        var head = String(shown.prefix(englishLineBudget))
+        if let cut = head.lastIndex(of: " "), head.distance(from: head.startIndex, to: cut) >= englishLineBudget - 12 {
+            head = String(head[..<cut])
+        }
+        return head + "…"
+    }
 
     /// 迁移过的行的短副标题（第27批）：zh 时与老路径逐字节相同；en 先查 shortEn（按目录键，
     /// 语义身份），没有就在词边界截断——不把单词劈开。繁体（第39批）按繁体全文查 shortHant，
@@ -207,13 +230,7 @@ import Cocoa
         switch WSL10n.language {
         case .en where WSL10n.englishBundle != nil:
             if let mapped = shortEn[subtitle.key] { return mapped }
-            let shown = subtitle.shown
-            guard shown.count > englishLineBudget else { return shown }
-            var head = String(shown.prefix(englishLineBudget))
-            if let cut = head.lastIndex(of: " "), head.distance(from: head.startIndex, to: cut) >= englishLineBudget - 12 {
-                head = String(head[..<cut])
-            }
-            return head + "…"
+            return cutEnglish(subtitle.shown)
         case .zhHant:
             let shown = subtitle.shown
             if let mapped = shortHant[shown] { return mapped }
@@ -243,13 +260,16 @@ import Cocoa
         "settings.shade.copyProgress.sub": "Show copy progress at the notch",
         "settings.shade.carplay.sub": "Long-press the notch for full screen",
         "settings.shade.deviceBattery.sub": "The notch says when a device connects",
-        "settings.shade.collapse.sub": "Keep the bar, use one consistent bar, or thumbnail",
+        "settings.shade.collapse.sub": "Keep, one consistent bar, or thumbnail",
         "settings.shade.calendar.subNotAsked": "Counts down before meetings; macOS asks once",
         "settings.shade.calendar.subGranted": "Counts down; join when there's a link",
         "settings.shade.focus.tuck": "Tuck chats while focusing",
         "settings.shade.focus.presetTooltip": "New lengths apply from the next round.",
         "settings.shade.focus.tuckTooltip": "Only windows from the private app list.",
         "settings.shade.focus.noteCounting": "For now it only counts time.",
+        // R24：带录制按钮的快捷键行，预算放宽后仍放不下的两句。
+        "settings.shortcuts.focusTimer.sub": "Starts, pauses or resumes the focus timer",
+        "settings.shortcuts.countdownTimer.sub": "Pick minutes, then Return",
         "settings.advanced.sub": "Reset defaults, or open the diagnostics log",
         "settings.advanced.diagnostics.sub": "Open the diagnostics log",
         "settings.advanced.reduceMotionHint": "Turn on Reduce motion in System Settings",
