@@ -7,6 +7,20 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <description>WindowShade 更新清单</description>
     <language>zh-Hans</language>
     <item>
+      <title>1.0.17</title>
+      <pubDate>Sat, 17 Oct 2026 15:24:34 +0000</pubDate>
+      <sparkle:version>17</sparkle:version>
+      <sparkle:shortVersionString>1.0.17</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.17</link>
+      <description><![CDATA[这一版换了签名证书并通过 Apple 公证，从 1.0.16 升级要手动下载一次、重新打开两项授权；另外让收起更稳，设置里多了导出诊断信息、导出／导入设置，也多了 7 个捷径动作。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.17/WindowShade-v1.0.17.zip" length="10647571" type="application/octet-stream" sparkle:edSignature="clpfgz4O+hHJoZkEAzTAZOA5MIXl371V5ET0pfeMbussS7AKmXIdq3v6TX831SOGEKooziKLL1l6wNxmD9LRAQ=="></enclosure>
+    </item>
+    <item>
       <title>1.0.16</title>
       <pubDate>Wed, 14 Oct 2026 16:30:00 +0000</pubDate>
       <sparkle:version>16</sparkle:version>
@@ -17,7 +31,8 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.16/WindowShade-v1.0.16.zip" length="9831144" type="application/octet-stream" sparkle:edSignature="gxw9YqozJjFHEpxvhwj8SAgPlVPPELaVKaAErmqi5wmFudcyF/8NzT0MuB6TVZUqCfjSc7WPiZ3KiwGkFpAnDA=="></enclosure>
     </item>
   </channel>
-</rss><!-- sparkle-signatures:
-edSignature: IxwFwy0uxQGtk6sM3+O4S1t6YgFFnk3KOPKCFLybt+Xx56SeqUiGcQSquZHYIRRjJmY2SFikkN+cXvmv8gIKAQ==
-length: 1469
+</rss>
+<!-- sparkle-signatures:
+edSignature: KlmNXFoJiTy2NM3oU2WXDjvlD1BS8NQYA6ekVOUuCiIkQDrGi9G8bjbuS4Mef6XIq0B95gtQR99mA5jFAWB1Bg==
+length: 2647
 -->
