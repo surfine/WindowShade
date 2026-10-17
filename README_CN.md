@@ -39,7 +39,7 @@
 
 ## 下载
 
-到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新的 ZIP，解压，把 `WindowShade.app` 拖进“应用程序”打开，按提示给权限。它住在菜单栏里，不占 Dock 位置。
+到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新的 DMG，打开后把 `WindowShade.app` 拖到“应用程序”，再打开它，按提示给权限。（ZIP 是同一个 App，应用内更新用的就是它。）它住在菜单栏里，不占 Dock 位置。
 
 - **要 macOS 15 以上、Apple Silicon。** 没有 Intel 版。
 - **1.0.17 下载包：** ZIP 10.65 MB，解压后的应用文件合计 27.48 MB（十进制；文件系统实际占用可能不同）。包里多了只存在本机的崩溃报告，所以比上一版大一点。
