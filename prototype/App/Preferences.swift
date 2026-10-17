@@ -205,7 +205,7 @@ extension AppDelegate {
     }
 
     func makeShadeSettingsPage() -> NSView {
-        let (root, stack) = makeSettingsPageRoot()
+        let (root, stack) = makeSettingsPageRoot(explainer: .shade)
         stack.addArrangedSubview(makeSettingsHeader(
             title: "卷帘", subtitle: WSL10n.setting("settings.shade.sub", zh: "设置怎么收起窗口、收起后什么样、要不要提示音。"),
             symbolName: "rectangle.compress.vertical"))
@@ -213,7 +213,8 @@ extension AppDelegate {
         let trigger = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.glance.name", zh: "看一眼"),
                                  subtitle: WSL10n.setting("settings.shade.glance.sub", zh: "指针停在卷帘条上，窗口在原处出现，移开就收回"),
-                                 isOn: GlanceController.isEnabled, action: #selector(prefToggleGlance(_:))),
+                                 isOn: GlanceController.isEnabled, action: #selector(prefToggleGlance(_:)),
+                                 explainer: ExplainerRow.Shade.glance),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.trigger", zh: "触发")))
         stack.addArrangedSubview(trigger)
@@ -234,19 +235,22 @@ extension AppDelegate {
         let arrangeCard = makeUnifiedSettingsCard([
             makeUnifiedControlRow(name: WSL10n.setting("settings.shade.gap.name", zh: "窗口之间留缝"),
                                   subtitle: WSL10n.setting("settings.shade.gap.sub", zh: "半屏、四角、网格、魔法平铺、卷轴排好的窗口之间和屏幕边留一道缝"),
-                                  control: gapSeg),
+                                  control: gapSeg, explainer: ExplainerRow.Shade.gap),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.splitHandle.name", zh: "分屏把手"),
                                  subtitle: WSL10n.setting("settings.shade.splitHandle.sub", zh: "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉"),
-                                 isOn: SplitViewController.isEnabled, action: #selector(prefToggleSplitDivider(_:))),
+                                 isOn: SplitViewController.isEnabled, action: #selector(prefToggleSplitDivider(_:)),
+                                 explainer: ExplainerRow.Shade.splitHandle),
             makeUnifiedControlRow(name: WSL10n.setting("settings.shade.centering.name", zh: "走到一列时"),
                                   subtitle: WSL10n.setting("settings.shade.centering.sub", zh: "贴边：挪得最少。居中：永远在正中"),
-                                  control: centeringPopup),
+                                  control: centeringPopup, explainer: ExplainerRow.Shade.centering),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.centerWhenFits.name", zh: "放得下就居中"),
                                  subtitle: WSL10n.setting("settings.shade.centerWhenFits.sub", zh: "列加起来不到一屏时，整组放在正中"),
-                                 isOn: ScrollStrip.storedCentering().whenFits, action: #selector(prefToggleCenterWhenFits(_:))),
+                                 isOn: ScrollStrip.storedCentering().whenFits, action: #selector(prefToggleCenterWhenFits(_:)),
+                                 explainer: ExplainerRow.Shade.centerWhenFits),
             makeUnifiedToggleRow(name: WSL10n.text("settings.stripWidths.name", zh: "记住每个 App 的列宽"),
                                  subtitle: WSL10n.text("settings.stripWidths.sub", zh: "改过宽度的 App，下次开在卷轴里还是那个宽度"),
-                                 isOn: StripWidthMemory.isEnabled(), action: #selector(prefToggleStripWidths(_:))),
+                                 isOn: StripWidthMemory.isEnabled(), action: #selector(prefToggleStripWidths(_:)),
+                                 explainer: ExplainerRow.Shade.rememberWidths),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.arrange", zh: "排布")))
         stack.addArrangedSubview(arrangeCard)
@@ -259,7 +263,8 @@ extension AppDelegate {
             collapseRows[0],
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.floating.name", zh: "浮在其他窗口上面"),
                                  subtitle: WSL10n.setting("settings.shade.floating.sub", zh: "收起的窗口也不会被别的窗口挡住"),
-                                 isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
+                                 isOn: floatingOnTop, action: #selector(prefToggleFloating(_:)),
+                                 explainer: ExplainerRow.Shade.floating),
             collapseRows[1],
         ])
         stack.addArrangedSubview(appearance)
@@ -277,11 +282,14 @@ extension AppDelegate {
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shade.group.sound", zh: "声音")))
         let sound = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.sound.name", zh: "收起和展开时播放音效"), subtitle: nil,
-                                 isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
+                                 isOn: soundEnabled, action: #selector(prefToggleSound(_:)),
+                                 explainer: ExplainerRow.Shade.sound),
             makeUnifiedControlRow(name: WSL10n.setting("settings.shade.foldSound.name", zh: "收起音效"), subtitle: nil,
-                                  control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
+                                  control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:))),
+                                  explainer: ExplainerRow.Shade.sound),
             makeUnifiedControlRow(name: WSL10n.setting("settings.shade.unfoldSound.name", zh: "展开音效"), subtitle: nil,
-                                  control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
+                                  control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:))),
+                                  explainer: ExplainerRow.Shade.sound),
         ])
         stack.addArrangedSubview(sound)
         sound.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -294,10 +302,11 @@ extension AppDelegate {
             let experiments = makeUnifiedSettingsCard([
                 makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.carplay.name", zh: "把 iPhone 的画面放到整块屏"),
                                      subtitle: WSL10n.setting("settings.shade.carplay.sub", zh: "长按刘海进入全屏；再长按或按 Esc 回到桌面"),
-                                     isOn: CarPlaySurfaceController.isEnabled, action: #selector(prefToggleCarPlaySurface(_:))),
+                                     isOn: CarPlaySurfaceController.isEnabled, action: #selector(prefToggleCarPlaySurface(_:)),
+                                     explainer: ExplainerRow.Shade.iPhoneFullScreen),
                 makeUnifiedControlRow(name: WSL10n.setting("settings.shade.carplayEndpoint.name", zh: "接收器地址"),
                                       subtitle: WSL10n.setting("settings.shade.carplayEndpoint.sub", zh: "ws:// 开头并带令牌；不填时全屏只显示示意画面"),
-                                      control: makeCarPlayEndpointField()),
+                                      control: makeCarPlayEndpointField(), explainer: ExplainerRow.Shade.plain),
             ])
             stack.addArrangedSubview(experiments)
             experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true

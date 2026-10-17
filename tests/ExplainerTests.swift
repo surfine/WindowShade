@@ -16,6 +16,7 @@ struct ExplainerTests {
         tokenDurations()
         loopTimings()
         sceneLibrary()
+        shadeScenes()
         pageAndRowLoops()
         offAndOptions()
         environment()
@@ -89,6 +90,33 @@ struct ExplainerTests {
         // 0.14 + 0.6 + (0.545 + 2.6) + (0.46 + 0.8) = 5.145
         expect(near(say.timeline.loopDuration, 5.145) && say.notchLine != nil && say.device == .text, "notch-says loop is 5.145 s with two lines")
         expect(ExplainerScenes.dockSwipe.trackpadOnly && !ExplainerScenes.dockHover.trackpadOnly, "only the Dock swipe needs a trackpad")
+    }
+
+    /// 卷帘页：两种变体改的是收起那一帧的样子；静图没有帧；每段都有读屏句。
+    static func shadeScenes() {
+        let uni = ExplainerScenes.rollUnified
+        expect(uni.keyState[.windowA]?.look == .unified && uni.keyState[.windowA]?.h == 10, "unified variant rolls into the unified bar")
+        expect(uni.state(throughFrame: uni.frames.count - 1)[.windowA]?.look == .plain, "unified variant unrolls to a plain window")
+        let thumb = ExplainerScenes.rollThumbnail
+        expect(thumb.keyState[.windowA]?.look == .thumbnail && thumb.keyState[.windowA]?.x == 214 && thumb.keyState[.windowA]?.rolled == false,
+               "thumbnail variant shrinks in place")
+        expect(thumb.arrows.result != ExplainerScenes.doubleClickRoll.arrows.result, "thumbnail variant has its own result arrow")
+        expect(near(thumb.timeline.loopDuration, ExplainerScenes.doubleClickRoll.timeline.loopDuration), "variants keep the double-click timing")
+        let stills = [ExplainerScenes.gap0, ExplainerScenes.gap4, ExplainerScenes.gap10, ExplainerScenes.colEdge, ExplainerScenes.colCenter,
+                      ExplainerScenes.colOverflow, ExplainerScenes.centerFit, ExplainerScenes.rememberWidths, ExplainerScenes.translucentBar]
+        expect(stills.allSatisfy { $0.isStill && $0.frames.isEmpty }, "the shade stills have no frames")
+        let g = ExplainerScenes.gap10.initial
+        expect(near(g[.windowA]?.x ?? -1, 10) && near((g[.windowB]?.x ?? 0) - ((g[.windowA]?.x ?? 0) + (g[.windowA]?.w ?? 0)), 10), "the wide gap is 10 between the windows")
+        let shade: [ExplainerSpec] = stills + [ExplainerScenes.glance, ExplainerScenes.splitHandle, ExplainerScenes.floatOnTop,
+                                              ExplainerScenes.iPhoneFullScreen, uni, thumb]
+        expect(Set(shade.map(\.id)).count == shade.count, "shade scene ids are unique")
+        expect(shade.allSatisfy { $0.description.zh.hasPrefix("演示：") }, "every shade scene has a VoiceOver sentence")
+        for spec in [ExplainerScenes.glance, ExplainerScenes.splitHandle, ExplainerScenes.floatOnTop, ExplainerScenes.iPhoneFullScreen] {
+            expect(spec.keyFrameIndex != nil && spec.timeline.loopDuration > 1, "\(spec.id) has a key frame and a real loop")
+        }
+        expect(ExplainerScenes.glance.keyState[.windowB]?.h == 104, "glance key frame shows the window hanging down")
+        expect(ExplainerPage.shade.pageDefault.id == "glance", "shade page default is the glance")
+        if case .options(let list) = ExplainerRow.Shade.centering.kind { expect(list.count == 3, "centering has one scene per option") } else { expect(false, "centering is an options row") }
     }
 
     static func row(_ id: Int, _ row: ExplainerRow, on: Bool? = true, option: Int? = nil) -> ExplainerDirector.RowState {

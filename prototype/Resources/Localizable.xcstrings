@@ -10397,6 +10397,443 @@
         }
       }
     },
+    "explainer.appThumb.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: A rolled-up window shrinks to a thumbnail where it was."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：收起后在原处缩成一张缩略图。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：收起後在原處縮成一張縮圖。"
+          }
+        }
+      }
+    },
+    "explainer.appUni.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Rolled-up windows all get the same title bar."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：收起后统一成一样的标题栏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：收起後統一成一樣的標題列。"
+          }
+        }
+      }
+    },
+    "explainer.centerFit.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Two columns that fit on one screen sit as a group in the middle."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两列加起来不到一屏，整组放在正中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩列加起來不到一個螢幕，整組放在正中。"
+          }
+        }
+      }
+    },
+    "explainer.colCenter.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: The column you move to stops in the middle of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：走到的那一列停在屏幕正中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：走到的那一列停在螢幕正中。"
+          }
+        }
+      }
+    },
+    "explainer.colEdge.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: The column you move to stops against the screen edge."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：走到的那一列贴着屏幕边停。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：走到的那一列貼著螢幕邊停。"
+          }
+        }
+      }
+    },
+    "explainer.colOverflow.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: When the columns don't fit on one screen, the column you move to stops in the middle. When they fit, it stays near the edge."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：几列放不下一屏时，走到的那一列停在屏幕正中；放得下就贴边。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：幾列放不下一個螢幕時，走到的那一列停在螢幕正中；放得下就貼邊。"
+          }
+        }
+      }
+    },
+    "explainer.floatTop.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Click the window behind and it comes forward, while the roll-up bar stays on top."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：点一下后面那扇窗口，它到前面来，卷帘条仍在最上面。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按一下後面那個視窗，它到前面來，捲簾條仍在最上面。"
+          }
+        }
+      }
+    },
+    "explainer.gap0.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Two windows side by side with no gap between them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两扇并排的窗口之间不留缝。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩個並排的視窗之間不留縫。"
+          }
+        }
+      }
+    },
+    "explainer.gap0.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window gaps · None"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口之间留缝 · 不留"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗間距 · 不留"
+          }
+        }
+      }
+    },
+    "explainer.gap10.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Two windows side by side with a wide gap between them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两扇并排的窗口之间留宽缝。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩個並排的視窗之間留寬縫。"
+          }
+        }
+      }
+    },
+    "explainer.gap10.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window gaps · Wide"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口之间留缝 · 宽"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗間距 · 寬"
+          }
+        }
+      }
+    },
+    "explainer.gap4.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Two windows side by side with a narrow gap between them."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两扇并排的窗口之间留窄缝。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩個並排的視窗之間留窄縫。"
+          }
+        }
+      }
+    },
+    "explainer.gap4.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window gaps · Narrow"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口之间留缝 · 窄"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗間距 · 窄"
+          }
+        }
+      }
+    },
+    "explainer.glance.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Rest the pointer on a roll-up bar and the window hangs down for a quick look. Move away and it rolls back."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：指针停在卷帘条上，窗口内容垂下来给你看一眼；移开就收回。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：指標停在捲簾條上，視窗內容垂下來讓你看一眼；移開就收回。"
+          }
+        }
+      }
+    },
+    "explainer.iphoneFull.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Long-press the notch and the whole screen shows your iPhone. Press Esc to come back."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：长按刘海，整块屏变成 iPhone 的画面；按 Esc 回来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：長按瀏海，整個螢幕變成 iPhone 的畫面；按 Esc 回來。"
+          }
+        }
+      }
+    },
+    "explainer.iphoneFull.cover": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 的画面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 的畫面"
+          }
+        }
+      }
+    },
+    "explainer.rememberW.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: The same app opens in the strip at the same width next time."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：同一个 App 下次进卷轴还是那么宽。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：同一個 App 下次進卷軸還是那麼寬。"
+          }
+        }
+      }
+    },
+    "explainer.split.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Drag the bar between two windows and both resize together."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：拖中间那根竖条，两扇窗口一起变宽变窄。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：拖中間那根豎條，兩個視窗一起變寬變窄。"
+          }
+        }
+      }
+    },
+    "explainer.trans.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: The roll-up bar is see-through, so what's behind it shows."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：卷帘条半透明，后面的内容透出来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：捲簾條半透明，後面的內容透出來。"
+          }
+        }
+      }
+    },
     "explainer.dockHover.ax": {
       "extractionState": "manual",
       "localizations": {
