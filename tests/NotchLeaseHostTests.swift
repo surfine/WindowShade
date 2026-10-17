@@ -257,7 +257,20 @@ import Cocoa
         merged.collapse()
         expect(kinds.last == .window && !merged.isExpanded, "那一排收起：焦点回到窗口")
 
-        print(failures == 0 ? "PASS NotchLeaseHostTests: 16 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
+        print("CASE LEASE-H17 | 没有刘海面板的屏不拦启动台（规格 V11：1x 外接屏、刘海关着）")
+        expect(NotchLeaseHub.screenClaim(locked: false, arbitrated: true) == .lease, "有刘海面板：照常申请租约")
+        expect(NotchLeaseHub.screenClaim(locked: false, arbitrated: false) == .noArbiter, "没有刘海面板：不拿租约直接开")
+        expect(NotchLeaseHub.screenClaim(locked: true, arbitrated: false) == .refused, "锁着屏：没有面板也不开")
+        expect(NotchLeaseHub.screenClaim(locked: true, arbitrated: true) == .refused, "锁着屏：有面板也不开")
+        let bare = WS2.DisplayID(value: 99)
+        expect(hub.screenClaim(on: bare) == .noArbiter, "宿主：表外的屏是没有仲裁者")
+        expect(!hub.acquire(.launchpad, on: bare), "宿主：表外的屏申请仍然拿不到（所以启动台不能只看 acquire）")
+        expect(hub.screenClaim(on: main) == .lease, "宿主：有面板的屏要申请")
+        locked = true
+        expect(hub.screenClaim(on: bare) == .refused, "宿主：锁屏时表外的屏也不开")
+        locked = false
+
+        print(failures == 0 ? "PASS NotchLeaseHostTests: 17 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
         if failures > 0 { exit(1) }
     }
 }
