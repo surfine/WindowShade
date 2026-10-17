@@ -9,7 +9,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
 fi
 swiftc ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} prototype/Core/LaunchpadModel.swift prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
-  prototype/Core/FlickMotion.swift tests/LaunchpadMotionStub.swift \
+  prototype/Core/FlickMotion.swift prototype/Core/ScrollShape.swift tests/LaunchpadMotionStub.swift \
   prototype/App/Launchpad.swift prototype/App/LaunchpadBackdrop.swift prototype/Core/WS2AppUninstallPlan.swift prototype/App/WS2AppUninstallScanner.swift prototype/App/LaunchpadUninstall.swift prototype/App/LaunchpadView.swift \
   prototype/App/LaunchpadFolders.swift prototype/App/LaunchpadLibrary.swift prototype/App/LaunchpadArtwork.swift prototype/App/LaunchpadToday.swift prototype/App/LaunchpadActivities.swift prototype/App/NotchActivitySymbol.swift prototype/App/LaunchpadOpenWith.swift \
   tests/LaunchpadViewTests.swift -o .build/launchpad-tests/view

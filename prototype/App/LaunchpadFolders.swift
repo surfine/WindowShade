@@ -692,7 +692,7 @@ extension LaunchpadView {
         CATransaction.commit()
     }
 
-    func folderScroll(_ event: NSEvent) {
+    func folderScroll(_ event: NSEvent, shape: ScrollShape) {
         guard let overlay = folder, overlay.dragging == nil else { return }
         let pager = overlay.pager
         if !event.hasPreciseScrollingDeltas {
@@ -701,6 +701,13 @@ extension LaunchpadView {
             let step = (event.scrollingDeltaY + event.scrollingDeltaX) < 0 ? 1 : -1
             pager.settle(to: min(max(pager.page + step, 0), pager.count - 1))
             overlay.pageSettled()
+            return
+        }
+        if case .smoothWheel(let steps) = shape {
+            if let step = smoothWheelPage(steps, at: event.timestamp) {
+                pager.settle(to: min(max(pager.page + step, 0), pager.count - 1))
+                overlay.pageSettled()
+            }
             return
         }
         guard event.momentumPhase == [] else { return }

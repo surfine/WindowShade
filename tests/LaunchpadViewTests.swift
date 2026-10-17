@@ -38,6 +38,27 @@ struct LaunchpadViewTests {
             navigation.pager.begin(at: 3); navigation.pager.drag(by: -2000, at: 3.1); navigation.pager.end()
             precondition(navigation.pager.page == -1)
             navigation.settle(to: 0)
+            // 平滑滚轮（罗技 Options+ 之类：连续、没相位、没惯性）：一下拨动翻一页；只有第二轴（拇指轮）的照样翻。
+            // 合成事件不带时间戳（NSEvent.timestamp 为 0）：照真设备每 15 毫秒一个补上。
+            @MainActor func smoothFlick(dy: [Int32], dx: [Int32]) {
+                let start = clock_gettime_nsec_np(CLOCK_UPTIME_RAW)
+                for (i, (y, x)) in zip(dy, dx).enumerated() {
+                    guard let cg = CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2, wheel1: y, wheel2: x, wheel3: 0) else { continue }
+                    cg.timestamp = start + UInt64(i) * 15_000_000
+                    cg.setIntegerValueField(.scrollWheelEventIsContinuous, value: 1)
+                    cg.setIntegerValueField(.scrollWheelEventPointDeltaAxis1, value: Int64(y))
+                    cg.setIntegerValueField(.scrollWheelEventPointDeltaAxis2, value: Int64(x))
+                    cg.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis1, value: Double(y))
+                    cg.setDoubleValueField(.scrollWheelEventFixedPtDeltaAxis2, value: Double(x))
+                    if let event = NSEvent(cgEvent: cg) { navigation.scrollWheel(with: event) }
+                }
+            }
+            smoothFlick(dy: [-12, -10, -8, -6, -4, -2], dx: [0, 0, 0, 0, 0, 0])
+            precondition(navigation.pager.page == 1, "a smooth-wheel flick turns exactly one page (got \(navigation.pager.page))")
+            await wait(0.3)
+            smoothFlick(dy: [0, 0, 0, 0, 0, 0], dx: [12, 10, 8, 6, 4, 2])
+            precondition(navigation.pager.page == 0, "a smooth wheel2-only flick turns one page back (got \(navigation.pager.page))")
+            navigation.settle(to: 0)
             let dot = CGPoint(x: navigation.dots.frame.minX + 3.5, y: navigation.dots.frame.midY)
             guard case .page(0) = navigation.target(at: dot) else { preconditionFailure("page dot must remain clickable") }
             navigation.settle(to: navigation.homePages)
@@ -224,6 +245,7 @@ struct LaunchpadViewTests {
             precondition(arrivals == 1 && completions.count == 2,
                          "failed artwork is cached for this generation instead of retrying every frame")
             print("PASS: scan/edit ordering, folder pull-out rollback, pager cancellation, library keyboard/VoiceOver, Esc from the App Library keeps the keyboard, material fallback, stale artwork generations")
+            print("PASS: Launchpad view — smooth-wheel (continuous, phase-0) flicks turn one page each, wheel2-only included")
             print("PASS: Launchpad view — stationary merge, home/folder edge paging, release, rapid folder switch, hide cancellation")
             exit(0)
         }

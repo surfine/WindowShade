@@ -5516,7 +5516,8 @@ final class NotchCanvasView: NSView {
     override func scrollWheel(with event: NSEvent) {
         guard authenticationView == nil else { return }
         holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil
-        if !event.hasPreciseScrollingDeltas || event.momentumPhase != [] { onScrollNoise?() }
+        // 普通滚轮、惯性、平滑滚轮（连续但没相位，罗技 Options+ 之类）都只是路过的滚动，不是在刘海上拉。
+        if !event.hasPreciseScrollingDeltas || event.momentumPhase != [] || event.phase == [] { onScrollNoise?() }
         guard event.hasPreciseScrollingDeltas, event.momentumPhase == [] else { return }
         let fingerDown = event.isDirectionInvertedFromDevice ? event.scrollingDeltaY : -event.scrollingDeltaY
         let fingerRight = event.isDirectionInvertedFromDevice ? event.scrollingDeltaX : -event.scrollingDeltaX

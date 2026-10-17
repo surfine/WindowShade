@@ -73,6 +73,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     /// 在空白处按住拖着翻页：上一次的 x。
     var mousePaging: CGFloat?
     var wheelLock: TimeInterval = 0
+    /// 分清触控板、普通滚轮和平滑滚轮（罗技 Options+ 之类）：平滑滚轮折成格，和普通滚轮一样一格翻一页。
+    var scrollShape = ScrollShapeClassifier()
     /// 指针停着、或者键盘选中的那一格。
     var hovered: String?
     var holdTimer: Timer?
@@ -625,8 +627,10 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     }
 
     override func scrollWheel(with event: NSEvent) {
+        // 每个滚动事件都先过分类器（它要看到触控板的相位，才分得清后面的惯性是谁的）。
+        let shape = scrollShape.classify(ScrollShapeEvent(event))
         guard placing == nil, reorder == nil else { return }
-        if folder != nil { folderScroll(event); return }
+        if folder != nil { folderScroll(event, shape: shape); return }
         if listActive { return }
         if !event.hasPreciseScrollingDeltas {
             // 普通鼠标：滚一格翻一页。
@@ -634,6 +638,13 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             wheelLock = event.timestamp + 0.25
             let step = (event.scrollingDeltaY + event.scrollingDeltaX) < 0 ? 1 : -1
             settle(to: min(max(pager.page + step, pager.minimumPage), pageCount - 1))
+            return
+        }
+        if case .smoothWheel(let steps) = shape {
+            // 平滑滚轮：折出来的一格和普通鼠标的一格一样翻一页。
+            if let step = smoothWheelPage(steps, at: event.timestamp) {
+                settle(to: min(max(pager.page + step, pager.minimumPage), pageCount - 1))
+            }
             return
         }
         guard event.momentumPhase == [] else { return }
@@ -663,6 +674,13 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         default:
             break
         }
+    }
+
+    /// 平滑滚轮折出的一格往哪翻（和普通鼠标同一个方向规则、同一个 0.25 秒间隔）；不翻页返回 nil。
+    func smoothWheelPage(_ steps: ScrollWheelSteps, at time: TimeInterval) -> Int? {
+        guard !steps.isEmpty, time > wheelLock else { return nil }
+        wheelLock = time + 0.25
+        return (steps.y + steps.x) < 0 ? 1 : -1
     }
 
     // MARK: 指针：停上去浮起来、按下变暗
