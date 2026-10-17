@@ -81,7 +81,7 @@
 | 同上但按住 400 ms、每步 120–150 ms | 图标仍未被拖起；画面进入一个卡片切换界面：右侧上下各一张窗口缩略卡（Safari「起始页面」、档案「最近项目」），壁纸模糊、Dock 在底，卡片名带 App 图标。这不是 Slide Over，更像 iOS 27 在全萤幕模式下的窗口卡片选择；它停在原地不会自己收起，点空白处也不收（点 Dock 空白处之外会回到主画面） |
 | 按住 Safari 图标（Safari 在前台）同样慢拖 | 把 Safari 自己的窗口变成缩略卡（同上卡片界面），也没有进 Slide Over |
 
-截图（缩到宽 600 px）：`docs/visual-qa/v7-slide-over/dock-drag-card-switcher.png`（长按菜单与两张卡片并存）、`card-switcher-settled.png`（等 10 秒后仍是这个界面）。
+截图（缩到高 600 px，413×600）：`docs/visual-qa/v7-slide-over/dock-drag-card-switcher.png`（长按菜单与两张卡片并存）、`card-switcher-settled.png`（等 10 秒后仍是这个界面）。
 
 **没有量到的东西**：Slide Over 面板的圆角、离屏边距离、宽度、顶部留白、把手尺寸，全部 not_run，因为从头到尾没有一张 Slide Over 面板的画面。模拟器已关机（`simctl shutdown`），多工处理仍是「全萤幕 App」。
 
