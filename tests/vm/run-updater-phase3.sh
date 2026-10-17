@@ -12,11 +12,15 @@
 #      换成对应测试公钥，并加 ATS 放行 http（1.0.16 没有 NSAppTransportSecurity，http 清单会被系统拦）。副本 ad-hoc 重签。
 #      真私钥、钥匙串一律不碰。
 #   4. 宿主在虚拟机网桥地址（来宾默认网关）上起 python3 http.server，只在本次运行期间。
-#   5. 来宾里：1.0.16 指向本地清单，触发「检查更新…」，导出 AX 文字与截图；期望「这一版要手动下载」＋打开下载页，不是安装。
-#      再对 1.0.17 同样做一遍，期望「已是最新」、不崩溃、没有「回到 1.0.16」。
+#   5. 来宾里不用 AppleScript／辅助功能／ssh 截图（会卡在没人点的授权框）。偏好写成「定时检查已过期」（SUHasLaunchedBefore、
+#      SUEnableAutomaticChecks、SUScheduledCheckInterval=3600、SULastCheckTime=5 天前），启动后 Sparkle 自己在后台检查，不用点菜单。
+#      证据三样：宿主 http 访问日志（清单被取、1.0.17 的 zip 没被请求）、App 日志（found 1.0.17…／error:／有无下载安装字样）、
+#      经 open 在图形会话里跑的 VMWindowList.app（窗口清单＋尽力截图）。
+#      局限：定时检查按设计不弹窗（Updater.swift backendFound 只在 userInitiated 时 presentOffer），所以「打开下载页」按钮、
+#      「已是最新」小窗、设置里没有「回到」这三项在这条路径上看不到，一律记 INCONCLUSIVE，留给人点一次菜单。
 #   6. 还原来宾偏好、退出 App、删掉拷进去的 App、停 HTTP 服务；证据拷回 --out（默认 .build/release-acceptance-2026-10-17/phase3-updater/）。
-# 判读：PASS／FAIL／INCONCLUSIVE。清单没被取到、菜单驱动不了、更新器没启动，都是 INCONCLUSIVE，绝不记 PASS；
-#      驱动成功但没有提示、出现安装按钮、或本地 zip 地址被请求，是 FAIL。
+# 判读：PASS／FAIL／INCONCLUSIVE。清单没被取到、更新器没启动、证据缺，都是 INCONCLUSIVE，绝不记 PASS；
+#      本地 zip 被请求、日志出现下载／解压／安装、崩溃、1.0.17 上看到「发现新版本」，是 FAIL。
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 repo_root=$PWD
@@ -53,7 +57,7 @@ g() { ssh "${ssh_opts[@]}" "$host" "$@"; }   # 来宾命令
 tmp=$(mktemp -d); mkdir "$tmp/serve" "$tmp/dl"
 http_pid=""
 cleanup() {
-  [ -n "$http_pid" ] && kill "$http_pid" 2>/dev/null || true
+  if [ -n "$http_pid" ]; then kill "$http_pid" 2>/dev/null; wait "$http_pid" 2>/dev/null; fi; true
   if [ "$dry" = 0 ] && [ "${guest_touched:-0}" = 1 ]; then
     g "bash /tmp/updater-in-guest.sh cleanup" 2>&1 | sed 's/^/  /' || echo "WARN 来宾清理没跑成，手动：ssh $host 'bash /tmp/updater-in-guest.sh cleanup'" >&2
   fi
@@ -146,7 +150,23 @@ g "curl -fs -m 5 '$feed_url' -o /dev/null" || { echo "来宾连不到 $feed_url�
 
 # --- 5. 传进来宾并跑 ---
 guest_touched=1
-scp -q "${ssh_opts[@]}" "$tmp/p3-1016.zip" "$tmp/p3-1017.zip" tests/vm/updater-in-guest.sh "$host:/tmp/"
+wl="$tmp/VMWindowList.app"; mkdir -p "$wl/Contents/MacOS"
+swiftc -target arm64-apple-macos15.0 tests/vm/vm-window-list.swift -o "$wl/Contents/MacOS/vm-window-list"
+cat > "$wl/Contents/Info.plist" <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleIdentifier</key><string>com.windowshade.vm-window-list</string>
+<key>CFBundleName</key><string>VMWindowList</string>
+<key>CFBundleExecutable</key><string>vm-window-list</string>
+<key>CFBundlePackageType</key><string>APPL</string>
+<key>LSUIElement</key><true/>
+</dict></plist>
+PLIST
+codesign --force -s - "$wl" >/dev/null 2>&1 || true
+ditto -c -k --keepParent "$wl" "$tmp/vmwl.zip"
+scp -q "${ssh_opts[@]}" "$tmp/p3-1016.zip" "$tmp/p3-1017.zip" "$tmp/vmwl.zip" tests/vm/updater-in-guest.sh "$host:/tmp/"
+g "mkdir -p ~/wsqa-p3 && rm -rf ~/wsqa-p3/VMWindowList.app && ditto -x -k /tmp/vmwl.zip ~/wsqa-p3/"
 g "mkdir -p ~/Applications/wsqa-p3-1016 ~/Applications/wsqa-p3-1017 && ditto -x -k /tmp/p3-1016.zip ~/Applications/wsqa-p3-1016 && ditto -x -k /tmp/p3-1017.zip ~/Applications/wsqa-p3-1017 \
   && ls -d ~/Applications/wsqa-p3-1016/*.app ~/Applications/wsqa-p3-1017/*.app"
 g "bash /tmp/updater-in-guest.sh prep"
@@ -161,42 +181,41 @@ run_one p3-1017 wsqa-p3-1017 || true
 cp "$tmp/http.log" "$tmp/http-1017.log"
 
 # --- 6. 取证据（清理在 trap 里） ---
-scp -q -r "${ssh_opts[@]}" "$host:wsqa-p3/shots" "$host:wsqa-p3/ax" "$host:wsqa-p3/logs" "$out/" 2>/dev/null || echo "WARN 证据没完全拷回来"
+scp -q -r "${ssh_opts[@]}" "$host:wsqa-p3/shots" "$host:wsqa-p3/logs" "$out/" 2>/dev/null || echo "WARN 证据没完全拷回来"
 cp "$tmp"/http-*.log "$tmp"/*.guest.txt "$out/" 2>/dev/null || true
 cp "$tmp/serve/appcast.xml" "$out/local-appcast.xml"
 
 # --- 7. 判读 ---
-field() { sed -n "s/.*AXRESULT.* $2=\([^ ]*\).*/\1/p" "$1" | tail -1; }
+field() { sed -n "s/.*RESULT.* $2=\([^ ]*\).*/\1/p" "$1" | tail -1; }
 fetched() { grep -q 'GET /appcast.xml' "$1"; }
 zip_hit() { grep -q 'GET /WindowShade-v1.0.17.zip' "$1"; }
-echo; echo "== Phase 3 判读（证据：$out）=="
+echo; echo "== Phase 3 判读（证据：$out；定时检查路径，不点菜单）=="
+UI_NOTE="定时检查按设计不弹窗，这一项要人点一次「检查更新…」看（菜单项按住 Option 才显示）"
 # 1.0.16
-f="$tmp/p3-1016.guest.txt"; cls=$(field "$f" class); drive=$(field "$f" drive); h="$tmp/http-1016.log"
-if ! grep -q AXRESULT "$f" 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.16 来宾没产出结果（见 $out/）"
-elif ! fetched "$h"; then record "INCONCLUSIVE phase3/1.0.16 本地清单没被取到（更新器没启动，或 SUFeedURL 覆盖没生效；updater_started=$(field "$f" updater_started)；试 --feed-via plist）"
-elif zip_hit "$h" || [ "$cls" = install ]; then record "FAIL phase3/1.0.16 出现了安装路径（class=$cls，zip 被请求=$(zip_hit "$h" && echo yes || echo no)）"
-elif [ "$cls" = download ] && [ "$(field "$f" crash)" = no ]; then record "PASS phase3/1.0.16 弹出手动下载提示＋打开下载页，没有安装按钮，没请求 zip"
-elif [ "$cls" = none ] && [ "$drive" = ok ]; then record "FAIL phase3/1.0.16 触发了检查但没有出现任何提示"
-elif [ "$cls" = none ]; then record "INCONCLUSIVE phase3/1.0.16 驱动不了菜单（drive=$drive），也没有被动出现提示"
-else record "FAIL phase3/1.0.16 提示不是预期的手动下载（class=$cls，看 $out/ax/p3-1016.txt）"; fi
-# 1.0.17
-f="$tmp/p3-1017.guest.txt"; cls=$(field "$f" class); drive=$(field "$f" drive); h="$tmp/http-1017.log"
-if ! grep -q AXRESULT "$f" 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 来宾没产出结果（见 $out/）"
+f="$tmp/p3-1016.guest.txt"; h="$tmp/http-1016.log"
+if ! grep -q RESULT "$f" 2>/dev/null || [ -z "$(field "$f" version)" ]; then record "INCONCLUSIVE phase3/1.0.16 来宾没产出结果（$(grep -o "RESULT.*" "$f" 2>/dev/null | head -1)；见 $out/）"
+elif ! fetched "$h"; then record "INCONCLUSIVE phase3/1.0.16 本地清单没被取到（updater_started=$(field "$f" updater_started) not_started=$(field "$f" updater_not_started) error=$(field "$f" error)；试 --feed-via plist）"
+elif zip_hit "$h"; then record "FAIL phase3/1.0.16 本地 1.0.17 zip 被请求了（它尝试下载）"
+elif [ "$(field "$f" installish_log_lines)" != 0 ] || [ "$(field "$f" crash)" = yes ]; then record "FAIL phase3/1.0.16 日志出现下载／解压／安装字样或崩溃（installish=$(field "$f" installish_log_lines) crash=$(field "$f" crash)）"
+elif [ "$(field "$f" found)" = none ]; then record "FAIL phase3/1.0.16 取了清单但 App 日志没有发现 1.0.17（error=$(field "$f" error)；多半是签名没过或条目不对）"
 else
-  ver=$(field "$f" version); build=$(field "$f" build)
-  if [ "${build:-0}" -lt 17 ] 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 传进去的不是 1.0.17 构建（version=$ver build=$build；用 --app-1017 指向新构建）"
-  elif ! fetched "$h"; then record "INCONCLUSIVE phase3/1.0.17 本地清单没被取到（updater_started=$(field "$f" updater_started)）"
+  record "PASS phase3/1.0.16 取了清单、发现 1.0.17（$(field "$f" found)），没请求 zip、没有下载／安装日志、没崩溃（只证明「没尝试一键安装」）"
+  record "INCONCLUSIVE phase3/1.0.16 「这一版要手动下载」提示与「打开下载页」按钮没看到。$UI_NOTE。窗口：$(field "$f" onscreen_titles)"
+fi
+# 1.0.17
+f="$tmp/p3-1017.guest.txt"; h="$tmp/http-1017.log"
+if ! grep -q RESULT "$f" 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 来宾没产出结果（见 $out/）"
+else
+  build=$(field "$f" build)
+  if ! [ "${build:-0}" -ge 17 ] 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 传进去的不是 1.0.17 构建（version=$(field "$f" version) build=$build；用 --app-1017 指向新构建）"
+  elif ! fetched "$h"; then record "INCONCLUSIVE phase3/1.0.17 本地清单没被取到（updater_started=$(field "$f" updater_started) error=$(field "$f" error)）"
   elif [ "$(field "$f" crash)" = yes ] || [ "$(field "$f" alive)" = no ]; then record "FAIL phase3/1.0.17 崩溃或退出（crash=$(field "$f" crash) alive=$(field "$f" alive)）"
-  elif zip_hit "$h" || [ "$cls" = install ] || [ "$cls" = download ]; then record "FAIL phase3/1.0.17 在 1.0.17 上弹出了假更新（class=$cls）"
-  elif [ "$cls" = uptodate ]; then record "PASS phase3/1.0.17 显示已是最新，没崩溃，没假版本"
-  elif [ "$cls" = none ] && [ "$drive" = ok ]; then record "FAIL phase3/1.0.17 触发了检查但没有出现「已是最新」"
-  elif [ "$cls" = none ]; then record "INCONCLUSIVE phase3/1.0.17 驱动不了菜单（drive=$drive）"
-  else record "FAIL phase3/1.0.17 小窗内容不是「已是最新」（class=$cls，看 $out/ax/p3-1017.txt）"; fi
-  case "$(field "$f" rollback)" in
-    absent) record "PASS phase3/1.0.17 设置里没有「回到 …」" ;;
-    present) record "FAIL phase3/1.0.17 设置里出现了「回到 …」" ;;
-    *) record "INCONCLUSIVE phase3/1.0.17 没能看到设置里的更新分组（settings=$(field "$f" settings)）；回头人工看 $out/shots/p3-1017-settings.png" ;;
-  esac
+  elif zip_hit "$h" || [ "$(field "$f" found)" != none ] || [ "$(field "$f" installish_log_lines)" != 0 ]; then record "FAIL phase3/1.0.17 在 1.0.17 上发现了「新版本」或尝试下载（found=$(field "$f" found)）"
+  elif [ "$(field "$f" error)" != none ]; then record "FAIL phase3/1.0.17 更新器报错（$(field "$f" error)）"
+  else
+    record "PASS phase3/1.0.17 取了清单、没有假版本、没请求 zip、没崩溃（只证明「没发现新版本」）"
+  fi
+  record "INCONCLUSIVE phase3/1.0.17 「已是最新」小窗与设置里没有「回到 1.0.16」没看到。$UI_NOTE"
 fi
 printf '%s\n' "${verdicts[@]}" > "$out/verdicts.txt"
 if printf '%s\n' "${verdicts[@]}" | grep -q '^FAIL'; then exit 1; fi
