@@ -55,11 +55,13 @@ extension GlanceProbe {
     let excluded = WindowBrowserSettings.excludedBundleIDs
     let own = Bundle.main.bundleIdentifier
     func items() -> [DockScenarioItem] { dockScenarioItems() }
-    if dockAutohide {
-      // 自动隐藏时图标在屏外：把指针推到屏幕下沿（Dock 默认在下方）让它滑出来，有界等待，打印用时。
+    /// 自动隐藏时图标在屏外：把指针推到屏幕下沿（Dock 默认在下方）让它滑出来，有界等待。
+    /// 指针一离开下沿 Dock 就缩回去，所以每次要找图标（reset() 之后的 hoverFixture）都要重新来一遍。
+    func revealDock() async -> Bool {
+      guard dockAutohide else { return true }
+      if items().contains(where: { $0.bundleID == bundleID }) { return true }
       let screen = CGDisplayBounds(CGMainDisplayID())
       let edge = CGPoint(x: screen.midX, y: screen.maxY - 1)
-      let started = CACurrentMediaTime()
       var shown = false
       for _ in 0..<3 where !shown {
         dockScenarioMove(to: CGPoint(x: edge.x, y: edge.y - 40))
@@ -67,6 +69,11 @@ extension GlanceProbe {
         dockScenarioMove(to: edge)
         shown = await dockScenarioWait(4) { items().contains { $0.bundleID == bundleID } }
       }
+      return shown
+    }
+    if dockAutohide {
+      let started = CACurrentMediaTime()
+      let shown = await revealDock()
       print("INFO dock-scenarios (b): Dock \(shown ? "revealed" : "not revealed") after \(String(format: "%.1f", CACurrentMediaTime() - started)) s")
     }
     guard let mine = items().first(where: { $0.bundleID == bundleID }) else {
@@ -99,7 +106,8 @@ extension GlanceProbe {
     }
     /// 指针移到固定 App 的图标上，等面板出现。
     func hoverFixture(timeout: TimeInterval = 6) async -> Bool {
-      guard let icon = fixtureIcon() else { return false }
+      // 自动隐藏：reset() 把指针带离下沿后 Dock 已缩回，先重新叫出来（规格 V8(b)）。
+      guard await revealDock(), let icon = fixtureIcon() else { return false }
       let target = CGPoint(x: icon.midX, y: icon.midY)
       await dockScenarioGlide(from: dockScenarioPointer(), to: target, step: 14, pause: 8)
       return await dockScenarioWait(timeout) { panelNow() != nil }
