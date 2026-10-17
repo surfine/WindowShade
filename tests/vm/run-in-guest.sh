@@ -93,6 +93,12 @@ for suite in "$@"; do
   out="$HOME/wsqa-run/results/$suite.txt"; rm -f "$out"
   t0=$SECONDS; timed_out=0
   echo "INFO guest: load $(sysctl -n vm.loadavg) before $suite"
+  if [ "$suite" = dock-scenarios ]; then
+    # 这组只在 30 秒没有输入时才动指针；刚改完设置（重启 Dock）会把来宾的闲置计时清零，等它过 35 秒（最多 2 分钟）。
+    w0=$SECONDS
+    while (( $(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1e9); exit}') < 35 && SECONDS - w0 < 120 )); do sleep 5; done
+    echo "INFO guest: waited $((SECONDS - w0)) s for the guest to be idle before dock-scenarios"
+  fi
   open -n -W --env WINDOWSHADE_LOG_PATH="$log" --env WINDOWSHADE_PROBE_ROOT="$HOME/wsqa-run" \
     --env WINDOWSHADE_PROBE_TIMEOUT_SCALE="$scale" --env PROBE_SHOTS="$HOME/wsqa-run/shots" \
     --stdout "$out" --stderr "$out" ./WindowShade.app \
