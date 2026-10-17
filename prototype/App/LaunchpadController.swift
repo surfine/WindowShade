@@ -224,6 +224,7 @@ final class LaunchpadController {
     /// 静音入口传入目标显示器。已经打开就保持打开，不收起。
     func show(on screen: NSScreen, from notch: NSRect? = nil) {
         guard !isShowing else { return }
+        lastShowRefusalForProbe = nil
         navigationGeneration &+= 1
         placementGeneration &+= 1 // 回到启动台即放弃之前尚在等待的自动排布。
         owner.gestures.cancel(reason: "launchpad")
