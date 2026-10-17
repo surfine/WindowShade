@@ -256,6 +256,7 @@ import Cocoa
         "settings.shade.splitHandle.sub": "Drag the middle bar to resize both",
         "settings.shade.floating.sub": "Rolled-up windows stay in front",
         "settings.shade.fileShelf.sub": "Files you drop on the notch wait here",
+        "settings.browser.arrangeMenu.sub": "Right-click a window, then Arrange: halves, corners, center, fill",
         "settings.shade.downloads.sub": "Watch the Downloads folder",
         "settings.shade.copyProgress.sub": "Show copy progress at the notch",
         "settings.shade.carplay.sub": "Long-press the notch for full screen",
