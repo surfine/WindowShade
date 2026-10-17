@@ -1,5 +1,5 @@
 // 来宾里换显示模式的小工具（规格 V11）：只在 QA 虚拟机的图形会话里由 tests/vm/run-in-guest.sh 经 open 启动，宿主上不跑。
-// 用法：vm-display-mode list | current | set <宽>x<高>@<缩放>（例如 set 1280x800@1，缩放 1 或 2）
+// 用法：vm-display-mode list | current | set <宽>x<高>@<缩放>（例如 set 1280x800@1，缩放 1 或 2）| restore（回到永久配置）
 // 只改本次登录会话的显示模式（.forSession），不写永久设置；恢复用同一命令 set 回 current 记下的值。
 import CoreGraphics
 import Foundation
@@ -41,6 +41,10 @@ case "set":
   }
   Thread.sleep(forTimeInterval: 1.0)
   print("OK \(CGDisplayCopyDisplayMode(CGMainDisplayID()).map(label) ?? "unknown")")
+case "restore":
+  CGRestorePermanentDisplayConfiguration()
+  Thread.sleep(forTimeInterval: 1.0)
+  print("OK restored \(CGDisplayCopyDisplayMode(CGMainDisplayID()).map(label) ?? "unknown")")
 default:
   print("FAIL unknown command \(args[1])")
   exit(2)
