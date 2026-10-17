@@ -105,10 +105,15 @@ for suite in "$@"; do
     while (( $(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1e9); exit}') < 35 && SECONDS - w0 < 120 )); do sleep 5; done
     echo "INFO guest: waited $((SECONDS - w0)) s for the guest to be idle before dock-scenarios"
   fi
+  # 长会话（R39）：soak-browser／soak-glance／soak-fold 展开成 --soak --soak-kind … --soak-rounds N（WSQA_SOAK_ROUNDS，默认 100）。
+  case "$suite" in
+    soak-*) probe_args=(--soak --soak-kind "${suite#soak-}" --soak-rounds "${WSQA_SOAK_ROUNDS:-100}") ;;
+    *) probe_args=("--$suite") ;;
+  esac
   open -n -W --env WINDOWSHADE_LOG_PATH="$log" --env WINDOWSHADE_PROBE_ROOT="$HOME/wsqa-run" \
     --env WINDOWSHADE_PROBE_TIMEOUT_SCALE="$scale" --env PROBE_SHOTS="$HOME/wsqa-run/shots" \
     --stdout "$out" --stderr "$out" ./WindowShade.app \
-    --args --glance-probe --fixture "$HOME/wsqa-run/GlanceFixture.app/Contents/MacOS/GlanceFixture" "--$suite" &
+    --args --glance-probe --fixture "$HOME/wsqa-run/GlanceFixture.app/Contents/MacOS/GlanceFixture" "${probe_args[@]}" &
   opid=$!
   while kill -0 "$opid" 2>/dev/null; do
     if (( SECONDS - t0 > limit )); then
