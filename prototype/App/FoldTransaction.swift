@@ -108,40 +108,61 @@ extension AppDelegate {
     func scheduleFoldVerification(id: CGWindowID) {
         guard let installed = shaded[id] else { return }
         let expected = foldCallbackStamp(id: id, state: installed)
+        // 规格 R19：台前调度下最小化可能晚于原判定点才生效，补救后多看一段（只读）。
+        // 台前调度关着、或不是最小化时 late=0、maxAge=2，与原来完全相同；只有最小化才去读那个偏好。
+        let late = installed.hide == .minimized
+            ? FoldVerifier.lateObservationWindow(hideIsMinimize: true, stageManager: stageManagerGloballyEnabled())
+            : 0
+        let maxAge: TimeInterval = 2 + late
+        if late > 0 {
+            wlog("shade: stage manager on; minimize verification window +\(late)s id=\(id)")
+        }
         FoldVerifier(
             schedule: { delay, action in DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action) },
-            isCurrent: { [weak self] in self?.foldCallbackIsCurrent(expected) == true },
+            isCurrent: { [weak self] in self?.foldCallbackIsCurrent(expected, maximumAge: maxAge) == true },
             observation: { [weak self] in
-                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return .unknown }
+                guard let self, self.foldCallbackIsCurrent(expected, maximumAge: maxAge), let state = self.shaded[id] else { return .unknown }
                 return self.observeFoldHide(state.hide, win: state.element, pid: state.pid, id: id)
             },
             salvage: { [weak self] in
-                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id],
+                guard let self, self.foldCallbackIsCurrent(expected, maximumAge: maxAge), let state = self.shaded[id],
                       state.hide == .minimized, windowID(of: state.element) == id else { return false }
                 var pid: pid_t = 0
                 guard AXUIElementGetPid(state.element, &pid) == .success, pid == state.pid,
-                      self.foldCallbackIsCurrent(expected) else { return false }
+                      self.foldCallbackIsCurrent(expected, maximumAge: maxAge) else { return false }
                 // Retry only the SAME strategy. Crossing from hidden/offscreen/alpha to
                 // minimized would need a restore record for both attempted mutations.
                 setAXMinimized(state.element, true)
                 return true
             },
             salvagedObservation: { [weak self] in
-                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return .unknown }
+                guard let self, self.foldCallbackIsCurrent(expected, maximumAge: maxAge), let state = self.shaded[id] else { return .unknown }
                 return self.observeFoldHide(.minimized, win: state.element, pid: state.pid, id: id)
             },
+            lateObservationWindow: late,
             result: { [weak self] result in
-                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return }
+                guard let self, self.foldCallbackIsCurrent(expected, maximumAge: maxAge), let state = self.shaded[id] else { return }
                 switch result {
                 case .hidden:
                     self.revealOverlayAfterVerification(id: id, state: state)
                 case .unknown:
                     self.retainUnconfirmedFold(id: id, state: state)
                 case .visible:
+                    if late > 0 {
+                        wlog("shade: stage manager minimize never observed id=\(id) onscreen=\(cgWindowIsCurrentlyOnScreen(id)) frontmost=\(NSWorkspace.shared.frontmostApplication?.processIdentifier == state.pid)")
+                    }
                     self.rollbackFoldTransaction(id: id, expectedTransaction: expected.transaction)
                 }
             }
         ).start()
+    }
+
+    /// 台前调度（com.apple.WindowManager GloballyEnabled，只读）是否开着。先同步一次那个域，
+    /// 运行中切换台前调度也读得到新值；只在最小化的验证里调用，一次收起至多一次。
+    func stageManagerGloballyEnabled() -> Bool {
+        let domain = "com.apple.WindowManager" as CFString
+        CFPreferencesAppSynchronize(domain)
+        return (CFPreferencesCopyAppValue("GloballyEnabled" as CFString, domain) as? Bool) == true
     }
 
     func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {

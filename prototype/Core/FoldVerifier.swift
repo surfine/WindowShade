@@ -11,15 +11,28 @@ final class FoldVerifier {
     private let salvagedObservation: () -> Observation
     private let quickObservation: (() -> Observation)?
     private let result: (Observation) -> Void
+    private let lateObservationWindow: TimeInterval
     private var started = false
     private var finished = false
     private static let quickInterval: TimeInterval = 0.03
+    static let lateObservationInterval: TimeInterval = 0.25
+    /// 台前调度下最小化的额外观察窗（规格 R19）。
+    static let stageManagerMinimizeLateWindow: TimeInterval = 2.5
+
+    /// 补救之后还要再看多久才判 visible（回滚）。只有“最小化 + 台前调度开着”才放宽：
+    /// 台前调度把最小化交给 WindowManager 编排，AXMinimized 可能晚于原来 0.95 s 的判定点才翻转。
+    /// 其余情况返回 0，验证时序与原来一字不差。
+    static func lateObservationWindow(hideIsMinimize: Bool, stageManager: Bool) -> TimeInterval {
+        hideIsMinimize && stageManager ? stageManagerMinimizeLateWindow : 0
+    }
 
     init(schedule: @escaping Schedule, isCurrent: @escaping () -> Bool,
          observation: @escaping () -> Observation, salvage: @escaping () -> Bool,
          salvagedObservation: @escaping () -> Observation,
          quickObservation: (() -> Observation)? = nil,
+         lateObservationWindow: TimeInterval = 0,
          result: @escaping (Observation) -> Void) {
+        self.lateObservationWindow = lateObservationWindow.isFinite ? max(0, lateObservationWindow) : 0
         self.schedule = schedule; self.isCurrent = isCurrent
         self.observation = observation; self.salvage = salvage
         self.salvagedObservation = salvagedObservation
@@ -75,8 +88,24 @@ final class FoldVerifier {
             guard attempted else { finish(.visible); return }
             schedule(0.35) {
                 guard !self.finished, self.isCurrent() else { return }
-                self.finish(self.salvagedObservation())
+                let seen = self.salvagedObservation()
+                guard !self.finished, self.isCurrent() else { return }
+                if seen == .hidden || self.lateObservationWindow <= 0 { self.finish(seen); return }
+                self.observeLate(remaining: self.lateObservationWindow)
             }
+        }
+    }
+
+    /// 只读不写：补救已经做过一次，这里只等那次写入落地；到点仍没看到 hidden 就按最后一次读数结案。
+    private func observeLate(remaining: TimeInterval) {
+        let step = min(Self.lateObservationInterval, remaining)
+        schedule(step) {
+            guard !self.finished, self.isCurrent() else { return }
+            let seen = self.salvagedObservation()
+            guard !self.finished, self.isCurrent() else { return }
+            let left = remaining - step
+            if seen == .hidden || left <= 0.001 { self.finish(seen); return }
+            self.observeLate(remaining: left)
         }
     }
 
