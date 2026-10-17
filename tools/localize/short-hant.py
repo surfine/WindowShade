@@ -54,12 +54,24 @@ def main():
     for text in skipped:
         print("   跳过:", text[:32])
 
-    block = "\n".join(f'        "{a}": "{b}",' for a, b in rows)
+    # 手工加进 shortHant 的条目（键不在生成结果里）原样保留，不因重新生成而丢失；
+    # 同键以生成结果为准。手工条目接在生成条目后面，保持原有相对顺序。
+    pattern = re.compile(r'(nonisolated static let shortHant: \[String: String\] = \[)(.*?)(\n    \]\n)', re.S)
+    existing = pattern.search(source)
+    manual = []
+    if existing:
+        generated_keys = {a for a, _ in rows}
+        manual = [(a, b) for a, b in re.findall(r'"((?:[^"\\]|\\.)*)": "((?:[^"\\]|\\.)*)"', existing.group(2))
+                  if a not in generated_keys]
+        print(f"保留手工条目 {len(manual)} 条", flush=True)
+    # 已有条目留在原位置（diff 不吵），新条目排在最后。
+    old_order = {a: i for i, (a, _) in enumerate(re.findall(r'"((?:[^"\\]|\\.)*)": "((?:[^"\\]|\\.)*)"', existing.group(2)))} if existing else {}
+    merged = sorted(rows + manual, key=lambda r: old_order.get(r[0], len(old_order) + 1))
+    block = "\n".join(f'        "{a}": "{b}",' for a, b in merged)
     # 只吃掉 shortHant 表体：从声明行到它自己的收尾 `]`（不要把下一张表也吞了）。
-    pattern = re.compile(r'(nonisolated static let shortHant: \[String: String\] = \[).*?(\n    \]\n)', re.S)
     if not pattern.search(source):
         raise SystemExit("在 WS2SettingsInfo.swift 里找不到 shortHant 表（先手工建空表）")
-    source = pattern.sub(lambda m: m.group(1) + "\n" + block + m.group(2), source, count=1)
+    source = pattern.sub(lambda m: m.group(1) + "\n" + block + m.group(3), source, count=1)
     open(SOURCE, "w", encoding="utf-8").write(source)
     print("已写入短句表")
 
