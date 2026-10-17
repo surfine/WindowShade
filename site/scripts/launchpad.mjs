@@ -1,7 +1,7 @@
-// 启动台（开发版）官网小样：文案与结构。样式在 launchpad.css，交互在 launchpad.js。
+// 启动台（1.0.17 起在下载版里）官网小样：文案与结构。样式在 launchpad.css，交互在 launchpad.js。
 const t = {
   zh: {
-    kicker: '启动台 · 开发版',
+    kicker: '启动台',
     title: 'App 有位置，<br>窗口也有去处。',
     lead: '⌃⌘L 打开启动台。把 App 收进文件夹，或去最后一页的 App 资料库里找。',
     points: [
@@ -9,9 +9,8 @@ const t = {
       ['长按整理主屏幕', '按住一个图标进入编辑，再拖动排序、建文件夹。'],
       ['从主屏幕移除不卸载', '拿掉图标，App 还在 Mac 上，随时可以再添回来。'],
       ['拖到屏幕边可侧拉', '不在编辑时，把图标直接拖到屏幕边，打开的窗口就放进侧拉。'],
-      ['在刘海里验证 Touch ID', '菜单里选“验证 Touch ID…”，刘海展开确认本次应用请求。无刘海的屏幕显示独立胶囊，完成后收回，恢复原来的实时活动。'],
     ],
-    note: '启动台与 Touch ID 入口仍是开发版，还没有发布，当前下载版不含这些改动。这是网页示意。',
+    note: '1.0.17 起，同一版里还有魔法平铺、卷轴、画中画、带分屏把手的侧拉、⌥Tab 按窗口切换、点 Dock 让开后隐藏。这是网页示意。',
     tabHome: '主屏幕',
     tabLibrary: 'App 资料库',
     tabLabel: '启动台视图',
@@ -32,7 +31,7 @@ const t = {
     caption: '网页示意，不会打开应用或改变你的排列。',
   },
   en: {
-    kicker: 'Launchpad · Developer build',
+    kicker: 'Launchpad',
     title: 'Every app has a place.<br>Every window has somewhere to go.',
     lead: 'Press ⌃⌘L to open Launchpad. Drop apps into folders, or find them in the App Library on the last page.',
     points: [
@@ -40,9 +39,8 @@ const t = {
       ['Rearrange the Home grid', 'Press and hold an icon to edit. Drag icons to rearrange them or make folders.'],
       ['Remove from Home, not from the Mac', 'Taking an icon off the grid leaves the app installed. Add it back whenever you like.'],
       ['Drag out into Slide Over', 'Outside editing mode, drag an app icon straight to the screen edge to open its window in Slide Over.'],
-      ['Verify Touch ID in the notch', 'Choose “Verify Touch ID…” to confirm this application request in the notch. Displays without a notch use a separate capsule. When finished, it closes and restores the previous live activity.'],
     ],
-    note: 'Launchpad and the Touch ID entry point are still a developer build and have not shipped; the current download doesn’t include these changes. This is a web illustration.',
+    note: 'Also new in 1.0.17: Magic Tiling, the scroll strip, Picture in Picture, Slide Over with a split handle, ⌥-Tab by window, and Dock click-to-hide. This is a web illustration.',
     tabHome: 'Home grid',
     tabLibrary: 'App Library',
     tabLabel: 'Launchpad views',
