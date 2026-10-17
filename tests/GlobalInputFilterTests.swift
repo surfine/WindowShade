@@ -70,9 +70,10 @@ struct GlobalInputFilterTests {
     }
 
     static func sample(_ kind: GlobalInputSample.Kind, phase: Int64 = 0, momentum: Int64 = 0,
-                       continuous: Bool = true, at point: CGPoint = CGPoint(x: 500, y: 500), pid: pid_t = 777) -> GlobalInputSample {
+                       continuous: Bool = true, at point: CGPoint = CGPoint(x: 500, y: 500), pid: pid_t = 777,
+                       time: TimeInterval = 0) -> GlobalInputSample {
         GlobalInputSample(kind: kind, scrollPhase: phase, momentumPhase: momentum, continuous: continuous,
-                          location: point, targetPID: pid)
+                          location: point, targetPID: pid, time: time)
     }
 
     static func main() {
@@ -82,6 +83,7 @@ struct GlobalInputFilterTests {
         dockLockTable()
         dockHoverTable()
         sequencing()
+        smoothWheelAdmission()
         pointerMerging()
         coreSnapshot()
         windowNumber()
@@ -228,6 +230,32 @@ struct GlobalInputFilterTests {
     }
 
     // MARK: 2. 输入线程的账
+
+    /// 平滑滚轮（ScrollShape）：连续、没相位的，和前面没有手指那段的惯性，每个都送到标题栏手势（主线程靠完整的一串折格）；
+    /// 触控板松手后的惯性照旧不送；Dock 上的滑动不收滚轮。
+    static func smoothWheelAdmission() {
+        var state = GlobalInputFilterState()
+        let quiet = GlobalInputSnapshot()
+        let both: GlobalInputRoutes = [.titleScroll, .dockSwipe]
+        let phaseless = (0..<5).map { state.admit(sample(.scroll, time: 1 + Double($0) * 0.015), registered: both, snapshot: quiet, ownPID: 42) }
+        expect(phaseless.allSatisfy { $0?.routes == [.titleScroll] }, "every continuous phase-0 event (Options+ smooth scrolling) reaches the title-bar gesture, never the Dock swipe")
+        let momentumOnly = (0..<4).map { i in
+            state.admit(sample(.scroll, momentum: i == 0 ? 1 : (i == 3 ? 3 : 2), time: 3 + Double(i) * 0.016),
+                        registered: both, snapshot: quiet, ownPID: 42)
+        }
+        expect(momentumOnly.allSatisfy { $0?.routes == [.titleScroll] }, "a momentum-only burst with no finger phase reaches the title-bar gesture")
+        var pad = GlobalInputFilterState()
+        let start = pad.admit(sample(.scroll, phase: 1, time: 5), registered: .titleScroll, snapshot: quiet, ownPID: 42)!
+        pad.acknowledge(start.sequence)
+        _ = pad.admit(sample(.scroll, phase: 4, time: 5.1), registered: .titleScroll, snapshot: quiet, ownPID: 42)
+        let tail = (0..<10).map { i in
+            pad.admit(sample(.scroll, momentum: i == 0 ? 1 : 2, time: 5.11 + Double(i) * 0.016), registered: .titleScroll, snapshot: quiet, ownPID: 42)
+        }
+        expect(tail.allSatisfy { $0 == nil }, "the trackpad's own momentum still stays on the input thread")
+        var off = GlobalInputFilterState()
+        expect(off.admit(sample(.scroll, time: 1), registered: .dockSwipe, snapshot: quiet, ownPID: 42) == nil,
+               "with only the Dock swipe listening, smooth-wheel events are not forwarded")
+    }
 
     static func sequencing() {
         var state = GlobalInputFilterState()

@@ -194,6 +194,8 @@ final class TrackpadGestureController {
                           before: ScreenTile?, armed: GestureAction?)?
     static let keyShadeMemory: TimeInterval = 10
     private var lastWheelAt: TimeInterval = -.infinity
+    /// 分清触控板、普通滚轮和平滑滚轮（罗技 Options+ 之类：连续、没相位，或者只有惯性）。
+    private var scrollShape = ScrollShapeClassifier()
     private var lastCommit: (id: CGWindowID, at: TimeInterval, direction: GestureDirection?)?
     private var wheelEnd: DispatchWorkItem?
 
@@ -344,6 +346,10 @@ final class TrackpadGestureController {
         }
         switch event.type {
         case .scrollWheel:
+            // 平滑滚轮折成格，走鼠标滚轮那条路；触控板和普通滚轮照下面原样处理。
+            if case .smoothWheel(let steps) = scrollShape.classify(ScrollShapeEvent(event, time: clock())) {
+                return smoothWheel(steps, location: location, ownWindow: ownWindow, windowNumber: event.windowNumber)
+            }
             // 松手后的惯性滚动：手势在松手那一刻已经有结论。
             if event.momentumPhase != [] { return false }
             let delta = GestureFingerDelta.fromScroll(deltaX: event.scrollingDeltaX,
@@ -447,6 +453,31 @@ final class TrackpadGestureController {
         func notch(_ value: CGFloat) -> CGFloat { value == 0 ? 0 : (value > 0 ? Self.wheelStep : -Self.wheelStep) }
         feed(session, session.recognizer.scroll(CGVector(dx: notch(delta.dx), dy: notch(delta.dy)), at: now),
              animated: true)
+        scheduleWheelEnd()
+        return session.consumes
+    }
+
+    /// 平滑滚轮（ScrollShape）：每折出一格当作鼠标滚轮的一格。没走满一格的事件只让正在进行的那一串别结算。
+    @discardableResult
+    func smoothWheel(_ steps: ScrollWheelSteps, location: () -> CGPoint, ownWindow: NSWindow?,
+                     windowNumber: Int = 0) -> Bool {
+        guard !steps.isEmpty else {
+            let now = clock()
+            guard let session, session.isWheel, now - lastWheelAt <= Self.wheelQuiet else { return false }
+            lastWheelAt = now
+            scheduleWheelEnd()
+            return session.consumes
+        }
+        let delta = GestureFingerDelta.fromScroll(deltaX: CGFloat(steps.x), deltaY: CGFloat(steps.y))
+        var consumes = false
+        for _ in 0..<steps.count {
+            consumes = wheel(delta, location: location, ownWindow: ownWindow, windowNumber: windowNumber)
+        }
+        return consumes
+    }
+
+    /// 滚轮停 0.3 秒结算（滚轮没有“松手”）；每来一格重新计时。
+    private func scheduleWheelEnd() {
         wheelEnd?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self, let session = self.session, session.isWheel else { return }
@@ -455,7 +486,6 @@ final class TrackpadGestureController {
         }
         wheelEnd = work
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.wheelQuiet, execute: work)
-        return session.consumes
     }
 
     /// 两指张合。delta 是这一帧的缩放增量（张开为正）。

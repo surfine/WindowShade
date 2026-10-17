@@ -105,18 +105,22 @@ struct GlobalInputSample: Sendable, Equatable {
     var location: CGPoint = .zero
     /// 系统要把这个事件交给哪个进程（0：不知道）。
     var targetPID: pid_t = 0
+    /// 输入线程收到它的时刻（秒，单调）：分平滑滚轮的惯性和触控板的惯性要用。
+    var time: TimeInterval = 0
 
     init(kind: Kind, scrollPhase: Int64 = 0, momentumPhase: Int64 = 0, continuous: Bool = false,
-         location: CGPoint = .zero, targetPID: pid_t = 0) {
+         location: CGPoint = .zero, targetPID: pid_t = 0, time: TimeInterval = 0) {
         self.kind = kind
         self.scrollPhase = scrollPhase
         self.momentumPhase = momentumPhase
         self.continuous = continuous
         self.location = location
         self.targetPID = targetPID
+        self.time = time
     }
 
-    init(_ event: CGEvent, type: CGEventType) {
+    init(_ event: CGEvent, type: CGEventType, time: TimeInterval = ProcessInfo.processInfo.systemUptime) {
+        self.time = time
         switch type {
         case .scrollWheel: kind = .scroll
         case .leftMouseDown: kind = .leftDown
@@ -132,6 +136,12 @@ struct GlobalInputSample: Sendable, Equatable {
             momentumPhase = event.getIntegerValueField(.scrollWheelEventMomentumPhase)
             continuous = event.getIntegerValueField(.scrollWheelEventIsContinuous) != 0
         }
+    }
+
+    /// 分类器要的那几项（增量不用：输入线程只问是不是平滑滚轮，不折格）。
+    var scrollShapeEvent: ScrollShapeEvent {
+        ScrollShapeEvent(precise: continuous, phased: scrollPhase != 0,
+                         momentum: ScrollMomentum(cgMomentumPhase: momentumPhase), time: time)
     }
 
     /// 这一下是不是一串事件的“开头”：主线程处理完它之前，同一条路后面的事件都照送。
@@ -252,6 +262,9 @@ struct GlobalInputFilterState: Sendable, Equatable {
     var hoverWasNear = false
     /// 已经有一个只看指针位置的事件在路上：后面的合进它（主线程处理时读的是那一刻的指针位置）。
     var pointerDeliveryPending = false
+    /// 和 TrackpadGestureController 里那份同样分类：平滑滚轮的每个事件都送（主线程靠完整的一串折格），
+    /// 触控板的惯性照旧不送。
+    var scrollShape = ScrollShapeClassifier()
 
     func awaitingMain(_ route: GlobalInputRoute) -> Bool { openers[route.rawValue] > acknowledged }
 
@@ -259,8 +272,13 @@ struct GlobalInputFilterState: Sendable, Equatable {
                         ownPID: pid_t, slack: CGFloat = GlobalInputPredicate.pointerSlack) -> GlobalInputAdmission? {
         if ownPID != 0, s.targetPID == ownPID { return nil }
         var routes: GlobalInputRoutes = []
+        var smoothWheel = false
+        if registered.contains(.titleScroll), s.kind == .scroll,
+           case .smoothWheel = scrollShape.classify(s.scrollShapeEvent) {
+            smoothWheel = true
+        }
         if registered.contains(.titleScroll),
-           GlobalInputPredicate.titleScroll(s, sessionActive: snapshot.titleSessionActive || awaitingMain(.titleScroll)) {
+           smoothWheel || GlobalInputPredicate.titleScroll(s, sessionActive: snapshot.titleSessionActive || awaitingMain(.titleScroll)) {
             routes.insert(.titleScroll)
         }
         if registered.contains(.dockSwipe),
