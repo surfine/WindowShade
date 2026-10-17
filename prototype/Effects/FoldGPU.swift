@@ -144,33 +144,32 @@ final class FoldGPU: Sendable {
   private static func compileInParallel(
     device: any MTLDevice, descriptors: [MTLRenderPipelineDescriptor]
   ) throws -> [any MTLRenderPipelineState] {
-    final class Results: @unchecked Sendable {
-      let lock = NSLock()
+    struct Results {
       var states: [(any MTLRenderPipelineState)?]
       var error: (any Error)?
-      init(count: Int) { states = Array(repeating: nil, count: count) }
     }
-    let results = Results(count: descriptors.count)
+    // 规格 M3：回调线程各写一格，一把 Mutex 护整组。
+    let results = Mutex(Results(states: Array(repeating: nil, count: descriptors.count), error: nil))
     let group = DispatchGroup()
     for (index, descriptor) in descriptors.enumerated() {
       group.enter()
       device.makeRenderPipelineState(descriptor: descriptor) { state, error in
-        results.lock.lock()
-        results.states[index] = state
-        if state == nil, results.error == nil {
-          results.error = error ?? EffectError.unavailable(WSL10n.text("fold.err.pipeline", zh: "渲染管线编译失败"))
+        results.withLock { results in
+          results.states[index] = state
+          if state == nil, results.error == nil {
+            results.error = error ?? EffectError.unavailable(WSL10n.text("fold.err.pipeline", zh: "渲染管线编译失败"))
+          }
         }
-        results.lock.unlock()
         group.leave()
       }
     }
     group.wait()
-    results.lock.lock()
-    defer { results.lock.unlock() }
-    if let error = results.error { throw error }
-    return try results.states.map {
-      guard let state = $0 else { throw EffectError.unavailable(WSL10n.text("fold.err.pipeline", zh: "渲染管线编译失败")) }
-      return state
+    return try results.withLock { results in
+      if let error = results.error { throw error }
+      return try results.states.map {
+        guard let state = $0 else { throw EffectError.unavailable(WSL10n.text("fold.err.pipeline", zh: "渲染管线编译失败")) }
+        return state
+      }
     }
   }
 }
