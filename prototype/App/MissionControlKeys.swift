@@ -164,13 +164,15 @@ final class MissionControlKeys {
         guard code == 13 || code == 12 else { return pass }
 
         let windows = WindowListCache.shared.onScreenWindows()
-        guard MissionControlPick.isActive(in: windows) else { return pass }
-        // 调度中心开着时这一下一定要吃掉：放行的话它会落到"最前面那个 App"身上，
-        // 关掉一扇你没在看的窗——指针底下恰好没有窗口时尤其危险。
+        guard let detection = MissionControlPick.detection(in: windows) else { return pass }
         guard let target = MissionControlPick.target(at: event.location, in: windows) else {
-            wlog("mc-keys: nothing under the pointer; the key is swallowed anyway")
-            return nil
+            wlog(MissionControlPick.diagnostic(at: event.location, in: windows, detection: detection))
+            // 名字对得上的确证情形：调度中心开着时这一下一定要吃掉，放行的话它会落到"最前面那个 App"身上，
+            // 关掉一扇你没在看的窗——指针底下恰好没有窗口时尤其危险。
+            // 只靠备援线索判断的（系统换了窗口名）拿不准，宁可放行，免得误吞平时的 ⌘W／⌘Q。
+            return detection == .shieldName ? nil : pass
         }
+        if detection != .shieldName { wlog("mc-keys: fallback detection rule=\(detection.rawValue)") }
 
         let kind: MissionControlActions.Kind = code == 13 ? .closeWindow : .quitApp
         DispatchQueue.main.async {
