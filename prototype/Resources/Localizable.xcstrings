@@ -66316,6 +66316,236 @@
           }
         }
       }
+    },
+    "explainer.dockClick.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Click the Dock icon of the frontmost app again and it steps aside; click once more and it comes back."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：它在最前时再点一下 Dock 图标，这个 App 让开；再点一下回来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：它在最前面時再點一下 Dock 圖示，這個 App 讓開；再點一下回來。"
+          }
+        }
+      }
+    },
+    "explainer.dockStay.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Push the pointer to the bottom edge of another display and the Dock stays where it is."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：指针碰到另一块屏的底边，Dock 不跟过去。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：指標碰到另一塊螢幕的底邊，Dock 不跟過去。"
+          }
+        }
+      }
+    },
+    "explainer.mcClose.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: In Mission Control, point at a window and press ⌘W to close it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：在调度中心里指着一张卡按 ⌘W，那扇窗口关掉。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：在指揮中心裡指著一張卡片按 ⌘W，那扇視窗關掉。"
+          }
+        }
+      }
+    },
+    "explainer.menuItem.dev": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menu bar icon"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单栏图标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選單列圖示"
+          }
+        }
+      }
+    },
+    "explainer.menuItem.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still: The menu bar icon’s menu gains “Choose Window…”."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静图：菜单栏图标的菜单里多出“选择窗口…”。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靜態圖：選單列圖示的選單裡多出“選擇視窗…”。"
+          }
+        }
+      }
+    },
+    "explainer.switchOff.dev": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關"
+          }
+        }
+      }
+    },
+    "explainer.switchOff.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still: Switch by window is off."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静图：按窗口切换关着。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靜態圖：按視窗切換關著。"
+          }
+        }
+      }
+    },
+    "explainer.switchOption.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Hold ⌥ and press Tab repeatedly to step through windows; let go to switch to the one highlighted."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按住 ⌥ 连按 Tab，一扇扇挑窗口，松手到那扇。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按住 ⌥ 連按 Tab，一扇扇挑視窗，放手到那扇。"
+          }
+        }
+      }
+    },
+    "explainer.switchCommand.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Hold ⌘ and press Tab repeatedly to step through windows; let go to switch to the one highlighted."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按住 ⌘ 连按 Tab，一扇扇挑窗口，松手到那扇。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按住 ⌘ 連按 Tab，一扇扇挑視窗，放手到那扇。"
+          }
+        }
+      }
+    },
+    "explainer.browserPanel.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still: The window browsing panel."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静图：窗口浏览的面板。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靜態圖：視窗瀏覽的面板。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

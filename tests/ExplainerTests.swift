@@ -80,6 +80,19 @@ struct ExplainerTests {
         expect(ExplainerScenes.originIpad.isStill && ExplainerScenes.originMac.isStill && !ExplainerScenes.originWindows.isStill, "iPad and Mac are stills; Windows plays")
         expect(ExplainerPage.notch.pageDefault.id == "tuck", "the notch page defaults to tuck")
         if case .options(let origin) = ExplainerRow.Notch.origin.kind { expect(origin.count == 3, "origin row has one scene per option") } else { expect(false, "origin row is an options row") }
+        // 窗口浏览页：循环的场景有关键帧、读屏句、时长大于一秒；静图没有帧；按窗口切换三段对上分段。
+        let browserLoops = [ExplainerScenes.dockClickHide, ExplainerScenes.dockStay, ExplainerScenes.missionControlClose,
+                            ExplainerScenes.switcher(option: true), ExplainerScenes.switcher(option: false)]
+        for spec in browserLoops {
+            expect(spec.keyFrameIndex != nil && spec.description.zh.hasPrefix("演示：") && spec.timeline.loopDuration > 1, "\(spec.id) is a looping scene with a key frame")
+        }
+        let browserStills = [ExplainerScenes.menuItemStill, ExplainerScenes.switcherOff, ExplainerScenes.panelStill]
+        expect(browserStills.allSatisfy { $0.isStill && $0.description.zh.hasPrefix("静图：") }, "browser stills have no frames")
+        if case .options(let specs) = ExplainerRow.Browser.switcher.kind {
+            expect(specs.map(\.id) == ["switcherOff", "switcherOption", "switcherCommand"], "switcher options line up with Off / ⌥Tab / ⌘Tab")
+        } else { expect(false, "switcher is an options row") }
+        expect(ExplainerScenes.switcher(option: true).keyState[.panel]?.look == .highlight2, "switcher key frame is the second Tab")
+        expect(ExplainerPage.browser.pageDefault.id == "dockHover", "browser page default is Dock hover")
         // 关键帧那一刻的样子：双击那段停在卷帘条（高 10、内容收起），窗口没挪。
         let key = ExplainerScenes.doubleClickRoll.keyState
         expect(key[.windowA]?.h == 10 && key[.windowA]?.rolled == true && key[.windowA]?.x == 70, "double-click key state is the strip in place")
