@@ -32,6 +32,8 @@ import Cocoa
                                       WSL10n.text("settings.shade.focus.preset50", zh: "50 分钟 / 10 分钟")])
         presets.selectItem(at: WS2FocusSettings.preset == .minutes50 ? 1 : 0)
         presets.target = self; presets.action = #selector(changePreset); row.addArrangedSubview(presets)
+        // 行被撑宽时多出来的宽度不给下拉（否则它会被拉成整行宽，渲染时好时坏）。
+        presets.setContentHuggingPriority(.required, for: .horizontal)
         presets.toolTip = WSL10n.text("settings.shade.focus.presetTooltip", zh: "新的时长从下一轮开始生效。正在进行的一轮保持原时长。")
         addArrangedSubview(row)
         chime.state = CountdownTimerSettings.chimeEnabled ? .on : .off; chime.target = self; chime.action = #selector(changeChime)
