@@ -32,13 +32,16 @@
   }
   const shape = { w: new Spring(0), h: new Spring(0), r: new Spring(0) };
 
-  // 各种样子（cqw：屏宽的百分之一）。刘海和菜单栏一样高；展开时外框圆角与里面卡片的圆角同心、边距一致。
-  const NOTCH = { w: 14.5, h: 5.4, r: 1.5 };
+  // 各种样子（cqw：屏宽的百分之一）。刘海和菜单栏一样高（37 pt），所以 1 pt = 5.4 / 37 cqw；增量和圆角照
+  // design-system §4.6 的状态表：紧凑两侧各 34、底角 island.hug 12；提醒 +200 × +52、圆角 24；
+  // 展开一排高 +142、圆角 28。展开的宽度要放下三张格子，取 54（表里写的是下限 +120）。
+  const PT = 5.4 / 37;
+  const NOTCH = { w: 14.5, h: 5.4, r: 12 * PT };
   const shapes = {
     rest: NOTCH,
-    compact: { w: NOTCH.w + 2 * 4.6, h: NOTCH.h, r: 1.6 },
-    alert: { w: 38, h: NOTCH.h + 8.6, r: 3.6 },
-    shelf: { w: 54, h: NOTCH.h + 21, r: 4.2 },
+    compact: { w: NOTCH.w + 2 * 34 * PT, h: NOTCH.h, r: 12 * PT },
+    alert: { w: NOTCH.w + 200 * PT, h: NOTCH.h + 52 * PT, r: 24 * PT },
+    shelf: { w: 54, h: NOTCH.h + 142 * PT, r: 28 * PT },
   };
   let mode = 'rest';
   let tucked = false, changed = false, hovering = false, alertUntil = 0, frame = 0, last = 0;
@@ -131,7 +134,8 @@
       if (!reduce.matches) { swellAt = performance.now(); run(); }
     };
     cancelAnimationFrame(flight);
-    if (reduce.matches) { placeFront(1); done(); }
+    // 减少动态效果：不飞，原处淡出（reduced 0.25 s），刘海随后直接换样子。
+    if (reduce.matches) { front.classList.add('is-fading'); setTimeout(() => { front.classList.remove('is-fading'); done(); }, 250); }
     else {
       // 飞进刘海：settle，终点是个口子，不回弹。
       const [response, zeta] = WSMotion.named('settle');
@@ -157,7 +161,11 @@
     front.hidden = false;
     front.classList.remove('is-leaving');
     cancelAnimationFrame(flight);
-    if (reduce.matches || !flightPose) { front.style.transform = ''; front.style.borderRadius = ''; }
+    if (reduce.matches || !flightPose) {
+      front.style.transform = ''; front.style.borderRadius = '';
+      // 原处淡入。
+      if (reduce.matches) { front.classList.add('is-fading'); requestAnimationFrame(() => requestAnimationFrame(() => front.classList.remove('is-fading'))); }
+    }
     else {
       const [response, zeta] = WSMotion.named('flyOut');
       const t0 = performance.now();

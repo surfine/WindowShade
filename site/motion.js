@@ -88,5 +88,45 @@
     return 100 / 1710;
   }
 
-  window.WSMotion = { tokens, solve, progress, named, kick, play, roll, reduced, ptInCqw };
+  // 一根可打断的弹簧：to() 换终点时保留此刻的位置和速度（WWDC23 10158 的叠加：位置、速度都连续，
+  // 中途掉头不撞墙）。每帧用闭式解从上一帧推到这一帧，帧率高低（60 / 120 Hz）走的是同一条曲线。
+  // onFrame(value) 每帧调用；静止后自己停，不空转 requestAnimationFrame。
+  class Spring {
+    constructor(value, onFrame, token = 'calm') {
+      this.value = value; this.target = value; this.velocity = 0;
+      this.onFrame = onFrame; this.frame = 0; this.last = 0;
+      this.use(token);
+    }
+    use(token) { [this.response, this.zeta] = named(token); return this; }
+    // velocity：单位/秒（和 value 同一单位）。不传就沿用当下的速度。
+    to(target, { token, velocity } = {}) {
+      if (token) this.use(token);
+      if (velocity !== undefined) this.velocity = velocity;
+      this.target = target;
+      if (reduced()) { this.snap(target); return this; }
+      if (!this.frame) { this.last = 0; this.frame = requestAnimationFrame(t => this.step(t)); }
+      return this;
+    }
+    snap(value = this.target) {
+      cancelAnimationFrame(this.frame); this.frame = 0;
+      this.value = this.target = value; this.velocity = 0;
+      this.onFrame(value);
+      return this;
+    }
+    stop() { cancelAnimationFrame(this.frame); this.frame = 0; this.velocity = 0; this.target = this.value; }
+    get moving() { return !!this.frame; }
+    step(now) {
+      const dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 1 / 120;
+      this.last = now;
+      const [d, v] = solve(this.value - this.target, this.velocity, this.response, this.zeta, dt);
+      this.value = this.target + d; this.velocity = v;
+      // 停在残差里：位移和速度都小到看不出来就落定，不等一段写死的时长。
+      const span = Math.max(1e-6, this.rest ?? 0.001);
+      if (Math.abs(d) < span && Math.abs(v) < span * 10) { this.frame = 0; this.value = this.target; this.velocity = 0; this.onFrame(this.value); return; }
+      this.onFrame(this.value);
+      this.frame = requestAnimationFrame(t => this.step(t));
+    }
+  }
+
+  window.WSMotion = { tokens, solve, progress, named, kick, play, roll, reduced, ptInCqw, Spring };
 })();

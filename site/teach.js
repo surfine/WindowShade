@@ -335,23 +335,33 @@
   const handle = screen.querySelector('.thandle');
   const pct = v => `${v.toFixed(3)}%`;
   const place = (el, r) => { el.style.left = pct(r.x); el.style.top = pct(r.y); el.style.width = pct(r.w); el.style.height = pct(r.h); };
+  // Sizes are cached, not read every frame: fingertips, tails, ripples and the pointer move by
+  // transform only (composited). The little window and the notch change size, so they keep
+  // left/top/width/height, but the screen is a size container, so that layout stays inside it.
+  let padW = 1, padH = 1, scrW = 1, scrH = 1;
+  const sizes = new ResizeObserver(() => { padW = pad.clientWidth || 1; padH = pad.clientHeight || 1; scrW = screen.clientWidth || 1; scrH = screen.clientHeight || 1;
+    // Fired after setup, so the lesson state below exists: redraw the paused frame at the new size.
+    if (!running && plans[current]) { if (reduce.matches) still(current); else if (!frozen) render(frameAt(plans[current], 0)); }
+  });
+  sizes.observe(pad); sizes.observe(screen);
+  padW = pad.clientWidth || 1; padH = pad.clientHeight || 1; scrW = screen.clientWidth || 1; scrH = screen.clientHeight || 1;
+  const at = (x, y, w, h) => `translate3d(${(x / 100 * w).toFixed(2)}px,${(y / 100 * h).toFixed(2)}px,0)`;
 
   function render(f) {
-    const box = pad.getBoundingClientRect();
-    const dot = box.width * 0.12;
+    const dot = padW * 0.12;
     dotEls.forEach((el, i) => {
       const d = f.dots[i];
       const trail = trailEls[i];
       if (!d || d.o <= 0) { el.style.opacity = '0'; trail.style.opacity = '0'; return; }
       el.style.opacity = d.o.toFixed(3);
-      el.style.left = pct(d.x); el.style.top = pct(d.y);
+      // Pressing shrinks the dot a little (13.4 → 11.6 of the pad width), as in Trackpad.mov.
+      el.style.transform = `${at(d.x, d.y, padW, padH)} translate(-50%,-50%) scale(${(1 - 0.134 * d.press).toFixed(4)})`;
       el.style.setProperty('--press', d.press.toFixed(3));
       if (d.trail) {
-        const dx = ((d.x - d.trail[0]) / 100) * box.width, dy = ((d.y - d.trail[1]) / 100) * box.height;
+        const dx = ((d.x - d.trail[0]) / 100) * padW, dy = ((d.y - d.trail[1]) / 100) * padH;
         const len = Math.min(Math.hypot(dx, dy), dot * 2);
-        trail.style.left = pct(d.x); trail.style.top = pct(d.y);
-        trail.style.width = `${(len + dot / 2).toFixed(1)}px`;
-        trail.style.transform = `translateY(-50%) rotate(${Math.atan2(-dy, -dx)}rad)`;
+        // The tail is drawn at its longest and scaled down along its length from under the dot.
+        trail.style.transform = `${at(d.x, d.y, padW, padH)} rotate(${Math.atan2(-dy, -dx)}rad) translateY(-50%) scaleX(${((len + dot / 2) / (dot * 2.5)).toFixed(4)})`;
         trail.style.opacity = (d.o * d.press * Math.min(1, len / 3)).toFixed(3);
       } else {
         trail.style.opacity = '0';
@@ -361,8 +371,7 @@
       const r = f.ripples[i];
       el.style.opacity = r ? r.o.toFixed(3) : '0';
       if (!r) return;
-      el.style.left = pct(r.x); el.style.top = pct(r.y);
-      el.style.transform = `translate(-50%,-50%) scale(${r.s.toFixed(3)})`;
+      el.style.transform = `${at(r.x, r.y, padW, padH)} translate(-50%,-50%) scale(${r.s.toFixed(3)})`;
     });
     const fade = f.fade ?? 1;
     place(win, f.win);
@@ -371,7 +380,7 @@
     win.classList.toggle('is-docked', !!f.win.docked);
     if (f.fly) { place(fly, f.fly); fly.style.opacity = '1'; } else { fly.style.opacity = '0'; }
     ptr.style.opacity = f.ptr ? fade.toFixed(3) : '0';
-    if (f.ptr) { ptr.style.left = pct(f.ptr.x); ptr.style.top = pct(f.ptr.y); }
+    if (f.ptr) ptr.style.transform = at(f.ptr.x, f.ptr.y, scrW, scrH);
     const n = f.notch ?? REST;
     notch.style.width = pct(n.w);
     notch.style.height = pct(n.h);

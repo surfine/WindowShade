@@ -49,15 +49,20 @@ let scrubFrame = 0;
 function runScrubbers() {
   scrubFrame = 0;
   const vh = innerHeight;
+  // Read every position first, then write: one layout per frame instead of one per demo
+  // (interleaving a read after another demo's style write forces a synchronous layout).
+  const due = [];
   for (const sc of scrubbers) {
     if (sc.off?.()) continue;
     const r = sc.el.getBoundingClientRect();
+    if (r.bottom < -vh || r.top > 2 * vh) continue;
     const c = (r.top + r.height / 2) / vh;
     const from = typeof sc.from === 'function' ? sc.from() : sc.from, to = from - sc.span;
     let p = Math.min(1, Math.max(0, (from - c) / (from - to)));
     if (reduceMotion.matches) p = p >= .5 ? 1 : 0;
-    sc.apply(p);
+    if (p !== sc.last) due.push([sc, p]);
   }
+  for (const [sc, p] of due) { sc.last = p; sc.apply(p); }
 }
 const scheduleScrub = () => { if (!scrubFrame) scrubFrame = requestAnimationFrame(runScrubbers); };
 addEventListener('scroll', scheduleScrub, { passive: true });
@@ -73,8 +78,10 @@ const status = document.querySelector('#demo-status');
 if (desk && reference && fold && bar && body && status) {
   let folded = false;
   let touched = false;
-  let rollNow = 0;
-  let stopRoll = () => {};
+  // The roll is one spring. A second double-click mid-roll reverses it from where it is, at the
+  // speed it already has, the way the app's own roll animations are additive (design-system §4.6).
+  const rollSpring = window.WSMotion ? new WSMotion.Spring(0, p => setRoll(p), 'calm') : null;
+  const stopRoll = () => { if (rollSpring?.moving) rollSpring.stop(); desk.classList.remove('is-rolling'); };
   new ResizeObserver(() => desk.style.setProperty('--body-h', `${body.offsetHeight}px`)).observe(body);
   // When the screen changes size (a window resized, a foldable opened or closed), a dragged
   // position measured in pixels no longer means the same place: settle the window back home.
@@ -86,18 +93,17 @@ if (desk && reference && fold && bar && body && status) {
   }).observe(desk);
 
   function setRoll(p) {
-    rollNow = p;
-    desk.style.setProperty('--roll', p.toFixed(4));
-    desk.style.setProperty('--roller', p > .01 && p < .99 ? '1' : '0');
-    desk.classList.toggle('is-folded', p >= .99);
+    const v = Math.min(1, Math.max(0, p));
+    desk.style.setProperty('--roll', v.toFixed(4));
+    desk.style.setProperty('--roller', v > .01 && v < .99 ? '1' : '0');
+    desk.classList.toggle('is-folded', v >= .99);
+    if (rollSpring && !rollSpring.moving) desk.classList.remove('is-rolling');
   }
   function animateRoll(to) {
-    stopRoll();
-    const from = rollNow;
+    if (reduceMotion.matches || !rollSpring) { rollSpring ? rollSpring.snap(to) : setRoll(to); return; }
+    // 没有动量的收起 / 展开：calm（ζ 1）。滚动直接改 --roll，不走这段。
     desk.classList.add('is-rolling');
-    if (reduceMotion.matches || !window.WSMotion) { setRoll(to); desk.classList.remove('is-rolling'); return; }
-    // 没有动量的收起 / 展开：calm。滚动条直接改 --roll，不走这段。
-    stopRoll = WSMotion.play('calm', p => setRoll(from + (to - from) * p), () => desk.classList.remove('is-rolling'));
+    rollSpring.to(to, { token: 'calm' });
   }
   function setFolded(next, announce = true) {
     folded = next;
@@ -128,12 +134,19 @@ if (desk && reference && fold && bar && body && status) {
   }
   const soft = (v, lo, hi, size) => v < lo ? lo + rubber(v - lo, size) : v > hi ? hi + rubber(v - hi, size) : v;
   function place(x, y) { reference.style.translate = `${x}px ${y}px`; }
+  // Settling back inside the desk: two independent springs (x and y), each starting at the
+  // release velocity, so a throw past the edge eases back without a seam (WWDC18 fluid interfaces).
+  const settleX = window.WSMotion ? new WSMotion.Spring(0, x => { offset.x = x; place(offset.x, offset.y); }, 'calm') : null;
+  const settleY = window.WSMotion ? new WSMotion.Spring(0, y => { offset.y = y; place(offset.x, offset.y); }, 'calm') : null;
+  if (settleX) settleX.rest = settleY.rest = .3;
   bar.addEventListener('pointerdown', e => {
     if (e.button !== 0) return;
     touched = true;
     // Capture on press so a quick flick off the bar still reports its release here.
     try { bar.setPointerCapture(e.pointerId); } catch {}
-    drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y, moving: false, b: bounds() };
+    // Grabbing the window mid-settle catches it where it is.
+    settleX?.stop(); settleY?.stop();
+    drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, ox: offset.x, oy: offset.y, moving: false, b: bounds(), samples: [[e.timeStamp, offset.x, offset.y]] };
   });
   bar.addEventListener('pointermove', e => {
     if (!drag || e.pointerId !== drag.id) return;
@@ -148,6 +161,8 @@ if (desk && reference && fold && bar && body && status) {
     offset.x = soft(drag.ox + dx, minX, maxX, w);
     offset.y = soft(drag.oy + dy, minY, maxY, h);
     place(offset.x, offset.y);
+    drag.samples.push([e.timeStamp, offset.x, offset.y]);
+    if (drag.samples.length > 6) drag.samples.shift();
   });
   function endDrag(e) {
     if (!drag || e.pointerId !== drag.id) return;
@@ -155,16 +170,16 @@ if (desk && reference && fold && bar && body && status) {
       const { minX, maxX, minY, maxY } = drag.b;
       const toX = Math.min(maxX, Math.max(minX, offset.x));
       const toY = Math.min(maxY, Math.max(minY, offset.y));
-      const fromX = offset.x, fromY = offset.y;
       reference.style.transition = 'none';
       reference.classList.remove('is-dragging');
-      // 松手回到桌面里：calm，不套 0.38 秒的贝塞尔。
-      if (window.WSMotion && !reduceMotion.matches) {
-        WSMotion.play('calm', p => {
-          offset.x = fromX + (toX - fromX) * p;
-          offset.y = fromY + (toY - fromY) * p;
-          place(offset.x, offset.y);
-        });
+      // 松手回到桌面里：calm（ζ 1），带着松手时的速度；没出界就停在松手的地方。
+      const [t0, x0, y0] = drag.samples[0], [t1, x1, y1] = drag.samples[drag.samples.length - 1];
+      const dt = (t1 - t0) / 1000, fresh = e.type !== 'pointercancel' && dt > .008 && e.timeStamp - t1 < 80;
+      const vx = fresh ? (x1 - x0) / dt : 0, vy = fresh ? (y1 - y0) / dt : 0;
+      if (settleX && !reduceMotion.matches) {
+        settleX.value = offset.x; settleY.value = offset.y;
+        if (toX !== offset.x) settleX.to(toX, { velocity: vx }); else settleX.snap(toX);
+        if (toY !== offset.y) settleY.to(toY, { velocity: vy }); else settleY.snap(toY);
       } else { offset.x = toX; offset.y = toY; place(toX, toY); }
       lastDragEnd = performance.now();
     }
@@ -191,7 +206,7 @@ if (desk && reference && fold && bar && body && status) {
   scrubbers.push({ el: desk, from: () => Math.min(.62, home) - .02, span: .3, off: () => touched, apply: p => {
     stopRoll();
     if (!!folded !== p >= .5) { folded = p >= .5; fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold; bar.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-expanded', String(!folded)); }
-    setRoll(p);
+    if (rollSpring) rollSpring.snap(p); else setRoll(p);
   } });
 }
 
@@ -374,8 +389,22 @@ const glanceStrip = document.querySelector('.glance-strip');
 const glanceCard = document.querySelector('#glance-card');
 if (glanceDesk && glanceStrip && glanceCard) {
   let closeTimer = 0;
+  // GlancePanel.rollDown / rollUp: the mask grows with `calm` both ways; Reduce Motion fades instead.
+  // One spring, so moving the pointer off and back mid-roll reverses from where the edge is.
+  new ResizeObserver(() => glanceDesk.style.setProperty('--card-h', `${glanceCard.offsetHeight}px`)).observe(glanceCard);
+  const drawDrop = d => {
+    glanceDesk.style.setProperty('--drop', Math.min(1, Math.max(0, d)).toFixed(4));
+    glanceDesk.classList.toggle('is-showing', d > .001);
+  };
+  const drop = window.WSMotion ? new WSMotion.Spring(0, drawDrop, 'calm') : null;
   const setGlance = open => {
     clearTimeout(closeTimer);
+    if (!drop) drawDrop(open ? 1 : 0);
+    else if (reduceMotion.matches) {
+      // Reduce Motion: a short cross-fade (the app's reduced spring, 0.25 s, no velocity).
+      drop.velocity = 0; drop.use('reduced'); drop.target = open ? 1 : 0;
+      if (!drop.frame) { drop.last = 0; drop.frame = requestAnimationFrame(t => drop.step(t)); }
+    } else drop.to(open ? 1 : 0, { token: 'calm' });
     glanceDesk.classList.toggle('is-open', open);
     glanceStrip.setAttribute('aria-expanded', String(open));
     glanceCard.setAttribute('aria-hidden', String(!open));
@@ -438,7 +467,7 @@ if (pinExample && pinDesk && pinState && pinSwitch) {
   pinDesk.querySelector('[data-window=reference]')?.addEventListener('pointerdown', () => bringForward(false));
 }
 
-// Window browsing: pointer-hover opens a read-only panel that grows out of its Dock icon.
+// Window browsing: pointer-hover opens a read-only panel above its Dock icon.
 const browseDesk = document.querySelector('#browse-desk');
 const browseIcon = document.querySelector('#browse-icon');
 const browsePanel = document.querySelector('#browse-panel');
@@ -446,14 +475,8 @@ const browseState = document.querySelector('#browse-state');
 if (browseDesk && browseIcon && browsePanel && browseState) {
   let browseOpen = false;
   let browseLocked = false;
-  function anchor() {
-    const p = browsePanel.getBoundingClientRect(), i = browseIcon.getBoundingClientRect();
-    if (!p.width) return;
-    const x = ((i.left + i.width / 2 - p.left) / p.width) * 100;
-    browsePanel.style.setProperty('--origin', `${Math.max(0, Math.min(100, x)).toFixed(1)}% 100%`);
-  }
+  // The real panel only fades (WindowBrowserPanel: 0.16 s in, 0.11 s out); the CSS does that.
   function renderBrowse(open) {
-    if (open) anchor();
     browseOpen = open;
     browseDesk.classList.toggle('is-open', open);
     browseIcon.setAttribute('aria-expanded', String(open));
