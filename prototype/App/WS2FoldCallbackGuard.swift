@@ -30,6 +30,13 @@ extension AppDelegate {
             unlocked: unlocked, maximumAge: maximumAge)
     }
 
+    /// 只问“还是不是同一次收起”，不看年龄与锁屏/呈现代次。给过期验证的收尾用（见 resolveExpiredFoldVerification）。
+    func foldCallbackIsSameFold(_ expected: WS2FoldCallbackStamp) -> Bool {
+        guard let state = shaded[expected.window], state.sourceWindowID == expected.window,
+              state.lifecycleStage == .folded else { return false }
+        return expected.sameFold(as: foldCallbackStamp(id: expected.window, state: state))
+    }
+
     func observeFoldHide(_ hide: HideMethod, win: AXUIElement, pid: pid_t,
                          id: CGWindowID) -> FoldVerifier.Observation {
         guard MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else { return .unknown }

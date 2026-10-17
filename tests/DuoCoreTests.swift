@@ -109,6 +109,7 @@ import Foundation
     try restorationTests()
     deferredRestoreCompletionTests()
     foldVerificationTests()
+    expiredFoldVerificationTests()
     titlebarIntentTests()
     print(
       "PASS: angle endpoints, bounded spring, held position, duplicate/reverse transitions, report decoding, latest-only frames, stale producer isolation, injected restore clock, timeout/retry/cancellation, durable restart/write failure"
@@ -258,6 +259,87 @@ import Foundation
       precondition(stale.probes == previousProbes && stale.rescues == previousRescues
                    && stale.rescueProbes == 0 && stale.completions.isEmpty,
                    "Old verification must never mutate, acknowledge or roll back its replacement")
+    }
+  }
+  // 验证回调过期（主线程被堵过 maxAge）：不再静默丢掉，按“是不是同一次收起 + 真实状态”收尾。
+  static func expiredFoldVerificationTests() {
+    typealias V = FoldVerifier
+    // 裁决：同一次收起 + 读到已最小化 → 收尾成已收起。
+    precondition(V.expiredVerdict(sameFold: true, unlocked: true, observation: .hidden, unlockRechecks: 0) == .complete)
+    // 同一次收起 + 窗口还在 → 回滚。
+    precondition(V.expiredVerdict(sameFold: true, unlocked: true, observation: .visible, unlockRechecks: 0) == .rollback)
+    // 换了一次收起（事务号变了）：不管读到什么、锁没锁，都不碰。
+    for seen in [V.Observation.hidden, .visible, .unknown] {
+      for unlocked in [true, false] {
+        precondition(V.expiredVerdict(sameFold: false, unlocked: unlocked, observation: seen, unlockRechecks: 0) == .ignore,
+                     "A superseded fold is never touched by the old callback")
+      }
+    }
+    // 读不准 → 保留恢复入口。
+    precondition(V.expiredVerdict(sameFold: true, unlocked: true, observation: .unknown, unlockRechecks: 0) == .retainUnconfirmed)
+    // 锁屏：等；等满上限才退成保留恢复入口，不会无限等。
+    precondition(V.expiredVerdict(sameFold: true, unlocked: false, observation: .hidden, unlockRechecks: 0) == .waitForUnlock)
+    precondition(V.expiredVerdict(sameFold: true, unlocked: false, observation: .hidden,
+                                  unlockRechecks: V.expiredUnlockRecheckLimit) == .retainUnconfirmed)
+
+    // 同一次收起的判据：看事务号，不看年龄、锁屏代次和呈现代次。
+    let base = WS2FoldCallbackStamp(window: 7, pid: 42, transaction: UUID(), hide: "minimized",
+                                    boot: UUID(), sessionEpoch: 1, presentation: UUID(), capturedAt: 10)
+    let later = WS2FoldCallbackStamp(window: 7, pid: 42, transaction: base.transaction, hide: "minimized",
+                                     boot: base.boot, sessionEpoch: 2, presentation: UUID(), capturedAt: 30)
+    precondition(base.sameFold(as: later), "Age, lock epoch and presentation do not supersede a fold")
+    precondition(!base.accepts(current: later, now: 30, unlocked: true, maximumAge: 4.5),
+                 "The original freshness fence still rejects it")
+    let refolded = WS2FoldCallbackStamp(window: 7, pid: 42, transaction: UUID(), hide: "minimized",
+                                        boot: base.boot, sessionEpoch: 1, presentation: base.presentation, capturedAt: 30)
+    precondition(!base.sameFold(as: refolded), "A newer fold of the same window supersedes it")
+
+    // 验证链本身：主链在途中过期 → onExpired 恰好一次、不再读/补救/出结果；新鲜时从不调用。
+    for expireAt in [0.1, 0.3, 0.7] {
+      let clock = Clock()
+      var fresh = true, reads = 0, salvages = 0, expired = 0
+      var results: [V.Observation] = []
+      let verifier = FoldVerifier(
+        schedule: clock.schedule, isCurrent: { fresh },
+        observation: { reads += 1; return .visible }, salvage: { salvages += 1; return true },
+        salvagedObservation: { reads += 1; return .visible },
+        onExpired: { expired += 1 }, result: { results.append($0) })
+      verifier.start()
+      clock.advance(expireAt)
+      fresh = false
+      let readsBefore = reads, salvagesBefore = salvages
+      clock.advance(5)
+      precondition(expired == 1 && results.isEmpty && reads == readsBefore && salvages == salvagesBefore,
+                   "expireAt=\(expireAt): expired=\(expired) results=\(results)")
+      fresh = true
+      clock.advance(5)
+      precondition(expired == 1 && results.isEmpty, "An expired chain stays closed")
+    }
+    // VM 那一次：主线程堵了 9 s，第一次验证轮到时就已过期。
+    do {
+      let clock = Clock()
+      var expired = 0
+      var results: [V.Observation] = []
+      let verifier = FoldVerifier(
+        schedule: clock.schedule, isCurrent: { false },  // 轮到 0.15 s 那一步时戳早已超龄
+        observation: { .hidden }, salvage: { true }, salvagedObservation: { .hidden },
+        onExpired: { expired += 1 }, result: { results.append($0) })
+      verifier.start()
+      clock.advance(10)
+      precondition(expired == 1 && results.isEmpty, "A blocked main thread hands the fold to the expiry path")
+    }
+    // 正常路径：一直新鲜，不调用 onExpired，结果与原来一样。
+    do {
+      let clock = Clock()
+      var expired = 0
+      var results: [V.Observation] = []
+      let verifier = FoldVerifier(
+        schedule: clock.schedule, isCurrent: { true },
+        observation: { .hidden }, salvage: { true }, salvagedObservation: { .hidden },
+        onExpired: { expired += 1 }, result: { results.append($0) })
+      verifier.start()
+      clock.advance(5)
+      precondition(expired == 0 && results == [.hidden])
     }
   }
   // 规格 R19：台前调度侧条卡片的几何判据与展开后请回来的步骤。

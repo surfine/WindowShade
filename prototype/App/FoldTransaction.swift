@@ -140,6 +140,9 @@ extension AppDelegate {
                 return self.observeFoldHide(.minimized, win: state.element, pid: state.pid, id: id)
             },
             lateObservationWindow: late,
+            onExpired: { [weak self] in
+                self?.resolveExpiredFoldVerification(id: id, expected: expected, maximumAge: maxAge)
+            },
             result: { [weak self] result in
                 guard let self, self.foldCallbackIsCurrent(expected, maximumAge: maxAge), let state = self.shaded[id] else { return }
                 switch result {
@@ -155,6 +158,46 @@ extension AppDelegate {
                 }
             }
         ).start()
+    }
+
+    /// 验证链过期后的收尾（VM 重负载下实测：安装阶段 9.5 s，0.15 s 的第一次验证轮到时戳已超过 maxAge，
+    /// 被静默丢掉——窗口最小化了，卷帘条没亮，既没记未确认也没回滚）。这里不再看年龄：
+    /// 只要还是同一次收起（事务号相同），就重新读一次真实状态，照实收尾；换了事务就不碰。
+    /// 读到隐藏 → 与验证通过同一个出口；读到可见 → 与 visible 同一个回滚；读不准 → 保留恢复入口；
+    /// 锁屏 → 不读不写，每秒再看一次。这里从不发起新的隐藏写入（不补救），只认已经发生的事。
+    func resolveExpiredFoldVerification(id: CGWindowID, expected: WS2FoldCallbackStamp,
+                                        maximumAge: TimeInterval, unlockRechecks: Int = 0) {
+        let sameAtStart = foldCallbackIsSameFold(expected)
+        let unlocked = MainActor.assumeIsolated { AuthorizationService.shared.lockState() == .unlocked }
+        var seen = FoldVerifier.Observation.unknown
+        if sameAtStart, unlocked, let state = shaded[id] {
+            seen = observeFoldHide(state.hide, win: state.element, pid: state.pid, id: id)
+        }
+        // 这次读可能又等了一个忙 App：动手前再对一次事务号。
+        let same = sameAtStart && foldCallbackIsSameFold(expected)
+        let verdict = FoldVerifier.expiredVerdict(sameFold: same, unlocked: unlocked, observation: seen,
+                                                  unlockRechecks: unlockRechecks)
+        if verdict != .waitForUnlock || unlockRechecks == 0 {
+            let age = Int((ProcessInfo.processInfo.systemUptime - expected.capturedAt) * 1000)
+            wlog("shade: verification expired id=\(id) ageMs=\(age) maxAgeMs=\(Int(maximumAge * 1000)) sameFold=\(same) unlocked=\(unlocked) observed=\(seen) verdict=\(verdict) rechecks=\(unlockRechecks)")
+        }
+        switch verdict {
+        case .ignore:
+            return
+        case .complete:
+            guard let state = shaded[id] else { return }
+            revealOverlayAfterVerification(id: id, state: state)
+        case .rollback:
+            rollbackFoldTransaction(id: id, expectedTransaction: expected.transaction)
+        case .retainUnconfirmed:
+            guard let state = shaded[id] else { return }
+            retainUnconfirmedFold(id: id, state: state)
+        case .waitForUnlock:
+            DispatchQueue.main.asyncAfter(deadline: .now() + FoldVerifier.expiredUnlockRecheckInterval) { [weak self] in
+                self?.resolveExpiredFoldVerification(id: id, expected: expected, maximumAge: maximumAge,
+                                                     unlockRechecks: unlockRechecks + 1)
+            }
+        }
     }
 
     /// 台前调度（com.apple.WindowManager GloballyEnabled，只读）是否开着。先同步一次那个域，
