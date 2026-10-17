@@ -1,4 +1,4 @@
-#!/usr/bin/env python3 -I
+#!/usr/bin/env python3
 """H3: per-pixel dE between an sRGB capture and a displayP3 capture of the same content.
 
 Usage: python3 -I compare-srgb-p3.py capsule-raw-sRGB.png capsule-raw-displayP3.png
@@ -90,7 +90,7 @@ def main():
         if r is None:
             ls = lab_s.get(s) or lab_s.setdefault(s, lab(xyz(M_S, s)))
             lp_t = lab(xyz(M_P3, p))                     # P3 decoded as P3
-            lp_u = lp_t if p == s else lab_p.get(p) or lab_p.setdefault(p, lab(xyz(M_S, p)))  # P3 numbers read as sRGB
+            lp_u = lab_p.get(p) or lab_p.setdefault(p, lab(xyz(M_S, p)))  # P3 numbers read as sRGB
             r = cache[k] = (round(de2000(ls, lp_t), 3), round(de2000(ls, lp_u), 3))
         for key, v in zip(("tagged", "untagged"), r):
             hist[key][v] = hist[key].get(v, 0) + 1
@@ -107,4 +107,5 @@ def main():
     moved = sum(c for d, c in hist["tagged"].items() if d > 5)
     print(f"content-mismatch pixels (tagged dE>5): {moved} = {moved / n * 100:.2f}%")
 
-main()
+if __name__ == "__main__":
+    main()
