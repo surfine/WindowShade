@@ -2,7 +2,7 @@
 # 看一眼真机探针：需要先 `cd prototype && ./build.sh --stage`（签名隔离构建，已授权辅助功能与屏幕录制）。
 # 会在屏幕上短暂出现测试窗口；不操作用户自己的窗口。
 # 每次跑一项，例如 --gesture、--launchpad-keys、--fullscreen（会进一次系统全屏再退出）；完整列表见 prototype/App/GlanceProbe.swift 的调度。
-# --fold-timing、--orphan（R10）、--soak [--soak-rounds N]（R39）、--menubar-owner（R22）、--focus-steal（R41）、--switch-cpu、--idle-first-op [--idle-seconds N]（E6）会自行只开一扇临时窗（不必再加 --single）。
+# --fold-timing、--orphan（R10）、--soak [--soak-kind fold|browser|glance] [--soak-rounds N] [--soak-sample-every N]（R39）、--menubar-owner（R22）、--focus-steal（R41）、--switch-cpu、--idle-first-op [--idle-seconds N]（E6）会自行只开一扇临时窗（不必再加 --single）。
 # --browser-identity（R20）：再开一个临时 App 实例，核对 orderOut 关窗与 kill -9 之后窗口浏览的列表。
 # --second-display（V9）：把临时窗挪到非主屏收起再展开；--finder-columns（R23）：开一扇临时访达窗口量列表列宽，用完关掉、删掉临时文件夹；--finder-alias（R23）：临时目录里建文件夹和指向它的替身，用合成鼠标双击替身，核对访达照常打开它、没被当成窗口动作。
 # --launchpad-tiling（R18）：启动台开着，往系统发 fn＋Control＋←→↑↓／F／C，对照临时 App 的参考窗，看启动台会不会被系统平铺挪动；会发真的合成键，跑的时候别碰键盘。
