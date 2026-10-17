@@ -5069,6 +5069,10 @@ final class NotchCanvasView: NSView {
         var radius: (from: Double, axis: MorphAxis?)
     }
 
+    /// 第二颗岛位移与尺寸动画的键：`add(_:key:to:shape:now:)` 按「前缀.keyPath」逐轴挂，这里与它保持一致。
+    private static let companionMotionKeys = ["companion.position.x", "companion.position.y",
+                                              "companion.bounds.size.width", "companion.bounds.size.height"]
+
     private func add(_ spring: Spring, key: String, to layer: CALayer, shape: MorphShape, now: CFTimeInterval) {
         // CASpring 设明确的 beginTime（同一层时钟）：接力核对可以按同一瞬间算速度，不靠提交时刻。
         let begin = layer.convertTime(now, from: nil)
@@ -5242,8 +5246,7 @@ final class NotchCanvasView: NSView {
         CATransaction.setDisableActions(true)
         let presented = companion.presentation()?.frame ?? companion.frame
         let wasVisible = (companion.presentation()?.opacity ?? companion.opacity) > 0.01 && !companion.isHidden
-        let inflight = companion.animation(forKey: "companion.position") != nil
-            || companion.animation(forKey: "companion.bounds.size") != nil
+        let inflight = Self.companionMotionKeys.contains { companion.animation(forKey: $0) != nil }
         if inflight { companionRetargeted = true }
         companion.isHidden = false
         companion.cornerRadius = height / 2
@@ -5252,8 +5255,7 @@ final class NotchCanvasView: NSView {
         let fromOpacity = companion.presentation()?.opacity ?? companion.opacity
         let toOpacity: Float = text == nil ? 0 : 1
         if reduced {
-            companion.removeAnimation(forKey: "companion.position")
-            companion.removeAnimation(forKey: "companion.bounds.size")
+            for key in Self.companionMotionKeys { companion.removeAnimation(forKey: key) }
             companion.frame = wasVisible ? presented : together
         } else {
             companion.frame = destination
@@ -5287,8 +5289,7 @@ final class NotchCanvasView: NSView {
     var splitForProbe: (separated: Bool, retargeted: Bool, fades: Bool) {
         let showing = companion.opacity > 0.01
         let apart = companion.frame.minX + 1 >= island.frame.maxX
-        let moving = companion.animation(forKey: "companion.position") != nil
-            || companion.animation(forKey: "companion.bounds.size") != nil
+        let moving = Self.companionMotionKeys.contains { companion.animation(forKey: $0) != nil }
         let fading = companion.animation(forKey: "companion.opacity") != nil
         return (Motion.reduced ? showing : apart && showing, companionRetargeted, !moving && (fading || Motion.reduced))
     }
