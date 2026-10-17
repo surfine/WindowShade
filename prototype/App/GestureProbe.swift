@@ -877,6 +877,103 @@ extension GlanceProbe {
     await closeMissionControlAfterProbe()
   }
 
+  /// 调度中心体检（--mission-control）：打开调度中心，把 Dock／WindowManager 名下的窗口原样打出来
+  /// （名字、层级、外框，看 macOS 27 上的真实形状），核对认出方式、在临时窗口上的挑选、
+  /// 窗口浏览在调度中心开着时列的窗口和平时一致（alt-tab 在 27 上这里列错过），最后用 Esc 关掉。
+  /// 不挪光标：挑选用临时窗口打开后的真实外框中心点直接查窗口表。
+  func exerciseMissionControlSurvey(pid: pid_t) async throws {
+    guard MissionControlPick.detection(in: WindowListCache.shared.onScreenWindows()) == nil else {
+      print("FAIL mission-control: Mission Control was already open before the probe")
+      return
+    }
+    try await wait("fixture windows", timeout: 6) { !appWindows(pid: pid).isEmpty }
+    guard let element = appWindows(pid: pid).first, let id = windowID(of: element) else {
+      throw EffectError.unavailable("mission-control fixture window")
+    }
+    func browsedIDs() -> Set<CGWindowID>? {
+      switch WindowBrowserDiscovery.discover(pid: pid, overlayIDs: [], excludedBundleIDs: []) {
+      case .success(let list), .partial(let list, _): return Set(list.map(\.originalWindowID))
+      case .empty: return []
+      case .failure, .timedOut: return nil
+      }
+    }
+    let before = browsedIDs()
+    print("INFO mission-control: os=\(ProcessInfo.processInfo.operatingSystemVersionString) fixture window id=\(id) browsed before=\(before.map { "\($0.sorted())" } ?? "unavailable")")
+
+    DockOverview.missionControl()
+    do {
+      try await wait("mission control open", timeout: 8) {
+        MissionControlPick.detection(in: WindowListCache.shared.onScreenWindows()) != nil
+      }
+    } catch {
+      // 认不出来本身就是这支探针要报的结果：先把窗口表打出来，再报 FAIL。
+      dumpMissionControlWindows()
+      print("FAIL mission-control: no detection rule matched 8 s after asking the Dock to open Mission Control; see the dump above")
+      await gapCloseMissionControl(label: "mission-control")
+      return
+    }
+    try await Task.sleep(for: .milliseconds(600), clock: .suspending)
+    let windows = WindowListCache.shared.onScreenWindows()
+    let rule = MissionControlPick.detection(in: windows)
+    dumpMissionControlWindows()
+    switch rule {
+    case .shieldName?: print("PASS mission-control: detected by the shield window name (rule=shieldName)")
+    case let other?: print("WARN mission-control: the shield name is gone; detected only by fallback rule=\(other.rawValue) (the key catch passes keys through without a target in this case)")
+    case nil: print("FAIL mission-control: detection lost right after it was seen")
+    }
+
+    if let live = bounds(id) {
+      let point = CGPoint(x: live.midX, y: live.midY)
+      let picked = MissionControlPick.target(at: point, in: windows)
+      print("\(picked?.pid == pid ? "PASS" : "FAIL") mission-control: the pick at the fixture's live frame centre is the fixture (picked pid=\(picked?.pid ?? 0) want=\(pid) id=\(picked?.windowID ?? 0) frame=\(live))")
+    } else {
+      print("FAIL mission-control: the fixture window has no bounds while Mission Control is open")
+    }
+
+    let during = browsedIDs()
+    if let before, let during {
+      print("\(before == during && during.contains(id) ? "PASS" : "FAIL") mission-control: window browsing lists the same fixture windows while Mission Control is open (before=\(before.sorted()) during=\(during.sorted()))")
+    } else {
+      print("FAIL mission-control: window browsing could not be read (before=\(before == nil ? "nil" : "ok") during=\(during == nil ? "nil" : "ok"))")
+    }
+    // 系统层的 pid 不该被当成可浏览窗口。
+    let systemPIDs = Set(windows.compactMap { info -> pid_t? in
+      let owner = info[kCGWindowOwnerName as String] as? String ?? ""
+      guard MissionControlPick.ignoredOwners.contains(owner) else { return nil }
+      return (info[kCGWindowOwnerPID as String] as? NSNumber).map { pid_t($0.int32Value) }
+    })
+    var leaked: [pid_t] = []
+    for systemPID in systemPIDs {
+      switch WindowBrowserDiscovery.discover(pid: systemPID, overlayIDs: [], excludedBundleIDs: []) {
+      case .success(let list), .partial(let list, _): if !list.isEmpty { leaked.append(systemPID) }
+      default: break
+      }
+    }
+    print("\(leaked.isEmpty ? "PASS" : "FAIL") mission-control: window browsing lists no Dock／WindowManager windows (leaked pids=\(leaked))")
+
+    await gapCloseMissionControl(label: "mission-control")
+    let after = browsedIDs()
+    print("\(after == before ? "PASS" : "FAIL") mission-control: window browsing is back to the same list after closing")
+  }
+
+  /// 把 Dock／WindowManager／Window Server 名下的窗口一行一个打出来：给人看 macOS 27 的真实形状。
+  private func dumpMissionControlWindows() {
+    let windows = WindowListCache.shared.onScreenWindows()
+    var count = 0
+    for info in windows {
+      let owner = info[kCGWindowOwnerName as String] as? String ?? ""
+      guard MissionControlPick.ignoredOwners.contains(owner) else { continue }
+      let name = info[kCGWindowName as String] as? String ?? ""
+      let layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
+      let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
+      let number = (info[kCGWindowNumber as String] as? NSNumber)?.intValue ?? 0
+      let frame = MissionControlPick.windowBounds(info).map { "\(Int($0.minX)),\(Int($0.minY)) \(Int($0.width))x\(Int($0.height))" } ?? "?"
+      print("DUMP mission-control: owner=\(owner) name=\(name.isEmpty ? "-" : name) layer=\(layer) alpha=\(alpha) id=\(number) frame=\(frame)")
+      count += 1
+    }
+    print("INFO mission-control: \(count) system-owned windows of \(windows.count) on screen; screens=\(MissionControlPick.activeDisplayBounds())")
+  }
+
   /// 收尾：把调度中心关掉，别留在用户屏幕上。两条路（正常跑完、中途停）都走这里。
   private func closeMissionControlAfterProbe() async {
     let source = CGEventSource(stateID: .hidSystemState)
