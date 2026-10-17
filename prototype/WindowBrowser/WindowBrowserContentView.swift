@@ -1195,11 +1195,30 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         moveSelection(direction: offset < 0 ? .up : .down)
     }
 
+    /// 键盘面板里对选中的那扇窗口：⌘W 关闭、⌘M 最小化、⌃⌘F 进入全屏（和按窗口切换里同一个键做同一件事）。
+    /// Dock 面板不是 key window，键盘到不了；没有选中项时返回 false，由调用方走原来的路。
+    @discardableResult
+    func handleWindowShortcut(_ event: NSEvent) -> Bool {
+        guard let action = WindowBrowserShortcut.action(
+            modifiers: event.modifierFlags,
+            characters: event.charactersIgnoringModifiers) else { return false }
+        return performSelectionShortcut(action)
+    }
+
+    @discardableResult
+    func performSelectionShortcut(_ action: WindowBrowserAction) -> Bool {
+        guard mode == .keyboard, let key = selection else { return false }
+        browserItem(self, perform: action, key: key)
+        return true
+    }
+
     /// 网格方向键使用真实列数；文本输入优先交给搜索框。
     override func keyDown(with event: NSEvent) {
         // ⌘F：系统里“查找”的习惯；键盘面板用它把焦点放到搜索框。
+        if handleWindowShortcut(event) { return }
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if mode == .keyboard,
-           event.modifierFlags.intersection(.deviceIndependentFlagsMask).contains(.command),
+           flags.contains(.command), !flags.contains(.control),
            event.charactersIgnoringModifiers?.lowercased() == "f" {
             focusSearch()
             return

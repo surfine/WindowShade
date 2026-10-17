@@ -89,8 +89,16 @@ final class WindowBrowserPanel: NSPanel {
     }
 
     /// ⌘W 等系统关闭路径也必须回到控制器，避免面板已关闭但控制器仍以为可见。
+    /// 键盘面板里有选中项时 ⌘W 关的是选中的那扇窗口；没有选中项才关面板本身。
     override func performClose(_ sender: Any?) {
+        if mode == .keyboard, browserContentView.performSelectionShortcut(.close) { return }
         onCancel?()
+    }
+
+    /// ⌘W / ⌘M / ⌃⌘F 在搜索框有焦点时也要生效（文本框不处理这几个键）。
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if mode == .keyboard, browserContentView.handleWindowShortcut(event) { return true }
+        return super.performKeyEquivalent(with: event)
     }
 
     override func becomeKey() {

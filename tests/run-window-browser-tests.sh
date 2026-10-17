@@ -33,6 +33,7 @@ swiftc -target "$(uname -m)-apple-macosx15.0" $GLASS_DEFINE \
   prototype/WindowBrowser/WindowCatalog.swift \
   prototype/WindowBrowser/WindowBrowserViews.swift \
   prototype/WindowBrowser/WindowBrowserActionBar.swift \
+  prototype/WindowBrowser/WindowBrowserTrafficLights.swift \
   prototype/WindowBrowser/WindowBrowserCardView.swift \
   prototype/WindowBrowser/WindowBrowserListRowView.swift \
   prototype/WindowBrowser/WindowBrowserSelectionDetailView.swift \

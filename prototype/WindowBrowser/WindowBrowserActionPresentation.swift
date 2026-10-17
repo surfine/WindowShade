@@ -53,6 +53,23 @@ enum WindowBrowserActionPresentation {
         .fold, .unfold, .pinPreview, .unpinPreview, .newWindow
     ]
 
+    /// Dock 预览卡左上角红黄绿对应的三个动作，顺序即从左到右。
+    static let trafficLightActions: [WindowBrowserAction] = [.close, .minimize, .fullScreen]
+
+    /// 红黄绿读同一份条目；已最小化的窗口黄灯置灰而不是消失（三颗位置不跳）。
+    static func trafficLightItems(from items: [WindowBrowserActionItem],
+                                  record: WindowRecord) -> [WindowBrowserActionItem] {
+        trafficLightActions.compactMap { action in
+            if let found = items.first(where: { $0.action == action }) { return found }
+            guard action == .minimize, record.isMinimized else { return nil }
+            return WindowBrowserActionItem(
+                action: .minimize, title: title(for: .minimize, record: record),
+                symbolName: symbolName(for: .minimize, record: record),
+                isEnabled: false, disabledReason: nil, isDestructive: false,
+                isBusy: false, isOn: false, isPrimary: false)
+        }
+    }
+
     static func items(for record: WindowRecord, context: Context) -> [WindowBrowserActionItem] {
         orderedActions.compactMap { item(for: $0, record: record, context: context) }
     }
@@ -151,6 +168,9 @@ enum WindowBrowserActionPresentation {
     static func macShortcut(for action: WindowBrowserAction) -> (key: String, label: String)? {
         switch action {
         case .newWindow: return ("n", "⌘N")
+        case .close: return ("w", "⌘W")
+        case .minimize: return ("m", "⌘M")
+        case .fullScreen: return ("f", "⌃⌘F")
         default: return nil
         }
     }
@@ -393,5 +413,19 @@ enum WindowBrowserSymbol {
         let configured = image.withSymbolConfiguration(configuration) ?? image
         configured.isTemplate = true
         return configured
+    }
+}
+
+/// 键盘面板里对选中窗口的快捷键：⌘W 关闭、⌘M 最小化、⌃⌘F 进入全屏。
+enum WindowBrowserShortcut {
+    static func action(modifiers: NSEvent.ModifierFlags, characters: String?) -> WindowBrowserAction? {
+        let flags = modifiers.intersection(.deviceIndependentFlagsMask)
+            .subtracting([.capsLock, .numericPad, .function])
+        switch (flags, characters?.lowercased()) {
+        case ([.command], "w"): return .close
+        case ([.command], "m"): return .minimize
+        case ([.command, .control], "f"): return .fullScreen
+        default: return nil
+        }
     }
 }
