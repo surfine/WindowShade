@@ -62061,6 +62061,190 @@
           }
         }
       }
+    },
+    "whatsNew1018.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New in this version, and on"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这一版新开了这几样"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這一版新開了這幾樣"
+          }
+        }
+      }
+    },
+    "whatsNew1018.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switches you never changed are now on. Turn off anything you don’t want in Settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你没动过的开关，现在是开着的。不想要哪样，在设置里关掉。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "你沒動過的開關，現在是開著的。不想要哪樣，在設定裡關掉。"
+          }
+        }
+      }
+    },
+    "whatsNew1018.notch.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck windows into the notch. It tells you the Mac shortcut when one doesn’t work, and shows music and downloads."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口能收进刘海；按错快捷键时刘海说一句；音乐、下载这些显示在刘海上。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗能收進瀏海；按錯快速鍵時瀏海說一句；音樂、下載這些顯示在瀏海上。"
+          }
+        }
+      }
+    },
+    "whatsNew1018.dock.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest the pointer on a Dock icon to see that app’s windows."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指针停在 Dock 图标上，这个 App 的窗口排出来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指標停在 Dock 圖示上，這個 App 的視窗排出來。"
+          }
+        }
+      }
+    },
+    "whatsNew1018.shelf.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File shelf and Dock icons"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件架和 Dock 图标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "檔案架和 Dock 圖示"
+          }
+        }
+      }
+    },
+    "whatsNew1018.shelf.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files you drag to the notch wait on the shelf. Click a Dock icon again to move that app out of the way."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖到刘海的文件放进文件架；再点一下 Dock 图标，让开这个 App。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖到瀏海的檔案放進檔案架；再點一下 Dock 圖示，讓開這個 App。"
+          }
+        }
+      }
+    },
+    "whatsNew1018.change": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change in Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在设置里改…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在設定裡改…"
+          }
+        }
+      }
+    },
+    "whatsNew1018.tour": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Me How"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看看怎么用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看看怎麼用"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

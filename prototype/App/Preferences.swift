@@ -1153,13 +1153,58 @@ extension AppDelegate {
     }
 
     func showPermissionOnboardingIfNeeded(force: Bool) {
-        let missing = !hasAccessibilityPermission() || !hasScreenRecordingPermission()
-        let shouldShowFirstRun = !UserDefaults.standard.bool(forKey: shadeOnboardingShownDefaultsKey)
-        guard missing || shouldShowFirstRun || force else { return }
-        if !force && UserDefaults.standard.bool(forKey: shadeOnboardingShownDefaultsKey) { return }
         // force 都是缺权限时的提醒（按快捷键没权限、刘海里点"需要权限"、换显示器时的恢复）：直接到授权页，
-        // 和 1.0.15 一样一打开就看得到授权行。首次打开从第一页看起。
-        showPermissionOnboarding(toPermissions: force)
+        // 和 1.0.15 一样一打开就看得到授权行。
+        if force { showPermissionOnboarding(toPermissions: true); return }
+        // 启动时：新装 → A1；升级上来缺辅助功能、这一版没看过 → “再打开一次这两项”（U1），之后接 N1；
+        // 升级上来有真变了的新默认、这一版没看过 → “这一版新开了这几样”（N1）。见 Core/WhatsNew1018Changes.swift。
+        let defaults = UserDefaults.standard
+        if !launchIsUpgrade {
+            // 新装的不看 U1、N1（T 已经演过新开的这些）：先记下看过，下次启动认成老安装时也不弹。
+            defaults.set(true, forKey: WhatsNew1018Changes.permissionsAgainShownKey)
+            defaults.set(true, forKey: WhatsNew1018Changes.whatsNewShownKey)
+        }
+        let route = LaunchOnboardingRoute.decide(
+            upgrade: launchIsUpgrade,
+            onboardingShown: defaults.bool(forKey: shadeOnboardingShownDefaultsKey),
+            accessibilityTrusted: hasAccessibilityPermission(),
+            permissionsAgainShown: defaults.bool(forKey: WhatsNew1018Changes.permissionsAgainShownKey),
+            whatsNewShown: defaults.bool(forKey: WhatsNew1018Changes.whatsNewShownKey),
+            hasWhatsNew: !whatsNew1018Groups().isEmpty)
+        wlog("onboarding: launch route=\(route) upgrade=\(launchIsUpgrade)")
+        switch route {
+        case .none: return
+        case .welcome: showPermissionOnboarding(toPermissions: false)
+        case .permissionsAgain(let thenWhatsNew): showPermissionsAgain(thenWhatsNew: thenWhatsNew)
+        case .whatsNew: showWhatsNew1018()
+        }
+    }
+
+    /// 这个人这一版真变了的新默认（N1 的行）。
+    func whatsNew1018Groups() -> [WhatsNew1018Changes.Group] {
+        WhatsNew1018Changes.groups(in: .standard, dockClickNow: DockClickHideDefault.isOn(
+                                       previewInstall: InstallHistory.settled(in: .standard) == .preview,
+                                       origin: SwitcherOrigin.current),
+                                   previewInstall: InstallHistory.settled(in: .standard) == .preview)
+    }
+
+    /// “这一版新开了这几样”（N1）：只列真变了的；没有就不弹。打开就算看过（“好”和关窗口也一样），只弹一次。
+    func showWhatsNew1018() {
+        let groups = whatsNew1018Groups()
+        UserDefaults.standard.set(true, forKey: WhatsNew1018Changes.whatsNewShownKey)
+        guard !groups.isEmpty else { return }
+        MainActor.assumeIsolated {
+            if whatsNewWindow == nil { whatsNewWindow = WhatsNew1018Window() }
+            whatsNewWindow?.onChange = { [weak self] group in
+                switch group {
+                case .notch, .shelfAndDock: self?.showSettingsWindow(section: .notch)
+                case .dockHover: self?.showSettingsWindow(section: .browser)
+                }
+            }
+            // 欢迎窗口 T 的刘海一段做好以前先从第一页看起（欢迎那一路换成 T 的刘海一段）。
+            whatsNewWindow?.onTour = { [weak self] in self?.showWelcomeGuide() }
+            whatsNewWindow?.show(groups: groups)
+        }
     }
 
     /// 欢迎使用 WindowShade：三步，一句话说清它是什么、问"你之前常用哪个？"、授权（见 Welcome.swift）。
@@ -1173,12 +1218,41 @@ extension AppDelegate {
         onboardingWindow?.contentView?.subviews.lazy.compactMap { $0 as? WelcomeView }.first
     }
 
-    /// 装好新版本后辅助功能或屏幕录制没了（系统有时要重新打开）：翻到授权页，换成"再打开一次这两项"那组文案。
+    /// 装好新版本后辅助功能或屏幕录制没了（系统有时要重新打开）：更新日志那条路（Updater.swift 的 permissionsBefore）。
+    /// 和启动时认出来的落到同一个“再打开一次这两项”；这一次启动已经弹过就不重弹。
     func showPermissionsAgainAfterUpdate() {
+        guard !permissionsAgainShownThisLaunch else {
+            wlog("onboarding: permissions again already shown this launch")
+            return
+        }
+        let defaults = UserDefaults.standard
+        showPermissionsAgain(thenWhatsNew: !defaults.bool(forKey: WhatsNew1018Changes.whatsNewShownKey)
+                                && !whatsNew1018Groups().isEmpty && whatsNewWindow?.isVisible != true)
+    }
+
+    /// “再打开一次这两项”（U1）：翻到授权页，换成那组文案；thenWhatsNew 时关掉之后接 N1。
+    func showPermissionsAgain(thenWhatsNew: Bool) {
+        permissionsAgainShownThisLaunch = true
+        whatsNewAfterOnboarding = whatsNewAfterOnboarding || thenWhatsNew
+        UserDefaults.standard.set(true, forKey: WhatsNew1018Changes.permissionsAgainShownKey)
         MainActor.assumeIsolated {
             showWelcome(startPage: WelcomeView.permissionPage)
             onboardingWelcomeView?.permissionsAgain = true
         }
+    }
+
+    /// 欢迎窗口关了（“开始使用”“稍后再说”或关窗口）：U1 之后要接 N1 的，现在弹。
+    func onboardingDidEnd() {
+        guard whatsNewAfterOnboarding else { return }
+        whatsNewAfterOnboarding = false
+        showWhatsNew1018()
+    }
+
+    /// 引导里的“去授权”（辅助功能）：带系统询问（把 WindowShade 放进列表），再打开“辅助功能”那一栏。
+    /// 设置页和菜单里的同一行不带询问（启动时也不再带，见 WindowShade.swift 启动序列）。
+    @objc func onboardingGrantAccessibilityAction() {
+        requestAccessibilityPrompt()
+        openAccessibilityPrivacySettings()
     }
 
     @MainActor private func showWelcome(startPage: Int) {
@@ -1223,6 +1297,7 @@ extension AppDelegate {
                     UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
                     self?.onboardingRefreshTimer?.invalidate()
                     self?.onboardingRefreshTimer = nil
+                    self?.onboardingDidEnd()
                 }
             }
             // 整个被挡住、在别的桌面上时授权页不再每秒查；又看得见了马上刷新一次、接着查。
@@ -1295,7 +1370,7 @@ extension AppDelegate {
         var rows = [
             makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
                 subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")), granted: ax,
-                action: #selector(openAccessibilitySettingsAction)),
+                action: #selector(onboardingGrantAccessibilityAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
                 subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览")), granted: screen,
                 action: #selector(openScreenRecordingSettingsAction)),

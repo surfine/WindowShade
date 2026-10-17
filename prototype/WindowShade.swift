@@ -247,6 +247,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     weak var onboardingDoneButton: NSButton?
     weak var onboardingCaption: NSTextField?
     var onboardingRefreshTimer: Timer?
+    /// 这一次启动之前这台 Mac 就跑过 WindowShade（启动第一步认，见 applicationDidFinishLaunching）。
+    var launchIsUpgrade = false
+    /// “再打开一次这两项”关掉之后接着弹“这一版新开了这几样”。
+    var whatsNewAfterOnboarding = false
+    /// 这一次启动已经弹过“再打开一次这两项”：更新日志那条路 10 秒后再报一次时不重弹。
+    var permissionsAgainShownThisLaunch = false
+    /// “这一版新开了这几样”窗口（1.0.18）。
+    var whatsNewWindow: WhatsNew1018Window?
     let onboardingContentWidth: CGFloat = 452
     var suppressUnshadeSounds = false
     var ownsGlobalInput = true
@@ -336,7 +344,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if UpdateLaunch.deferLaunchIfRestoring({ [weak self] in self?.applicationDidFinishLaunching(note) }) { return }
         // 新装还是升级：赶在这一次启动写下任何设置之前认一次、存下来（声音迁移每次启动都写，清理收起记录会删键；
         // 见 App/GlobalShortcuts.swift 的 InstallHistory）。
-        _ = InstallHistory.settled(in: .standard)
+        // 这一次启动之前就跑过 WindowShade 没有（1.0.16 起第一次启动就存下 InstallHistory；更早的认得出是 .shipped）。
+        // 引导据此分新装 A1 和升级 U1 / N1，不靠更新日志，手动下载装上来的也认得出。
+        let hadInstallRecord = UserDefaults.standard.object(forKey: InstallHistory.defaultsKey) != nil
+        launchIsUpgrade = InstallHistory.settled(in: .standard) != .fresh || hadInstallRecord
         // 量耗电等场合另开一份：刘海不播报、不教，也不把"教过"写进设置。
         if CommandLine.arguments.contains("--no-teach") { NotchController.probeSilence = true }
         // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
@@ -359,7 +370,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         logIfSlow("launch statusItem", threshold: 0.1) { setupStatusItem() }
         logIfSlow("launch dockEffect", threshold: 0.1) { enableScaleMinimizeEffectForSession() }
         logIfSlow("launch hotKey", threshold: 0.1) { registerHotKey() }
-        logIfSlow("launch ensureAX", threshold: 0.1) { _ = ensureAccessibility() }
+        // 启动时只读、不弹系统框：带询问的调用只留给引导里的“去授权”（requestAccessibilityPrompt）。
+        logIfSlow("launch checkAX", threshold: 0.1) { _ = hasAccessibilityPermission() }
         // 把本进程所有同步 AX 调用的超时从系统默认 6s 收紧到 2s。
         // 目标 app 无响应时，event tap 回调和主线程最多被拖 2s 而不是 6s；
         // 正常 app 的 AX 属性读取都在毫秒级，不受影响。
@@ -734,6 +746,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         onboardingRefreshTimer?.invalidate()
         onboardingRefreshTimer = nil
         onboardingWindow?.orderOut(nil)
+        onboardingDidEnd()
     }
 
 
