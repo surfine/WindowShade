@@ -9,7 +9,17 @@ let settingsContentWidth: CGFloat = 640
 
 private final class SettingsPageHost: NSView {
   var appearanceDidChange: (() -> Void)?
+  /// ⌘F：窗口把快捷键沿视图树往下问，这一页总在树里（侧栏收起时也在）。
+  var findShortcut: (() -> Void)?
   override var isFlipped: Bool { true }
+  override func performKeyEquivalent(with event: NSEvent) -> Bool {
+    if let findShortcut, event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+       event.charactersIgnoringModifiers?.lowercased() == "f" {
+      findShortcut()
+      return true
+    }
+    return super.performKeyEquivalent(with: event)
+  }
   override func viewDidChangeEffectiveAppearance() {
     super.viewDidChangeEffectiveAppearance()
     appearanceDidChange?()
@@ -64,6 +74,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private var pageScroll: NSScrollView!
   private var pages: [WindowShadeSettingsSection: NSView] = [:]
   private let sidebarTable = NSTableView()
+  /// 侧栏顶上的设置搜索（1.0.18 新表面稿第 2 节，见 SettingsSearchSidebar.swift）。
+  private let search = SettingsSearchSidebar()
   private let splitController = NSSplitViewController()
   private var activePageConstraints: [NSLayoutConstraint] = []
   private var currentSection: WindowShadeSettingsSection = .effects
@@ -134,6 +146,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     window?.subtitle = currentSection.title
     // 侧栏表格的读屏标签是建表时设的，reloadData 不会更新，这里随语言重建。
     sidebarTable.setAccessibilityLabel(WSL10n.text("settings.shell.sidebar.label", zh: "设置侧边栏"))
+    search.refreshCopy()
     visibleSections = WS2Preview.sections
     sidebarTable.reloadData()
     pages.removeAll()
@@ -152,6 +165,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     visibleSections = sections
     sidebarTable.reloadData()
     isRebuildingLocalCopy = false
+    reindexSearch()
     let target = WindowShadeSettingsSection.restored(lastViewed: currentSection, visible: sections)
     pageHost?.subviews.forEach { $0.removeFromSuperview() }
     select(section: target)
@@ -171,6 +185,64 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.pointer] = controller.owner?.makePointerSettingsPage()
     pages[.remote] = controller.owner?.makeRemoteSettingsPage()
     pages[.conductor] = controller.owner?.makeConductorSettingsPage()
+    reindexSearch()
+  }
+
+  /// 设置搜索的索引从建好的页里收（藏着的页也收，搜的时候按侧栏里的页过滤）。
+  private func reindexSearch() {
+    let ordered = visibleSections + WindowShadeSettingsSection.allCases.filter { !visibleSections.contains($0) }
+    search.reindex(pages: ordered.compactMap { section in pages[section].map { (section, $0) } }, visible: visibleSections)
+  }
+
+  /// 搜索结果变了：侧栏整个重读（结果态 / 页列表态），选中行跟着摆，不触发换页。
+  private func searchResultsChanged() {
+    isRebuildingLocalCopy = true
+    defer { isRebuildingLocalCopy = false }
+    sidebarTable.allowsEmptySelection = search.isActive
+    sidebarTable.reloadData()
+    syncSidebarSelection()
+  }
+
+  private func syncSidebarSelection() {
+    let wasRebuilding = isRebuildingLocalCopy
+    isRebuildingLocalCopy = true
+    defer { isRebuildingLocalCopy = wasRebuilding }
+    if search.isActive {
+      if let row = search.selectedTableRow {
+        sidebarTable.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+        sidebarTable.scrollRowToVisible(row)
+      } else {
+        sidebarTable.deselectAll(nil)
+      }
+    } else if let row = WindowShadeSettingsSection.row(of: currentSection, in: visibleSections) {
+      sidebarTable.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+    }
+  }
+
+  /// ⌘F：侧栏收着先展开，焦点放进搜索框并全选已有的字。
+  private func focusSearch() {
+    if let item = splitController.splitViewItems.first, item.isCollapsed { item.isCollapsed = false }
+    search.focusField(in: window)
+  }
+
+  /// 选中一条结果：侧栏不变；右边换到那一页，那一行滚到上三分之一处、亮一下，讲解带演它。
+  private func reveal(_ result: SettingsSearchResult) {
+    guard let section = WindowShadeSettingsSection.allCases.first(where: { "\($0)" == result.entry.page }),
+          let row = search.view(for: result.entry), let view = row.view else { return }
+    // 在手势页没选中的那一段里：先切到那一段（和点分段一样走 action）。
+    if let segment = row.segment, segment.control.selectedSegment != segment.index {
+      segment.control.selectedSegment = segment.index
+      _ = segment.control.sendAction(segment.control.action, to: segment.control.target)
+    }
+    select(section: section)
+    let option = result.option.flatMap { SettingsSearchCollection.option($0, in: view) }
+    // 等换页的淡入和 select 里两拍之后的回到顶部做完，再滚。
+    DispatchQueue.main.asyncAfter(deadline: .now() + (Motion.reduced ? 0.05 : 0.12)) { [weak self] in
+      guard let self, self.currentSection == section, view.window === self.window else { return }
+      SettingsSearchReveal.scroll(self.pageScroll, toShow: view)
+      SettingsSearchReveal.flash(view, option: option)
+      SettingsExplainerHost.focus(row: view, option: option?.item)
+    }
   }
 
   required init?(coder: NSCoder) { nil }
@@ -214,6 +286,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       try? self.renderer?.setImage(Self.artwork())
       self.previewChanged()
     }
+    host.findShortcut = { [weak self] in self?.focusSearch() }
     pageHost = host
     pageHost.translatesAutoresizingMaskIntoConstraints = false
     scroll.documentView = pageHost
@@ -337,14 +410,44 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     sidebarTable.delegate = self
     sidebarTable.setAccessibilityLabel(WSL10n.text("settings.shell.sidebar.label", zh: "设置侧边栏"))
     scroll.documentView = sidebarTable
-    return scroll
+    // 搜索框放在侧栏顶上（和系统设置同一个位置）：左右 10，下面接页列表 / 结果。
+    search.onResultsChanged = { [weak self] in self?.searchResultsChanged() }
+    search.onSelectionMoved = { [weak self] in self?.syncSidebarSelection() }
+    search.onCommit = { [weak self] in self?.reveal($0) }
+    search.onLeave = { [weak self] in
+      guard let self else { return }
+      self.window?.makeFirstResponder(self.sidebarTable)
+    }
+    let container = NSView()
+    scroll.automaticallyAdjustsContentInsets = false
+    container.addSubview(search.field)
+    container.addSubview(scroll)
+    NSLayoutConstraint.activate([
+      search.field.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
+      search.field.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+      search.field.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor, constant: 2),
+      scroll.topAnchor.constraint(equalTo: search.field.bottomAnchor, constant: 8),
+      scroll.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+      scroll.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+      scroll.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+    ])
+    return container
   }
 
   func numberOfRows(in tableView: NSTableView) -> Int {
-    visibleSections.count
+    search.tableRowCount ?? visibleSections.count
+  }
+
+  func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
+    search.isActive ? search.height(ofRow: row) : tableView.rowHeight
+  }
+
+  func tableView(_ tableView: NSTableView, shouldSelectRow row: Int) -> Bool {
+    !search.isActive || search.result(atRow: row) != nil
   }
 
   func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+    if search.isActive { return search.cell(forRow: row) }
     guard let section = WindowShadeSettingsSection.section(atRow: row, in: visibleSections) else { return nil }
     let cell = NSTableCellView()
     let icon = NSImageView(image: NSImage(systemSymbolName: section.symbolName,
@@ -371,6 +474,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   func tableViewSelectionDidChange(_ notification: Notification) {
     if isRebuildingLocalCopy { return }
+    if search.isActive {
+      // 点了一条结果：和 Return 一样跳过去，结果留在侧栏里。
+      if let result = search.result(atRow: sidebarTable.selectedRow) {
+        search.selected = sidebarTable.selectedRow - 1
+        reveal(result)
+      }
+      return
+    }
     guard let section = WindowShadeSettingsSection.section(atRow: sidebarTable.selectedRow, in: visibleSections),
           section != currentSection else { return }
     select(section: section)
@@ -428,8 +539,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
     window?.subtitle = section.title
-    // 藏着的页（只有探针会点名打开）没有对应的行，侧栏选中不动。
-    if let row = WindowShadeSettingsSection.row(of: section, in: visibleSections), sidebarTable.selectedRow != row {
+    // 藏着的页（只有探针会点名打开）没有对应的行，侧栏选中不动。搜索结果开着时侧栏放的是结果，也不动。
+    if !search.isActive, let row = WindowShadeSettingsSection.row(of: section, in: visibleSections), sidebarTable.selectedRow != row {
       sidebarTable.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
     }
     if section == .effects {
@@ -467,6 +578,18 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     return page.frame.midX - pageHost.bounds.midX
   }
 
+  /// 诊断：设置搜索收到的索引（SettingsNavigationTests 写成转储，给 tests/check-settings-search-index.py 对照）。
+  var searchEntriesForDiagnostics: [SettingsSearchEntry] { search.collection.index.entries }
+
+  /// 诊断：像在搜索框里打字一样搜一次；commit 为真时再按一次 Return。返回这次的结果。
+  @discardableResult
+  func searchForDiagnostics(_ text: String, commit: Bool = false) -> [SettingsSearchResult] {
+    search.field.stringValue = text
+    search.controlTextDidChange(Notification(name: NSControl.textDidChangeNotification, object: search.field))
+    if commit, let result = search.results?.first { reveal(result) }
+    return search.results ?? []
+  }
+
   /// 诊断：收起 / 展开侧栏（截图探针用它验证"切换侧栏不改变窗口尺寸"）。
   /// 收起侧栏只是把宽度还给详情区，不应该让窗口本身变大或变小。
   var sidebarCollapsedForDiagnostics: Bool {
@@ -495,6 +618,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       pages[.conductor] = owner.makeConductorSettingsPage()
       // 高级页的「实验」一组也是 AppDelegate 的开关（离开就锁要等选了随身设备才可用），一起重建。
       if let controller { pages[.advanced] = makeAdvancedPage(controller: controller) }
+      reindexSearch()
       select(section: currentSection)
     }
   }

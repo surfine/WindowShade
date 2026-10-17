@@ -37,6 +37,47 @@ final class SettingsExplainerHost: NSResponder {
         return view
     }
 
+    // MARK: 设置搜索跳到一行（1.0.18 新表面稿第 2 节第 4 条）
+
+    /// 设置搜索选中了一行：讲解带像点住那一行一样演它（发 .click）；命中的是分段控件的某一段，演那一段
+    /// （发 .hoverOption）。和指针点住走同一条路。讲解带还没接线（刚换页）就先记下，接好了再做。
+    /// 这一页没有讲解带、这一行没挂牌：不做什么（讲解带照旧演页默认）。
+    static func focus(row: NSView, option: Int?) {
+        var top: NSView = row
+        while let parent = top.superview { top = parent }
+        guard let band = band(in: top, containing: row) else { return }
+        band.host.focus(view: row, option: option)
+    }
+
+    private static func band(in view: NSView, containing row: NSView) -> SettingsExplainerBand? {
+        if let band = view as? SettingsExplainerBand, let root = band.pageRoot, row.isDescendant(of: root) { return band }
+        for sub in view.subviews {
+            if let found = band(in: sub, containing: row) { return found }
+        }
+        return nil
+    }
+
+    private var pendingFocus: (view: NSView, option: Int?)?
+
+    func focus(view: NSView, option: Int?) {
+        guard observedWindow != nil else {
+            pendingFocus = (view, option)
+            return
+        }
+        pendingFocus = nil
+        // 行本身挂了牌，或者牌挂在它外面一层 / 里面一层（对照表的一行）。
+        var candidate: NSView? = view
+        var id: Int?
+        while let current = candidate, id == nil {
+            id = rows.first(where: { $0.value.view === current })?.key
+            candidate = current.superview
+        }
+        if id == nil { id = rows.first(where: { $0.value.view?.isDescendant(of: view) == true })?.key }
+        guard let id, let state = rowState(id) else { return }
+        if director.selected?.id != id { send(.click(state)) }
+        if let option, case .options = state.row.kind { send(.hoverOption(state, option: option)) }
+    }
+
     // MARK: 整页重建时接着用的状态
 
     private struct Saved {
@@ -102,6 +143,7 @@ final class SettingsExplainerHost: NSResponder {
             send(.openPage)
         }
         enterRowUnderPointer()
+        if let pendingFocus { focus(view: pendingFocus.view, option: pendingFocus.option) }
     }
 
     /// 同一页换了一组行（例如手势页的分段）：换页默认，行的接线不动。指着的、选住的都放开，
