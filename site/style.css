@@ -184,7 +184,9 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .stage.is-rolling .roller{opacity:1}
 
 
-.stage.is-folded .win-ref .win-bar{border-radius:2.6cqw;box-shadow:none}
+.win-ref .win-bar{transition:none;border-bottom-left-radius:var(--bar-foot);border-bottom-right-radius:var(--bar-foot);--bar-foot:clamp(0px,calc(2.6cqw - (1 - var(--roll,0)) * var(--body-h,0px)),2.6cqw)}
+/* The bar's lower corners round exactly as the rolling edge reaches them, not on a timer. */
+.stage.is-folded .win-ref .win-bar{box-shadow:none}
 .win-ref.is-dragging{cursor:grabbing}
 .stage-foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px}
 .stage-hint{font-size:13px;line-height:1.6;color:var(--faint)}
@@ -209,15 +211,16 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .mini-dock{position:absolute;left:50%;bottom:4cqw;transform:translateX(-50%);display:flex;gap:2.2cqw;padding:1.8cqw 2.4cqw;border-radius:4cqw;background:var(--menubar);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 .5px var(--hair)}
 .mini-dock i{width:7cqw;height:7cqw;border-radius:2cqw;background:color-mix(in srgb,var(--win) 80%,var(--accent) 20%)}
 .mini-dock i:nth-child(2){background:color-mix(in srgb,var(--win) 70%,#f0a040 30%)}
-.mini-dock .mini-slot{width:0;margin-left:-2.2cqw;opacity:0;background:var(--win);box-shadow:0 0 0 .5px var(--win-line)}
+.mini-dock .mini-slot{opacity:0;background:var(--win);box-shadow:0 0 0 .5px var(--win-line);transform-origin:0 50%}
 /* Scroll-linked: --p is how far each tile has travelled toward the middle of the screen. */
 .way[data-way=close] .mini-win{opacity:calc(1 - var(--p,0));transform:scale(calc(1 - .06 * var(--p,0)))}
 .way[data-way=minimize] .mini-win{transform:translate(calc(20% * var(--p,0)),calc(68% * var(--p,0))) scale(calc(1 - .9 * var(--p,0)));opacity:calc(1 - .6 * var(--p,0))}
-.way[data-way=minimize] .mini-slot{width:calc(7cqw * var(--p,0));margin-left:calc(-2.2cqw * (1 - var(--p,0)));opacity:var(--p,0)}
+.way[data-way=minimize] .mini-slot{transform:scale(var(--p,0));opacity:var(--p,0)}
 .way[data-way=shade] .mini-body{clip-path:inset(0 0 calc(var(--p,0) * 100%) 0)}
 .way[data-way=shade] .mini-roll{transform:translateY(calc(-34cqw * var(--p,0)))}
 .way:not([data-way=shade]) .mini-roll{display:none}
-.way.done[data-way=shade] .mini-bar{border-radius:4.4cqw;box-shadow:none}
+.way[data-way=shade] .mini-bar{transition:none;--bar-foot:clamp(0px,calc(4.4cqw - (1 - var(--p,0)) * 34cqw),4.4cqw);border-bottom-left-radius:var(--bar-foot);border-bottom-right-radius:var(--bar-foot)}
+.way.done[data-way=shade] .mini-bar{box-shadow:none}
 .ways-foot{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line)}
 .ways-foot p{font-size:15px;line-height:1.75;color:var(--muted);max-width:40em}
 
@@ -275,16 +278,23 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .stage-glance .win-draft{left:30%;top:22%;width:62%;height:68%}
 .glance-strip{left:8%;top:13%;width:56%;z-index:3;padding:0;border:0;background:none;text-align:inherit;font:inherit;cursor:default}
 .glance-strip .win-bar{border-radius:2.6cqw}
-.glance-card{position:absolute;left:8%;top:calc(13% + 5cqw + 6 * var(--pt));width:56%;z-index:2;border-radius:2.6cqw;overflow:hidden;box-shadow:0 0 0 .5px var(--win-edge),0 calc(8 * var(--pt)) calc(34 * var(--pt)) var(--win-drop);clip-path:inset(0 0 100% 0 round 2.6cqw);opacity:0;pointer-events:none}
-.glance-card .win-body{border-radius:0;min-height:30cqw;background:var(--blue-soft);color:var(--blue-text)}
+/* The card rolls down from under the bar, the way GlancePanel's mask does (calm spring, app.js sets --drop 0 → 1).
+   Composited only: the card's clip box slides up by (1 − drop) while its content slides back down by the same
+   amount, so the content stays put and only the lower edge travels. The shadow is its own layer, scaled with it. */
+.glance-card,.glance-shade{position:absolute;left:8%;top:calc(13% + 5cqw + 6 * var(--pt));width:56%;border-radius:2.6cqw;pointer-events:none;visibility:hidden}
+.glance-card{z-index:2;overflow:hidden;transform:translateY(calc((var(--drop,0) - 1) * 100%))}
+.glance-card>.win-body{transform:translateY(calc((1 - var(--drop,0)) * 100%))}
+.glance-shade{z-index:1;height:var(--card-h,30cqw);box-shadow:0 0 0 .5px var(--win-edge),0 calc(8 * var(--pt)) calc(34 * var(--pt)) var(--win-drop);transform-origin:50% 0;transform:scaleY(var(--drop,0));opacity:min(1,calc(var(--drop,0) * 3))}
+.stage-glance.is-showing .glance-card,.stage-glance.is-showing .glance-shade{visibility:visible}
+.stage-glance.is-open .glance-card{pointer-events:auto}
+.glance-card .win-body{border-radius:2.6cqw;box-shadow:inset 0 0 0 .5px var(--win-edge);min-height:30cqw;background:var(--blue-soft);color:var(--blue-text)}
 .glance-card h3{font-size:4.3cqw}
 .glance-card .win-body p{color:color-mix(in srgb,var(--blue-text) 78%,transparent)}
-.stage-glance.is-open .glance-card{clip-path:inset(0 0 0 0 round 2.6cqw);opacity:1;pointer-events:auto}
-@media(prefers-reduced-motion:no-preference){.glance-card{transition:clip-path .22s var(--ease-out),opacity .12s}}
+/* Reduce Motion: GlancePanel only fades (reduced spring 0.25 s); nothing travels. */
+@media(prefers-reduced-motion:reduce){.glance-card,.glance-card>.win-body,.glance-shade{transform:none}.glance-card,.glance-shade{opacity:var(--drop,0)}}
 /* Title-bar gestures: --roll (0 open → 1 rolled up) and --fill (0 its size → 1 fills the screen) follow the scroll 1:1. */
 /* Two fingertips on the title bar during a demo: they move the way the fingers would. */
 .stage-pin{aspect-ratio:1.36}
-.stage-pin .win{transition:transform .28s var(--ease-out)}
 .stage-pin .win-bar{cursor:default}
 .pin-source{left:7%;top:12%;width:52%;z-index:2}
 .pin-source .win-body{background:var(--blue-soft);color:var(--blue-text);padding-block:3.6cqw 5.4cqw}
@@ -319,8 +329,9 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .app-shade img{width:100%;height:100%}
 .dock-icon.app-text::before{content:"";position:absolute;left:50%;bottom:-1.1cqw;width:.7cqw;height:.7cqw;margin-left:-.35cqw;border-radius:50%;background:var(--win-ink);opacity:.55}
 .app-text{overflow:visible}
-.panel{position:absolute;left:50%;bottom:16cqw;width:78%;padding:2.2cqw 2.2cqw 1.6cqw;border-radius:3.2cqw;background:color-mix(in srgb,var(--win) 94%,transparent);-webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);filter:var(--win-shadow);transform-origin:var(--origin,24% 100%);translate:-50% 0;opacity:0;scale:.96;visibility:hidden;transition:opacity .14s var(--ease-out),scale .14s var(--ease-out),visibility 0s .14s}
-.stage-browse.is-open .panel{opacity:1;scale:1;visibility:visible;transition:opacity .2s var(--ease-out),scale .24s var(--ease-out),visibility 0s}
+.panel{position:absolute;left:50%;bottom:16cqw;width:78%;padding:2.2cqw 2.2cqw 1.6cqw;border-radius:3.2cqw;background:color-mix(in srgb,var(--win) 94%,transparent);-webkit-backdrop-filter:blur(24px) saturate(170%);backdrop-filter:blur(24px) saturate(170%);filter:var(--win-shadow);translate:-50% 0;opacity:0;visibility:hidden;transition:opacity .11s ease-out,visibility 0s .11s}
+/* Same as WindowBrowserPanel: fade in 0.16 s, out 0.11 s; the panel never scales or slides. */
+.stage-browse.is-open .panel{opacity:1;visibility:visible;transition:opacity .16s ease-out,visibility 0s}
 .panel-head{display:flex;align-items:center;justify-content:space-between;font-size:1.9cqw;font-weight:600;color:var(--win-muted);padding:0 .4cqw}
 .segmented{display:flex;padding:.3cqw;border-radius:1.2cqw;background:var(--chip)}
 .segmented i{display:grid;place-items:center;width:4cqw;height:2.8cqw;border-radius:.9cqw}
@@ -445,9 +456,8 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
   .mini-win{transition:opacity .25s ease!important;transform:none!important;opacity:1!important}
   .way.play[data-way=close] .mini-win,.way.play[data-way=minimize] .mini-win{opacity:0!important}
   .mini-dock .mini-slot{transition:opacity .25s ease!important}
-  .stage-browse .panel{transition:opacity .2s!important;scale:1!important}
   .js [data-reveal]{transform:none!important;transition:opacity .4s ease!important}
-  .reference,.win-ref,.stage-pin .win,.lid,.page,.button,.chip{transition:none!important}
+  .reference,.win-ref,.lid,.page,.button,.chip{transition:none!important}
 }
 @media(prefers-reduced-transparency:reduce){
   .header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
@@ -554,10 +564,10 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .teach-pad{display:grid;place-items:center;container-type:inline-size}
 .teach-screen{background:none}
 .tpad{position:relative;width:43%;aspect-ratio:1.31;border-radius:10.5%/13.8%;box-shadow:inset 0 0 0 max(1.5px,.86cqw) var(--teach-pad-edge);container-type:inline-size;overflow:hidden}
-.tdot,.tripple,.ttrail{position:absolute;left:50%;top:50%;pointer-events:none;opacity:0}
-.tdot{--press:0;width:calc(13.4cqw - 1.8cqw * var(--press));aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:rgb(26 89 184 / calc(.2 + .46 * var(--press)));box-shadow:inset 0 0 0 1.5cqw rgb(26 89 184 / calc(.85 - .25 * var(--press)));z-index:2}
+.tdot,.tripple,.ttrail{position:absolute;left:0;top:0;pointer-events:none;opacity:0;will-change:transform,opacity}
+.tdot{--press:0;width:13.4cqw;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:rgb(26 89 184 / calc(.2 + .46 * var(--press)));box-shadow:inset 0 0 0 1.5cqw rgb(26 89 184 / calc(.85 - .25 * var(--press)));z-index:2}
 .tripple{width:13.4cqw;aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 1.2cqw rgb(26 89 184 / .8)}
-.ttrail{height:11.6cqw;border-radius:6cqw;transform-origin:0 50%;background:linear-gradient(90deg,rgb(26 89 184 / .33),rgb(26 89 184 / 0));z-index:1}
+.ttrail{width:30cqw;height:11.6cqw;border-radius:6cqw;transform-origin:0 0;background:linear-gradient(90deg,rgb(26 89 184 / .33),rgb(26 89 184 / 0));z-index:1}
 .tscreen{position:relative;width:100%;height:100%;background:var(--teach-wall);container-type:size;overflow:hidden;box-shadow:0 0 0 .5px rgba(0,0,0,.08)}
 .tmenu{position:absolute;inset:0 0 auto;height:5.4cqh;display:flex;align-items:center;justify-content:space-between;padding:0 1.6cqw;z-index:4}
 .tmenu span{display:flex;gap:.9cqw}
@@ -585,7 +595,7 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .tdock i{width:4.9cqh;aspect-ratio:1;border-radius:24%;background:#1a8cff}
 .tdock i:nth-child(2){background:#ff9f0a}.tdock i:nth-child(3){background:#ff375f}.tdock i:nth-child(4){background:#30d158}.tdock i:nth-child(5){background:#ffd60a}.tdock i:nth-child(6){background:#fff}.tdock i:nth-child(7){background:#64d2ff}.tdock i:nth-child(8){background:#7d7aff}.tdock i:nth-child(10){background:#636366}.tdock i:nth-child(11){background:#30d158}.tdock i:nth-child(12){background:#aeaeb2}
 .tdock b{width:.15cqw;height:4.4cqh;background:rgba(255,255,255,.5)}
-.tptr{position:absolute;width:2.5cqw;left:50%;top:50%;opacity:0;z-index:7;pointer-events:none}
+.tptr{position:absolute;width:2.5cqw;left:0;top:0;opacity:0;z-index:7;pointer-events:none;will-change:transform,opacity}
 .tptr path{fill:#111;stroke:#fff;stroke-width:1.3;stroke-linejoin:round}
 .teach-tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;padding:3px;border-radius:11px;background:var(--chip)}
 .teach-tabs-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);border-radius:8px;background:var(--accent);box-shadow:0 1px 3px rgba(20,40,110,.25);transform:translateX(calc(var(--index,0) * 100%));transition:transform .38s var(--ease-out)}
@@ -640,7 +650,7 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .notch-term p:first-child{color:#8fd18f}
 .notch-caret{width:1cqw;height:2.2cqw;background:#d7dbe3;animation:notch-caret 1.1s steps(1) infinite}
 @keyframes notch-caret{50%{opacity:0}}
-.island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:14.5cqw;height:5.4cqw;background:#000;border-radius:0 0 1.5cqw 1.5cqw;overflow:hidden;z-index:6;outline:none;box-shadow:0 0 0 .5px rgba(255,255,255,.08)}
+.island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:14.5cqw;height:5.4cqw;background:#000;border-radius:0 0 1.75cqw 1.75cqw;contain:layout paint;overflow:hidden;z-index:6;outline:none;box-shadow:0 0 0 .5px rgba(255,255,255,.08)}
 .island:focus-visible{box-shadow:0 0 0 2px var(--accent)}
 .island>div{position:absolute;inset:0;opacity:0;transition:opacity .16s var(--ease-out);pointer-events:none}
 .island[data-mode=compact] .island-compact,.island[data-mode=alert] .island-alert,.island[data-mode=shelf] .island-shelf{opacity:1;transition-duration:.24s;transition-delay:.08s;pointer-events:auto}
@@ -651,7 +661,7 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .island-count{font:600 2.3cqw/1 -apple-system,BlinkMacSystemFont,sans-serif;color:#fff}
 .island-dot{width:1.1cqw;aspect-ratio:1;border-radius:50%;background:var(--accent);display:none}
 .stage-notch.has-changed .island-dot{display:block}
-.island-alert{display:flex;align-items:flex-end;gap:1.6cqw;padding:0 2.2cqw 2cqw}
+.island-alert{display:flex;align-items:flex-end;gap:1.6cqw;padding:0 2.2cqw 1.6cqw}
 .island-alert .island-icon{width:6cqw}
 .island-alert .island-icon::after{font-size:2.2cqw}
 .island-text{display:grid;gap:.4cqw;color:#fff;line-height:1.2}
@@ -668,4 +678,5 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .card-label b{font-size:1.7cqw;font-weight:600}
 .card-label small{font-size:1.4cqw;color:rgba(255,255,255,.6)}
 .stage-notch.has-changed .island-card:first-child .card-pic{box-shadow:inset 0 0 0 .12cqw rgba(255,255,255,.1),0 0 0 .3cqw var(--accent)}
-@media(prefers-reduced-motion:reduce){.island>div{transition:none}.notch-caret{animation:none}}
+.notch-front.is-fading{opacity:0}
+@media(prefers-reduced-motion:reduce){.island>div{transition:none}.notch-caret{animation:none}.notch-front{transition:opacity .25s ease!important}}
