@@ -78,6 +78,7 @@ extension GlanceProbe {
     let recorder = HitchRecorder(screen: screen)
     let vm = HitchRecorder.isVirtualMachine
     let budget: HitchMeter.Budget = vm ? .virtualMachine : .hardware
+    let animatedInVM = args.contains("--animated")
     print(String(format: "INFO hitch: %d rounds per kind, refresh %.0f Hz (%@), %@, budget %@",
       rounds, recorder.refreshHz, screen.localizedName, vm ? "virtual machine" : "hardware",
       vm ? "VM: ratio INFO only, worst < 500 ms" : "ratio < 5 ms/s and worst < 100 ms"))
@@ -93,28 +94,60 @@ extension GlanceProbe {
 
     var results: [(kind: String, runs: [[Double]])] = []
 
-    // 收起／展开。
+    // 收起／展开。每轮之间要等够：展开之后产品还会在 80／250／550／1100 ms 各补一次几何与前台，
+    // 下一次收起若在那之前开始，会和这些补丁抢主线程（也会把它们量进下一次收起里）。
+    // 一轮超时不整组中止：打印当时的状态、设法展开复原，记一次失败接着下一轮；连续 2 轮失败才放弃这一类。
     var folds: [[Double]] = [], unfolds: [[Double]] = []
+    var foldFailures: [String] = []
+    var consecutive = 0
+    var hides: [String: Int] = [:]
+    let foldLimit = 10.0, unfoldLimit = 10.0
     for round in 1...rounds {
       await ShareableContentCache.shared.prefetch()
-      folds.append(try await measure {
-        owner.shade(element, id)
-        try await wait("hitch fold \(round)") {
-          self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
-            && self.owner.duoController.windowEffects.activeCount == 0
+      do {
+        let started = CACurrentMediaTime()
+        let fold = try await measure {
+          owner.shade(element, id)
+          try await wait("hitch fold \(round)", timeout: foldLimit) {
+            self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
+              && self.owner.duoController.windowEffects.activeCount == 0
+          }
+          try await tail(150)
         }
-        try await tail(150)
-      })
-      try await Task.sleep(for: .milliseconds(300), clock: .suspending)
-      unfolds.append(try await measure {
-        _ = owner.unshade(id)
-        try await wait("hitch unfold \(round)", timeout: 8) {
-          self.onscreen(self.id) && self.owner.shaded[self.id] == nil
-            && self.owner.duoController.windowEffects.activeCount == 0
+        if let hide = owner.shaded[id]?.hide { hides["\(hide)", default: 0] += 1 }
+        try await Task.sleep(for: .milliseconds(500), clock: .suspending)
+        let unfold = try await measure {
+          _ = owner.unshade(id)
+          try await wait("hitch unfold \(round)", timeout: unfoldLimit) {
+            self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+              && self.owner.duoController.windowEffects.activeCount == 0
+          }
+          try await tail(150)
         }
-        try await tail(150)
-      })
-      try await Task.sleep(for: .milliseconds(400), clock: .suspending)
+        folds.append(fold)
+        unfolds.append(unfold)
+        consecutive = 0
+        if CACurrentMediaTime() - started > 6 {
+          print(String(format: "INFO hitch fold round %d: slow round %.1f s", round, CACurrentMediaTime() - started))
+        }
+      } catch {
+        consecutive += 1
+        let message = "round \(round): \(error.localizedDescription) [\(hitchFoldState())]"
+        foldFailures.append(message)
+        print("INFO hitch fold \(message)")
+        fflush(stdout)
+        try await hitchRecover(element: element, round: round)
+        if consecutive >= 2 {
+          print("INFO hitch fold: \(consecutive) rounds in a row failed; stopping fold/unfold early")
+          break
+        }
+      }
+      try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
+    }
+    print("INFO hitch fold: hide methods \(hides.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: " "))"
+      + "\(vm && !animatedInVM ? "; VM: fold cover animation off (the paravirtual GPU never presents it; pass --animated to force)" : "")")
+    if !foldFailures.isEmpty {
+      print("FAIL hitch fold: \(foldFailures.count) of \(folds.count + foldFailures.count) rounds did not finish; first: \(foldFailures[0])")
     }
     results += [("fold", folds), ("unfold", unfolds)]
 
@@ -160,7 +193,7 @@ extension GlanceProbe {
     if GlanceController.isEnabled {
       let glance = owner.glance
       owner.shade(element, id)
-      try await wait("hitch strip shown") {
+      try await wait("hitch strip shown", timeout: 10) {
         self.owner.shaded[self.id]?.overlay.map { $0.isVisible && $0.alphaValue > 0.5 } == true
           && self.owner.duoController.windowEffects.activeCount == 0
       }
@@ -210,6 +243,32 @@ extension GlanceProbe {
         print("INFO hitch \(kind): on hardware this would be \(hardware.isEmpty ? "PASS" : "FAIL (\(hardware.joined(separator: ", ")))")")
       }
       fflush(stdout)
+    }
+  }
+
+  /// 超时那一刻的收起状态，一行：生命周期、隐藏方式、卷帘条、真窗口在不在屏、前台是谁、效果是否还在跑。
+  func hitchFoldState() -> String {
+    let front = NSWorkspace.shared.frontmostApplication
+    guard let state = owner.shaded[id] else {
+      return "not shaded, onscreen=\(onscreen(id)) frontmost=\(front?.localizedName ?? "-")(\(front?.processIdentifier ?? 0)) effects=\(owner.duoController.windowEffects.activeCount)"
+    }
+    let overlay = state.overlay.map { "visible=\($0.isVisible) alpha=\(String(format: "%.2f", $0.alphaValue))" } ?? "none"
+    return "stage=\(state.lifecycleStage) hide=\(state.hide) overlay(\(overlay)) onscreen=\(onscreen(id)) "
+      + "frontmost=\(front?.localizedName ?? "-")(\(front?.processIdentifier ?? 0))\(front?.processIdentifier == state.pid ? "=fixture" : "") "
+      + "effects=\(owner.duoController.windowEffects.activeCount)"
+  }
+
+  /// 一轮没走完：还收着就展开，等真窗口回到屏上（有界）；复原不了才整组中止。
+  func hitchRecover(element: AXUIElement, round: Int) async throws {
+    if owner.shaded[id] != nil { _ = owner.unshade(id) }
+    do {
+      try await wait("hitch recover \(round)", timeout: 10) {
+        self.onscreen(self.id) && self.owner.shaded[self.id] == nil
+          && self.owner.duoController.windowEffects.activeCount == 0
+      }
+      print("INFO hitch fold round \(round): recovered (\(hitchFoldState()))")
+    } catch {
+      throw EffectError.unavailable("hitch: could not restore the fixture window after round \(round) [\(hitchFoldState())]")
     }
   }
 

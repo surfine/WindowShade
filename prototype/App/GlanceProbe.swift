@@ -36,9 +36,10 @@ final class GlanceProbe {
     owner.statusItem.isVisible = false
     owner.appearanceMode = .nativeScreenshot
     owner.duoController.persistsSettings = false
-    // --hitch 量的是收起动画本身的帧节奏，所以总是带动画。
+    // --hitch 量的是收起动画本身的帧节奏，所以真机上总是带动画；虚拟机的半虚拟化显卡从不呈现收起盖板
+    // （每次都等满呈现超时再退回普通收起，白白多 1–4 秒），虚拟机里只有显式 --animated 才带。
     owner.duoController.settings.windowsEnabled = CommandLine.arguments.contains("--animated")
-      || CommandLine.arguments.contains("--hitch")
+      || (CommandLine.arguments.contains("--hitch") && !HitchRecorder.isVirtualMachine)
     owner.duoController.settings.desktopEnabled = false
     owner.duoController.start(owner: owner)
     let glance = owner.glance
