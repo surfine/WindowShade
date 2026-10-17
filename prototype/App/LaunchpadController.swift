@@ -42,6 +42,13 @@ final class LaunchpadController {
 
     var isShowing: Bool { panel != nil }
 
+    /// 最近一次 show 为什么没开（只给日志和探针报错用）。
+    private(set) var lastShowRefusalForProbe: String?
+    private func noteShowRefused(_ why: String) {
+        lastShowRefusalForProbe = why
+        wlog("launchpad: show refused: \(why)")
+    }
+
     /// 面板正在这块屏上。没打开，或开在另一块屏，都不是。
     func panelIsOn(_ screen: NSScreen) -> Bool {
         guard let panel, let shown = panel.screen else { return false }
@@ -207,7 +214,10 @@ final class LaunchpadController {
 
     func show(from notch: NSRect? = nil) {
         let pointer = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else { return }
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else {
+            noteShowRefused("no screen (pointer=\(NSStringFromPoint(pointer)) screens=\(NSScreen.screens.count))")
+            return
+        }
         show(on: screen, from: notch)
     }
 
@@ -222,7 +232,10 @@ final class LaunchpadController {
         // 启动台层先占这块屏；占不到（授权、指挥正占着）就不开。
         if let id = NotchController.displayID(screen) {
             let display = WS2.DisplayID(value: id)
-            guard owner.notch.leases.acquire(.launchpad, on: display) else { return }
+            guard owner.notch.leases.acquire(.launchpad, on: display) else {
+                noteShowRefused("display lease refused (display=\(id) frame=\(NSStringFromRect(screen.frame)) scale=\(screen.backingScaleFactor))")
+                return
+            }
             shownDisplay = display
         }
         previousApp = NSWorkspace.shared.frontmostApplication

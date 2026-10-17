@@ -1579,7 +1579,10 @@ extension GlanceProbe {
     }
     pad.show()
     try await Task.sleep(for: .milliseconds(1400), clock: .suspending)
-    guard let view = pad.viewForProbe else { throw EffectError.unavailable("launchpad did not show") }
+    guard let view = pad.viewForProbe else {
+      let screens = NSScreen.screens.map { "\(NSStringFromRect($0.frame))@\($0.backingScaleFactor)x" }.joined(separator: ",")
+      throw EffectError.unavailable("launchpad did not show (refusal: \(pad.lastShowRefusalForProbe ?? "none recorded"); screens: \(screens); pointer: \(NSStringFromPoint(NSEvent.mouseLocation)); showing=\(pad.isShowing))")
+    }
     shoot("launchpad-home")
     print("INFO launchpad layers: \(view.debugForProbe())")
     try await Task.sleep(for: .milliseconds(1600), clock: .suspending)
