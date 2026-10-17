@@ -389,20 +389,25 @@ extension AppDelegate {
                 name: WSL10n.setting("settings.experiments.livePreview.name", zh: "普通窗口实时预览"),
                 subtitle: WSL10n.setting("settings.experiments.livePreview.sub", zh: "窗口浏览里选中的窗口播放实时画面"),
                 isOn: WindowBrowserSettings.livePreviewEnabled,
-                action: #selector(prefToggleWindowBrowserLive(_:))),
+                action: #selector(prefToggleWindowBrowserLive(_:)),
+                explainer: ExplainerRow.Advanced.livePreview),
             // 跟着声音跳（NP-6）：默认关；打开时系统才问"系统音频录制"。拒绝过的，副标题写原因，再打开带去系统设置。
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.followSound.name", zh: "跟着声音跳"),
                                  subtitle: followSoundSubtitle(),
-                                 isOn: AudioLevelController.isEnabled, action: #selector(prefToggleFollowSound(_:))),
+                                 isOn: AudioLevelController.isEnabled, action: #selector(prefToggleFollowSound(_:)),
+                                 explainer: ExplainerRow.Advanced.followSound),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.awaySummary.name", zh: "回来时说一下离开期间的事"),
                                  subtitle: WSL10n.setting("settings.shade.awaySummary.sub", zh: "锁屏或睡眠时有变化才说"),
-                                 isOn: AwaySummaryController.isEnabled, action: #selector(prefToggleAwaySummary(_:))),
+                                 isOn: AwaySummaryController.isEnabled, action: #selector(prefToggleAwaySummary(_:)),
+                                 explainer: ExplainerRow.Advanced.awaySummary),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.copyProgress.name", zh: "拷贝进度"),
                                  subtitle: WSL10n.setting("settings.shade.copyProgress.sub", zh: "Finder 拷贝时在刘海上显示拷到哪了"),
-                                 isOn: CopyProgressSource.isEnabled, action: #selector(prefToggleCopyProgress(_:))),
+                                 isOn: CopyProgressSource.isEnabled, action: #selector(prefToggleCopyProgress(_:)),
+                                 explainer: ExplainerRow.Advanced.copyProgress),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.originGuess.name", zh: "猜你从哪来"),
                                  subtitle: WSL10n.setting("settings.shade.originGuess.sub", zh: "按出别的系统的习惯时问一次"),
-                                 isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:))),
+                                 isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:)),
+                                 explainer: ExplainerRow.Advanced.originGuess),
             makePresenceLockRow(),
             makePresenceDeviceRow(),
             BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },
@@ -514,7 +519,8 @@ extension AppDelegate {
         let usable = PresenceLockDriver.sourceAvailable
         let row = makeUnifiedToggleRow(name: WSL10n.text("settings.privacy.presenceLock.name", zh: "离开就锁"),
                                        subtitle: usable ? WSL10n.text("settings.privacy.presenceLock.sub", zh: "随身设备走远了，倒数 10 秒后锁屏") : WSL10n.text("settings.privacy.presenceLock.needDevice", zh: "先在下面选一台随身设备"),
-                                       isOn: on, action: #selector(prefTogglePresenceLock(_:)))
+                                       isOn: on, action: #selector(prefTogglePresenceLock(_:)),
+                                       explainer: ExplainerRow.Advanced.awayLock)
         (row as? NSStackView)?.arrangedSubviews.compactMap { $0 as? NSSwitch }.first?.isEnabled = usable || on
         return row
     }
@@ -669,7 +675,8 @@ extension AppDelegate {
         let isOn = BystanderCameraPick.isEnabled
         let shown = BystanderTuckRow.presentation(isOn: isOn, listEmpty: PrivateAppList.shared.isEmpty)
         let row = makeUnifiedToggleRow(name: BystanderTuckRow.title, subtitle: shown.subtitle, isOn: isOn,
-                                       enabled: shown.enabled, action: #selector(prefToggleBystanderCover(_:)))
+                                       enabled: shown.enabled, action: #selector(prefToggleBystanderCover(_:)),
+                                       explainer: ExplainerRow.Advanced.bystander)
         row.toolTip = shown.toolTip
         return row
     }

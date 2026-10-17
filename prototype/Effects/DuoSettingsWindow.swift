@@ -954,6 +954,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       stack.topAnchor.constraint(equalTo: root.topAnchor),
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
+    // 顶上的讲解带（1.0.18）：行用 SettingsExplainerHost.tag 挂牌，没挂牌的行指上去回到页默认。
+    let band = SettingsExplainerBand(page: .advanced)
+    band.pageRoot = root
+    stack.addArrangedSubview(band)
+    stack.setCustomSpacing(14, after: band)
     let header = makePageHeader(
       title: WSL10n.setting("settings.advanced.title", zh: "高级"),
       subtitle: WSL10n.setting("settings.advanced.sub", zh: "恢复默认值，或打开诊断日志排查问题。"),
@@ -965,7 +970,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let languageSection = makeSectionLabel(WSL10n.text("settings.language.section", zh: "语言"))
     stack.addArrangedSubview(languageSection)
     stack.setCustomSpacing(6, after: languageSection)
-    let languageCard = makeSettingsCard([makeLanguageRow()])
+    let languageCard = makeSettingsCard([SettingsExplainerHost.tag(makeLanguageRow(), ExplainerRow.Advanced.language)])
     stack.addArrangedSubview(languageCard)
     languageCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: languageCard)
@@ -1016,7 +1021,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     infoRow.alignment = .centerY
     infoRow.spacing = 14
     infoRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-    let infoCard = makeSettingsCard([infoRow])
+    let infoCard = makeSettingsCard([SettingsExplainerHost.tag(infoRow, ExplainerRow.Advanced.reduceMotion)])
     let infoSection = makeSectionLabel(WSL10n.text("settings.advanced.section.accessibility", zh: "辅助功能"))
     stack.addArrangedSubview(infoSection)
     stack.setCustomSpacing(6, after: infoSection)
@@ -1036,12 +1041,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.addArrangedSubview(aboutSection)
     stack.setCustomSpacing(6, after: aboutSection)
     let aboutCard = makeSettingsCard([
-      makeActionRow(
+      SettingsExplainerHost.tag(makeActionRow(
         title: WSL10n.setting("settings.about.diagnostics.name", zh: "导出诊断信息"),
         subtitle: WSL10n.setting("settings.about.diagnostics.sub", zh: "存成文件夹给你过目，不会自动发出"),
         symbol: "shippingbox",
         button: aboutButton(WSL10n.text("settings.about.diagnostics.button", zh: "导出…"), "shippingbox",
-                            #selector(exportDiagnosticsAction))),
+                            #selector(exportDiagnosticsAction))), ExplainerRow.Advanced.exportDiagnostics),
       makeActionRow(
         title: WSL10n.setting("settings.about.exportSettings.name", zh: "导出设置"),
         subtitle: WSL10n.setting("settings.about.exportSettings.sub", zh: "备份成一个文件，换电脑时导回去"),

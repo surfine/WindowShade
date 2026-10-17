@@ -19,6 +19,7 @@ struct ExplainerTests {
         shadeScenes()
         shortcutScenes()
         privacyScenes()
+        advancedScenes()
         pageAndRowLoops()
         offAndOptions()
         environment()
@@ -181,6 +182,28 @@ struct ExplainerTests {
                "accessibility on rolls the window, off leaves it")
         expect(ExplainerRow.Privacy.accessibility(granted: true) != ExplainerRow.Privacy.accessibility(granted: false), "the permission row follows the grant state")
         expect(ExplainerScenes.launchAtLogin.initial[.menuBarIcon]?.opacity == 1, "launch at login shows the menu bar icon")
+    /// 高级页：三张静图没有帧（减少动态效果是强制摆一帧）；实验各段有关键帧；变体只改了该改的；每段都有读屏句。
+    static func advancedScenes() {
+        let stills = [ExplainerScenes.advLanguage, ExplainerScenes.advDiagnostics, ExplainerScenes.advReduceMotion]
+        expect(stills.allSatisfy(\.isStill), "the advanced stills hold one frame")
+        expect(ExplainerScenes.advReduceMotion.keyFrameIndex == ExplainerScenes.doubleClickRoll.keyFrameIndex
+               && ExplainerScenes.advReduceMotion.keyState[.windowA]?.h == 10, "reduce-motion still rests on the rolled-up key frame")
+        expect(ExplainerScenes.advLivePreview.initial[.panel]?.look == .livePreview && ExplainerScenes.dockHover.initial[.panel]?.look == nil,
+               "live preview swaps only the panel look")
+        let guess = ExplainerScenes.advOriginGuess
+        expect(guess.notchLine?.title.zh == "你之前常用 Windows？" && ExplainerScenes.notchTeaches.notchLine?.title.zh != guess.notchLine?.title.zh,
+               "origin guess has its own notch line")
+        let lock = ExplainerScenes.advAwayLock
+        expect(lock.state(throughFrame: lock.keyFrameIndex)[.cover]?.opacity == 1 && lock.frames.last?.isReset == true, "away lock ends locked, then resets")
+        expect(lock.state(throughFrame: 1)[.deviceText]?.text != nil, "the device text changes when it walks away")
+        let loops: [ExplainerSpec] = [lock, ExplainerScenes.advLivePreview, ExplainerScenes.advBeat, ExplainerScenes.advAwaySummary,
+                                      ExplainerScenes.advCopyProgress, guess]
+        expect(loops.allSatisfy { $0.keyFrameIndex != nil && $0.timeline.loopDuration > 1 }, "every experiment scene has a key frame and a real loop")
+        let all = loops + stills
+        expect(Set(all.map(\.id)).count == all.count, "advanced scene ids are unique")
+        expect(all.allSatisfy { $0.description.zh.hasPrefix("演示：") }, "every advanced scene has a VoiceOver sentence")
+        expect(ExplainerPage.advanced.pageDefault.id == "adv.language", "advanced page default is the language still")
+        if case .pageDefault = ExplainerRow.Advanced.bystander.kind { expect(true, "bystander follows the page default") } else { expect(false, "bystander follows the page default") }
     }
 
     static func row(_ id: Int, _ row: ExplainerRow, on: Bool? = true, option: Int? = nil) -> ExplainerDirector.RowState {

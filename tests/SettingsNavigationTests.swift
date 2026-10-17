@@ -140,6 +140,8 @@ struct SettingsNavigationTests {
       (.notch, ["有变化时提醒", "音量和亮度"], nil),
       // 效果页：讲解带在最上面，截图看带宽和行距。
       (.effects, ["锁屏开合效果"], nil),
+      // 高级页：只为出浅深色截图（顶上的讲解带 + 语言、关于、实验各组）。
+      (.advanced, [], nil),
     ]
     // 隐私一栏：四组和每一行都在，且和登记表生成的数据源一致。
     settings.select(section: .permissions)
