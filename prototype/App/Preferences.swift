@@ -1430,9 +1430,9 @@ extension AppDelegate {
             recorderRow(.nextDisplay, subtitle: WSL10n.setting("settings.shortcuts.nextDisplay.sub", zh: "按原来的排法放到下一块屏幕上；上下摆的显示器也行")),
             recorderRow(.tuckAll, subtitle: WSL10n.setting("settings.shortcuts.tuckAll.sub", zh: "这块屏上的窗口全部收进刘海，再按一下放回来")),
             recorderRow(.tuckCurrent, subtitle: WSL10n.setting("settings.shortcuts.tuckCurrent.sub", zh: "只把当前窗口收进刘海")),
-            recorderRow(.notchShelf, subtitle: WSL10n.setting("settings.shortcuts.notchShelf.sub", zh: "展开后用方向键选、Return 打开、Esc 退出；默认不占用任何快捷键")),
-            recorderRow(.joinColumnLeft, subtitle: WSL10n.setting("settings.shortcuts.joinColumn.sub", zh: "卷轴里用；已经在一列里就拆成一列。默认不占用任何快捷键")),
-            recorderRow(.joinColumnRight, subtitle: WSL10n.setting("settings.shortcuts.joinColumn.sub", zh: "卷轴里用；已经在一列里就拆成一列。默认不占用任何快捷键")),
+            recorderRow(.notchShelf, subtitle: WSL10n.setting("settings.shortcuts.notchShelf.sub", zh: "方向键选、Return 打开、Esc 退出")),
+            recorderRow(.joinColumnLeft, subtitle: WSL10n.setting("settings.shortcuts.joinColumn.sub", zh: "卷轴里用；已在一列就拆成一列")),
+            recorderRow(.joinColumnRight, subtitle: WSL10n.setting("settings.shortcuts.joinColumn.sub", zh: "卷轴里用；已在一列就拆成一列")),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.arrange", zh: "排布当前窗口")))
         stack.addArrangedSubview(arrange)
@@ -1477,7 +1477,7 @@ extension AppDelegate {
             recorderRow(.undoPlacement, subtitle: WSL10n.setting("settings.shortcuts.undoPlacement.sub", zh: "回到排之前的位置和大小")),
             recorderRow(.previousDisplay, subtitle: WSL10n.setting("settings.shortcuts.previousDisplay.sub", zh: "和“移到另一块屏幕”反着转")),
             recorderRow(.focusTimer, subtitle: WSL10n.setting("settings.shortcuts.focusTimer.sub", zh: "开始、暂停或继续同一个番茄钟；默认不占用任何快捷键")),
-            recorderRow(.countdownTimer, subtitle: WSL10n.setting("settings.shortcuts.countdownTimer.sub", zh: "刘海里选分钟，回车开始；默认不占用任何快捷键"), quickEnable: true),
+            recorderRow(.countdownTimer, subtitle: WSL10n.setting("settings.shortcuts.countdownTimer.sub", zh: "选分钟，回车开始"), quickEnable: true),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.more", zh: "更多排法")))
         stack.addArrangedSubview(more)
