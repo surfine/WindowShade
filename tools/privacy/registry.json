@@ -7026,9 +7026,9 @@
   },
   {
    "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
-   "line": 68,
+   "line": 70,
    "symbol": "UserDefaults",
-   "source": "get { UserDefaults.standard.bool(forKey: dockEnabledKey) }",
+   "source": "get { UserDefaults.standard.object(forKey: dockEnabledKey) as? Bool ?? ReleaseDefaults.value(dockEnabledKey) }",
    "signal": "settings"
   },
   {
@@ -7176,6 +7176,13 @@
    "line": 257,
    "symbol": "UserDefaults",
    "source": "var translucent: Bool = UserDefaults.standard.bool(forKey: shadeTranslucentDefaultsKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/WindowShade.swift",
+   "line": 349,
+   "symbol": "UserDefaults",
+   "source": "let hadInstallRecord = UserDefaults.standard.object(forKey: InstallHistory.defaultsKey) != nil",
    "signal": "settings"
   },
   {
@@ -7424,6 +7431,34 @@
    "signal": "login-item"
   },
   {
+   "path": "prototype/App/Preferences.swift",
+   "line": 1161,
+   "symbol": "UserDefaults",
+   "source": "let defaults = UserDefaults.standard",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/Preferences.swift",
+   "line": 1194,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.set(true, forKey: WhatsNew1018Changes.whatsNewShownKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/Preferences.swift",
+   "line": 1228,
+   "symbol": "UserDefaults",
+   "source": "let defaults = UserDefaults.standard",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/Preferences.swift",
+   "line": 1237,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.set(true, forKey: WhatsNew1018Changes.permissionsAgainShownKey)",
+   "signal": "settings"
+  },
+  {
    "path": "prototype/Effects/DuoController.swift",
    "line": 554,
    "symbol": "SCShareableContent",
@@ -7449,6 +7484,13 @@
    "line": 37,
    "symbol": "UserDefaults",
    "source": "let after = UserDefaults.standard.data(forKey: LaunchpadController.layoutKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/Core/WhatsNew1018Changes.swift",
+   "line": 67,
+   "symbol": "UserDefaults",
+   "source": "static func groups(in defaults: UserDefaults, dockClickNow: Bool, previewInstall: Bool,",
    "signal": "settings"
   }
  ],

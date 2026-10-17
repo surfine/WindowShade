@@ -152,14 +152,14 @@ final class NotchController {
         get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? ReleaseDefaults.value(enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
-    /// 展开时窗口和正在进行的事合成一排：左段收着的窗口，一条竖线，右段正在播放的、编程会话（M11，设计上默认开；1.0.16 真机验过前默认关，见 ReleaseDefaults）。
+    /// 展开时窗口和正在进行的事合成一排：左段收着的窗口，一条竖线，右段正在播放的、编程会话（M11，设计上默认开；1.0.18 起 Aaron 拍板默认开，见 ReleaseDefaults）。
     /// 关着是旧样子：活动卡和窗口格上下叠放。
     nonisolated static let mergedRowKey = "Notch.mergedRow"
     nonisolated static var mergedRowEnabled: Bool {
         get { NotchMergedRowPreference.isEnabled(in: .standard) }
         set { UserDefaults.standard.set(newValue, forKey: mergedRowKey) }
     }
-    /// 最小呈现（M13，设计上默认开；1.0.16 真机验过前默认关，见 ReleaseDefaults）：同时有两件以上持续活动时，选中的是紧凑，其余退成岛右侧的最小形；
+    /// 最小呈现（M13，设计上默认开；1.0.18 起 Aaron 拍板默认开，见 ReleaseDefaults）：同时有两件以上持续活动时，选中的是紧凑，其余退成岛右侧的最小形；
     /// 短暂提醒撞上正在播放时不另开第二颗岛，这一颗岛 bloom 成提醒。关着是旧样子。
     nonisolated static let minimalPresentationKey = NotchMinimalPresentation.defaultsKey
     nonisolated static var minimalPresentationEnabled: Bool {

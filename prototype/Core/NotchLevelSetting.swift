@@ -4,7 +4,7 @@
 import Foundation
 
 enum NotchLevelSetting {
-    /// 开关。设计上默认开（Aaron 2026-10-09），1.0.16 真机验过前默认关（ReleaseDefaults）。关了：不出两耳，也不拦键，系统的提示照常。
+    /// 开关。设计上默认开（Aaron 2026-10-09），1.0.18 起 Aaron 拍板默认开（ReleaseDefaults）。关了：不出两耳，也不拦键，系统的提示照常。
     static let key = "Notch.levelKeys.enabled"
     /// 开关或辅助功能状态变了，设置这一行与监听都按它重算。
     static let didChange = Notification.Name("WindowShade.NotchLevelSetting.didChange")

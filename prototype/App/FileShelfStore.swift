@@ -8,7 +8,7 @@ import Foundation
 enum FileShelf {
     static let enabledKey = "FileShelf.enabled"
 
-    /// 1.0.16 真机验过前默认关；没有入口前不会记任何东西。设置里关掉即清空。
+    /// 1.0.18 起 Aaron 拍板默认开；没有入口前不会记任何东西。设置里关掉即清空。
     static var enabled: Bool {
         get { (UserDefaults.standard.object(forKey: enabledKey) as? Bool) ?? ReleaseDefaults.value(enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }

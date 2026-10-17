@@ -1,4 +1,4 @@
-// 窗口浏览功能的设置键与默认值。Dock 悬停与普通窗口实时预览默认关闭，
+// 窗口浏览功能的设置键与默认值。Dock 悬停跟默认值总账走（1.0.18 起默认开），普通窗口实时预览默认关闭，
 // 菜单入口始终可用；独立快捷键默认不注册。
 
 import Carbon.HIToolbox
@@ -65,8 +65,9 @@ enum WindowBrowserSettings {
         }
     }
 
+    /// Dock 悬停查看窗口。没设过跟默认值总账走（1.0.18 起默认开，见 ReleaseDefaults）；显式开过关过的照旧。
     static var dockEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: dockEnabledKey) }
+        get { UserDefaults.standard.object(forKey: dockEnabledKey) as? Bool ?? ReleaseDefaults.value(dockEnabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: dockEnabledKey) }
     }
 

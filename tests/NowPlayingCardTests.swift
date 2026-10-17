@@ -282,10 +282,10 @@ import Foundation
         typealias D = NotchNowPlayingDefaults
         expect(D.musicKey == "Notch.activities.musicEnabled" && D.streamKey == "Notch.activities.nowPlayingStream", "键名不变")
 
-        // 没设过（nil）：跟 1.0.16 默认值总账走（设计上默认开，真机验过前关）。
+        // 没设过（nil）：跟默认值总账走（设计上默认开，1.0.18 起 Aaron 拍板开）。
         expect(D.state(forKey: D.musicKey, in: suite) == .unset && D.state(forKey: D.streamKey, in: suite) == .unset, "没设过")
         expect(D.musicEnabled(in: suite) == ReleaseDefaults.value(D.musicKey) && D.streamEnabled(in: suite) == ReleaseDefaults.value(D.streamKey), "两个键没设过：跟总账走")
-        expect(!D.musicEnabled(in: suite) && !D.streamEnabled(in: suite), "没验过：都是关")
+        expect(D.musicEnabled(in: suite) && D.streamEnabled(in: suite), "1.0.18 拍板：都是开")
         expect(!D.streamExplicitlyEnabled(in: suite), "没设过不算“显式开过”（离开就锁暂停媒体沿用老行为）")
 
         // 显式关：保持关。

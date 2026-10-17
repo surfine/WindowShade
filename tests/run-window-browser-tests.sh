@@ -11,7 +11,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
 fi
 
 swiftc -target "$(uname -m)-apple-macosx15.0" $GLASS_DEFINE \
-  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/ReleaseDefaults.swift \
   prototype/App/StandardMenu.swift \
   prototype/App/GlobalShortcuts.swift \
   prototype/WindowBrowser/WindowBrowserModels.swift \

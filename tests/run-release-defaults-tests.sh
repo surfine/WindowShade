@@ -1,5 +1,5 @@
 #!/bin/bash
-# 1.0.16 默认值总账（纯逻辑）：1.0.15 的键不动，新键没验过一律关。
+# 默认值总账（纯逻辑）：1.0.15 的键不动，没验过也没拍板的一律关，拍板的开。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/release-defaults-tests
