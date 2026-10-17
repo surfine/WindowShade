@@ -10374,6 +10374,351 @@
         }
       }
     },
+    "explainer.dbl.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Double-click the title bar and the window rolls up into a bar. Double-click again to unroll it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：在标题栏上双击，窗口收成卷帘条；再双击，展开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：在標題列上按兩下，視窗收成捲簾條；再按兩下，展開。"
+          }
+        }
+      }
+    },
+    "explainer.dockHover.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Rest the pointer on a Dock icon and that app’s windows line up."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：指针停在 Dock 图标上，这个 App 的窗口排出来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：指標停在 Dock 圖示上，這個 App 的視窗排出來。"
+          }
+        }
+      }
+    },
+    "explainer.dockSwipe.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: With the pointer on a Dock icon, swipe up with two fingers to see all of that app’s windows, or swipe down to hide the app."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：指针停在 Dock 图标上，两指往上滑看这个 App 的所有窗口，往下滑让开它。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：指標停在 Dock 圖示上，兩指往上滑看這個 App 的所有視窗，往下滑讓開它。"
+          }
+        }
+      }
+    },
+    "explainer.dropSplit.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Drag a window onto another one and the two sit side by side."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：把一扇窗口拖到另一扇上，两扇并排。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：把一個視窗拖到另一個上，兩個並排。"
+          }
+        }
+      }
+    },
+    "explainer.menubar.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Click the WindowShade icon in the menu bar. The menu has your rolled-up windows and Settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：点菜单栏上的 WindowShade 图标，菜单里有收起的窗口和设置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：點一下選單列上的 WindowShade 圖示，選單裡有收起的視窗和設定。"
+          }
+        }
+      }
+    },
+    "explainer.overview.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: In the strip overview, drag a window to the notch and let go to tuck it in."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：在卷轴概览里把一扇窗口拖到刘海，松手就收进去。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：在卷軸概覽裡把一個視窗拖到瀏海，鬆手就收進去。"
+          }
+        }
+      }
+    },
+    "explainer.stripDrag.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: In the strip, drag a column’s title bar to swap it with the column next to it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：在卷轴里拖一列的标题栏，和旁边那列换位置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：在卷軸裡拖一欄的標題列，和旁邊那欄換位置。"
+          }
+        }
+      }
+    },
+    "explainer.swipeD.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Swipe down with two fingers on the title bar and the window fills the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两指在标题栏上往下滑，窗口铺满屏幕。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩指在標題列上往下滑，視窗鋪滿螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.swipeL.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Swipe left with two fingers on the title bar and the window takes the left half of the screen."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两指在标题栏上往左滑，窗口占左半屏。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩指在標題列上往左滑，視窗佔左半螢幕。"
+          }
+        }
+      }
+    },
+    "explainer.swipeUp.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Swipe up with two fingers on the title bar and the window rolls up into a bar. Swipe down to unroll it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两指在标题栏上往上滑，窗口收成卷帘条；往下滑，展开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩指在標題列上往上滑，視窗收成捲簾條；往下滑，展開。"
+          }
+        }
+      }
+    },
+    "explainer.teach.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Control-C does nothing, so the notch says that on a Mac you copy with Command-C. Press it and the notch closes."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：按 Control-C 没反应，刘海说 Mac 上拷贝按 Command-C；按了，刘海收回。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：按 Control-C 沒反應，瀏海說 Mac 上複製按 Command-C；按了，瀏海收回。"
+          }
+        }
+      }
+    },
+    "explainer.teach.line": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On a Mac, copy is ⌘C"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 上拷贝按 ⌘C"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 上複製按 ⌘C"
+          }
+        }
+      }
+    },
+    "explainer.teach.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most shortcuts use ⌘ instead of ⌃"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常用快捷键把 ⌃ 换成 ⌘"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常用快速鍵把 ⌃ 換成 ⌘"
+          }
+        }
+      }
+    },
+    "explainer.tile.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Spread two fingers and the windows line up in columns. Ones that don’t fit continue as a strip you swipe through with two fingers."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：两指张开，窗口一列挨一列排好；放不下的接成卷轴，两指滑过去。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：兩指張開，視窗一欄挨一欄排好；放不下的接成卷軸，兩指滑過去。"
+          }
+        }
+      }
+    },
+    "explainer.tuck.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: Flick the title bar toward the notch and the window tucks into it. Click the notch to put it back."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：朝刘海甩一下标题栏，窗口收进刘海；点一下刘海，放回。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：朝瀏海甩一下標題列，視窗收進瀏海；點一下瀏海，放回來。"
+          }
+        }
+      }
+    },
     "face.cameraOff": {
       "extractionState": "manual",
       "localizations": {
