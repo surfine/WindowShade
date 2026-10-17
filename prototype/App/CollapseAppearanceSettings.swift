@@ -51,10 +51,10 @@ extension AppDelegate {
         return [
             makeCollapseSettingsRow(name: WSL10n.setting("settings.shade.appearance.name", zh: "收起后的样子"),
                                     subtitle: WSL10n.setting("settings.shade.collapse.sub", zh: "卷帘条跟原来一样或用统一标题栏，也可以在原处缩成缩略图"),
-                                    control: segment),
+                                    control: segment, explainer: ExplainerRow.Shade.appearance),
             makeCollapseSettingsRow(name: translucentName,
                                     subtitle: WSL10n.setting("settings.shade.translucent.sub", zh: "让它更透一些，能看到后面的内容"),
-                                    control: sliderGroup),
+                                    control: sliderGroup, explainer: ExplainerRow.Shade.translucent),
         ]
     }
 
