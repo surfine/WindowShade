@@ -1,0 +1,25 @@
+<svg viewBox="0 0 600 400" width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3e8ef"/><stop offset="1" stop-color="#cfd6e0"/></linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#65707f"/><stop offset=".25" stop-color="#6c7686"/><stop offset="1" stop-color="#6c7686"/></linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#glass)"/>
+  <rect width="600" height="108" fill="url(#fab)"/>
+  <line x1="0" y1="10" x2="600" y2="10" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="19" x2="600" y2="19" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="28" x2="600" y2="28" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="37" x2="600" y2="37" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="46" x2="600" y2="46" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="55" x2="600" y2="55" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="64" x2="600" y2="64" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="73" x2="600" y2="73" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="82" x2="600" y2="82" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="91" x2="600" y2="91" stroke="#000" stroke-opacity=".045"/>
+  <line x1="0" y1="100" x2="600" y2="100" stroke="#000" stroke-opacity=".045"/>
+  <rect y="100" width="600" height="10" fill="#b9c2ce"/>
+  <rect y="108" width="600" height="2" fill="#000" fill-opacity=".12"/>
+  <line x1="300" y1="110" x2="300" y2="122" stroke="#b9c2ce" stroke-width="2"/>
+  <rect x="290" y="122" width="20" height="9" rx="4.5" fill="#b9c2ce"/>
+  <path d="M232 200 H362" stroke="#fff" stroke-opacity=".88" stroke-width="5" stroke-linecap="round"/>
+  <path d="M350 186 L366 200 L350 214" stroke="#fff" stroke-opacity=".88" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
