@@ -760,6 +760,7 @@
 - **2026-10-17 第二十批**：逐页扫出 可见 8 页 简体 8、繁体 9、英文 5 处硬切＋13 处省略号；硬切已改成省略号（b623f7a）；缩短文案提案 `docs/handoff/R24-copy-proposal-2026-10-17.md`（f0e7df3）待 Aaron 在 A（只缩短句）／B（调预算＋缩短）／C（保留预算）里选。
 
 #### R25 · 多点触控按设备归属
+- **2026-10-17 代码已做（真手 not_run）**：`Core/TouchOwnership.swift` 按触控设备号（`NSTouch.device` 的 `deviceID`，取不到时用设备对象本身）分开数手指；标题栏拖动记住按下时在用的那块板，只听它的离手。一块板有手指却 1 秒没帧、别的板来帧时补一个「已离开」（只更新计数，不据此判手势结束）。单设备时逐帧产出与旧计数一致（`tests/run-touch-ownership-tests.sh` 对照）。两块板同时用仍要 V5 真手验。
 - **依据**：OmniWM「Raw multitouch ownership is **isolated per physical device**, preventing a built-in trackpad and an external trackpad from overwriting or ending each other's gestures」；以及「**Missing final lift frames** recover after a stale gap so later gestures are **not permanently blocked**」。
 - **现状**：**确认不带设备身份**——`App/TrackpadGestures.swift` 的触点路径只数 `.touching` 的个数（`:2214` 一带）。
 - **改动**：手势会话按物理设备归属；补一条「丢最后一帧」的过期恢复。

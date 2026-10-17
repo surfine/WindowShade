@@ -176,6 +176,9 @@ final class TrackpadGestureController {
     /// 触控板上此刻接触着几根手指（只读监听的触摸流）。
     private var titleHold: Timer?
     private var touchesNow = 0
+    /// 每块板各自的手指数，和此刻在用的是哪块（规格 R25）。
+    private var touchRoster = TouchRoster()
+    private var secondTouchDeviceLogged = false
     /// 拖动中每来一个事件就往后推：40 毫秒没有新的拖动事件，看看是不是在高速中停住了（手离开了）。
     private var stopCheck: DispatchWorkItem?
     private var touchesDirect = false
@@ -1147,6 +1150,8 @@ final class TrackpadGestureController {
         /// 按下时手指就在触控板上：这一下是用触控板拖的（三指拖移、按下触控板拖），手指离开才算离手。
         /// 用鼠标拖时另一只手的手指搭在触控板上又抬起，不算。
         let touchedAtDown: Bool
+        /// 按下时在用的那块板（规格 R25）：之后只听这块板的手指变化，另一块板放上、抬起手指都不结束这一下。
+        var touchDevice: UInt64?
         /// 手指离开触控板时已经判过：之后迟到的“松开”不再判第二次。
         var decided = false
         /// 这一下是手指直接在屏幕上拖的（触摸屏一类）。
@@ -1209,6 +1214,7 @@ final class TrackpadGestureController {
             let drag = FlickDrag(id: id, pid: pid, frameAtDown: bounds, start: event.timestamp, down: point,
                                  touches: touchesNow)
             drag.direct = touchesNow > 0 && touchesDirect
+            drag.touchDevice = touchesNow > 0 ? touchRoster.active : nil
             flickDrag = drag
             if event.clickCount == 1 {
                 titleHold = Timer.scheduledTimer(withTimeInterval: 0.55, repeats: false) { [weak self] _ in
@@ -1393,16 +1399,27 @@ final class TrackpadGestureController {
 
     /// 触控板上的手指数变了。手指全部离开时，正在拖的标题栏就在这一刻判，不等系统迟到的“松开”。
     private func touchesChanged(_ change: PinchEventTap.TouchChange) {
-        touchesNow = change.count
+        touchRoster.apply(TouchOwnership.Change(device: change.device, count: change.count, previous: change.previous,
+                                                recovered: change.recovered))
+        // 只有一块板时就是这次变化的 count；两块板时是此刻在用的那块（规格 R25）。
+        touchesNow = touchRoster.activeCount
         if change.count > 0 { touchesDirect = change.direct }
         if !touchStreamSeen {
             touchStreamSeen = true
             wlog("gesture: touch stream active fingers=\(change.count) direct=\(change.direct)")
         }
+        if change.recovered {
+            wlog("gesture: touch device \(change.device) went quiet with \(change.previous) fingers down; treated as lifted")
+        } else if !secondTouchDeviceLogged, touchRoster.touchingDevices > 1 {
+            secondTouchDeviceLogged = true
+            wlog("gesture: touches on two devices at once; tracked separately")
+        }
         guard let drag = flickDrag else { return }
+        // 这一下是用另一块板拖的：这块板上的手指放上、抬起都与它无关。
+        if let owner = drag.touchDevice, owner != change.device { return }
         drag.maxTouches = max(drag.maxTouches, change.count, change.previous)
         if change.direct { drag.direct = true }
-        guard drag.touchedAtDown, change.count == 0, change.previous > 0, !drag.decided,
+        guard !change.recovered, drag.touchedAtDown, change.count == 0, change.previous > 0, !drag.decided,
               let last = drag.samples.last else { return }
         drag.decided = true
         decideFlick(drag, source: .touchLift, signal: change.time, release: last.point, lifted: change.lifted)
@@ -2155,12 +2172,19 @@ final class PinchEventTap: @unchecked Sendable {
         var lifted: [CGPoint]
         /// 直接触摸（触摸屏一类）。现在的 Mac 上只有触控板的间接触摸；将来有触摸屏时从这里分辨。
         var direct: Bool
+        /// 哪块板（规格 R25）：count / previous 都只是这块板上的手指数。
+        var device: UInt64 = 0
+        /// 过期恢复补出来的离手（见 TouchOwnership）：不据此判定手势结束。
+        var recovered = false
     }
 
     private let lock = NSLock()
     private var port: CFMachPort?
-    /// 只在监听线程上读写。
-    private var touchCount = 0
+    /// 只在监听线程上读写：每块板各自的手指数（规格 R25）。
+    private var touchOwnership = TouchOwnership()
+    /// 只在监听线程上读写：上一次查过的设备对象和它的编号，同一块板的帧不再重复去查。
+    private var cachedDevice: AnyObject?
+    private var cachedDeviceKey: UInt64 = 0
     /// 诊断：头 300 个手势类事件各是什么类型（查触摸流为什么没来）。
     private var typeCounts: [UInt: Int] = [:]
     private var typeSeen = 0
@@ -2229,16 +2253,71 @@ final class PinchEventTap: @unchecked Sendable {
         }
     }
 
-    /// 在监听线程上：只在手指数变化时回主线程，手指在触控板上移动的每一帧都不打扰主线程。
+    /// 在监听线程上：这个触点来自哪块板。系统的触控设备对象带一个设备号；取不到时用对象本身，再不行就是 nil（归到最近那块板）。
+    private func deviceKey(_ touch: NSTouch) -> UInt64? {
+        guard let raw = touch.device else { return nil }
+        let device = raw as AnyObject
+        if let cachedDevice, cachedDevice === device { return cachedDeviceKey }
+        let key: UInt64
+        if let object = device as? NSObject, object.responds(to: NSSelectorFromString("deviceID")),
+           let number = object.value(forKey: "deviceID") as? NSNumber {
+            key = number.uint64Value
+        } else {
+            key = UInt64(UInt(bitPattern: ObjectIdentifier(device)))
+        }
+        cachedDevice = device
+        cachedDeviceKey = key
+        return key
+    }
+
+    /// 在监听线程上：只在某块板的手指数变化时回主线程，手指在触控板上移动的每一帧都不打扰主线程。
+    /// 两块板按设备分开数（规格 R25），一块板的手指不会改写另一块板的计数。
     fileprivate func noteTouches(_ event: NSEvent) {
         let touching = event.touches(matching: .touching, in: nil)
-        guard touching.count != touchCount else { return }
-        let change = TouchChange(count: touching.count, previous: touchCount, time: event.timestamp,
-                                 lifted: event.touches(matching: [.ended, .cancelled], in: nil).map(\.normalizedPosition),
-                                 direct: touching.contains { $0.type == .direct })
-        touchCount = touching.count
+        var counts: [UInt64: Int] = [:]
+        var direct: Set<UInt64> = []
+        for touch in touching {
+            let key = touchOwnership.key(for: deviceKey(touch))
+            counts[key, default: 0] += 1
+            if touch.type == .direct { direct.insert(key) }
+        }
+        // 只有手指数可能变了才去取离开的触点：手指在板上移动的每一帧不多做事。
+        let only: (key: UInt64, value: Int)? = counts.isEmpty ? (touchOwnership.key(for: nil), 0)
+            : counts.count == 1 ? counts.first : nil
+        if let only, touchOwnership.key(for: nil) == only.key, touchOwnership.count(of: only.key) == only.value {
+            // 这块板没变；可能顺带补出别的板的过期离手。
+            let recovered = touchOwnership.frame(device: only.key, count: only.value, time: event.timestamp)
+            guard !recovered.isEmpty else { return }
+            let changes = recovered.map {
+                TouchChange(count: $0.count, previous: $0.previous, time: event.timestamp, lifted: [], direct: false,
+                            device: $0.device, recovered: $0.recovered)
+            }
+            DispatchQueue.main.async { [weak self] in
+                for change in changes { self?.onTouchesChanged?(change) }
+            }
+            return
+        }
+        let ended = event.touches(matching: [.ended, .cancelled], in: nil)
+        var lifted: [UInt64: [CGPoint]] = [:]
+        for touch in ended {
+            let key = touchOwnership.key(for: deviceKey(touch))
+            lifted[key, default: []].append(touch.normalizedPosition)
+            if counts[key] == nil { counts[key] = 0 }
+        }
+        if counts.isEmpty { counts[touchOwnership.key(for: nil)] = 0 }
+        var changes: [TouchChange] = []
+        for (key, count) in counts.sorted(by: { $0.key < $1.key }) {
+            for change in touchOwnership.frame(device: key, count: count, time: event.timestamp) {
+                let own = change.device == key && !change.recovered
+                changes.append(TouchChange(count: change.count, previous: change.previous, time: event.timestamp,
+                                           lifted: own ? lifted[key] ?? [] : [],
+                                           direct: own && direct.contains(key),
+                                           device: change.device, recovered: change.recovered))
+            }
+        }
+        guard !changes.isEmpty else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.onTouchesChanged?(change)
+            for change in changes { self?.onTouchesChanged?(change) }
         }
     }
 
