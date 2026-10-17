@@ -823,6 +823,7 @@
 - **改动**：**先核实**——在「自动重排 Spaces」开着与关着两种情况下，跑卷轴、跨桌面、停靠那几条；确认哪些功能受影响。**受了影响才加检查**（照 ChainYourMac 的做法：缺哪条说哪条，并给一个直接打开对应系统设置的入口——Wins 的 `dockLock.hud.openSystemSettings` 是同一个形状）。
 - **验收**：受影响的功能有清单；检查只在真受影响时出现，且一次说清楚。
 - **风险**：**不要因为别人要求就要求**——我们的实现不同，照抄会把用户吓跑。
+- **核实办法（2026-10-17 补，未在虚拟机里跑过）**：两个开关＝「自动依最近使用重新排列 Spaces」（`com.apple.dock mru-spaces`，系统默认开，要测的是关）与「显示器具有单独空间」（`com.apple.spaces spans-displays`，默认单独空间，要测的是关；系统常要注销才生效，来宾只有一块屏，只能当补充）。`tests/vm/run-core-probes.sh lume@<ip> --setting mru-spaces-off <组名…>`、`--setting spans-displays-on <组名…>`；基线用不带 `--setting` 的同一批组。建议组：`strip other-space space-follow slide-over-desktops dock-scenarios edge-park wins fold-timing restore-guard orphan`（卷轴、跨桌面、停靠、收放）。三种状态的 FAIL／SKIP 一致＝没受影响，**不加检查、不改代码**；某组只在某状态下失败＝受影响，再按上面「改动」加检查。
 
 #### R31 · 我们自己改过的系统设置：退出/崩溃要恢复，卸载要干净
 - **✅ 2026-10-15（433a3ba）**：全表核过只写一个系统键（程序坞 `mineffect`），写前落盘原值与「原本有没有」，正常退出与异常退出后的下次启动都还原；程序坞其它键只读。顺带修了两处越积越多的残留：侧拉恢复记录清空后不删文件（本机积了 132 个），测试 suite 只清内容不删文件。两版 README 加「怎么彻底删掉」。

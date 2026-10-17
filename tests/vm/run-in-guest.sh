@@ -4,6 +4,8 @@
 #   WSQA_SETTINGS：跑之前在来宾里临时改的系统设置（逗号分隔），结束或被打断时一律还原：
 #     autohide             程序坞自动隐藏（defaults write com.apple.dock autohide；V8（b））
 #     stage-manager        台前调度（defaults write com.apple.WindowManager GloballyEnabled；V8（f）、R19／V10）
+#     mru-spaces-off       关掉「自动依最近使用重新排列 Spaces」（defaults write com.apple.dock mru-spaces -bool false；R30）
+#     spans-displays-on    关掉「显示器具有单独空间」（defaults write com.apple.spaces spans-displays -bool true；R30；系统常要注销才生效，来宾通常只有一块屏，别单靠它下结论）
 #     display:宽x高@缩放   显示模式，例如 display:1280x800@1（V11；用 vm-display-mode 小工具，只改本次登录会话）
 #   WSQA_TIMEOUT_SCALE：把探针自己的等待上限放宽几倍（1–8，默认 3；宿主负载高时虚拟机慢），WSQA_SUITE_TIMEOUT：每组总时限（秒，默认 900）。
 # 安全：只在虚拟机里改设置。改任何设置之前先检查 kern.hv_vmm_present（虚拟机里为 1），不是就整个退出；宿主机永远不会走到这里的改动分支。
@@ -51,13 +53,15 @@ restore_all() {
   local touched_dock=0 touched_wm=0
   restore_default autohide com.apple.dock autohide && touched_dock=1
   restore_default stage-manager com.apple.WindowManager GloballyEnabled && touched_wm=1
+  restore_default mru-spaces com.apple.dock mru-spaces && touched_dock=1
+  restore_default spans-displays com.apple.spaces spans-displays && touched_dock=1
   if [ -e saved/display ]; then
     echo "INFO guest: restoring display mode $(cat saved/display)"
     # 记下的模式不一定在可选列表里（来宾开机时的 HiDPI 模式有时不列出）；那就退回永久配置（本来就只改了本次会话）。
     { display_tool set "$(cat saved/display)" || display_tool restore; } && rm -f saved/display
   fi
   if (( touched_wm )); then killall cfprefsd WindowManager Dock 2>/dev/null; wait_dock
-  elif (( touched_dock )); then killall Dock 2>/dev/null; wait_dock; fi
+  elif (( touched_dock )); then killall cfprefsd Dock SystemUIServer 2>/dev/null; wait_dock; fi
   if (( touched_dock || touched_wm )); then echo "INFO guest: settings restored"; fi
 }
 
@@ -69,6 +73,8 @@ apply_settings() {
       autohide) save_default autohide com.apple.dock autohide; defaults write com.apple.dock autohide -bool true; dock=1 ;;
       stage-manager) save_default stage-manager com.apple.WindowManager GloballyEnabled
         defaults write com.apple.WindowManager GloballyEnabled -bool true; wm=1 ;;
+      mru-spaces-off) save_default mru-spaces com.apple.dock mru-spaces; defaults write com.apple.dock mru-spaces -bool false; dock=1 ;;
+      spans-displays-on) save_default spans-displays com.apple.spaces spans-displays; defaults write com.apple.spaces spans-displays -bool true; dock=1 ;;
       display:*)
         [ -e saved/display ] || display_tool current | head -1 > saved/display
         grep -Eq '^[0-9]+x[0-9]+@[12]$' saved/display || { echo "REFUSED: cannot read the current display mode" >&2; rm -f saved/display; return 5; }
@@ -78,8 +84,8 @@ apply_settings() {
     esac
   done
   if (( wm )); then killall cfprefsd WindowManager Dock 2>/dev/null; wait_dock
-  elif (( dock )); then killall Dock 2>/dev/null; wait_dock; fi
-  echo "INFO guest: settings applied: $settings (autohide=$(defaults read com.apple.dock autohide 2>/dev/null || echo unset), stage-manager=$(defaults read com.apple.WindowManager GloballyEnabled 2>/dev/null || echo unset))"
+  elif (( dock )); then killall cfprefsd Dock SystemUIServer 2>/dev/null; wait_dock; fi
+  echo "INFO guest: settings applied: $settings (mru-spaces=$(defaults read com.apple.dock mru-spaces 2>/dev/null || echo unset), spans-displays=$(defaults read com.apple.spaces spans-displays 2>/dev/null || echo unset), autohide=$(defaults read com.apple.dock autohide 2>/dev/null || echo unset), stage-manager=$(defaults read com.apple.WindowManager GloballyEnabled 2>/dev/null || echo unset))"
 }
 
 # 上一次被打断时留下的改动先还原，再开始。

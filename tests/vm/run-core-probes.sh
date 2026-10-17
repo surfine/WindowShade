@@ -1,7 +1,7 @@
 #!/bin/bash
 # 在另外两个支持的 macOS 版本的虚拟机里跑核心探针（支持政策见 DEVELOPMENT.md「支持的系统版本」）。
 # 用法：tests/vm/run-core-probes.sh lume@<虚拟机地址> [--setting 设置]… [--timeout-scale N] [--suite-timeout 秒] [探针组…]
-#   --setting 可重复：autohide（V8 b）、stage-manager（V8 f／R19／V10）、display:1280x800@1（V11）；只在虚拟机里改，跑完还原。
+#   --setting 可重复：autohide（V8 b）、stage-manager（V8 f／R19／V10）、mru-spaces-off／spans-displays-on（R30）、display:1280x800@1（V11）；只在虚拟机里改，跑完还原。
 #   例：tests/vm/run-core-probes.sh lume@192.168.64.5 --setting autohide dock-scenarios
 #       tests/vm/run-core-probes.sh lume@192.168.64.5 --setting display:1280x800@1 launchpad
 # 先 cd prototype && ./build.sh --stage；虚拟机用外置 QA 盘的 Lume（RUNBOOK.md），客体里已授权辅助功能与屏幕录制、
@@ -21,7 +21,7 @@ while [ $# -gt 0 ]; do
 done
 [ ${#suites[@]} -gt 0 ] || suites=(fold-timing restore-guard fold-unminimizable orphan wins browser-more)
 for s in ${settings[@]+"${settings[@]}"}; do
-  [[ "$s" =~ ^(autohide|stage-manager|display:[0-9]+x[0-9]+@[12])$ ]] || { echo "未知的设置：$s" >&2; exit 2; }
+  [[ "$s" =~ ^(autohide|stage-manager|mru-spaces-off|spans-displays-on|display:[0-9]+x[0-9]+@[12])$ ]] || { echo "未知的设置：$s" >&2; exit 2; }
 done
 [[ "$scale" =~ ^[0-9]+$ && "$suite_timeout" =~ ^[0-9]+$ ]] || { echo "--timeout-scale／--suite-timeout 要是整数" >&2; exit 2; }
 case "$host" in
