@@ -7368,6 +7368,13 @@
    "signal": "window-ax"
   },
   {
+   "path": "prototype/App/GlanceProbe.swift",
+   "line": 1339,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "if AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,",
+   "signal": "window-ax"
+  },
+  {
    "path": "prototype/main.swift",
    "line": 169,
    "symbol": "AXUIElementCopyAttributeValue",
@@ -7429,6 +7436,20 @@
    "symbol": "SCShareableContent",
    "source": "try await SCShareableContent.current",
    "signal": "window-image"
+  },
+  {
+   "path": "prototype/App/LaunchpadTilingProbe.swift",
+   "line": 31,
+   "symbol": "UserDefaults",
+   "source": "let savedLayout = UserDefaults.standard.data(forKey: LaunchpadController.layoutKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/LaunchpadTilingProbe.swift",
+   "line": 37,
+   "symbol": "UserDefaults",
+   "source": "let after = UserDefaults.standard.data(forKey: LaunchpadController.layoutKey)",
+   "signal": "settings"
   }
  ],
  "groups": [
