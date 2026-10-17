@@ -75,6 +75,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
 fi
 swiftc -module-cache-path "$(pwd)/.build/module-cache" -whole-module-optimization -target "$(uname -m)-apple-macosx15.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
   -I "$NATIVE_DIR" "$NATIVE_DIR/WS2Child.o" \
+  -I prototype/Vendor/PLCrashReporter/include prototype/Vendor/PLCrashReporter/libCrashReporter-MacOSX-Static.a -Xlinker -lc++ -Xlinker -lz \
   "${SOURCES[@]}" ${TEST_SOURCE[@]+"${TEST_SOURCE[@]}"} \
   -framework Cocoa -framework Carbon -framework ApplicationServices -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
