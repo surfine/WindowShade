@@ -1756,7 +1756,7 @@ extension AppDelegate {
     }
 
     func makeWindowBrowserSettingsPage() -> NSView {
-        let (root, stack) = makeSettingsPageRoot()
+        let (root, stack) = makeSettingsPageRoot(explainer: .browser)
         stack.addArrangedSubview(makeSettingsHeader(
             title: WSL10n.text("settings.section.browser", zh: "窗口浏览"),
             subtitle: WSL10n.setting("settings.browser.subtitle", zh: "在 Dock 图标上看这个应用的全部窗口，也可以用菜单或快捷键打开。"),
@@ -1767,27 +1767,32 @@ extension AppDelegate {
                 name: WSL10n.setting("settings.browser.dockHover.name", zh: "Dock 悬停查看窗口"),
                 subtitle: WSL10n.setting("settings.browser.dockHover.sub", zh: "鼠标停在 Dock 图标上时显示窗口面板。不会启动没在运行的应用。"),
                 isOn: WindowBrowserSettings.dockEnabled,
-                action: #selector(prefToggleWindowBrowserDock(_:))),
+                action: #selector(prefToggleWindowBrowserDock(_:)),
+                explainer: ExplainerRow.Browser.dockHover),
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.browser.dockClick.name", zh: "再点一下 Dock 图标，让开这个 App"),
                 subtitle: WSL10n.setting("settings.browser.dockClick.sub", zh: "它已经在最前、窗口露着时才这样（和 Windows 任务栏一样）；再点一下回来"),
                 isOn: DockClickHide.isEnabled,
-                action: #selector(prefToggleDockClickHide(_:))),
+                action: #selector(prefToggleDockClickHide(_:)),
+                explainer: ExplainerRow.Browser.dockClick),
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.browser.dockStay.name", zh: "Dock 留在现在这块屏上"),
                 subtitle: WSL10n.setting("settings.browser.dockStay.sub", zh: "指针碰到别的屏的底边时 Dock 不跟过去（只管放在底部的 Dock）；打开时记下 Dock 现在在哪"),
                 isOn: DockLock.isEnabled,
-                action: #selector(prefToggleDockLock(_:))),
+                action: #selector(prefToggleDockLock(_:)),
+                explainer: ExplainerRow.Browser.dockStay),
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.browser.missionControlClose.name", zh: "调度中心里按 ⌘W 关窗"),
                 subtitle: WSL10n.setting("settings.browser.missionControlClose.sub", zh: "指针指着哪扇就关哪扇，⌘Q 退出它的 App；只在调度中心开着时这样，平时不动你的 ⌘W"),
                 isOn: MissionControlKeys.isEnabled,
-                action: #selector(prefToggleMissionControlKeys(_:))),
+                action: #selector(prefToggleMissionControlKeys(_:)),
+                explainer: ExplainerRow.Browser.missionControlClose),
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.browser.menuItem.name", zh: "在菜单里显示“选择窗口…”"),
                 subtitle: WSL10n.setting("settings.browser.menuItem.sub", zh: "默认不占用快捷键，可以在“快捷键”里设置"),
                 isOn: WindowBrowserSettings.keyboardPanelEnabled,
-                action: #selector(prefToggleWindowBrowserKeyboard(_:))),
+                action: #selector(prefToggleWindowBrowserKeyboard(_:)),
+                explainer: ExplainerRow.Browser.menuItem),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.trigger", zh: "触发")))
         stack.addArrangedSubview(triggers)
@@ -1804,7 +1809,7 @@ extension AppDelegate {
         let switcherCard = makeUnifiedSettingsCard([
             makeUnifiedControlRow(name: WSL10n.setting("settings.browser.byWindow.name", zh: "按窗口切换"),
                                   subtitle: WSL10n.setting("settings.browser.byWindow.sub", zh: "按住连按 Tab 一扇一扇地挑，松手切过去；收着的窗口也在里面。选 ⌘Tab 会换掉系统的 App 切换"),
-                                  control: triggerSeg),
+                                  control: triggerSeg, explainer: ExplainerRow.Browser.switcher),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.switching", zh: "切换")))
         stack.addArrangedSubview(switcherCard)
@@ -1821,7 +1826,7 @@ extension AppDelegate {
                                           action: #selector(openWindowBrowserPanel))
                     button.bezelStyle = .rounded
                     return button
-                }()),
+                }(), explainer: ExplainerRow.Browser.panel),
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.browser.exclude.name", zh: "按应用排除"),
                 subtitle: excludedAppsSubtitle(),
@@ -1830,7 +1835,7 @@ extension AppDelegate {
                                           action: #selector(prefEditWindowBrowserExclusions))
                     button.bezelStyle = .rounded
                     return button
-                }()),
+                }(), explainer: ExplainerRow.Browser.panel),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.panel", zh: "面板")))
         stack.addArrangedSubview(preview)
@@ -1854,15 +1859,15 @@ extension AppDelegate {
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.browser.panelBackground.name", zh: "面板背景"),
                 subtitle: WSL10n.setting("settings.browser.panelBackground.sub", zh: "开启系统的“减少透明度”时，自动使用不透明背景。"),
-                control: appearanceControl),
+                control: appearanceControl, explainer: ExplainerRow.Browser.panel),
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.browser.defaultLayout.name", zh: "默认显示方式"),
                 subtitle: WSL10n.setting("settings.browser.defaultLayout.sub", zh: "自动：窗口多的时候用列表，少的时候用缩略图。面板里的切换只影响这一次。"),
-                control: styleControl),
+                control: styleControl, explainer: ExplainerRow.Browser.panel),
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.browser.arrangeMenu.name", zh: "排布与撤销"),
                 subtitle: WSL10n.setting("settings.browser.arrangeMenu.sub", zh: "在窗口右键菜单里选“排布”：左半、右半、四角、居中、铺满屏幕、移到另一块屏幕。可以先看效果，移好之后还能撤销。"),
-                control: NSTextField(labelWithString: "")),
+                control: NSTextField(labelWithString: ""), explainer: ExplainerRow.Browser.panel),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.appearance", zh: "外观")))
         stack.addArrangedSubview(appearance)
