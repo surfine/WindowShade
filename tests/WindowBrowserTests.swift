@@ -3331,6 +3331,80 @@ enum WindowBrowserTests {
         }
     }
 
+    /// Dock 预览卡左上角的红黄绿：读同一份条目、位置贴画面、窄卡片操作条先收、出现满 0.18 s 才接点按。
+    static func trafficLightChecks(card: WindowBrowserCardView, record: WindowRecord) {
+        let context = WindowBrowserActionPresentation.Context()
+        let items = WindowBrowserActionPresentation.items(for: record, context: context)
+        let lights = WindowBrowserActionPresentation.trafficLightItems(from: items, record: record)
+        expect(lights.map(\.action) == [.close, .minimize, .fullScreen],
+               "the traffic lights are close, minimize, full screen in that order")
+        for light in lights {
+            let source = items.first { $0.action == light.action }
+            expect(source == light && light.isEnabled == (WindowBrowserActionPolicy.preflight(
+                action: light.action, record: record, hasAccessibility: true,
+                hasScreenRecording: true) == nil),
+                   "traffic light \(light.action.rawValue) is the same item the menu shows (one preflight)")
+        }
+        // 已最小化：黄灯置灰而不是消失，三颗位置不跳；"更多"菜单里仍然藏掉这一项。
+        var minimized = record
+        minimized.isMinimized = true
+        let minItems = WindowBrowserActionPresentation.items(for: minimized, context: context)
+        expect(!minItems.contains { $0.action == .minimize },
+               "the menu still hides 最小化 for a minimized window")
+        let minLights = WindowBrowserActionPresentation.trafficLightItems(from: minItems, record: minimized)
+        expect(minLights.map(\.action) == [.close, .minimize, .fullScreen]
+               && minLights[1].isEnabled == false,
+               "a minimized window keeps a greyed yellow light instead of losing it")
+        // 位置：画面左上角，圆离两边 8 pt。
+        card.layout()
+        let picture = card.thumbnailHostFrameForDiagnostics
+        let group = card.trafficLightsFrameForDiagnostics
+        let inset = (WindowBrowserTrafficLights.height - WindowBrowserTrafficLights.diameter) / 2
+        expect(abs((group.minX + inset) - (picture.minX + 8)) < 0.5
+               && abs(picture.maxY - (group.maxY - inset) - 8) < 0.5 && picture.contains(group),
+               "the lights sit 8 pt from the picture's top-left corner (group=\(group) picture=\(picture))")
+        expect(card.trafficLightsAreVisible == card.actionBarIsVisible,
+               "the lights appear and hide together with the action bar")
+        // 快捷键：悬停提示里跟在名字后面；键盘面板里 ⌘W / ⌘M / ⌃⌘F 对选中窗口。
+        expect(WindowBrowserActionPresentation.macShortcut(for: .close)?.label == "⌘W"
+               && WindowBrowserActionPresentation.macShortcut(for: .minimize)?.label == "⌘M"
+               && WindowBrowserActionPresentation.macShortcut(for: .fullScreen)?.label == "⌃⌘F",
+               "the tooltips spell the Mac shortcuts")
+        expect(WindowBrowserShortcut.action(modifiers: [.command], characters: "w") == .close
+               && WindowBrowserShortcut.action(modifiers: [.command], characters: "M") == .minimize
+               && WindowBrowserShortcut.action(modifiers: [.command, .control], characters: "f") == .fullScreen
+               && WindowBrowserShortcut.action(modifiers: [.command], characters: "f") == nil
+               && WindowBrowserShortcut.action(modifiers: [.command, .shift], characters: "w") == nil
+               && WindowBrowserShortcut.action(modifiers: [], characters: "w") == nil,
+               "only ⌘W, ⌘M and ⌃⌘F map to window actions (⌘F stays the search shortcut)")
+        // 出现满 0.18 s 才接受点按；置灰的不响应。
+        let group2 = card.trafficLightsForTesting
+        var pressed: [WindowBrowserAction] = []
+        group2.onPress = { pressed.append($0) }
+        group2.setRevealed(true)
+        let t0 = group2.shownAt ?? 0
+        expect(!group2.press(.close, now: t0 + 0.05) && pressed.isEmpty,
+               "a press before 0.18 s is ignored (a pointer sweeping through cannot close a window)")
+        expect(group2.press(.close, now: t0 + 0.2) && pressed == [.close],
+               "a press after 0.18 s goes through")
+        group2.configure(items: minLights)
+        expect(!group2.press(.minimize, now: t0 + 0.3),
+               "a greyed light does not respond")
+        group2.configure(items: lights)
+        // 窄卡片：操作条先从尾巴上收，红黄绿不收。
+        let narrow = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 150, height: 186))
+        configure(card: narrow, record: record, selected: true, busy: false)
+        narrow.layout()
+        let wide = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 186))
+        configure(card: wide, record: record, selected: true, busy: false)
+        wide.layout()
+        expect(narrow.actionFrameForDiagnostics.width < wide.actionFrameForDiagnostics.width
+               && narrow.trafficLightsFrameForDiagnostics.width == WindowBrowserTrafficLights.groupWidth
+               && narrow.trafficLightsFrameForDiagnostics.maxX <= narrow.actionFrameForDiagnostics.minX + 5,
+               "on a narrow card the action bar shrinks first and never overlaps the lights "
+               + "(bar=\(narrow.actionFrameForDiagnostics) lights=\(narrow.trafficLightsFrameForDiagnostics))")
+    }
+
     static func configure(card: WindowBrowserCardView, record: WindowRecord,
                           selected: Bool, busy: Bool) {
         let actions = WindowBrowserActionPresentation.items(
@@ -4411,6 +4485,8 @@ enum WindowBrowserTests {
                "card actions float inside the picture's top-right corner (bar=\(bar) picture=\(picture))")
         expect(overlayCard.titleFrameForDiagnostics.width >= 288 - 16 - 0.5,
                "the title keeps the full card width")
+
+        trafficLightChecks(card: overlayCard, record: records[0])
 
         // 玻璃面板的阴影交给系统（按窗口实际形状计算，贴合玻璃圆角）。
         let shadowPanel = WindowBrowserPanel(mode: .dock, frame: NSRect(x: 0, y: 0, width: 312, height: 210))
