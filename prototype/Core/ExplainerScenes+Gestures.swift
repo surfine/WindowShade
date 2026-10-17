@@ -4,8 +4,18 @@
 import Foundation
 
 extension ExplainerPage {
-    /// 页默认：标题栏手势往上滑收起。
-    static var gestures: ExplainerPage { ExplainerPage(id: "gestures", pageDefault: ExplainerScenes.swipeUpRoll) }
+    /// 页默认：标题栏手势往上滑收起（第一段“收起与展开”的第一行）。
+    static var gestures: ExplainerPage { gestures(segment: 0) }
+
+    /// 手势页分成四段（就是四个分组：收起与展开、刘海、排布、窗口浏览）；每段的页默认是这一段第一行。
+    static func gestures(segment: Int) -> ExplainerPage {
+        switch segment {
+        case 1: return ExplainerPage(id: "gestures.notch", pageDefault: ExplainerScenes.tuckIntoNotch)
+        case 2: return ExplainerPage(id: "gestures.arrange", pageDefault: ExplainerScenes.dropSplit)
+        case 3: return ExplainerPage(id: "gestures.browser", pageDefault: ExplainerScenes.dockSwipe)
+        default: return ExplainerPage(id: "gestures", pageDefault: ExplainerScenes.swipeUpRoll)
+        }
+    }
 }
 
 extension ExplainerRow {

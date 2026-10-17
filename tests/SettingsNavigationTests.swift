@@ -65,12 +65,28 @@ struct SettingsNavigationTests {
         await drainLayout()
         return descendants(root).compactMap { ($0 as? NSTextField)?.stringValue }
       }
-      let onGesture = await labelsIn(.gesture)
+      // 手势页分成四段（就是四个分组），一次只露一段：逐段收齐。
+      settings.select(section: .gesture)
+      await drainLayout()
+      guard let segments = gestureSegments(root) else { preconditionFailure("手势页要有四段分段") }
+      precondition(segments.segmentCount == 4, "手势页分四段，实际 \(segments.segmentCount)")
+      precondition(descendants(root).contains { $0 is SettingsExplainerView }, "手势页顶上有讲解带")
+      var onGesture: [String] = []
+      for index in 0..<segments.segmentCount {
+        await selectGestureSegment(index, in: root)
+        // 没选中的几段只是藏起来、仍在视图树里：只收这一段看得见的字，免得重复计数。
+        onGesture += descendants(root).compactMap { view -> String? in
+          guard let field = view as? NSTextField, !field.isHiddenOrHasHiddenAncestor else { return nil }
+          return field.stringValue
+        }
+      }
+      await selectGestureSegment(0, in: root)
+      precondition(!onGesture.contains("只读对照，来自现有手势表，不是新开关。"), "对照表下那句实现说明删掉")
       for name in gestureNames {
         precondition(onGesture.filter { $0 == name }.count == 1, "手势页应有且只有一行: \(name)")
       }
-      // 八行各一行「手指」，加上对照表的列头（收着也在视图树里）。
-      precondition(onGesture.filter { $0 == "手指" }.count == gestureNames.count + 1,
+      // 八行各一行「手指」（对照表的列头收着，看不见，不算）。
+      precondition(onGesture.filter { $0 == "手指" }.count == gestureNames.count,
                    "每条手势行下面有一行「手指」")
       for section in [WindowShadeSettingsSection.shade, .browser, .pointer] {
         let texts = await labelsIn(section)
@@ -84,6 +100,7 @@ struct SettingsNavigationTests {
       precondition(!onGesture.contains("三指轻点是中键") && !onGesture.contains("四指轻点打开看不见的窗口"),
                    "没核对的两行不进手势页")
       _ = await labelsIn(.gesture)
+      await selectGestureSegment(0, in: root)
       GestureTableDisclosure.setExpandedForDiagnostics(false)
       settings.refreshSettings()
       await drainLayout()
@@ -110,15 +127,17 @@ struct SettingsNavigationTests {
     }
     // 带说明文字、右侧有控件的行：多行说明不能贴边，也不能压到控件上。
     // 快捷键录制行在“快捷键”分页，窗口浏览页保留菜单开关与外观选项。
-    let rowsBySection: [(WindowShadeSettingsSection, [String])] = [
-      (.browser, ["在菜单里显示“选择窗口…”", "面板背景", "默认显示方式"]),
-      (.shortcuts, ["整理卷帘条", "选择窗口…"]),
-      // 卷轴概览能收进刘海（stripOverviewNotch，默认关）现在在「手势」页。
-      (.gesture, ["卷轴概览能收进刘海", "标题栏手势", "中键收起窗口"]),
+    // 第三项是手势页的第几段（别的页 nil）。
+    let rowsBySection: [(WindowShadeSettingsSection, [String], Int?)] = [
+      (.browser, ["在菜单里显示“选择窗口…”", "面板背景", "默认显示方式"], nil),
+      (.shortcuts, ["整理卷帘条", "选择窗口…"], nil),
+      // 卷轴概览能收进刘海（stripOverviewNotch，默认关）现在在「手势」页的“刘海”一段。
+      (.gesture, ["标题栏手势", "中键收起窗口"], 0),
+      (.gesture, ["卷轴概览能收进刘海"], 1),
       // 隐私页（原权限与启动）没有“标签 + 右侧控件”的行，这里只为出浅深色截图。
-      (.permissions, []),
+      (.permissions, [], nil),
       // 刘海页：音量和亮度那一行并进了勾选，开关仍要贴右边（1.0.17 精简后回归过一次）。
-      (.notch, ["有变化时提醒", "音量和亮度"]),
+      (.notch, ["有变化时提醒", "音量和亮度"], nil),
     ]
     // 隐私一栏：四组和每一行都在，且和登记表生成的数据源一致。
     settings.select(section: .permissions)
@@ -174,9 +193,10 @@ struct SettingsNavigationTests {
                    && UserDefaults.standard.object(forKey: key) == nil, "关掉：通知并删键")
       NotificationCenter.default.removeObserver(token)
     }
-    for (section, names) in rowsBySection {
+    for (section, names, segment) in rowsBySection {
     settings.select(section: section)
     await drainLayout()
+    if let segment { await selectGestureSegment(segment, in: root) }
     await drainLayout()
     for appearance in [NSAppearance.Name.aqua, .darkAqua] {
       settings.window?.appearance = NSAppearance(named: appearance)
@@ -212,7 +232,7 @@ struct SettingsNavigationTests {
       let directory = URL(fileURLWithPath: ".build/appkit-tests/settings-shots", isDirectory: true)
       try! FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
       try! bitmap.representation(using: .png, properties: [:])!.write(
-        to: directory.appendingPathComponent("\(section)-\(appearance.rawValue).png"))
+        to: directory.appendingPathComponent("\(section)\(segment.map { $0 > 0 ? "-\($0)" : "" } ?? "")-\(appearance.rawValue).png"))
     }
     }
     // 旗标关着（这个测试进程里 WindowShade 2 的开关都没开）：侧栏 8 页，WindowShade 2 的行不见，
@@ -274,6 +294,20 @@ struct SettingsNavigationTests {
         DispatchQueue.main.async { continuation.resume() }
       }
     }
+  }
+
+  @MainActor
+  private static func gestureSegments(_ root: NSView) -> NSSegmentedControl? {
+    descendants(root).compactMap { $0 as? NSSegmentedControl }.first { $0.target is GestureSegments }
+  }
+
+  /// 点手势页的第 index 段（和用户点分段一样走 action）。
+  @MainActor
+  private static func selectGestureSegment(_ index: Int, in root: NSView) async {
+    guard let control = gestureSegments(root) else { preconditionFailure("找不到手势页的分段") }
+    control.selectedSegment = index
+    _ = control.sendAction(control.action, to: control.target)
+    await drainLayout()
   }
 
   @MainActor

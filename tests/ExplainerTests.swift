@@ -141,6 +141,14 @@ struct ExplainerTests {
         _ = middle.handle(.openPage)
         let m = middle.handle(.enter(row(9, ExplainerRow.Gestures.middleFold, on: false)))
         expect(m?.spec.id == "swipeUp" && m?.mode == .hold(arrows: false) && m?.dimmed == false, "a page-default row holds the page key frame, never dimmed")
+
+        // 手势页四段：每段的页默认是这一段第一行，页 id 各不相同（整页重建时按 id 接着用状态机）。
+        let segments = (0..<4).map { ExplainerPage.gestures(segment: $0) }
+        expect(segments.map(\.pageDefault.id) == ["swipeUp", "tuck", "dropSplit", "dockSwipe"], "each segment opens on its first row")
+        expect(Set(segments.map(\.id)).count == 4 && ExplainerPage.gestures == segments[0], "segment pages have distinct ids; the page default is the first segment")
+        var notch = ExplainerDirector(page: segments[1])
+        let opened = notch.handle(.openPage)
+        expect(opened?.spec.id == "tuck" && opened?.mode == .play(loops: 2), "the notch segment plays its first row twice")
     }
 
     static func offAndOptions() {
@@ -202,6 +210,10 @@ struct ExplainerTests {
         _ = v.handle(.loopsFinished("swipeUp"))
         _ = v.handle(.environment(.init(visible: false)))
         expect(v.handle(.environment(.init(visible: true))) == nil, "a finished page loop is not replayed on return")
+        // 窗口还没到最前就打开了页：先停在关键帧，看得见了才演两轮。
+        var early = ExplainerDirector(page: .gestures, environment: .init(visible: false))
+        expect(early.handle(.openPage)?.mode == .hold(arrows: false), "a page opened in a hidden window waits on the key frame")
+        expect(early.handle(.environment(.init(visible: true)))?.mode == .play(loops: 2), "it plays twice once the window is visible")
         // 已经演过的页再打开（整页重建）：只摆关键帧。
         var rebuilt = ExplainerDirector(page: .gestures, pagePlayed: true)
         expect(rebuilt.handle(.openPage)?.mode == .hold(arrows: false), "a rebuilt page that already played holds the key frame")
