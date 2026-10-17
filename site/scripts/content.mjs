@@ -32,7 +32,7 @@ export const copy = {
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
     video: '看介绍视频',
-    facts: ['macOS 15 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.16 · ZIP 9.83 MB'],
+    facts: ['macOS 15 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.17 · ZIP 10.65 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -253,7 +253,7 @@ export const copy = {
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
     video: 'Watch the intro (in Chinese)',
-    facts: ['macOS 15 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.16 · ZIP 9.83 MB'],
+    facts: ['macOS 15 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.17 · ZIP 10.65 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],

@@ -7,7 +7,7 @@
 
 | Tag | 主题 |
 | --- | --- |
-| v1.0.17 | 第一个 Developer ID 公证版（macOS 15 起）；发布关见 [v1.0.17-release-gate.md](v1.0.17-release-gate.md)，说明草稿见 [v1.0.17.md](v1.0.17.md) |
+| v1.0.17 | 第一个 Developer ID 公证版（macOS 15 起）：换证书要手动下载一次；高级 → 关于、7 个捷径动作；见 [v1.0.17.md](v1.0.17.md)、[发布关](v1.0.17-release-gate.md) |
 
 ## 已发布
 
