@@ -19,6 +19,7 @@ final class WindowBrowserCardView: NSView {
     private let statusIconView = NSImageView()
     private let statusField = NSTextField(labelWithString: "")
     private let actionBar = WindowBrowserActionBar()
+    private let trafficLights = WindowBrowserTrafficLights()
     private var params = WindowBrowserLayoutParams.standard
     private var trackingAreaRef: NSTrackingArea?
     private var pressedInside = false
@@ -37,6 +38,9 @@ final class WindowBrowserCardView: NSView {
     var titleForTesting: String { titleField.stringValue }
     var thumbnailImageForTesting: NSImage? { thumbnailView.image }
     var actionBarIsVisible: Bool { !actionBar.isHidden }
+    var trafficLightsAreVisible: Bool { !trafficLights.isHidden }
+    var trafficLightsForTesting: WindowBrowserTrafficLights { trafficLights }
+    var trafficLightsFrameForDiagnostics: NSRect { trafficLights.frame }
     /// 无画面时展示的应用图标（由内容视图按实例缓存后传入）。
     var placeholderIcon: NSImage? {
         didSet {
@@ -72,8 +76,11 @@ final class WindowBrowserCardView: NSView {
         statusIconView.setAccessibilityElement(false)
         actionBar.buttonPointSize = WindowBrowserTypography.detailSize
         actionBar.overlayStyle = true
+        trafficLights.isHidden = true
+        trafficLights.onPress = { [weak self] action in self?.perform(action: action) }
+        // 红黄绿排在操作条前面（读屏顺序）。
         for view in [placeholderView, thumbnailHost, titleField, statusIconView,
-                     statusField, actionBar] {
+                     statusField, trafficLights, actionBar] {
             addSubview(view)
         }
         placeholderView.addSubview(placeholderLabel)
@@ -115,7 +122,7 @@ final class WindowBrowserCardView: NSView {
                    menu: NSMenu?) {
         let actionSignature = actions.map {
             "\($0.action.rawValue)\($0.isEnabled ? 1 : 0)"
-        }.joined()
+        }.joined() + (record.isMinimized ? "m" : "")
         // 标题与应用名也要进入签名：否则后台刷新了标题却不会真正更新卡片。
         let signature = "\(record.metadataRevision)|\(record.key.hashValue)|"
             + "\(record.appName)|\(record.displayTitle)|\(selected)|"
@@ -139,6 +146,8 @@ final class WindowBrowserCardView: NSView {
         actionBar.configure(items: actions.filter(\.isPrimary), key: record.key,
                             target: self, action: #selector(actionButtonClicked(_:)),
                             busy: busy)
+        trafficLights.configure(items: WindowBrowserActionPresentation.trafficLightItems(
+            from: actions, record: record))
         providedMenu = menu
         // 内容配置只重算卡片底色与选中环；画面区样式只在外观/表面变化时重算。
         WindowBrowserSurfaceStyle.applyCard(self, selected: isSelected, hovering: isHovering,
@@ -247,6 +256,7 @@ final class WindowBrowserCardView: NSView {
         statusIconView.image = nil
         actionBar.reset()
         actionBar.isHidden = true
+        trafficLights.setRevealed(false)
         providedMenu = nil
         setAccessibilityLabel(nil)
         setAccessibilityValue(nil)
@@ -295,7 +305,17 @@ final class WindowBrowserCardView: NSView {
         titleField.frame = NSRect(x: padding, y: titleY, width: width, height: titleHeight)
         // 浮层贴着“实际画面”的右上角（画面比外框窄时不悬在空白处）。
         let picture = thumbnailHost.isHidden ? imageBox : thumbnailHost.frame
-        actionBar.fitActions(in: max(32, picture.width - 12))
+        // 左上角红黄绿：圆距画面两边 8 pt（命中区 20 × 20，圆在中间留 3 pt）；
+        // 操作条可用宽度先减去这一组再各留 8 pt。
+        let lightsInset = (WindowBrowserTrafficLights.height - WindowBrowserTrafficLights.diameter) / 2
+        trafficLights.frame = NSRect(x: picture.minX + 8 - lightsInset,
+                                     y: picture.maxY - 8 - WindowBrowserTrafficLights.height + lightsInset,
+                                     width: WindowBrowserTrafficLights.groupWidth,
+                                     height: WindowBrowserTrafficLights.height)
+        trafficLights.needsLayout = true
+        trafficLights.setRevealed(actionBarShouldShow)
+        let lightsReserve = WindowBrowserTrafficLights.visualWidth + 8
+        actionBar.fitActions(in: max(32, picture.width - 12 - lightsReserve))
         let actionsWidth = actionBar.requiredWidth
         let overlayHeight = 28 + WindowBrowserActionBar.overlayInset * 2
         let overlayInset: CGFloat = 6
