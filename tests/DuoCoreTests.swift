@@ -213,6 +213,39 @@ import Foundation
                    "Between the full probes the cheap signal keeps being watched")
     }
 
+    // 规格 R19：只有“最小化 + 台前调度”放宽，其余组合与原来一样是 0。
+    precondition(FoldVerifier.lateObservationWindow(hideIsMinimize: true, stageManager: true) > 0)
+    for (minimize, stage) in [(true, false), (false, true), (false, false)] {
+      precondition(FoldVerifier.lateObservationWindow(hideIsMinimize: minimize, stageManager: stage) == 0,
+                   "Outside Stage Manager minimize the verification timing is unchanged")
+    }
+    // 最小化在 2 s 才落地：原时序在 0.95 s 判 visible（回滚），放宽后等到它并判 hidden；
+    // 两种都只补救一次。永远不落地时，到点按 visible 结案，不会无限等。
+    for (late, landsAt, expected, settledBy) in [
+      (0.0, 2.0, FoldVerifier.Observation.visible, 0.96),
+      (FoldVerifier.stageManagerMinimizeLateWindow, 2.0, .hidden, 2.21),  // 0.95 后每 0.25 s 一读
+      (FoldVerifier.stageManagerMinimizeLateWindow, 99.0, .visible,
+       0.95 + FoldVerifier.stageManagerMinimizeLateWindow + 0.01),
+    ] {
+      let clock = Clock()
+      var salvages = 0
+      var results: [FoldVerifier.Observation] = []
+      let reading = { clock.time >= landsAt ? FoldVerifier.Observation.hidden : .visible }
+      let verifier = FoldVerifier(
+        schedule: clock.schedule, isCurrent: { true },
+        observation: reading, salvage: { salvages += 1; return true },
+        salvagedObservation: reading, lateObservationWindow: late,
+        result: { results.append($0) })
+      verifier.start()
+      clock.advance(settledBy - 0.02)
+      precondition(results.isEmpty, "No verdict before the window closes (late=\(late))")
+      clock.advance(0.03)
+      precondition(results == [expected] && salvages == 1,
+                   "late=\(late) landsAt=\(landsAt): got \(results), salvages=\(salvages)")
+      clock.advance(10)
+      precondition(results.count == 1, "Verdict is reported once")
+    }
+
     for replacedAt in [0.0, 0.2, 0.7] {
       let stale = Scenario()
       stale.verifier.start()
