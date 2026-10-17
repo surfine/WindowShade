@@ -6,6 +6,6 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/explainer-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FlickMotion.swift \
-  prototype/Core/ExplainerScript.swift "prototype/Core/ExplainerScenes+Common.swift" "prototype/Core/ExplainerScenes+Gestures.swift" \
+  prototype/Core/ExplainerScript.swift "prototype/Core/ExplainerScenes+Common.swift" "prototype/Core/ExplainerScenes+Gestures.swift" "prototype/Core/ExplainerScenes+Advanced.swift" \
   tests/ExplainerTests.swift -o .build/explainer-tests/explainer
 .build/explainer-tests/explainer
