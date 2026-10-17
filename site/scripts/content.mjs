@@ -214,13 +214,13 @@ export const copy = {
     ],
 
     trustTitle: '你的窗口，<br>只留在你的 Mac 上。',
-    trustBody: '辅助功能权限用来找到和移动窗口，屏幕录制权限用来拍下窗口画面做预览。画面只在你的电脑上处理，不会传到别处。应用万一意外退出，窗口也会自动恢复原样。',
+    trustBody: '辅助功能权限用来找到和移动窗口，是必需的；屏幕录制权限可选，开了才有窗口的实时画面。画面只在你的电脑上处理，不会传到别处。应用万一意外退出，窗口也会自动恢复原样。',
     researchLink: '设计理由与研究笔记',
 
     faqTitle: '下载之前，你可能会问',
     faqs: [
       ['我的 Mac 能用吗？', '要 macOS 15 以上，Apple Silicon，没有 Intel 版；还在 macOS 14 的，继续用 1.0.16。收起、看一眼和手势都不用特别的硬件；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
-      ['要什么权限？', '两项。辅助功能：找到、移动、恢复窗口。屏幕录制：拍下窗口画面做预览。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。用着用着辅助功能被关掉了，它会提醒你。'],
+      ['要什么权限？', '两项，一项必需、一项可选。辅助功能（必需）：找到、移动、恢复窗口。屏幕录制（可选）：开了，看一眼、窗口浏览和置顶预览里能看到窗口的实时画面；不开也能用，预览会改成图标和标题。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。用着用着辅助功能被关掉了，它会提醒你。'],
       ['看一眼和手势会动我的窗口吗？', '看一眼不会。手势只在你松手、而且小浮窗的进度条走满时才动窗口；往回拉就取消。'],
       ['窗口浏览会动我的窗口吗？', '不会，除非你按下卡片上的按钮。动手之前，它还会再确认一次“就是这一扇窗口”，确认不了就不做。'],
       ['没有刘海的 Mac 也能收进刘海吗？', '能。外接显示器上，菜单栏正中有一个看不见的刘海：平时不露面，收着窗口时才显出来，朝它甩一下同样收得进去。'],
@@ -230,7 +230,7 @@ export const copy = {
       ['刘海会换掉系统的音量和亮度提示吗？', '默认不会。在设置里打开“音量和亮度”，按这些键时刘海里才显示。之后想看回系统自己的提示，再打开“改回用系统的提示”：WindowShade 只旁听、不拦按键，系统的提示照常出现，刘海里也跟着显示。'],
       ['出了问题，怎么告诉你们？', '在“设置 → 高级 → 关于”里点“报告问题”。也可以先“导出诊断信息”：它只存在你的电脑上，不会上传，发不发给我们由你决定。同一处还能导出、导入设置，导入前会先留一份备份。'],
       ['所有窗口都能收起来吗？', '普通窗口都可以。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。'],
-      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包已通过 Apple 公证。从 1.0.16 及以前升级的人，这一版要手动下载一次，装好后重新打开辅助功能和屏幕录制。'],
+      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包已通过 Apple 公证。从 1.0.16 及以前升级的人，这一版要手动下载一次，装好后重新打开辅助功能（开过屏幕录制的，也重新打开）。'],
     ],
 
     endTitle: '下次窗口挤成一团，<br>先别急着关。',
@@ -435,13 +435,13 @@ export const copy = {
     ],
 
     trustTitle: 'Your windows<br>stay on your Mac.',
-    trustBody: 'Accessibility permission finds and moves windows. Screen Recording takes the window pictures used for previews. Everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were.',
+    trustBody: 'Accessibility permission finds and moves windows, and is required. Screen Recording is optional: turn it on to see live pictures of your windows in Glance. Everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were.',
     researchLink: 'Design rationale and research notes',
 
     faqTitle: 'Before you download',
     faqs: [
       ['Will it work on my Mac?', 'You need macOS 15 or later and Apple Silicon — there’s no Intel build. If you’re still on macOS 14, stay on 1.0.16. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
-      ['What permissions does it need?', 'Two. Accessibility: finding, moving and restoring windows. Screen Recording: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac. If Accessibility gets turned off while the app is running, it tells you.'],
+      ['What permissions does it need?', 'Two: one required, one optional. Accessibility (required): finding, moving and restoring windows. Screen Recording (optional): turn it on to see live window pictures in Glance, in window browsing and in pinned previews; leave it off and WindowShade still works, with previews showing icons and titles instead. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac. If Accessibility gets turned off while the app is running, it tells you.'],
       ['Do glances and gestures move my windows?', 'A glance never does. A gesture moves a window only when you let go with the panel’s track full; pull back to cancel.'],
       ['Can I use the notch without a notch?', 'Yes. On an external display there’s an invisible notch in the middle of the menu bar: it stays out of sight until a window is tucked into it, and flicking toward it works the same.'],
       ['How is Slide Over different from pinning?', 'Pinning just keeps a window in front, where it is. Slide Over docks it at the screen edge: pull it out when you need it and tuck it away when you don’t, from any desktop.'],
@@ -451,7 +451,7 @@ export const copy = {
       ['Does the notch replace the volume and brightness display?', 'Not by default. Turn on Volume & brightness in Settings and the notch shows them when you press those keys. If you’d rather keep the system’s own display, also turn on Use the System’s Volume and Brightness Pop-ups: WindowShade only listens, the keys go through, the system shows its own display and the notch follows along.'],
       ['Something’s wrong. How do I tell you?', 'In Settings → Advanced → About, click Report a Problem. You can also Export Diagnostics first: the file stays on your Mac, nothing is uploaded, and you decide whether to send it. The same place exports and imports settings; importing makes a backup first.'],
       ['Does it work with every window?', 'With regular windows, yes. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use.'],
-      ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is notarized by Apple. If you’re updating from 1.0.16 or earlier, download this one by hand, then reopen Accessibility and Screen Recording.'],
+      ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is notarized by Apple. If you’re updating from 1.0.16 or earlier, download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on).'],
     ],
 
     endTitle: 'Next time windows pile up,<br>don’t close them just yet.',

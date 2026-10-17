@@ -44,7 +44,7 @@ Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releas
 - **Needs macOS 15 or later and Apple Silicon.** There’s no Intel build.
 - **1.0.17 download:** 10.65 MB ZIP; the extracted app contains 27.48 MB of files (decimal MB; filesystem allocation may differ). It now includes on-device crash reporting, hence slightly bigger.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
-- **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility and Screen Recording in System Settings → Privacy & Security. From here on, updates install from the menu.
+- **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - Every release ships with a SHA-256 checksum file; for what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
 
 ## What it does
@@ -96,7 +96,7 @@ Double-click a title bar to roll up; double-click the bar to unroll.
 
 ## Your windows stay on your Mac
 
-WindowShade asks for two permissions. **Accessibility** (called Device Control and Data Access in System Settings from macOS 27): finding, moving and restoring windows. **Screen Recording**: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were. WindowShade collects no usage data and does no analytics or reporting; checking for updates goes online. Everything it reads is listed under Privacy in Settings and on the [privacy page](https://windowshade.aaronlau.me/privacy/).
+WindowShade asks for two permissions: one required, one optional. **Accessibility** (required; called Device Control and Data Access in System Settings from macOS 27): finding, moving and restoring windows. **Screen Recording** (optional): turn it on to see live window pictures in Glance, in window browsing and in pinned previews; leave it off and WindowShade still works, with previews showing icons and titles instead. “Screen Recording” is just the name the system gives that permission — everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were. WindowShade collects no usage data and does no analytics or reporting; checking for updates goes online. Everything it reads is listed under Privacy in Settings and on the [privacy page](https://windowshade.aaronlau.me/privacy/).
 
 Regular windows all roll up. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use. If something goes wrong, please [report it](https://github.com/surfine/WindowShade/issues) with your macOS version, the app, and the steps.
 
