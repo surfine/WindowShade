@@ -12,7 +12,7 @@
   --page:#eceef2; --panel:#fbfbfc; --sunk:#e3e5ea; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
   --accent:#0058cc; --true:#0a7cff; --old:#d93a2f; --ok:#0e6436; --warn:#9a5b00;
   --wall-a:#cfe3ff; --wall-b:#f1dcf2; --wall-c:#f7e7d6; --bezel:#050506; --win:#ffffff; --winbar:#f3f3f5; --winline:#d9dbe1; --paper:#fffaf0;
-  --e0:#dfe2e8; --e9:#0058cc;
+  --e0:#dfe2e8; --e9:#0058cc; --stage:#e6e8ee; --deck:#c3c6ce;
   --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Noto Sans SC",sans-serif;
   --display:"SF Pro Display",-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,monospace;
@@ -22,14 +22,14 @@
   --page:#121316; --panel:#1b1c20; --sunk:#24252a; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
   --accent:#5a9cff; --true:#4aa8ff; --old:#ff6b5e; --ok:#4cc38a; --warn:#e3a443;
   --wall-a:#1d2c4a; --wall-b:#2c2140; --wall-c:#3a2a22; --bezel:#000000; --win:#2a2b30; --winbar:#34353b; --winline:#46474e; --paper:#33302a;
-  --e0:#2a2c33; --e9:#5a9cff;
+  --e0:#2a2c33; --e9:#5a9cff; --stage:#17181c; --deck:#4a4c53;
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --page:#121316; --panel:#1b1c20; --sunk:#24252a; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
   --accent:#5a9cff; --true:#4aa8ff; --old:#ff6b5e; --ok:#4cc38a; --warn:#e3a443;
   --wall-a:#1d2c4a; --wall-b:#2c2140; --wall-c:#3a2a22; --bezel:#000000; --win:#2a2b30; --winbar:#34353b; --winline:#46474e; --paper:#33302a;
-  --e0:#2a2c33; --e9:#5a9cff;
+  --e0:#2a2c33; --e9:#5a9cff; --stage:#17181c; --deck:#4a4c53;
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:15px/1.6 var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -73,6 +73,12 @@ svg{display:block;max-width:100%;height:auto}
 .board .cap b{color:var(--ink);font-weight:600}
 .board svg{border-radius:8px;box-shadow:0 0 0 .5px var(--line)}
 .vboards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:14px}
+.covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
+.cover{display:flex;flex-direction:column;gap:8px;margin:0}
+.cover svg{width:320px;max-width:100%;border-radius:6px;box-shadow:0 0 0 .5px var(--line)}
+.cover .t2{font-size:13.5px;line-height:1.45}
+.cover .n{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-left:6px}
+.cover .n.bad{color:var(--old)}
 .mocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px}
 .mock{display:flex;flex-direction:column;gap:10px}
 .mock svg{border-radius:10px;box-shadow:0 0 0 .5px var(--line);background:var(--bezel)}
@@ -101,10 +107,11 @@ img.frame{border-radius:8px;box-shadow:0 0 0 .5px var(--line);max-width:100%;hei
 <header style="display:flex;flex-direction:column;gap:12px">
   <span class="eyebrow">设计稿 · 宣传片 · 2026-10-18</span>
   <h1>1.0.18 宣传片分镜</h1>
-  <p class="lede">先稿后片。这份稿只改画面方案，不动 promo 源码。五个问题 Aaron 已在 10-18 定了，结论放在最前面。概念照 Aaron 已点头的那一版：片名双关的卷帘开场，刘海是主角，片尾卷帘条拼出 GitHub 二维码再点 Star，长度 45–60 秒（新稿 58 秒），交代 1.0.18 里刘海默认打开。改的是：刘海换成本机实测的形状和曲线，能量挪进刘海那一幕，每个交接处都有东西活着带过去，休息拍是有意的。</p>
+  <p class="lede">先稿后片。这份稿只改画面方案，不动 promo 源码。五个问题和平台指标 Aaron 已在 10-18 定了，都放在最前面。概念照 Aaron 已点头的那一版：片名双关的卷帘开场，刘海是主角，片尾卷帘条拼出 GitHub 二维码再点 Star，长度 45–60 秒（新稿 45 秒），交代 1.0.18 里刘海默认打开。改的是：刘海换成本机实测的形状和曲线，能量挪进刘海那一幕，每个交接处都有东西活着带过去，休息拍是有意的。</p>
   <div class="status">
     <span class="chip">现片 <b>56.0 s</b> · 连贯 <b>0.62</b> · 裸切 <b>3</b> · 静止 <b>0.531</b> · 峰值 <b>−1.0 dBFS</b></span>
-    <span class="chip">新稿 <b>58.0 s</b> · 24 拍 · 120 bpm · 目标连贯 <b>≥ 0.80</b></span>
+    <span class="chip">新稿 <b>45.0 s</b> · 19 拍 · 120 bpm · 目标连贯 <b>≥ 0.80</b></span>
+    <span class="chip">第 0 帧就在动 · 看点间隔 <b>≤ 6 s</b> · 片尾卡 <b>4 s</b></span>
     <span class="chip">刘海依据 <b>Mac17,4 · 1710×1107 pt</b></span>
   </div>
 </header>
@@ -114,6 +121,29 @@ img.frame{border-radius:8px;box-shadow:0 0 0 .5px var(--line);max-width:100%;hei
   <span class="eyebrow">已定 · Aaron，2026-10-18</span>
   <h2>五件事已定，下面的稿已经照改</h2>
   <ol class="qs" id="qList"></ol>
+</section>
+
+
+<!-- ============ 0b. 平台指标（已定）============ -->
+<section id="platform">
+  <span class="eyebrow">已定 · 平台指标（Aaron，2026-10-18）</span>
+  <h2>前 3 秒、完播、封面点击：这三样说了算</h2>
+  <p>B 站和其它平台最看三个数：前 3 秒的跳出率、完播率、封面加标题的点击率。下面五条是定下来的要求，节拍表、画板、验收表都已照改。</p>
+  <ol class="qs">
+    <li><div><div style="font-weight:600">前 3 秒：第 0 帧就是最强的看点，而且已经在动</div><div class="rec">开场直接是三扇窗口飞进真刘海、又原样放回（B1–B2）；静音看到 1.5 s 就懂。拉绳和 1994 历史挪到钩子之后，压成 3 s（B3–B4）。</div></div></li>
+    <li><div><div style="font-weight:600">完播：每 5–7 s 一个新看点，不留只讲解的拍</div><div class="rec">17 个看点，相邻最长隔 6.0 s。第二高点放在全片 70–80 %：B17 刘海喷出二维码，约 34.5 s / 45 s。片尾卡只留 4 s。</div></div></li>
+    <li><div><div style="font-weight:600">节奏收紧</div><div class="rec">58 s → 45 s，19 拍；刘海幕（6–17.5 s）仍是能量最高的一段，手上四拍低一档。</div></div></li>
+    <li><div><div style="font-weight:600">机身周围留白（和 WS2 片同一条意见）</div><div class="rec">宽景里机身占画宽约 60 %（55–65 %）；刘海从不贴画面顶边：宽景上方留约 13 % 画高，近景约 24 %，看得到机身边框和外面的底色。</div></div></li>
+    <li><div><div style="font-weight:600">封面与标题</div><div class="rec">三个封面概念：一个大主体、≤ 8 个汉字、高反差，320 px 缩略图能读；每个配两个 ≤ 25 字的标题，只说片里兑现得了的事。见下一节。</div></div></li>
+  </ol>
+</section>
+
+<!-- ============ 0c. 封面 ============ -->
+<section id="covers">
+  <span class="eyebrow">封面与标题</span>
+  <h2>三个封面，按 320 px 缩略图的实际大小画</h2>
+  <p>下面每张就是 B 站信息流里缩略图的宽度（320 px）。字数在标题后面，超出上限会标红。推荐第一个：封面就是片子的第 0 帧，点进来看到的正是封面上那件事，前 3 秒不落空。</p>
+  <div class="covers" id="coverList"></div>
 </section>
 
 <!-- ============ 1. 真机刘海 ============ -->
@@ -172,8 +202,8 @@ img.frame{border-radius:8px;box-shadow:0 0 0 .5px var(--line);max-width:100%;hei
 <!-- ============ 3. 节拍表 ============ -->
 <section id="beats">
   <span class="eyebrow">三 · 改后的节拍表</span>
-  <h2>24 拍，58 秒，刘海那一幕最热闹</h2>
-  <p>120 bpm，一拍 0.5 s，所有时间落在十六分音符上。镜头最短 1.0 s、最长 7.0 s（7×，门槛 4×）。三段真静止（5.50、23.50、39.50 s 起）加片尾卡。字幕叠层只剩片尾卡；其余文字都长在画面里的东西上：卷帘条的标题、岛里的一句话、欢迎窗口。</p>
+  <h2>19 拍，45 秒：开门就是看点，刘海那一幕最热闹</h2>
+  <p>120 bpm，一拍 0.5 s，所有时间落在十六分音符上。第 0 帧就在动，前 3 秒是全片最强的看点（吞进去、放回来）；卷帘双关和 1994 历史压成 3 s 跟在后面。镜头最短 0.75 s、最长 5.5 s（7.3×，门槛 4×）。两段真静止（6.0、17.5 s 起）加 4 s 片尾卡。片尾卡之前没有任何叠层字幕，文字都长在画面里的东西上：卷帘条的标题、岛里的一句话、欢迎窗口。</p>
   <div class="energy panel" id="energyNew"></div>
   <div class="scroll panel" style="padding:4px 6px"><table class="beats" id="beatTable"></table></div>
 </section>
@@ -182,10 +212,10 @@ img.frame{border-radius:8px;box-shadow:0 0 0 .5px var(--line);max-width:100%;hei
 <section id="boards">
   <span class="eyebrow">四 · 关键帧</span>
   <h2>每拍一张 16:9，另配四张 9:16</h2>
-  <p>每张都在同一个世界坐标里画（本机屏幕 1710 × 1107 pt），相机只是取景框，所以相邻两拍之间看得出什么留下、往哪走。蓝色箭头是这一拍的主要运动，虚线箭头是带进下一拍的东西。</p>
+  <p>每张都在同一个世界坐标里画（本机屏幕 1710 × 1107 pt，外面是机身和键盘面），相机只是取景框；宽景按机身占画宽约 60 % 取景，所以相邻两拍之间看得出什么留下、往哪走。蓝色箭头是这一拍的主要运动，虚线箭头是带进下一拍的东西。</p>
   <div class="boards" id="boards169"></div>
   <h3>9:16（B 站竖版、视频号）</h3>
-  <p class="small muted">竖版不是横版裁中间：刘海始终顶格居中，屏幕按顶部带取景，片尾卡改成上下排。</p>
+  <p class="small muted">竖版不是横版裁中间：刘海居中，上方留出机身边框和底色，不贴画面顶边；片尾卡改成上下排。</p>
   <div class="vboards" id="boards916"></div>
 </section>
 
@@ -212,9 +242,9 @@ img.frame{border-radius:8px;box-shadow:0 0 0 .5px var(--line);max-width:100%;hei
       <ul class="tight small">
         <li>母带 −16 LUFS 积分响度，真峰值上限 <b>−3.5 dBTP</b>（AAC 编码后仍在 verify 的 −3 dBFS 以下）。现片峰值 −1.0 dBFS。</li>
         <li>材质只有四种：布与绳（卷帘）、木（点击、键帽）、玻璃（刘海开合）、低频（吞）。混响一个房间。</li>
-        <li>事件 <b>≤ 21 个</b>，少于 24 拍。现片 96 个，其中 44–48 s 一段就有 30 个。</li>
-        <li>两处声音的休息和画面的休息对齐：23.50–24.50 s 鼓停一拍；39.50–40.75 s 只剩房间底噪。</li>
-        <li>音乐沿用自合成（scripts/audio.ts），不引入外部曲目；律动拍（19.5–23.5 s）由同一条鼓驱动岛里的波形，画面和声音同一帧。</li>
+        <li>事件 <b>≤ 17 个</b>，少于 19 拍。现片 96 个，其中 44–48 s 一段就有 30 个。</li>
+        <li>两处声音的休息和画面的休息对齐：6.0–6.75 s 只剩房间底噪；17.5–18.5 s 鼓停一拍。</li>
+        <li>音乐沿用自合成（scripts/audio.ts），不引入外部曲目；律动拍（13.5–17.5 s）由同一条鼓驱动岛里的波形，画面和声音同一帧。</li>
       </ul>
     </div>
     <div class="panel scroll"><table id="sfxTable" style="min-width:380px"></table></div>
@@ -402,43 +432,40 @@ const PROBS=[
 /* ---------- 3. 节拍 ---------- */
 // [t0,t1,名,类,动,静,带,能量]
 const BEATS=[
- [0,1,'拉绳','burst','光标抓住绳坠，第 6 帧就拉；底杆急升（expoOut），布卷上卷管。','墙面','卷管一路上升，变成标题栏',7],
- [1,2.5,'卷帘就是窗口','','相机后拉 3×；帘布变成窗口内容，底杆变成写着「WindowShade」的标题栏，窗口卷完成一条卷帘条。','桌面壁纸','同一条卷帘条，还在动',6],
- [2.5,4,'1994 → 2026','','卷帘条原地换三代外观：1994 条纹标题栏卷起；2001 Aqua 双击没反应，左右轻抖 2 px；2026 再卷起。条左端一个小年份是唯一的字。','相机','2026 卷帘条已在桌面上的位置',4],
- [4,5.5,'一桌子卷起来','burst','另外六扇窗口按十六分音符依次卷起，各带一点挤压；相机继续后拉，露出整台 Mac 和真刘海。','刘海','相机的后拉；刘海在画面上方正中',9],
- [5.5,6.75,'停','rest','1.25 s 真静止；6.5 s 刘海按 hover 呼吸一次（左右 +5、下 +3，calm）。','全部','那一下呼吸：角色醒了，相机开始推',0],
- [6.75,8.25,'刘海醒了','notch','相机推向刘海（刘海占画宽 11 % → 32 %），指针靠近，刘海朝指针一侧微微偏。','桌面（景深虚化）','指针抓住刘海下方一扇窗口的标题栏',5],
- [8.25,10.5,'吞','notch','甩一下标题栏：窗口沿 glide 弧线飞向刘海并缩小；刘海张口成落点（catch），吞下（settle，不回弹），右耳计数 0→1。相机追窗口，到口时 2 px 落地震。','其它窗口','右耳的「1」',8],
- [10.5,12,'再吞两扇','burst','八分音符上两次甩，每次吞得更快；计数 1→2→3 数字滚动。相机在两处来源间甩（带快门）。','刘海顶边','右耳的「3」',9],
- [12,14.5,'说','notch','刘海 bloom 成提醒：左耳 App 图标，刘海下方一句话（1080p ≥ 28 px），停 1.2 s 后 calm 收回。','相机微停','提醒往右耳收，那扇窗口住在那里',6],
- [14.5,16.75,'还','notch','点右耳：那一排 expand 展开，窗口 flyOut 飞回原处；相机跟窗口回家再推回。','其它卷帘条','窗口落在指针下，接着打字',7],
- [16.75,19.5,'教','notch','左下按 ⌃ C（起因贴着刘海下方画）；刘海 bloom 成教学，岛里 ⌃ 键帽翻成 ⌘（pop）；第二次按 ⌘C，岛点一下头（calm 缩 3 px）。','桌面','音乐第一拍在两耳里响起',6],
- [19.5,23.5,'律动','burst','两耳波形按十六分音符跳（同一条鼓驱动）；音量键 → 数字药丸逐拍长；电量在重拍上弹出；相机随拍 ±4 px。全片最满的一拍。','没有大面积的东西','最后一个重拍，鼓停，刘海收回静止',9],
- [23.5,24.5,'一拍静','rest','1 s 静止，音乐停一拍。','刘海、桌面','两根手指落在标题栏上（触控板小窗从左下滑入）',0],
- [24.5,28,'两指','','同一张桌子：上推收起窗口、下拉展开窗口、左右推半屏，落在八分音符上；相机拉到中景。','刘海（静止，看着）','最后一推把「参考资料」送进左半屏，指针顺势滑到 Dock',6],
- [28,30.5,'窗口浏览','','指针停在 Dock 图标上，面板从这颗图标长出来；卡片左上角是 1.0.18 新加的红黄绿，指着时三颗一起露符号。点一张卡的红灯，那张卡 0.10 s 淡出，其余卡 settle 挪过来。','桌上的窗口','面板收回 Dock 的同一刻，这一排图标开始升起',5],
- [30.5,33,'启动台','','Dock 的图标升起、铺开成启动台的格子（同一批图标，桌面压暗，不换画面）；点一个，格子收回 Dock，新窗口从那颗图标长出来。','刘海、壁纸','刚长出来的新窗口，桌上现在四扇',6],
- [33,35.5,'平铺','','两指张开（魔法平铺）：四扇窗口各自滑进要去的格位，十六分音符错开；相机拉到全景。','刘海','排好的四格',7],
- [35.5,37,'全部收进刘海','burst','四格依次卷成卷帘条，刘海一口气吞下（十六分音符错开），右耳计数滚动。','壁纸','空桌面，只剩刘海',9],
- [37,39.5,'装上就在','notch','同一块屏：Dock 上 WindowShade 图标弹一下，欢迎窗口出来，带「已通过 Apple 公证」小标；没碰任何设置，刘海就呼吸、接住第一次甩。','相机','点「开始使用」，欢迎窗口卷成一条卷帘条',4],
- [39.5,40.75,'停','rest','1.25 s 静止，声音只剩房间。','全部','刘海吸一口气（深 +3）',0],
- [40.75,46.5,'吐出二维码','notch','刘海吐出 29 条卷帘条，一行一条，十六分音符，四小节一组；每条沿 flyOut 弧线落到堆上；相机下摇跟着堆，最后正对。','刘海在画面顶端','叠好的卷帘条',7],
- [46.5,48.5,'封','','逐行把标题栏换成干净的二维码模块（gather→seal），影子合成一张卡。','相机','二维码卡；最后一条保留标题栏，当 Star 按钮',4],
- [48.5,51,'Star','','指针点最后一条上的「Star」，星形填满（pop，回弹 ≤ 0.25）；上方刘海右耳闪一颗星回应。','二维码','字标从那条卷帘条里升起',5],
- [51,58,'片尾卡','rest','52 s 前字标、口号、网址落定，之后静止；56.5 s 刘海最后呼吸一次。','全部','—（结束）',1],
+ [0,1.5,'吞进刘海','burst','第 0 帧三扇窗口已经在半空飞向真刘海（带快门），0.25 / 0.75 / 1.25 s 各吞一扇：刘海张成落点（catch）、吞下（settle），右耳计数 1→2→3。1.5 s 时桌面已空，静音也看得懂。','刘海顶边、壁纸','右耳的「3」，指针已经停在上面',9],
+ [1.5,3,'原样放回','burst','点右耳：那一排 expand 展开，三扇窗口按十六分音符 flyOut 飞回各自原来的位置和大小。','刘海','最后落地的那扇，指针顺势双击它的标题栏',8],
+ [3,4.5,'卷起来','','双击：窗口卷成一条卷帘条，条上标题正是「WindowShade」（片名长在画面里，不是字幕）；卷管的织物纹理一闪，交代卷帘这个双关。','其它窗口','这条卷帘条，原地开始换外观',6],
+ [4.5,6,'1994 → 2026','','同一条卷帘条原地换三代外观：1994 条纹标题栏卷起，2001 Aqua 双击落空、轻抖 2 px，2026 再卷起。条左端一个小年份是唯一的字。','相机','2026 那条回到桌面上它的位置',5],
+ [6,6.75,'停','rest','0.75 s 真静止；声音只剩房间。','全部','刘海呼吸一次，相机开始推',0],
+ [6.75,8.25,'近景再吞','notch','相机推到近景（刘海上方留出机身边框和空白）；甩一下标题栏，窗口沿 glide 弧线飞进刘海，这次看清真刘海的肩和底角怎么张口、合上。','桌面（景深虚化）','右耳计数 +1',8],
+ [8.25,10.75,'说','notch','刘海 bloom 成提醒：左耳 App 图标，刘海下方一句话（1080p ≥ 28 px），停 1.2 s 后 calm 收回。','相机微停','左下角有人按下 ⌃ C',6],
+ [10.75,13.5,'教','notch','⌃ C 的键帽就画在刘海下方；刘海 bloom 成教学，岛里 ⌃ 翻成 ⌘（pop）；第二次按 ⌘C，岛点一下头。','桌面','鼓的第一拍在两耳里响起',6],
+ [13.5,17.5,'律动','burst','两耳波形按十六分音符跳（同一条鼓驱动）；音量键让岛逐拍长成数字药丸；电量在重拍上弹出；相机随拍 ±4 px。刘海幕的顶点。','没有大面积的东西','最后一个重拍，鼓停',9],
+ [17.5,18.5,'一拍静','rest','1 s 真静止，音乐停一拍。','刘海、桌面','两根手指落在标题栏上',0],
+ [18.5,21.5,'两指','','相机拉到中景：上推收起窗口、下拉展开窗口、左右推半屏，落在八分音符上。','刘海（静止，看着）','最后一推把窗口送进左半屏，指针滑到 Dock',6],
+ [21.5,24,'窗口浏览','','面板从 Dock 图标长出来；卡片左上角是 1.0.18 新加的红黄绿，指着时三颗一起露符号；点红灯，那张卡 0.10 s 淡出，其余卡 settle 挪过来。','桌上的窗口','面板收回的同一刻，这一排图标开始升起',5],
+ [24,26.5,'启动台','','Dock 的图标升起、铺开成启动台的格子（同一批图标，桌面压暗，不换画面）；点一个，格子收回 Dock，新窗口从那颗图标长出来。','刘海、壁纸','新窗口，桌上现在四扇',6],
+ [26.5,29.5,'平铺','','相机拉到宽景（机身占画宽约 60 %）；两指张开（魔法平铺）：四扇窗口各自滑进格位，十六分音符错开。','刘海','排好的四格',7],
+ [29.5,31,'全部收进刘海','burst','四格依次卷成卷帘条，刘海一口气吞下，右耳计数滚动。','壁纸','空桌面，只剩刘海',8],
+ [31,33.5,'装上就在','notch','Dock 上 WindowShade 图标弹一下，欢迎窗口出来（带「已通过 Apple 公证」小标）；点「开始使用」，它卷成卷帘条，刘海不等任何设置就把它接住：默认就开着。','相机','刘海吸一口气（深 +3）',6],
+ [33.5,39,'吐出二维码','burst','第二高点（≈ 34.5 s，全片 77 %）：刘海一口气喷出 29 条卷帘条，扇形飞散再一行行落成堆，十六分音符四小节；相机下摇跟着堆，最后正对。','刘海在画面上方（不贴顶）','叠好的卷帘条',9],
+ [39,41,'封 · Star','','逐行换成干净的二维码模块（gather→seal）；指针点最后一条上的「Star」，星形填满；刘海右耳闪一颗星回应。','二维码','字标从那条卷帘条里升起',5],
+ [41,45,'片尾卡','rest','42 s 前字标、口号、网址落定，之后静止；44 s 刘海最后呼吸一次。片尾卡 4 s。','全部','—（结束）',2],
 ];
+const PAYOFFS=[[0.5,'第一扇吞进'],[2.5,'全部放回'],[4,'卷成「WindowShade」'],[5.5,'1994 外观'],[7.75,'近景吞'],[9.25,'刘海说话'],[12,'⌃ 翻 ⌘'],[15,'律动'],[20,'两指半屏'],[22.75,'红灯关卡'],[25.25,'启动台'],[28,'魔法平铺'],[30.25,'全部吞下'],[32.5,'默认就接住'],[34.5,'喷出二维码'],[40,'Star'],[42,'片尾']];
+const TOTAL=45;
 (function(){
   const lv=[]; const step=1/12;
-  for(let t=0;t<58-1e-9;t+=step){ const b=BEATS.find(b=>t>=b[0]&&t<b[1]); let v=b?b[7]:0;
-    if(b&&b[2]==='片尾卡') v=t<52?3:(t>=56.5&&t<57.2?2:0);
-    if(b&&b[2]==='停'&&b[0]===5.5&&t>=6.5) v=2;
-    if(b&&b[2]==='停'&&b[0]===39.5&&t>=40.5) v=2;
+  for(let t=0;t<TOTAL-1e-9;t+=step){ const b=BEATS.find(b=>t>=b[0]&&t<b[1]); let v=b?b[7]:0;
+    if(b&&b[2]==='片尾卡') v=t<42?3:(t>=44&&t<44.6?2:0);
     lv.push(v); }
   const host=$('#energyNew'); const h=document.createElement('h3'); h.textContent='能量图：新稿目标（与现片同一刻度）'; host.appendChild(h);
-  energyStrip(host,'新稿',lv,58,[[6.75,23.5,'var(--true)'],[24.5,35.5,'var(--faint)']]);
+  energyStrip(host,'新稿',lv,58,[[6,17.5,'var(--true)'],[18.5,29.5,'var(--faint)'],[33.5,35.5,'var(--warn)']]);
   const lvOld=[...OLD_ENERGY].map(c=>Math.max(0,LV.indexOf(c)));
   energyStrip(host,'现片',lvOld,58,[[12,28,'var(--old)']]);
-  const p=document.createElement('p'); p.className='small muted'; p.textContent='蓝底是新稿的刘海幕（6.75–23.5 s），灰底是手上那四拍（24.5–35.5 s，两指、窗口浏览、启动台、平铺），它们比刘海幕低一档。三段真静止是故意的：5.50、23.50、39.50 s 起，加上 52 s 后的片尾卡。';
+  let gap=0; for(let i=1;i<PAYOFFS.length;i++) gap=Math.max(gap,PAYOFFS[i][0]-PAYOFFS[i-1][0]);
+  const p=document.createElement('p'); p.className='small muted';
+  p.textContent=`蓝底是刘海幕（6–17.5 s），灰底是手上四拍（18.5–29.5 s，比刘海幕低一档），橙底是第二高点（吐出二维码，34.5 s ≈ 全片 ${Math.round(34.5/TOTAL*100)} %）。看点 ${PAYOFFS.length} 个：${PAYOFFS.map(p=>p[0]+' s '+p[1]).join('、')}；相邻两个最长隔 ${gap.toFixed(2)} s（要求 ≤ 7 s）。`;
   host.appendChild(p);
   const tb=$('#beatTable');
   tb.innerHTML='<thead><tr><th>t</th><th>拍</th><th>什么在动</th><th>什么静止</th><th>带进下一拍</th></tr></thead>';
@@ -490,58 +517,76 @@ const desk=(rolledIdx,hide)=>DESK.map((d,i)=>hide&&hide.includes(i)?'':W({...d,r
 const dock=()=>{let s=`<rect x="${N.cx-170}" y="1040" width="340" height="56" rx="18" fill="rgba(255,255,255,.55)" stroke="var(--winline)"/>`;const cols=['#3b82f6','#22a06b','#e5484d','#f5a524','#7c5cff','#64748b'];cols.forEach((c,i)=>s+=`<rect x="${N.cx-150+i*52}" y="1048" width="40" height="40" rx="10" fill="${c}"/>`);return s;};
 const menubar=()=>label(14,22,'WindowShade',13,'start',650,'var(--ink)')+label(1696,22,'9:41',13,'end',500,'var(--ink)');
 
+const CAM_W=[-595,-215,2900], CAM_M=[-260,-150,2230], CAM_C=[480,-100,750]; // 宽景机身约 60 % 画宽；刘海上方留白
 // 每拍：相机（世界坐标 x0,y0,w）与内容
 const BOARDS=[
- {bare:true,noclip:true,cam:[560,40,560],draw:()=>{ // B1 拉绳：近景卷帘
-   let s=`<rect x="560" y="40" width="560" height="315" fill="var(--wall-c)"/>`;
-   s+=`<rect x="610" y="60" width="460" height="22" rx="11" fill="#cdb79a"/><rect x="620" y="82" width="440" height="150" fill="#efe3cf"/>`;
-   for(let i=0;i<7;i++) s+=`<line x1="620" x2="1060" y1="${100+i*19}" y2="${100+i*19}" stroke="#e2d2b8" stroke-width="2"/>`;
-   s+=`<rect x="614" y="228" width="452" height="12" rx="6" fill="#b89a74"/><line x1="1010" x2="1010" y1="240" y2="300" stroke="#8a7155" stroke-width="2"/><circle cx="1010" cy="304" r="6" fill="#8a7155"/>`;
-   s+=cursor(1004,300,1.4)+arrow(1060,300,1060,150,{w:3.5});
-   return s;}},
- {cam:[420,60,860],draw:()=>W({x:520,y:180,w:640,h:30,title:'WindowShade',rolled:true})+`<rect x="520" y="204" width="640" height="190" fill="#efe3cf" opacity=".45" rx="8"/>`+arrow(840,380,840,230,{w:3})+arrow(560,440,460,520,{dash:true,w:2.5})+label(530,530,'相机后拉 3×',18,'start',500,'var(--muted)')},
- {cam:[420,60,860],draw:()=>{let s='';const ys=[170,250,330];const st=[['#fff','1994'],['#cfd8e8','2001'],['var(--winbar)','2026']];
+ {cam:[230,-120,1250],draw:()=>menubar()+desk([],[0,1,2])+[[560,150,200,130,1],[1010,120,160,104,.92],[805,70,96,62,.8]].map(([x,y,w,h,a])=>`<rect x="${x-60}" y="${y+50}" width="${w}" height="${h}" rx="10" fill="none" stroke="var(--winline)" stroke-width="2" stroke-dasharray="8 8" opacity=".7"/>`+W({x,y,w,h,title:'',alpha:a})+arrow(x+w/2,y+h/2,N.cx+(x+w/2-N.cx)*.15,40,{w:3})).join('')+isl(ST.drop,`<text x="${N.cx+150}" y="26" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">1</text>`)+label(N.cx,560,'第 0 帧：三扇已经在飞',24,'middle',600,'var(--muted)')},
+ {cam:[-260,-150,2230],draw:()=>menubar()+desk([],[0,1,2])+isl(ST.expanded,[0,1,2].map(i=>`<rect x="${N.cx-150+i*104}" y="${N.D+18}" width="92" height="70" rx="14" fill="#2a2b30"/>`).join(''))+[[380,300,250,170],[930,250,300,200],[1290,330,240,170]].map(([x,y,w,h],k)=>W({x,y,w,h,title:['笔记','参考资料','文章草稿'][k],alpha:.9})+arrow(N.cx+(x+w/2-N.cx)*.2,190,x+w/2,y,{w:3})).join('')+cursor(N.cx+170,20,1.6)},
+ {cam:[300,-80,1100],draw:()=>menubar()+desk([],[1,2,3,4,5])+isl(ST.rest)+`<rect x="520" y="204" width="640" height="210" fill="#efe3cf" opacity=".5" rx="8"/>`+[0,1,2,3,4,5,6].map(i=>`<line x1="530" x2="1150" y1="${222+i*26}" y2="${222+i*26}" stroke="#e2d2b8" stroke-width="2" opacity=".6"/>`).join('')+W({x:520,y:180,w:640,h:30,title:'WindowShade',rolled:true})+arrow(840,400,840,230,{w:3})+cursor(700,186,1.5)+`<circle cx="704" cy="190" r="16" fill="none" stroke="var(--true)" stroke-width="2.5"/><circle cx="704" cy="190" r="26" fill="none" stroke="var(--true)" stroke-width="1.5" opacity=".5"/>`+label(540,470,'双击 · 卷起；标题就是片名',20,'start',500,'var(--muted)')},
+ {cam:[420,40,860],draw:()=>{let s='';const ys=[170,250,330];const st=[['#fff','1994'],['#cfd8e8','2001'],['var(--winbar)','2026']];
    ys.forEach((y,i)=>{s+=`<g opacity="${i===2?1:.35}">`+(i===0?`<rect x="520" y="${y}" width="640" height="26" fill="#fff" stroke="#111" stroke-width="2"/>`+[0,1,2,3,4,5].map(k=>`<line x1="560" x2="1120" y1="${y+6+k*3}" y2="${y+6+k*3}" stroke="#111"/>`).join('')+`<rect x="770" y="${y+4}" width="140" height="18" fill="#fff"/>`+label(840,y+18,'WindowShade',13,'middle',700,'#111'):W({x:520,y,w:640,h:26,title:'WindowShade',rolled:true,tint:st[i][0]}))+label(505,y+18,st[i][1],15,'end',600,'var(--muted)')+'</g>';});
    s+=arrow(1180,170,1180,330,{bend:40,w:2.5})+label(1200,260,'原地换代',16,'start',500,'var(--muted)');return s;}},
- {cam:[-40,-30,1790],draw:()=>menubar()+desk('all')+dock()+isl(ST.rest)+arrow(300,820,150,960,{dash:true,w:3})+label(170,990,'相机继续后拉',22,'start',500,'var(--muted)')},
- {cam:[-40,-30,1790],draw:()=>menubar()+desk('all')+dock()+isl(ST.hover)+label(N.cx,120,'静 1.25 s',22,'middle',600,'var(--ok)')},
- {cam:[555,-10,600],draw:()=>menubar()+desk([0,2,3,4,5])+isl(ST.hover)+cursor(930,120,1.3)+arrow(700,300,820,80,{dash:true,w:2.5})+label(600,330,'相机推向刘海',16,'start',500,'var(--muted)')},
- {cam:[555,-10,600],draw:()=>menubar()+desk([0,2,3,4,5],[1])+W({x:760,y:110,w:190,h:130,title:'参考资料',alpha:.55})+isl(ST.drop)+arrow(800,300,850,90,{w:3.2,lift:30})+cursor(870,170,1.3)},
- {cam:[555,-10,600],draw:()=>menubar()+desk('all',[1,2])+isl(ST.compact,`<text x="${N.cx+N.hw+16}" y="23" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">3</text><rect x="${N.cx-N.hw-24}" y="9" width="16" height="16" rx="4" fill="#5a9cff"/>`)+arrow(620,260,770,40,{w:3})+arrow(1100,260,960,40,{w:3})},
- {cam:[555,-10,600],draw:()=>menubar()+desk('all',[1,2])+isl(ST.alert,`<rect x="${N.cx-188}" y="8" width="20" height="20" rx="5" fill="#5a9cff"/><text x="${N.cx}" y="66" font-size="17" font-weight="650" fill="#fff" text-anchor="middle">「参考资料」有新批注</text>`)+label(N.cx,150,'岛里这一句就是台词；1080p ≥ 28 px',13,'middle',500,'var(--muted)')},
- {cam:[300,-20,1100],draw:()=>menubar()+desk('all',[1])+isl(ST.expanded,[0,1,2].map(i=>`<rect x="${N.cx-150+i*104}" y="${N.D+18}" width="92" height="70" rx="14" fill="#2a2b30"/>`).join(''))+W({x:680,y:300,w:420,h:300,title:'参考资料',alpha:.9})+arrow(N.cx,190,890,300,{w:3,bend:40})+cursor(905,110,1.4)},
- {cam:[400,-15,900],draw:()=>menubar()+desk('all',[1])+W({x:680,y:150,w:420,h:300,title:'参考资料'})+isl(ST.teach,keycap(N.cx-120,42,'⌃','control',1.1)+`<text x="${N.cx-55}" y="72" font-size="22" fill="#fff">→</text>`+keycap(N.cx-25,42,'⌘','command',1.1)+keycap(N.cx+40,42,'C','',1.1))+keycap(620,520,'⌃','control',1.1)+keycap(672,520,'C','',1.1)+arrow(700,515,N.cx-120,140,{dash:true,w:2.5})},
- {cam:[555,-10,600],draw:()=>menubar()+desk('all',[1,2])+isl(ST.level,`<rect x="${N.cx-150}" y="9" width="18" height="18" rx="4" fill="#e5484d"/>`+[0,1,2,3,4].map(i=>`<rect x="${N.cx+N.hw+10+i*7}" y="${16-[6,10,4,9,7][i]}" width="4" height="${[12,20,8,18,14][i]}" rx="2" fill="#30d158"/>`).join('')+`<rect x="${N.cx-110}" y="${N.D+2}" width="220" height="5" rx="2.5" fill="rgba(255,255,255,.2)"/><rect x="${N.cx-110}" y="${N.D+2}" width="150" height="5" rx="2.5" fill="#fff"/>`)+label(N.cx,150,'波形与音乐同一条鼓；相机随拍 ±4 px',13,'middle',500,'var(--muted)')},
- {cam:[555,-10,600],draw:()=>menubar()+desk('all',[1,2])+isl(ST.rest)+label(N.cx,150,'静 1 s · 鼓停一拍',16,'middle',600,'var(--ok)')},
- {cam:[150,-20,1400],draw:()=>menubar()+desk([3,5])+isl(ST.rest)+`<rect x="180" y="610" width="220" height="150" rx="16" fill="rgba(255,255,255,.75)" stroke="var(--winline)"/><circle cx="275" cy="690" r="11" fill="#5a9cff"/><circle cx="305" cy="690" r="11" fill="#5a9cff"/>`+arrow(290,670,290,630,{w:3})+arrow(890,170,890,100,{w:3})+arrow(820,400,600,420,{dash:true,w:2.5})},
- {cam:[380,540,1000],draw:()=>desk([0,2,3,4,5]).replace(/<g opacity="1">/g,'<g opacity=".55">')+dock()+`<rect x="560" y="770" width="560" height="236" rx="16" fill="var(--panel)" stroke="var(--winline)"/>`+[0,1,2].map(i=>{const x=578+i*180,y=788;const hov=i===1;return `<g opacity="${i===0?.35:1}"><rect x="${x}" y="${y}" width="164" height="200" rx="10" fill="var(--win)" stroke="${hov?'var(--true)':'var(--winline)'}" stroke-width="${hov?2:1}"/><rect x="${x+10}" y="${y+10}" width="144" height="150" rx="6" fill="var(--winbar)"/>${[0,1,2].map(k=>`<circle cx="${x+22+k*16}" cy="${y+22}" r="6" fill="${['#ff5f57','#febc2e','#28c840'][k]}"/>`+(hov?`<text x="${x+22+k*16}" y="${y+25.5}" font-size="9" font-weight="700" text-anchor="middle" fill="rgba(0,0,0,.6)">${['×','−','+'][k]}</text>`:'')).join('')}<text x="${x+82}" y="${y+184}" font-size="13" text-anchor="middle" fill="var(--muted)">${['邮件','参考资料','文章草稿'][i]}</text></g>`;}).join('')+cursor(762,810,1.3)+arrow(829,1040,829,1012,{dash:true,w:2.5})+arrow(650,900,700,900,{w:2.5})+label(578,1030,'红灯关掉第一张，其余 settle 挪过来',14,'start',500,'var(--muted)')},
- {cam:[-40,-30,1790],draw:()=>menubar()+desk([0,2,3,4,5])+`<rect x="0" y="0" width="1710" height="1107" fill="rgba(20,20,30,.35)"/>`+isl(ST.rest)+[0,1,2].map(r=>[0,1,2,3,4,5].map(c=>`<rect x="${N.cx-470+c*180}" y="${280+r*170}" width="80" height="80" rx="20" fill="${['#3b82f6','#22a06b','#e5484d','#f5a524','#7c5cff','#64748b'][(r*2+c)%6]}"/>`).join('')).join('')+dock()+[0,2,5].map(c=>arrow(N.cx-130+c*52,1040,N.cx-430+c*180,620,{w:2.4})).join('')+cursor(N.cx-60,640,1.4)},
- {cam:[-40,-30,1790],draw:()=>menubar()+isl(ST.rest)+[W({x:8,y:40,w:840,h:1000,title:'参考资料'}),W({x:862,y:40,w:840,h:500,title:'文章草稿'}),W({x:862,y:546,w:416,h:494,title:'笔记'}),W({x:1286,y:546,w:416,h:494,title:'日历'})].join('')+[[730,300,300,400],[1130,380,1070,250],[300,660,1070,760],[1360,690,1490,760]].map(([a,b,c,d])=>arrow(a,b,c,d,{w:2.6})).join('')},
- {cam:[-40,-30,1790],draw:()=>menubar()+isl(ST.compact,`<text x="${N.cx+N.hw+16}" y="23" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">4</text>`)+[W({x:8,y:40,w:840,h:24,title:'参考资料',rolled:true}),W({x:862,y:40,w:840,h:24,title:'文章草稿',rolled:true}),W({x:862,y:546,w:416,h:24,title:'笔记',rolled:true}),W({x:1286,y:546,w:416,h:24,title:'日历',rolled:true})].join('')+[[428,52],[1282,52],[1070,558],[1494,558]].map(([x,y])=>arrow(x,y+12,N.cx+(x-N.cx)*.15,46,{w:2.6})).join('')},
- {cam:[-40,-30,1790],draw:()=>menubar()+isl(ST.hover)+W({x:N.cx-260,y:300,w:520,h:330,title:'欢迎使用 WindowShade'})+`<rect x="${N.cx-90}" y="560" width="180" height="34" rx="9" fill="#2563eb"/>`+label(N.cx,582,'开始使用',15,'middle',650,'#fff')+`<rect x="${N.cx-75}" y="510" width="150" height="24" rx="12" fill="#e8f3ec"/>`+label(N.cx,527,'已通过 Apple 公证',12,'middle',600,'#0e6436')+dock()+`<rect x="${N.cx-150+4*52}" y="1030" width="40" height="40" rx="10" fill="#9fb7e8"/>`+label(N.cx,400,'v1.0.18',14,'middle',500,'#5f6068')},
- {cam:[-40,-30,1790],draw:()=>menubar()+isl({...ST.rest,d:N.D+3})+W({x:N.cx-260,y:160,w:520,h:26,title:'欢迎使用 WindowShade',rolled:true})+label(N.cx,420,'静 1.25 s · 只剩房间声',22,'middle',600,'var(--ok)')},
- {cam:[455,-20,800],draw:()=>menubar()+isl(ST.drop)+qr(N.cx-140,240,29,9.6,14,true)+[0,1,2].map(i=>W({x:N.cx-80+i*30,y:100+i*40,w:180,h:20,rolled:true,alpha:.85-i*.2})).join('')+arrow(N.cx,90,N.cx,230,{w:3})+arrow(N.cx+250,300,N.cx+250,420,{dash:true,w:2.5})+label(N.cx+262,370,'相机下摇',14,'start',500,'var(--muted)')},
- {bare:true,cam:[455,80,800],draw:()=>qr(N.cx-140,170,29,9.6,29,false)+label(N.cx,152,'示意图案；成片用真码，扫码验收',12,'middle',500,'var(--muted)')},
- {cam:[455,-20,800],draw:()=>isl(ST.compact,`<path d="M${N.cx+N.hw+16} 9 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.8 -7 3.8 1.5 -7.5 -5.5 -5 7.5 -1z" fill="#ffd60a"/>`)+qr(N.cx-140,120,29,9.6,29,false)+W({x:N.cx-140,y:420,w:280,h:28,title:'',rolled:true})+`<path d="M${N.cx-40} 426 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.8 -7 3.8 1.5 -7.5 -5.5 -5 7.5 -1z" fill="#ffd60a"/>`+label(N.cx+10,439,'Star',14,'middle',650,'var(--ink)')+cursor(N.cx+20,434,1.3)},
- {cam:[-40,-30,1790],draw:()=>isl(ST.hover)+label(500,470,'WindowShade',96,'middle',700,'var(--ink)')+label(500,560,'收起窗口，留下位置。',46,'middle',600,'var(--ink)')+`<rect x="250" y="620" width="500" height="64" rx="32" fill="var(--panel)" stroke="var(--winline)"/>`+label(500,663,'windowshade.aaronlau.me',30,'middle',600,'var(--accent)')+label(500,760,'1.0.18 · macOS 15 起 · 免费开源',30,'middle',500,'var(--muted)')+qr(1060,300,29,13,29,false)+label(1248,760,'GitHub · Star',30,'middle',600,'var(--ink)')+label(N.cx,980,'最小字号 30 px@1080p（竖版 44 px）',18,'middle',500,'var(--ok)')},
+ {cam:[-595,-215,2900],draw:()=>menubar()+desk('all')+dock()+isl(ST.hover)+label(N.cx,120,'静 0.75 s',22,'middle',600,'var(--ok)')},
+ {cam:[480,-100,750],draw:()=>menubar()+desk([0,2,3,4,5],[1])+W({x:760,y:110,w:190,h:130,title:'参考资料',alpha:.55})+isl(ST.drop)+arrow(800,300,850,90,{w:3.2,lift:30})+cursor(870,170,1.3)},
+ {cam:[480,-100,750],draw:()=>menubar()+desk('all',[1,2])+isl(ST.alert,`<rect x="${N.cx-188}" y="8" width="20" height="20" rx="5" fill="#5a9cff"/><text x="${N.cx}" y="66" font-size="17" font-weight="650" fill="#fff" text-anchor="middle">「参考资料」有新批注</text>`)+label(N.cx,150,'岛里这一句就是台词；1080p ≥ 28 px',13,'middle',500,'var(--muted)')},
+ {cam:[380,-110,950],draw:()=>menubar()+desk('all',[1])+W({x:680,y:150,w:420,h:300,title:'参考资料'})+isl(ST.teach,keycap(N.cx-120,42,'⌃','control',1.1)+`<text x="${N.cx-55}" y="72" font-size="22" fill="#fff">→</text>`+keycap(N.cx-25,42,'⌘','command',1.1)+keycap(N.cx+40,42,'C','',1.1))+keycap(620,520,'⌃','control',1.1)+keycap(672,520,'C','',1.1)+arrow(700,515,N.cx-120,140,{dash:true,w:2.5})},
+ {cam:[480,-100,750],draw:()=>menubar()+desk('all',[1,2])+isl(ST.level,`<rect x="${N.cx-150}" y="9" width="18" height="18" rx="4" fill="#e5484d"/>`+[0,1,2,3,4].map(i=>`<rect x="${N.cx+N.hw+10+i*7}" y="${16-[6,10,4,9,7][i]}" width="4" height="${[12,20,8,18,14][i]}" rx="2" fill="#30d158"/>`).join('')+`<rect x="${N.cx-110}" y="${N.D+2}" width="220" height="5" rx="2.5" fill="rgba(255,255,255,.2)"/><rect x="${N.cx-110}" y="${N.D+2}" width="150" height="5" rx="2.5" fill="#fff"/>`)+label(N.cx,150,'波形与音乐同一条鼓；相机随拍 ±4 px',13,'middle',500,'var(--muted)')},
+ {cam:[480,-100,750],draw:()=>menubar()+desk('all',[1,2])+isl(ST.rest)+label(N.cx,150,'静 1 s · 鼓停一拍',16,'middle',600,'var(--ok)')},
+ {cam:[-260,-150,2230],draw:()=>menubar()+desk([3,5])+isl(ST.rest)+`<rect x="180" y="610" width="220" height="150" rx="16" fill="rgba(255,255,255,.75)" stroke="var(--winline)"/><circle cx="275" cy="690" r="11" fill="#5a9cff"/><circle cx="305" cy="690" r="11" fill="#5a9cff"/>`+arrow(290,670,290,630,{w:3})+arrow(890,170,890,100,{w:3})+arrow(820,400,600,420,{dash:true,w:2.5})},
+ {cam:[330,560,1050],draw:()=>desk([0,2,3,4,5]).replace(/<g opacity="1">/g,'<g opacity=".55">')+dock()+`<rect x="560" y="770" width="560" height="236" rx="16" fill="var(--panel)" stroke="var(--winline)"/>`+[0,1,2].map(i=>{const x=578+i*180,y=788;const hov=i===1;return `<g opacity="${i===0?.35:1}"><rect x="${x}" y="${y}" width="164" height="200" rx="10" fill="var(--win)" stroke="${hov?'var(--true)':'var(--winline)'}" stroke-width="${hov?2:1}"/><rect x="${x+10}" y="${y+10}" width="144" height="150" rx="6" fill="var(--winbar)"/>${[0,1,2].map(k=>`<circle cx="${x+22+k*16}" cy="${y+22}" r="6" fill="${['#ff5f57','#febc2e','#28c840'][k]}"/>`+(hov?`<text x="${x+22+k*16}" y="${y+25.5}" font-size="9" font-weight="700" text-anchor="middle" fill="rgba(0,0,0,.6)">${['×','−','+'][k]}</text>`:'')).join('')}<text x="${x+82}" y="${y+184}" font-size="13" text-anchor="middle" fill="var(--muted)">${['邮件','参考资料','文章草稿'][i]}</text></g>`;}).join('')+cursor(762,810,1.3)+arrow(829,1040,829,1012,{dash:true,w:2.5})+arrow(650,900,700,900,{w:2.5})+label(578,1030,'红灯关掉第一张，其余 settle 挪过来',14,'start',500,'var(--muted)')},
+ {cam:[-260,-150,2230],draw:()=>menubar()+desk([0,2,3,4,5])+`<rect x="0" y="0" width="1710" height="1107" fill="rgba(20,20,30,.35)"/>`+isl(ST.rest)+[0,1,2].map(r=>[0,1,2,3,4,5].map(c=>`<rect x="${N.cx-470+c*180}" y="${280+r*170}" width="80" height="80" rx="20" fill="${['#3b82f6','#22a06b','#e5484d','#f5a524','#7c5cff','#64748b'][(r*2+c)%6]}"/>`).join('')).join('')+dock()+[0,2,5].map(c=>arrow(N.cx-130+c*52,1040,N.cx-430+c*180,620,{w:2.4})).join('')+cursor(N.cx-60,640,1.4)},
+ {cam:[-595,-215,2900],draw:()=>menubar()+isl(ST.rest)+[W({x:8,y:40,w:840,h:1000,title:'参考资料'}),W({x:862,y:40,w:840,h:500,title:'文章草稿'}),W({x:862,y:546,w:416,h:494,title:'笔记'}),W({x:1286,y:546,w:416,h:494,title:'日历'})].join('')+[[730,300,300,400],[1130,380,1070,250],[300,660,1070,760],[1360,690,1490,760]].map(([a,b,c,d])=>arrow(a,b,c,d,{w:2.6})).join('')},
+ {cam:[-595,-215,2900],draw:()=>menubar()+isl(ST.compact,`<text x="${N.cx+N.hw+16}" y="23" font-size="15" font-weight="700" fill="#fff" text-anchor="middle">4</text>`)+[W({x:8,y:40,w:840,h:24,title:'参考资料',rolled:true}),W({x:862,y:40,w:840,h:24,title:'文章草稿',rolled:true}),W({x:862,y:546,w:416,h:24,title:'笔记',rolled:true}),W({x:1286,y:546,w:416,h:24,title:'日历',rolled:true})].join('')+[[428,52],[1282,52],[1070,558],[1494,558]].map(([x,y])=>arrow(x,y+12,N.cx+(x-N.cx)*.15,46,{w:2.6})).join('')},
+ {cam:[-260,-150,2230],draw:()=>menubar()+isl(ST.drop)+W({x:N.cx-260,y:260,w:520,h:24,title:'欢迎使用 WindowShade',rolled:true})+`<rect x="${N.cx-85}" y="300" width="170" height="26" rx="13" fill="#e8f3ec"/>`+label(N.cx,318,'已通过 Apple 公证',14,'middle',600,'#0e6436')+arrow(N.cx,250,N.cx,95,{w:3.2})+dock()+`<rect x="${N.cx-150+4*52}" y="1030" width="40" height="40" rx="10" fill="#9fb7e8"/>`+label(N.cx,600,'没碰任何设置，刘海直接接住',26,'middle',600,'var(--muted)')},
+ {cam:[255,-120,1200],draw:()=>menubar()+isl(ST.drop)+[...Array(11)].map((_,i)=>{const a=(-75+i*15)*Math.PI/180,r=170+(i%3)*70,x=N.cx+Math.sin(a)*r*1.6,y=70+Math.cos(a)*r;return `<g transform="rotate(${(-75+i*15)*.4} ${x} ${y})">`+W({x:x-80,y:y-10,w:160,h:20,rolled:true,alpha:.95})+'</g>';}).join('')+qr(N.cx-140,400,29,7,8,true)+arrow(N.cx-60,90,N.cx-300,250,{w:2.8})+arrow(N.cx+60,90,N.cx+300,250,{w:2.8})+label(N.cx,-70,'第二高点 · 全片约 77 %',24,'middle',650,'var(--warn)')},
+ {cam:[455,-70,800],draw:()=>isl(ST.compact,`<path d="M${N.cx+N.hw+16} 9 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.8 -7 3.8 1.5 -7.5 -5.5 -5 7.5 -1z" fill="#ffd60a"/>`)+qr(N.cx-140,120,29,9.6,29,false)+W({x:N.cx-140,y:420,w:280,h:28,title:'',rolled:true})+`<path d="M${N.cx-40} 426 l3.5 7 7.5 1 -5.5 5 1.5 7.5 -7 -3.8 -7 3.8 1.5 -7.5 -5.5 -5 7.5 -1z" fill="#ffd60a"/>`+label(N.cx+10,439,'Star',14,'middle',650,'var(--ink)')+cursor(N.cx+20,434,1.3)},
+ {cam:[-40,-120,1790],draw:()=>isl(ST.hover)+label(500,470,'WindowShade',96,'middle',700,'var(--ink)')+label(500,560,'收起窗口，留下位置。',46,'middle',600,'var(--ink)')+`<rect x="250" y="620" width="500" height="64" rx="32" fill="var(--panel)" stroke="var(--winline)"/>`+label(500,663,'windowshade.aaronlau.me',30,'middle',600,'var(--accent)')+label(500,760,'1.0.18 · macOS 15 起 · 免费开源',30,'middle',500,'var(--muted)')+qr(1060,300,29,13,29,false)+label(1248,760,'GitHub · Star',30,'middle',600,'var(--ink)')+label(N.cx,850,'最小字号 30 px@1080p（竖版 44 px）',18,'middle',500,'var(--ok)')},
 ];
 function board(host,i,cam,draw,ratio){
   const [x0,y0,w]=cam; const h=ratio==='v'?w*16/9:w*9/16;
   const f=document.createElement('figure'); f.className='board';
   const id='g'+i+ratio;
-  const svg=`<svg viewBox="${x0} ${y0} ${w} ${h}" role="img" aria-label="B${i+1} ${BEATS[i][2]} 关键帧"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--wall-a)"/><stop offset=".55" stop-color="var(--wall-b)"/><stop offset="1" stop-color="var(--wall-c)"/></linearGradient><clipPath id="c${id}"><path d="${screenD()}"/></clipPath></defs><rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="var(--page)"/>${BOARDS[i].bare?'':`<path d="${screenD()}" fill="var(--bezel)" transform="translate(0 0)" stroke="var(--bezel)" stroke-width="28"/>`}<path d="${screenD()}" fill="url(#${id})"/><g clip-path="${BOARDS[i].noclip?'':`url(#c${id})`}">${draw()}</g></svg>`;
+  const svg=`<svg viewBox="${x0} ${y0} ${w} ${h}" role="img" aria-label="B${i+1} ${BEATS[i][2]} 关键帧"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--wall-a)"/><stop offset=".55" stop-color="var(--wall-b)"/><stop offset="1" stop-color="var(--wall-c)"/></linearGradient><clipPath id="c${id}"><path d="${screenD()}"/></clipPath></defs><rect x="${x0}" y="${y0}" width="${w}" height="${h}" fill="var(--stage)"/>${(BOARDS[i]&&BOARDS[i].bare)?'':`<path d="M-150 1118 H1860 L1834 1166 Q855 1182 -124 1166 Z" fill="var(--deck)"/><rect x="770" y="1118" width="170" height="9" rx="4.5" fill="var(--bezel)" opacity=".25"/><rect x="-18" y="-18" width="1746" height="1140" rx="46" fill="var(--bezel)"/>`}<path d="${screenD()}" fill="url(#${id})"/><g clip-path="${(BOARDS[i]&&BOARDS[i].noclip)?'':`url(#c${id})`}">${draw()}</g></svg>`;
   f.innerHTML=svg+`<figcaption class="cap"><b>B${i+1} ${BEATS[i][2]}</b> · ${BEATS[i][0].toFixed(2)}–${BEATS[i][1].toFixed(2)} s</figcaption>`;
   host.appendChild(f);
 }
 (function(){
   const h=$('#boards169'); BOARDS.forEach((b,i)=>board(h,i,b.cam,b.draw,'h'));
   const v=$('#boards916');
-  const V=[[0,[690,20,300]],[7,[705,-10,300]],[11,[705,-10,300]],[23,[545,-20,620]]];
+  const V=[[0,[655,-90,400]],[8,[655,-90,400]],[16,[555,-120,600]],[18,[545,-120,620]]];
   V.forEach(([i,cam])=>{
     let draw=BOARDS[i].draw;
-    if(i===23) draw=()=>isl(ST.hover)+label(N.cx,300,'WindowShade',74,'middle',700,'var(--ink)')+label(N.cx,365,'收起窗口，留下位置。',38,'middle',600,'var(--ink)')+qr(N.cx-189,420,29,13,29,false)+`<rect x="${N.cx-250}" y="830" width="500" height="64" rx="32" fill="var(--panel)" stroke="var(--winline)"/>`+label(N.cx,873,'windowshade.aaronlau.me',32,'middle',600,'var(--accent)')+label(N.cx,945,'1.0.18 · 免费开源',34,'middle',500,'var(--muted)')+label(N.cx,1010,'GitHub · Star',34,'middle',600,'var(--ink)');
-    if(i===0) draw=()=>`<rect x="690" y="20" width="300" height="540" fill="var(--wall-c)"/><rect x="700" y="60" width="280" height="20" rx="10" fill="#cdb79a"/><rect x="708" y="80" width="264" height="240" fill="#efe3cf"/><rect x="704" y="318" width="272" height="12" rx="6" fill="#b89a74"/><line x1="940" x2="940" y1="330" y2="420" stroke="#8a7155" stroke-width="2"/><circle cx="940" cy="424" r="6" fill="#8a7155"/>`+cursor(934,420,1.4)+arrow(965,430,965,200,{w:3.5});
+    if(i===0) draw=()=>menubar()+[[790,330,130,90,1],[800,200,100,70,.9],[822,95,66,44,.8]].map(([x,y,w,h,a])=>W({x,y,w,h,title:'',alpha:a})+arrow(x+w/2,y,N.cx,40,{w:2.4})).join('')+isl(ST.drop,`<text x="${N.cx+150}" y="26" font-size="16" font-weight="700" fill="#fff" text-anchor="middle">1</text>`)+label(N.cx,520,'已经在飞',20,'middle',600,'var(--muted)');
+    if(i===18) draw=()=>isl(ST.hover)+label(N.cx,230,'WindowShade',74,'middle',700,'var(--ink)')+label(N.cx,295,'收起窗口，留下位置。',38,'middle',600,'var(--ink)')+qr(N.cx-189,350,29,13,29,false)+`<rect x="${N.cx-250}" y="760" width="500" height="64" rx="32" fill="var(--panel)" stroke="var(--winline)"/>`+label(N.cx,803,'windowshade.aaronlau.me',32,'middle',600,'var(--accent)')+label(N.cx,875,'1.0.18 · 免费开源',34,'middle',500,'var(--muted)')+label(N.cx,940,'GitHub · Star',34,'middle',600,'var(--ink)');
     board(v,i,cam,draw,'v');
+  });
+})();
+
+
+/* ---------- 封面 ---------- */
+(function(){
+  const host=$('#coverList');
+  const big=(x,y,t,size,fill,stroke,anchor)=>`<text x="${x}" y="${y}" text-anchor="${anchor||'middle'}" font-size="${size}" font-weight="900" fill="${fill}" ${stroke?`stroke="${stroke}" stroke-width="12" paint-order="stroke"`:''} font-family="PingFang SC,Noto Sans SC,-apple-system,sans-serif">${t}</text>`;
+  const notchAt=(sc,tx,ty,st)=>`<g transform="translate(${tx} ${ty}) scale(${sc}) translate(${-N.cx} 0)"><path d="${islandD(st||ST.rest)}" fill="#000"/></g>`;
+  const C=[
+   {key:'刘海能装窗口',rec:true,draw:()=>`<rect width="1600" height="900" fill="url(#cw)"/><rect x="0" y="0" width="1600" height="30" fill="#000"/>`+notchAt(3.4,800,30,ST.drop)+`<g transform="rotate(-8 800 420)"><rect x="560" y="330" width="480" height="270" rx="26" fill="#fff" stroke="#1d1d1f" stroke-width="6"/><rect x="560" y="330" width="480" height="58" rx="26" fill="#eef0f4"/><circle cx="600" cy="360" r="11" fill="#ff5f57"/><circle cx="634" cy="360" r="11" fill="#febc2e"/><circle cx="668" cy="360" r="11" fill="#28c840"/></g>`+[0,1,2].map(i=>`<line x1="${640+i*150}" y1="${630}" x2="${700+i*140}" y2="${700}" stroke="#1d1d1f" stroke-width="10" stroke-linecap="round" opacity=".3"/>`).join('')+big(800,860,'刘海能装窗口',190,'#111','#fff'),
+    titles:['甩一下，窗口收进Mac刘海，点一下原样放回','免费开源：让Mac刘海替你收窗口'],
+    note:'主体是真刘海张口吞一扇窗口，和片子第 0 帧同一画面。'},
+   {key:'双击卷起窗口',draw:()=>`<rect width="1600" height="900" fill="#111214"/><rect x="140" y="170" width="620" height="78" rx="22" fill="#f2f2f5"/><circle cx="190" cy="209" r="14" fill="#ff5f57"/><circle cx="232" cy="209" r="14" fill="#febc2e"/><circle cx="274" cy="209" r="14" fill="#28c840"/><rect x="160" y="248" width="580" height="250" fill="#efe3cf" opacity=".9"/>`+[0,1,2,3,4].map(i=>`<line x1="160" x2="740" y1="${290+i*44}" y2="${290+i*44}" stroke="#d8c6a8" stroke-width="6"/>`).join('')+`<rect x="150" y="490" width="600" height="26" rx="13" fill="#b89a74"/><path d="M450 640 L450 300" stroke="#ffd60a" stroke-width="18" stroke-linecap="round"/><path d="M395 365 L450 290 L505 365" fill="none" stroke="#ffd60a" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>`+big(1520,470,'双击',230,'#ffd60a','','end')+big(1520,730,'卷起窗口',210,'#fff','','end'),
+    titles:['Mac丢了25年的双击卷起窗口，我做回来了','双击标题栏，窗口卷成一条：免费Mac小工具'],
+    note:'片名双关：窗口像卷帘一样卷上去。主体是一扇正在卷的窗口。'},
+   {key:'一下清空桌面',draw:()=>`<rect width="1600" height="900" fill="#f4f4f6"/><rect x="0" y="0" width="800" height="650" fill="#cfe0ff"/><rect x="800" y="0" width="800" height="650" fill="#e9dcff"/>`+[[60,80,300,220],[220,180,320,230],[420,90,300,250],[120,330,340,230],[470,320,280,250],[300,260,260,200]].map(([x,y,w,h])=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="18" fill="#fff" stroke="#9aa0ad" stroke-width="4"/>`).join('')+`<rect x="800" y="0" width="800" height="22" fill="#000"/>`+notchAt(2.6,1200,22,ST.compact)+`<text x="${1200+122.6*2.6-46}" y="76" font-size="56" font-weight="800" fill="#fff" text-anchor="middle">6</text><path d="M700 330 L900 330" stroke="#111" stroke-width="16" stroke-linecap="round"/><path d="M860 290 L905 330 L860 370" fill="none" stroke="#111" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/><rect x="0" y="650" width="1600" height="250" fill="#000"/>`+big(800,850,'一下清空桌面',190,'#fff'),
+    titles:['窗口太多？一甩全收进刘海，桌面一下清空','桌面窗口一团乱？刘海一口全吃下，点一下就回来'],
+    note:'前后对比：左边一桌窗口，右边干净桌面和刘海耳朵上的计数。'},
+  ];
+  C.forEach((c,i)=>{
+    const f=document.createElement('figure'); f.className='cover';
+    const zh=[...c.key].filter(ch=>/\p{Script=Han}/u.test(ch)).length;
+    f.innerHTML=`<svg viewBox="0 0 1600 900" role="img" aria-label="封面${i+1}：${c.key}"><defs><linearGradient id="cw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bcd6ff"/><stop offset="1" stop-color="#f3dcf3"/></linearGradient></defs>${c.draw()}</svg>`+
+      `<figcaption class="cap"><b>封面 ${i+1}${c.rec?'（推荐）':''}：${c.key}</b><span class="n${zh>8?' bad':''}">${zh} 字</span></figcaption>`+
+      `<div class="small muted">${c.note}</div>`+
+      c.titles.map((t,k)=>{const n=[...t].length;return `<div class="t2">标题 ${String.fromCharCode(65+k)}：${t}<span class="n${n>25?' bad':''}">${n} 字</span></div>`;}).join('');
+    host.appendChild(f);
   });
 })();
 
@@ -640,28 +685,34 @@ if('IntersectionObserver' in window && !reducedMQ.matches){
 }
 
 /* ---------- 6–8 表 ---------- */
-const SFX=[['0.20','布与绳','拉绳（一声长卷）'],['2.75','木','1994 卷起'],['3.40','木','2001 双击落空（轻）'],['4.00–5.25','布','整桌卷起：一层织物「刷」，不逐窗打点'],['6.50','玻璃','刘海呼吸（极轻）'],['8.60','低频','吞'],['10.50–11.50','低频','再吞两口（同一样本变调）'],['12.15','玻璃','提醒展开'],['14.70','木','点耳朵'],['15.00','玻璃','飞回'],['16.90','木','⌃C 键帽'],['17.80','木','⌘ 翻面（pop）'],['19.50','音乐','鼓进（律动 19.5–23.5 由音乐本身承担）'],['24.60–27.80','木','两指手势：一条连续摩擦，落点各轻点一下（算 1 个事件）'],['28.40','木','窗口浏览：点红灯关掉一张卡'],['30.60','玻璃','启动台铺开（一口气）'],['33.10','布','魔法平铺：一层滑动声'],['35.50','低频','全部吞下'],['37.20','玻璃','Dock 弹跳 + 欢迎窗口'],['40.75–46.50','布','吐出二维码：一条渐强的翻页声，不逐行 tick'],['48.80','木','Star 点击 + 一声亮音']];
+const SFX=[['0.25 / 0.75 / 1.25','低频','三连吞（一个样本三次起伏，算 1 个）'],['1.75','玻璃','放回'],['3.25','布与木','双击连着卷起（一声）'],['4.75–5.75','木','三代外观：1994 卷起、2001 双击落空（2 个）'],['7.75','低频','近景吞'],['8.40','玻璃','提醒展开'],['11.00','木','⌃C 键帽'],['11.90','木','⌘ 翻面（pop）'],['13.50','音乐','鼓进（律动由音乐本身承担，不另加事件）'],['18.60–21.30','木','两指：一条连续摩擦'],['22.75','木','红灯关卡'],['24.20','玻璃','启动台铺开'],['26.60','布','魔法平铺滑动'],['29.50–30.60','低频','全部吞下（一声长吞）'],['32.30','玻璃','欢迎窗口被接住'],['33.50–38.00','布','喷出二维码：一条渐强的翻页声，不逐行 tick'],['40.00','木','Star 点击 + 一声亮音']];
 (function(){const t=$('#sfxTable');t.innerHTML='<thead><tr><th>t (s)</th><th>材质</th><th>事件</th></tr></thead><tbody>'+SFX.map(r=>`<tr><td class="t">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')+'</tbody>';
-  const p=document.createElement('caption');p.style.cssText='caption-side:bottom;text-align:left;font-size:12.5px;color:var(--faint);padding-top:8px';p.textContent='共 21 个事件（< 24 拍）；三段静止里没有事件。';t.appendChild(p);})();
+  const p=document.createElement('caption');p.style.cssText='caption-side:bottom;text-align:left;font-size:12.5px;color:var(--faint);padding-top:8px';p.textContent='共 17 个事件（< 19 拍）；三段静止里没有事件。';t.appendChild(p);})();
 const ACC=[
  ['连贯','carry_flow.py 连贯分','≥ 0.80','0.62'],
  ['裸切','bare 边界数','0（片尾卡之外不留硬切）','3（4.15、39.98、43.98 s）'],
  ['边界数','探到的边界数 ≥ 节拍表交接数的一半','否则按人眼逐个交接核对','8 / 约 9'],
- ['能量分布','刘海幕 6.75–23.5 s 的平均能量','≥ 全片平均 × 1.5，且高于手上四拍（24.5–35.5 s）；幕内最长安静段 ≤ 1.25 s（只允许 23.5 s 那一拍）','12–28 s 平均远低于全片；16–24 s 全空'],
- ['静止比','verify rest','0.28–0.40；最长安静段只出现在片尾卡','0.531；最长 7.5 s 在幕中'],
- ['镜头长短','cadence（--shots 传 24 拍边界）','变异系数 ≥ 0.25，最长/最短 ≥ 4×','未测（skip）'],
+ ['能量分布','刘海幕 6–17.5 s 的平均能量','≥ 全片平均 × 1.5，且高于手上四拍（18.5–29.5 s）；幕内不留安静段','12–28 s 平均远低于全片；16–24 s 全空'],
+ ['静止比','verify rest','0.18–0.30（节奏收紧后）；至少一段 ≥ 1 s 真静止（17.5 s）','0.531；最长 7.5 s 在幕中'],
+ ['镜头长短','cadence（--shots 传 19 拍边界）','变异系数 ≥ 0.25，最长/最短 ≥ 4×','未测（skip）'],
  ['刘海形状','4K 帧上刘海轮廓与真路径（同比例）逐点距离','≤ 1 px@1080p；底角、肩都在','宽差 24 pt、深差 4 pt、无肩'],
  ['二维码','zbarimg 读 16:9 与 9:16 的片尾帧，1080p 与 540p 各一次','4/4 解出 github.com/surfine/WindowShade','未测'],
  ['空帧','逐帧非背景像素占比','0 帧 < 2 %（3 s 灰屏那种不允许）','3.0–4.1 s 有近空帧'],
  ['字号','画面里所有字的 x-height 换算字号','16:9 ≥ 28 px@1080p；9:16 ≥ 40 px@1080×1920','片尾事实行 ≈ 14 px，岛内 9–11 px'],
  ['字幕','叠层字幕条数（片尾卡除外）','0（已定：1–44 s 不留；新稿片尾卡之前全无）；英文版走 ?lang=','15'],
- ['音频','峰值 / 真峰值；事件数','≤ −3 dBFS（母带 −3.5 dBTP）；≤ 21','−1.0 dBFS；96'],
+ ['音频','峰值 / 真峰值；事件数','≤ −3 dBFS（母带 −3.5 dBTP）；≤ 17','−1.0 dBFS；96'],
+ ['前 3 秒','第 0 帧的运动能量；静音看到 1.5 s 截停','第 0 帧已在动（能量 ≥ 6/9）；5 个没看过的人静音看到 1.5 s，≥ 4 人说得出「窗口飞进刘海」','前 2.5 s 几乎静止'],
+ ['看点间隔','节拍表里相邻两个看点','≤ 7 s；没有只讲解、画面不发生事的拍','16–24 s 一个都没有'],
+ ['第二高点','能量第二高的一段落在哪','全片 70–80 %（新稿 34.5 s / 45 s ≈ 77 %）','—'],
+ ['片尾卡','时长','≤ 4 s','12 s（44–56 s）'],
+ ['留白','宽景机身占画宽；刘海离画面顶边','55–65 %；刘海上方 ≥ 画高 8 %（近景 ≥ 20 %）','屏幕框占画宽 83 %，刘海贴着框顶'],
+ ['封面','320 px 缩略图','≤ 8 个汉字、一个大主体、高反差；标题 ≤ 25 字','—'],
  ['盲读','blind_sheet.py 去字六帧','看的人说得出「刘海把窗口吃进去、又还回来」','未测'],
 ];
 (function(){const t=$('#acceptTable');t.innerHTML='<thead><tr><th>项</th><th>怎么量</th><th>新片目标</th><th>现片</th></tr></thead><tbody>'+ACC.map(r=>`<tr><td style="font-weight:600;white-space:nowrap">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td style="color:var(--old)">${r[3]}</td></tr>`).join('')+'</tbody>';})();
 const QS=[
- ['1994 的历史单独一拍吗？','不单独成拍，并进开场：B3 同一条卷帘条原地换三代外观，1.5 s；「Mac 丢了 25 年」由 2001 那一下双击落空来演。'],
- ['Dock 窗口浏览、启动台、平铺要不要砍？','三段都留，但不做成目录：同一张桌子、同一个画框，每段只一拍，手递手接力：B14 两指 → B15 窗口浏览（卡片带 1.0.18 新加的红黄绿）→ B16 启动台 → B17 平铺 → B18 全部收进刘海。全片因此从 54 s 加到 58 s；刘海幕（6.75–23.5 s）仍是能量最高的一段。'],
+ ['1994 的历史单独一拍吗？','不单独成拍，并进开场（平台指标定下后挪到钩子之后）：B4 同一条卷帘条原地换三代外观，1.5 s；「Mac 丢了 25 年」由 2001 那一下双击落空来演。'],
+ ['Dock 窗口浏览、启动台、平铺要不要砍？','三段都留，但不做成目录：同一张桌子、同一个画框，每段只一拍，手递手接力：B11 两指 → B12 窗口浏览（卡片带 1.0.18 新加的红黄绿）→ B13 启动台 → B14 平铺 → B15 全部收进刘海。平台指标定下后全片收紧到 45 s；刘海幕（6–17.5 s）仍是能量最高的一段。'],
  ['宽形状画不画肩？','画。所有状态都用本机 bezelPath 实测的肩（延伸 7.12 pt，起点 x 755.26 / 954.74）、底角（延伸 15.07）和深 33.26。这一处片子比产品更写实：产品按 design-system §5.1 的 S3，落点、提醒、教学、展开这几种宽形状目前顶角是直角、不画肩。'],
  ['叠层字幕留不留？','1–44 s 一条都不留（新稿实际上片尾卡之前全无）；片尾卡保留字标、口号、网址、版本。英文版走同一份合成的 ?lang= 切换，不另开字幕轨。'],
  ['画面里写机型或比例数字吗？','不写。按本机 Mac17,4 的形状画，片中不出现机型名和任何比例数字（copy-guide 第 1、5 条）；数字只留在这份稿和代码注释里。'],
