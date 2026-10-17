@@ -138,6 +138,8 @@ struct SettingsNavigationTests {
       (.permissions, [], nil),
       // 刘海页：音量和亮度那一行并进了勾选，开关仍要贴右边（1.0.17 精简后回归过一次）。
       (.notch, ["有变化时提醒", "音量和亮度"], nil),
+      // 高级页：只为出浅深色截图（顶上的讲解带 + 语言、关于、实验各组）。
+      (.advanced, [], nil),
     ]
     // 隐私一栏：四组和每一行都在，且和登记表生成的数据源一致。
     settings.select(section: .permissions)
