@@ -53,7 +53,8 @@ restore_all() {
   restore_default stage-manager com.apple.WindowManager GloballyEnabled && touched_wm=1
   if [ -e saved/display ]; then
     echo "INFO guest: restoring display mode $(cat saved/display)"
-    display_tool set "$(cat saved/display)" && rm -f saved/display
+    # 记下的模式不一定在可选列表里（来宾开机时的 HiDPI 模式有时不列出）；那就退回永久配置（本来就只改了本次会话）。
+    { display_tool set "$(cat saved/display)" || display_tool restore; } && rm -f saved/display
   fi
   if (( touched_wm )); then killall cfprefsd WindowManager Dock 2>/dev/null; wait_dock
   elif (( touched_dock )); then killall Dock 2>/dev/null; wait_dock; fi
