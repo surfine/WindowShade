@@ -1,0 +1,14 @@
+qc_gate  ws2-next-draft-a-tonight.mp4
+PASS  spec      duration=48.000s size=1920x1080 fps=30.000
+PASS  audio     I=-14.1 LUFS TP=-3.2 dBFS (target -14.0 +- 1.0 LUFS, TP <= -1.0)
+PASS  black     no black span >= 0.2 s
+PASS  still     longest 2.60 s (start 37.40 s, end hold excluded) still ratio 0.552; frames 1440; want <= 3.00 s
+PASS  end-hold  last 5.90 s still (want >= 1.00 s)
+PASS  open      opening mean luma 89.9 over first 0.30 s (want >= 8)
+FAIL  rhythm    verify_promo verdict FAIL
+    PASS  rest       still 0.514  longest quiet 6.25 s
+    PASS  burst      bursts [(0.08, 0.67), (2.58, 3.33), (3.33, 4.67), (5.5, 6.17), (7.08, 7.75), (11.25, 12.67), (12.75, 14.08), (14.08, 15.5), (18.58, 19.33), (23.08, 23.5), (28.08, 28.5), (29.83, 30.33), (33.0, 34.17), (36.42, 37.0), (40.08, 41.17)]
+    PASS  not-flat   row-profile variation 0.71 (advisory, >= 0.35)
+    FAIL  audio      peak -3.2 dBFS  clipped 0  quiet 0.012
+PASS  carry     score 1.00 considered 15 (want >= 0.50)
+VERDICT: FAIL
