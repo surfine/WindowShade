@@ -1,0 +1,10 @@
+continuity  score 1.00 — 9 boundaries: 9 carried, 0 anchored, 0 bare; 0 exempt; hard cuts 0, bursts []
+  t=  2.45  R 0.46  carried   survivors 728/800 moving 730 disp  8.4%  scale 0.82  coherence 0.36
+  t=  9.65  R 0.47  carried   survivors 218/800 moving 271 disp  3.7%  scale 0.95  coherence 0.71
+  t= 10.40  R 0.44  carried   survivors 463/800 moving 679 disp  7.0%  scale 1.13  coherence 0.53
+  t= 13.13  R 0.42  carried   survivors 606/800 moving 584 disp  7.5%  scale 1.17  coherence 0.56
+  t= 16.47  R 0.45  carried   survivors 677/800 moving 664 disp 12.2%  scale 0.78  coherence 0.38
+  t= 20.72  R 0.51  carried   survivors 205/800 moving 221 disp  8.8%  scale 1.38  coherence 0.36
+  t= 30.10  R 0.51  carried   survivors 506/800 moving 597 disp  7.0%  scale 0.97  coherence 0.28
+  t= 32.87  R 0.44  carried   survivors 699/800 moving 701 disp  6.9%  scale 0.93  coherence 0.59
+  t= 35.20  R 0.53  carried   survivors 656/800 moving 703 disp 18.5%  scale 0.68  coherence 0.64

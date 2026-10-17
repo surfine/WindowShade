@@ -20,7 +20,7 @@ const NOTCH_C = { x: HW.cx, y: HW.h / 2 };
 
 // ---------- 拍点 ----------
 export const T = {
-  tuck: 0.15,
+  tuck: 0,
   pointerIn: 3.3, toNotch: [3.6, 4.4], shelf: 4.55, toCard: [4.75, 5.2], click: 5.4, untuck: 5.45,
   toNotch2: [6.8, 7.5], lpClick: 7.6, lpOpen: 7.65, lpClose: 11.2,
   toBar: [11.4, 11.9], press: 12.0, drag: [12.05, 12.9], drop: 12.45, slide: [12.95, 13.65], release: 13.45,
@@ -29,12 +29,12 @@ export const T = {
   verify: 23.4, face: 24.6, phone: 25.2, unlock: 26.0, verifyOff: 26.6,
   lips: 28.4, char0: 29.2, charGap: 0.22, sub: 30.6, lipsStop: 31.3,
   nodDown: 33.2, nodUp: 33.53, ok: 33.55, glide: 33.6, lipsOff: 34.2,
-  pull: 40.0, mark: 44.0,
+  pull: 40.0, mark: 42.6,
 };
 
 /** 真静止的段：相机钉在目标上，一个像素不动。 */
 export const RESTS: [number, number][] = [
-  [1.8, 2.6], [10.7, 11.2], [16.8, 17.6], [21.8, 22.8], [31.8, 32.4], [38.6, 39.6], [46.0, 48.0],
+  [1.85, 2.6], [10.7, 11.2], [16.8, 17.6], [21.8, 22.8], [31.8, 32.4], [38.6, 39.6], [43.8, 48.0],
 ];
 export const inRest = (t: number) => RESTS.some(([a, b]) => t >= a && t < b);
 
@@ -237,7 +237,12 @@ function islandTrack(): Shape[] {
   islandCache = out;
   return out;
 }
-export const islandAt = (f: number) => islandTrack()[Math.max(0, Math.min(TOTAL - 1, Math.round(f)))];
+/** 按故事时间取刘海形状（逐帧结果之间线性插值）。 */
+export function islandAt(t: number): Shape {
+  const tr = islandTrack(), x = Math.max(0, Math.min(TOTAL - 1, t * FPS)), i = Math.floor(x), f = x - i;
+  const a = tr[i], b = tr[Math.min(TOTAL - 1, i + 1)];
+  return { w: mix(a.w, b.w, f), h: mix(a.h, b.h, f), rb: mix(a.rb, b.rb, f) };
+}
 
 /** 刘海里显示哪一样内容，以及透明度：形状走出去约 40% 再进，下一次换形前 0.08 秒先退。 */
 export type IslandContent =
@@ -272,56 +277,58 @@ export const WORDMARK = { at: T.mark, text: 'WindowShade 2', sub: '刘海，从�
 export type Cam = { ax: number; ay: number; s: number };
 type Target = Cam & { resp: number; z: number };
 function camTarget(t: number): Target {
-  const base = (ax: number, ay: number, s: number, resp = 0.8, z = 0.88): Target => ({ ax, ay, s, resp, z });
+  // 取景留白（Aaron 10-18）：中景整机约占画面宽 55–65%（s≈0.62–0.72），推近看刘海也停在整块屏幕左右留边（s≤0.95，屏宽不超过画面 85%），
+  // 屏幕上缘离画面顶至少约 150 px。弹簧比上一版硬约两成。
+  const base = (ax: number, ay: number, s: number, resp = 0.65, z = 0.88): Target => ({ ax, ay, s, resp, z });
   if (t < 1.6) {
     // 落后主体 0.1 秒跟着窗口往上走，同时往刘海推近。
     const w = shadeWin(t - 0.1), p = tuckP(t - 0.1);
-    const ay = 128 + 0.1 * Math.max(0, cy(w) - 128) * (w.o > 0 ? 1 : 0);
-    return base(HW.cx, ay, 3.0 + 0.35 * p, 0.42, 0.86);
+    const ay = 360 + 0.12 * Math.max(0, cy(w) - 360) * (w.o > 0 ? 1 : 0);
+    return base(HW.cx, ay, 0.8 + 0.1 * p, 0.38, 0.86);
   }
-  if (t < 2.6) return base(HW.cx, 128, 3.35, 0.42, 0.86);
+  if (t < 2.6) return base(HW.cx, 360, 0.9, 0.38, 0.86);
   if (t < 7.0) {
-    if (t < 4.3) return base(HW.cx, 553, 1.0, 0.95, 0.9);
-    if (t < T.untuck) return base(HW.cx, 470, 1.04, 0.8, 0.9);
+    if (t < 4.3) return base(HW.cx, 553, 0.64, 0.75, 0.9);
+    if (t < T.untuck) return base(HW.cx, 500, 0.7, 0.6, 0.9);
     const w = shadeWin(t - 0.1);
-    return base(mix(HW.cx, cx(w), 0.3), mix(470, cy(w), 0.3), 1.02, 0.7, 0.88);
+    return base(mix(HW.cx, cx(w), 0.25), mix(500, cy(w), 0.25), 0.68, 0.55, 0.88);
   }
   if (t < 11.2) {
-    const pour = seg(t, T.lpOpen, T.lpOpen + 1.2);
-    return base(HW.cx, 500, mix(1.1, 1.2, smooth(pour)), 0.9, 0.9);
+    const pour = seg(t, T.lpOpen, T.lpOpen + 1.0);
+    return base(HW.cx, 520, mix(0.7, 0.76, smooth(pour)), 0.7, 0.9);
   }
   if (t < 15.0) {
-    if (t < T.drag[0]) return base(1080, 420, 1.12, 0.8, 0.9);
+    if (t < T.drag[0]) return base(960, 500, 0.7, 0.6, 0.9);
     if (t < T.release) {
-      // 拖向刘海：相机提前到落点。
+      // 拖向刘海：相机提前到落点（推近但不出画）。
       const p = pointerRaw(t + 0.15);
-      return base(mix(HW.cx, p.x, 0.25), mix(300, p.y, 0.25), 1.45, 0.6, 0.88);
+      return base(mix(HW.cx, p.x, 0.2), mix(380, p.y, 0.15), 0.85, 0.5, 0.88);
     }
     const w = effectsWin(t - 0.1);
-    return base(mix(HW.cx, cx(w), 0.55), mix(330, cy(w), 0.45), 1.12, 0.7, 0.86);
+    return base(mix(HW.cx, cx(w), 0.35), mix(480, cy(w), 0.3), 0.72, 0.55, 0.86);
   }
-  if (t < 18.6) return base(HW.cx, 150, 2.4, 0.75, 0.9);
-  if (t < 23.0) return base(HW.cx, 553, 0.98, 1.0, 0.92);
-  if (t < 28.0) return base(HW.cx, 215, 2.0, 1.1, 0.9);
+  if (t < 18.6) return base(HW.cx, 360, 0.9, 0.6, 0.9);
+  if (t < 23.0) return base(HW.cx, 553, 0.6, 0.8, 0.92);
+  if (t < 28.0) return base(HW.cx, 360, 0.88, 0.85, 0.9);
   if (t < 33.0) {
-    // 读口型：字一个个出来，相机跟着慢慢凑近候选（落定后 31.8–32.4 真静止）。
+    // 读口型：字一个个出来，相机跟着慢慢凑近候选（落定后真静止）。
     const k = smooth(seg(t, 28.6, 30.8));
-    return base(mix(HW.cx, HW.cx + 40, k), mix(190, 150, k), mix(2.3, 2.75, k), 1.0, 0.92);
+    return base(mix(HW.cx, HW.cx + 25, k), mix(360, 345, k), mix(0.88, 0.94, k), 0.8, 0.92);
   }
   if (t < 36.4) {
-    if (t < T.nodUp) return base(HW.cx, 255, 2.3, 0.3, 0.75);
-    if (t < T.glide + 0.1) return base(HW.cx, 190, 2.3, 0.3, 0.75);
+    if (t < T.nodUp) return base(HW.cx, 400, 0.94, 0.26, 0.75);
+    if (t < T.glide + 0.1) return base(HW.cx + 25, 345, 0.94, 0.26, 0.75);
     const w = browseWin(t - 0.1);
-    return base(mix(HW.cx, cx(w), 0.6), mix(300, cy(w), 0.5), 1.18, 0.8, 0.86);
+    return base(mix(HW.cx, cx(w), 0.35), mix(480, cy(w), 0.3), 0.72, 0.6, 0.86);
   }
-  return base(HW.cx, 553, 0.92, 1.0, 0.92);
+  return base(HW.cx, 553, 0.62, 0.8, 0.92);
 }
 let camCache: Cam[] | null = null;
 function camTrack(): Cam[] {
   if (camCache) return camCache;
   const out: Cam[] = [];
   const t0 = camTarget(0);
-  const st = { ax: t0.ax, ay: t0.ay + 25, ls: Math.log(t0.s * 0.96) }, v = { ax: 0, ay: 0, ls: 0 };
+  const st = { ax: t0.ax, ay: t0.ay + 20, ls: Math.log(t0.s * 0.97) }, v = { ax: 0, ay: 0, ls: 0 };
   const SUB = 8, dt = 1 / (FPS * SUB);
   for (let f = 0; f < TOTAL; f++) {
     const tf = f / FPS;
@@ -346,6 +353,11 @@ function camTrack(): Cam[] {
   camCache = out;
   return out;
 }
-export const camAt = (f: number) => camTrack()[Math.max(0, Math.min(TOTAL - 1, Math.round(f)))];
+/** 按故事时间取相机（逐帧结果之间线性插值）。 */
+export function camAt(t: number): Cam {
+  const tr = camTrack(), x = Math.max(0, Math.min(TOTAL - 1, t * FPS)), i = Math.floor(x), f = x - i;
+  const a = tr[i], b = tr[Math.min(TOTAL - 1, i + 1)];
+  return { ax: mix(a.ax, b.ax, f), ay: mix(a.ay, b.ay, f), s: Math.exp(mix(Math.log(a.s), Math.log(b.s), f)) };
+}
 /** 片尾拉远：1.6 秒临界阻尼，46 秒前停稳；之后钉死。 */
-export const pullQ = (t: number) => (t >= 46 ? 1 : approach(t - T.pull, 1.9, 1));
+export const pullQ = (t: number) => (t >= 43.8 ? 1 : approach(t - T.pull, 1.6, 1));

@@ -7,6 +7,7 @@ import { CAPTIONS, WORDMARK, camAt, pullQ } from './plan';
 import { H, W, camera, pose, screenTransform } from './rig';
 import { Screen } from './Screen';
 import { Stage } from './Stage';
+import { storyOf } from './warp';
 
 const K = 2; // 网页按 2× 排，贴图时再缩
 
@@ -16,7 +17,7 @@ function Caption({ t }: { t: number }) {
   const inP = approach(t - c.from, 0.5, 0.86);
   const out = seg(t, c.to - 0.25, c.to);
   return (
-    <div style={{ position: 'absolute', left: 0, right: 0, top: 900, textAlign: 'center', opacity: Math.min(1, inP) * (1 - out),
+    <div style={{ position: 'absolute', left: 0, right: 0, top: 958, textAlign: 'center', opacity: Math.min(1, inP) * (1 - out),
       transform: `translateY(${((1 - inP) * 14).toFixed(2)}px)`, fontFamily: '"PingFang SC",-apple-system,sans-serif', fontSize: 60, fontWeight: 600,
       color: '#fff', letterSpacing: 1, textShadow: '0 2px 18px rgba(0,0,0,.55)' }}>{c.text}</div>
   );
@@ -34,8 +35,8 @@ function Wordmark({ t }: { t: number }) {
 
 export function Film({ audio }: { audio?: string }) {
   const f = useCurrentFrame();
-  const t = f / FPS;
-  const p = pose(camAt(f), pullQ(t));
+  const t = storyOf(f / FPS); // 片子帧 → 故事时间（warp.ts）
+  const p = pose(camAt(t), pullQ(t));
   const cam = camera(p);
   const m = screenTransform(cam, 1710 * K, 1107 * K);
   return (
@@ -43,7 +44,7 @@ export function Film({ audio }: { audio?: string }) {
       <Stage p={p} neo W={W} H={H} />
       <div style={{ position: 'absolute', left: 0, top: 0, width: 1710 * K, height: 1107 * K, transformOrigin: '0 0', transform: m }}>
         <div style={{ position: 'absolute', left: 0, top: 0, width: 1710, height: 1107, zoom: K } as React.CSSProperties}>
-          <Screen f={f} />
+          <Screen t={t} />
         </div>
       </div>
       <Caption t={t} />

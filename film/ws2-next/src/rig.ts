@@ -19,9 +19,9 @@ export const ptToWorld = (x: number, y: number) => TL.clone().addScaledVector(RI
 export const distFor = (s: number) => (M_PER_PT * H) / (2 * TAN * s);
 
 /** 片尾两台并排：Neo 在左后方，略转向镜头。 */
-export const NEO_POS: [number, number, number] = [-0.47, 0, -0.07];
+export const NEO_POS: [number, number, number] = [-0.6, 0, -0.22];
 export const NEO_ROT = 0.2;
-const FINAL = { aim: new THREE.Vector3(-0.2, 0.085, -0.13), dist: 1.32, elev: 13, yaw: 9 };
+const FINAL = { aim: new THREE.Vector3(-0.29, 0.09, -0.19), dist: 1.4, elev: 13, yaw: 7 };
 
 export type Pose = { pos: THREE.Vector3; aim: THREE.Vector3; up: THREE.Vector3 };
 export function pose(c: Cam, q: number): Pose {
@@ -30,8 +30,10 @@ export function pose(c: Cam, q: number): Pose {
   if (q <= 0) return { aim: aim0, pos: aim0.clone().addScaledVector(SCREEN_N, d0), up: SCREEN_UP.clone() };
   const el = (FINAL.elev * Math.PI) / 180, yw = (FINAL.yaw * Math.PI) / 180;
   const dirF = new THREE.Vector3(Math.sin(yw) * Math.cos(el), Math.sin(el), Math.cos(yw) * Math.cos(el));
-  const dir = SCREEN_N.clone().lerp(dirF, q).normalize();
-  const dist = Math.exp(mix(Math.log(d0), Math.log(FINAL.dist), q));
+  // 先退后、再转向：距离走得比方向快，Neo 进画时已经在远处，不会贴着画面左缘扫进来。
+  const qd = 1 - (1 - q) * (1 - q);
+  const dir = SCREEN_N.clone().lerp(dirF, q * q * (3 - 2 * q)).normalize();
+  const dist = Math.exp(mix(Math.log(d0), Math.log(FINAL.dist), qd));
   const aim = aim0.clone().lerp(FINAL.aim, q);
   const up = SCREEN_UP.clone().lerp(new THREE.Vector3(0, 1, 0), q).normalize();
   return { aim, pos: aim.clone().addScaledVector(dir, dist), up };

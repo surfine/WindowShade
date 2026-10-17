@@ -2,7 +2,7 @@
 // 刷脸、读唇、点头按 D1 用刘海小岛的语言画成产品界面（不画 Face ID 图形，也不画系统的解锁界面）。
 import type { CSSProperties, ReactNode } from 'react';
 import { Img, staticFile } from 'remotion';
-import { FPS, HW, seg, smooth } from './motion';
+import { HW, seg, smooth } from './motion';
 import {
   APPS, T, appSlot, appState, browseWin, effectsWin, islandAt, islandContent, launchBackdrop, lockAmount, pointer, shadeWin, WIN,
   type WinState,
@@ -49,8 +49,8 @@ const Sym = ({ name, size, tint = 1, style }: { name: string; size: number; tint
   <Img src={staticFile(`sym/${name}.png`)} style={{ width: size, height: size, objectFit: 'contain', filter: tint ? 'invert(1)' : 'none', ...style }} />
 );
 
-function Island({ t, f }: { t: number; f: number }) {
-  const s = islandAt(f);
+function Island({ t }: { t: number }) {
+  const s = islandAt(t);
   const { c, o } = islandContent(t);
   const L = HW.cx - s.w / 2;
   const top = HW.h;
@@ -201,8 +201,7 @@ function Launchpad({ t }: { t: number }) {
   );
 }
 
-export function Screen({ f }: { f: number }) {
-  const t = f / FPS;
+export function Screen({ t }: { t: number }) {
   const lock = lockAmount(t);
   const bd = t >= T.lpOpen ? launchBackdrop(t) : 0;
   const blur = Math.max(lock * 22, bd * 16);
@@ -226,7 +225,7 @@ export function Screen({ f }: { f: number }) {
       {blur > 0.05 ? <div style={{ position: 'absolute', inset: 0, background: `rgba(4,6,12,${(lock * 0.5 + bd * 0.28).toFixed(3)})` }} /> : null}
       <Launchpad t={t} />
       <Pointer t={t} />
-      <Island t={t} f={f} />
+      <Island t={t} />
     </div>
   );
 }
