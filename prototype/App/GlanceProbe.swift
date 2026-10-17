@@ -809,11 +809,22 @@ final class GlanceProbe {
       return
     }
     owner.shade(other, otherID)
+    // 规格 R19／V10：台前调度开着时这扇窗收不起来，结束时 op=normal、shaded=false——分不清是收起前就被拒、
+    // 动画盖板中途撤掉，还是藏了又回滚。等待期间把经过的状态、隐藏方式和盖板是否出现过都记下来。
+    var trail: [String] = []
+    func note(_ entry: String) { if trail.last != entry { trail.append(entry) } }
+    note("start op=\(owner.currentOperationState(otherID).rawValue) cover=\(owner.duoController.windowEffects.hasActiveTransition(for: otherID))")
     do {
-      try await wait("other folded", timeout: 6) { folded(otherID) }
+      try await wait("other folded", timeout: 6) {
+        let state = owner.shaded[otherID]
+        note("op=\(owner.currentOperationState(otherID).rawValue) cover=\(owner.duoController.windowEffects.hasActiveTransition(for: otherID)) hide=\(state?.hide.rawValue ?? "-")")
+        return folded(otherID)
+      }
     } catch {
       let state = owner.shaded[otherID]
       print("INFO restore-guard: second window \(otherID) size=\(String(describing: axSize(other))) shaded=\(state != nil) hide=\(state?.hide.rawValue ?? "-") overlay=\(state?.overlay.map { "visible=\($0.isVisible) alpha=\($0.alphaValue)" } ?? "none") op=\(owner.currentOperationState(otherID)) effects=\(owner.duoController.windowEffects.activeCount) onscreen=\(onscreen(otherID))")
+      print("INFO restore-guard: second window facts stageManager=\(stageManagerEnabled) cg=\(bounds(otherID).map { "\($0)" } ?? "-") ax=\(axPosition(other).map { "\($0)" } ?? "-") minimized=\(axObservedBoolAttribute(other, kAXMinimizedAttribute as String).map(String.init) ?? "-") minimizeButton=\(isAXButtonEnabled(other, kAXMinimizeButtonAttribute as String)) frontmost=\(NSWorkspace.shared.frontmostApplication?.processIdentifier == pid) referenceOnscreen=\(onscreen(id))")
+      print("INFO restore-guard: second window trail " + trail.joined(separator: " > "))
       throw error
     }
     try await Task.sleep(for: .milliseconds(500), clock: .suspending)

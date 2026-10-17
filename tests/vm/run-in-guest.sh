@@ -114,5 +114,11 @@ for suite in "$@"; do
   wait "$opid" 2>/dev/null
   fails=$(grep -c '^FAIL' "$out"); verdict=$(grep '^verdict' "$out")
   echo "== $suite fails=$fails $verdict elapsed=$((SECONDS - t0))s timed_out=$timed_out"
-  grep -E '^(FAIL|INFO (restore|glance|probe-wait|dock-scenarios)|TIMING|PASS fold-unmin|SKIP)' "$out" | cut -c1-220
+  grep -E '^(FAIL|INFO (restore|glance|probe-wait|dock-scenarios)|TIMING|PASS fold-unmin|SKIP)' "$out" | cut -c1-600
+  # 规格 R19／V10：没过的组把 App 自己的收起日志（拒绝、盖板撤回、隐藏方式、回滚）带出来——
+  # 探针输出只看得到结果，看不到 shade 停在哪一步。完整日志放进 shots/，随截图一起拷回宿主。
+  if [ "$fails" != 0 ] || ! grep -q 'PASS' <<<"$verdict" || [ "$timed_out" = 1 ]; then
+    grep -E '(shade:|duo-window:|state: |focus: handoff|fallback|hide |minimiz|rolled back|refuse)' "$log" | tail -n 40 | cut -c1-300 | sed 's/^/LOG /'
+    mkdir -p shots && cp "$log" "shots/app-$suite.log" 2>/dev/null || true
+  fi
 done
