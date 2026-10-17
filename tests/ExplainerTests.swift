@@ -67,6 +67,18 @@ struct ExplainerTests {
             let used = Set(spec.initial.keys).union(spec.frames.flatMap { $0.set.keys })
             expect(used.allSatisfy { e in spec.initial[e] != nil || spec.frames.contains { $0.set[e] != nil } }, "\(spec.id) elements resolve")
         }
+        // 刘海页：每段 id 唯一、有读屏句和关键帧；三段“之前常用”下标对上 SwitcherOrigin.answers（Windows / iPad / Mac）。
+        let notch: [ExplainerSpec] = [ExplainerScenes.notchAlert, ExplainerScenes.notchLiveActivity, ExplainerScenes.notchNowPlaying,
+            ExplainerScenes.notchDownload, ExplainerScenes.notchMergedRow, ExplainerScenes.notchHoverGuard, ExplainerScenes.notchFileShelf,
+            ExplainerScenes.notchDeviceBattery, ExplainerScenes.originWindows, ExplainerScenes.originIpad, ExplainerScenes.originMac]
+        expect(Set((notch + scenes).map(\.id)).count == notch.count + scenes.count, "notch scene ids are unique and do not clash with the library")
+        for spec in notch {
+            expect(spec.description.zh.hasPrefix("演示：") || spec.description.zh.hasPrefix("静图："), "\(spec.id) has a VoiceOver sentence")
+            expect(spec.isStill || (spec.keyFrameIndex != nil && spec.timeline.loopDuration > 1), "\(spec.id) is a still or a loop with a key frame")
+        }
+        expect(ExplainerScenes.originIpad.isStill && ExplainerScenes.originMac.isStill && !ExplainerScenes.originWindows.isStill, "iPad and Mac are stills; Windows plays")
+        expect(ExplainerPage.notch.pageDefault.id == "tuck", "the notch page defaults to tuck")
+        if case .options(let origin) = ExplainerRow.Notch.origin.kind { expect(origin.count == 3, "origin row has one scene per option") } else { expect(false, "origin row is an options row") }
         // 关键帧那一刻的样子：双击那段停在卷帘条（高 10、内容收起），窗口没挪。
         let key = ExplainerScenes.doubleClickRoll.keyState
         expect(key[.windowA]?.h == 10 && key[.windowA]?.rolled == true && key[.windowA]?.x == 70, "double-click key state is the strip in place")
