@@ -1277,9 +1277,15 @@ extension AppDelegate {
       duoController.settingsWindow = DuoSettingsWindow(controller: duoController)
     }
     duoController.settingsWindow?.refreshVisibleSections()
+    // 先请系统把我们换到前台，再摆窗口。macOS 14 起 activate() 是协商式的：从快捷键、手势、捷径打开时
+    // 前台 App 不让也会被拒，窗口就落在别人后面；那种情况下仍把设置窗口提到最前（拿不到键盘焦点也看得见）。
+    NSApp.activate()
     duoController.settingsWindow?.showWindow(nil)
     if let section { duoController.settingsWindow?.select(section: section) }
-    NSApp.activate()
+    if let window = duoController.settingsWindow?.window {
+      window.makeKeyAndOrderFront(nil)
+      if !NSApp.isActive { window.orderFrontRegardless() }
+    }
     duoController.settingsChanged()
   }
 }
