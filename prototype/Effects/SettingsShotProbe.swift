@@ -73,55 +73,65 @@ final class SettingsShotProbe {
                 print("settings-shots: \(name)")
             }
         }
-        // 欢迎窗口（“欢迎使用 WindowShade…”）：新用户第一眼看到的就是它，三步在浅深色下各拍一组。
+        // 欢迎窗口（“欢迎使用 WindowShade…”，1.0.18 版 A1 / A2 / T / U1）和 N1“这一版新开了这几样”：新用户、升级的人
+        // 第一眼看到的就是它们，浅深色下各拍一组。全拍静帧（讲解带在 --settings-shots 下定在关键帧），只画出来、不存：
+        // 授权行按给定状态画，不读系统；来处不写偏好。一页拍几张时按 a、b、c 编号。
+        typealias Shot = (page: Int, preview: WelcomePreview, note: String)
+        let plan: [[Shot]] = [
+            [(0, WelcomePreview(practice: .demo), "A1 demo key frame (rolled up)"),
+             (0, WelcomePreview(practice: .idle), "A1 your turn (hint shown)"),
+             (0, WelcomePreview(practice: .rolled), "A1 practice rolled up"),
+             (0, WelcomePreview(practice: .done), "A1 practice unrolled, done")],
+            [(1, WelcomePreview(accessibility: false, screenRecording: false), "A2 nothing granted"),
+             (1, WelcomePreview(accessibility: false, screenRecording: false, stuck: true), "A2 stuck hint after 10 s"),
+             (1, WelcomePreview(accessibility: true, screenRecording: false), "A2 accessibility only"),
+             (1, WelcomePreview(accessibility: true, screenRecording: true), "A2 both granted")],
+            WelcomeFlow.TourSegment.allCases.map { segment in
+                (2, WelcomePreview(accessibility: segment != .menuBar, segment: segment), "T \(segment)"
+                    + (segment == .menuBar ? " (accessibility skipped)" : ""))
+            },
+        ]
         for (appearanceName, appearance) in appearances {
             NSApp.appearance = NSAppearance(named: appearance)
             owner.showPermissionOnboarding()
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
             guard let window = owner.onboardingWindow else { continue }
-            // 全拍静帧，不等动画：有动画的一步按有刘海的屏摆出 WelcomeScene.shotMoments 里的那几刻（和“减少动态效果”同一条路径），
-            // 刘海里那两行字至少拍到一次，再按没有刘海的屏拍最后那一刻（胶囊浮出来说话），哪台 Mac 上拍都一样；
-            // 问来处的一步拍“还没选”和“选了 Windows”（只画出来，不存，探针不写用户偏好）；授权页拍一张。一步拍几张时按 a、b、c 编号。
-            let (welcome, plan): (WelcomeView?, [[WelcomePreview]]) = MainActor.assumeIsolated {
-                (owner.onboardingWelcomeView, WelcomeView.pages.indices.map { page in
-                    if page == WelcomeView.originPage {
-                        return [WelcomePreview(origin: .unanswered), WelcomePreview(origin: .windows)]
-                    }
-                    guard WelcomeView.pages[page].picture != nil, page < WelcomeScene.shotMoments.count else { return [WelcomePreview()] }
-                    let moments = WelcomeScene.shotMoments[page]
-                    return moments.map { WelcomePreview(moment: $0, notched: true) }
-                        + [WelcomePreview(moment: moments.last, notched: false)]
-                })
-            }
-            // 三步之前那一步（只在 App 不在“应用程序”里时出现）：按“第一次放进去”摆出来拍一张，编号 0。
-            MainActor.assumeIsolated { welcome?.showMove(UpdaterMoveStep(kind: .move)) }
-            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
-            if let image = capture(window: window) ?? window.contentView.flatMap({ render(view: $0) }),
-               let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
-                let name = "onboarding-\(appearanceName)-0.png"
+            let welcome = MainActor.assumeIsolated { owner.onboardingWelcomeView }
+            func shoot(_ name: String, _ note: String, in target: NSWindow) {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+                guard let image = capture(window: target) ?? target.contentView.flatMap({ render(view: $0) }),
+                      let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return }
                 try? data.write(to: outputDirectory.appendingPathComponent(name))
-                manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height)) 放进“应用程序”那一步\n"
+                manifest += "\(name): \(Int(target.frame.width))x\(Int(target.frame.height)) \(note)\n"
                 print("settings-shots: \(name)")
             }
+            // 三页之前那一步（只在 App 不在“应用程序”里时出现）：按“第一次放进去”摆出来拍一张，编号 0。
+            MainActor.assumeIsolated { welcome?.showMove(UpdaterMoveStep(kind: .move)) }
+            shoot("onboarding-\(appearanceName)-0.png", "move to Applications step", in: window)
             for (page, shots) in plan.enumerated() {
                 for (index, shot) in shots.enumerated() {
-                    MainActor.assumeIsolated { welcome?.show(page, preview: shot) }
-                    RunLoop.current.run(until: Date().addingTimeInterval(0.4))
-                    guard let image = capture(window: window) ?? window.contentView.flatMap({ render(view: $0) }) else { continue }
+                    MainActor.assumeIsolated { welcome?.show(shot.page, preview: shot.preview) }
                     let letter = shots.count > 1 ? String(Array("abcdefgh")[index]) : ""
-                    let name = "onboarding-\(appearanceName)-\(page + 1)\(letter).png"
-                    if let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
-                        try? data.write(to: outputDirectory.appendingPathComponent(name))
-                        let at = shot.moment.map { String(format: " at=%.2f", $0) } ?? ""
-                        let origin = shot.origin.map { " origin=\($0.rawValue)（只画出来，没存）" } ?? ""
-                        let notch = shot.notched.map { $0 ? " notch=yes" : " notch=no（没有刘海的屏）" } ?? ""
-                        manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height))\(at)\(notch)\(origin)\n"
-                        print("settings-shots: \(name)")
-                    }
+                    shoot("onboarding-\(appearanceName)-\(page + 1)\(letter).png", shot.note, in: window)
                 }
+            }
+            // U1：升级上来缺授权时单独的一页。
+            for (index, grants) in [(false, false), (true, false)].enumerated() {
+                MainActor.assumeIsolated {
+                    welcome?.showAgain(preview: WelcomePreview(accessibility: grants.0, screenRecording: grants.1))
+                }
+                shoot("onboarding-\(appearanceName)-u1\(Array("ab")[index]).png",
+                      "U1 permissions again (accessibility \(grants.0 ? "on" : "off"))", in: window)
             }
             // orderOut 而不是 close：关闭会把“看过引导”写进偏好，探针不写用户偏好。
             window.orderOut(nil)
+            // N1：三行都是新开的样子（只画出来，不写“看过”）。
+            let whatsNew = MainActor.assumeIsolated { WhatsNew1018Window() }
+            MainActor.assumeIsolated { whatsNew.show(groups: WhatsNew1018Changes.Group.allCases) }
+            if let target = MainActor.assumeIsolated({ whatsNew.windowForShots }) {
+                shoot("onboarding-\(appearanceName)-n1.png", "N1 what's new, all three rows", in: target)
+                target.orderOut(nil)
+            }
         }
         try? manifest.write(to: outputDirectory.appendingPathComponent("manifest.txt"),
                             atomically: true, encoding: .utf8)
