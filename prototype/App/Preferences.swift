@@ -964,6 +964,10 @@ extension AppDelegate {
         controls.orientation = .horizontal
         controls.alignment = .centerY
         controls.spacing = 10
+        // 提前量弹出菜单和开关都只占自己的宽度：多出来的宽度全部留给左边的文字列，不撑开这一栏。
+        controls.distribution = .fill
+        lead.setContentHuggingPriority(.required, for: .horizontal)
+        toggle.setContentHuggingPriority(.required, for: .horizontal)
         controls.setContentHuggingPriority(.required, for: .horizontal)
         controls.setContentCompressionResistancePriority(.required, for: .horizontal)
         // 副标题按权限状态选各自的键（语义身份是 access，不是中文句子）。
