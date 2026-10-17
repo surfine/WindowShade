@@ -36,7 +36,9 @@ final class GlanceProbe {
     owner.statusItem.isVisible = false
     owner.appearanceMode = .nativeScreenshot
     owner.duoController.persistsSettings = false
+    // --hitch 量的是收起动画本身的帧节奏，所以总是带动画。
     owner.duoController.settings.windowsEnabled = CommandLine.arguments.contains("--animated")
+      || CommandLine.arguments.contains("--hitch")
     owner.duoController.settings.desktopEnabled = false
     owner.duoController.start(owner: owner)
     let glance = owner.glance
@@ -57,7 +59,7 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--dock-scenarios")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit"]
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit", "--hitch"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
@@ -75,7 +77,7 @@ final class GlanceProbe {
       try? FileManager.default.createDirectory(atPath: reportDir, withIntermediateDirectories: true)
       try? FileManager.default.removeItem(atPath: WindowClassesProbe.reportPath)
     }
-    if ["--soak", "--idle-first-op", "--browser-identity", "--dock-scenarios", "--window-classes"].contains(where: { CommandLine.arguments.contains($0) }) {
+    if ["--soak", "--hitch", "--idle-first-op", "--browser-identity", "--dock-scenarios", "--window-classes"].contains(where: { CommandLine.arguments.contains($0) }) {
       fixtureArguments += ["--lifetime", "1800"]
     }
     process.arguments = fixtureArguments
@@ -171,6 +173,11 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--soak") {
       try await soak(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--hitch") {
+      try await hitch(element: element)
       finish(nil)
       return
     }
