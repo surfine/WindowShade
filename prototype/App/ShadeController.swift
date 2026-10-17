@@ -347,6 +347,10 @@ extension AppDelegate {
                 completeFold(success: false); return
             }
             let installStartedAt = CFAbsoluteTimeGetCurrent()
+            // 逐步打点（只记时间戳，慢的时候才拼成一行）：VM 重负载下见过 install=9521ms、
+            // 已知分段却只有 ~1.5 s——差额落在哪一步，下一次日志直接写出来。
+            var installSteps: [(name: String, at: CFAbsoluteTime)] = []
+            func installStep(_ name: String) { installSteps.append((name, CFAbsoluteTimeGetCurrent())) }
             defer {
                 let installMilliseconds = (CFAbsoluteTimeGetCurrent() - installStartedAt) * 1000
                 foldPhaseTotals["▸安装阶段合计", default: 0] += installMilliseconds / 1000
@@ -360,12 +364,19 @@ extension AppDelegate {
                         .map { "\($0.name) \(Int($0.seconds * 1000))ms" }
                         .joined(separator: " · ")
                     wlog("perf: fold install id=\(id) install=\(Int(installMilliseconds))ms total=\(Int(totalMilliseconds))ms mode=\(mode) phases: \(phases)")
+                    var previous = installStartedAt
+                    let steps = installSteps.map { step -> String in
+                        defer { previous = step.at }
+                        return "\(step.name) \(Int((step.at - previous) * 1000))ms"
+                    }.joined(separator: " · ")
+                    wlog("perf: fold install steps id=\(id) \(steps) · end \(Int((CFAbsoluteTimeGetCurrent() - previous) * 1000))ms")
                 }
             }
             shadeOperationIDs.remove(id)
             foldPhase("辅助功能配置") {
                 configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
             }
+            installStep("accessibility")
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
             // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
@@ -373,6 +384,7 @@ extension AppDelegate {
             let appHideSafe = foldPhase("焦点交接") {
                 stalled ? false : handOffFocusBeforeHiding(win: win, pid: pid, id: id)
             }
+            installStep("focus-handoff")
             // crash consistency：先把 durable recovery intent 落盘，再执行任何
             // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
             // rescue 仍能按 intent 找回窗口；隐藏成功验证后由 recordShadeJournal
@@ -384,6 +396,7 @@ extension AppDelegate {
                                           sourceDisplayID: sourceDisplayID,
                                           sourceSpaceID: sourceSpaceID)
             }
+            installStep("recovery-intent")
             guard intentWritten else {
                 dismissOverlay(overlay)
                 transitionOperationState(id: id, to: .failed, reason: "recovery-intent-write-failed")
@@ -405,11 +418,13 @@ extension AppDelegate {
                 dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "expired-before-hide")
                 completeFold(success: false); return
             }
+            installStep("pre-hide-checks")
             let hideStartedAt = CFAbsoluteTimeGetCurrent()
             let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
                                   policy: policy, appHideSafe: appHideSafe,
                                   stalledWindowID: stalled ? id : nil)
             foldPhaseTotals["隐藏窗口", default: 0] += CFAbsoluteTimeGetCurrent() - hideStartedAt
+            installStep("hide")
             if stalled && hide == .none {
                 // 停车和调透明都没成：窗口原样没动，不装卷帘条。恢复意图留给救援按“窗口可见”清理。
                 dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "ax-stalled-unparked")
@@ -426,6 +441,7 @@ extension AppDelegate {
             let verifyStartedAt = CFAbsoluteTimeGetCurrent()
             let hideVerifiedNow = hideTookEffect(hide, win: win, pid: pid, id: id, size: size, stalled: stalled)
             foldPhaseTotals["隐藏验证", default: 0] += CFAbsoluteTimeGetCurrent() - verifyStartedAt
+            installStep("hide-verify")
             foldPhase("日志落盘") {
                 recordShadeJournal(id: id, win: win, hide: hide, pid: pid, bundleID: bundleID,
                                    appName: appName, title: title,
@@ -435,8 +451,10 @@ extension AppDelegate {
                                    sourceDisplayID: sourceDisplayID,
                                    sourceSpaceID: sourceSpaceID)
             }
+            installStep("journal")
             foldPhase("卷帘条 Space 归属") { prepareOverlayWindowForSpaceAssignment(overlay) }
             let oid = foldPhase("卷帘条窗口号") { cgWindowID(for: overlay) }
+            installStep("overlay-prep")
             if let oid {
                 overlayIDs.insert(oid)
                 // 安装阶段里最后一块没打点的：跨 Space 移动与它的几何回退。
@@ -463,6 +481,7 @@ extension AppDelegate {
             // 发给的正是刚被要求隐藏自己、此刻最忙的那个 App——实测 18 个窗口
             // 1363ms，占整次折叠的 32%。推迟到下一轮 runloop 注册，从关键路径上拿掉。
             // App 卡住时不注册观察者：AXObserver 注册要它回四次消息。
+            installStep("space-move")
             let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut) && !stalled
             let observer: AXObserver? = nil
             let state = ShadeState(element: win, sourceWindowID: id,
@@ -487,9 +506,11 @@ extension AppDelegate {
                 carry.stopIfCarried(id, reason: "shaded")
                 glance.attach(id: id, overlay: overlay)
             }
+            installStep("state-install")
             foldPhase("状态机转换") {
                 transitionOperationState(id: id, to: .folded, reason: "install")
             }
+            installStep("state-transition")
             if wantsObserver {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
@@ -504,6 +525,7 @@ extension AppDelegate {
                 }
             }
             foldPhase("Space 回归调度") { scheduleSourceSpaceReturnIfNeeded(id: id, state: state) }
+            installStep("space-return")
             if hideVerifiedNow, shaded[id]?.foldTransactionID == state.foldTransactionID, admissionCurrent() {
                 let spaceInvariantHeld = foldPhase("Space 不变量") {
                     enforceOverlaySpaceInvariant(id: id, state: state, reason: "install")
@@ -514,6 +536,7 @@ extension AppDelegate {
                 }
                 // Hiding is committed even if the user switched away from its Space.
                 completeFold(success: true, transaction: state.foldTransactionID)
+                installStep("reveal")
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
                 if stalled, admissionCurrent() {
@@ -525,19 +548,24 @@ extension AppDelegate {
                         settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: false)
                     }
                 }
+                installStep("verify-schedule")
             }
             hoverPreviewSuppressedUntil[id] = Date().addingTimeInterval(0.7)
             foldPhase("重回专注栈") { rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay) }
+            installStep("focus-rejoin")
             if autoJoinFocusShelf {
                 foldPhase("加入专注 shelf") {
                     joinFocusShelfAfterShadeIfNeeded(id: id, overlay: overlay)
                 }
+                installStep("focus-shelf")
             }
             if options.rebuildMenuAfterInstall {
                 rebuildMenu()
+                installStep("menu-rebuild")
             }
             if options.emitFoldFeedback {
                 playFoldSound()
+                installStep("sound")
             }
         }
 
