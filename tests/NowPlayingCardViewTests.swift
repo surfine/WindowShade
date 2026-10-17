@@ -94,7 +94,7 @@ import Cocoa
         expect(card.isDragging && card.scrub.barHeight == 8, "按下：条加粗到 8")
         expect(seeks.isEmpty, "按下的时候还不跳")
         card.mouseDragged(with: mouse(.leftMouseDragged, windowPoint(fraction: 0.75), window: window))
-        close(card.scrub.displayFraction(player: 0.25, now: 1000), 0.75, "拖动跟手")
+        close(card.scrub.displayFraction(player: 0.25), 0.75, "拖动跟手")
         expect(seeks.isEmpty, "拖动中也不跳")
         card.mouseUp(with: mouse(.leftMouseUp, windowPoint(fraction: 0.75), window: window))
         expect(seeks.count == 1, "松手跳一次")
