@@ -18,6 +18,8 @@
 | [卡住时刘海开口](卡住时刘海开口.html)（[线上](https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ)） | 刘海在等什么、开口的节奏 | 概念片前段、opus 的开口、1.0 宣传片若改画面 |
 | [收成缩略图](收成缩略图.html)（[线上](https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N)） | 原地缩成缩略图、排到屏幕边、收进刘海 | 概念片收起、1.0 宣传片的收起 |
 | [欢迎使用 WindowShade](欢迎使用%20WindowShade.html)（[线上](https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc)） | 欢迎窗口 | 动效样片里的欢迎、官网 |
+| [首次打开 1.0.17 小样](%E9%A6%96%E6%AC%A1%E6%89%93%E5%BC%80%201.0.17%20%E5%B0%8F%E6%A0%B7.html)（[线上](https://claude.ai/artifact/R2h7LCy9eQFF1GgH6kHF8u)） | 1.0.18 首次打开与整个设置的讲解动画：先学双击收起，再一起问辅助功能和屏幕录制（可选），再用一页四段演刘海、窗口浏览、手势与卷轴、菜单栏；升级一页找回授权、一页说新开了什么；每个设置页顶上一条“设备 / 结果”讲解带，行到哪演到哪；末尾是 1.0.18 工作单。**Aaron 10-17 已拍板全部问题** | 取代欢迎窗口现在的三步（Welcome.swift）和各设置页顶部 |
+| [1.0.18 新表面 小样](1.0.18%20%E6%96%B0%E8%A1%A8%E9%9D%A2%20%E5%B0%8F%E6%A0%B7.html)（[线上](https://claude.ai/artifact/2p7dHpjTEEf5wGqcobQiTG)） | Dock 预览卡上的红黄绿（关闭 / 最小化 / 进入全屏）、设置侧栏搜索（⌘F、同义词、跳到行并让讲解带演）、正在播放拖完进度 1.5 秒内信本地、DMG 安装窗口（卷帘背景、两种外观通用）、权限文案统一（辅助功能必需、屏幕录制可选）；附五个待定问题和各自的实现范围。**小样，等 Aaron 定稿** | 不是镜头；1.0.18 第 2–5 天实现的画面依据 |
 | [为什么不用最小化](为什么不用最小化.html)（[线上](https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT)） | 看不见的窗口都在刘海里，和最小化的差别 | 1.0 宣传片的收起故事、概念片第 2 章 |
 | [一颗岛](一颗岛.html)（[线上](https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac)） | 岛（紧凑两耳、最小点）与半岛（展开下鼓）、提醒回媒体、内容替换与数字过渡 | 对 Alcove / WWDC23 10194；产品刘海变形；《一句话》与概念片互训 |
 | [手边的每一样](手边的每一样.html)（[线上](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)） | 一个入口，一套动作，任何输入 | 概念片第 4 章 |
