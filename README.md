@@ -59,6 +59,14 @@ Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releas
 
 **Window browsing.** Rest the pointer on an app’s icon in the Dock and every window that app has open is listed, each with a picture and a title. The panel is for looking: a window changes only when you press a button on its card; Space gives a large preview without bringing the window forward; placement shows where the window will go and moves it only when you agree, and you can undo afterwards. You can also open it from Choose window… in the menu bar, or with a hot key you set — the Dock entry is off by default. The panel is temporary: it does not replace the Dock or take over Command-Tab. Details are in the [window browsing notes](docs/window-browser.md).
 
+**Launchpad.** Record a shortcut (for example `⌃⌘L`) to open the Home grid: every app, with the App Library on the last page. Drag an icon to a screen edge for Slide Over, with a split handle. It opens even when the notch is off. Details are in the [Launchpad notes](docs/launchpad.md).
+
+**More layouts and actions.** Magic Tiling, the scroll strip, Picture in Picture (a window shrinks to a live picture that floats in a screen corner), `⌥`-Tab to switch by window, and Dock click-to-hide (off by default; turn it on in Settings). Settings → Shortcuts can bring Rectangle’s key set over in one click.
+
+**The notch (off by default; turn it on in Settings).** Once on, it brings live activities, the file shelf, accessory battery notices, the volume/brightness display and “Move this app aside”, each with its own switch. For a careful action such as turning off automatic update checks, the notch opens around the system fingerprint prompt so you confirm with Touch ID; it does not unlock macOS. [Details](docs/touch-id-island.md)
+
+**Interface language.** Settings → Advanced → Interface language: follow the system, 简体中文, 繁體中文 or English. It takes effect immediately, no restart. English covers the whole Settings window and the notch sentences; menus, Window Browser, privacy and a few more are still being translated.
+
 **An extra: close the lid, and the desktop stays put.**
 
 <img src="assets/windowshade-lid-en.gif" alt="As the MacBook lid closes, the desktop seems to stay where it was, darker and blurrier toward the top" width="620">
@@ -73,7 +81,7 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 ## Shortcuts
 
-Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.16 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
+Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.17 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
 
 | Shortcut (upgraded setups) | What it does |
 | --- | --- |
@@ -107,16 +115,16 @@ WindowShade changes one system setting: the Dock’s minimize effect. When it ne
 
 ## In development
 
-The current download is **1.0.16** — tucked windows and the rest of the notch page above are in it, plus a three-step welcome, a “What WindowShade reads” privacy page and an interface-language switch. On a new installation, the notch, live activities, file shelf, accessory notices, volume/brightness display and Dock click-to-hide are off until enabled in Settings. [Release notes](docs/releases/v1.0.16.md) · [defaults](docs/releases/v1.0.16-defaults.md) · [gate report](docs/releases/v1.0.16-acceptance/gate-0B-verification.md)
+The current download is **1.0.17**. Everything described above is in it; this version also adds a three-step welcome, a “What WindowShade reads” privacy page, diagnostics export and settings export/import. [Release notes](docs/releases/v1.0.17.md)
 
-These are not in the download yet:
+What comes next is **WindowShade 2**: your Mac’s windows taking direction, and answering to the devices at hand. Part of it is already written and sits behind a preview switch in 1.0.17 — not shown in Settings and not running:
 
-- **Three interface languages.** Settings → Advanced → Interface language: **follow the system / 简体中文 / 繁體中文 / English**; it takes effect immediately, no restart.
-  The Traditional build follows Taiwan usage (瀏海, 捲簾條, 快速鍵, 輔助使用), with the same coverage as the English one.
-  English covers the whole Settings window and the notch sentences; a few surfaces are still being translated. [Details](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
-- **Touch ID in the notch** — expands the notch around the system fingerprint prompt to confirm a WindowShade request; it does not unlock macOS. [Details](docs/touch-id-island.md)
-- **Launchpad and new gestures** — the Home grid with the App Library (`⌃⌘L`), Magic Tiling, the scroll strip, Picture in Picture, Slide Over with a split handle, `⌥`-Tab by window, Rectangle key import, Dock click-to-hide, and more. [Launchpad](docs/launchpad.md) · [title-bar gestures](docs/gestures.md)
-- **Experimental or device-limited** — face scanning, presence locking, remote control and CarPlay have experimental and device limits; none of this claims macOS face unlock or complete CarPlay reception.
+- **Conductor mode and coding sessions** — the state and approvals of several coding sessions in one place.
+- **Remote control** — drive this Mac from an iPhone or similar device, including mute control.
+- **CarPlay reception** — put the iPhone’s picture on the whole screen.
+- **Mouse and trackpad** — finer settings such as smooth scrolling, side buttons and three- or four-finger taps.
+
+A few more are still experimental or device-limited: face scanning, presence locking, remote control and CarPlay. None of this claims macOS face unlock or complete CarPlay reception.
 
 ## Build and contribute
 
