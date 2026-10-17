@@ -1482,11 +1482,41 @@ extension AppDelegate {
     }
 
     func makeShortcutsSettingsPage() -> NSView {
-        let (root, stack) = makeSettingsPageRoot()
+        let (root, stack) = makeSettingsPageRoot(explainer: .shortcuts)
         stack.addArrangedSubview(makeSettingsHeader(
             title: WSL10n.text("settings.shortcuts.title", zh: "快捷键"),
             subtitle: WSL10n.setting("settings.shortcuts.subtitle", zh: "在任何应用里都能用。点“录制…”再按下新的组合；“清除”会关掉这个快捷键。"),
             symbolName: "command"))
+
+        // 讲解：每一行演这一行现在录的组合（没录写“还没录”）；没有自己画面的动作跟页默认。
+        func explainerAction(_ shortcut: GlobalShortcut) -> ExplainerRow.Shortcuts.Action {
+            switch shortcut {
+            case .leftHalf: return .place(.leftHalf)
+            case .rightHalf: return .place(.rightHalf)
+            case .topHalf: return .place(.topHalf)
+            case .bottomHalf: return .place(.bottomHalf)
+            case .topLeft: return .place(.topLeft)
+            case .topRight: return .place(.topRight)
+            case .bottomLeft: return .place(.bottomLeft)
+            case .bottomRight: return .place(.bottomRight)
+            case .leftThird: return .place(.leftThird)
+            case .centerThird: return .place(.centerThird)
+            case .rightThird: return .place(.rightThird)
+            case .leftTwoThirds: return .place(.leftTwoThirds)
+            case .rightTwoThirds: return .place(.rightTwoThirds)
+            case .fill, .stepLarger: return .place(.fill)
+            case .fullHeight: return .place(.fullHeight)
+            case .center: return .place(.center)
+            case .larger: return .place(.larger)
+            case .smaller: return .place(.smaller)
+            case .toggleShade, .stepSmaller: return .roll
+            case .pinPreview: return .pin
+            case .tuckAll, .tuckCurrent: return .tuck
+            case .magicTile: return .tile
+            case .windowBrowser: return .browser
+            default: return .none
+            }
+        }
 
         func recorderRow(_ shortcut: GlobalShortcut, subtitle: SettingsText?, quickEnable: Bool = false) -> NSView {
             let recorder = HotKeyRecorderView(accessibilityName: shortcut.titleText.shown)
@@ -1499,8 +1529,10 @@ extension AppDelegate {
                 self?.applyShortcut(hotKey, for: shortcut)
                 recorder?.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
             }
+            let explainer = ExplainerRow.Shortcuts.row(
+                explainerAction(shortcut), combo: GlobalShortcutSettings.hotKey(for: shortcut).map(WindowBrowserSettings.displayName(for:)))
             guard quickEnable else {
-                return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: recorder)
+                return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: recorder, explainer: explainer)
             }
             // 计时器出厂不占键：这一个按钮一下用 ⌃⌥T 开上，已经是 ⌃⌥T 就不可按。
             let enable = NSButton(title: WSL10n.text("settings.shortcuts.enableCountdown", zh: "用 ⌃⌥T 开计时器"), target: self, action: #selector(prefEnableCountdownShortcut))
@@ -1509,7 +1541,7 @@ extension AppDelegate {
             let control = NSStackView(views: [enable, recorder])
             control.orientation = .horizontal
             control.spacing = 8
-            return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: control)
+            return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: control, explainer: explainer)
         }
 
         let window = makeUnifiedSettingsCard([
@@ -1559,11 +1591,11 @@ extension AppDelegate {
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.shortcuts.rectangle.name", zh: "用 Rectangle 的快捷键"),
                 subtitle: WSL10n.setting("settings.shortcuts.rectangle.sub", zh: "装过 Rectangle 的照它现在的设置，没装过的用它推荐的那一套（⌃⌥ 加方向键和字母）。下面的名字和 Raycast 的窗口命令一一对应"),
-                control: takeOver),
+                control: takeOver, explainer: ExplainerRow.Shortcuts.rectangle),
             makeUnifiedControlRow(
                 name: WSL10n.setting("settings.shortcuts.directionKeys", zh: "方向键换成字母"),
                 subtitle: WSL10n.setting("settings.shortcuts.swish.sub", zh: "变小一级、变大一级、左半屏、右半屏改用 ⌃⌥ 加字母，和 Swish 一样。别的动作在用的组合不抢"),
-                control: directionKeys),
+                control: directionKeys, explainer: ExplainerRow.Shortcuts.rectangle),
             recorderRow(.topHalf, subtitle: nil),
             recorderRow(.bottomHalf, subtitle: nil),
             recorderRow(.topLeft, subtitle: nil),
@@ -1596,7 +1628,8 @@ extension AppDelegate {
                 name: WSL10n.setting("settings.shortcuts.numbered.name", zh: "按编号展开已收起的窗口"),
                 subtitle: WSL10n.setting("settings.shortcuts.numbered.sub", zh: "\(GlobalShortcutSettings.numberedDisplayName) 对应菜单里的前 9 个窗口", GlobalShortcutSettings.numberedDisplayName),
                 isOn: GlobalShortcutSettings.numberedExpandEnabled,
-                action: #selector(prefToggleNumberedShortcuts(_:))),
+                action: #selector(prefToggleNumberedShortcuts(_:)),
+                explainer: ExplainerRow.Shortcuts.numbered),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.folded", zh: "已收起的窗口")))
         stack.addArrangedSubview(strips)
