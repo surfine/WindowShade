@@ -66,7 +66,7 @@ ssh "${ssh_opts[@]}" "$host" "mkdir -p ~/wsqa-run && cd ~/wsqa-run && rm -rf Win
   && ditto -x -k /tmp/ws.zip . && ditto -x -k /tmp/fx.zip . && { [ ! -f /tmp/dm.zip ] || ditto -x -k /tmp/dm.zip .; } \
   && cp /tmp/run-in-guest.sh . && chmod +x run-in-guest.sh \
   && codesign --verify --deep --strict WindowShade.app && echo \"guest macOS \$(sw_vers -productVersion)\" \
-  && WSQA_SETTINGS='$joined' WSQA_TIMEOUT_SCALE=$scale WSQA_SUITE_TIMEOUT=$suite_timeout ./run-in-guest.sh ${suites[*]}"
+  && WSQA_SETTINGS='$joined' WSQA_TIMEOUT_SCALE=$scale WSQA_SUITE_TIMEOUT=$suite_timeout WSQA_SOAK_ROUNDS=${WSQA_SOAK_ROUNDS:-100} ./run-in-guest.sh ${suites[*]}"
 # 带回截图（V11 要看图标），有就拿。
 out=".build/vm-results/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$out" && scp -q -r "${ssh_opts[@]}" "$host:wsqa-run/shots/." "$out/" 2>/dev/null && echo "screenshots: $out" || true
