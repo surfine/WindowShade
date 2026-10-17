@@ -45,7 +45,8 @@
 - **1.0.17 下載包：** ZIP 10.65 MB，解壓後的應用檔案合計 27.48 MB（十進位；檔案系統實際佔用可能不同）。包裡多了只存在本機的當機報告，所以比上一版大一點。
 - **已通過 Apple 公證。** 第一次開啟時系統會自己檢查，不用再手動放行。
 - **從 1.0.16 及以前升級：** 這一版要手動下載一次，裝好後在“系統設定 → 隱私權與安全性”裡重新開啟輔助使用與螢幕錄製。之後就能在選單裡更新。
-- 每次釋出都附 SHA-256 校驗檔案。每個版本改了什麼，見 [更新記錄](https://github.com/surfine/WindowShade/releases)。
+- **用 Homebrew：** `brew install --cask surfine/tap/windowshade`。
+- 每次發布都附 SHA-256 校驗檔。每個版本改了什麼，見 [更新記錄](https://github.com/surfine/WindowShade/releases)。
 
 ## 它能做什麼
 

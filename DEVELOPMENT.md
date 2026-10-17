@@ -45,7 +45,7 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 （1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
 用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
 同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
-**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目草稿在 docs/releases/appcast-item-1.0.17.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
+**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
 
 ## 模块结构
 
@@ -394,6 +394,8 @@ cd prototype
 7. **先走测试频道**：条目先带 `<sparkle:channel>beta</sparkle:channel>` 发一次。Aaron 自己
    `defaults write com.windowshade.prototype WindowShadeUpdateChannel beta` 打开测试频道，装上用一天，再去掉频道标记重发清单。
 8. **分批推送**：条目带 `sparkle:phasedRolloutInterval` 86400。**撤回一版**：从清单删掉那一条再部署。
+9. **Homebrew**：在 [surfine/homebrew-tap](https://github.com/surfine/homebrew-tap) 的 `Casks/windowshade.rb` 改 `version` 和 `sha256`（取 `dist/WindowShade-v${VERSION}.zip.sha256`），
+   `brew style` 与 `brew audit --cask --strict --online surfine/tap/windowshade` 通过后提交推送。
 
 `prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构；发布说明须标明实际架构。Apple Development 签名不等于公证，不宣称已经 notarized。
 

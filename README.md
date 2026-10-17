@@ -45,6 +45,7 @@ Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releas
 - **1.0.17 download:** 10.65 MB ZIP; the extracted app contains 27.48 MB of files (decimal MB; filesystem allocation may differ). It now includes on-device crash reporting, hence slightly bigger.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility and Screen Recording in System Settings → Privacy & Security. From here on, updates install from the menu.
+- **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
 - Every release ships with a SHA-256 checksum file; for what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
 
 ## What it does
