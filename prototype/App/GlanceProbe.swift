@@ -1165,25 +1165,34 @@ final class GlanceProbe {
     _ = owner.unshade(id)
   }
 
-  /// 规格 R39：同一进程里连续收起、展开很多次，看内存足迹与窗口数会不会一路往上走。
-  /// 前 10 轮是热身（缓存、首次分配），之后取中段与末尾比较；线性泄漏会让后半程继续涨。
+  /// 规格 R39：同一进程里连续做同一件事很多次，看内存足迹、窗口数、文件描述符、线程数会不会一路往上走。
+  /// `--soak-kind fold`（默认，收起展开）、`browser`（窗口浏览开合）、`glance`（悬停看一眼）；`--soak-rounds N`、`--soak-sample-every N`。
+  /// 前 10 轮是热身（缓存、首次分配），之后取中段与末尾比较；线性泄漏会让后半程继续涨。门槛见 SoakLedger.swift。
   private func soak(element: AXUIElement) async throws {
     let previousVolume = shadeSounds.volume
     shadeSounds.volume = 0
     defer { shadeSounds.volume = previousVolume }
-    let rounds = CommandLine.arguments.firstIndex(of: "--soak-rounds")
-      .flatMap { CommandLine.arguments.indices.contains($0 + 1) ? Int(CommandLine.arguments[$0 + 1]) : nil } ?? 120
-    func footprintMB() -> Double {
-      var info = task_vm_info_data_t()
-      var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
-      let kr = withUnsafeMutablePointer(to: &info) {
-        $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-          task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
-        }
-      }
-      return kr == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : -1
+    let args = CommandLine.arguments
+    func option(_ name: String) -> String? {
+      args.firstIndex(of: name).flatMap { args.indices.contains($0 + 1) ? args[$0 + 1] : nil }
     }
-    var samples: [(round: Int, mb: Double, windows: Int)] = []
+    let kind = option("--soak-kind") ?? "fold"
+    let requested = option("--soak-rounds").flatMap { Int($0) }
+    switch kind {
+    case "browser":
+      try await soakBrowser(rounds: requested ?? 100)
+      return
+    case "glance":
+      try await soakGlance(element: element, rounds: requested ?? 100)
+      return
+    case "fold":
+      break
+    default:
+      throw EffectError.unavailable("--soak-kind must be fold, browser or glance")
+    }
+    let rounds = requested ?? 120
+    let every = soakSampleEvery(default: 20)
+    var samples: [SoakSample] = []
     let warmup = 10
     for round in 0..<rounds {
       owner.shade(element, id)
@@ -1197,48 +1206,16 @@ final class GlanceProbe {
           && self.owner.duoController.windowEffects.activeCount == 0
       }
       try await Task.sleep(for: .milliseconds(200), clock: .suspending)
-      if round + 1 == warmup || (round + 1) % 20 == 0 || round + 1 == rounds {
-        let sample = (round + 1, footprintMB(), NSApp.windows.count)
+      if soakShouldSample(round: round + 1, rounds: rounds, every: every, warmup: warmup) {
+        let sample = SoakSample.take(round: round + 1)
         samples.append(sample)
-        print(String(format: "SOAK round %d: footprint %.1f MB, windows %d", sample.0, sample.1, sample.2))
+        print(String(format: "SOAK round %d: footprint %.1f MB, windows %d, descriptors %d, threads %d",
+          sample.round, sample.footprintMB, sample.windows, sample.descriptors, sample.threads))
         fflush(stdout)
       }
     }
-    guard let first = samples.first, let last = samples.last, samples.count >= 3 else {
-      throw EffectError.unavailable("soak needs at least \(warmup + 20) rounds")
-    }
-    let middle = samples[samples.count / 2]
-    let lateGrowth = last.mb - middle.mb
-    print(String(format: "INFO soak: %d rounds, footprint %.1f -> %.1f -> %.1f MB (warm, middle, end), windows %d -> %d",
-      rounds, first.mb, middle.mb, last.mb, first.windows, last.windows))
-    // 门槛：后半程不应再涨过 4 MB（量级参照：一次收起的截图缓存约 1–3 MB）；窗口数不增加。
-    if lateGrowth > 4 {
-      print(String(format: "FAIL soak: footprint still growing in the second half (+%.1f MB)", lateGrowth))
-    } else {
-      print(String(format: "PASS soak: footprint flat in the second half (%+.1f MB)", lateGrowth))
-    }
-    // 窗口数同样比中段与末尾：第一次用到才建的面板（一次性）不算增长，之后还在涨才算。
-    if last.windows > middle.windows {
-      print("FAIL soak: window count still growing in the second half \(middle.windows) -> \(last.windows)")
-    } else {
-      print("PASS soak: window count flat in the second half (\(middle.windows) -> \(last.windows))")
-    }
-    // 再让系统的 leaks 看一眼自己：数无人引用的内存块。会把本进程暂停几秒，探针此刻没有别的事。
-    let leaks = Process()
-    leaks.executableURL = URL(fileURLWithPath: "/usr/bin/leaks")
-    leaks.arguments = ["\(ProcessInfo.processInfo.processIdentifier)"]
-    let pipe = Pipe()
-    leaks.standardOutput = pipe
-    leaks.standardError = Pipe()
-    if (try? leaks.run()) != nil {
-      let text = String(decoding: pipe.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-      leaks.waitUntilExit()
-      for line in text.split(separator: "\n") where line.contains("leaks for") || line.contains("nodes malloced") {
-        print("INFO soak leaks: \(line.trimmingCharacters(in: .whitespaces))")
-      }
-    } else {
-      print("INFO soak leaks: could not run /usr/bin/leaks")
-    }
+    try soakVerdict(label: "soak", rounds: rounds, samples: samples, warmup: warmup)
+    soakLeaksSummary(label: "soak")
   }
 
   /// 收起时截图的几种办法各要多久（中位数），以及画面是否完整。
