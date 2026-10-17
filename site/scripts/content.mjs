@@ -114,7 +114,7 @@ export const copy = {
 
     notchKicker: '收进刘海',
     notchTitle: '刘海，<br>也能装窗口。',
-    notchIntro: '1.0.16 候选功能，尚未发布，需在设置里打开。朝刘海甩一下标题栏，窗口缩小、飞进刘海，桌面一下子空了。刘海两边露出它的图标和个数；指针停上去，刘海往下展开成一排，点一下，它回到原来的位置。',
+    notchIntro: '默认关闭，在设置里打开。朝刘海甩一下标题栏，窗口缩小、飞进刘海，桌面一下子空了。刘海两边露出它的图标和个数；指针停上去，刘海往下展开成一排，点一下，它回到原来的位置。',
     notchPoints: [
       ['一个入口，找回所有收着的窗口', '收进刘海的、卷帘条、侧拉的、带到每张桌面的窗口，都排在这一排里。点哪一格，哪一扇就回到它该在的地方。'],
       ['有变化，刘海告诉你', '收着的窗口标题变了，比如编译完成、下载好了，刘海短暂展开说一句就收回，格子上留一个点。一直在变的窗口只标点，不打扰你。'],
@@ -208,6 +208,10 @@ export const copy = {
       ['⌃ ⌘ 0', '排好卷帘条，或进入专注布局'],
       ['⌃ ⌘ ←→↑↓', '左右排布，变小一级，变大一级'],
     ],
+    shortcutNotes: [
+      '新装时这几组一项都不预设：在“设置 → 快捷键”里自己录，也可以一键换上 Rectangle 那一套。从 1.0.15 及以前升级上来的，保留上面这几组。',
+      '另有 7 个动作，在“快捷指令”、聚焦搜索和 Siri 里都能用，比如收起或展开当前窗口、全部展开、置顶或取消置顶当前窗口。',
+    ],
 
     trustTitle: '你的窗口，<br>只留在你的 Mac 上。',
     trustBody: '辅助功能权限用来找到和移动窗口，屏幕录制权限用来拍下窗口画面做预览。画面只在你的电脑上处理，不会传到别处。应用万一意外退出，窗口也会自动恢复原样。',
@@ -215,13 +219,16 @@ export const copy = {
 
     faqTitle: '下载之前，你可能会问',
     faqs: [
-      ['我的 Mac 能用吗？', '要 macOS 15 以上，Apple Silicon，没有 Intel 版。收起、看一眼和手势都不用特别的硬件；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
-      ['要什么权限？', '两项。辅助功能：找到、移动、恢复窗口。屏幕录制：拍下窗口画面做预览。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。'],
+      ['我的 Mac 能用吗？', '要 macOS 15 以上，Apple Silicon，没有 Intel 版；还在 macOS 14 的，继续用 1.0.16。收起、看一眼和手势都不用特别的硬件；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
+      ['要什么权限？', '两项。辅助功能：找到、移动、恢复窗口。屏幕录制：拍下窗口画面做预览。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。用着用着辅助功能被关掉了，它会提醒你。'],
       ['看一眼和手势会动我的窗口吗？', '看一眼不会。手势只在你松手、而且小浮窗的进度条走满时才动窗口；往回拉就取消。'],
       ['窗口浏览会动我的窗口吗？', '不会，除非你按下卡片上的按钮。动手之前，它还会再确认一次“就是这一扇窗口”，确认不了就不做。'],
       ['没有刘海的 Mac 也能收进刘海吗？', '能。外接显示器上，菜单栏正中有一个看不见的刘海：平时不露面，收着窗口时才显出来，朝它甩一下同样收得进去。'],
       ['侧拉和置顶有什么不一样？', '置顶只是让窗口一直在最前面，位置不变。侧拉让窗口靠在屏幕边：要用时拉出来，不用时收到边外，换到别的桌面也拉得出来。'],
       ['我装了 Swish，会打架吗？', '不会。Swish 在运行时，标题栏上的手势交给它；卷帘条上的下拉照常。'],
+      ['快捷键按了没反应？', '多半是开着“安全输入”：比如在输入密码的时候，系统不把按键交给别的应用。别的窗口管理工具占用了同一个组合，也会这样。遇到这两种情况，刘海里会说一句是哪一种。'],
+      ['刘海会换掉系统的音量和亮度提示吗？', '默认不会。在设置里打开“音量和亮度”，按这些键时刘海里才显示。之后想看回系统自己的提示，再打开“改回用系统的提示”：WindowShade 只旁听、不拦按键，系统的提示照常出现，刘海里也跟着显示。'],
+      ['出了问题，怎么告诉你们？', '在“设置 → 高级 → 关于”里点“报告问题”。也可以先“导出诊断信息”：它只存在你的电脑上，不会上传，发不发给我们由你决定。同一处还能导出、导入设置，导入前会先留一份备份。'],
       ['所有窗口都能收起来吗？', '普通窗口都可以。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。'],
       ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包已通过 Apple 公证。从 1.0.16 及以前升级的人，这一版要手动下载一次，装好后重新打开辅助功能和屏幕录制。'],
     ],
@@ -328,7 +335,7 @@ export const copy = {
 
     notchKicker: 'Tuck into the notch',
     notchTitle: 'The notch<br>can hold windows.',
-    notchIntro: 'An unreleased 1.0.16 candidate feature, off until enabled in Settings. Flick a title bar toward the notch and the window shrinks and flies into it, clearing your desk. Its icon and a count show beside the notch; rest the pointer there and the notch opens into a row. Click one and it goes back where it was.',
+    notchIntro: 'Off until you turn it on in Settings. Flick a title bar toward the notch and the window shrinks and flies into it, clearing your desk. Its icon and a count show beside the notch; rest the pointer there and the notch opens into a row. Click one and it goes back where it was.',
     notchPoints: [
       ['One place for every put-away window', 'Windows tucked into the notch, rolled-up bars, Slide Over and windows on every desktop all sit in that row. Click a card and that window goes back where it belongs.'],
       ['The notch tells you when something changes', 'When a tucked window’s title changes, say a build finishes or a download completes, the notch opens briefly to say so, then leaves a dot on its card. Windows that change all the time only get the dot.'],
@@ -422,6 +429,10 @@ export const copy = {
       ['⌃ ⌘ 0', 'Line up the bars, or switch to a focus layout'],
       ['⌃ ⌘ ←→↑↓', 'To the sides, one size down, one size up'],
     ],
+    shortcutNotes: [
+      'A new setup presets none of these: record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. Setups upgraded from 1.0.15 or earlier keep the ones above.',
+      'There are also 7 actions for Shortcuts, Spotlight and Siri, such as Roll Up or Unroll Front Window, Unroll All, and Pin or Unpin Front Window.',
+    ],
 
     trustTitle: 'Your windows<br>stay on your Mac.',
     trustBody: 'Accessibility permission finds and moves windows. Screen Recording takes the window pictures used for previews. Everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were.',
@@ -429,13 +440,16 @@ export const copy = {
 
     faqTitle: 'Before you download',
     faqs: [
-      ['Will it work on my Mac?', 'You need macOS 15 or later and Apple Silicon — there’s no Intel build. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
-      ['What permissions does it need?', 'Two. Accessibility: finding, moving and restoring windows. Screen Recording: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac.'],
+      ['Will it work on my Mac?', 'You need macOS 15 or later and Apple Silicon — there’s no Intel build. If you’re still on macOS 14, stay on 1.0.16. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
+      ['What permissions does it need?', 'Two. Accessibility: finding, moving and restoring windows. Screen Recording: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac. If Accessibility gets turned off while the app is running, it tells you.'],
       ['Do glances and gestures move my windows?', 'A glance never does. A gesture moves a window only when you let go with the panel’s track full; pull back to cancel.'],
       ['Can I use the notch without a notch?', 'Yes. On an external display there’s an invisible notch in the middle of the menu bar: it stays out of sight until a window is tucked into it, and flicking toward it works the same.'],
       ['How is Slide Over different from pinning?', 'Pinning just keeps a window in front, where it is. Slide Over docks it at the screen edge: pull it out when you need it and tuck it away when you don’t, from any desktop.'],
       ['I use Swish. Will they clash?', 'No. While Swish is running, title-bar gestures are left to it; pulling down on a rolled-up bar still works.'],
       ['Does window browsing move my windows?', 'No — not unless you press a button on a card. Before it acts, it checks once more that the window is still the one you picked. If it can’t be sure, it does nothing.'],
+      ['A shortcut does nothing. Why?', 'Most likely Secure Input is on: while you type a password, for example, macOS keeps keystrokes from other apps. Another window manager holding the same combination does the same. In either case, the notch says which one it is.'],
+      ['Does the notch replace the volume and brightness display?', 'Not by default. Turn on Volume & brightness in Settings and the notch shows them when you press those keys. If you’d rather keep the system’s own display, also turn on Use the System’s Volume and Brightness Pop-ups: WindowShade only listens, the keys go through, the system shows its own display and the notch follows along.'],
+      ['Something’s wrong. How do I tell you?', 'In Settings → Advanced → About, click Report a Problem. You can also Export Diagnostics first: the file stays on your Mac, nothing is uploaded, and you decide whether to send it. The same place exports and imports settings; importing makes a backup first.'],
       ['Does it work with every window?', 'With regular windows, yes. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use.'],
       ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is notarized by Apple. If you’re updating from 1.0.16 or earlier, download this one by hand, then reopen Accessibility and Screen Recording.'],
     ],
