@@ -17,6 +17,9 @@ extension AppDelegate {
     // 启动时补上“收起后的样子”选的缩略图（WindowShade.swift 只认得前两项）。
     adoptPersistedCollapseAppearance()
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    // 固定的存档名：系统按它记住图标位置，Thaw／Ice／Bartender 这类菜单栏管理器也靠它认出同一个图标。
+    // 必须在其它设置之前给；可见性只在这里立一次，之后重建菜单不再强设（否则会和管理器打架）。
+    statusItem.autosaveName = "WindowShadeStatusItem"
     statusItem.isVisible = true
     statusMenu = NSMenu()
     statusMenu.delegate = self
@@ -46,18 +49,19 @@ extension AppDelegate {
     // 高频触发；目标解析在后台完成后仅在目标改变时安排下一次重建。
     menuRebuildWorkItem?.cancel()
     menuRebuildWorkItem = nil
-    statusItem.button?.image = Self.statusBarIcon
-    statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
-    statusItem.button?.imagePosition = .imageLeft
-    statusItem.isVisible = true
-    statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
-    statusItem.button?.toolTip =
-      shaded.isEmpty ? "WindowShade"
-        : "WindowShade：\(PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))"
-    // VoiceOver：状态栏按钮读成“WindowShade + 当前折叠数量”，而不是一个孤立的数字。
-    statusItem.button?.setAccessibilityLabel(PaperSurfaceAccessibility.statusItemLabel)
-    statusItem.button?.setAccessibilityValue(
-      PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))
+    // 图标、字体、位置在 setupStatusItem 已设好；这里只在内容真的变了才写，
+    // 避免每次重建都让按钮重排、状态栏图标宽度抖一下。
+    if let button = statusItem.button {
+      let title = shaded.isEmpty ? "" : " \(shaded.count)"
+      if button.title != title { button.title = title }
+      let tip =
+        shaded.isEmpty ? "WindowShade"
+          : "WindowShade：\(PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))"
+      if button.toolTip != tip { button.toolTip = tip }
+      // VoiceOver：状态栏按钮读成“WindowShade + 当前折叠数量”，而不是一个孤立的数字。
+      let value = PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count)
+      if button.accessibilityValue() as? String != value { button.setAccessibilityValue(value) }
+    }
     statusMenu.removeAllItems()
 
     let menuState = makeMenuState()
