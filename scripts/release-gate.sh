@@ -6,6 +6,7 @@
 #   --appcast 默认 site/public/appcast.xml；清单里要已经有这一版的条目（先写好清单再过关，再上传）。
 #   --cert-change <Team ID>：换证书的那一版（docs/update.md）。第 3 步不比「DR 与上一版逐字相同」，改核
 #   「Developer ID 签名、Team 是这个」；清单那一项还要是 informationalUpdate。
+# 第 11 项卡顿账只打印 INFO，不影响退出码。
 # 只读：不改清单、不上传、不碰日常运行的 App；会短暂运行新旧两版的 --self-check（无界面、约 1 秒）。
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -127,6 +128,12 @@ if [[ "$AUTH" == "Developer ID Application:"* ]]; then
 else
   fail "10 不是 Developer ID 签的（$AUTH）：2026-10-16 起发布包要 build.sh --release ＋ scripts/notarize.sh"
 fi
+
+# 11. 卡顿账（只报不挡：INFO，不计入 PASS／FAIL）。scripts/perf-report.sh 按 build 号记账，取这个候选 build 最近的一行。
+ledger=docs/perf-ledger.md
+perf_row=$([ -f "$ledger" ] && grep -F "(build $BUILD)" "$ledger" | tail -1 || true)
+if [ -n "$perf_row" ]; then echo "INFO 11 卡顿账（build $BUILD，只报不挡）：${perf_row#| }"
+else echo "INFO 11 卡顿账里还没有 build $BUILD 的行（scripts/perf-report.sh --host 或 --vm，只报不挡）"; fi
 
 echo "== 发布关：$VERSION（build $BUILD）$([ $fails = 0 ] && echo '全部通过' || echo "$fails 项不过")"
 [ "$fails" = 0 ]
