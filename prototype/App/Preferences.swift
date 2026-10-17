@@ -1073,18 +1073,6 @@ extension AppDelegate {
         if let url = URL(string: CalendarSettings.systemSettingsURL) { NSWorkspace.shared.open(url) }
     }
 
-    /// 欢迎窗口第三步"允许"：点了才问系统；给了就顺手打开设置里的"日程"，不给就整行收起，之后不追问。
-    @objc func allowCalendarFromWelcome(_ sender: Any?) {
-        MainActor.assumeIsolated {
-            notch.activities.requestCalendarAccess { [weak self] granted in
-                if granted {
-                    CalendarSettings.enabled = true
-                    self?.notch.activities.calendarSettingsChanged()
-                }
-                self?.refreshOnboardingState()
-            }
-        }
-    }
     @objc func prefToggleDownloads(_ sender: NSSwitch) {
         MainActor.assumeIsolated { notch.activities.setDownloadsEnabled(sender.state == .on) }
     }
@@ -1245,16 +1233,21 @@ extension AppDelegate {
                 case .dockHover: self?.showSettingsWindow(section: .browser)
                 }
             }
-            // 欢迎窗口 T 的刘海一段做好以前先从第一页看起（欢迎那一路换成 T 的刘海一段）。
-            whatsNewWindow?.onTour = { [weak self] in self?.showWelcomeGuide() }
+            // “看看怎么用”：打开欢迎窗口的 T，从刘海一段看起。
+            whatsNewWindow?.onTour = { [weak self] in self?.showWelcomeTour() }
             whatsNewWindow?.show(groups: groups)
         }
     }
 
-    /// 欢迎使用 WindowShade：三步，一句话说清它是什么、问"你之前常用哪个？"、授权（见 Welcome.swift）。
-    /// toPermissions：缺权限时的提醒，直接翻到授权页；否则从第一步开始。
+    /// 欢迎使用 WindowShade：三页，A1 看一遍再试一下、A2 授权、T 再看四样（见 Welcome.swift）。
+    /// toPermissions：缺权限时的提醒，直接翻到授权页；否则从第一页开始。
     func showPermissionOnboarding(toPermissions: Bool = false) {
         MainActor.assumeIsolated { showWelcome(startPage: toPermissions ? WelcomeView.permissionPage : 0) }
+    }
+
+    /// N1 的“看看怎么用”：打开欢迎窗口的 T，从刘海一段看起。
+    func showWelcomeTour() {
+        MainActor.assumeIsolated { showWelcome(startPage: WelcomeView.tourPage) }
     }
 
     /// 欢迎窗口里那一页（窗口没建过或内容换过时是 nil）。
@@ -1300,10 +1293,9 @@ extension AppDelegate {
     }
 
     @MainActor private func showWelcome(startPage: Int) {
-        let permissionPage = WelcomeView.permissionPage
-        // 已经开着：不重建、不挪回正中，看到哪一页还在哪一页，只拿到最前面；缺权限的提醒才翻到授权页。
+        // 已经开着：不重建、不挪回正中，看到哪一页还在哪一页，只拿到最前面；缺权限的提醒翻到授权页，“看看怎么用”翻到 T。
         if let window = onboardingWindow, window.isVisible, let current = onboardingWelcomeView {
-            if startPage == permissionPage, current.index != permissionPage || current.onMoveStep { current.show(permissionPage) }
+            if startPage != 0, current.index != startPage || current.onMoveStep { current.show(startPage) }
             window.makeKeyAndOrderFront(nil)
             window.makeFirstResponder(current)
             NSApp.activate()
@@ -1311,11 +1303,18 @@ extension AppDelegate {
             return
         }
         let view = WelcomeView(frame: NSRect(origin: .zero, size: WelcomeView.size))
-        view.permissionsGranted = { hasAccessibilityPermission() && hasScreenRecordingPermission() }
+        // “继续”“开始使用”只等辅助功能（屏幕录制可选，Aaron 拍板 2026-10-17）。
+        view.permissionsGranted = { hasAccessibilityPermission() }
         view.onFinish = { [weak self] in self?.dismissOnboarding() }
         view.onLater = { [weak self] in self?.dismissOnboarding() }
-        onboardingPermissionStack = view.permissionStack
-        onboardingProgressLabel = view.progressLabel
+        view.onGrantAccessibility = { [weak self] in self?.onboardingGrantAccessibilityAction() }
+        view.onGrantScreenRecording = {
+            // 先问一次系统，让 WindowShade 出现在“屏幕录制”列表里，再打开那一栏。
+            if !hasScreenRecordingPermission() { _ = CGRequestScreenCaptureAccess() }
+            openScreenRecordingPrivacySettings()
+        }
+        onboardingPermissionStack = nil
+        onboardingProgressLabel = nil
         onboardingDoneButton = nil
         onboardingCaption = nil
         let window: NSWindow
@@ -1377,7 +1376,7 @@ extension AppDelegate {
     /// 翻到别的页、两项都有了、窗口收起来或整个被挡住就停（1.0.15 起权限齐全时本来就不跑）。
     @MainActor func updateOnboardingRefresh() {
         guard let window = onboardingWindow, window.isVisible, window.occlusionState.contains(.visible),
-              let view = onboardingWelcomeView, view.index == WelcomeView.permissionPage else {
+              let view = onboardingWelcomeView, view.needsPermissionRefresh else {
             onboardingRefreshTimer?.invalidate()
             onboardingRefreshTimer = nil
             return
@@ -1395,78 +1394,12 @@ extension AppDelegate {
         }
     }
 
-    /// 按现在的授权状态画授权行和进度字；和上次画的一样就什么都不动。返回画没画。
+    /// 按现在的授权状态画授权行（A2、U1 各自的 ✓）；和上次画的一样就什么都不动。返回画没画。
+    /// 日程不在引导里问了：等刘海第一次要说“快开会”时再问（设计稿 A2 第 1 条）。
     @MainActor @discardableResult
     func refreshOnboardingState() -> Bool {
-        guard let permissionStack = onboardingPermissionStack else { return false }
-        let ax = hasAccessibilityPermission()
-        let screen = hasScreenRecordingPermission()
-        let welcome = onboardingWelcomeView
-        let calendarAccess = CalendarSource.access()
-        if let welcome, welcome.shownGrants == [ax, screen], welcome.shownCalendar == calendarAccess { return false }
-        welcome?.shownGrants = [ax, screen]
-        welcome?.shownCalendar = calendarAccess
-
-        permissionStack.arrangedSubviews.forEach {
-            permissionStack.removeArrangedSubview($0)
-            $0.removeFromSuperview()
-        }
-        var rows = [
-            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
-                subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")), granted: ax,
-                action: #selector(onboardingGrantAccessibilityAction)),
-            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
-                subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览")), granted: screen,
-                action: #selector(openScreenRecordingSettingsAction)),
-        ]
-        // 第三行：日程（CAL-4）。可有可无，不算进"还差几步"；点了"允许"才问系统，拒绝之后整行不出。
-        if let calendarRow = makeWelcomeCalendarRow(calendarAccess) { rows.append(calendarRow) }
-        let card = makeUnifiedSettingsCard(rows)
-        permissionStack.addArrangedSubview(card)
-        card.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
-
-        let grantedCount = (ax ? 1 : 0) + (screen ? 1 : 0)
-        let allGranted = grantedCount == 2
-        if let progress = onboardingProgressLabel {
-            if allGranted {
-                progress.stringValue = WSL10n.text("welcome.progress.ready", zh: "权限已就绪")
-                progress.textColor = .systemGreen
-            } else {
-                progress.stringValue = WSL10n.text("welcome.progress.partial", zh: "还差%@步权限 · %@ / 2 已完成", String(2 - grantedCount), String(grantedCount))
-                progress.textColor = .labelColor
-            }
-        }
-        onboardingDoneButton?.isEnabled = allGranted
-        onboardingCaption?.isHidden = allGranted
-        return true
-    }
-
-    /// 欢迎窗口第三步的日程一行：没问过是"允许"，给了是"✓ 已允许"，不给就没有这一行。
-    private func makeWelcomeCalendarRow(_ access: CalendarAccess) -> NSView? {
-        let trailing: NSView
-        switch access.welcomeRow {
-        case .hidden:
-            return nil
-        case .allowButton:
-            let button = NSButton(title: WSL10n.text("welcome.calendar.allow", zh: "允许"), target: self, action: #selector(allowCalendarFromWelcome(_:)))
-            button.bezelStyle = .rounded
-            button.controlSize = .regular
-            button.setAccessibilityLabel(WSL10n.text("welcome.calendar.allowA11y", zh: "日程，快开会时提醒你，允许"))
-            trailing = button
-        case .allowed:
-            let chip = NSTextField(labelWithString: WSL10n.text("welcome.calendar.allowed", zh: "✓ 已允许"))
-            chip.font = SystemAppearancePolicy.font(relativeToBody: -1)
-            chip.textColor = .systemGreen
-            chip.setAccessibilityLabel(WSL10n.text("welcome.calendar.allowedA11y", zh: "日程，已允许"))
-            trailing = chip
-        }
-        let labels = makeUnifiedLabels(name: WSL10n.setting("settings.shade.calendar.name", zh: CalendarWords.name), subtitle: WSL10n.setting("welcome.calendar.sub", zh: "快开会时提醒你"), symbol: "calendar")
-        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        trailing.setContentHuggingPriority(.required, for: .horizontal)
-        let row = WS2SettingsRow(content: labels, control: trailing, spacing: 12)
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
-        return row
+        guard let welcome = onboardingWelcomeView else { return false }
+        return welcome.updateGrants(accessibility: hasAccessibilityPermission(), screenRecording: hasScreenRecordingPermission())
     }
 
     // MARK: 窗口浏览

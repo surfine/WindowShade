@@ -24,6 +24,8 @@ final class WhatsNew1018Window: NSObject, NSWindowDelegate {
     private static let padding: CGFloat = 40
 
     var isVisible: Bool { window?.isVisible == true }
+    /// 截图核对用（--settings-shots）：拍这扇窗口。
+    var windowForShots: NSWindow? { window }
 
     static var title: String { WSL10n.text("whatsNew1018.title", zh: "这一版新开了这几样") }
 

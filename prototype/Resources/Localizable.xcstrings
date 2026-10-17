@@ -65995,98 +65995,6 @@
         }
       }
     },
-    "welcome.art.appName": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Notes"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "备忘录"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "備忘錄"
-          }
-        }
-      }
-    },
-    "welcome.art.mailTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mail"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "邮件"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "郵件"
-          }
-        }
-      }
-    },
-    "welcome.art.memoTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Shopping List"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "购物清单"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "購物清單"
-          }
-        }
-      }
-    },
-    "welcome.art.menubar": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@    File    Edit    Window"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@    文件    编辑    窗口"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@    檔案    編輯    視窗"
-          }
-        }
-      }
-    },
     "welcome.button.back": {
       "extractionState": "manual",
       "localizations": {
@@ -66202,259 +66110,6 @@
         }
       }
     },
-    "welcome.calendar.allow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allow"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "允许"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "允許"
-          }
-        }
-      }
-    },
-    "welcome.calendar.allowA11y": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calendar, reminds you before meetings, allow"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日程，快开会时提醒你，允许"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日程，快開會時提醒你，允許"
-          }
-        }
-      }
-    },
-    "welcome.calendar.allowed": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "✓ Allowed"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "✓ 已允许"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "✓ 已允許"
-          }
-        }
-      }
-    },
-    "welcome.calendar.allowedA11y": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Calendar, allowed"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日程，已允许"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "日程，已允許"
-          }
-        }
-      }
-    },
-    "welcome.calendar.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Reminds you before meetings"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快开会时提醒你"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快開會時提醒你"
-          }
-        }
-      }
-    },
-    "welcome.flow.introLede": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "When a Windows shortcut does nothing, the notch says which Mac key to use. When things go smoothly, it stays quiet."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按了 Windows 的快速鍵沒反應時，瀏海說一句 Mac 上按哪一下。順利的時候，它不出聲。"
-          }
-        }
-      }
-    },
-    "welcome.flow.introTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Just switched to a Mac? Start at the notch."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "刚换 Mac？从刘海开始。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "剛換 Mac？從瀏海開始。"
-          }
-        }
-      }
-    },
-    "welcome.flow.note.ipad": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "On a Mac, a two-finger tap opens menus, just like an iPad trackpad. The notch speaks up when you get stuck."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在 Mac 上，菜单要两指点按，和 iPad 接触控板时一样。卡住时刘海会说。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在 Mac 上，選單要兩指點按，和 iPad 接觸控式軌跡板時一樣。卡住時瀏海會說。"
-          }
-        }
-      }
-    },
-    "welcome.flow.note.mac": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Then the notch will mostly stay quiet. You can change this anytime in Settings."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "那刘海多半不会开口。设置里随时能改。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "那瀏海多半不會開口。設定裡隨時能改。"
-          }
-        }
-      }
-    },
-    "welcome.flow.note.unanswered": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pick one and the notch teaches to your habits."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选一个，刘海按你的习惯来教。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "選一個，瀏海按你的習慣來教。"
-          }
-        }
-      }
-    },
-    "welcome.flow.note.windows": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy and paste are ⌘ under your thumb, right where Alt used to be. The notch covers the rest when you get stuck."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拷贝、粘贴用拇指按 ⌘，就在你原来按 Alt 的地方。其余的，卡住时刘海会说。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "複製、貼上用拇指按 ⌘，就在你原來按 Alt 的地方。其餘的，卡住時瀏海會說。"
-          }
-        }
-      }
-    },
     "welcome.flow.originTitle": {
       "extractionState": "manual",
       "localizations": {
@@ -66474,144 +66129,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "你之前常用哪個？"
-          }
-        }
-      }
-    },
-    "welcome.flow.pageLabel": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page %@"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %@ 页"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "第 %@ 頁"
-          }
-        }
-      }
-    },
-    "welcome.flow.permissionLede": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Accessibility lets WindowShade move windows, and Screen Recording lets it show live previews. Turn both on and you’re set."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "輔助使用讓 WindowShade 能移動視窗，螢幕錄製讓它能顯示即時畫面。兩項都開啟就能用了。"
-          }
-        }
-      }
-    },
-    "welcome.flow.permissionTitle": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Last step: permissions"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最后一步：授权"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "最後一步：授權"
-          }
-        }
-      }
-    },
-    "welcome.flow.picture.intro": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Animation: ⌃C does nothing, so the notch opens and says “On a Mac, Copy is ⌘C”; ⌘C works and the notch folds away; then ⌘V drops that line into Mail."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "动画：按了 ⌃C 没有反应，刘海展开说“Mac 上拷贝按 ⌘C”；按了 ⌘C，刘海收回；再按 ⌘V，那句话落进邮件。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "動畫：按了 ⌃C 沒有反應，瀏海展開說“Mac 上複製按 ⌘C”；按了 ⌘C，瀏海收回；再按 ⌘V，那句話落進郵件。"
-          }
-        }
-      }
-    },
-    "welcome.flow.picture.origin": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Illustration: with Windows picked, the four keycaps at the lower left become the Mac keys fn, control, option, and command."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "示意图：选了 Windows，左下角四颗键帽换成 Mac 上的 fn、control、option、command。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "示意圖：選了 Windows，左下角四顆鍵帽換成 Mac 上的 fn、control、option、command。"
-          }
-        }
-      }
-    },
-    "welcome.progress.partial": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ permission step(s) to go · %@ / 2 done"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还差%@步权限 · %@ / 2 已完成"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "還差%@步權限 · %@ / 2 已完成"
           }
         }
       }
@@ -66658,6 +66175,834 @@
           "stringUnit": {
             "state": "translated",
             "value": "歡迎使用 WindowShade"
+          }
+        }
+      }
+    },
+    "welcome.a1.done": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That’s it. Every window works the same way."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就这样。别的窗口也一样。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就這樣。別的視窗也一樣。"
+          }
+        }
+      }
+    },
+    "welcome.a1.hint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click here"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在这里双击"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在這裡按兩下"
+          }
+        }
+      }
+    },
+    "welcome.a1.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It becomes a roll-up bar. Everything inside stays put."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口收成一条卷帘条，里面的东西都还在。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗收成一條捲簾條，裡面的東西都還在。"
+          }
+        }
+      }
+    },
+    "welcome.a1.option": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Want the usual double-click? Hold Option."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "想要系统原来的双击？按住 Option 再双击。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "想要系統原來的按兩下？按住 Option 再按兩下。"
+          }
+        }
+      }
+    },
+    "welcome.a1.practiceA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shopping List title bar. Double-click to roll up."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "购物清单的标题栏。双击收起窗口。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "購物清單的標題列。按兩下收起視窗。"
+          }
+        }
+      }
+    },
+    "welcome.a1.rolled": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rolled up. Double-click the bar to unroll it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起了。再双击卷帘条，原样展开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起了。再按兩下捲簾條，原樣展開。"
+          }
+        }
+      }
+    },
+    "welcome.a1.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click a title bar to roll the window up."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击标题栏，把窗口收起来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按兩下標題列，把視窗收起來。"
+          }
+        }
+      }
+    },
+    "welcome.a1.yourTurn": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your turn: double-click the title bar of the window on the right."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轮到你：在右边那扇窗口的标题栏上双击。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輪到你：在右邊那個視窗的標題列上按兩下。"
+          }
+        }
+      }
+    },
+    "welcome.a2.axSub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find, move and roll up windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找到、移动和收起窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找到、移動和收起視窗"
+          }
+        }
+      }
+    },
+    "welcome.a2.grantedA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ granted"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@已授权"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@已授權"
+          }
+        }
+      }
+    },
+    "welcome.a2.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That one belonged to WindowShade. To roll up other apps’ windows, turn on Accessibility."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刚才那扇是 WindowShade 自己的窗口。收起别的 App 的窗口，要打开辅助功能。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剛才那個是 WindowShade 自己的視窗。收起別的 App 的視窗，要開啟輔助使用。"
+          }
+        }
+      }
+    },
+    "welcome.a2.optional": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可选"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可選"
+          }
+        }
+      }
+    },
+    "welcome.a2.privacy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings → Privacy lists what WindowShade reads and why."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读了什么、为什么读，设置 → 隐私 里都列着。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讀了什麼、為什麼讀，設定 → 隱私權 裡都列著。"
+          }
+        }
+      }
+    },
+    "welcome.a2.srSub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn it on to see live window pictures in Glance and Window Browsing. Everything works without it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开了，看一眼和窗口浏览里能看到窗口的实时画面。不开也能用。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開了，看一眼和視窗瀏覽裡能看到視窗的即時畫面。不開也能用。"
+          }
+        }
+      }
+    },
+    "welcome.a2.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll up any window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让每扇窗口都能收起"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "讓每個視窗都能收起"
+          }
+        }
+      }
+    },
+    "welcome.a2.try": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now double-click the title bar of any window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在去任何一扇窗口的标题栏上双击试试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在去任何一個視窗的標題列上按兩下試試。"
+          }
+        }
+      }
+    },
+    "welcome.a2.wait": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on WindowShade in System Settings. This updates on its own."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在系统设置里打开 WindowShade 的开关，这里会自己变。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在系統設定裡開啟 WindowShade 的開關，這裡會自己變。"
+          }
+        }
+      }
+    },
+    "welcome.flow.pageOf": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %@ of %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %@ 页，共 %@ 页"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %@ 頁，共 %@ 頁"
+          }
+        }
+      }
+    },
+    "welcome.tour.browse.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause the pointer and the app’s windows line up. Click one to go there. Choose Window… in the menu works too."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指针停一下，这个 App 的窗口就排出来，点哪扇去哪扇。菜单里的“选择窗口…”也行。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指標停一下，這個 App 的視窗就排出來，點哪個去哪個。選單裡的「選擇視窗…」也行。"
+          }
+        }
+      }
+    },
+    "welcome.tour.browse.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest on a Dock icon to see all its windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停在 Dock 图标上，看它的所有窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停在 Dock 圖示上，看它的所有視窗"
+          }
+        }
+      }
+    },
+    "welcome.tour.gestures.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swipe left or right on a title bar for the left or right half. Spread two fingers to line windows up in columns. When they don’t fit, they continue as a strip you swipe through."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "两指在标题栏上往左、往右滑，占左半屏、右半屏。两指张开，窗口一列挨一列排好；放不下的接成卷轴，两指滑过去。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "兩指在標題列上往左、往右滑，佔左半螢幕、右半螢幕。兩指張開，視窗一列挨一列排好；放不下的接成捲軸，兩指滑過去。"
+          }
+        }
+      }
+    },
+    "welcome.tour.gestures.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two fingers, and the windows line up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "两指一滑，窗口就排好"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "兩指一滑，視窗就排好"
+          }
+        }
+      }
+    },
+    "welcome.tour.menuBar.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade has no Dock icon. Click this icon in the menu bar for rolled-up windows and Settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade 没有 Dock 图标。点菜单栏上的这个图标，收起的窗口和设置都在这里。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade 沒有 Dock 圖示。點選單列上的這個圖示，收起的視窗和設定都在這裡。"
+          }
+        }
+      }
+    },
+    "welcome.tour.menuBar.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It lives in the menu bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "它在菜单栏里"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "它在選單列裡"
+          }
+        }
+      }
+    },
+    "welcome.tour.noAccessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility is off, so only WindowShade’s own windows roll up for now."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没打开辅助功能，现在只能收起 WindowShade 自己的窗口。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒開啟輔助使用，現在只能收起 WindowShade 自己的視窗。"
+          }
+        }
+      }
+    },
+    "welcome.tour.notch.lede": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flick a title bar toward the notch to tuck the window in. Click the notch to bring it back. Press a shortcut that doesn’t work on a Mac, and the notch tells you which one does."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝刘海甩一下标题栏，窗口就收进去；点一下刘海，放回。按了 Mac 上不管用的快捷键，刘海会说一句该按哪个。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝瀏海甩一下標題列，視窗就收進去；點一下瀏海，放回。按了 Mac 上不管用的快速鍵，瀏海會說一句該按哪個。"
+          }
+        }
+      }
+    },
+    "welcome.tour.notch.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck windows into the notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口可以收进刘海"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗可以收進瀏海"
+          }
+        }
+      }
+    },
+    "welcome.tour.originOptional": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Optional"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不选也行"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不選也行"
+          }
+        }
+      }
+    },
+    "welcome.tour.seg.gestures": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestures & Strip"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手势与卷轴"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手勢與捲軸"
+          }
+        }
+      }
+    },
+    "welcome.tour.seg.menuBar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menu Bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单栏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選單列"
+          }
+        }
+      }
+    },
+    "welcome.tour.segmentsA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Four more things"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再看四样"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再看四樣"
+          }
+        }
+      }
+    },
+    "welcome.u1.axSub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needed to roll up and move windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起和移动窗口要用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起和移動視窗要用"
+          }
+        }
+      }
+    },
+    "welcome.u1.leftBoth": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2 left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还差 2 项"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還差 2 項"
+          }
+        }
+      }
+    },
+    "welcome.u1.leftScreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen Recording is left. You can go without it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还差屏幕录制。不开也能用。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還差螢幕錄製。不開也能用。"
+          }
+        }
+      }
+    },
+    "welcome.u1.once": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " This is a one-time step. Later updates keep them on."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只要这一次，以后更新不用再开。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只要這一次，以後更新不用再開。"
+          }
+        }
+      }
+    },
+    "welcome.u1.srSub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live pictures in Glance and thumbnails use it. Rolling up works without it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看一眼和缩略图里的实时画面要用。不开也能收起窗口。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看一眼和縮圖裡的即時畫面要用。不開也能收起視窗。"
           }
         }
       }
