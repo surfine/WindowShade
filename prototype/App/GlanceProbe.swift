@@ -361,6 +361,11 @@ final class GlanceProbe {
       finish(nil)
       return
     }
+    if CommandLine.arguments.contains("--mission-control") {
+      try await exerciseMissionControlSurvey(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--wins") {
       try await exerciseWins(element: element, original: original, pid: process.processIdentifier)
       finish(nil)

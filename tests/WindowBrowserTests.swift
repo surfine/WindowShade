@@ -1169,6 +1169,42 @@ enum WindowBrowserTests {
                                rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
         expect(MissionControlPick.target(at: overlapped, in: [shield, invisible, frontApp])?.pid == 4242,
                "a fully transparent window is skipped")
+
+        // macOS 27 备援：窗口名变了也要认出来，但只认有把握的形状。
+        let screen = [CGRect(x: 0, y: 0, width: 1710, height: 1107)]
+        expect(MissionControlPick.detection(in: [shield, frontApp], screens: screen) == .shieldName,
+               "the exact shield name is the confirmed signal")
+        let renamed = window(pid: 687, id: 9010, owner: "WindowManager", name: "ExposeShieldWindow2", layer: 19,
+                             rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.detection(in: [renamed, frontApp], screens: screen) == .nameVariant,
+               "a renamed expose window under WindowManager is still recognised")
+        let unnamed = window(pid: 687, id: 9011, owner: "WindowManager", layer: 19,
+                             rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.detection(in: [unnamed, frontApp], screens: screen) == .fullScreenSystemLayer,
+               "an unnamed full-screen WindowManager window at the shield level is recognised")
+        let stageStrip = window(pid: 687, id: 9012, owner: "WindowManager", layer: 19,
+                                rect: CGRect(x: 0, y: 0, width: 200, height: 1107))
+        expect(MissionControlPick.detection(in: [stageStrip, frontApp], screens: screen) == nil,
+               "a WindowManager window that does not cover a screen (Stage Manager strip) is not Mission Control")
+        let lowLayer = window(pid: 687, id: 9013, owner: "WindowManager", layer: 0,
+                              rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.detection(in: [lowLayer], screens: screen) == nil,
+               "a full-screen window below the shield level is not Mission Control")
+        let dockFull = window(pid: 50870, id: 9014, owner: "Dock", layer: 20,
+                              rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.detection(in: [dockFull, frontApp], screens: screen) == nil,
+               "an unnamed Dock full-screen layer (Launchpad-like) is not Mission Control")
+        let dockExpose = window(pid: 50870, id: 9015, owner: "Dock", name: "Expose Overlay", layer: 20,
+                                rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.detection(in: [dockExpose], screens: screen) == .nameVariant,
+               "a Dock window named like expose is recognised")
+        let someoneElse = window(pid: 4245, id: 9016, owner: "示例应用", name: "ExposeNotes", layer: 19,
+                                 rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.detection(in: [someoneElse], screens: screen) == nil,
+               "other apps' windows never count, whatever they are named")
+        let line = MissionControlPick.diagnostic(at: overlapped, in: [renamed, frontApp], detection: .nameVariant)
+        expect(line.hasPrefix("mc-keys: no target; rule=nameVariant") && !line.contains("\n"),
+               "the no-target diagnostic is one line that names the rule")
     }
 
     static func thumbnails() {
