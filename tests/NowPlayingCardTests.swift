@@ -20,6 +20,7 @@ import Foundation
         testText()
         testSeekPolicy()
         testScrub()
+        testLocalClock()
         testRetract()
         testOutputs()
         testStreamVerdict()
@@ -156,35 +157,30 @@ import Foundation
         expect(!scrub.isDragging && scrub.barHeight == 4, "不让跳：按了也不加粗")
         scrub.setSeekable(true)
         expect(scrub.showsHandCursor && scrub.barHeight == 4, "能跳：手形，平时 4 高")
-        expect(scrub.displayFraction(player: 0.3, now: 0) == 0.3, "没按时画播放器给的")
+        expect(scrub.displayFraction(player: 0.3) == 0.3, "没按时画播放器给的")
 
         // 按下：加粗 8，立刻跳到按下处。
         expect(scrub.press(at: 196, trackWidth: 392), "按下被接住")
         expect(scrub.barHeight == 8 && scrub.isDragging, "按下 8 高")
-        close(scrub.displayFraction(player: 0.3, now: 0), 0.5, "按下就跳到按下处")
+        close(scrub.displayFraction(player: 0.3), 0.5, "按下就跳到按下处")
         // 拖动跟手；播放器的位置变了也不理。
         scrub.drag(to: 98, trackWidth: 392)
-        close(scrub.displayFraction(player: 0.9, now: 1), 0.25, "拖动跟手，不理播放器")
+        close(scrub.displayFraction(player: 0.9), 0.25, "拖动跟手，不理播放器")
         scrub.drag(to: -50, trackWidth: 392)
-        close(scrub.displayFraction(player: 0.9, now: 1), 0, "拖出左边停在 0")
+        close(scrub.displayFraction(player: 0.9), 0, "拖出左边停在 0")
         scrub.drag(to: 900, trackWidth: 392)
-        close(scrub.displayFraction(player: 0.1, now: 1), 1, "拖出右边停在 1")
+        close(scrub.displayFraction(player: 0.1), 1, "拖出右边停在 1")
         // 松手才真的跳：只有 release 返回秒数。
         scrub.drag(to: 98, trackWidth: 392)
-        let seconds = scrub.release(at: 98, trackWidth: 392, duration: 200, now: 10)
+        let seconds = scrub.release(at: 98, trackWidth: 392, duration: 200)
         close(seconds, 50, "松手跳到 25% × 200 = 50 秒")
         expect(!scrub.isDragging && scrub.barHeight == 4, "松手变回 4 高")
-        close(scrub.displayFraction(player: 0.6, now: 10.5), 0.25, "松手后在目标上再留一会儿，不弹回去")
-        close(scrub.displayFraction(player: 0.25, now: 10.5), 0.25, "播放器追上了就用播放器的")
-        close(scrub.displayFraction(player: 0.6, now: 11.5), 0.6, "超过 1 秒不再留")
-        expect(scrub.holdExpiry(now: 10.5) == 11, "给松手后的保持排一次到点")
-        expect(scrub.holdExpiry(now: 12) == nil, "到点后不用再排")
-        expect(scrub.release(at: 1, trackWidth: 392, duration: 200, now: 12) == nil, "没按过就松手：什么都不发")
+        close(scrub.displayFraction(player: 0.6), 0.6, "松手后条读时间线，不再钉在目标上")
+        expect(scrub.release(at: 1, trackWidth: 392, duration: 200) == nil, "没按过就松手：什么都不发")
 
         // 没有时长（直播）：松手不发跳转。
         _ = scrub.press(at: 10, trackWidth: 392)
-        expect(scrub.release(at: 10, trackWidth: 392, duration: nil, now: 20) == nil, "没有时长不跳")
-        expect(scrub.holdExpiry(now: 20) == nil, "也不留")
+        expect(scrub.release(at: 10, trackWidth: 392, duration: nil) == nil, "没有时长不跳")
 
         // 拖着的时候播放器变得不能跳了：取消。
         _ = scrub.press(at: 100, trackWidth: 392)
@@ -192,7 +188,52 @@ import Foundation
         expect(!scrub.isDragging && scrub.barHeight == 4, "中途不让跳了：取消，变回 4 高")
         scrub.setSeekable(true)
         expect(scrub.press(at: 100, trackWidth: 0), "宽度 0 也能按")
-        close(scrub.displayFraction(player: 0.5, now: 0), 0, "宽度 0 时位置落在 0，不崩")
+        close(scrub.displayFraction(player: 0.5), 0, "宽度 0 时位置落在 0，不崩")
+    }
+
+    // MARK: 本地时间线（跳完 / 点暂停之后 1.5 秒内信自己）
+
+    private static func feed(_ elapsed: Double, stamp: Double, playing: Bool = true) -> NowPlayingTimeline {
+        NowPlayingTimeline(duration: 260, elapsed: elapsed, stamp: stamp, rate: playing ? 1 : 0)
+    }
+
+    static func testLocalClock() {
+        // 1. 播放器还在报跳之前的旧位置：不理，条和时间字读本地。
+        var clock = NowPlayingLocalClock()
+        let old = feed(20, stamp: 10)
+        clock.seek(to: 100, now: 10, feed: old)
+        close(clock.reconcile(feed: old, now: 10.5)?.position(atEpoch: 10.5), 100.5, "旧位置被忽略，本地从目标起按 1 倍速走")
+        expect(clock.phase == .trustingSelf && clock.localPlaying == true, "防抖窗口内信自己")
+
+        // 2. 播放器报对了（差不到 1 秒）：提前交还，窗口提前结束。
+        let matched = feed(100.2, stamp: 10.4)
+        let handed = clock.reconcile(feed: matched, now: 10.6)
+        expect(handed == matched && clock.phase == .followingPlayer && clock.nextWake(now: 10.6) == nil, "对上了立刻交还")
+
+        // 3. 1.5 秒到了还没对上：交还播放器，并给出从哪滑回。
+        clock.seek(to: 100, now: 20, feed: old)
+        expect(clock.reconcile(feed: old, now: 21.4) != old && clock.nextWake(now: 21.4) == 21.5, "1.5 秒前仍信自己，并排好到点唤醒")
+        expect(clock.reconcile(feed: old, now: 21.5) == old, "1.5 秒到了交还播放器")
+        expect(clock.phase == .slidingBack, "没对上：进入滑回")
+        close(clock.takeSlide(), 101.5, "从本地位置滑回")
+        expect(clock.phase == .followingPlayer && clock.takeSlide() == nil, "只滑一次，之后跟着播放器")
+
+        // 4. 连续两次松手：每次都重新数 1.5 秒。
+        clock.seek(to: 100, now: 30, feed: old)
+        clock.seek(to: 50, now: 31, feed: old)
+        close(clock.reconcile(feed: old, now: 32)?.position(atEpoch: 32), 51, "第二次松手后 1 秒，仍信自己（离第一次已 2 秒）")
+        expect(clock.nextWake(now: 32) == 32.5, "到点从最后一次松手起算")
+
+        // 5. 点暂停后播放器还报“在播”：不理；报成暂停且位置对上才交还。
+        var paused = NowPlayingLocalClock()
+        let playing = feed(30, stamp: 10)
+        paused.setPlaying(false, now: 10, feed: playing)
+        let stillPlaying = feed(30, stamp: 10.2)
+        let local = paused.reconcile(feed: stillPlaying, now: 10.3)
+        close(local?.position(atEpoch: 10.8), 30, "本地暂停：位置停住")
+        expect(paused.localPlaying == false && local?.isMoving == false, "播放器还报在播也不理")
+        let reported = feed(30, stamp: 10.6, playing: false)
+        expect(paused.reconcile(feed: reported, now: 10.7) == reported && paused.phase == .followingPlayer, "播放器报成暂停才交还")
     }
 
     // MARK: 收回
