@@ -20,7 +20,7 @@ final class FoldVerifier {
     static let stageManagerMinimizeLateWindow: TimeInterval = 2.5
 
     /// 补救之后还要再看多久才判 visible（回滚）。只有“最小化 + 台前调度开着”才放宽：
-    /// 台前调度把最小化交给 WindowManager 编排，AXMinimized 可能晚于原来 0.95 s 的判定点才翻转。
+    /// 台前调度把最小化做成缩进侧条的动画（StageStrip），机器忙时外框可能晚于原来 0.95 s 的判定点才缩到位。
     /// 其余情况返回 0，验证时序与原来一字不差。
     static func lateObservationWindow(hideIsMinimize: Bool, stageManager: Bool) -> TimeInterval {
         hideIsMinimize && stageManager ? stageManagerMinimizeLateWindow : 0

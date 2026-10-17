@@ -61,7 +61,10 @@ extension AppDelegate {
         case .hidden: return app.isHidden ? .hidden : .visible
         case .minimized:
             guard let value = axObservedBoolAttribute(win, kAXMinimizedAttribute as String) else { return .unknown }
-            return value ? .hidden : .visible
+            if value { return .hidden }
+            // 台前调度把“最小化”做成侧条卡片，AXMinimized 不变（规格 R19）。台前调度关着时这一支恒为 visible。
+            if let size = axSize(win), windowParkedInStageStrip(id: id, axSize: size) { return .hidden }
+            return .visible
         case .privateAlpha:
             guard let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: id),
                   alpha.isFinite, (0...1).contains(alpha) else { return .unknown }
