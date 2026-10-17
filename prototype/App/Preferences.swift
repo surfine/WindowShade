@@ -160,7 +160,9 @@ extension AppDelegate {
         showSettingsWindow()
     }
 
-    private func makeSettingsPageRoot() -> (NSView, NSStackView) {
+    /// explainer：这一页的讲解（页默认）。给了就在页顶插一条 640 × 200 的讲解带，下面留 14 pt 接第一组；
+    /// 行用各自构造器的 `explainer:` 参数接上（见 Core/ExplainerScript.swift 文件头）。
+    private func makeSettingsPageRoot(explainer: ExplainerPage? = nil) -> (NSView, NSStackView) {
         // 背景由设置窗口的详情区统一铺满，页面保持透明。
         let root = NSView()
         let stack = NSStackView()
@@ -175,6 +177,12 @@ extension AppDelegate {
             stack.topAnchor.constraint(equalTo: root.topAnchor),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
         ])
+        if let explainer {
+            let band = SettingsExplainerBand(page: explainer)
+            band.pageRoot = root
+            stack.addArrangedSubview(band)
+            stack.setCustomSpacing(14, after: band)
+        }
         return (root, stack)
     }
 
@@ -609,10 +617,10 @@ extension AppDelegate {
 
     func makePermissionDesignSample() -> NSView {
         makeUnifiedSettingsCard([
-            makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
+            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.text("settings.common.accessibility", zh: "辅助功能"),
                 subtitle: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口"), granted: false,
                 action: #selector(openAccessibilitySettingsAction)),
-            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
+            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: WSL10n.text("settings.common.screenRecording", zh: "屏幕录制"),
                 subtitle: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览"), granted: true,
                 action: #selector(openScreenRecordingSettingsAction)),
         ])
@@ -744,22 +752,22 @@ extension AppDelegate {
     }
 
     private func makeUnifiedToggleRow(name: String, subtitle: String?, isOn: Bool,
-                                      enabled: Bool = true, action: Selector) -> NSView {
+                                      enabled: Bool = true, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedToggleRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle),
                              accessibleName: name, minHeight: subtitle == nil ? 40 : 48,
-                             isOn: isOn, enabled: enabled, action: action)
+                             isOn: isOn, enabled: enabled, action: action, explainer: explainer)
     }
 
     /// 迁移过的行（第27批）：名与说明是 key+zh 的文案对，显示走当前语言。
     private func makeUnifiedToggleRow(name: SettingsText, subtitle: SettingsText?, isOn: Bool,
-                                      enabled: Bool = true, action: Selector) -> NSView {
+                                      enabled: Bool = true, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedToggleRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle),
                              accessibleName: name.shown, minHeight: subtitle == nil ? 40 : 48,
-                             isOn: isOn, enabled: enabled, action: action)
+                             isOn: isOn, enabled: enabled, action: action, explainer: explainer)
     }
 
     private func makeUnifiedToggleRow(labels: NSStackView, accessibleName: String, minHeight: CGFloat,
-                                      isOn: Bool, enabled: Bool, action: Selector) -> NSView {
+                                      isOn: Bool, enabled: Bool, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         let toggle = NSSwitch()
         toggle.state = isOn ? .on : .off
         toggle.isEnabled = enabled
@@ -774,21 +782,21 @@ extension AppDelegate {
         ])
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: minHeight).isActive = true
-        return row
+        return SettingsExplainerHost.tag(row, explainer)
     }
 
-    private func makeUnifiedControlRow(name: String, subtitle: String?, control: NSView) -> NSView {
+    private func makeUnifiedControlRow(name: String, subtitle: String?, control: NSView, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedControlRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle),
-                              minHeight: subtitle == nil ? 40 : 48, control: control)
+                              minHeight: subtitle == nil ? 40 : 48, control: control, explainer: explainer)
     }
 
     /// 迁移过的行（第27批）。
-    func makeUnifiedControlRow(name: SettingsText, subtitle: SettingsText?, control: NSView) -> NSView {
+    func makeUnifiedControlRow(name: SettingsText, subtitle: SettingsText?, control: NSView, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedControlRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle),
-                              minHeight: subtitle == nil ? 40 : 48, control: control)
+                              minHeight: subtitle == nil ? 40 : 48, control: control, explainer: explainer)
     }
 
-    func makeUnifiedControlRow(labels: NSStackView, minHeight: CGFloat, control: NSView) -> NSView {
+    func makeUnifiedControlRow(labels: NSStackView, minHeight: CGFloat, control: NSView, explainer: ExplainerRow? = nil) -> NSView {
         let row = WS2SettingsRow(content: labels, control: control)
         NSLayoutConstraint.activate([
             labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
@@ -796,24 +804,24 @@ extension AppDelegate {
         ])
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: minHeight).isActive = true
-        return row
+        return SettingsExplainerHost.tag(row, explainer)
     }
 
     /// 迁移过的权限行：名与说明都走目录（隐私页、窗口浏览页）。
     private func makeUnifiedPermissionRow(symbol: String, name: SettingsText, subtitle: SettingsText,
-                                          granted: Bool, action: Selector) -> NSView {
+                                          granted: Bool, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedPermissionRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle, symbol: symbol),
-                                 name: name.shown, granted: granted, action: action)
+                                 name: name.shown, granted: granted, action: action, explainer: explainer)
     }
 
     private func makeUnifiedPermissionRow(symbol: String, name: String, subtitle: String,
-                                           granted: Bool, action: Selector) -> NSView {
+                                           granted: Bool, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedPermissionRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle, symbol: symbol),
-                                 name: name, granted: granted, action: action)
+                                 name: name, granted: granted, action: action, explainer: explainer)
     }
 
     private func makeUnifiedPermissionRow(labels: NSStackView, name: String,
-                                           granted: Bool, action: Selector) -> NSView {
+                                           granted: Bool, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
@@ -828,7 +836,7 @@ extension AppDelegate {
         chip.setContentHuggingPriority(.required, for: .horizontal)
         let row = WS2SettingsRow(content: labels, control: chip, spacing: 12)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
-        return row
+        return SettingsExplainerHost.tag(row, explainer)
     }
 
     func makeSoundPopup(selected: String, action: Selector) -> NSPopUpButton {
@@ -1637,14 +1645,12 @@ extension AppDelegate {
     func makeGestureSettingsPage() -> NSView {
         inputController.apply()
         let prefs = inputController.preferences
-        let (root, stack) = makeSettingsPageRoot()
+        // 照系统设置 → 触控板：顶上讲解带，下面一排分段（就是四个分组），再下面是这一段的行。
+        let (root, stack) = makeSettingsPageRoot(explainer: .gestures(segment: GestureSegments.selected))
 
+        var groups: [(title: String, card: NSView)] = []
         func group(_ title: String, _ rows: [NSView]) {
-            let card = makeUnifiedSettingsCard(rows)
-            stack.addArrangedSubview(makePrefGroupLabel(title))
-            stack.addArrangedSubview(card)
-            card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-            stack.setCustomSpacing(18, after: card)
+            groups.append((title, makeUnifiedSettingsCard(rows)))
         }
 
         let titleBarTable = GestureTableDisclosure(
@@ -1653,19 +1659,23 @@ extension AppDelegate {
             effectColumn: WSL10n.setting("settings.gesture.table.col.effect", zh: "效果"),
             lines: [
                 .init(gesture: WSL10n.setting("settings.gesture.table.up.gesture", zh: "往上滑"),
-                      effect: WSL10n.setting("settings.gesture.table.up.effect", zh: "收起窗口；已铺满的窗口先撤销上次排布")),
+                      effect: WSL10n.setting("settings.gesture.table.up.effect", zh: "收起窗口；已铺满的窗口先撤销上次排布"),
+                      explainer: ExplainerRow.Gestures.tableUp),
                 .init(gesture: WSL10n.setting("settings.gesture.table.down.gesture", zh: "往下滑"),
-                      effect: WSL10n.setting("settings.gesture.table.down.effect", zh: "铺满屏幕")),
+                      effect: WSL10n.setting("settings.gesture.table.down.effect", zh: "铺满屏幕"),
+                      explainer: ExplainerRow.Gestures.tableDown),
                 .init(gesture: WSL10n.setting("settings.gesture.table.side.gesture", zh: "往左 / 往右滑"),
-                      effect: WSL10n.setting("settings.gesture.table.side.effect", zh: "左半屏 / 右半屏，再推一下沿梯子走一格")),
+                      effect: WSL10n.setting("settings.gesture.table.side.effect", zh: "左半屏 / 右半屏，再推一下沿梯子走一格"),
+                      explainer: ExplainerRow.Gestures.tableSide),
                 .init(gesture: WSL10n.setting("settings.gesture.table.spread.gesture", zh: "张开"),
-                      effect: WSL10n.setting("settings.gesture.table.spread.effect", zh: "魔法平铺")),
+                      effect: WSL10n.setting("settings.gesture.table.spread.effect", zh: "魔法平铺"),
+                      explainer: ExplainerRow.Gestures.tableSpread),
                 .init(gesture: WSL10n.setting("settings.gesture.table.pinch.gesture", zh: "捏合"),
                       effect: WSL10n.setting("settings.gesture.table.pinch.effect", zh: "撤销上次排布")),
                 .init(gesture: WSL10n.setting("settings.gesture.table.strip.gesture", zh: "卷帘条上往下拉"),
-                      effect: WSL10n.setting("settings.gesture.table.strip.effect", zh: "展开窗口")),
-            ],
-            note: WSL10n.setting("settings.gesture.table.note", zh: "只读对照，来自现有手势表，不是新开关。"))
+                      effect: WSL10n.setting("settings.gesture.table.strip.effect", zh: "展开窗口"),
+                      explainer: ExplainerRow.Gestures.tableStripPull),
+            ])
 
         // 中键收起窗口属于 WindowShade 2 的输入设备实验：预览旗标关着时藏起来，已经打开的照样露出来好关掉。
         let showsMiddleFold = WS2Preview.shows(previewOn: WS2Preview.isOn, alreadyOn: prefs.middleFold)
@@ -1675,12 +1685,14 @@ extension AppDelegate {
                                      subtitle: trackpadGesturePreferenceSubtitle(),
                                      isOn: TrackpadGestureController.isEnabled,
                                      action: #selector(prefToggleTrackpadGestures(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.titleBar", zh: "两指 · 标题栏 · 滑动 / 张合 / 滚轮"), kind: .primitive, table: titleBarTable),
+                fingers: WSL10n.setting("settings.gesture.chip.titleBar", zh: "两指 · 标题栏 · 滑动 / 张合 / 滚轮"), kind: .primitive, table: titleBarTable,
+                explainer: ExplainerRow.Gestures.titleBar),
             GestureRows.decorate(
                 makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"),
                                      subtitle: titlebarDoubleClickPreferenceSubtitle(),
                                      isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.doubleClick", zh: "双击 · 标题栏"), kind: .primitive),
+                fingers: WSL10n.setting("settings.gesture.chip.doubleClick", zh: "双击 · 标题栏"), kind: .primitive,
+                explainer: ExplainerRow.Gestures.doubleClick),
         ]
         if showsMiddleFold {
             foldRows.append(GestureRows.decorate(
@@ -1690,7 +1702,8 @@ extension AppDelegate {
                          symbol: "rectangle.compress.vertical",
                          control: inputSwitch(on: prefs.middleFold, enabled: true,
                                               action: #selector(prefInputMiddleFold(_:)), name: WSL10n.text("settings.input.middleFold.name", zh: "中键收起窗口"))),
-                fingers: WSL10n.setting("settings.gesture.chip.middle", zh: "中键 · 标题栏 · 点一下 / 上下拖"), kind: .primitive))
+                fingers: WSL10n.setting("settings.gesture.chip.middle", zh: "中键 · 标题栏 · 点一下 / 上下拖"), kind: .primitive,
+                explainer: ExplainerRow.Gestures.middleFold))
         }
         group(WSL10n.text("settings.gesture.group.fold", zh: "收起与展开"), foldRows)
         group(WSL10n.text("settings.shade.group.notch", zh: "刘海"), [
@@ -1698,12 +1711,14 @@ extension AppDelegate {
                 makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.tuckNotch.name", zh: "收进刘海"),
                                      subtitle: WSL10n.setting("settings.shade.tuckNotch.sub", zh: "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"),
                                      isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.tuck", zh: "甩一下标题栏 → 刘海"), kind: .combination),
+                fingers: WSL10n.setting("settings.gesture.chip.tuck", zh: "甩一下标题栏 → 刘海"), kind: .combination,
+                explainer: ExplainerRow.Gestures.tuck),
             GestureRows.decorate(
                 makeUnifiedToggleRow(name: WSL10n.text("settings.stripNotch.name", zh: "卷轴概览能收进刘海"),
                                      subtitle: WSL10n.text("settings.stripNotch.sub", zh: "在卷轴概览里把窗口拖到刘海，松手就收进去"),
                                      isOn: ScrollStripController.notchLinkEnabled(), action: #selector(prefToggleStripNotch(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.overviewNotch", zh: "拖 · 卷轴概览 → 刘海"), kind: .combination),
+                fingers: WSL10n.setting("settings.gesture.chip.overviewNotch", zh: "拖 · 卷轴概览 → 刘海"), kind: .combination,
+                explainer: ExplainerRow.Gestures.overviewTuck),
         ])
         group(WSL10n.text("settings.shade.group.arrange", zh: "排布"), [
             GestureRows.decorate(
@@ -1713,7 +1728,8 @@ extension AppDelegate {
                                      accessibleName: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排").shown,
                                      minHeight: 48, isOn: TrackpadGestureController.dropSplitEnabled,
                                      enabled: true, action: #selector(prefToggleDropSplit(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.dropSplit", zh: "拖 · 窗口 → 另一扇窗口"), kind: .combination),
+                fingers: WSL10n.setting("settings.gesture.chip.dropSplit", zh: "拖 · 窗口 → 另一扇窗口"), kind: .combination,
+                explainer: ExplainerRow.Gestures.dropSplit),
             GestureRows.decorate(
                 makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
                                                                subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
@@ -1721,7 +1737,8 @@ extension AppDelegate {
                                      accessibleName: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
                                      minHeight: 48, isOn: StripTitleDrag.isEnabled(),
                                      enabled: true, action: #selector(prefToggleStripTitleDrag(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.stripDrag", zh: "拖 · 卷轴里的标题栏"), kind: .combination),
+                fingers: WSL10n.setting("settings.gesture.chip.stripDrag", zh: "拖 · 卷轴里的标题栏"), kind: .combination,
+                explainer: ExplainerRow.Gestures.stripDrag),
         ])
         group(WSL10n.text("settings.section.browser", zh: "窗口浏览"), [
             GestureRows.decorate(
@@ -1730,8 +1747,11 @@ extension AppDelegate {
                     subtitle: WSL10n.setting("settings.browser.dockSwipe.sub", zh: "往上滑看这个 App 的所有窗口，往下滑让开这个 App"),
                     isOn: DockSwipeController.isEnabled,
                     action: #selector(prefToggleDockSwipe(_:))),
-                fingers: WSL10n.setting("settings.gesture.chip.dockSwipe", zh: "两指 · Dock 图标 · 上滑 / 下滑"), kind: .primitive),
+                fingers: WSL10n.setting("settings.gesture.chip.dockSwipe", zh: "两指 · Dock 图标 · 上滑 / 下滑"), kind: .primitive,
+                explainer: ExplainerRow.Gestures.dockSwipe),
         ])
+        GestureSegments.install(groups, in: stack,
+                                band: stack.arrangedSubviews.first as? SettingsExplainerBand)
         return root
     }
 

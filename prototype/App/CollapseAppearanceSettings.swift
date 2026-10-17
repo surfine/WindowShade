@@ -81,7 +81,8 @@ extension AppDelegate {
     }
 
     /// 和 Preferences.swift 里的设置行同一个样子：左边名字和一句说明，右边控件。
-    private func makeCollapseSettingsRow(name: SettingsText, subtitle: SettingsText?, control: NSView) -> NSView {
+    private func makeCollapseSettingsRow(name: SettingsText, subtitle: SettingsText?, control: NSView,
+                                         explainer: ExplainerRow? = nil) -> NSView {
         let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
         WS2SettingsCopy.pinInfoTrailing(labels)
         let row = WS2SettingsRow(content: labels, control: control)
@@ -91,6 +92,6 @@ extension AppDelegate {
         ])
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
-        return row
+        return SettingsExplainerHost.tag(row, explainer)
     }
 }

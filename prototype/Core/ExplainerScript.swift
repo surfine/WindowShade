@@ -498,6 +498,11 @@ struct ExplainerDirector {
             next = ExplainerPresentation(spec: spec, mode: mode, dimmed: dimmed, transition: .crossfade, announces: true)
         }
         if reduced { next.transition = .instant }
+        // 看不见时不演：先停在关键帧，记下来，看得见了再从头演。
+        if !environment.visible, case .play = next.mode {
+            next.mode = .hold(arrows: reduced)
+            interrupted = true
+        }
         guard let current else {
             next.transition = .instant
             return commit(next)

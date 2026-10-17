@@ -10489,6 +10489,29 @@
         }
       }
     },
+    "explainer.off": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关着"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關著"
+          }
+        }
+      }
+    },
     "explainer.overview.ax": {
       "extractionState": "manual",
       "localizations": {
@@ -10692,6 +10715,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "示範：兩指張開，視窗一欄挨一欄排好；放不下的接成卷軸，兩指滑過去。"
+          }
+        }
+      }
+    },
+    "explainer.trackpadOnly": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs a trackpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要用触控板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要用觸控式軌跡板"
           }
         }
       }
@@ -35969,6 +36015,190 @@
           "stringUnit": {
             "state": "translated",
             "value": "遙控模式；設定裡的「移除」取消這一台"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.activation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read once when a Settings page with a demo opens"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开有演示的设置页时读一次"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開有示範的設定頁時讀一次"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.combined": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All that's known is whether there's a trackpad, never what you do on it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只知道有没有触控板，看不出你在上面做了什么。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只知道有沒有觸控式軌跡板，看不出你在上面做了什麼。"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.destination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used in memory only"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在内存里用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在記憶體裡用"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether there's a trackpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有没有触控板"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有沒有觸控式軌跡板"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.purpose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lets the demos in Settings show a trackpad or a mouse"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置里的演示画触控板还是鼠标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定裡的示範畫觸控式軌跡板還是滑鼠"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.reads": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether this Mac has a trackpad (built-in or Magic Trackpad); fingers aren't read"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 连没连着触控板（内建的或妙控板）；不读手指"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這台 Mac 連沒連著觸控式軌跡板（內建的或巧控板）；不讀手指"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demos in Settings show the device in your hand"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置里的演示画你手上的设备"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定裡的示範畫你手上的裝置"
+          }
+        }
+      }
+    },
+    "privacy.pointing-device.toggle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No switch of its own; it follows the demos in Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有单独的开关，跟着设置里的演示走"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有單獨的開關，跟著設定裡的示範走"
           }
         }
       }
@@ -62150,29 +62380,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "展開視窗"
-          }
-        }
-      }
-    },
-    "settings.gesture.table.note": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Read-only reference, not a new switch."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只读对照，来自现有手势表，不是新开关。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "唯讀對照，來自現有手勢表，不是新開關。"
           }
         }
       }
