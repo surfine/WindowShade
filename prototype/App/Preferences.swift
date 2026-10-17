@@ -322,7 +322,7 @@ extension AppDelegate {
 
     /// 「刘海」一页（1.0.17 从卷帘页拆出来）：刘海里显示什么、什么时候展开。开关都还是原来那一个键。
     func makeNotchSettingsPage() -> NSView {
-        let (root, stack) = makeSettingsPageRoot()
+        let (root, stack) = makeSettingsPageRoot(explainer: .notch)
         stack.addArrangedSubview(makeSettingsHeader(
             title: WSL10n.text("settings.section.notch", zh: "刘海"),
             subtitle: WSL10n.setting("settings.notch.sub", zh: "刘海里显示什么、什么时候展开。"),
@@ -332,37 +332,50 @@ extension AppDelegate {
         let notchCard = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.notchAlerts.name", zh: "有变化时提醒"),
                                  subtitle: WSL10n.setting("settings.shade.notchAlerts.sub", zh: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你"),
-                                 isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
+                                 isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:)),
+                                 explainer: ExplainerRow.Notch.alerts),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.activities.name", zh: "实时活动"),
                                  subtitle: WSL10n.setting("settings.shade.activities.sub", zh: "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线"),
-                                 isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:))),
+                                 isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:)),
+                                 explainer: ExplainerRow.Notch.activities),
             // 正在播放未验前默认关（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.nowPlaying.name", zh: "正在播放"),
                                  subtitle: WSL10n.setting("settings.shade.nowPlaying.sub", zh: "歌名和封面显示在刘海上"),
-                                 isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:))),
+                                 isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:)),
+                                 explainer: ExplainerRow.Notch.nowPlaying),
             // 番茄钟的设置属于"实时活动"这一栏（R09：从「专注与输入」挪过来）；到点响一声也在这一行。
             MainActor.assumeIsolated { WS2FocusSettingsRows(runtime: ws2Runtime) },
             // 日程：开关加提前量（CAL-4）。没有权限时副标题这么写，点一下去系统设置。
             makeCalendarSettingsRow(),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.downloads.name", zh: "浏览器下载"),
                                  subtitle: WSL10n.setting("settings.shade.downloads.sub", zh: "读取「下载」文件夹，看有没有没下完的文件"),
-                                 isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:))),
+                                 isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:)),
+                                 explainer: ExplainerRow.Notch.downloads),
+            // 设备的电量（1.0.18 默认开）：从 高级 → 实验 搬回刘海页，和别的"刘海上说一声"的行放一起。
+            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.deviceBattery.name", zh: "设备的电量"),
+                                 subtitle: WSL10n.setting("settings.shade.deviceBattery.sub", zh: "耳机、手机这些设备连上或电量低时，刘海说一声"),
+                                 isOn: DeviceBatteryController.isEnabled, action: #selector(prefToggleDeviceBattery(_:)),
+                                 explainer: ExplainerRow.Notch.deviceBattery),
             // 音量和亮度：开关未验前默认关；没允许辅助功能时副标题改说系统的提示也会出现，并带"允许…"。
             // 下面跟一项「改回用系统的提示」（R12）：开着只旁听、不拦键，系统自己的提示照出，刘海跟着画。默认关。
             LevelRowHost { [weak self] in self?.makeLevelKeysGroup() ?? NSView() },
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.mergedRow.name", zh: "合成一排"),
                                  subtitle: WSL10n.setting("settings.shade.mergedRow.sub", zh: "窗口和正在进行的事排在同一排"),
-                                 isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
+                                 isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:)),
+                                 explainer: ExplainerRow.Notch.mergedRow),
             makeUnifiedToggleRow(name: WSL10n.text("settings.hoverGuard.name", zh: "悬停不误触"),
                                  subtitle: WSL10n.text("settings.hoverGuard.sub", zh: "指针在刘海上停一下才展开，路过不展开"),
-                                 isOn: NotchController.hoverGuardEnabled, action: #selector(prefToggleHoverGuard(_:))),
+                                 isOn: NotchController.hoverGuardEnabled, action: #selector(prefToggleHoverGuard(_:)),
+                                 explainer: ExplainerRow.Notch.hoverGuard),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.fileShelf.name", zh: "文件架"),
                                  subtitle: WSL10n.setting("settings.shade.fileShelf.sub", zh: "拖到刘海暂存的文件放在这里；关掉后清空"),
-                                 isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:))),
+                                 isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:)),
+                                 explainer: ExplainerRow.Notch.fileShelf),
             // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
             makeUnifiedControlRow(name: WSL10n.setting("settings.shade.origin.name", zh: "之前常用"),
                                   subtitle: WSL10n.setting("settings.shade.origin.sub", zh: "卡住时，刘海按你原来的习惯提示 Mac 上怎么做"),
-                                  control: SwitcherOriginControl.make()),
+                                  control: SwitcherOriginControl.make(),
+                                  explainer: ExplainerRow.Notch.origin),
         ])
         stack.addArrangedSubview(notchCard)
         notchCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -390,9 +403,6 @@ extension AppDelegate {
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.originGuess.name", zh: "猜你从哪来"),
                                  subtitle: WSL10n.setting("settings.shade.originGuess.sub", zh: "按出别的系统的习惯时问一次"),
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:))),
-            makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.deviceBattery.name", zh: "设备的电量"),
-                                 subtitle: WSL10n.setting("settings.shade.deviceBattery.sub", zh: "耳机、手机这些设备连上或电量低时，刘海说一声"),
-                                 isOn: DeviceBatteryController.isEnabled, action: #selector(prefToggleDeviceBattery(_:))),
             makePresenceLockRow(),
             makePresenceDeviceRow(),
             BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },
