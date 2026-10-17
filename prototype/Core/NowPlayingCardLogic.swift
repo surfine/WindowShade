@@ -238,13 +238,10 @@ enum NowPlayingCardText {
 struct NowPlayingScrub: Equatable {
     static let restHeight: CGFloat = 4
     static let pressedHeight: CGFloat = 8
-    /// 松手后条留在目标上多久，等播放器的位置追上来（别弹回去）。
-    static let holdAfterRelease: Double = 1.0
 
     private(set) var seekable = false
     private(set) var pressed = false
     private var target: Double?
-    private var holdUntil: Double?
 
     /// 播放器不让跳时条不加粗、也不接按下。
     var barHeight: CGFloat { seekable && pressed ? Self.pressedHeight : Self.restHeight }
@@ -267,7 +264,6 @@ struct NowPlayingScrub: Equatable {
     mutating func press(at x: CGFloat, trackWidth: CGFloat) -> Bool {
         guard seekable else { return false }
         pressed = true
-        holdUntil = nil
         target = Self.fraction(x: x, width: trackWidth)
         return true
     }
@@ -277,36 +273,116 @@ struct NowPlayingScrub: Equatable {
         target = Self.fraction(x: x, width: trackWidth)
     }
 
-    /// 松手：返回要跳到的秒数（只有这一刻才真的跳）。条变回 4 高，位置在目标上再留一小会儿。
-    mutating func release(at x: CGFloat, trackWidth: CGFloat, duration: Double?, now: Double) -> Double? {
+    /// 松手：返回要跳到的秒数（只有这一刻才真的跳）。条变回 4 高；之后的位置由 `NowPlayingLocalClock` 接着走。
+    mutating func release(at x: CGFloat, trackWidth: CGFloat, duration: Double?) -> Double? {
         guard pressed else { return nil }
         pressed = false
         let fraction = Self.fraction(x: x, width: trackWidth)
-        target = fraction
-        holdUntil = now + Self.holdAfterRelease
-        guard let duration, duration > 0 else { target = nil; holdUntil = nil; return nil }
+        target = nil
+        guard let duration, duration > 0 else { return nil }
         return fraction * duration
     }
 
     mutating func cancel() {
         pressed = false
         target = nil
-        holdUntil = nil
     }
 
-    /// 条此刻该画到哪（0…1）。按住或刚松手时是目标，否则是播放器给的。
-    func displayFraction(player: Double?, now: Double) -> Double? {
+    /// 条此刻该画到哪（0…1）。按住时是目标，否则是时间线给的。
+    func displayFraction(player: Double?) -> Double? {
         if pressed, let target { return target }
-        if let target, let holdUntil {
-            if now < holdUntil, abs((player ?? target) - target) > 0.01 { return target }
-        }
         return player
     }
+}
 
-    /// 要不要给松手后的保持排一次唤醒（到点清掉）。
-    func holdExpiry(now: Double) -> Double? {
-        guard let holdUntil, holdUntil > now, !pressed else { return nil }
-        return holdUntil
+// MARK: - 本地时间线：跳完、点暂停之后 1.5 秒内信自己
+
+/// 松手跳转或点暂停 / 播放的那一刻起，条和“已播 / 剩余”读一条本地时间线（目标秒数、那一刻、1 倍速；暂停是 0 倍）。
+/// 1.5 秒防抖窗口里，播放器报的位置或播放状态跟本地对不上就不理（它多半还在报旧的）；对上了（位置差不到 1 秒、
+/// 播放状态一致）立刻交还。1.5 秒到了还没对上，播放器多半拒绝了这次操作：条滑回它报的位置（`takeSlide`）。
+struct NowPlayingLocalClock: Equatable, Sendable {
+    static let debounce: Double = 1.5
+    static let agreeTolerance: Double = 1.0
+
+    enum Phase: Equatable, Sendable {
+        /// 平时：直接用播放器的时间线。
+        case followingPlayer
+        /// 松手、点暂停 / 播放之后的防抖窗口：用本地的。
+        case trustingSelf
+        /// 防抖到点还没对上：已交还播放器，等界面取走“从哪滑回来”。
+        case slidingBack
+    }
+
+    private(set) var phase: Phase = .followingPlayer
+    private var local: NowPlayingTimeline?
+    private var startedAt: Double = 0
+    private var slideFrom: Double?
+
+    /// 本地信自己时，现在是不是在播（给播放键图标和封面缩放用）；平时 nil，以播放器为准。
+    var localPlaying: Bool? { phase == .trustingSelf ? local?.isMoving : nil }
+
+    /// 松手跳转：从目标秒数起按 1 倍速走（暂停中保持 0 倍）。每次松手都重新数 1.5 秒。
+    mutating func seek(to seconds: Double, now: Double, feed: NowPlayingTimeline?) {
+        guard let base = currentBase(feed: feed, now: now) else { return }
+        let rate = base.isMoving ? 1.0 : 0.0
+        begin(NowPlayingTimeline(duration: base.duration, elapsed: seconds, stamp: now, rate: rate), now: now)
+    }
+
+    /// 点暂停 / 播放：本地立刻变 0 倍或 1 倍，位置停在（或从）此刻的位置。
+    mutating func setPlaying(_ playing: Bool, now: Double, feed: NowPlayingTimeline?) {
+        guard let base = currentBase(feed: feed, now: now) else { return }
+        begin(NowPlayingTimeline(duration: base.duration, elapsed: base.position(atEpoch: now), stamp: now, rate: playing ? 1 : 0), now: now)
+    }
+
+    /// 每次渲染都问一次：此刻条和时间字该读哪条时间线。
+    mutating func reconcile(feed: NowPlayingTimeline?, now: Double) -> NowPlayingTimeline? {
+        guard phase == .trustingSelf, let local else { return feed }
+        guard let feed else { cancel(); return nil }
+        let agrees = abs(feed.position(atEpoch: now) - local.position(atEpoch: now)) <= Self.agreeTolerance
+            && feed.isMoving == local.isMoving
+        if agrees {
+            reset()
+            return feed
+        }
+        if now - startedAt >= Self.debounce {
+            slideFrom = local.position(atEpoch: now)
+            self.local = nil
+            phase = .slidingBack
+            return feed
+        }
+        return local
+    }
+
+    /// 防抖到点没对上：返回要从哪个位置（秒）滑回播放器的位置，只返回一次。
+    mutating func takeSlide() -> Double? {
+        guard phase == .slidingBack else { return nil }
+        defer { reset() }
+        return slideFrom
+    }
+
+    /// 防抖窗口什么时候到点（排一次唤醒）。不在窗口里是 nil。
+    func nextWake(now: Double) -> Double? {
+        guard phase == .trustingSelf else { return nil }
+        return max(now, startedAt + Self.debounce)
+    }
+
+    mutating func cancel() { reset() }
+
+    private mutating func begin(_ timeline: NowPlayingTimeline, now: Double) {
+        local = timeline
+        startedAt = now
+        slideFrom = nil
+        phase = .trustingSelf
+    }
+
+    private func currentBase(feed: NowPlayingTimeline?, now: Double) -> NowPlayingTimeline? {
+        phase == .trustingSelf ? (local ?? feed) : feed
+    }
+
+    private mutating func reset() {
+        phase = .followingPlayer
+        local = nil
+        slideFrom = nil
     }
 }
 

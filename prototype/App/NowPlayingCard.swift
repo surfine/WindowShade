@@ -288,6 +288,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         inputIsCurrent = { false }
         stopTimers()
         scrub.cancel()
+        localClock.cancel()
     }
 
     private func stopTimers() {
@@ -399,8 +400,9 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         let previous = content
         content = next
         scrub.setSeekable(next.seekable)
-        timeline = next.timeline
+        feedTimeline = next.timeline
         if previous?.title != next.title || previous?.artist != next.artist {
+            localClock.cancel()
             titleField.stringValue = next.title
             artistField.stringValue = next.artist
             titleField.toolTip = next.title
@@ -408,16 +410,23 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         }
         setArtwork(image)
         defer { renderWave() }
-        let paused = next.isPaused
+        window?.invalidateCursorRects(for: self)
+        renderProgress()
+        applyPlayState(wasShown: previous != nil)
+        setAccessibilityLabel(next.spoken)
+        needsLayout = true
+    }
+
+    /// 播放键图标、读屏文字和封面缩放。本地信自己的那 1.5 秒里，点下去立刻换，不等播放器报回来。
+    private func applyPlayState(wasShown: Bool) {
+        let paused = localClock.localPlaying.map { !$0 } ?? (content?.isPaused ?? false)
+        let changed = shownPaused != paused
+        shownPaused = paused
         playButton.setSymbol(paused ? "play.fill" : "pause.fill")
         let playLabel = paused ? WSL10n.text("notch.action.play", zh: "播放") : WSL10n.text("notch.action.pause", zh: "暂停")
         playButton.setAccessibilityLabel(playLabel)
         playButton.toolTip = playLabel
-        if previous?.isPaused != paused || !entranceDone { applyCoverPauseScale(animated: previous != nil && entranceDone) }
-        setAccessibilityLabel(next.spoken)
-        window?.invalidateCursorRects(for: self)
-        renderProgress()
-        needsLayout = true
+        if changed || !entranceDone { applyCoverPauseScale(animated: wasShown && entranceDone) }
     }
 
     /// 输出设备键的图标跟着当前设备（扬声器 / 耳机 / 音箱）。
@@ -425,7 +434,12 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         outputButton.setSymbol((kind ?? .speaker).symbol)
     }
 
+    /// 条和时间字此刻读的时间线（`renderProgress` 里由本地时间线裁决）；`feedTimeline` 是播放器报的。
     private var timeline: NowPlayingTimeline?
+    private var feedTimeline: NowPlayingTimeline?
+    private var localClock = NowPlayingLocalClock()
+    private var shownPaused: Bool?
+    private var slideUntil: Double = 0
 
     private func setArtwork(_ image: NowPlayingArtworkImage?) {
         artwork = image
@@ -451,7 +465,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     }
 
     private func applyCoverPauseScale(animated: Bool) {
-        let scale = (content?.isPaused ?? false) ? NowPlayingCardLayout.pausedCoverScale : 1
+        let scale = (shownPaused ?? content?.isPaused ?? false) ? NowPlayingCardLayout.pausedCoverScale : 1
         let target = CATransform3DMakeScale(scale, scale, 1)
         let from = coverLayer.presentation()?.transform ?? coverLayer.transform
         coverLayer.transform = target
@@ -541,11 +555,15 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     /// 进度条和时间此刻该画成什么样。`animatedBar`：粗细变化走弹簧。
     private func renderProgress(animatedBar: Bool = true) {
         let now = clock()
+        let phaseBefore = localClock.localPlaying
+        timeline = localClock.reconcile(feed: feedTimeline, now: now)
+        let slideFrom = localClock.takeSlide()
+        if localClock.localPlaying != phaseBefore { applyPlayState(wasShown: true) }
         let live = timeline?.isLive == true
         barHost.isHidden = live || listOpen
         liveTag.isHidden = !live || listOpen
         let playerFraction = timeline?.fraction(atEpoch: now)
-        let shown = scrub.displayFraction(player: playerFraction, now: now)
+        let shown = scrub.displayFraction(player: playerFraction)
         let height = scrub.barHeight
         let width = barWidth
         let heightChanged = height != barHeightShown
@@ -572,9 +590,17 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
             }
         }
         fillLayer.removeAnimation(forKey: "progress")
-        // 播着、没在拖、没在等松手后的追赶：交给 Core Animation 线性走完，主线程不用每帧醒来。
+        // 防抖到点播放器还没对上：条用 calm 从本地位置滑回播放器报的位置（减少动态效果时直接到）。
+        if let slideFrom, let shown, let duration = timeline?.duration, duration > 0, !Motion.reduced {
+            let fromWidth = CGFloat(min(1, max(0, slideFrom / duration))) * width
+            let slide = Motion.spring(.calm, keyPath: "bounds.size.width")
+            slide.fromValue = fromWidth; slide.toValue = CGFloat(shown) * width
+            fillLayer.add(slide, forKey: "bar.slide")
+            slideUntil = now + slide.duration
+        }
+        // 播着、没在拖、没在滑回：交给 Core Animation 线性走完，主线程不用每帧醒来。
         if let shown, let timeline, let duration = timeline.duration, timeline.isMoving, !scrub.isDragging, window != nil,
-           scrub.holdExpiry(now: now) == nil, shown < 1 {
+           now >= slideUntil, shown < 1 {
             let animation = CABasicAnimation(keyPath: "bounds.size.width")
             animation.fromValue = filled
             animation.toValue = width
@@ -618,7 +644,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
             return
         }
         var delay = timeline?.secondsUntilNextTick(atEpoch: now)
-        if let expiry = scrub.holdExpiry(now: now) { delay = min(delay ?? .infinity, max(0.02, expiry - now)) }
+        if let expiry = nextWake(now: now) { delay = min(delay ?? .infinity, max(0.02, expiry - now)) }
         guard let delay, delay.isFinite else { return }
         let timer = Timer(timeInterval: delay, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.renderProgress(animatedBar: false) }
@@ -628,8 +654,14 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         tickTimer = timer
     }
 
+    /// 下一次要自己醒来的时刻：本地防抖到点，或滑回结束后接上线性走条。
+    private func nextWake(now: Double) -> Double? {
+        let wakes = [localClock.nextWake(now: now), slideUntil > now ? slideUntil : nil].compactMap { $0 }
+        return wakes.min()
+    }
+
     private func scheduleHoldExpiry(now: Double) {
-        guard let expiry = scrub.holdExpiry(now: now) else { return }
+        guard let expiry = nextWake(now: now) else { return }
         let timer = Timer(timeInterval: max(0.02, expiry - now), repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.renderProgress(animatedBar: false) }
         }
@@ -712,7 +744,8 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         }
         guard scrub.isDragging else { super.mouseUp(with: event); return }
         let point = convert(event.locationInWindow, from: nil)
-        let seconds = scrub.release(at: barX(point), trackWidth: barWidth, duration: timeline?.duration, now: clock())
+        let seconds = scrub.release(at: barX(point), trackWidth: barWidth, duration: timeline?.duration)
+        if let seconds, inputIsCurrent() { localClock.seek(to: seconds, now: clock(), feed: feedTimeline) }
         renderProgress()
         onInteractionChange?()
         if let seconds, inputIsCurrent() { onSeek?(seconds) }
@@ -735,12 +768,22 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
 
     override func keyDown(with event: NSEvent) {
         guard inputIsCurrent() else { super.keyDown(with: event); return }
-        if event.keyCode == 49 { onCommand?(.playPause); return }   // 空格：播放 / 暂停
+        if event.keyCode == 49 { playPause(); return }   // 空格：播放 / 暂停
         super.keyDown(with: event)
     }
 
     @objc private func previousAction() { guard inputIsCurrent() else { return }; onCommand?(.previous) }
-    @objc private func playAction() { guard inputIsCurrent() else { return }; onCommand?(.playPause) }
+    @objc private func playAction() { guard inputIsCurrent() else { return }; playPause() }
+
+    /// 点暂停 / 播放：本地先变，再发命令。
+    private func playPause() {
+        if let timeline {
+            localClock.setPlaying(!timeline.isMoving, now: clock(), feed: feedTimeline)
+            renderProgress(animatedBar: false)
+            applyPlayState(wasShown: true)
+        }
+        onCommand?(.playPause)
+    }
     @objc private func nextAction() { guard inputIsCurrent() else { return }; onCommand?(.next) }
     @objc private func outputAction() {
         guard inputIsCurrent() else { return }
