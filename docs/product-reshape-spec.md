@@ -678,6 +678,7 @@
 - **现状（2026-10-15 自纠）**：此前写「`fullScreenDisallowsTiling` 只在 `Thumbnail.swift:35`」，**是错的**——本机复核是**三处**：`App/Thumbnail.swift:35` ＋ **`App/OverlayFactory.swift:21`／`:56`／`:186`**（覆盖层工厂，说明多数覆盖层已经带上了）。其余面板各写各的（`App/SlideOver.swift:943`／`:1076`、`App/Carry.swift:18`、`App/PictureInPicture.swift:575`／`:667`、`App/SplitView.swift:644`、`App/SlideOverDropHint.swift:124`、`App/PictureInPictureViews.swift:364`、`PinnedPreviewPanel.swift:14`）。
 - **改动**：**逐个核**它在 macOS 15+ 上会不会被系统平铺管到；**该加的加，不该加的别动**。这不是批量替换。
 - **核过，结论与规格相反（2026-10-16）**：独立小程序实测，系统「移动与调整大小 › 左」（`_zoomLeft:`）对 key 窗口一律生效——无边框、`.transient`、`canJoinAllSpaces`、**连带着 `.fullScreenDisallowsTiling` 的也照样被挪走**。所以「补齐这个开关」挡不住平铺，**不加**。我们的面板都靠自己 `setFrame` 移动，没有一处用系统拖动（`performDrag` 0 处），拖到屏幕边的平铺碰不到；剩下唯一的入口是我们自己的面板是 key 时按平铺快捷键。能成为 key、又没带开关的有：收起取画面时临时停焦点的 1×1 窗、启动台、CarPlay、刘海（验证或专注时）、卷轴概览、窗口浏览（键盘模式）。合成按键连对照组（普通窗口）都挪不动，自动验证不了。**待 Aaron（一分钟）**：打开启动台，按 fn＋Control＋←，看它会不会被挪到左半边；会的话再定怎么挡（截住那几个动作），不会就结案。
+- **探针（2026-10-17）**：`--launchpad-tiling`（`App/LaunchpadTilingProbe.swift`）往系统发真的合成键（fn＋Control＋←→↑↓／F／C），先对照临时 App 的参考窗是否被挪，再对启动台做同样的事；只有对照挪了才下 PASS／FAIL，对照没挪记 INFO inconclusive。**还没在真机上跑**，所以上面「待 Aaron」那一步仍有效。
 
 ---
 

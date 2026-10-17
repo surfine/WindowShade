@@ -243,6 +243,13 @@ final class GlanceProbe {
       finish(nil)
       return
     }
+    // 规格 R18：启动台开着按 fn＋Control＋←（系统平铺快捷键），看它会不会被挪走；对照组是临时 App 的参考窗。
+    if CommandLine.arguments.contains("--launchpad-tiling") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseLaunchpadTiling(pid: process.processIdentifier, element: element)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--launchpad-keys") {
       try await exerciseLaunchpadKeys()
       finish(nil)
