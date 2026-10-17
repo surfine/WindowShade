@@ -67305,6 +67305,282 @@
           }
         }
       }
+    },
+    "explainer.privateWindow.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private window: 1Password"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私人窗口：1Password"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私人視窗：1Password"
+          }
+        }
+      }
+    },
+    "explainer.privateWindow.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: An app on your private windows list shows only its icon in Window Browser and in a glance, never its contents."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：选进私人窗口的 App，在窗口浏览和看一眼里只露图标，不露内容。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：選進私人視窗的 App，在視窗瀏覽和看一眼裡只露出圖示，不露出內容。"
+          }
+        }
+      }
+    },
+    "explainer.accessibilityOn.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility · Allowed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能 · 已授权"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輔助使用 · 已授權"
+          }
+        }
+      }
+    },
+    "explainer.accessibilityOn.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: With Accessibility on, windows can be rolled up and moved."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：打开辅助功能，窗口才能被收起、挪动。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：打開輔助使用，視窗才能被收起、挪動。"
+          }
+        }
+      }
+    },
+    "explainer.accessibilityOff.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility · Not allowed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能 · 未授权"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "輔助使用 · 未授權"
+          }
+        }
+      }
+    },
+    "explainer.accessibilityOff.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: With Accessibility off, windows can't be rolled up or moved."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：没打开辅助功能时，窗口收不起来，也挪不动。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：沒打開輔助使用時，視窗收不起來，也挪不動。"
+          }
+        }
+      }
+    },
+    "explainer.screenRecordingOn.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen Recording · Allowed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕录制 · 已授权"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "螢幕錄製 · 已授權"
+          }
+        }
+      }
+    },
+    "explainer.screenRecordingOn.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: With Screen Recording on, the card shows a live picture of the window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：打开屏幕录制，卡片里是窗口的实时画面。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：打開螢幕錄製，卡片裡是視窗的即時畫面。"
+          }
+        }
+      }
+    },
+    "explainer.screenRecordingOff.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen Recording · Not allowed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "屏幕录制 · 未授权"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "螢幕錄製 · 未授權"
+          }
+        }
+      }
+    },
+    "explainer.screenRecordingOff.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: With Screen Recording off, the card has no picture of the window."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：没打开屏幕录制时，卡片里没有窗口的画面。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：沒打開螢幕錄製時，卡片裡沒有視窗的畫面。"
+          }
+        }
+      }
+    },
+    "explainer.launchAtLogin.text": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Log in to this Mac"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录这台 Mac"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登入這台 Mac"
+          }
+        }
+      }
+    },
+    "explainer.launchAtLogin.ax": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demo: After you log in, the menu bar icon appears on its own."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示：登录后，菜单栏里的图标自己出现。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "示範：登入後，選單列裡的圖示自己出現。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

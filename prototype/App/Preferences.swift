@@ -457,7 +457,7 @@ extension AppDelegate {
     /// 再把两项系统授权、登录时启动和更新并进同一页——开关全都还是原来那一个，不复制。
     /// 页头两句：列在这里 + 不做统计或上报；"除了检查更新，都不离开这台 Mac"要等联网实测核过再开（WS2PrivacyCopy.showsNetworkPromise）。
     func makePermissionsSettingsPage() -> NSView {
-        let (root, stack) = makeSettingsPageRoot()
+        let (root, stack) = makeSettingsPageRoot(explainer: .privacy)
         stack.addArrangedSubview(makeSettingsHeader(
             title: WSL10n.text("settings.privacy.title", zh: "隐私"), subtitle: WS2PrivacyCopy.headerSubtitle(), symbolName: "lock.shield"))
         let pane = MainActor.assumeIsolated { WS2PrivacyPane(owner: self) }
@@ -469,20 +469,25 @@ extension AppDelegate {
         let cover = makeUnifiedSettingsCard([
             makeUnifiedControlRow(name: WSL10n.setting("settings.privateApps.rowTitle", zh: PrivateAppListPanel.rowTitle),
                                   subtitle: WSL10n.setting("settings.privateApps.rowSubtitle", zh: PrivateAppListPanel.rowSubtitle),
-                                  control: NSButton(title: WSL10n.text("settings.privacy.manage", zh: "管理…"), target: self, action: #selector(prefOpenPrivateApps(_:)))),
+                                  control: NSButton(title: WSL10n.text("settings.privacy.manage", zh: "管理…"), target: self, action: #selector(prefOpenPrivateApps(_:))),
+                                  explainer: ExplainerRow.Privacy.privateApps),
         ])
         stack.addArrangedSubview(cover)
         cover.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: cover)
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.common.group.permissions", zh: "权限")))
+        let axGranted = hasAccessibilityPermission()
+        let srGranted = hasScreenRecordingPermission()
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
                                      subtitle: WSL10n.setting("settings.common.accessibility.sub", zh: WSL10n.text("prefs.designSample.accessibility.sub", zh: "找到、移动和恢复窗口")),
-                                     granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
+                                     granted: axGranted, action: #selector(openAccessibilitySettingsAction),
+                                     explainer: ExplainerRow.Privacy.accessibility(granted: axGranted)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
                                      name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
                                      subtitle: WSL10n.setting("settings.common.screenRecording.sub", zh: WSL10n.text("prefs.designSample.screenRecording.sub", zh: "截取窗口画面做预览")),
-                                     granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
+                                     granted: srGranted, action: #selector(openScreenRecordingSettingsAction),
+                                     explainer: ExplainerRow.Privacy.screenRecording(granted: srGranted)),
         ])
         stack.addArrangedSubview(permissions)
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -490,7 +495,8 @@ extension AppDelegate {
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.privacy.group.launch", zh: "启动")))
         let launch = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: WSL10n.text("settings.privacy.launchAtLogin.name", zh: "登录时自动启动"), subtitle: launchAtLoginSubtitle(),
-                                 isOn: launchAtLoginEnabled(), action: #selector(prefToggleLaunchAtLogin(_:))),
+                                 isOn: launchAtLoginEnabled(), action: #selector(prefToggleLaunchAtLogin(_:)),
+                                 explainer: ExplainerRow.Privacy.launchAtLogin),
         ])
         stack.addArrangedSubview(launch)
         launch.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true

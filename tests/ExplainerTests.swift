@@ -18,6 +18,7 @@ struct ExplainerTests {
         sceneLibrary()
         shadeScenes()
         shortcutScenes()
+        privacyScenes()
         pageAndRowLoops()
         offAndOptions()
         environment()
@@ -165,6 +166,21 @@ struct ExplainerTests {
         if case .loop(let spec) = ExplainerRow.Shortcuts.row(.place(.leftHalf), combo: "⌃⌘←").kind { expect(spec.id == "shortcut.leftHalf.⌃⌘←", "recorded combo loops") } else { expect(false, "recorded combo is a loop") }
         expect(ExplainerRow.Shortcuts.row(.none, combo: "⌃⌘←") == .pageDefault, "an action with no scene follows the page default")
         expect(ExplainerPage.shortcuts.pageDefault.id == "shortcut.leftHalf.⌃⌘←", "shortcuts page default is the left half")
+    /// 隐私页：全是静图；授权行按授权状态取已授权或未授权那张；每段都有读屏句。
+    static func privacyScenes() {
+        let all = [ExplainerScenes.privateWindow, ExplainerScenes.accessibilityOn, ExplainerScenes.accessibilityOff,
+                   ExplainerScenes.screenRecordingOn, ExplainerScenes.screenRecordingOff, ExplainerScenes.launchAtLogin]
+        expect(all.allSatisfy { $0.isStill && $0.frames.isEmpty }, "the privacy scenes are all stills")
+        expect(Set(all.map(\.id)).count == all.count, "privacy scene ids are unique")
+        expect(all.allSatisfy { $0.description.zh.hasPrefix("演示：") }, "every privacy scene has a VoiceOver sentence")
+        expect(ExplainerPage.privacy.pageDefault.id == "privateWindow", "privacy page default is the private window")
+        expect(ExplainerScenes.privateWindow.initial[.panel]?.look == .privatePreview, "private window card shows only the icon")
+        expect(ExplainerScenes.screenRecordingOn.initial[.panel]?.look == .livePreview && ExplainerScenes.screenRecordingOff.initial[.panel]?.look == .plain,
+               "screen recording on shows the live card, off does not")
+        expect(ExplainerScenes.accessibilityOn.initial[.windowA]?.rolled == true && ExplainerScenes.accessibilityOff.initial[.windowA]?.rolled == false,
+               "accessibility on rolls the window, off leaves it")
+        expect(ExplainerRow.Privacy.accessibility(granted: true) != ExplainerRow.Privacy.accessibility(granted: false), "the permission row follows the grant state")
+        expect(ExplainerScenes.launchAtLogin.initial[.menuBarIcon]?.opacity == 1, "launch at login shows the menu bar icon")
     }
 
     static func row(_ id: Int, _ row: ExplainerRow, on: Bool? = true, option: Int? = nil) -> ExplainerDirector.RowState {
