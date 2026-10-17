@@ -235,6 +235,54 @@ struct SettingsNavigationTests {
         to: directory.appendingPathComponent("\(section)\(segment.map { $0 > 0 ? "-\($0)" : "" } ?? "")-\(appearance.rawValue).png"))
     }
     }
+    // 设置搜索（1.0.18 新表面稿第 2 节）：索引从建好的页里收，转储给 tests/check-settings-search-index.py 对照；
+    // 结果态、跳过去、没找到各截一张（settings-shots/search-*.png）。减少动态效果开着：滚动直接到，截图不等弹簧。
+    do {
+      Motion.reducedOverrideForProbe = true
+      defer { Motion.reducedOverrideForProbe = nil }
+      let entries = settings.searchEntriesForDiagnostics
+      precondition(entries.count > 80, "设置搜索的索引太少：\(entries.count) 行")
+      for name in ["双击标题栏收起窗口", "窗口之间留缝", "收进刘海", "界面语言", "按窗口切换"] {
+        precondition(entries.contains { $0.name.shown == name }, "索引里要有：\(name)")
+      }
+      precondition(Set(entries.map(\.id)).count == entries.count, "索引条目的 id 不重复")
+      let dump = entries.map { entry -> [String: Any] in
+        ["page": entry.page, "key": entry.key ?? "", "names": entry.name.all, "options": entry.options.map(\.shown)]
+      }
+      let directory = URL(fileURLWithPath: ".build/appkit-tests", isDirectory: true)
+      try! FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+      try! JSONSerialization.data(withJSONObject: dump, options: [.prettyPrinted, .sortedKeys])
+        .write(to: directory.appendingPathComponent("settings-search-index.json"))
+      guard let sidebar = descendants(root).compactMap({ $0 as? NSTableView }).first
+      else { preconditionFailure("找不到设置侧栏") }
+      let sections = sidebar.numberOfRows
+      func shot(_ name: String) {
+        root.layoutSubtreeIfNeeded()
+        guard let bitmap = root.bitmapImageRepForCachingDisplay(in: root.bounds) else { preconditionFailure("Cannot render settings") }
+        root.cacheDisplay(in: root.bounds, to: bitmap)
+        let shots = directory.appendingPathComponent("settings-shots", isDirectory: true)
+        try! FileManager.default.createDirectory(at: shots, withIntermediateDirectories: true)
+        try! bitmap.representation(using: .png, properties: [:])!.write(to: shots.appendingPathComponent("search-\(name).png"))
+      }
+      let hide = settings.searchForDiagnostics("隐藏")
+      precondition(!hide.isEmpty, "“隐藏”靠同义词找到收起的那几行")
+      precondition(sidebar.numberOfRows == hide.count + 1, "结果态：一行结果数 + 每条一行")
+      await drainLayout()
+      shot("results")
+      let gap = settings.searchForDiagnostics("缝", commit: true)
+      precondition(gap.first?.entry.name.shown == "窗口之间留缝", "“缝”第一条是窗口之间留缝：\(gap.map(\.entry.name.shown))")
+      try? await Task.sleep(nanoseconds: 300_000_000)
+      await drainLayout()
+      precondition(settings.window?.subtitle == WindowShadeSettingsSection.shade.title, "Return 跳到卷帘页")
+      precondition(sidebar.numberOfRows == gap.count + 1, "跳过去之后侧栏还是结果")
+      shot("reveal")
+      _ = settings.searchForDiagnostics("xyz")
+      precondition(sidebar.numberOfRows == 1, "没找到：一行“没有找到”")
+      await drainLayout()
+      shot("empty")
+      _ = settings.searchForDiagnostics("")
+      precondition(sidebar.numberOfRows == sections, "清空后回到页列表")
+    }
     // 旗标关着（这个测试进程里 WindowShade 2 的开关都没开）：侧栏 8 页，WindowShade 2 的行不见，
     // 搬走的行在新位置各出现一次。
     do {

@@ -49734,6 +49734,2329 @@
         }
       }
     },
+    "settings.search.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋"
+          }
+        }
+      }
+    },
+    "settings.search.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜尋設定"
+          }
+        }
+      }
+    },
+    "settings.search.count": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ results"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 个结果"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 個結果"
+          }
+        }
+      }
+    },
+    "settings.search.countOne": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 result"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 个结果"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 個結果"
+          }
+        }
+      }
+    },
+    "settings.search.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No results for “%@”"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有找到“%@”"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有找到「%@」"
+          }
+        }
+      }
+    },
+    "settings.search.tryAnother": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try another word, like “roll up” or “notch”"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "换个说法试试，比如“收起”“刘海”"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換個說法試試，比如「收起」「瀏海」"
+          }
+        }
+      }
+    },
+    "settings.search.sameAs": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "same as “%@”"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就是你说的“%@”"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就是你說的「%@」"
+          }
+        }
+      }
+    },
+    "settings.search.resultA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@, %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，%@页"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@，%@頁"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.rollUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "collapse, collapsed, expand, expanded, fold, shade, hide, minimize → roll up, unroll, rolled-up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "折叠、卷起、卷成、隐藏、最小化、collapse、collapsed、expand、expanded、fold、shade、hide、minimize → 收起、展开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "摺疊、捲起、捲成、隱藏、最小化、collapse、collapsed、expand、expanded、fold、shade、hide、minimize → 收起、展開"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.bar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "strip, bar → rolled-up window bar, roll up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题条、细杠、strip、bar alone、bar → 卷帘条、收起"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "標題條、細槓、strip、bar alone、bar → 捲簾條、收起"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.thumbnail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "thumbnail, small window, placeholder window, roll-up style, collapsed look → Thumbnail, What a rolled-up window looks like"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗、小图、占位窗口、缩略、thumbnail、roll-up style、collapsed look → 缩略图、收起后的样子"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗、小圖、佔位視窗、縮略、thumbnail、roll-up style、collapsed look → 縮圖、收起後的樣子"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.pin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pin, float, keep on top, always on top → Pin, Float above other windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "钉住、悬浮、总在最前、pin、float、keep on top、always on top → 置顶、浮在其他窗口上面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "釘住、懸浮、總在最前、pin、float、keep on top、always on top → 置頂、浮在其他視窗上面"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.unpinAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pause pins, hide pinned, boss key → Unpin everything for now"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂停置顶、隐藏置顶、老板键、boss key → 暂时取消全部置顶、恢复全部置顶"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暫停置頂、隱藏置頂、老闆鍵、boss key → 暫時取消全部置頂、回復全部置頂"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.deviceBattery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "battery level, remaining battery, charging, paired → Device batteries, battery"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电池电量、剩余电量、还能用 N 分钟、正在充电、蓝牙设备已配对 → 设备的电量、电量"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "電池電量、剩餘電量、還能用 N 分鐘、正在充電、藍牙裝置已配對 → 裝置的電量、電量"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.deviceNames": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magic Mouse, Magic Keyboard, Magic Trackpad → Magic Mouse, Magic Keyboard, Magic Trackpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magic Mouse、巧控滑鼠、鼠标 2 代 → 妙控鼠标、妙控键盘、妙控板、蓝牙配件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magic Mouse、巧控滑鼠、滑鼠 2 代 → 巧控滑鼠、巧控鍵盤、巧控板、藍牙配件"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.thisMac": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "energy, battery life, InternalBattery → this Mac"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能耗、还能用多久、InternalBattery → 这台 Mac"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能耗、還能用多久、InternalBattery → 這台 Mac"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.touchID": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "verify identity, authentication → Touch ID"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "验证身份、认证成功、安全验证 → 用 Touch ID 确认、Touch ID"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "驗證身份、驗證成功、安全驗證 → 用 Touch ID 確認、Touch ID"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.permissions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "permission, permissions, authorize → Accessibility, Screen Recording"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "权限、授权、permission、permissions → 辅助功能、屏幕录制"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "權限、授權、permission、permissions → 輔助使用、螢幕錄製"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.windowBrowsing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "taskbar, dock preview, window picker, window browser panel, Dock hover panel → Window browsing, Dock"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口选择面板、Dock 悬停面板、任务栏、Dock 预览、窗口选择、taskbar、dock preview、window picker、window browser panel、Dock hover panel → 窗口浏览、Dock 悬停、Dock 图标"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗選擇面板、Dock 停留面板、工作列、Dock 預覽、視窗選擇、taskbar、dock preview、window picker、window browser panel、Dock hover panel → 視窗瀏覽、Dock 停留、Dock 圖示"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.chooseWindow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "open window browser → Choose a window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开窗口浏览器 → 选择窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟視窗瀏覽器 → 選擇視窗"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.bigPreview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Look, Space preview → Large preview"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Look 预览、Space 预览 → 大图预览"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick Look 預覽、Space 預覽 → 大圖預覽"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.glance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "peek, hover preview, preview → Glance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偷看、悬停展开、临时展开、预览、peek、hover preview → 看一眼"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偷看、停留展開、臨時展開、預覽、peek、hover preview → 看一眼"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.frozenPicture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "snapshot, cached picture, stale screenshot → not a live picture"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快照、缓存画面、过期截图 → 收起时的画面、不是实时画面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快照、快取畫面、過期截圖 → 收起時的畫面、不是即時畫面"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.allSpaces": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pin to all spaces, all desktops → Every desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跨桌面、随身、跟随、pin to all spaces → 带到每张桌面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跨桌面、隨身、跟隨、pin to all spaces → 帶到每張桌面"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.titleBarGestures": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "trackpad gestures, gestures → Title bar gestures"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触控板手势、触摸板手势、手势操作 → 标题栏手势"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "觸控式軌跡板手勢、觸控式軌跡板手勢、手勢操作 → 標題列手勢"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.sizeStep": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "maximize, minimize, zoom in, zoom out → One step larger, One step smaller"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大化、最小化、放大、缩小 → 变大一级、变小一级"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大化、最小化、放大、縮小 → 變大一級、變小一級"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.screenSide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "next display, second screen → Move to another screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跨屏、甩到副屏、下一个显示器 → 移到左边的屏幕、移到右边的屏幕、移到另一块屏幕"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跨螢幕、甩到副螢幕、下一個顯示器 → 移到左邊的螢幕、移到右邊的螢幕、移到另一塊螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.thirds": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1/3, 2/3, thirds → third"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1/3、2/3、三等分 → 三分之一、三分之二"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1/3、2/3、三等分 → 三分之一、三分之二"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.grid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "grid cell, 3×2, sixth → sixth"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "网格单元、3×2、sixth → 六分之一、三分之二"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "網格單元、3×2、sixth → 六分之一、三分之二"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.magicTiling": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "auto tile, tile, tiling, smart layout → Magic Tiling"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动平铺、智能布局、平铺、自动排列、auto tile、tile、tiling → 魔法平铺"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自動平鋪、智慧佈局、平鋪、自動排列、auto tile、tile、tiling → 魔法並排"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.strip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "scrolling, infinite canvas, strip position, page N of M → strip"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷动平铺、无限画布、滚动工作区、scrolling、strip、strip position N、page N of M → 卷轴"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "捲動平鋪、無限畫布、捲動工作區、scrolling、strip、strip position N、page N of M → 卷軸"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.stripOverview": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "overview, Exposé → Strip overview"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "概述、总览、overview、Exposé、调度中心 → 卷轴概览"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "概述、總覽、overview、Exposé、指揮中心 → 卷軸概覽"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.origin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "source, migration, background → Used before"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "来源、背景、迁移自、老用户类型、source、migration → 之前常用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "來源、背景、遷移自、老使用者型別、source、migration → 之前常用"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.byWindow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cmd-Tab Plus, Alt-Tab, alt tab, switcher, window switcher → Switch by window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cmd-Tab Plus、窗口切换器、Alt-Tab、切换窗口、alt tab、switcher、window switcher → 按窗口切换"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cmd-Tab Plus、視窗切換器、Alt-Tab、切換視窗、alt tab、switcher、window switcher → 按視窗切換"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.keyNames": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ctrl, Cmd, Alt, hotkey, keybinding, keyboard shortcut → Shortcuts, shortcut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ctrl、Cmd、Alt、热键、快捷方式、键位、hotkey、keybinding、keyboard shortcut → 快捷键"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ctrl、Cmd、Alt、熱鍵、快捷方式、鍵位、hotkey、keybinding、keyboard shortcut → 快速鍵"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.tuckAll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hide all, minimize all, show desktop → Tuck everything into the notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐藏全部、最小化全部、显示桌面 → 全部收进刘海"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隱藏全部、最小化全部、顯示桌面 → 全部收進瀏海"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.moveDisplay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "move to display, next display → Move to another screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移到另一显示器、跨屏、下一个显示器 → 移到另一块屏幕、移到上一块屏幕"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移到另一顯示器、跨螢幕、下一個顯示器 → 移到另一塊螢幕、移到上一塊螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.halves": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top Half, upper half → Top half, Bottom half"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顶部一半、Top Half → 上半屏、下半屏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頂部一半、Top Half → 上半螢幕、下半螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.largerSmaller": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Make Larger, Make Smaller → A bit larger, A bit smaller"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放大、缩小、Make Larger → 大一点、小一点"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放大、縮小、Make Larger → 大一點、小一點"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.heightCenter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Maximize Height, center → Full height, Center"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大化高度、Maximize Height → 高度占满、居中"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大化高度、Maximize Height → 高度佔滿、置中"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.rectangle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "import Rectangle, compatibility mode → Rectangle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导入 Rectangle、迁移、兼容模式 → 用 Rectangle 的快捷键、更多排法"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "匯入 Rectangle、遷移、相容模式 → 用 Rectangle 的快速鍵、更多排法"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.welcome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onboarding, tutorial, tour, guide → Welcome to WindowShade"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用说明、新手教程、Onboarding、导览 → 欢迎使用 WindowShade"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "使用說明、新手教程、Onboarding、導覽 → 歡迎使用 WindowShade"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.pip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PiP, mini window, floating window → Picture in Picture"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗、悬浮窗、PiP、迷你模式 → 画中画"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小窗、懸浮窗、PiP、迷你模式 → 子母畫面"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.splitHandle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "divider, Split View, splitter → Split handle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分隔条、divider、Split View、分割线 → 分屏把手、分屏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分隔條、divider、Split View、分割線 → 分割顯示把手、分割顯示"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.dropSplit": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "drag to split, merge windows, snap, split → Drop onto a window to split, Title bar gestures, Magic Tiling"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖拽分屏、合并窗口、吸附、分屏、snap、split → 拖到窗口上并排、标题栏手势、魔法平铺"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖移分割顯示、合併視窗、吸附、分割顯示、snap、split → 拖到視窗上並排、標題列手勢、魔法並排"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.frame": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "border, grabber, resize handle → handle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "边框、grabber、resize handle → 玻璃边框、把手"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "邊框、grabber、resize handle → 玻璃邊框、把手"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.gap": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "gap, spacing, margin → Gap between windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "间距、边距、缝隙、gap、spacing、margin → 窗口之间留缝"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "間距、邊距、縫隙、gap、spacing、margin → 視窗之間留縫"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.moveAside": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide, hide app, minimize app → Hide the app, move the app aside"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dock 反转、隐藏窗口、隐藏应用、最小化 App、Hide → 让开这个 App"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dock 反轉、隱藏視窗、隱藏應用、最小化 App、Hide → 讓開這個 App"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.dropIsland": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snap Island, layout panel → drop island"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分屏岛、Snap Island、布局面板 → 落点小岛"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分割顯示島、Snap Island、佈局面板 → 落點小島"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.shake": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aero Shake, shake → Shake"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "摇一摇、Aero Shake、甩开 → 晃一晃"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搖一搖、Aero Shake、甩開 → 晃一晃"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.notchTaps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home button, Exposé → Mission Control, Home Screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home 键、主屏幕按钮、Exposé → 回到主屏幕、调度中心"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home 鍵、主螢幕按鈕、Exposé → 回到主螢幕、指揮中心"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.minimizedHidden": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "minimized windows, hidden apps → Minimized, Hidden"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最小化窗口仓、隐藏区 → 已最小化、已隐藏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最小化視窗倉、隱藏區 → 已最小化、已隱藏"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.otherSpaces": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "other spaces, Space 3, remote windows → Desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他空间、Space 3、跨桌面窗口、远程窗口 → 桌面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "其他空間、Space 3、跨桌面視窗、遠端視窗 → 桌面"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.openWith": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open With → Open with"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开方式、Open With → 用哪个 App 打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開啟方式、Open With → 用哪個 App 開啟"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.ninths": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3×3, ninth, nine grid → ninth"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3×3、ninth、九宫格 → 九分之一"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3×3、ninth、九宮格 → 九分之一"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.flick": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "flick, throw window → Flick a title bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "抛窗口、flick、快速拖拽 → 甩一下标题栏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拋視窗、flick、快速拖移 → 甩一下標題列"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.slideOver": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slide Over, drawer → Slide Over"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滑过、侧滑、Slide Over、抽屉 → 侧拉"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滑過、側滑、Slide Over、抽屜 → 側拉"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.fullScreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full Screen, maximize → Enter full screen, Fill the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大化、全屏模式、Full Screen → 进入全屏、铺满屏幕"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "最大化、全螢幕模式、Full Screen → 進入全螢幕、鋪滿螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.quitApp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Force Quit, kill, end process → Quit the app"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "结束进程、杀死、Force Quit、退出应用 → 退出 App"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "結束程序、殺死、Force Quit、退出應用 → 退出 App"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.missionControlClose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mission Control Pro, close helper → closes a window in Mission Control"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调度中心 Pro、Mission Control 增强、关窗助手 → 调度中心里按 ⌘W 关窗"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指揮中心 Pro、Mission Control 增強、關窗助手 → 指揮中心裡按 ⌘W 關窗"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.tuck": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "notch, dynamic island, notch area, put in the notch, hide in the notch, hidden, restored to notch → Tuck into the notch, notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "塞进刘海、刘海收纳、灵动岛、刘海屏、notch、dynamic island、notch area、put in the notch、hide in the notch、hidden、restored to notch → 收进刘海、刘海"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "塞進瀏海、瀏海收納、靈動島、瀏海螢幕、notch、dynamic island、notch area、put in the notch、hide in the notch、hidden、restored to notch → 收進瀏海、瀏海"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.alerts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live Activity, notification, changes → Tell me when things change"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时活动、通知、动态、Live Activity → 有变化时提醒"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "即時活動、通知、動態、Live Activity → 有變化時提醒"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.activities": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "widgets, notifications → Live activities"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小组件、Widgets、通知、widgets、notifications → 实时活动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "小元件、Widgets、通知、widgets、notifications → 即時活動"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.looks": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "original look, standard title bar → Keep as-is, One consistent bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原貌卷帘、标准标题栏 → 跟原来一样、统一标题栏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原貌捲簾、標準標題列 → 跟原來一樣、統一標題列"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.systemLook": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "system glass, native material → Follow the system"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统玻璃、原生材质 → 跟随系统外观"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統玻璃、原生材質 → 跟隨系統外觀"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "material fallback, missing permission → No picture right now"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "材质回退、权限缺失 → 画面暂时看不到"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "材質回退、權限缺失 → 畫面暫時看不到"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.focusTimer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pomodoro, timer, work mode → Focus timer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "番茄时钟、Pomodoro、计时器、工作模式 → 番茄钟"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "番茄時鐘、Pomodoro、計時器、工作模式 → 番茄鍾"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.timer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "countdown, alarm, timer alarm, focus timer → timer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒计时器、闹钟、定时器、番茄钟、timer alarm → 计时器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "倒計時器、鬧鐘、定時器、番茄鍾、timer alarm → 計時器"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.calendar": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "meeting, event, calendar reminder → Calendar, event"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会议、事件、日历提醒、入会、参会 → 日程"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "會議、事件、日曆提醒、入會、參會 → 日程"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.shelf": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tray, shelf, favorites → File shelf"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "货架、托盘、收藏夹、删除、暂存、Shelf、Tray → 文件架"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "貨架、托盤、收藏夾、刪除、暫存、Shelf、Tray → 檔案架"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.stripColumns": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "consume, expel, merge column, stack → column"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合并列、堆叠、consume、expel、吸入、弹出 → 并进、拆成一列"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合併列、堆疊、consume、expel、吸入、彈出 → 並進、拆成一列"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.launchpad": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launchpad, launcher → Launchpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launchpad、启动器、应用启动台 → 启动台"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launchpad、啟動器、應用啟動台 → 啟動台"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.homeScreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "desktop, home page → Home Screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面、主页、首屏 → 主屏幕"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "桌面、主頁、首螢幕 → 主螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.library": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "all apps, app library → App Library"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "应用库、所有应用、图书馆 → App 资料库"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "應用庫、所有應用、圖書館 → App 資料庫"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.folder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "group, cluster → folder"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分组、文件夹组、cluster → 文件夹"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分組、資料夾組、cluster → 資料夾"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.removeHome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "delete, remove app → Remove from Home Screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除、卸载、移除应用 → 从主屏幕移除"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除、解除安裝、移除應用 → 從主螢幕移除"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.uninstall": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "delete app, permanently delete, wipe → Uninstall"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除应用、永久删除、彻底清除 → 卸载"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刪除應用、永久刪除、徹底清除 → 解除安裝"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.addHome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "add app, restore icon → Add to Home Screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "添加应用、恢复图标 → 添加到主屏幕"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新增應用、回復圖示 → 新增到主螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.editHome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "edit mode, jiggle mode → Edit Home Screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编辑模式、抖动模式、整理模式 → 编辑主屏幕"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "編輯模式、抖動模式、整理模式 → 編輯主螢幕"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.smoothScroll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "inertia scrolling, silky scrolling → Smooth scrolling"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "惯性滚动、丝滑滚动 → 平滑滚动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "慣性捲動、絲滑捲動 → 平滑捲動"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.scrollDirection": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "natural scrolling, reverse scrolling → scroll direction"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自然滚动、反向滚动 → 滚动方向"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自然捲動、反向捲動 → 捲動方向"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.middleButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "wheel click, middle click → middle button"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滚轮按下、中键点击 → 中键"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滾輪按下、中鍵點選 → 中鍵"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.remote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "remote control mode → Remote mode, Remote"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "远程模式、遥控控制 → 遥控模式、遥控器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遠端模式、遙控控制 → 遙控模式、遙控器"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.siriRemote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV Remote, TV remote → Siri Remote"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV 遥控器、电视遥控器 → Siri 遥控器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple TV 遙控器、電視遙控器 → Siri 遙控器"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.iphoneRemote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone remote, phone remote → Remote on iPhone"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 遥控、手机遥控器 → iPhone 上的遥控器"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone 遙控、手機遙控器 → iPhone 上的遙控器"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.conductor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "remote control, command mode → Conductor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "远程控制、指挥控制 → 指挥模式"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遠端控制、指揮控制 → 指揮模式"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.silent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "silent control, mute mode, failed, error, operation aborted, pending, ack timeout, verify your identity, confirm the action, mismatch error, stale proposal, draft is local, not uploaded, privacy on, mask applied, cannot unlock, filling disabled → Silent actions, Dialect"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静音控制、无声模式、failed、error、operation aborted、pending、ack timeout、verify your identity、confirm the action、mismatch error、stale proposal、draft is local、not uploaded、privacy on、mask applied、cannot unlock、filling disabled → 静音操作、方言"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靜音控制、無聲模式、failed、error、operation aborted、pending、ack timeout、verify your identity、confirm the action、mismatch error、stale proposal、draft is local、not uploaded、privacy on、mask applied、cannot unlock、filling disabled → 靜音操作、方言"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.skipModifier": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bypass, disable, temporary off → Double-click a title bar to roll up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bypass、disable、temporary off → 双击标题栏收起窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "bypass、disable、temporary off → 按兩下標題列收起視窗"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.bystander": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "privacy screen, shoulder surfing, privacy mode → someone is looking"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偷看、防窥、窥屏、隐私模式 → 有人在看"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偷看、防窺、窺螢幕、隱私權模式 → 有人在看"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.tooClose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "distance warning, too close → too close"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距离警告、太近了 → 离屏幕近了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "距離警告、太近了 → 離螢幕近了"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.headDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "posture warning, neck → head down"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坐姿警告、颈椎 → 头低久了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "坐姿警告、頸椎 → 頭低久了"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.nearHeadDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "combined reminder → head down"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "综合提醒 → 近了，头低久了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "綜合提醒 → 近了，頭低久了"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.language": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "language, UI language, Requires restart → Interface language"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言、UI language、Requires restart → 界面语言"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "語言、UI language、Requires restart → 介面語言"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.followSystem": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto, System default → Follow the system"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto、System default → 跟随系统"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto、System default → 跟隨系統"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.resetDiagnostics": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "factory reset, debug log, reset, log → Reset defaults, Diagnostics log"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "factory reset、debug log、重置、日志 → 恢复动态效果默认值、诊断日志"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "factory reset、debug log、重置、日誌 → 回復動態效果預設值、診斷日誌"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.mergedHover": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "merge row, hover protection → One merged row, Hover guard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "merge row、hover protection → 合成一排、悬停不误触"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "merge row、hover protection → 合成一排、停留不誤觸"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.sound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sound, audio, chime → sound, chime"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "声音、音效、sound、audio、chime → 音效、响一声、提示音"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聲音、音效、sound、audio、chime → 音效、響一聲、提示音"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.animation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "animation, motion → animation, motion"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "动画、动效、animation、motion → 动画、动态效果"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "動畫、動效、animation、motion → 動畫、動態效果"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.music": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "music, media, song → Now Playing, Live activities"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音乐、歌、媒体、music、media、song → 正在播放、实时活动、跟着声音跳"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音樂、歌、媒體、music、media、song → 正在播放、即時活動、跟著聲音跳"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.download": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "download, downloads → Browser downloads"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下载、download、downloads → 浏览器下载"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下載、download、downloads → 瀏覽器下載"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.capture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "screen capture, recording → Screen Recording"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录屏、截屏、screen capture、recording → 屏幕录制"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "錄螢幕、截圖、screen capture、recording → 螢幕錄製"
+          }
+        }
+      }
+    },
     "settings.section.effects": {
       "extractionState": "manual",
       "localizations": {
