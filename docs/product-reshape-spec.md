@@ -93,7 +93,17 @@
 - **待验证**：integ2 签名构建的真机探针正在跑（涉及 O1、A1、R16、R20 `--window-classes`、R21 等本批改动的探针），结果回来之前以上全部只算「代码 ✅」，不算真机通过。
 - **not_run 及原因**：宿主负载 130–730 时探针会超时，那不算产品失败，所以负载高的时段没有硬跑；台前调度、程序坞自动隐藏、显示缩放三类需要改系统设置，只在 QA 虚拟机里试，本机不动。
 
+**第二十批（2026-10-17，ultracode 收尾 session）**：
+- **integ2 探针查清**：browser-more 两项 FAIL 与 wins「main focused」超时发生时宿主 HID 闲置 0 s（有人在用机器）；闲置时各重跑两次全过；dock-scenarios 三次中一次 FAIL（右键后预览没再出现）、两次全过，记偶发。不是回归。
+- **R20**：推测性 AXSystemDialog 窄规则（d69547b）决定不收——少列会藏掉真对话框；`--window-classes` 把 Word 式搜索条记成 knownOpen（8f5dc31）。
+- **1.0.17 精简落地**（7c5775e／55cc917）：预览旗标 `WindowShade.Preview.WS2`（默认关），侧栏 8 页（效果、卷帘、刘海、手势、窗口浏览、快捷键、隐私、高级），刘海独立成页，C 类进「高级 → 实验」，设置键全保留，已开着的 WS2 开关照样露出；顺带修好「上次打开的设置页」错一位（存档编号回到 1.0.16 的 0–8，新页 9、10）。后续修正：第一次打开侧栏露出藏着的三页（516f33a）、刘海页并进来的两行勾选挤歪开关（9eb2220）、番茄钟下拉被拉成整行宽（a3d6b89）。
+- **B 类自动化**（各自 worktree、独立审查后收）：R18 `--launchpad-tiling`（245152a／1e2abad）、R23 `--finder-alias`（0c91e20／06bc589）、R29 诊断与无录屏直走普通收起（808560e／f841043）、R19／V10 台前调度先把临时 App 激活成当前舞台（2fa27e1）、V11／V8(b)(f) 虚拟机里临时改设置（4f43b2d／ef08c15，另修显示模式还原 3a674af、dock-scenarios 先等闲置 fa5e96f）、N1 检查脚本（35185e2）、E3 脚本定稿（f8f7bf2／0a41594，未录）、R24 硬切改省略号（b623f7a）与三语裁切提案（f0e7df3，待 Aaron 定）、PLCrashReporter 隐私清单核对（be71c5f：上游无必要理由 API）、zh-Hant「窗口瀏覽」→「視窗瀏覽」（2cf9897）、Phase 3 更新器虚拟机脚本（216c43a）。
+- **真机探针**（integ3 签名构建）：16 组＋2 组新探针全过（close-quit 4、window-classes 8、browser-identity 5、browser-more 5、dock-scenarios 8、wins 8、habits 2、fold-timing 2、restore-guard 4、fold-unminimizable 4、pins 5、grid 5、home 4、carry 7、capsule-color 3、orphan 3、launchpad-tiling 4、finder-alias 3），三语 `--settings-shots` 各 37 张。
+- **1.0.17 发布关**：Phase 0 门禁 1、2、3、4、5、8、8b、9、10 PASS，6／7b／7c 待发布日（appcast 要 Aaron 的 EdDSA 私钥签）；已公证、Gatekeeper `source=Notarized Developer ID`。Phase 2：macOS 26.6.2 六组全过（首次画面变化 138 ms、卷帘条 383 ms）；macOS 15.6.1 六组全过（233／448 ms，宿主同时在构建）。wsqa-15 之前没设自动登录（来宾停在登录窗），本轮在来宾里设好。证据：`.build/release-acceptance-2026-10-17/`。
+
 **进度（2026-10-17 07:30）**：89 条（扣冻结的 25 条 O／A）中 已完成 62、待真机／待 Aaron 22、剩余 5
+
+**进度（2026-10-17 第二十批后）**：<待主代理填>
 
 **Aaron 拍板（2026-10-17 第十八批后）**：
 - **R16** 新开「手势」页，按收起与展开／刘海／排布／窗口浏览四组；每行加「手指」一行，标题栏手势下带只读对照表；三指、四指轻点核对完再露出（之前不进手势页）。
@@ -634,6 +644,7 @@
 ---
 
 #### R13 · 崩溃上报
+- **2026-10-17 第二十批**：PLCrashReporter 1.12.0 上游清单无必要理由 API，App 清单不加项（be71c5f）。
 
 - **依据**：**WindowMizer 内嵌 PLCrashReporter**（`plcrash.CrashReport.*`、`com.plausiblelabs.crashreporter.data`），并收集 `hw.model`／`hw.logicalcpu_max`／`kern.osrelease`／`kern.osversion`。[production-maturity](production-maturity.md) 里我们那条「崩溃自愈与日志」**至今空白**。
 - **已定案（2026-10-15）：纯本地**——接崩溃上报（PLCrashReporter 现成且成熟），**报告只落本地、永不上网**；给用户的是**导出**，不是上传。
@@ -679,6 +690,7 @@
 - **改动**：**逐个核**它在 macOS 15+ 上会不会被系统平铺管到；**该加的加，不该加的别动**。这不是批量替换。
 - **核过，结论与规格相反（2026-10-16）**：独立小程序实测，系统「移动与调整大小 › 左」（`_zoomLeft:`）对 key 窗口一律生效——无边框、`.transient`、`canJoinAllSpaces`、**连带着 `.fullScreenDisallowsTiling` 的也照样被挪走**。所以「补齐这个开关」挡不住平铺，**不加**。我们的面板都靠自己 `setFrame` 移动，没有一处用系统拖动（`performDrag` 0 处），拖到屏幕边的平铺碰不到；剩下唯一的入口是我们自己的面板是 key 时按平铺快捷键。能成为 key、又没带开关的有：收起取画面时临时停焦点的 1×1 窗、启动台、CarPlay、刘海（验证或专注时）、卷轴概览、窗口浏览（键盘模式）。合成按键连对照组（普通窗口）都挪不动，自动验证不了。**待 Aaron（一分钟）**：打开启动台，按 fn＋Control＋←，看它会不会被挪到左半边；会的话再定怎么挡（截住那几个动作），不会就结案。
 - **探针（2026-10-17）**：`--launchpad-tiling`（`App/LaunchpadTilingProbe.swift`）往系统发真的合成键（fn＋Control＋←→↑↓／F／C），先对照临时 App 的参考窗是否被挪，再对启动台做同样的事；只有对照挪了才下 PASS／FAIL，对照没挪记 INFO inconclusive。**还没在真机上跑**，所以上面「待 Aaron」那一步仍有效。
+- **2026-10-17 第二十批**：合成键下 fn+Control+↑／↓ 能挪普通窗口、启动台不动（PASS）；←／→／F／C 合成键连普通窗口都挪不动，判 inconclusive——这四个仍要 Aaron 手按（保留原「待 Aaron」）。
 
 ---
 
@@ -692,6 +704,7 @@
 - **改动**：**先验收，后适配**。开台前调度，把已有探针重跑一遍：收起、窗口浏览、分屏、贴边、多屏各一条；把失败的记成问题再逐个修。**别一上来就写适配代码**——19 条里大部分是「系统缩放导致外框与捕获尺寸不一致」，一条尺度修正可能就解决多条。
 - **验收**：台前调度开着，上述五类各一条通过；关掉后行为不变。（2026-10-17 虚拟机里试过：探针的临时 App 窗口在台前调度下被收进缩略条，CG 外框 83×97 对辅助功能 640×452，探针进不了测试，五类 not_run；见 V 系列后面的「要改系统设置的验收」。）
 - **风险**：Rectangle 那条「功能被撤到 flag 后面」说明**这里的适配可能引入不稳**——所以每条适配都要能单独关掉。
+- **2026-10-17 第二十批**：台前调度开着时 macOS 26.6.2 虚拟机 fold-timing PASS（首次画面变化 962 ms），**restore-guard FAIL**：另一扇 18 s 内没收起（timeout: other folded after 18.0 s）——真发现，待适配，先不改行为。台前调度先把临时 App 激活成当前舞台（2fa27e1）。
 
 #### R20 · 窗口身份边界（orderOut／无标题浮层／静默退出／多实例）
 - **依据**：OmniWM「Windows that apps such as **Calendar close by ordering out instead of destroying** are now retired from the layout」；DockDoor「**Untitled** toolbar/overlay windows no longer get mistaken for real app windows」「Apps that quit **without a clean termination notice** no longer leave stale entries」「Closed windows from **separate instances** of the same app no longer linger」；**加上 OmniWM 那份 18 个窗口分类夹具**（含 PiP、Chrome 弹窗、**别的刘海 App 的浮层**、登录窗锁屏遮蔽、快速查看、Word 工具条）。
@@ -733,6 +746,7 @@
 - **改动**：先复现。列表视图的访达窗口收起再还原后四列宽度是否不变；双击桌面文件夹替身是否被当窗口动作。
 - **验收**：两条各验一次。
 - **部分 ✅（2026-10-16）**：列宽那一条——`--finder-columns`（签名构建）开一扇临时访达窗口、经访达自己的菜单切成列表，四列宽 351／181／97／121，收起再展开后完全一样；窗口用完关掉、临时文件夹删掉。**还没做**：「双击桌面上的文件夹替身被当成窗口动作」要真鼠标双击，合成事件验不了，待 Aaron。
+- **2026-10-17 第二十批**：`--finder-alias` 真机 PASS：双击文件夹替身（符号链接）在同一访达窗口打开，没被当成窗口动作（装着标题栏点击钩子）；真替身文件、桌面上的替身未覆盖。
 
 #### R24 · 多语言下的布局裁切
 - **2026-10-15 已量，待文案决定**：用 `--settings-shots` 加启动参数 `-WindowShade.InterfaceLanguage en|zh|zhHant` 渲染三种语言各 32 张（只覆盖这一个进程，不写偏好），锁屏下也能跑。设置页的副标题是单行、超宽就截断：
@@ -743,6 +757,7 @@
 - **现状**：英语适配在做（[BATCH27](handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)）；**布局在长语言下会不会裁切、格式化与读屏标签是否在范围内，都没验过**。
 - **改动**：**德语最长，最容易撑破**——按最长的那一门验；格式（数字/日期/时间）与**读屏标签**都要进范围，不只是文案。
 - **验收**：每种语言跑一遍设置窗口与常驻面，无裁切/溢出；数字、时间、读屏标签符合当地习惯。
+- **2026-10-17 第二十批**：逐页扫出 可见 8 页 简体 8、繁体 9、英文 5 处硬切＋13 处省略号；硬切已改成省略号（b623f7a）；缩短文案提案 `docs/handoff/R24-copy-proposal-2026-10-17.md`（f0e7df3）待 Aaron 在 A（只缩短句）／B（调预算＋缩短）／C（保留预算）里选。
 
 #### R25 · 多点触控按设备归属
 - **依据**：OmniWM「Raw multitouch ownership is **isolated per physical device**, preventing a built-in trackpad and an external trackpad from overwriting or ending each other's gestures」；以及「**Missing final lift frames** recover after a stale gap so later gestures are **not permanently blocked**」。
@@ -785,6 +800,7 @@
 - **验收**：缺权限时，清单里承诺可用的每一项**确实可用**；提示只出现一次；清单能直接被引用回答「凭什么要录屏」。
 - **风险**：**不要为了「能降级」而把实时画面退化成假的**——降级要说清楚，不是假装。
 - **✅ 2026-10-15 代码核对（真机 not_run：这台 Mac 收回屏幕录制属于改系统安全设置，要 Aaron 在另一账户或另一台机器上跑）**。全仓 `hasScreenRecordingPermission()`／`CGPreflightScreenCaptureAccess()` 闸门逐处过了一遍，缺权限时：
+- **2026-10-17 第二十批**：源码诊断——展开路径没丢原位，收起前窗口已被铺满（标题栏双击判定超时放行给 App，或三击铺满）；加两行日志分辨；没有录屏时收起直接走普通收起。下次虚拟机重跑看 `>>> shade … frame=`、`titlebar-tap: decision timed out`。
 
   | 功能 | 没有屏幕录制时 | 依据 |
   | --- | --- | --- |
@@ -1088,10 +1104,10 @@
 | **V5** | **真三指 / 真触控板**（甩一下、卷轴跟手） | scorecard「真三指没人上手试过」「真触控板没人试」 | 拿真手指跑 |
 | **V6** | **Magic Mouse / 罗技滚轮** | scorecard「Magic Mouse、罗技滚轮没人上手试过」 | 各跑一遍 |
 | **V7** | **部分（2026-10-17）**：模拟器已下载并能起；确认 Slide Over 只在设置「全萤幕 App」模式下有、Dock 图标拖到边缘进入，侧拉一侧常量已查实；**iPadOS 一侧像素测量 not_run**（机器负载约 400，拖拽手势注入失败），复测办法与并排表见 [v7-slide-over-compare.md](v7-slide-over-compare.md) ｜ **侧拉的像素级比对** | 需要 iPadOS 27 模拟器（已就绪：WS-V7-iPadPro11） | 比对完成或明确记 not_run |
-| **V8** | **DockDoor 那 12 条场景上机**（窗口浏览，**唯一落后的一行**） | [competitive-analysis.md](competitive-analysis.md):33 已列，未上机 | 逐条跑过 |
+| **V8** | **DockDoor 那 12 条场景上机**（窗口浏览，**唯一落后的一行**） | [competitive-analysis.md](competitive-analysis.md):33 已列，未上机 | 逐条跑过 **2026-10-17 第二十批**：(b) 自动隐藏这次因来宾闲置计时被设置改动清零而 SKIP，已修脚本（fa5e96f），待重跑；虚拟机里临时改设置（4f43b2d／ef08c15）。 |
 | **V9** | **部分（2026-10-16）**：「接着两块」那一类——本机内建屏 ＋ Studio Display，`--second-display`（签名构建）把临时窗挪到 Studio Display 收起：卷帘条落在同一块屏、收起记下的是那块屏、展开后窗口回到那块屏，三项 PASS。插拔、改分辨率、两块同型号要真手或另一块屏，待 Aaron。原文：**多显示器矩阵**：接一块／拔掉／改分辨率／**两块同型号** | WindowMizer 三条（crash on display change、wrong monitor's snapshot、**monitors share the same size and resolution**）；四家都用 UUID | 四类各一条 |
-| **V10** | **台前调度**（与 R19 配套） | 见 R19 | 五类各一条 |
-| **V11** | **图标在异常分辨率/缩放下不变形** | LaunchOS **两次**修这个：v2.1.0「app icons would display **abnormally at different resolutions**」、v2.1.3「icons could appear **enlarged**」。我们窗口浏览有 `placeholderIcon`（`WindowBrowserCardView.swift:41`）、启动台按 `backingScaleFactor` 取图，**但没在异常缩放档下验过** | 换缩放档/分辨率后两处图标都正常；取不到真图标时**有确定性的兜底**（不留空白、不留错图） |
+| **V10** | **台前调度**（与 R19 配套） | 见 R19 | 五类各一条 **2026-10-17 第二十批**：台前调度开着时 macOS 26.6.2 虚拟机 fold-timing PASS（首次画面变化 962 ms），restore-guard FAIL（另一扇 18 s 内没收起），见 R19；调度先激活临时 App（2fa27e1）。 |
+| **V11** | **图标在异常分辨率/缩放下不变形** | LaunchOS **两次**修这个：v2.1.0「app icons would display **abnormally at different resolutions**」、v2.1.3「icons could appear **enlarged**」。我们窗口浏览有 `placeholderIcon`（`WindowBrowserCardView.swift:41`）、启动台按 `backingScaleFactor` 取图，**但没在异常缩放档下验过** | 换缩放档/分辨率后两处图标都正常；取不到真图标时**有确定性的兜底**（不留空白、不留错图） **2026-10-17 第二十批**：显示模式 1280x800@1 下 fold-timing PASS，launchpad「did not show」FAIL（待查是缩放还是环境）；还原时记下的 1280x800@2 不在可选列表，已改成退回永久配置（3a674af）。 |
 
 #### 2026-10-16/17 · 要改系统设置的验收，只在 QA 虚拟机里做（Aaron 2026-10-17 同意：只动虚拟机，不动本机）
 
@@ -1173,7 +1189,7 @@
 | --- | --- | --- |
 | **E1** | **✅ 2026-10-15**：`scripts/energy-profile.sh`；本机（Mac17,4、macOS 27.0.1、build 16 签名构建）静置 CPU **0.10%**（3×60 秒中位数）。原文：**把 60 秒静置实测做成例行项**（每版必跑，数字进 [scorecard](scorecard.md)）。口径固定：无操作、无手势、屏幕不锁不灭、同一台机、**跑三次取中位**。**做成脚本，不是手抄的仪式**——照 OmniWM `Scripts/energy-profile.sh` 的形状 | 每次发版有一行数字，可跨版本对比 |
 | **E2** | **✅ 2026-10-15（口径已清）**：同一次测量里 phys_footprint **54 MB**、RSS 125–153 MB；以前的「约 100 MB」是 RSS 一类的数。Wins 自称的「<30 MB」口径未知，不能直接比。原文：**查清内存口径再对比**：先量清我们的 physical footprint 与 RSS，分「空载」与「开了窗口浏览＋几个常驻面」两种状态；再去查 Wins 那 30 MB 的确切含义。**现在这一行是 100 MB vs 它自称的 30 MB，口径不一致就不能下结论** | 一张同口径对照表；不引用对不上的数字 |
-| **E3** | **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 |
+| **E3** | **一次可比的长会话卡顿对比**（对 1.0.15）：同样的窗口数、同样的手势序列，记帧时间分布 | 帧时间分布 + 结论 **2026-10-17 第二十批**：脚本定稿未录（f8f7bf2／0a41594）。 |
 | **E4** | **✅ 2026-10-15（bf73aad）**：两处都设了 10% 容差；窗口浏览那个只在面板开着时跑，**不是常驻**。原文：**补两处 `tolerance`**：`App/ScrollStripRun.swift:148`（0.5s）、`WindowBrowser/WindowBrowserController.swift:1320`（0.6s，**同时核它是否常驻**——若是，空闲时仍有 1.7 Hz 唤醒） | 改动 + 静置数字不劣化 |
 | **E5** | **✅ 2026-10-15**：排队中的请求本来就能取消（每个任务开跑前 `demand.execution.begin()`，过时就跳过；每个 App 只一个在途）。真正的缺口是窗口浏览没接熔断：现在问之前看 `AXStallBreaker`，开着就报失败（旧条目保留、标待刷新），问完把耗时记进熔断——卡住的 App 之后 4 秒内收起、救援、窗口浏览都直接跳过它。原文：**AX 请求可取消**（AeroSpace 那条我们只做了一半：有按 App 队列、有逐调用 timeout、有按调用熔断，**没有可取消**） | 一个 App 卡住时，排队中的请求能取消，不吃满 timeout |
 | **E6** | **✅ 2026-10-16（877ca09）**：签名构建：`--switch-cpu` 两个 App 之间切 20 次，我们比静置多花的 CPU ≈ 0（静置 8 秒 48.9 ms，切换期间 29.3 ms）；`--idle-first-op` 静置 5 分钟后第一次收起，卷帘条 448 ms，暖的中位数 442 ms（+6 ms）。原文：核 Ice 那两条：**切 App 时菜单栏面 CPU**、**长时间空闲后第一次操作的迟滞** | 各一条探针 |
@@ -1195,7 +1211,7 @@
 
 | 编号 | 动作 | 验收 |
 | --- | --- | --- |
-| **N1** | **App Intents（已定案：最小切口）**：**先做 5–8 个最常用动作**（收起／全部收进刘海／打开窗口浏览／恢复全部／切到某扇窗…），**不铺满**。**这一条改写「扩展面」那一行的结论**——Apple 的原生答案，免费得到快捷指令／Spotlight／Siri，不必自造 CLI 或 URL scheme。**Intent 是用户可见的公开契约，先按[固定词汇表](copy-guide.md)定名再实现** | 快捷指令里能搜到、能跑通、能串成自动化；Spotlight 能搜到 |
+| **N1** | **App Intents（已定案：最小切口）**：**先做 5–8 个最常用动作**（收起／全部收进刘海／打开窗口浏览／恢复全部／切到某扇窗…），**不铺满**。**这一条改写「扩展面」那一行的结论**——Apple 的原生答案，免费得到快捷指令／Spotlight／Siri，不必自造 CLI 或 URL scheme。**Intent 是用户可见的公开契约，先按[固定词汇表](copy-guide.md)定名再实现** | 快捷指令里能搜到、能跑通、能串成自动化；Spotlight 能搜到 **2026-10-17 第二十批**：自动检查 PASS（7 个动作、三语标题与说明齐全、与源码一致，35185e2）；「快捷指令」App 里搜得到仍要看界面（computer-use 待 Aaron 不在时做）。 |
 | **N2** | **`os.Logger`**：面向系统的诊断（启动、权限、通道体检、自愈）走统一记录，带 `subsystem` ＋ `category`；**涉及用户数据的字段标 `privacy:`，与隐私登记（[privacy-page.md](privacy-page.md)）逐条对齐**。文件日志保留（探针依赖它） | `log stream --predicate 'subsystem == …'` 看得到关键路径；隐私字段默认 `<private>` |
 | **N3** | **✅ 2026-10-15（c6f8dac）**：收起与窗口浏览两条已加；真机上 `--notch` 期间收起 4 开 4 合（2 folded、2 abandoned），`--browser-more` 期间会话 begin → 各阶段事件 → end(closed)。原文：**`OSSignposter`**：先给**折叠**与**窗口浏览**两条关键路径加区间与事件，让性能工作在 Instruments 里可见。E／H 系列的量测统一走这条 | Instruments 的 os_signpost 轨道能看到阶段划分；一次折叠的耗时分解可读 |
 | **N4** | **✅ 2026-10-16（3d67442、d73496a）**：外设电量（2 分钟）与 AirPods 电量（10 分钟）两条周期刷新改走 `NSBackgroundActivityScheduler`（`Support/MaintenanceTimer.swift`）。**更正规格**：`Updater.swift:137` 的 10 秒不是更新检查，是装后自查——被推迟会让看护 60 秒后当成卡住换回，必须留在计时器；定期查更新由 Sparkle 自己调度。其余重复计时器都是界面开着才跑或延迟敏感。**实测**：系统调度一开始会立刻跑一次、间隔可能拉到近两倍（60 秒档出现 115 秒）；已跳过立刻那一次，重测 77、144 秒。原文：**`NSBackgroundActivityScheduler`**：非延迟敏感的周期工作改走它（**更新检查** `App/Updater.swift:137` 的 10s 等）。**延迟敏感的不换**——R1 那个 5 秒通道体检必须保持 `Timer` | 功能行为不变；低电量下由系统自然推迟 |
