@@ -188,7 +188,12 @@ import Cocoa
             let head = String(subtitle[..<range.upperBound])
             if head.count <= 16 { return head }
         }
-        return String(subtitle.prefix(16))
+        return cutAtBudget(subtitle)
+    }
+
+    /// 兜底截到 16 字：被截就以省略号收尾，不留半个字（规格 R24）；全文仍在 ⓘ 与 tooltip 里。
+    nonisolated private static func cutAtBudget(_ text: String) -> String {
+        text.count <= 16 ? text : String(text.prefix(16)) + "…"
     }
 
     /// 英文一行里放得下的字符量级（第27批）。值以渲染实测校准（见本批证据），
@@ -212,7 +217,7 @@ import Cocoa
         case .zhHant:
             let shown = subtitle.shown
             if let mapped = shortHant[shown] { return mapped }
-            return shown.count <= 16 ? shown : String(shown.prefix(16))
+            return cutAtBudget(shown)
         default:
             return line(subtitle.zh)
         }
