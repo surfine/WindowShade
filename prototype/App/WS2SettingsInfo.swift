@@ -407,8 +407,10 @@ import Cocoa
     /// 设置行左侧：圆角色块里的符号（有才放）、名字、至多一行副标题，说不完的进 info.circle。
     /// 跟着枚举留在主线程：这里建的是 AppKit 视图。调用方都是主线程类型。
     static func content(name: String?, subtitle: String?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
-        content(name: name, subtitle: subtitle, shownLine: subtitle.map { line($0) },
-                symbol: symbol ?? name.flatMap { Self.symbol(for: $0) })
+        let built = content(name: name, subtitle: subtitle, shownLine: subtitle.map { line($0) },
+                            symbol: symbol ?? name.flatMap { Self.symbol(for: $0) })
+        SettingsSearchRegistry.register(built.view, name: name, subtitle: subtitle)
+        return built
     }
 
     /// 行内一句状态 + ⓘ 里另给一段解释的行（鼠标与触控板、遥控器页）：行内显示短句，
@@ -424,15 +426,19 @@ import Cocoa
             built.view.addArrangedSubview(WS2SettingsInfoButton(text: detail.shown, name: caption))
             WS2SettingsCopy.pinInfoTrailing(built.view)
         }
+        SettingsSearchRegistry.register(built.view, name: name, subtitle: subtitle)
         return built.view
     }
 
     /// 迁移过的行（第27批）：zh 是语义身份——图标按它查；显示文本与短副标题走当前语言。
     /// zh 模式下与本文件里的 String 版逐字节同输出（line 的 zh 分支就是老路径）。
     static func content(name: SettingsText?, subtitle: SettingsText?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
-        content(name: name?.shown, subtitle: subtitle?.shown,
-                shownLine: subtitle.map { line($0) },
-                symbol: symbol ?? name.flatMap { Self.symbol(for: $0.zh) })
+        let built = content(name: name?.shown, subtitle: subtitle?.shown,
+                            shownLine: subtitle.map { line($0) },
+                            symbol: symbol ?? name.flatMap { Self.symbol(for: $0.zh) })
+        // 设置搜索的行文字牌（App/SettingsSearchIndex.swift）：所有行构造器都经过这里。
+        SettingsSearchRegistry.register(built.view, name: name, subtitle: subtitle)
+        return built
     }
 
     static func content(name: String?, subtitle: String?, shownLine: String?, symbol: String?) -> (view: NSStackView, detail: NSTextField?) {
