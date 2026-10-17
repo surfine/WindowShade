@@ -127,3 +127,35 @@ struct WindowBrowserDetectionCoordinator {
         latestPointerRequestID = 0
     }
 }
+
+/// 指针离开 Dock 那一下的处理（规格 V8）。
+///
+/// 回退检测只在 Dock 附近做命中，离开 Dock 的那一下原本什么都不做，观察器手里的目标
+/// 只能等 Dock 自己再发一次“选中项变了”的辅助功能通知来清。Dock 弹过它的菜单
+/// （右键、长按）再按 Esc 关掉之后，这条通知常常在指针还停在图标上时就发完了，
+/// 指针离开时不再补发：目标一直留着，回到同一个图标时“目标没变”不再投递，
+/// 控制器的“让开 Dock 菜单”也一直解不开——预览再也不出来。
+enum DockHoverLeavePolicy {
+    enum Verdict: Equatable {
+        /// 立刻清掉目标。
+        case clearNow
+        /// 先等一会儿再复检（指针还在 Dock 条带里，可能只是图标之间的抖动）。
+        case recheckLater
+    }
+
+    /// 检测来源名：离开 Dock 那一下补的一次检测。
+    static let leaveSource = "pointer-left-dock"
+
+    /// 这一下从 Dock 附近移出去了、手里还有目标：补一次检测（不受节流限制）。
+    static func needsLeaveCheck(wasNear: Bool, isNear: Bool, hasTarget: Bool) -> Bool {
+        wasNear && !isNear && hasTarget
+    }
+
+    /// 检测没确认指针还在目标图标上时怎么办。离开那一下补的检测直接清：指针已经不在
+    /// Dock 条带里，没有图标之间的抖动可等，宽限期后的复检也只在 Dock 附近才跑。
+    static func verdictWhenUnconfirmed(source: String, secondsSinceResolved: TimeInterval,
+                                       grace: TimeInterval) -> Verdict {
+        if source == leaveSource { return .clearNow }
+        return secondsSinceResolved > grace ? .clearNow : .recheckLater
+    }
+}

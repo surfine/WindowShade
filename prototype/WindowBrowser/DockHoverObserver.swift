@@ -65,6 +65,8 @@ struct DockHoverTarget: Equatable {
     private var lastResolvedAt: CFAbsoluteTime = 0
     private var lastDockLivenessCheck: CFAbsoluteTime = 0
     private var lastPointerCocoa: NSPoint?
+    /// 上一次指针移动是不是在 Dock 附近：用来认出“离开 Dock 的那一下”。
+    private var pointerWasNearDock = false
     private var staleCheckWork: DispatchWorkItem?
     private var target: DockHoverTarget?
     private var generation: UInt64 = 1
@@ -110,6 +112,7 @@ struct DockHoverTarget: Equatable {
         removeWorkspaceObservers()
         removeScreenObserver()
         target = nil
+        pointerWasNearDock = false
         dockListElements = []
         dockElement = nil
         dockPID = 0
@@ -305,7 +308,8 @@ struct DockHoverTarget: Equatable {
             return
         }
         verifyDockInstanceIfNeeded()
-        staleCheckOrClear(reason: resolved == nil ? "no-app-item" : "pointer-moved")
+        staleCheckOrClear(reason: resolved == nil ? "no-app-item" : "pointer-moved",
+                          source: request.source)
     }
 
     /// 指针明明在 Dock 条带里、却解析不出任何应用项时，先确认观察的还是当前那个 Dock。
@@ -477,9 +481,19 @@ struct DockHoverTarget: Equatable {
         guard running else { return }
         lastPointerCocoa = mouse
         // 只在候选区域（Dock 条带或该屏的真实边缘带）做命中检测。
-        // 不在这里清除目标：鼠标位于图标与面板之间的过渡区域时，面板是否隐藏
-        // 由控制器结合面板矩形判断，观察器不能把中间区域误判成离开。
-        guard mouseIsNearDock(mouse) else { return }
+        // 不在这里直接清除目标：鼠标位于图标与面板之间的过渡区域时，面板是否隐藏
+        // 由控制器结合面板矩形判断（清目标只会排一次带面板矩形核对的隐藏）。
+        let near = mouseIsNearDock(mouse)
+        defer { pointerWasNearDock = near }
+        guard near else {
+            // 离开 Dock 的那一下补一次检测：不等 Dock 再发通知（Dock 菜单关掉后常常不发）。
+            if DockHoverLeavePolicy.needsLeaveCheck(wasNear: pointerWasNearDock, isNear: false,
+                                                    hasTarget: target != nil) {
+                requestDetection(at: mouse, source: DockHoverLeavePolicy.leaveSource,
+                                 pointerDriven: true)
+            }
+            return
+        }
         let now = CFAbsoluteTimeGetCurrent()
         guard now - lastHitTestAt >= Limits.hitTestInterval else { return }
         lastHitTestAt = now
@@ -488,17 +502,20 @@ struct DockHoverTarget: Equatable {
 
     /// 指针停在 Dock 上但不在任何应用图标上时，不能因为“不再移动”就保留旧目标。
     /// 超过宽限期立即清除；否则安排一次延迟复检（使用最后一次指针位置）。
-    private func staleCheckOrClear(reason: String) {
+    private func staleCheckOrClear(reason: String, source: String) {
         guard target != nil else {
             staleCheckWork?.cancel()
             staleCheckWork = nil
             return
         }
-        if CFAbsoluteTimeGetCurrent() - lastResolvedAt > 0.4 {
-            clear(reason: reason)
-            return
+        switch DockHoverLeavePolicy.verdictWhenUnconfirmed(
+            source: source, secondsSinceResolved: CFAbsoluteTimeGetCurrent() - lastResolvedAt,
+            grace: 0.4) {
+        case .clearNow:
+            clear(reason: source == DockHoverLeavePolicy.leaveSource ? "pointer-left-dock" : reason)
+        case .recheckLater:
+            scheduleStaleCheck(after: 0.45)
         }
-        scheduleStaleCheck(after: 0.45)
     }
 
     private func scheduleStaleCheck(after delay: TimeInterval) {
