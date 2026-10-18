@@ -18,6 +18,7 @@ for (const f of frames.map(Number)) {
     imageFormat: "jpeg",
     jpegQuality: quality,
     scale,
+    chromiumOptions: { gl: "angle" },
   });
   process.stdout.write(`${f} `);
 }

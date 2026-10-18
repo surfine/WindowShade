@@ -32,6 +32,8 @@ node scripts/stills.mjs <目录> 150 1300 2300                                  
 
 渲染按 480 帧一段进行，临时文件用完就删，最后无损拼接再配上音轨。
 
+渲染走 Chrome 的 ANGLE/Metal 后端（`chromiumOptions: { gl: "angle" }`）：同一段 4K（四张毛玻璃卡、120 帧）实测 63.7s → 18.7s，x264 参数与文件大小不变，整段 PSNR 51.8 dB / SSIM 0.9988。VideoToolbox 硬件编码反而更慢（43.9s）且体积翻倍，不采用。基准脚本见 `scripts/bench-gpu.mjs`。
+
 文案按 [`docs/copy-guide.md`](../docs/copy-guide.md) 写：动作叫“收起窗口 / 展开窗口”，收起后留下的那条叫“卷帘条”，手势动作名和应用里的提示浮窗一致。
 
 改画面时，收起、卷帘条、刘海以 [`docs/design-drafts/`](../docs/design-drafts/README.md) 为准，不沿用现在画出来的尺寸。刘海展开下鼓（设计别名「半岛」）对齐 [一颗岛](../docs/design-drafts/一颗岛.html)：贴传感器、无额头、矮/高两档避开临界高度；界面仍叫展开，不叫灵动岛。本轮只校正说明与对稿，不重写整条时间线。

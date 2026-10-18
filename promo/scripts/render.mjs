@@ -31,6 +31,12 @@ for (let from = 0; from < composition.durationInFrames; from += CHUNK) {
     pixelFormat: "yuv420p",
     muted: true,
     scale,
+    // Chrome on Metal via ANGLE. Measured on the four-blurred-card stretch of the 1.0.18
+    // film (4K, 120 frames): 63.7s -> 18.7s (3.4x) with x264 crf 16 unchanged and the same
+    // file size; whole-segment PSNR 51.8 dB / SSIM 0.9988 vs the CPU renderer. VideoToolbox
+    // (hardwareAcceleration) was slower than this path (43.9s) and doubled the bitrate.
+    // If a machine without Metal ever renders black frames, drop this option.
+    chromiumOptions: { gl: "angle" },
     frameRange: [from, to],
     outputLocation: file + ".tmp.mp4",
     concurrency: 8,
