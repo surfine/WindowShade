@@ -47,6 +47,12 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
 **2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目草稿在 docs/releases/appcast-item-1.0.17.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
 
+### 默认值翻开与 DMG（1.0.18）
+
+1.0.18 起一批功能默认开（[v1.0.18-defaults.md](docs/releases/v1.0.18-defaults.md)：`ReleaseDefaults.Entry` 多了 `ownerDecided`，「验过的、或 Aaron 拍板的，才默认开」）；
+首次下载改用 DMG（`scripts/make-dmg.sh`，Release 页挂 DMG；Sparkle 更新照旧用 zip）。
+**2026-10-18 候选源码已改好**（版本号 1.0.18／18、appcast 条目草稿在 docs/releases/appcast-item-1.0.18.xml、发布说明草稿；README 与官网的下载版数字等发布日一起改）；剩下的步骤见 [1.0.18 发布关 runbook](docs/releases/v1.0.18-release-gate.md)。
+
 ## 模块结构
 
 ```text

@@ -1,0 +1,22 @@
+<!-- 1.0.18 的 appcast 条目草稿（不在 site/public，免得被站点部署带上线）。
+     发布日：把下面整段（含 TODO 注释以外的 <item>）插进 site/public/appcast.xml 的 1.0.17 条目之前，
+     填好 url、length、sparkle:edSignature、pubDate，然后用 sign_update 重新签整份清单（文件末尾的签名块）。 -->
+    <!-- TODO(发布日)：url、length、sparkle:edSignature 三处写着 TODO 的地方，
+         等 Developer ID 签名＋公证后的 zip 出来，用 sign_update 签完再填；整份清单改完要重新签（文件末尾的签名块）。
+         pubDate 也按实际发布时间改。没填完之前不要部署。 -->
+    <item>
+      <title>1.0.18</title>
+      <pubDate>Sat, 18 Oct 2026 12:00:00 +0000</pubDate>
+      <sparkle:version>18</sparkle:version>
+      <sparkle:shortVersionString>1.0.18</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <!-- 1.0.16 及以前是开发证书签的（Team FVGLY6W6S4），1.0.17 起是 Developer ID（Team DQ45KFVHJ8）；
+           build 17 以下仍只弹提示并给下载页（docs/update.md「换证书的一版」），17 及以上一键更新。 -->
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.18</link>
+      <description><![CDATA[TODO(发布日)：用 docs/releases/v1.0.18.md 的「一句话摘要」。]]></description>
+      <enclosure url="TODO" length="TODO" type="application/octet-stream" sparkle:edSignature="TODO"></enclosure>
+    </item>
