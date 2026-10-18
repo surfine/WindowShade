@@ -192,7 +192,7 @@ export const sfx = (): Sfx[] => {
   add("NotchDemo", NOTCH_DEMO.flick + 16, "arm", 0.85);
   add("NotchDemo", NOTCH_DEMO.fly, "whoosh", 0.7);
   add("NotchDemo", NOTCH_DEMO.arrive, "pop", 0.5);
-  add("NotchDemo", NOTCH_DEMO.notice + 12, "chime", 0.5);
+  add("NotchDemo", NOTCH_DEMO.notice + 12, "pop", 0.45, 1.15);
   add("NotchDemo", NOTCH_DEMO.click, "click", 0.9);
   add("NotchDemo", NOTCH_DEMO.returnFly, "whoosh", 0.6);
   add("NotchDemo", NOTCH_DEMO.unroll, "rollDown", 0.8);
@@ -201,7 +201,7 @@ export const sfx = (): Sfx[] => {
   add("Version1018", V1018.rollDown, "rollDown", 0.8);
   add("Version1018", V1018.caption1Out, "whoosh", 0.45);
   V1018.chips.forEach((f, i) => add("Version1018", f, "pop", 0.5, 1 + i * 0.06));
-  add("Version1018", V1018.caption2, "chime", 0.5);
+  add("Version1018", V1018.caption2, "thock", 0.6);
 
   MORE.cards.forEach((f, i) => add("More", f, "pop", 0.5, 1 + i * 0.08));
   MORE.keys.forEach((f) => {
