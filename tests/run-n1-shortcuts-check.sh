@@ -1,7 +1,7 @@
 #!/bin/bash
 # 规格 N1：快捷指令动作的自动检查（不需要人、不动鼠标、不开窗口、不改系统）。
 #   bash tests/run-n1-shortcuts-check.sh [WindowShade.app 路径] [--registered]
-# (a) 读包里的 Metadata.appintents：恰好 7 个可发现动作，且每个的标题／说明在 en／zh-Hans／zh-Hant 都有、不为空；
+# (a) 读包里的 Metadata.appintents：恰好 8 个可发现动作，且每个的标题／说明在 en／zh-Hans／zh-Hant 都有、不为空；
 #     并和源码 prototype/App/WindowShadeIntents.swift 里的 AppIntent 结构体逐个对上。
 # (b) 只读查系统快捷指令的动作索引（~/Library/Shortcuts/ToolKit/Tools-active，复制到临时目录再查）：
 #     这个包的 bundle id 下登记了几个动作。默认只报告（INFO/SKIP）；加 --registered 时没登记就算 FAIL。
