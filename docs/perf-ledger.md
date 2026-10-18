@@ -9,3 +9,4 @@
 
 | 日期 | 版本 (build) 提交 | 机器 | 刷新率 | 对照预算 | 各类 ratio/worst |
 | --- | --- | --- | --- | --- | --- |
+| 2026-10-18 | 1.0.18 (build 18) 752769708 | VM wsqa-manual · macOS 26.6.2 · 2 vCPU | 60 Hz | 超预算：browser-open（虚拟机仅 worst 判） | fold 402.3/326; unfold 606.1/350; browser-open 187.6/539; browser-close 87.9/204; glance-show 4.3/51; glance-hide 0.0/17 |
