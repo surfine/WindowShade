@@ -43,7 +43,9 @@ DICT_ENTRY_RE = re.compile(r'^\s*"[A-Za-z0-9_.]+":\s*"((?:[^"\\\n]|\\.)*)"')
 HEADLINE_LIMIT = 8
 SUBTITLE_LIMIT = 20
 EXCLUDED_PARTS = {"tests", "probes"}
-EXCLUDED_FILES = {os.path.join("prototype", "Effects", "EffectInspector.swift")}
+# SettingsSearchSynonyms.swift 收的是用户可能输入的说法（含不该用的说法，搜它要能找到正确的那一行），不是界面文案。
+EXCLUDED_FILES = {os.path.join("prototype", "Effects", "EffectInspector.swift"),
+                  os.path.join("prototype", "Core", "SettingsSearchSynonyms.swift")}
 
 
 def grapheme_count(text):
