@@ -51,7 +51,7 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 
 1.0.18 起一批功能默认开（[v1.0.18-defaults.md](docs/releases/v1.0.18-defaults.md)：`ReleaseDefaults.Entry` 多了 `ownerDecided`，「验过的、或 Aaron 拍板的，才默认开」）；
 首次下载改用 DMG（`scripts/make-dmg.sh`，Release 页挂 DMG；Sparkle 更新照旧用 zip）。
-**2026-10-18 候选源码已改好**（版本号 1.0.18／18、appcast 条目草稿在 docs/releases/appcast-item-1.0.18.xml、发布说明草稿；README 与官网的下载版数字等发布日一起改）；剩下的步骤见 [1.0.18 发布关 runbook](docs/releases/v1.0.18-release-gate.md)。
+**2026-10-18 已发布**（版本号 1.0.18／18，Developer ID 签名＋公证；zip 与 DMG 在 GitHub Release v1.0.18，appcast 已加 1.0.18 条目并重签；README 三份与官网下载版数字已改）。
 
 ## 模块结构
 

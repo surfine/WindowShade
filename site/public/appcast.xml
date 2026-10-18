@@ -7,6 +7,20 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <description>WindowShade 更新清单</description>
     <language>zh-Hans</language>
     <item>
+      <title>1.0.18</title>
+      <pubDate>Sun, 18 Oct 2026 06:00:00 +0000</pubDate>
+      <sparkle:version>18</sparkle:version>
+      <sparkle:shortVersionString>1.0.18</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.18</link>
+      <description><![CDATA[设置里每一页都带一段演示，指到哪一行就演哪一行，侧栏还能搜索；刘海、刘海里的实时活动、文件架、Dock 悬停查看窗口这一版起默认打开（自己改过开关的不动），升级后会告诉你新开了什么。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.18/WindowShade-v1.0.18.zip" length="9347836" type="application/octet-stream" sparkle:edSignature="N2TcJaO1F5g3FsqdIqg6Hjn/pUihlTvFtmhUnV3erJR1T/HVVZDQUfkqDuFaTYDEhx48jl8FDtXo62ES0btTAQ=="></enclosure>
+    </item>
+    <item>
       <title>1.0.17</title>
       <pubDate>Sat, 17 Oct 2026 15:24:34 +0000</pubDate>
       <sparkle:version>17</sparkle:version>
@@ -33,6 +47,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
   </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: KlmNXFoJiTy2NM3oU2WXDjvlD1BS8NQYA6ekVOUuCiIkQDrGi9G8bjbuS4Mef6XIq0B95gtQR99mA5jFAWB1Bg==
-length: 2647
+edSignature: X8RBxYhs+TIp3Er959qJZXWny28YBBkcOq+4Q3NKcJVOjaTO7wR/DphIUq3Sz0XJWgpno1CmqEflVfQ5mbYcAg==
+length: 3852
 -->

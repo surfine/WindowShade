@@ -32,7 +32,7 @@ export const copy = {
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
     video: '看介绍视频',
-    facts: ['macOS 15 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.17 · ZIP 10.65 MB'],
+    facts: ['macOS 15 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.18 · ZIP 9.35 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -230,7 +230,7 @@ export const copy = {
       ['刘海会换掉系统的音量和亮度提示吗？', '默认不会。在设置里打开“音量和亮度”，按这些键时刘海里才显示。之后想看回系统自己的提示，再打开“改回用系统的提示”：WindowShade 只旁听、不拦按键，系统的提示照常出现，刘海里也跟着显示。'],
       ['出了问题，怎么告诉你们？', '在“设置 → 高级 → 关于”里点“报告问题”。也可以先“导出诊断信息”：它只存在你的电脑上，不会上传，发不发给我们由你决定。同一处还能导出、导入设置，导入前会先留一份备份。'],
       ['所有窗口都能收起来吗？', '普通窗口都可以。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。'],
-      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包已通过 Apple 公证。从 1.0.16 及以前升级的人，这一版要手动下载一次，装好后重新打开辅助功能（开过屏幕录制的，也重新打开）。'],
+      ['怎么装？', '下载 DMG 打开，把 WindowShade.app 拖进“应用程序”；也可以下 ZIP 解压。安装包已通过 Apple 公证。从 1.0.17 升级在菜单里点“检查更新”就行；从 1.0.16 及以前升级要手动下载一次，装好后重新打开辅助功能（开过屏幕录制的，也重新打开）。'],
     ],
 
     endTitle: '下次窗口挤成一团，<br>先别急着关。',
@@ -253,7 +253,7 @@ export const copy = {
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
     video: 'Watch the intro (in Chinese)',
-    facts: ['macOS 15 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.17 · ZIP 10.65 MB'],
+    facts: ['macOS 15 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.18 · ZIP 9.35 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],
@@ -451,7 +451,7 @@ export const copy = {
       ['Does the notch replace the volume and brightness display?', 'Not by default. Turn on Volume & brightness in Settings and the notch shows them when you press those keys. If you’d rather keep the system’s own display, also turn on Use the System’s Volume and Brightness Pop-ups: WindowShade only listens, the keys go through, the system shows its own display and the notch follows along.'],
       ['Something’s wrong. How do I tell you?', 'In Settings → Advanced → About, click Report a Problem. You can also Export Diagnostics first: the file stays on your Mac, nothing is uploaded, and you decide whether to send it. The same place exports and imports settings; importing makes a backup first.'],
       ['Does it work with every window?', 'With regular windows, yes. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use.'],
-      ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is notarized by Apple. If you’re updating from 1.0.16 or earlier, download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on).'],
+      ['How do I install it?', 'Download the DMG, open it and drag WindowShade.app into Applications; a ZIP works too. The app is notarized by Apple. From 1.0.17, Check for Updates in the menu is enough; from 1.0.16 or earlier, download by hand once, then reopen Accessibility (and Screen Recording, if you had turned it on).'],
     ],
 
     endTitle: 'Next time windows pile up,<br>don’t close them just yet.',

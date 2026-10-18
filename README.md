@@ -42,7 +42,7 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releases/latest), open it, drag `WindowShade.app` onto Applications, then open it and follow the permission prompts. (The ZIP is the same app and is what in-app updates use.) It lives in the menu bar and stays out of your Dock.
 
 - **Needs macOS 15 or later and Apple Silicon.** There’s no Intel build.
-- **1.0.17 download:** 10.65 MB ZIP; the extracted app contains 27.48 MB of files (decimal MB; filesystem allocation may differ). It now includes on-device crash reporting, hence slightly bigger.
+- **1.0.18 download:** 9.35 MB ZIP, or a 10.42 MB DMG for a first install; the extracted app contains 20.97 MB of files (decimal MB; filesystem allocation may differ).
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
@@ -82,7 +82,7 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 ## Shortcuts
 
-Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.17 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
+Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.18 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
 
 | Shortcut (upgraded setups) | What it does |
 | --- | --- |
@@ -116,9 +116,9 @@ WindowShade changes one system setting: the Dock’s minimize effect. When it ne
 
 ## In development
 
-The current download is **1.0.17**. Everything described above is in it; this version also adds a three-step welcome, a “What WindowShade reads” privacy page, diagnostics export and settings export/import. [Release notes](docs/releases/v1.0.17.md)
+The current download is **1.0.18**. Everything described above is in it; this version adds a short demo to every Settings page, a searchable Settings sidebar and a new welcome, and turns on the notch, Live Activities in the notch, the file shelf and Dock window previews by default for anyone who never changed those switches. [Release notes](docs/releases/v1.0.18.md)
 
-What comes next is **WindowShade 2**: your Mac’s windows taking direction, and answering to the devices at hand. Part of it is already written and sits behind a preview switch in 1.0.17 — not shown in Settings and not running:
+What comes next is **WindowShade 2**: your Mac’s windows taking direction, and answering to the devices at hand. Part of it is already written and sits behind a preview switch in 1.0.18 — not shown in Settings and not running:
 
 - **Conductor mode and coding sessions** — the state and approvals of several coding sessions in one place.
 - **Remote control** — drive this Mac from an iPhone or similar device, including mute control.
