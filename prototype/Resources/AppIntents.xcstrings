@@ -330,6 +330,116 @@
           }
         }
       }
+    },
+    "intent.lock.title": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock Screen and Tuck Private Apps"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "锁屏并收起私人 App"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鎖屏並收起私人 App"
+          }
+        }
+      }
+    },
+    "intent.lock.description": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tucks your private windows into the notch, then locks the screen. Leave to Lock must be on."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先把这个 App 的私人窗口收进刘海，再锁屏。需要先打开「离开就锁」。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先把這個 App 的私人視窗收進瀏海，再鎖屏。需要先打開「離開就鎖」。"
+          }
+        }
+      }
+    },
+    "intent.error.presenceLockOff": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on Leave to Lock in WindowShade Settings first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先在 WindowShade 设置里打开「离开就锁」。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先在 WindowShade 設定裡打開「離開就鎖」。"
+          }
+        }
+      }
+    },
+    "intent.error.presenceLockNoDevice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a nearby device in WindowShade Settings first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先在 WindowShade 设置里选一台随身设备。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先在 WindowShade 設定裡選一台隨身裝置。"
+          }
+        }
+      }
+    },
+    "intent.error.presenceLockBusy": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A lock request is already in progress."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在锁屏，请稍等。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在鎖屏，請稍等。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

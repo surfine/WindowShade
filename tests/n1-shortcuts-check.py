@@ -3,7 +3,7 @@
 import json, os, plistlib, re, shutil, sqlite3, sys, tempfile
 
 app, require_reg, src = sys.argv[1], sys.argv[2] == "1", sys.argv[3]
-EXPECTED = 7
+EXPECTED = 8
 LOCALES = ["en", "zh-Hans", "zh-Hant"]
 fails = 0
 def out(kind, msg):

@@ -488,8 +488,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    func application(_ application: NSApplication, open urls: [URL]) { MainActor.assumeIsolated { _ = WS2URLHandler.shared.open(urls) } } // windowshade://lock（App/WS2URLHandler.swift）
-
     /// 更新下载、解包、把关的途中退出：先否决、确认 Sparkle 停了再放行（App/Updater.swift）；平时直接退出。
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         // 第七份：正常退出由运行时统一把关（更新器 + owned 助手；先收票据与界面，再放行）。

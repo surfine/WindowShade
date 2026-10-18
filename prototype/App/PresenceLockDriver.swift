@@ -26,7 +26,7 @@ enum PresenceScreenLock {
 /// 用同一个账本挑窗口，只是不在刘海里说「有人在看」——马上就锁屏了。
 /// 名单为空、刘海关着、没有辅助功能权限时什么都不做。
 /// 自己锁的那一次（带令牌）收进去的，解锁后只把这一次自己收的放回原处（`restore`）；
-/// windowshade://lock 来的锁不带令牌，不记账，也不放回。
+/// 捷径（App Intent）来的锁不带令牌，不记账，也不放回。
 @MainActor enum PresencePrivateTuck {
     private static var ledger = PresenceTuckLedger()
 
@@ -334,15 +334,15 @@ final class PresenceMediaControl: @unchecked Sendable {
         feed([.enable])
         recheck(hint: nil)
         source?.start(emit: { [weak self] events in self?.feed(events) })
-        // windowshade://lock 只在开着时认。
-        WS2URLHandler.shared.lockScreen = { [weak self] in self?.lockFromLink() }
+        // 「锁屏并收起私人 App」捷径只在开着时认。
+        WS2LockIntentBridge.shared.lockScreen = { [weak self] in self?.lockFromIntent() }
     }
 
     private func stop() {
         guard running else { return }
         feed([.disable])
         running = false
-        WS2URLHandler.shared.lockScreen = nil
+        WS2LockIntentBridge.shared.lockScreen = nil
         source?.stop()
         timer?.invalidate(); timer = nil
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
@@ -459,13 +459,13 @@ final class PresenceMediaControl: @unchecked Sendable {
         if !lockNow(token) { feed([.lockFailed(token)]) }
     }
 
-    /// windowshade://lock：先收私人 App，再锁屏。不经过 reducer 的请求，所以锁上后只记成手动锁，
+    /// 捷径「锁屏并收起私人 App」：先收私人 App，再锁屏。不经过 reducer 的请求，所以锁上后只记成手动锁，
     /// 不留「自己锁的」归属：回来不会自动解锁，也不会替你续播。
-    private func lockFromLink() {
+    private func lockFromIntent() {
         guard running else { return }
         let count = tuckPrivate(nil)
-        wlog("presence: lock from link, tucked \(count) private windows")
-        if !lockScreen() { wlog("presence: lock from link failed") }
+        wlog("presence: lock from intent, tucked \(count) private windows")
+        if !lockScreen() { wlog("presence: lock from intent failed") }
     }
 
     // MARK: 计时

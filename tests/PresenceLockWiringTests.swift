@@ -1,7 +1,7 @@
 import Foundation
 
 /// 离开就锁的接线（R07）：在场来源仍然没有，这里用 WS2AwaySimulation 和同形状的小循环驱动 reducer，
-/// 检查锁前动作的顺序、读屏节点、只续播自己暂停的那一个、windowshade://lock 的校验与归属。
+/// 检查锁前动作的顺序、读屏节点、只续播自己暂停的那一个、捷径锁屏的归属。
 @main
 struct PresenceLockWiringTests {
     /// 和 PresenceLockDriver 同形状：喂一批 → 跟踪阶段 → 翻成命令 → 记下动作。
@@ -122,27 +122,18 @@ struct PresenceLockWiringTests {
         let numeric = PresenceMediaLedger.nowPlaying(fromGetOutput: Data(#"{"bundleIdentifier":"a.b","playing":1}"#.utf8))
         t.expect(numeric?.playing == false, "playing 不是布尔值不当作在放")
 
-        t.section("W-07", "windowshade://lock：只认精确形状，只锁不解锁，不留归属；没开就不认")
+        t.section("W-07", "捷径「锁屏并收起私人 App」：没开不锁，锁一次，不留归属")
         var locks = 0
-        let handler = WS2URLHandler(now: { 10 })
-        t.expect(!handler.open(URL(string: "windowshade://lock")!), "离开就锁没开（没挂上锁屏）→ 不认")
-        handler.lockScreen = { locks += 1 }
-        for bad in ["windowshade://unlock", "windowshade://lock?x=1", "windowshade://lock/anything", "windowshade://u@lock",
-                    "windowshade://lock:12", "windowshade://lock#now", "windowshade://u:p@lock", "https://lock",
-                    "windowshade:lock", "windowshade://LOCK/x", "windowshade://"] {
-            t.expect(!handler.open(URL(string: bad)!), "拒绝 \(bad)")
-        }
-        t.expect(locks == 0, "非法形状一次都没锁")
-        t.expect(handler.open(URL(string: "windowshade://lock")!) && locks == 1, "精确形状 → 锁一次")
-        t.expect(handler.open(URL(string: "WindowShade://Lock/")!) && locks == 2, "大小写和结尾斜杠不影响")
-        t.expect(!handler.ownsLock, "锁上后不留任何归属：回来不会自动解锁")
-        t.expect(handler.open([URL(string: "windowshade://lock")!, URL(string: "windowshade://lock")!]) && locks == 3,
-                 "一次送来两条只锁一次")
-        t.expect(!handler.open([URL(string: "windowshade://unlock")!]) && locks == 3, "没有解锁这回事")
+        let bridge = WS2LockIntentBridge(now: { 10 })
+        t.expect(bridge.requestLock() == .notAvailable && locks == 0, "离开就锁没开（没挂上锁屏）→ 不做")
+        bridge.lockScreen = { locks += 1 }
+        t.expect(bridge.requestLock() == .locked && locks == 1, "挂上后请求一次 → 锁一次")
+        t.expect(!bridge.ownsLock, "锁上后不留任何归属：回来不会自动解锁")
+        t.expect(bridge.requestLock() == .locked && locks == 2, "再请求一次仍然只锁一次")
         var policy = WS2LockRequestPolicy()
-        let request = policy.begin(origin: .localLink, at: 1, id: UUID())
+        let request = policy.begin(origin: .manual, at: 1, id: UUID())
         policy.observedLocked(provedRequestID: request?.id, at: 2)
-        t.expect(policy.ownedLock == nil, "就算拿请求号去证明，链接来源也拿不到归属")
+        t.expect(policy.ownedLock == nil, "就算拿请求号去证明，捷径来源也拿不到归属")
 
         t.section("W-08", "合盖效果开着时先折再锁：0.35 秒，在锁屏回执期限之内")
         t.expect(PresenceLockGlue.foldLead == 0.35, "0.35 秒")
