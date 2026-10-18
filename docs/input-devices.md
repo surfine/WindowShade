@@ -6,9 +6,9 @@
 
 “之前的要求”指 9 月 25 日那句：“我希望给 Magic Mouse 和 Magic Trackpad 用户一点惊喜，手势可以更完备一些，当然你要避免误触。”
 
-- 设计稿（可交互）：[手边的每一样](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)；遥控器上遥控与指挥怎么合成一件事：[iPhone 上的遥控器](design-drafts/iPhone%20上的遥控器.html)（2026-10-08 定稿）
-- 给 DeepSeek 的提示词：[handoff/deepseek-input.md](handoff/deepseek-input.md)
-- 相关：[gestures.md](gestures.md)（已有的标题栏手势）、[conductor-v2.md](conductor-v2.md)（指挥模式）、[device-battery.md](device-battery.md)、[privacy-page.md](privacy-page.md)
+- 设计稿（可交互）：[手边的每一样](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)；遥控器上遥控与指挥怎么合成一件事：iPhone 上的遥控器（2026-10-08 定稿）
+- 给 DeepSeek 的提示词：handoff/deepseek-input.md
+- 相关：[gestures.md](gestures.md)（已有的标题栏手势）、conductor-v2.md（指挥模式）、[device-battery.md](device-battery.md)、[privacy-page.md](privacy-page.md)
 
 ## 一句话
 
@@ -128,7 +128,7 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 
 ### Siri 遥控器（实体，蓝牙连 Mac）
 
-遥控器上没有模式切换，只有层（Aaron 2026-10-08 定，四层和每个键的意思见 [iPhone 上的遥控器](design-drafts/iPhone%20上的遥控器.html)）：
+遥控器上没有模式切换，只有层（Aaron 2026-10-08 定，四层和每个键的意思见 iPhone 上的遥控器）：
 在刘海那一排里走动是遥控模式，点一下会话格走进去是指挥模式；返回退一层。下表左栏是第 0、1 层（连着、刘海那一排），右栏是第 2、3 层（会话里、选模型）。
 
 | 键 | 不变的意思 | 那一排（遥控模式） | 会话里（指挥模式） |
@@ -150,7 +150,7 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 
 ### iPhone 控制中心里的遥控器
 
-同上表的层和键的意思；按键少一个环，往下滑、左右滑、往上滑都在触控区上做。键位见 [iPhone 上的遥控器](design-drafts/iPhone%20上的遥控器.html) 与 [conductor-v2.md](conductor-v2.md)。协议层改为**优先用 Swift**：
+同上表的层和键的意思；按键少一个环，往下滑、左右滑、往上滑都在触控区上做。键位见 iPhone 上的遥控器 与 conductor-v2.md。协议层改为**优先用 Swift**：
 配对、加密、OPACK、TLV8、文字输入会话用 itsytv-core 的零件（MIT）从客户端反过来写服务端，atv-core 只当参考。这样不再需要 Rust 工具链。
 
 ### PS5 手柄（DualSense）

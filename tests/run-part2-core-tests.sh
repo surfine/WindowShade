@@ -13,4 +13,4 @@ mkdir -p "$BUILD"
   "$ROOT/prototype/Core/RemoteSessionGate.swift" \
   "$ROOT/prototype/Core/PresenceReadDeadline.swift" \
   "$ROOT/tests/Part2CoreTests.swift" -o "$BUILD/part2-core-tests"
-"$BUILD/part2-core-tests" "$ROOT/docs/handoff/chatgpt-review-2/part2/validation/codex-outbound.ndjson"
+"$BUILD/part2-core-tests" "$ROOT/tests/fixtures/codex-outbound.ndjson"

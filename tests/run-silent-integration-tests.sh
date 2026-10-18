@@ -15,7 +15,7 @@ status_r00() {
   python3 - << 'PY'
 import json
 from pathlib import Path
-data = json.loads(Path("docs/handoff/silent-v3/STATUS.json").read_text())
+data = json.loads(Path("tests/fixtures/silent-v3-STATUS.json").read_text())
 blob = json.dumps(data)
 for banned in ("hardware_pass", "qualified", "%"):
     if banned in blob:

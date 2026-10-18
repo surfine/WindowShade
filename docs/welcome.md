@@ -44,7 +44,7 @@ A1 的“跳过”直接到 T；A2 的“稍后再说”也进 T（算看过）�
 ## T：再看四样
 
 - 四段：**刘海**（收进刘海＋放回、刘海教你，两块各演一轮；段下面是“你之前常用哪个？”的一行可选单选——这个答案决定刘海教什么，
-  见 [stuck-habits.md](stuck-habits.md)）、**窗口浏览**（Dock 悬停）、**手势与卷轴**（两指滑＋魔法平铺）、**菜单栏**（没有 Dock 图标，收起的窗口和设置都在这里）。
+  见 stuck-habits.md）、**窗口浏览**（Dock 悬停）、**手势与卷轴**（两指滑＋魔法平铺）、**菜单栏**（没有 Dock 图标，收起的窗口和设置都在这里）。
 - 自己往下走：一块演完停 0.4 s 演下一块，最后一段演完停住。点分段、指针停在演示块上、按“继续”就停在自己走；
   减少动态效果时不自己走。
 - 跳过了授权时，菜单栏一段多一行“还没打开辅助功能，现在只能收起 WindowShade 自己的窗口。”
@@ -55,7 +55,7 @@ A1 的“跳过”直接到 T；A2 的“稍后再说”也进 T（算看过）�
 - `SwitcherOrigin.current`：`.windows` / `.ipad` / `.mac` / `.unanswered`。存在 UserDefaults 的 `SwitcherOrigin` 键里；
   没答就是没有这个键，认不出的值当没答。
 - `SwitcherOrigin.didChangeNotification`：答案真的变了才发，总在主线程发；`userInfo[SwitcherOrigin.previousKey]` 是原来的 rawValue。
-- 消费方：`HabitRules.rules(for:)` 按来处开哪几条卡住提示（[stuck-habits.md](stuck-habits.md)）、`DockClickHide`、`HabitContext`、讲解动画（`ExplainerScenes+Notch`）。
+- 消费方：`HabitRules.rules(for:)` 按来处开哪几条卡住提示（stuck-habits.md）、`DockClickHide`、`HabitContext`、讲解动画（`ExplainerScenes+Notch`）。
 - 单测：`tests/run-switcher-origin-tests.sh`、`tests/run-welcome-flow-tests.sh`（状态机纯逻辑）。
 
 ## 验证

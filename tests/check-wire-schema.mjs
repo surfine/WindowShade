@@ -7,7 +7,7 @@ import { createRequire } from 'node:module';
 
 const [, , repoArg, outboundArg, reportArg] = process.argv;
 const repo = path.resolve(repoArg);
-const root = path.join(repo, 'docs/handoff/reference/codex-app-server-schema-0.153.0/v2');
+const root = path.join(repo, 'tests/fixtures/codex-app-server-schema-0.153.0/v2');
 const names = {
   'thread/start': 'ThreadStartParams',
   'thread/resume': 'ThreadResumeParams',

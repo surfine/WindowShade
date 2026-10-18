@@ -1,7 +1,7 @@
 # 行为影子小样
 
 独立原生实验，不进主 App。不读取文字，不触发锁屏、拒绝登录或解锁。
-论文、算法取舍与学习条件见 [研究记录](../../docs/behavior-risk-research.md)。
+论文、算法取舍与学习条件见 研究记录。
 
 ```sh
 bash tools/behavior-lab/run.sh --capabilities

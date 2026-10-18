@@ -10,7 +10,7 @@ Double-click again and it’s back. Rest the pointer on the bar to glance at it 
 A free, open-source window utility for Mac.
 
 [![Release](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
-[![macOS](https://img.shields.io/badge/macOS-14%2B-303b49?style=flat-square)](#download)
+[![macOS](https://img.shields.io/badge/macOS-15%2B-303b49?style=flat-square)](#download)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#download)
 [![License](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
@@ -45,6 +45,7 @@ Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releas
 - **1.0.17 download:** 10.65 MB ZIP; the extracted app contains 27.48 MB of files (decimal MB; filesystem allocation may differ). It now includes on-device crash reporting, hence slightly bigger.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
+- **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
 - Every release ships with a SHA-256 checksum file; for what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
 
 ## What it does
@@ -149,7 +150,9 @@ Set `WINDOWSHADE_CODESIGN_IDENTITY` or use an untracked `prototype/local-codesig
 | [`docs/releases/`](docs/releases/) | Preserved release notes |
 | [`WindowShade.md`](WindowShade.md) | Original design rationale and research notes |
 
-For changes to window behavior, include the affected window type, what happened before and after, and the checks you ran.
+For changes to window behavior, include the affected window type, what happened before and after, and the checks you ran. The full rules are in [CONTRIBUTING.md](CONTRIBUTING.md); questions and ideas go to [Discussions](https://github.com/surfine/WindowShade/discussions).
+
+If WindowShade earns a place on your Mac, a ⭐ on GitHub helps other people find it.
 
 ## Credits and license
 

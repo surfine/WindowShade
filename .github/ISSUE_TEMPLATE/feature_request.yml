@@ -1,0 +1,20 @@
+name: Feature request / 功能建议
+description: Something you'd like WindowShade to do. / 希望 WindowShade 能做的事。
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do? / 你想做什么
+      description: Describe the moment it would help, not only the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How would you like it to work? / 你希望它怎么做
+  - type: textarea
+    id: others
+    attributes:
+      label: Other apps that do this / 其他软件的做法
+      description: Optional. A screenshot or link helps.

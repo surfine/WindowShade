@@ -5,7 +5,7 @@
 这是 [face-unlock.md](face-unlock.md) 里 F1（蓝牙第二因素）和 F6（离开就锁）的具体做法。
 
 - 设计稿：[离开就锁](https://claude.ai/artifact/BPmRiSF26X44bpUqFMAZjs)
-- 给 DeepSeek 的提示词：[handoff/deepseek-dynamic-lock.md](handoff/deepseek-dynamic-lock.md)
+- 给 DeepSeek 的提示词：handoff/deepseek-dynamic-lock.md
 
 ## 读到的
 

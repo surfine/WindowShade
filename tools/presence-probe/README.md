@@ -1,7 +1,7 @@
 # 在场探针与离位策略小样
 
 独立原生实验，不进入主 App、不锁屏、不认证本人，不使用麦克风或健康数据。
-设计、论文与恢复边界见 [使用者边界](../../docs/authentication-boundaries.md)。
+设计、论文与恢复边界见 使用者边界。
 
 ```sh
 bash tools/presence-probe/run.sh
@@ -22,7 +22,7 @@ bash tests/run-presence-policy-tests.sh
 本机复核：授权 notDetermined；列表包含 MacBook Air、Studio Display 与连续互通手机。
 Studio Display 报告 USB 传输，不能只按 bltn 排除。显式选择它的 observe 请求在授权检查退出1，
 未请求权限或开始采集；帮助、非法模式/序号/多参数退出码已核对。
-多屏和盒盖边界见 [多屏认证](../../docs/multidisplay-authentication.md)。
+多屏和盒盖边界见 多屏认证。
 
 人体检测报告存在不等于本人；未检出不等于离位，探针没有图像质量评估。
 没有分类性别、体型、衣着、情绪；也没有判断旁人是谁或是否在偷窥。
