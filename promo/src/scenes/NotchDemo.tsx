@@ -6,13 +6,16 @@ import { Canvas, Caption, Clicks, Cursor, Lines, MacWindow, useVertical } from "
 
 // The notch, 1.0.18's headline home, played the way the product plays it
 // (prototype/App/Notch.swift):
-//   · into the notch: the snapshot flies flat (no roll-up animation), settling dead-centre
-//     into the pill — settle, no bounce, "终点是个口子" — and the pill swallows it
-//     (it renders under the pill, so no fade is needed);
+//   · into the notch: the snapshot flies flat (no roll-up animation), squashing into
+//     NotchIsland.tuckTarget — the notch rect itself — settling dead-centre with
+//     settle, no bounce ("终点是个口子"), and the pill swallows it (it renders under
+//     the pill, so no fade is needed and nothing hovers below the notch);
 //   · the pill blooms open to catch it, settles to a one-cell size;
-//   · out of the notch: flyOut with its landing bounce, straight back to its place,
-//     full size — not a strip, no unroll beat.
-// Text keeps breathing room below the pill (top 200 / pill visual bottom ~140).
+//   · out of the notch: flyOut with its landing bounce, growing out of the pill rect,
+//     straight back to its place, full size — not a strip, no unroll beat.
+// Captions sit low: the flight runs up the centre line, so a top headline would be
+// crossed by the window. Bottom text keeps the whole trip clean and leaves the
+// notch + desk window their own air.
 
 const DocBody: React.FC = () => (
   <div style={{ padding: 40 }}>
@@ -42,13 +45,12 @@ export const NotchDemo: React.FC = () => {
   const winW = v ? 560 : 480;
   const winH = v ? 420 : 360;
   const winX = v ? (1080 - 560) / 2 : 720;
-  const winY = v ? 880 : 380;
-  const pillY = 30; // cell centre: where the product lands the snapshot
+  const winY = v ? 820 : 320;
 
   const N = NOTCH_DEMO;
 
   // ---- the pill: bare → (bloom open to catch) → cell → notice → cell → drawer ----
-  const cellIn = motion(f, N.fly + 14, "bloom"); // opens as the window comes in (swallow)
+  const cellIn = motion(f, N.fly + 2, "bloom"); // opens as the window lifts off (swallow)
   const noticeIn = motion(f, N.notice, "bloom");
   const noticeOut = motion(f, N.noticeOut, "settle");
   const drawerIn = motion(f, N.drawer, "expand");
@@ -66,16 +68,22 @@ export const NotchDemo: React.FC = () => {
   const upIn = tw(f, N.fly, N.fly + 6);
   const backIn = tw(f, N.returnFly, N.returnFly + 4);
 
-  const pose = (x: number, y: number, s: number) => ({
-    left: x - winW / 2,
-    top: y,
-    width: winW,
-    transformOrigin: "50% 0%",
-    transform: `translateX(${winW / 2}px) scale(${s}) translateX(-${winW / 2}px)`,
+  // The snapshot is drawn into the destination rect — the product flies it to
+  // NotchIsland.tuckTarget (the notch itself), so it squashes, not just scales.
+  // Destination is the pill's own rect, so at t=1 it is exactly behind the pill.
+  const flight = (t: number, fromCx: number, fromY: number, toCx: number, toY: number, fromW: number, fromH: number, toW: number, toH: number) => {
+    const w = mix(fromW, toW, t);
+    const h = mix(fromH, toH, t);
+    const cxNow = mix(fromCx, toCx, t);
+    return { left: cxNow - w / 2, top: mix(fromY, toY, t), width: w, height: h };
+  };
+  const squashed = (w: number, h: number) => ({
+    transform: `scale(${w / winW}, ${h / winH})`,
+    transformOrigin: "0 0" as const,
   });
-  const deskPose = pose(winX + winW / 2, winY, 1);
-  const upPose = pose(mix(winX + winW / 2, cx, fly), mix(winY, pillY, fly), mix(1, 0.3, fly));
-  const backPose = pose(mix(cx, winX + winW / 2, back), mix(pillY, winY, back), mix(0.3, 1, back));
+
+  const upLeg = flight(fly, winX + winW / 2, winY, cx, 0, winW, winH, notchW, notchH);
+  const backLeg = flight(back, cx, 0, winX + winW / 2, winY, notchW, notchH, winW, winH);
 
   // Cursor: title bar → flick up → across to the notch → click → drift home.
   const curX = mix(winX + winW * 0.62, cx, tw(f, N.cursorOver, N.click));
@@ -89,9 +97,9 @@ export const NotchDemo: React.FC = () => {
 
   return (
     <Canvas>
-      <Caption zh="暂时不看，收进刘海。" en="Park it in the notch." at={0} out={N.notice - 12} top={v ? 230 : 200} />
-      <Caption zh="窗口有变化，它会提醒。" en="It taps you when a window changes." at={N.notice + 6} out={N.cursorOver - 10} top={v ? 230 : 200} />
-      <Caption zh="点一下，放回。" en="One click brings it back." at={N.cursorOver + 26} top={v ? 230 : 200} />
+      <Caption zh="暂时不看，收进刘海。" en="Park it in the notch." at={0} out={N.notice - 12} top={v ? 1460 : 780} />
+      <Caption zh="窗口有变化，它会提醒。" en="It taps you when a window changes." at={N.notice + 6} out={N.cursorOver - 10} top={v ? 1460 : 780} />
+      <Caption zh="点一下，放回。" en="One click brings it back." at={N.cursorOver + 26} top={v ? 1460 : 780} />
 
       {/* menu-bar strip grounds the notch at the top of the screen */}
       <div
@@ -109,31 +117,36 @@ export const NotchDemo: React.FC = () => {
 
       {/* leg 1: the window on the desk, until the flick */}
       {deskOut < 1 ? (
-        <div style={{ position: "absolute", ...deskPose, opacity: 1 - deskOut }}>
+        <div style={{ position: "absolute", left: winX, top: winY, width: winW, opacity: 1 - deskOut }}>
           <MacWindow x={0} y={0} w={winW} h={winH} title="参考资料" k={1.5} body={C.blueSoft}>
             <DocBody />
           </MacWindow>
         </div>
       ) : null}
 
-      {/* leg 2: the snapshot flying flat into the pill's centre.
-          Rendered under the pill (below in source order is wrong — Remotion stacks
-          later on top — so the pill comes AFTER this), so once small it is covered:
-          swallowed, no fade — the product does the same with the camera block. */}
+      {/* leg 2: the snapshot squashing into the pill's exact rect.
+          Rendered before the pill (later stacks on top), so on arrival it is fully
+          covered: swallowed, no fade — the product does the same with the camera block.
+          Sized by the pill's live rect, so there is never a shrunken window floating
+          under the notch. */}
       {fly > 0 && f < N.notice - 30 ? (
-        <div style={{ position: "absolute", ...upPose, opacity: upIn }}>
-          <MacWindow x={0} y={0} w={winW} h={winH} title="参考资料" k={1.5} body={C.blueSoft}>
-            <DocBody />
-          </MacWindow>
+        <div style={{ position: "absolute", ...upLeg, opacity: upIn }}>
+          <div style={{ width: winW, height: winH, ...squashed(upLeg.width, upLeg.height) }}>
+            <MacWindow x={0} y={0} w={winW} h={winH} title="参考资料" k={1.5} body={C.blueSoft}>
+              <DocBody />
+            </MacWindow>
+          </div>
         </div>
       ) : null}
 
-      {/* leg 3: back out of the notch — full size, straight home, landing bounce */}
+      {/* leg 3: back out of the notch — grows out of the pill rect, straight home, landing bounce */}
       {back > 0 ? (
-        <div style={{ position: "absolute", ...backPose, opacity: backIn }}>
-          <MacWindow x={0} y={0} w={winW} h={winH} title="参考资料" k={1.5} body={C.blueSoft}>
-            <DocBody />
-          </MacWindow>
+        <div style={{ position: "absolute", ...backLeg, opacity: backIn }}>
+          <div style={{ width: winW, height: winH, ...squashed(backLeg.width, backLeg.height) }}>
+            <MacWindow x={0} y={0} w={winW} h={winH} title="参考资料" k={1.5} body={C.blueSoft}>
+              <DocBody />
+            </MacWindow>
+          </div>
         </div>
       ) : null}
 
@@ -171,8 +184,12 @@ export const NotchDemo: React.FC = () => {
           </div>
         ) : null}
         {drawerT > 0.02 ? (
-          <div style={{ opacity: drawerT, scale: String(0.7 + 0.3 * drawerT) }}>
-            <MacWindow x={0} y={0} w={150} h={104} title="" k={0.6} roll={1} body="#fff" style={{ boxShadow: "0 8px 22px rgba(0,0,0,.5)" }} />
+          <div style={{ opacity: drawerT * (1 - tw(f, N.returnFly + 1, N.returnFly + 5)), scale: String(0.7 + 0.3 * drawerT), position: "relative", width: 200, height: 100 }}>
+            <MacWindow x={0} y={0} w={200} h={100} title="" k={0.62} body="#fff" style={{ boxShadow: "0 8px 22px rgba(0,0,0,.5)" }}>
+              <div style={{ padding: 12 }}>
+                <Lines k={0.45} widths={[88, 66, 80]} color="rgba(33,72,132,.18)" />
+              </div>
+            </MacWindow>
           </div>
         ) : null}
       </div>

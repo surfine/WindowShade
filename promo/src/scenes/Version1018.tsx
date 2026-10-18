@@ -9,70 +9,284 @@ import { Canvas, Caption, Clicks, Cursor, Glass, Lines, MacWindow, Rise, useVert
 
 const PAGES = ["效果", "卷帘", "刘海", "手势", "窗口浏览", "快捷键", "隐私", "高级"];
 
-const Icon: React.FC<{ kind: string; size: number }> = ({ kind, size }) => {
-  const s = size;
+// Each default is shown as itself, not as an icon: the card is a small vignette of
+// what turns on, so the block carries weight instead of floating four chips.
+const Vignette: React.FC<{ kind: string; w: number; h: number }> = ({ kind, w, h }) => {
   if (kind === "notch") {
     return (
-      <div style={{ width: s, height: s, display: "grid", placeItems: "center" }}>
-        <div style={{ width: s * 0.86, height: s * 0.32, borderRadius: `0 0 ${s * 0.18}px ${s * 0.18}px`, background: "#0a0b0d", position: "relative" }}>
-          <div style={{ position: "absolute", left: "50%", bottom: 3, width: 3, height: 3, marginLeft: -1.5, borderRadius: "50%", background: "#3a3f47" }} />
+      <div style={{ position: "relative", width: w, height: h }}>
+        <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 26, background: "rgba(20,26,38,.05)", boxShadow: "inset 0 -1px 0 rgba(0,0,0,.06)" }} />
+        <div
+          style={{
+            position: "absolute",
+            left: (w - 132) / 2,
+            top: 4,
+            width: 132,
+            height: 40,
+            background: C.black,
+            borderBottomLeftRadius: 13,
+            borderBottomRightRadius: 13,
+            display: "grid",
+            placeItems: "center",
+          }}
+        >
+          <div style={{ fontSize: 12, color: "#c6cbd4", letterSpacing: "0.02em" }}>参考资料 · 1</div>
+        </div>
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: w / 2 - 20 + i * 14,
+              top: 64 + i * 8,
+              width: 3,
+              height: 18 - i * 3,
+              borderRadius: 2,
+              background: C.accent,
+              opacity: 0.42 - i * 0.09,
+            }}
+          />
+        ))}
+        <div
+          style={{
+            position: "absolute",
+            left: (w - 88) / 2 + 4,
+            top: h - 88,
+            width: 88,
+            height: 68,
+            borderRadius: 8,
+            overflow: "hidden",
+            background: "#fff",
+            boxShadow: "0 8px 20px rgba(22,28,45,.18), 0 0 0 1px rgba(0,0,0,.06)",
+          }}
+        >
+          <div style={{ height: 17, background: C.bar, borderBottom: "1px solid rgba(0,0,0,.07)", display: "flex", alignItems: "center", gap: 3, padding: "0 6px" }}>
+            {["#ec6a5e", "#f4bf4f", "#61c554"].map((c) => (
+              <div key={c} style={{ width: 4.5, height: 4.5, borderRadius: "50%", background: c }} />
+            ))}
+          </div>
+          <div style={{ padding: "10px 10px" }}>
+            <Lines k={0.55} widths={[100, 74, 88]} color="rgba(33,72,132,.16)" />
+          </div>
         </div>
       </div>
     );
   }
   if (kind === "activity") {
     return (
-      <div style={{ width: s, height: s, display: "grid", placeItems: "center" }}>
-        <div style={{ width: s * 0.7, height: s * 0.7, borderRadius: s * 0.18, background: C.blueSoft, display: "grid", placeItems: "center" }}>
-          <div style={{ width: 0, height: 0, borderLeft: `${s * 0.2}px solid ${C.accent}`, borderTop: `${s * 0.12}px solid transparent`, borderBottom: `${s * 0.12}px solid transparent`, marginLeft: s * 0.06 }} />
+      <div style={{ position: "relative", width: w, height: h }}>
+        <div
+          style={{
+            position: "absolute",
+            left: (w - 208) / 2,
+            top: 18,
+            width: 208,
+            height: 92,
+            background: C.black,
+            borderRadius: 18,
+            boxShadow: "0 14px 30px rgba(10,12,20,.28)",
+            padding: "13px 16px",
+            boxSizing: "border-box",
+            display: "grid",
+            gap: 8,
+            alignContent: "start",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <div style={{ width: 9, height: 9, borderRadius: "50%", background: "#ff6b5e" }} />
+            <div style={{ fontSize: 15, fontWeight: 650, color: "#f4f5f7" }}>番茄钟</div>
+            <div style={{ marginLeft: "auto", fontSize: 12, color: "#9aa0ab" }}>12:04</div>
+          </div>
+          <div style={{ height: 6, borderRadius: 99, background: "rgba(255,255,255,.14)" }}>
+            <div style={{ width: "62%", height: "100%", borderRadius: 99, background: "#7fa8f0" }} />
+          </div>
+          <div style={{ fontSize: 12, color: "#9aa0ab" }}>专注中 · 还有 12 分钟</div>
+        </div>
+        <div style={{ position: "absolute", left: (w - 132) / 2, top: 132, width: 132, height: 34, borderRadius: 12, border: "1.5px dashed rgba(22,28,45,.16)", display: "grid", placeItems: "center", fontSize: 12, color: C.muted }}>
+          更多活动
         </div>
       </div>
     );
   }
   if (kind === "shelf") {
     return (
-      <div style={{ width: s, height: s, display: "grid", placeItems: "center" }}>
-        <div style={{ width: s * 0.74, height: s * 0.5, borderRadius: s * 0.1, border: `3px solid ${C.accent}`, borderTop: "none", position: "relative" }}>
-          <div style={{ position: "absolute", left: s * 0.1, top: -s * 0.2, width: s * 0.5, height: 3, background: C.accent, borderRadius: 2 }} />
-          <div style={{ position: "absolute", left: s * 0.1, top: -s * 0.09, width: s * 0.34, height: 3, background: C.accent, borderRadius: 2, opacity: 0.6 }} />
+      <div style={{ position: "relative", width: w, height: h }}>
+        <div
+          style={{
+            position: "absolute",
+            left: 14,
+            right: 14,
+            bottom: 30,
+            height: 12,
+            borderRadius: 6,
+            background: "linear-gradient(180deg, rgba(36,94,234,.3), rgba(36,94,234,.16))",
+            boxShadow: "0 6px 14px rgba(36,94,234,.18)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            left: w / 2 - 86,
+            bottom: 40,
+            width: 66,
+            height: 82,
+            borderRadius: 7,
+            background: "#fff",
+            boxShadow: "0 8px 18px rgba(22,28,45,.16), 0 0 0 1px rgba(0,0,0,.05)",
+            transform: "rotate(-5deg)",
+            padding: "10px 9px",
+            boxSizing: "border-box",
+          }}
+        >
+          <div style={{ width: 20, height: 4, borderRadius: 2, background: C.accent, opacity: 0.85 }} />
+          <div style={{ marginTop: 9 }}>
+            <Lines k={0.5} widths={[100, 78, 92]} color="rgba(0,0,0,.08)" />
+          </div>
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            left: w / 2 + 8,
+            bottom: 42,
+            width: 62,
+            height: 78,
+            borderRadius: 7,
+            background: "#fff",
+            boxShadow: "0 8px 18px rgba(22,28,45,.16), 0 0 0 1px rgba(0,0,0,.05)",
+            transform: "rotate(4deg)",
+            padding: "10px 9px",
+            boxSizing: "border-box",
+          }}
+        >
+          <div style={{ width: 20, height: 4, borderRadius: 2, background: "#f2b46b" }} />
+          <div style={{ marginTop: 9 }}>
+            <Lines k={0.5} widths={[92, 70]} color="rgba(0,0,0,.08)" />
+          </div>
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            right: 16,
+            bottom: 36,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: C.accent,
+            color: "#fff",
+            fontSize: 15,
+            fontWeight: 600,
+            display: "grid",
+            placeItems: "center",
+            boxShadow: "0 6px 14px rgba(36,94,234,.3)",
+          }}
+        >
+          +
         </div>
       </div>
     );
   }
   return (
-    <div style={{ width: s, height: s, display: "grid", placeItems: "center" }}>
-      <div style={{ width: s * 0.8, height: s * 0.34, borderRadius: s * 0.1, background: C.blueSoft, display: "flex", gap: s * 0.06, alignItems: "center", justifyContent: "center" }}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{ width: s * 0.14, height: s * 0.14, borderRadius: s * 0.035, background: i === 1 ? C.accent : "#9db6e8" }} />
+    <div style={{ position: "relative", width: w, height: h }}>
+      <div
+        style={{
+          position: "absolute",
+          left: (w - 152) / 2,
+          top: 16,
+          width: 152,
+          height: 96,
+          borderRadius: 12,
+          background: "rgba(255,255,255,.94)",
+          boxShadow: "0 14px 30px rgba(22,28,45,.18), 0 0 0 1px rgba(0,0,0,.05)",
+          padding: 11,
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div style={{ width: 16, height: 16, borderRadius: 4, background: C.blueSoft, border: `1.5px solid ${C.accent}` }} />
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: C.ink, whiteSpace: "nowrap" }}>页面 1 — 手稿</div>
+        </div>
+        <div style={{ marginTop: 9 }}>
+          <Lines k={0.5} widths={[100, 84, 92, 58]} color="rgba(0,0,0,.07)" />
+        </div>
+      </div>
+      <div style={{ position: "absolute", left: w / 2 - 8, top: 106, width: 16, height: 16, borderRadius: 3, background: "rgba(255,255,255,.94)", transform: "rotate(45deg)" }} />
+      <div
+        style={{
+          position: "absolute",
+          left: (w - 204) / 2,
+          bottom: 26,
+          width: 204,
+          height: 48,
+          borderRadius: 15,
+          background: "rgba(255,255,255,.6)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,.95), 0 10px 24px rgba(22,28,45,.16), 0 0 0 1px rgba(255,255,255,.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 9,
+        }}
+      >
+        {["#7fa8f0", "#8fd0b0", "#f2b46b", "#d79ce8", "#9aa8bd"].map((c, i) => (
+          <div
+            key={i}
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              background: c,
+              boxShadow: i === 0 ? `0 0 0 2px ${C.accent}, 0 4px 10px rgba(36,94,234,.3)` : "0 2px 6px rgba(22,28,45,.12)",
+            }}
+          />
         ))}
       </div>
     </div>
   );
 };
 
-const Chip: React.FC<{ kind: string; label: string; at: number; v: boolean; index: number }> = ({ kind, label, at, v, index }) => {
+const SUB: Record<string, string> = {
+  notch: "窗口收进刘海，点一下回来",
+  activity: "番茄钟、下载，在刘海里看进度",
+  shelf: "拖来的文件，先放在屏幕边上",
+  dock: "指一下 Dock，就知道是哪扇窗",
+};
+
+const FeatureCard: React.FC<{ kind: string; label: string; at: number; v: boolean; index: number }> = ({ kind, label, at, v, index }) => {
   const frame = useCurrentFrame();
   const p = pop(frame, at);
-  const s = v ? 440 : 270;
-  const h = v ? 170 : 150;
+  const w = v ? 900 : 640;
+  const h = v ? 260 : 252;
   return (
     <Glass
-      radius={v ? 30 : 26}
-      tint="rgba(255,255,255,.62)"
+      radius={30}
+      tint="rgba(255,255,255,.66)"
       style={{
-        left: v ? 88 + (index % 2) * (s + 24) : 387 + index * (s + 22),
-        top: v ? 1300 + Math.floor(index / 2) * (h + 24) : 660,
-        width: s,
+        left: v ? 90 : 306 + (index % 2) * 668,
+        top: v ? 500 + index * 280 : 372 + Math.floor(index / 2) * 280,
+        width: w,
         height: h,
         opacity: Math.min(1, p * 1.5),
-        scale: String(0.86 + 0.14 * p),
+        scale: String(0.9 + 0.1 * p),
       }}
     >
-      <div style={{ position: "relative", height: h, display: "flex", alignItems: "center", gap: v ? 24 : 18, padding: v ? "0 30px" : "0 24px" }}>
-        <Icon kind={kind} size={v ? 64 : 54} />
-        <div style={{ display: "grid", gap: 8 }}>
-          <div style={{ fontSize: v ? 34 : 28, fontWeight: 650, color: C.ink, whiteSpace: "nowrap" }}>{label}</div>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, width: "fit-content", padding: "3px 9px", borderRadius: 99, background: C.blueSoft, color: C.accent, fontSize: v ? 18 : 16, fontWeight: 600 }}>
+      <div style={{ position: "relative", height: h, display: "flex", alignItems: "center", gap: v ? 26 : 24, padding: v ? "0 32px" : "0 26px", boxSizing: "border-box" }}>
+        <Vignette kind={kind} w={240} h={200} />
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: v ? 34 : 32, fontWeight: 650, color: C.ink, whiteSpace: "nowrap" }}>{label}</div>
+          <div style={{ marginTop: 8, fontSize: v ? 21 : 20, lineHeight: 1.35, color: C.muted, whiteSpace: "nowrap" }}>{SUB[kind]}</div>
+          <div
+            style={{
+              marginTop: 14,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "4px 11px",
+              borderRadius: 99,
+              background: C.blueSoft,
+              color: C.accent,
+              fontSize: 17,
+              fontWeight: 600,
+            }}
+          >
             <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.accent }} />
             默认开
           </div>
@@ -85,7 +299,7 @@ const Chip: React.FC<{ kind: string; label: string; at: number; v: boolean; inde
 export const Version1018: React.FC = () => {
   const f = useCurrentFrame();
   const v = useVertical();
-  const win = v ? { x: 40, y: 330, w: 1000, h: 900, k: 1.35 } : { x: 100, y: 230, w: 1180, h: 760, k: 1.5 };
+  const win = v ? { x: 40, y: 330, w: 1000, h: 680, k: 1.35 } : { x: 370, y: 250, w: 1180, h: 660, k: 1.5 };
   const bar = 36 * win.k;
   const sideW = v ? 220 : 240;
   const contentX = sideW + 18;
@@ -233,31 +447,30 @@ export const Version1018: React.FC = () => {
         </div>
       </AbsoluteFill>
 
-      {/* Defaults chips */}
-      <Chip kind="notch" label="刘海收纳" at={V1018.chips[0]} v={v} index={0} />
-      <Chip kind="activity" label="实时活动" at={V1018.chips[1]} v={v} index={1} />
-      <Chip kind="shelf" label="文件架" at={V1018.chips[2]} v={v} index={2} />
-      <Chip kind="dock" label="Dock 预览" at={V1018.chips[3]} v={v} index={3} />
-      <Rise at={V1018.chips[0] - 6}>
-        <div
-          style={{
-            position: "absolute",
-            right: v ? 60 : 88,
-            top: v ? 1140 : 566,
-            padding: "7px 14px",
-            borderRadius: 99,
-            background: C.accent,
-            color: "#fff",
-            fontFamily: FONT,
-            fontSize: v ? 20 : 18,
-            fontWeight: 650,
-            letterSpacing: "0.02em",
-            boxShadow: "0 8px 20px rgba(36,94,234,.28)",
-          }}
-        >
-          1.0.18
-        </div>
-      </Rise>
+      {/* Defaults, each shown as itself */}
+      <FeatureCard kind="notch" label="刘海收纳" at={V1018.chips[0]} v={v} index={0} />
+      <FeatureCard kind="activity" label="实时活动" at={V1018.chips[1]} v={v} index={1} />
+      <FeatureCard kind="shelf" label="文件架" at={V1018.chips[2]} v={v} index={2} />
+      <FeatureCard kind="dock" label="Dock 预览" at={V1018.chips[3]} v={v} index={3} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: v ? 1652 : 948, display: "flex", justifyContent: "center" }}>
+        <Rise at={V1018.chips[0] - 6}>
+          <div
+            style={{
+              padding: "7px 14px",
+              borderRadius: 99,
+              background: C.accent,
+              color: "#fff",
+              fontFamily: FONT,
+              fontSize: 18,
+              fontWeight: 650,
+              letterSpacing: "0.02em",
+              boxShadow: "0 8px 20px rgba(36,94,234,.28)",
+            }}
+          >
+            1.0.18
+          </div>
+        </Rise>
+      </div>
     </Canvas>
   );
 };
