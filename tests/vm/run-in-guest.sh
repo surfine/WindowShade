@@ -102,7 +102,7 @@ for suite in "$@"; do
   if [ "$suite" = dock-scenarios ]; then
     # 这组只在 30 秒没有输入时才动指针；刚改完设置（重启 Dock）会把来宾的闲置计时清零，等它过 35 秒（最多 2 分钟）。
     w0=$SECONDS
-    while (( $(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1e9); exit}') < 35 && SECONDS - w0 < 120 )); do sleep 5; done
+    while (( $(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {v=$NF} END {if (v!="") print int(v/1e9)}') < 35 && SECONDS - w0 < 120 )); do sleep 5; done
     echo "INFO guest: waited $((SECONDS - w0)) s for the guest to be idle before dock-scenarios"
   fi
   # 长会话（R39）：soak-browser／soak-glance／soak-fold 展开成 --soak --soak-kind … --soak-rounds N（WSQA_SOAK_ROUNDS，默认 100）。

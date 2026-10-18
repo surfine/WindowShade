@@ -27,7 +27,7 @@ esac
 [ -x "$APP/Contents/MacOS/WindowShade" ] || { echo "ABORT: no app at $APP"; exit 66; }
 
 free_gb() { df -g /System/Volumes/Data | awk 'NR==2 {print $4}'; }
-idle() { ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1e9); exit}'; }
+idle() { ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {v=$NF} END {if (v!="") print int(v/1e9)}'; }
 [ "$(free_gb)" -ge $MIN_FREE_GB ] || { echo "ABORT: only $(free_gb) GB free on /System/Volumes/Data (< $MIN_FREE_GB)"; df -h /System/Volumes/Data; exit 3; }
 pgrep -x xctrace >/dev/null && { echo "ABORT: another xctrace is running"; exit 4; }
 [ -z "${E3_ALLOW_OTHER:-}" ] && pgrep -x WindowShade >/dev/null && { echo "ABORT: another WindowShade is running (hotkey clash); quit it or set E3_ALLOW_OTHER=1"; exit 4; }

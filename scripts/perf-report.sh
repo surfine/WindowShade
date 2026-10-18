@@ -44,7 +44,7 @@ case "$MODE" in
   host)
     [ -d "$APP" ] || { echo "先 cd prototype && ./build.sh --stage（找不到 $APP）" >&2; exit 1; }
     if [ "$FORCE" != 1 ]; then
-      idle=$(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1e9); exit}')
+      idle=$(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {v=$NF} END {if (v!="") print int(v/1e9)}')
       [ "${idle:-0}" -ge 20 ] || { echo "本机不闲置（${idle:-?} 秒内有输入）：卡顿数字会被你的操作污染。等 20 秒不动，或加 --force" >&2; exit 3; }
     fi
     MACHINE="$(sysctl -n hw.model) · $(sysctl -n machdep.cpu.brand_string) · macOS $(sw_vers -productVersion)"
