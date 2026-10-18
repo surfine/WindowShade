@@ -195,7 +195,6 @@ export const sfx = (): Sfx[] => {
   add("NotchDemo", NOTCH_DEMO.notice + 12, "pop", 0.45, 1.15);
   add("NotchDemo", NOTCH_DEMO.click, "click", 0.9);
   add("NotchDemo", NOTCH_DEMO.returnFly, "whoosh", 0.6);
-  add("NotchDemo", NOTCH_DEMO.unroll, "rollDown", 0.8);
   add("Version1018", V1018.click, "click", 0.8);
   add("Version1018", V1018.rollUp, "rollUp", 0.9);
   add("Version1018", V1018.rollDown, "rollDown", 0.8);
