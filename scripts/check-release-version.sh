@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 build=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" prototype/Info.plist)
-case "$build" in ''|*[!0-9]*) echo "FAIL release-version: CFBundleVersion「$build」不是正整数" >&2; exit 1;; esac
+case "$build" in ''|*[!0-9]*) echo "FAIL release-version: CFBundleVersion「${build}」不是正整数" >&2; exit 1;; esac
 # 占位条目（enclosure 的 url 以 TODO 开头，发布日才填）不算「已发过」。
 shipped=$(python3 -I - site/public/appcast.xml <<'PY'
 import sys, xml.etree.ElementTree as ET
@@ -23,7 +23,7 @@ print(max(vs) if vs else '')
 PY
 )
 if [ -n "$shipped" ] && [ "$build" -le "$shipped" ]; then
-  echo "FAIL release-version: CFBundleVersion=$build，appcast 里已发过 $shipped。先在 prototype/Info.plist 升 CFBundleVersion。" >&2
+  echo "FAIL release-version: CFBundleVersion=$build，appcast 里已发过 ${shipped}。先在 prototype/Info.plist 升 CFBundleVersion。" >&2
   exit 1
 fi
 echo "PASS release-version: CFBundleVersion=$build（appcast 最高 ${shipped:-无}）"

@@ -31,7 +31,7 @@ OUT="${OUT:-prototype/dist/WindowShade-v${VERSION}.dmg}"
 authority=$(codesign -dv --verbose=2 "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -1)
 case "$authority" in
   "Developer ID Application:"*) ;;
-  *) echo "ERROR: $APP 不是 Developer ID 签的（$authority）。" >&2; exit 1 ;;
+  *) echo "ERROR: $APP 不是 Developer ID 签的（${authority}）。" >&2; exit 1 ;;
 esac
 codesign --verify --deep --strict "$APP"
 xcrun stapler validate "$APP" >/dev/null || { echo "ERROR: $APP 没钉公证票据；先跑 scripts/notarize.sh" >&2; exit 1; }
@@ -54,7 +54,7 @@ if [ -f assets/dmg/background@2x.png ]; then
 else cp "$BG" "$stage/.background/background.png"; BGNAME=background.png; fi
 chflags hidden "$stage/.background"
 TEMPLATE=assets/dmg/DS_Store
-[ "$CAPTURE" = 1 ] || { [ -f "$TEMPLATE" ] && cp "$TEMPLATE" "$stage/.DS_Store" || echo "NOTE: 没有 $TEMPLATE，DMG 不带图标排版；见本脚本头部说明。" >&2; }
+[ "$CAPTURE" = 1 ] || { [ -f "$TEMPLATE" ] && cp "$TEMPLATE" "$stage/.DS_Store" || echo "NOTE: 没有 ${TEMPLATE}，DMG 不带图标排版；见本脚本头部说明。" >&2; }
 
 mkdir -p "$(dirname "$OUT")"; rm -f "$OUT"
 if [ "$CAPTURE" = 1 ]; then

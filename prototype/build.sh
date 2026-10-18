@@ -319,7 +319,7 @@ if [ "$release" = "1" ]; then
     echo "ERROR: strip 之后主程序 UUID 变了，dSYM 对不上。" >&2
     exit 1
   fi
-  echo "==> 已剥符号：$(du -h "$BIN" | cut -f1)（dSYM：$DSYM）"
+  echo "==> 已剥符号：$(du -h "$BIN" | cut -f1)（dSYM：${DSYM}）"
 fi
 cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
 # 译文放在 Resources/Localization 下，不放 App 根目录的 .lproj，免得改变系统给这个 App 选的界面语言。
@@ -511,7 +511,7 @@ if [ "$stage_only" = "1" ]; then
     STAGE_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP/Contents/Info.plist")
     if ! SELF_CHECK_OUT=$(perl -e 'alarm 5; exec @ARGV' "$BIN" --self-check 2>&1) \
       || ! printf '%s' "$SELF_CHECK_OUT" | grep -qF "build=$STAGE_BUILD"; then
-      echo "ERROR: --self-check 没有在 5 秒内返回 0 并输出 build=$STAGE_BUILD：${SELF_CHECK_OUT:-无输出}" >&2
+      echo "ERROR: --self-check 没有在 5 秒内返回 0 并输出 build=${STAGE_BUILD}：${SELF_CHECK_OUT:-无输出}" >&2
       exit 1
     fi
     echo "==> --self-check 通过：$SELF_CHECK_OUT"
