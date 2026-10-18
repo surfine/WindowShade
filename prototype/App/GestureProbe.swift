@@ -1826,6 +1826,17 @@ extension GlanceProbe {
     gestureFixturePID = pid
     let notch = owner.notch
     notch.install()
+    // 1.0.18 起实时活动默认开：这一组量的是刘海本身（收进、放回、空着不画），常驻的活动贴片
+    // （正在播放、电量）会把「紧凑形状」和「空刘海不画东西」两项顶掉。先临时关掉，跑完照原样恢复
+    // （与设置页开关同一路径，见 prefToggleActivities）。
+    let savedActivities = UserDefaults.standard.object(forKey: NotchActivityController.enabledKey)
+    NotchActivityController.isEnabled = false
+    notch.activities.configure()
+    defer {
+      if let savedActivities { UserDefaults.standard.set(savedActivities, forKey: NotchActivityController.enabledKey) }
+      else { UserDefaults.standard.removeObject(forKey: NotchActivityController.enabledKey) }
+      notch.activities.configure()
+    }
     guard let screen = NotchController.notchScreen(), let rect = NotchController.notchRect(on: screen) else {
       print("INFO notch: this Mac has no notch showing (lid closed?); skipped")
       return
