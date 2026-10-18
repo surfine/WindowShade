@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { MORE, sceneFrames } from "../timeline";
+import { MORE } from "../timeline";
 import { C, FONT, easeOut, mix, motion, pop, tw } from "../theme";
 import { Caption, Canvas, Cursor, Glass, Keycap, Lamps, tiltIn, useVertical } from "../ui";
 

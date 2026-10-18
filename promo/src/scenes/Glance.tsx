@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { GLANCE, sceneFrames } from "../timeline";
+import { GLANCE } from "../timeline";
 import { C, FONT, SERIF, easeOut, mix, motion, pop, tw } from "../theme";
 import { Caption, Canvas, Cursor, Lines, MacWindow, tiltIn, useVertical } from "../ui";
 

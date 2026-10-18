@@ -108,7 +108,7 @@ export const CoverTall: React.FC = () => (
       <Rolling x={80} y={560} w={860} h={560} draft={{ x: 160, y: 680, w: 860, h: 600 }} />
     </div>
     <Glass radius={40} tint="rgba(255,255,255,.45)" style={{ left: 80, bottom: 70, height: 80, padding: "0 34px", display: "flex", alignItems: "center" }}>
-      <div style={{ position: "relative", fontSize: 34, fontWeight: 600, color: C.ink, whiteSpace: "nowrap" }}>1994 年的老功能 · macOS 14 以上可用</div>
+      <div style={{ position: "relative", fontSize: 34, fontWeight: 600, color: C.ink, whiteSpace: "nowrap" }}>1994 年的老功能 · macOS 15 以上可用</div>
     </Glass>
   </Wall>
 );

@@ -90,7 +90,7 @@ export const End: React.FC = () => {
         </Glass>
         <div style={{ position: "absolute", left: 0, right: 0, top: 924 + dy, textAlign: "center", fontFamily: FONT }}>
           <Rise at={END.facts}>
-            <div style={{ fontSize: 28, color: C.muted }}>免费开源 · macOS 14 及以上 · Apple Silicon</div>
+            <div style={{ fontSize: 28, color: C.muted }}>1.0.18 · 免费开源 · macOS 15 及以上 · Apple Silicon</div>
           </Rise>
         </div>
       </AbsoluteFill>

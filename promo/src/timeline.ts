@@ -15,7 +15,8 @@ export const SCENES = [
   { id: "History", bars: 2 },
   { id: "Glance", bars: 2 },
   { id: "Gestures", bars: 6 },
-  { id: "Multitask", bars: 6 },
+  { id: "NotchDemo", bars: 4 },
+  { id: "Version1018", bars: 4 },
   { id: "More", bars: 2 },
   { id: "End", bars: 2 },
 ] as const;
@@ -88,6 +89,29 @@ export const GESTURES = {
   right: { down: 474, release: 516 },
   cancel: { down: 546, peak: 580, back: 610 },
   wheel: { swap: 628, notches: [646, 658, 670], commit: 680 },
+};
+
+export const NOTCH_DEMO = {
+  flick: 64,
+  fly: 76,
+  arrive: 118,
+  notice: 168,
+  noticeOut: 258,
+  cursorOver: 272,
+  click: 330,
+  drawer: 336,
+  returnFly: 380,
+  unroll: 436,
+};
+
+export const V1018 = {
+  caption1: 0,
+  caption1Out: 232,
+  click: 40,
+  rollUp: 58,
+  rollDown: 152,
+  caption2: 244,
+  chips: [260, 278, 296, 314],
 };
 
 export const MORE = {
@@ -164,8 +188,20 @@ export const sfx = (): Sfx[] => {
   add("Gestures", GESTURES.wheel.notches[2] + 1, "arm", 0.9);
   add("Gestures", GESTURES.wheel.commit, "whoosh", 0.45);
 
-  for (const frame of [48, 166, 270, 409, 472, 535]) add("Multitask", frame, "whoosh", 0.45);
-  add("Multitask", 600, "chime", 0.5);
+  add("NotchDemo", NOTCH_DEMO.flick, "touch", 0.5);
+  add("NotchDemo", NOTCH_DEMO.flick + 16, "arm", 0.85);
+  add("NotchDemo", NOTCH_DEMO.fly, "whoosh", 0.7);
+  add("NotchDemo", NOTCH_DEMO.arrive, "pop", 0.5);
+  add("NotchDemo", NOTCH_DEMO.notice + 12, "chime", 0.5);
+  add("NotchDemo", NOTCH_DEMO.click, "click", 0.9);
+  add("NotchDemo", NOTCH_DEMO.returnFly, "whoosh", 0.6);
+  add("NotchDemo", NOTCH_DEMO.unroll, "rollDown", 0.8);
+  add("Version1018", V1018.click, "click", 0.8);
+  add("Version1018", V1018.rollUp, "rollUp", 0.9);
+  add("Version1018", V1018.rollDown, "rollDown", 0.8);
+  add("Version1018", V1018.caption1Out, "whoosh", 0.45);
+  V1018.chips.forEach((f, i) => add("Version1018", f, "pop", 0.5, 1 + i * 0.06));
+  add("Version1018", V1018.caption2, "chime", 0.5);
 
   MORE.cards.forEach((f, i) => add("More", f, "pop", 0.5, 1 + i * 0.08));
   MORE.keys.forEach((f) => {
