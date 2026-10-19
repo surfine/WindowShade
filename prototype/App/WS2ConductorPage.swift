@@ -32,6 +32,7 @@ import Cocoa
     private let claudeScroll = NSScrollView()
     private let claudeText = NSTextView()
     private let claudeActions = NSStackView()
+    private let claudeSpeak = NSButton(title: WSL10n.text("conductor.speak", zh: "按住说话"), target: nil, action: nil)
     private let claudeSend = NSButton(title: WSL10n.text("conductor.send", zh: "发送"), target: nil, action: nil)
     private let claudeStop = NSButton(title: WSL10n.text("conductor.stopTurn", zh: "停止本轮"), target: nil, action: nil)
     private let menus = NSStackView()
@@ -175,6 +176,11 @@ import Cocoa
         claudeScroll.heightAnchor.constraint(equalToConstant: 150).isActive = true
         claudeScroll.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.addArrangedSubview(claudeScroll)
+        claudeSpeak.target = self
+        claudeSpeak.action = #selector(speakPressed(_:))
+        _ = claudeSpeak.sendAction(on: [.leftMouseDown, .leftMouseUp])
+        claudeSpeak.bezelStyle = .rounded
+        claudeSpeak.toolTip = WSL10n.text("conductor.speak.tip", zh: "按住说一句，松手得到草稿；只在这台 Mac 上识别。")
         claudeSend.target = self
         claudeSend.action = #selector(sendClaudeDraft)
         claudeSend.bezelStyle = .rounded
@@ -182,7 +188,7 @@ import Cocoa
         claudeStop.action = #selector(stopClaude)
         claudeStop.bezelStyle = .rounded
         claudeActions.spacing = 8
-        [claudeSend, claudeStop].forEach { claudeActions.addArrangedSubview($0) }
+        [claudeSpeak, claudeSend, claudeStop].forEach { claudeActions.addArrangedSubview($0) }
         stack.addArrangedSubview(claudeActions)
         claudeStatus.isHidden = true
         claudeScroll.isHidden = true
@@ -543,17 +549,19 @@ import Cocoa
         }
     }
 
+    private var voiceStatusLabel: NSTextField { isClaudeBackend ? claudeStatus : status }
+
     private func beginVoice() {
         guard inputIsCurrent(), voice == nil else { return }
         var session = VoiceDraftSession()
         guard session.start(at: ProcessInfo.processInfo.systemUptime) else { return }
         voice = session
-        status.stringValue = WSL10n.text("conductor.voice.listening", zh: "在听…松手出草稿")
+        voiceStatusLabel.stringValue = WSL10n.text("conductor.voice.listening", zh: "在听…松手出草稿")
         transcriber.start(onPartial: { [weak self] text in
             guard let self, var session = self.voice else { return }
             session.update(text)
             self.voice = session
-            self.status.stringValue = text
+            self.voiceStatusLabel.stringValue = text
         }, onFinish: { [weak self] result in
             self?.finishVoice(result)
         })
@@ -565,7 +573,7 @@ import Cocoa
                 if session.tick(at: ProcessInfo.processInfo.systemUptime) {
                     self.voice = nil
                     self.transcriber.cancel()
-                    self.status.stringValue = self.voiceFailureText(.tooLong)
+                    self.voiceStatusLabel.stringValue = self.voiceFailureText(.tooLong)
                     return
                 }
                 self.voice = session
@@ -577,7 +585,7 @@ import Cocoa
         guard var session = voice else { return }
         session.stop(at: ProcessInfo.processInfo.systemUptime)
         voice = session
-        status.stringValue = WSL10n.text("conductor.voice.transcribing", zh: "在转写…")
+        voiceStatusLabel.stringValue = WSL10n.text("conductor.voice.transcribing", zh: "在转写…")
         transcriber.stop()
     }
 
@@ -588,9 +596,10 @@ import Cocoa
         voice = nil
         if let draft = session.draft {
             editor.stringValue = draft
-            status.stringValue = ""
+            voiceStatusLabel.stringValue = ""
+            if isClaudeBackend { renderClaude() }
         } else if let failure = session.failure {
-            status.stringValue = voiceFailureText(failure)
+            voiceStatusLabel.stringValue = voiceFailureText(failure)
         }
     }
 

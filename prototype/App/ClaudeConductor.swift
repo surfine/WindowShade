@@ -126,6 +126,10 @@ final class ClaudeConductor {
 
     /// 常见安装位置；不扫描整个磁盘，也不猜 shell 配置。
     nonisolated static func defaultDiscovery() -> URL? {
+        if let override = ProcessInfo.processInfo.environment["WINDOWSHADE_CLAUDE_EXECUTABLE"],
+           FileManager.default.isExecutableFile(atPath: override) {
+            return URL(fileURLWithPath: override)
+        }
         let home = FileManager.default.homeDirectoryForCurrentUser
         let candidates = [
             "/opt/homebrew/bin/claude",
