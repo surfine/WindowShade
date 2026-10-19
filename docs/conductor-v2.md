@@ -175,7 +175,10 @@ prototype/Core/ConductorSession.swift（纯逻辑：状态机，输入事件 →
   页面级探针抓到的两个崩点：约束必须在 `addArrangedSubview` 之后激活，否则打开指挥页 SIGABRT；
   没有辅助功能授权时的 Timer 重试不要用 `MainActor.assumeIsolated`，改为 `Task { @MainActor }`。
   手机遥控：指挥页开着时，播放/选择＝发送当前草稿（Codex 先采用再发送），返回＝收起；
-  页面没开就仍走遥控器自己的层。页面探针已覆盖这两个动作；HID→宿主这一小段还没有合成事件验收，
-  声调/拍子的指挥手势也仍走遥控器自己的 ConductorSession（缺 `.connected` 握手，未接到页面）。
+  页面没开就仍走遥控器自己的层。声调/拍子通过真实 Codex 目标握手（context、capabilities、
+  四个槽位、initial、turn/actual）进入遥控会话，`stageConfig` 落到页面的模型/档位，
+  `showNotch` 的文字进页面提示；页面打开/切换目标时推送，按连接代次去重，关闭即断开。
+  页面探针覆盖遥控播放/返回；ConductorSession 测试覆盖 connected/快照/手势→stageConfig。
+  仍缺：真 iPhone 的 HID→宿主→页面整段（E1–E5）没有合成事件或真机记录。
 - **这一轮先把「指挥模式端到端」接成可真机试用**；所有 WS2 面继续藏在
   `WindowShade.Preview.WS2` 后面，验收过的才逐项露出。
