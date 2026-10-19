@@ -276,14 +276,21 @@ final class TrackpadGestureController {
             return
         }
         guard pinchTapRetry == nil else { return }
-        pinchTapRetry = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] timer in
-            let keepRetrying = MainActor.assumeIsolated { () -> Bool in
-                guard let self, Self.isEnabled else { return false }
-                guard self.pinchTap.start() else { return true }
-                self.pinchTapRetry = nil
-                return false
+        // 没有辅助功能授权时每 3 秒重试。不要在 Timer 回调里 assumeIsolated：
+        // 这台 macOS 27 上未授权 + 打开指挥页会让它在不同定时器间随机崩；跳一次主 actor 更稳。
+        pinchTapRetry = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, Self.isEnabled else {
+                    self?.pinchTapRetry?.invalidate()
+                    self?.pinchTapRetry = nil
+                    return
+                }
+                guard !self.pinchTap.start() else {
+                    self.pinchTapRetry?.invalidate()
+                    self.pinchTapRetry = nil
+                    return
+                }
             }
-            if !keepRetrying { timer.invalidate() }
         }
     }
 
