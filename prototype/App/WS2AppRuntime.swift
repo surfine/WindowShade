@@ -328,6 +328,14 @@ import Cocoa
             guard let view else { return nil }
             return self?.island.inputHandle(for: view)
         }
+        // 指挥页的按钮/手柄/发送都以“这一页还是当前页且机器可用”为准。
+        // 之前这个闭包从没被赋过值，默认恒 false，整页的写/发/停都是灰的。
+        view.inputIsCurrent = { [weak self, weak view] in
+            MainActor.assumeIsolated {
+                guard let self, let view else { return false }
+                return self.conductorPage === view && !self.sleeping && self.lockReasons.isEmpty
+            }
+        }
         attachConductorDevices(view)
         view.sync()
         return true

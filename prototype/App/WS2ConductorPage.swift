@@ -26,6 +26,17 @@ import Cocoa
     private let write = NSButton(title: WSL10n.text("conductor.adoptDraft", zh: "采用草稿"), target: nil, action: nil)
     private let send = NSButton(title: WSL10n.text("conductor.send", zh: "发送"), target: nil, action: nil)
     private let interrupt = NSButton(title: WSL10n.text("conductor.stopTurn", zh: "停止本轮"), target: nil, action: nil)
+    private let backendMenu = NSPopUpButton(frame: .zero, pullsDown: false)
+    private let claudeConductor: ClaudeConductor
+    private let claudeStatus = NSTextField(wrappingLabelWithString: "")
+    private let claudeScroll = NSScrollView()
+    private let claudeText = NSTextView()
+    private let claudeActions = NSStackView()
+    private let claudeSend = NSButton(title: WSL10n.text("conductor.send", zh: "发送"), target: nil, action: nil)
+    private let claudeStop = NSButton(title: WSL10n.text("conductor.stopTurn", zh: "停止本轮"), target: nil, action: nil)
+    private let menus = NSStackView()
+    private let actions = NSStackView()
+    private let devices = NSStackView()
     private let receipt = NSTextField(wrappingLabelWithString: "")
     private var adoptedDraft: WS2OwnedLaunchController.ConductorDraft?
     private var displayedTarget: WS2OwnedLaunchController.ConductorTarget?
@@ -45,16 +56,25 @@ import Cocoa
     private var rendering = false
     private var focusObservers: [NSObjectProtocol] = []
 
-    var backendEpoch: UUID? { controller.session?.connectionID }
+    var isClaudeBackend: Bool { backendMenu.indexOfSelectedItem == 1 }
+    var backendEpoch: UUID? { isClaudeBackend ? claudeConductor.epoch : controller.session?.connectionID }
     var isInputReady: Bool {
-        inputIsCurrent() && expectedLease != nil && currentLease?() == expectedLease &&
+        guard !isClaudeBackend else { return false }
+        return inputIsCurrent() && expectedLease != nil && currentLease?() == expectedLease &&
             window?.isKeyWindow == true && NSApp.isActive && backendEpoch != nil
     }
 
     init(controller: WS2OwnedLaunchController, transcriber: any VoiceTranscriber = MacVoiceTranscriber()) {
         self.controller = controller
         self.transcriber = transcriber
+        let projectURL: () -> URL = { [weak controller] in
+            MainActor.assumeIsolated {
+                controller?.projectURL ?? FileManager.default.homeDirectoryForCurrentUser
+            }
+        }
+        self.claudeConductor = ClaudeConductor(workingDirectory: projectURL, mayUse: { true })
         super.init(frame: .zero)
+        claudeConductor.onChange = { [weak self] in self?.renderClaude() }
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -69,6 +89,14 @@ import Cocoa
         ])
         title.font = .systemFont(ofSize: 15, weight: .semibold)
         stack.addArrangedSubview(title)
+        backendMenu.addItems(withTitles: [
+            WSL10n.text("conductor.backend.codex", zh: "Codex"),
+            WSL10n.text("conductor.backend.claude", zh: "Claude（只读）"),
+        ])
+        backendMenu.target = self
+        backendMenu.action = #selector(pickBackend)
+        backendMenu.setAccessibilityLabel(WSL10n.text("conductor.backend.label", zh: "助手"))
+        stack.addArrangedSubview(backendMenu)
         sessions.orientation = .vertical
         sessions.alignment = .leading
         sessions.spacing = 4
@@ -82,8 +110,9 @@ import Cocoa
         effortMenu.target = self
         effortMenu.action = #selector(pickEffort)
         let nextLabel = NSTextField(labelWithString: WSL10n.text("conductor.nextRound", zh: "下一轮"))
-        let menus = NSStackView(views: [nextLabel, modelMenu, effortMenu])
+        menus.orientation = .horizontal
         menus.spacing = 8
+        [nextLabel, modelMenu, effortMenu].forEach { menus.addArrangedSubview($0) }
         stack.addArrangedSubview(menus)
         editor.placeholderString = WSL10n.text("conductor.draftPlaceholder", zh: "草稿")
         editor.setAccessibilityLabel(WSL10n.text("conductor.draftLabel", zh: "待记下的草稿"))
@@ -109,8 +138,8 @@ import Cocoa
         _ = speak.sendAction(on: [.leftMouseDown, .leftMouseUp])
         speak.bezelStyle = .rounded
         speak.toolTip = WSL10n.text("conductor.speak.tip", zh: "按住说一句，松手得到草稿；只在这台 Mac 上识别。")
-        let actions = NSStackView(views: [speak, write, send, interrupt])
         actions.spacing = 8
+        [speak, write, send, interrupt].forEach { actions.addArrangedSubview($0) }
         stack.addArrangedSubview(actions)
         receipt.font = .systemFont(ofSize: 11)
         receipt.textColor = .secondaryLabelColor
@@ -121,16 +150,46 @@ import Cocoa
         enableButton.target = self
         enableButton.action = #selector(toggleDevice)
         enableButton.image = NSImage(systemSymbolName: "gamecontroller", accessibilityDescription: nil)
-        let devices = NSStackView(views: [deviceMenu, enableButton])
         devices.spacing = 8
+        [deviceMenu, enableButton].forEach { devices.addArrangedSubview($0) }
         stack.addArrangedSubview(devices)
         status.font = .systemFont(ofSize: 11)
         status.textColor = .secondaryLabelColor
         status.maximumNumberOfLines = 2
         stack.addArrangedSubview(status)
         status.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        claudeStatus.font = .systemFont(ofSize: 11)
+        claudeStatus.textColor = .secondaryLabelColor
+        claudeStatus.maximumNumberOfLines = 3
+        stack.addArrangedSubview(claudeStatus)
+        claudeStatus.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        claudeText.isEditable = false
+        claudeText.isSelectable = true
+        claudeText.drawsBackground = false
+        claudeText.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        claudeText.isVerticallyResizable = true
+        claudeText.autoresizingMask = [.width]
+        claudeScroll.documentView = claudeText
+        claudeScroll.hasVerticalScroller = true
+        claudeScroll.borderType = .bezelBorder
+        claudeScroll.heightAnchor.constraint(equalToConstant: 150).isActive = true
+        claudeScroll.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.addArrangedSubview(claudeScroll)
+        claudeSend.target = self
+        claudeSend.action = #selector(sendClaudeDraft)
+        claudeSend.bezelStyle = .rounded
+        claudeStop.target = self
+        claudeStop.action = #selector(stopClaude)
+        claudeStop.bezelStyle = .rounded
+        claudeActions.spacing = 8
+        [claudeSend, claudeStop].forEach { claudeActions.addArrangedSubview($0) }
+        stack.addArrangedSubview(claudeActions)
+        claudeStatus.isHidden = true
+        claudeScroll.isHidden = true
+        claudeActions.isHidden = true
         input.onActivate = { [weak self] id in self?.activate(id) ?? false }
         input.onCancel = { [weak self] in self?.onCancel?() }
+        updateBackendVisibility()
         sync()
     }
 
@@ -138,7 +197,7 @@ import Cocoa
 
     override func viewWillMove(toWindow newWindow: NSWindow?) {
         super.viewWillMove(toWindow: newWindow)
-        if newWindow == nil { cancelVoice() }
+        if newWindow == nil { cancelVoice(); claudeConductor.stop() }
     }
 
     override func viewDidMoveToWindow() {
@@ -165,6 +224,7 @@ import Cocoa
     }
 
     func sync() {
+        if isClaudeBackend { renderClaude(); return }
         let snap = snapshot()
         let target = controller.conductorTarget
         if displayedTarget != target {
@@ -198,6 +258,7 @@ import Cocoa
     }
 
     func controlTextDidChange(_ notification: Notification) {
+        if isClaudeBackend { renderClaude(); return }
         guard notification.object as? NSTextField === editor else { return }
         // Editing after adoption requires a new adoption. Never send a hidden older editor value.
         adoptedDraft = nil
@@ -239,6 +300,7 @@ import Cocoa
 
     func revoke() {
         input.revoke()
+        claudeConductor.stop()
         inputIsCurrent = { false }
         expectedLease = nil
         focusObservers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -405,6 +467,71 @@ import Cocoa
         guard let target = displayedTarget,
               ConductorPageSnapshot.acceptChoice(id, catalogue: choices),
               controller.stageConductorEffort(id, target: target) else { sync(); return }
+    }
+
+    @objc private func pickBackend() {
+        if isClaudeBackend {
+            _ = claudeConductor.ensure()
+        } else {
+            claudeConductor.stop()
+        }
+        editor.stringValue = ""
+        updateBackendVisibility()
+        sync()
+    }
+
+    private func updateBackendVisibility() {
+        let claude = isClaudeBackend
+        for view in [sessions, menus, actions, receipt, devices, status] as [NSView] {
+            view.isHidden = claude
+        }
+        claudeStatus.isHidden = !claude
+        claudeScroll.isHidden = !claude
+        claudeActions.isHidden = !claude
+        editor.placeholderString = claude
+            ? WSL10n.text("conductor.claude.placeholder", zh: "对 Claude 说一句")
+            : WSL10n.text("conductor.draftPlaceholder", zh: "草稿")
+        if claude { renderClaude() }
+    }
+
+    private func renderClaude() {
+        guard isClaudeBackend else { return }
+        claudeStatus.stringValue = claudeBackendStatus()
+        if claudeText.string != claudeConductor.transcript {
+            claudeText.string = claudeConductor.transcript
+            claudeText.scrollToEndOfDocument(nil)
+        }
+        let hasText = !editor.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        claudeSend.isEnabled = inputIsCurrent() && hasText && claudeConductor.status != .missing
+        claudeStop.isEnabled = inputIsCurrent() && claudeConductor.status == .running
+    }
+
+    private func claudeBackendStatus() -> String {
+        switch claudeConductor.status {
+        case .idle:
+            return WSL10n.text("conductor.claude.idle", zh: "还没有连接 Claude。")
+        case .missing:
+            return WSL10n.text("conductor.claude.missing", zh: "没找到 claude 命令；先安装 Claude Code，或把它放进 /opt/homebrew/bin、/usr/local/bin、~/.local/bin。")
+        case .ready:
+            return WSL10n.text("conductor.claude.ready", zh: "只读模式：不会改文件，工具请求会被拒绝。")
+        case .running:
+            return WSL10n.text("conductor.claude.running", zh: "正在回答…")
+        case .ended:
+            return WSL10n.text("conductor.claude.ended", zh: "连接断了；再发送会接回同一段对话。")
+        }
+    }
+
+    @objc private func sendClaudeDraft() {
+        guard inputIsCurrent() else { return }
+        let text = editor.stringValue
+        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        if claudeConductor.send(text) { editor.stringValue = "" }
+        renderClaude()
+    }
+
+    @objc private func stopClaude() {
+        claudeConductor.interrupt()
+        renderClaude()
     }
 
     @objc private func speakPressed(_ sender: NSButton) {
