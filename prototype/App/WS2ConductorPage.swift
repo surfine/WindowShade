@@ -173,9 +173,9 @@ import Cocoa
         claudeScroll.documentView = claudeText
         claudeScroll.hasVerticalScroller = true
         claudeScroll.borderType = .bezelBorder
+        stack.addArrangedSubview(claudeScroll)
         claudeScroll.heightAnchor.constraint(equalToConstant: 150).isActive = true
         claudeScroll.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.addArrangedSubview(claudeScroll)
         claudeSpeak.target = self
         claudeSpeak.action = #selector(speakPressed(_:))
         _ = claudeSpeak.sendAction(on: [.leftMouseDown, .leftMouseUp])
@@ -543,6 +543,16 @@ import Cocoa
         claudeConductor.interrupt()
         renderClaude()
     }
+
+    // 页面级探针（--conductor-claude-probe）：不产生用户可见入口，只给自驱验收调。
+    var probeInputIsCurrent: Bool { inputIsCurrent() }
+    var probeIsClaude: Bool { isClaudeBackend }
+    var probeClaudeStatus: ClaudeConductor.Status { claudeConductor.status }
+    var probeClaudeTranscript: String { claudeConductor.transcript }
+    func probeSelectClaude() { backendMenu.selectItem(at: 1); pickBackend() }
+    func probeSetDraft(_ text: String) { editor.stringValue = text; renderClaude() }
+    func probeSend() { sendClaudeDraft() }
+    func probeStop() { stopClaude() }
 
     @objc private func speakPressed(_ sender: NSButton) {
         switch NSApp.currentEvent?.type {

@@ -298,6 +298,13 @@ if CommandLine.arguments.contains("--duo-render-test") {
     exit(0)
 }
 let delegate = AppDelegate()
+if CommandLine.arguments.contains("--conductor-claude-probe") {
+    app.setActivationPolicy(.accessory)
+    app.delegate = delegate
+    DispatchQueue.main.async { MainActor.assumeIsolated { ConductorClaudeProbe.run(owner: delegate) } }
+    withExtendedLifetime(delegate) { app.run() }
+    exit(0)
+}
 // Isolated visual QA: builds real settings views without sensors, event taps,
 // window recovery, or changes to the user's saved effect preferences.
 if CommandLine.arguments.contains("--standard-menu-probe") {

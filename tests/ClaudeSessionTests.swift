@@ -36,25 +36,25 @@ struct ClaudeSessionTests {
         session.onEvent = { events.append($0) }
         session.onEnd = { ends.append($0) }
 
-        expect(session.send("你好"), "发送第一条")
+        expect(session.send("hello"), "发送第一条")
         expect(pump(4) { events.contains { if case .result = $0 { return true }; return false } }, "收到 result")
         let texts = events.compactMap { event -> String? in
             if case .textDelta(let text) = event { return text }
             return nil
         }
-        expect(texts.joined() == "收到：你好", "增量文字拼接：\(texts.joined())")
-        expect(events.contains { if case .assistant(let text, _) = $0 { return text == "收到：你好" }; return false }, "整段 assistant")
+        expect(texts.joined() == "reply: hello", "增量文字拼接：\(texts.joined())")
+        expect(events.contains { if case .assistant(let text, _) = $0 { return text == "reply: hello" }; return false }, "整段 assistant")
         expect(session.sessionID == "fake-claude-1", "会话 id 从 init 取得：\(session.sessionID ?? "nil")")
 
         events.removeAll()
-        expect(session.send("再来一次"), "同一进程发送第二条")
+        expect(session.send("again"), "同一进程发送第二条")
         expect(pump(4) { events.contains { if case .result = $0 { return true }; return false } }, "第二条 result")
-        expect(events.contains { if case .result(let result) = $0 { return result.text == "收到：再来一次" }; return false }, "第二条内容")
+        expect(events.contains { if case .result(let result) = $0 { return result.text == "reply: again" }; return false }, "第二条内容")
 
         session.interrupt()
         expect(pump(4) { ends.count > 0 }, "停止后收到进程结束")
         events.removeAll()
-        expect(session.send("继续"), "停止后用 --resume 重开")
+        expect(session.send("more"), "停止后用 --resume 重开")
         expect(pump(4) { events.contains { if case .result = $0 { return true }; return false } }, "重开后的 result")
         expect(session.sessionID == "fake-claude-1", "resume 后会话 id 不变")
 

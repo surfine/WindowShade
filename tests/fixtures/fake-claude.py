@@ -17,7 +17,7 @@ for line in sys.stdin:
     content = message.get("message", {}).get("content", "")
     if isinstance(content, list):
         content = "".join(part.get("text", "") for part in content if isinstance(part, dict))
-    reply = "收到：" + str(content)
+    reply = "reply: " + str(content)
     print(json.dumps({"type": "stream_event",
                       "event": {"type": "content_block_delta",
                                 "delta": {"type": "text_delta", "text": reply}}}), flush=True)

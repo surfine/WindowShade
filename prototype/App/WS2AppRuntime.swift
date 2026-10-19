@@ -309,6 +309,7 @@ import Cocoa
         view.navigateBack = { [weak self] in self?.openOwned() }
         view.sync(); host.start(); view.renderDevices(host.devices)
     }
+    var conductorPageForProbe: WS2ConductorPageView? { conductorPage }
     @discardableResult func openConductor() -> Bool {
         guard NotchController.isEnabled, !sleeping, lockReasons.isEmpty,
               AuthorizationService.shared.lockState() == .unlocked else { return false }
