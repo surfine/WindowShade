@@ -81,6 +81,12 @@ final class WS2InputController {
             host.pageAction = { [weak delegate = NSApp.delegate as? AppDelegate] button in
                 delegate?.ws2Runtime.remoteConductorAction(button) ?? false
             }
+            host.onConductorConfig = { [weak delegate = NSApp.delegate as? AppDelegate] config in
+                _ = delegate?.ws2Runtime.remoteConductorConfig(config)
+            }
+            host.onConductorNotch = { [weak delegate = NSApp.delegate as? AppDelegate] notch in
+                delegate?.ws2Runtime.remoteConductorNotch(notch)
+            }
             host.onChange = { [weak self] in
                 guard let self else { return }
                 self.remoteListening = self.remoteHost?.isListening == true
@@ -97,6 +103,11 @@ final class WS2InputController {
 
     /// 设置页用：iPhone 上的遥控器现在的样子。
     var remoteHostForSettings: WS2RemoteHost? { remoteHost }
+
+    /// 指挥页打开/切换会话时，把真实 Codex 目标交给遥控会话；nil 表示页面关了。
+    func setRemoteConductor(_ handshake: WS2OwnedLaunchController.RemoteHandshake?) {
+        remoteHost?.setConductor(handshake)
+    }
 
     func shutdown() {
         dispatchPrecondition(condition: .onQueue(.main))

@@ -192,6 +192,42 @@ import Foundation
         return .init(connection:session.connectionID,context:context,revision:conductorRevision)
     }
     var conductorTurn:String? { activeTurn }
+
+    /// 给 iPhone 遥控会话的握手：只从真实可用的 Codex 目标生成；不猜能力、不造槽位。
+    struct RemoteHandshake {
+        let context: WS2.Context
+        let project: String
+        let initial: WS2.ExecutionConfig
+        let capabilities: [ConductorCapabilities]
+        let slots: [WS2.ModelID?]
+        let turn: String?
+        let actual: WS2.ExecutionConfig?
+    }
+
+    func remoteConductorHandshake() -> RemoteHandshake? {
+        guard let target = conductorTarget, let model, let effort, let projectURL else { return nil }
+        let revision: UInt64 = 1
+        let provider: WS2.Provider = .codex
+        let capabilities = models.keys.sorted().compactMap { key -> ConductorCapabilities? in
+            let efforts = models[key] ?? []
+            guard !efforts.isEmpty else { return nil }
+            return ConductorCapabilities(model: .init(provider: provider, modelID: key),
+                                         supportedEfforts: efforts, revision: revision,
+                                         ultracodeWorkflowID: nil)
+        }
+        guard let current = capabilities.first(where: { $0.model.modelID == model }),
+              current.supportedEfforts.contains(effort) else { return nil }
+        let initial = WS2.ExecutionConfig(model: current.model, effort: effort,
+                                          workflowID: nil, capabilityRevision: revision)
+        var slots: [WS2.ModelID?] = capabilities.prefix(4).map(\.model)
+        while slots.count < 4 { slots.append(nil) }
+        let project = projectURL.lastPathComponent
+        return RemoteHandshake(context: target.context,
+                               project: project.isEmpty ? "WindowShade" : project,
+                               initial: initial, capabilities: capabilities, slots: slots,
+                               turn: activeTurn.flatMap { $0.isEmpty ? nil : $0 },
+                               actual: activeTurn == nil ? nil : initial)
+    }
     @discardableResult func selectConductorSession(_ key:WS2.SessionKey,revision:UInt64) -> Bool {
         guard revalidate(),conductorSessions.contains(where:{$0.context.session==key && $0.context.epoch==revision}) else { return false }
         if context?.session==key { return true }

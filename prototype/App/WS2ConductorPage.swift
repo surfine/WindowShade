@@ -3,6 +3,7 @@ import Cocoa
 /// 指挥页复用唯一 owned controller。采用草稿和发送分开，所有动作绑定正在显示的会话。
 @MainActor final class WS2ConductorPageView: NSView, WS2LeaseContent, WS2DeviceActionSink, NSTextFieldDelegate {
     var onCancel: (() -> Void)?
+    var remoteTargetChanged: ((WS2.Context?) -> Void)?
     var inputIsCurrent: () -> Bool = { false }
     var interactionSize: NSSize { NSSize(width: 460, height: 360) }
     let pageID = UUID()
@@ -35,6 +36,7 @@ import Cocoa
     private let claudeSpeak = NSButton(title: WSL10n.text("conductor.speak", zh: "按住说话"), target: nil, action: nil)
     private let claudeSend = NSButton(title: WSL10n.text("conductor.send", zh: "发送"), target: nil, action: nil)
     private let claudeStop = NSButton(title: WSL10n.text("conductor.stopTurn", zh: "停止本轮"), target: nil, action: nil)
+    private let remoteHint = NSTextField(wrappingLabelWithString: "")
     private let menus = NSStackView()
     private let actions = NSStackView()
     private let devices = NSStackView()
@@ -98,6 +100,12 @@ import Cocoa
         backendMenu.action = #selector(pickBackend)
         backendMenu.setAccessibilityLabel(WSL10n.text("conductor.backend.label", zh: "助手"))
         stack.addArrangedSubview(backendMenu)
+        remoteHint.font = .systemFont(ofSize: 11)
+        remoteHint.textColor = .secondaryLabelColor
+        remoteHint.maximumNumberOfLines = 2
+        remoteHint.isHidden = true
+        stack.addArrangedSubview(remoteHint)
+        remoteHint.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         sessions.orientation = .vertical
         sessions.alignment = .leading
         sessions.spacing = 4
@@ -236,6 +244,7 @@ import Cocoa
         if displayedTarget != target {
             input.cancelAll()
             displayedTarget = target
+            remoteTargetChanged?(target?.context)
         }
         displayedTurn = controller.conductorTurn
         if let target, let row = snap.rows.first(where: { $0.id == target.context.session && $0.revision == target.context.epoch }) {
@@ -483,7 +492,9 @@ import Cocoa
             claudeConductor.stop()
         }
         editor.stringValue = ""
+        remoteNotch("")
         updateBackendVisibility()
+        remoteTargetChanged?(isClaudeBackend ? nil : controller.conductorTarget?.context)
         sync()
     }
 
@@ -560,6 +571,12 @@ import Cocoa
 
     /// 手机遥控的返回：收起指挥页。
     func remoteBack() { onCancel?() }
+
+    /// 手机遥控会话的即时提示（画到第几拍、认出了什么、等待确认……）。
+    func remoteNotch(_ text: String) {
+        remoteHint.stringValue = text
+        remoteHint.isHidden = text.isEmpty
+    }
 
     // 页面级探针（--conductor-claude-probe）：不产生用户可见入口，只给自驱验收调。
     var probeInputIsCurrent: Bool { inputIsCurrent() }

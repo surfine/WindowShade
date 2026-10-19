@@ -142,12 +142,18 @@ enum WS2RemoteCopy {
     private var conductorSequence: UInt64 = 0
     /// 第 0、1 层的宿主与效果执行。随遥控器连上才有状态；环境没给端口时是 nil。
     private(set) var layerEffects: WS2RemoteEffects?
+    /// 指挥页开着时由运行时推来的手机指挥状态；页面没开时是 nil。
+    var onConductorConfig: ((WS2.ExecutionConfig) -> Void)?
+    var onConductorNotch: ((ConductorNotch) -> Void)?
+    private var remoteConductorContext: WS2.Context?
 
     init(environment: WS2RemoteHostEnvironment, log: (any WS2RemoteLogSink)? = nil) {
         self.environment = environment; self.log = log
         conductor = ConductorSession(bootID: UUID(), emptyDraftDigest: WS2.Digest(Data(SHA256.hash(data: Data())))!)
         if let port = environment.makeEffectPort?() {
             let effects = WS2RemoteEffects(port: port, clock: environment.clock)
+            effects.onConductorConfig = { [weak self] config in self?.onConductorConfig?(config) }
+            effects.onConductorNotch = { [weak self] notch in self?.onConductorNotch?(notch) }
             effects.hooks = WS2RemoteEffects.Hooks(
                 setRemoteLayer: { [weak self] layer in self?.applyRemoteLayer(layer) },
                 setFocusOnSession: { [weak self] on in self?.remote.setFocusOnSession(on) },
@@ -670,6 +676,35 @@ enum WS2RemoteCopy {
             pressSerial &+= 1
             press(WS2.ButtonEvent(button: button, phase: .clickOnly, pressID: pressSerial, beganAt: at, at: at))
         }
+    }
+
+    /// 运行时在指挥页打开/切换会话时推来握手；nil 表示页面关了，断开这段指挥会话。
+    func setConductor(_ handshake: WS2OwnedLaunchController.RemoteHandshake?) {
+        guard let handshake else {
+            guard let context = remoteConductorContext else { return }
+            remoteConductorContext = nil
+            conductorSequence &+= 1
+            let envelope: WS2.Envelope<ConductorSession.Event> = WS2.Envelope(
+                context: context, sequence: conductorSequence, receivedAt: now,
+                commandID: nil, turnID: nil, payload: .disconnected)
+            handle(conductor.receive(envelope), source: "remote-handshake-off")
+            return
+        }
+        remoteConductorContext = handshake.context
+        conductorSequence &+= 1
+        let connected: WS2.Envelope<ConductorSession.Event> = WS2.Envelope(
+            context: handshake.context, sequence: conductorSequence, receivedAt: now,
+            commandID: nil, turnID: nil,
+            payload: .connected(projectLabel: handshake.project, initial: handshake.initial,
+                                capabilities: handshake.capabilities, slots: handshake.slots))
+        handle(conductor.receive(connected), source: "remote-handshake")
+        guard conductor.context == handshake.context else { return }
+        conductorSequence &+= 1
+        let snapshot: WS2.Envelope<ConductorSession.Event> = WS2.Envelope(
+            context: handshake.context, sequence: conductorSequence, receivedAt: now,
+            commandID: nil, turnID: nil,
+            payload: .snapshot(turnID: handshake.turn, actual: handshake.actual))
+        handle(conductor.receive(snapshot), source: "remote-snapshot")
     }
 
     /// 指挥页开着时，播放/选择/返回先交给页面；交回 false 才继续走遥控器自己的层。

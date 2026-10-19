@@ -310,6 +310,37 @@ import Cocoa
         view.sync(); host.start(); view.renderDevices(host.devices)
     }
     var conductorPageForProbe: WS2ConductorPageView? { conductorPage }
+    private var remoteHandshakeKey: String?
+
+    /// 把指挥页当前的真实 Codex 目标推给 iPhone 遥控会话；同一份握手只推一次。
+    private func pushRemoteConductorHandshake() {
+        guard let page = conductorPage, !page.isClaudeBackend,
+              let handshake = owned.remoteConductorHandshake() else {
+            owner?.inputController.setRemoteConductor(nil)
+            remoteHandshakeKey = nil
+            return
+        }
+        // 同一段连接只握手一次；声调换档由会话自己的 stageConfig 负责，不再重发 connected。
+        let key = "\(handshake.context.epoch)"
+        guard key != remoteHandshakeKey else { return }
+        remoteHandshakeKey = key
+        owner?.inputController.setRemoteConductor(handshake)
+    }
+
+    @discardableResult func remoteConductorConfig(_ config: WS2.ExecutionConfig) -> Bool {
+        guard let page = conductorPage, !page.isClaudeBackend, let target = owned.conductorTarget else { return false }
+        if owned.model != config.model.modelID {
+            guard owned.stageConductorModel(config.model.modelID, target: target) else { return false }
+        }
+        guard owned.stageConductorEffort(config.effort, target: target) else { return false }
+        page.sync()
+        pushRemoteConductorHandshake()
+        return true
+    }
+
+    func remoteConductorNotch(_ notch: ConductorNotch) {
+        conductorPage?.remoteNotch(notch.text)
+    }
 
     /// 手机遥控落在指挥页上：播放/选择＝发送草稿，返回＝收起。页面没开就交回给遥控器自己的层。
     @discardableResult func remoteConductorAction(_ button: WS2.Button) -> Bool {
@@ -336,8 +367,11 @@ import Cocoa
                 self.conductorOwnsDeviceHost = false
             }
             self.conductorPage = nil
+            self.owner?.inputController.setRemoteConductor(nil)
+            self.remoteHandshakeKey = nil
         }), let lease = island.inputHandle(for: view) else { return false }
         conductorPage = view
+        view.remoteTargetChanged = { [weak self] _ in self?.pushRemoteConductorHandshake() }
         view.onCancel = { [weak self, weak view] in
             guard let self, let view else { return }
             self.island.dismiss(ifShowing: view)
@@ -357,6 +391,7 @@ import Cocoa
         }
         attachConductorDevices(view)
         view.sync()
+        pushRemoteConductorHandshake()
         return true
     }
     @discardableResult

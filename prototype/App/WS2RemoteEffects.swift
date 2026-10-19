@@ -148,8 +148,18 @@ extension WS2RemoteEffectPort {
         run(actions)
     }
 
+    var onConductorConfig: ((WS2.ExecutionConfig) -> Void)?
+    var onConductorNotch: ((ConductorNotch) -> Void)?
+
     func receive(conductor effects: [ConductorSession.Effect]) {
         guard !effects.isEmpty else { return }
+        for effect in effects {
+            switch effect {
+            case .showNotch(let notch): onConductorNotch?(notch)
+            case .stageConfig(let config): onConductorConfig?(config)
+            default: break
+            }
+        }
         for cue in ConductorSoundCue.cues(for: effects, lastBeats: &beatsSounded) { port.play(cue: cue) }
         let at = now
         var actions = pull(at)
