@@ -68919,22 +68919,22 @@
     "conductor.claude.ended": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Disconnected. Sending again resumes the same conversation."
-          }
-        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "连接断了；再发送会接回同一段对话。"
+            "value": "这一轮结束了；再发送会接上同一段对话。"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This turn ended. Sending again resumes the same conversation."
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "連接斷了；再傳送會接回同一段對話。"
+            "value": "這一輪結束了；再傳送會接上同一段對話。"
           }
         }
       }

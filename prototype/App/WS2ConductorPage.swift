@@ -476,6 +476,7 @@ import Cocoa
     }
 
     @objc private func pickBackend() {
+        cancelVoice()
         if isClaudeBackend {
             _ = claudeConductor.ensure()
         } else {
@@ -508,7 +509,8 @@ import Cocoa
             claudeText.scrollToEndOfDocument(nil)
         }
         let hasText = !editor.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        claudeSend.isEnabled = inputIsCurrent() && hasText && claudeConductor.status != .missing
+        claudeSend.isEnabled = inputIsCurrent() && hasText &&
+            claudeConductor.status != .missing && claudeConductor.status != .running
         claudeStop.isEnabled = inputIsCurrent() && claudeConductor.status == .running
     }
 
@@ -519,11 +521,13 @@ import Cocoa
         case .missing:
             return WSL10n.text("conductor.claude.missing", zh: "没找到 claude 命令；先安装 Claude Code，或把它放进 /opt/homebrew/bin、/usr/local/bin、~/.local/bin。")
         case .ready:
-            return WSL10n.text("conductor.claude.ready", zh: "只读模式：不会改文件，工具请求会被拒绝。")
+            let base = WSL10n.text("conductor.claude.ready", zh: "只读模式：不会改文件，工具请求会被拒绝。")
+            return claudeConductor.model.map { base + " · " + $0 } ?? base
         case .running:
-            return WSL10n.text("conductor.claude.running", zh: "正在回答…")
+            let base = WSL10n.text("conductor.claude.running", zh: "正在回答…")
+            return claudeConductor.model.map { base + " · " + $0 } ?? base
         case .ended:
-            return WSL10n.text("conductor.claude.ended", zh: "连接断了；再发送会接回同一段对话。")
+            return WSL10n.text("conductor.claude.ended", zh: "这一轮结束了；再发送会接上同一段对话。")
         }
     }
 

@@ -15,6 +15,7 @@ final class ClaudeConductor {
     private(set) var status: Status = .idle
     private(set) var transcript = ""
     private(set) var sessionID: String?
+    private(set) var model: String?
 
     var onChange: (@MainActor () -> Void)?
 
@@ -62,7 +63,7 @@ final class ClaudeConductor {
     @discardableResult
     func send(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, mayUse(), ensure(), let session else { return false }
+        guard status != .running, !trimmed.isEmpty, mayUse(), ensure(), let session else { return false }
         guard session.send(trimmed) else {
             status = .ended
             onChange?()
@@ -78,7 +79,7 @@ final class ClaudeConductor {
     func interrupt() {
         guard let session else { return }
         session.interrupt()
-        status = .ready
+        status = .ended
         transcript += "\n（已停止这一轮）\n"
         onChange?()
     }
@@ -92,8 +93,9 @@ final class ClaudeConductor {
 
     private func receive(_ event: ClaudeWire.Event) {
         switch event {
-        case .initialized(let id, _):
+        case .initialized(let id, let model):
             if let id { sessionID = id }
+            if let model { self.model = model }
         case .textDelta(let text):
             if !sawDelta {
                 transcript += "\n"
