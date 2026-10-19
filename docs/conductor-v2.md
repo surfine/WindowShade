@@ -158,3 +158,14 @@ prototype/Core/ConductorSession.swift（纯逻辑：状态机，输入事件 →
 | W5 | Codex 适配器（先只读任务） | DeepSeek D6 + 主模型 | 假服务器测试 + 一次真实只读任务 |
 | W6 | 语音：侧边按钮、转写、声纹放行 | 主模型 | 真机 |
 | W7 | Claude 适配器、发布资格（独立攻防、能耗） | 主模型 | v3 的 64 个场景逐项有真实结果 |
+
+## 2026-10-19 定案（优先于上文旧描述）
+
+- **语音草稿识别在这台 Mac 上做**：系统语音识别，`requiresOnDeviceRecognition`，不做云端回退；
+  触发是指挥页的「按住说话」，不是 iPhone 侧边按钮——系统遥控器不能替我们转写或传文字。
+  最长 60 秒，松手出草稿，不自动发送；空结果／超时／未授权／中断各有提示。
+- **Claude 后端走本地 `claude` CLI 的 stream-json 会话**，由 App 拥有进程，不把 API key 放进 App。
+  先用只读（`--permission-mode plan --permission-prompts none`）接通发送与流式回复；
+  工具审批的 host 协议之后单独做。
+- **这一轮先把「指挥模式端到端」接成可真机试用**；所有 WS2 面继续藏在
+  `WindowShade.Preview.WS2` 后面，验收过的才逐项露出。
