@@ -310,6 +310,20 @@ import Cocoa
         view.sync(); host.start(); view.renderDevices(host.devices)
     }
     var conductorPageForProbe: WS2ConductorPageView? { conductorPage }
+
+    /// 手机遥控落在指挥页上：播放/选择＝发送草稿，返回＝收起。页面没开就交回给遥控器自己的层。
+    @discardableResult func remoteConductorAction(_ button: WS2.Button) -> Bool {
+        guard let page = conductorPage else { return false }
+        switch button {
+        case .playPause, .select:
+            return page.remoteSend()
+        case .back:
+            page.remoteBack()
+            return true
+        default:
+            return false
+        }
+    }
     @discardableResult func openConductor() -> Bool {
         guard NotchController.isEnabled, !sleeping, lockReasons.isEmpty,
               AuthorizationService.shared.lockState() == .unlocked else { return false }
@@ -324,6 +338,10 @@ import Cocoa
             self.conductorPage = nil
         }), let lease = island.inputHandle(for: view) else { return false }
         conductorPage = view
+        view.onCancel = { [weak self, weak view] in
+            guard let self, let view else { return }
+            self.island.dismiss(ifShowing: view)
+        }
         view.expectedLease = lease
         view.currentLease = { [weak self, weak view] in
             guard let view else { return nil }

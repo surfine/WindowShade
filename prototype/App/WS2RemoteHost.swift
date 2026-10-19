@@ -672,7 +672,21 @@ enum WS2RemoteCopy {
         }
     }
 
+    /// 指挥页开着时，播放/选择/返回先交给页面；交回 false 才继续走遥控器自己的层。
+    var pageAction: (@MainActor (WS2.Button) -> Bool)?
+    private var pagePresses = Set<UInt64>()
+
     private func press(_ event: WS2.ButtonEvent) {
+        if let pageAction {
+            switch event.phase {
+            case .down, .clickOnly:
+                if pageAction(event.button) { pagePresses.insert(event.pressID); return }
+            case .up, .cancel:
+                if pagePresses.remove(event.pressID) != nil { return }
+            default:
+                break
+            }
+        }
         for effect in remote.handle(event) {
             if case .forward(let forwarded) = effect { conduct(.button(forwarded)) }
             else { handle([effect], source: "remote") }

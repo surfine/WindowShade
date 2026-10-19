@@ -544,6 +544,23 @@ import Cocoa
         renderClaude()
     }
 
+    /// 手机遥控的播放/选择：发送当前草稿（Codex 先采用再发送，Claude 直接发）。
+    @discardableResult func remoteSend() -> Bool {
+        guard inputIsCurrent() else { return false }
+        guard !editor.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+        if isClaudeBackend {
+            sendClaudeDraft()
+            return true
+        }
+        commitDraft()
+        guard adoptedDraft != nil else { return false }
+        sendDraft()
+        return adoptedDraft == nil
+    }
+
+    /// 手机遥控的返回：收起指挥页。
+    func remoteBack() { onCancel?() }
+
     // 页面级探针（--conductor-claude-probe）：不产生用户可见入口，只给自驱验收调。
     var probeInputIsCurrent: Bool { inputIsCurrent() }
     var probeIsClaude: Bool { isClaudeBackend }

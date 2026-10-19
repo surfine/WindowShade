@@ -43,10 +43,10 @@ enum ConductorClaudeProbe {
             return
         }
         log("page open")
-        after(0.2) { stepSelect(page) }
+        after(0.2) { stepSelect(page, owner: owner) }
     }
 
-    private static func stepSelect(_ page: WS2ConductorPageView) {
+    private static func stepSelect(_ page: WS2ConductorPageView, owner: AppDelegate) {
         page.probeSelectClaude()
         guard page.probeIsClaude else {
             log("FAIL conductor-claude-page: backend did not switch")
@@ -60,12 +60,16 @@ enum ConductorClaudeProbe {
         }
         log("backend selected")
         page.probeSetDraft("hello")
-        page.probeSend()
-        log("sent hello")
-        poll(page, attempts: 60)
+        guard owner.ws2Runtime.remoteConductorAction(.playPause) else {
+            log("FAIL conductor-claude-page: remote send did not reach the page")
+            finish(ok: false)
+            return
+        }
+        log("sent hello via remote play")
+        poll(page, attempts: 60, owner: owner)
     }
 
-    private static func poll(_ page: WS2ConductorPageView, attempts: Int) {
+    private static func poll(_ page: WS2ConductorPageView, attempts: Int, owner: AppDelegate) {
         let transcript = page.probeClaudeTranscript
         if transcript.contains("reply: hello"), page.probeClaudeStatus == .ready {
             var failures = 0
@@ -80,7 +84,7 @@ enum ConductorClaudeProbe {
             page.probeSetDraft("second")
             page.probeSend()
             page.probeStop()
-            after(0.3) { stepStop(page, prior: failures) }
+            after(0.3) { stepStop(page, prior: failures, owner: owner) }
             return
         }
         guard attempts > 0 else {
@@ -88,16 +92,28 @@ enum ConductorClaudeProbe {
             finish(ok: false)
             return
         }
-        after(0.1) { poll(page, attempts: attempts - 1) }
+        after(0.1) { poll(page, attempts: attempts - 1, owner: owner) }
     }
 
-    private static func stepStop(_ page: WS2ConductorPageView, prior: Int) {
+    private static func stepStop(_ page: WS2ConductorPageView, prior: Int, owner: AppDelegate) {
         var failures = prior
         func expect(_ ok: Bool, _ text: String) {
             if !ok { failures += 1 }
             log("\(ok ? "ok  " : "FAIL") \(text)")
         }
         expect(page.probeClaudeStatus == .ended, "stopping ends the turn")
+        guard owner.ws2Runtime.remoteConductorAction(.back) else {
+            log("FAIL conductor-claude-page: remote back did not reach the page")
+            finish(ok: false)
+            return
+        }
+        after(0.6) { stepBack(owner, prior: failures) }
+    }
+
+    private static func stepBack(_ owner: AppDelegate, prior: Int) {
+        let dismissed = owner.ws2Runtime.conductorPageForProbe == nil
+        log(dismissed ? "ok   back dismisses the conductor page" : "FAIL back did not dismiss the conductor page")
+        let failures = prior + (dismissed ? 0 : 1)
         log(failures == 0 ? "PASS conductor-claude-page" : "FAIL conductor-claude-page: \(failures)")
         finish(ok: failures == 0)
     }

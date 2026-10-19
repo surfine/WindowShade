@@ -78,6 +78,9 @@ final class WS2InputController {
             let host = WS2RemoteHost.makeForApp()
             let presenter = WS2RemoteNotchPresenter()
             host.presenter = presenter
+            host.pageAction = { [weak delegate = NSApp.delegate as? AppDelegate] button in
+                delegate?.ws2Runtime.remoteConductorAction(button) ?? false
+            }
             host.onChange = { [weak self] in
                 guard let self else { return }
                 self.remoteListening = self.remoteHost?.isListening == true
