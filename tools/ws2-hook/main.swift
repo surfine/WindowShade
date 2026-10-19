@@ -43,10 +43,10 @@ func controllingTTY() -> String? {
             let deadline = ProcessInfo.processInfo.systemUptime + (event == "PermissionRequest" ? 119 : 1)
             try client.sendLine(JSONSerialization.data(withJSONObject:payload,options:[.sortedKeys]),deadline:deadline)
             let response = try client.readLine(deadline:deadline)
-            // 此 helper 版本只支持观测/拒绝；allow 由 A4 接入后单独升级，不能凭 socket 字段启用。
-            if event == "PermissionRequest",let body = try JSONSerialization.jsonObject(with:response) as? [String:Any],
-               body["decision"] as? String == "deny" {
-                reply = Data(#"{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"deny"}}}"#.utf8)+Data([10])
+            // 只有在刘海里真的点了决定，服务器才会回 allow／deny；其余保持 {}，Claude Code 照常自己问。
+            if event == "PermissionRequest", let body = try JSONSerialization.jsonObject(with:response) as? [String:Any],
+               let decision = body["decision"] as? String, decision == "deny" || decision == "allow" {
+                reply = Data(#"{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"\#(decision)"}}}"#.utf8) + Data([10])
             }
         } catch { /* 保持 {}。不把输入、路径、命令或错误内容写入日志。 */ }
         try? FileHandle.standardOutput.write(contentsOf:reply)

@@ -1,5 +1,6 @@
 // 编程会话：Claude Code 的 hook（tools/ws2-hook，装在 Contents/Helpers/WindowShadeHook）连本机 socket 报事件，
-// 这里收下、映射成 AgentSessions 里的 observed 会话。只观测和拒绝，没有放行这条路：应答里不会出现 allow。
+// 这里收下、映射成 AgentSessions 里的 observed 会话。默认不替 Claude Code 决定；只有人在刘海里按过
+// “允许这一次”（高风险还要 Touch ID），才把这一条连接回成 allow。
 // 只收本机同一用户的连接（WS2UnixSocket 在 accept 时查对端 UID）；不联网；不存、不读工具参数，只留工具名。
 // 默认关；开关在指挥模式设置里。关掉就停止监听并删掉 socket 文件。
 import Foundation
@@ -16,8 +17,8 @@ struct WS2HookEvent: Equatable, Sendable {
         case sessionStart = "SessionStart", userPromptSubmit = "UserPromptSubmit", preToolUse = "PreToolUse"
         case postToolUse = "PostToolUse", stop = "Stop", permissionRequest = "PermissionRequest"
     }
-    /// 应答只有这两种。没有 allow：放行要走授权账，不在这条 socket 上。
-    enum Decision: Sendable { case none, deny }
+    /// 应答：不决定、拒绝、允许这一次。allow 只由主线程的审批决定触发，socket 自己从不主动发。
+    enum Decision: Sendable { case none, deny, allow }
 
     let kind: Kind
     let sessionID: String
@@ -79,6 +80,7 @@ struct WS2HookEvent: Equatable, Sendable {
         switch decision {
         case .none: return Data("{}".utf8)
         case .deny: return Data(#"{"decision":"deny"}"#.utf8)
+        case .allow: return Data(#"{"decision":"allow"}"#.utf8)
         }
     }
 }
@@ -119,6 +121,13 @@ struct WS2HookSessions: Sendable {
     }
     /// 会话所在的终端身份（hook 报过才有）。“过去”按它认 App、切 tmux 窗格。
     func terminal(of sessionID: String) -> TerminalIdentity? { terminals[sessionID] }
+    func waitingKey(of sessionID: String) -> WS2.ApprovalKey? { waiting[sessionID] }
+    /// 这一次等你的请求摘要：Touch ID 的目标绑在它上面，不是绑在工具名上。
+    func waitingDigest(of sessionID: String) -> Data? {
+        guard let key = waiting[sessionID] else { return nil }
+        return store.request(for: key)?.targetDigest.bytes
+    }
+    func project(of sessionID: String) -> String { meta[sessionID]?.project ?? "" }
     /// 等你的那一次要执行的东西（工具名）；不在等或没有工具名是空。
     func waitingSummary(of sessionID: String) -> String {
         guard let key = waiting[sessionID] else { return "" }
@@ -128,6 +137,16 @@ struct WS2HookSessions: Sendable {
     mutating func receive(_ event: WS2HookEvent, at now: WS2.Instant) -> [Change] {
         let before = statuses()
         apply(event, at: now)
+        return changes(from: before)
+    }
+
+    /// 人在刘海里按了允许或不允许：这次“等你”已经有人接手，不再挂着。
+    /// 决定本身由 socket 那条线写回；这里只把账上的占位请求结掉，状态回到原来的样子。
+    mutating func handled(sessionID: String, at now: WS2.Instant) -> [Change] {
+        guard let key = waiting.removeValue(forKey: sessionID) else { return [] }
+        let before = statuses()
+        sequence += 1
+        _ = store.choose(key, choice: .returnToHost, beganAt: now, sequence: sequence, now: now)
         return changes(from: before)
     }
 
@@ -173,6 +192,7 @@ struct WS2HookSessions: Sendable {
         }
         let context = context(key, current)
         // 新事件说明上一次的“等你”已经在终端里处理掉了：交回给助手自己，不替它决定。
+        // （挂住的连接由 listener 的过期或下一条 PermissionRequest 收尾；事件本身不带连接。）
         if let pending = waiting.removeValue(forKey: event.sessionID) {
             sequence += 1
             _ = store.choose(pending, choice: .returnToHost, beganAt: now, sequence: sequence, now: now)
@@ -261,8 +281,17 @@ struct WS2HookSessions: Sendable {
     }
     let path: String
     private let clock: any WS2Clock
+    /// 一次 PermissionRequest 的面：会话、项目、工具名、这次请求的摘要。不读工具参数。
+    struct PermissionAsk: Equatable, Sendable {
+        let sessionID: String
+        let project: String
+        let tool: String
+        let digest: Data
+    }
     private(set) var model = WS2HookSessions()
     private(set) var state: State = .off
+    /// 有权限请求等着人决定时调；主线程上。
+    var onPermissionAsk: ((PermissionAsk) -> Void)?
     var onChange: (([WS2HookSessions.Change]) -> Void)?
     var onState: ((State) -> Void)?
     private var listener: WS2HookListener?
@@ -306,6 +335,33 @@ struct WS2HookSessions: Sendable {
         setState(ok ? .listening : .failed)
     }
 
+    func isWaiting(sessionID: String) -> Bool {
+        state == .listening && model.waitingKey(of: sessionID) != nil
+    }
+
+    /// 人在刘海里做了决定：结掉账上的“等你”，把挂住的 hook 连接回掉。
+    /// completion 在写完之后回（主线程）：false 表示连接已经断了，这一次可能没送到。
+    @discardableResult
+    func decide(sessionID: String, allow: Bool, completion: (@Sendable (Bool) -> Void)? = nil) -> Bool {
+        guard state == .listening, model.waitingKey(of: sessionID) != nil else { return false }
+        let changes = model.handled(sessionID: sessionID, at: clock.now())
+        scheduleWake()
+        if !changes.isEmpty { onChange?(changes) }
+        listener?.decide(sessionID: sessionID, allow: allow) { sent in
+            DispatchQueue.main.async { completion?(sent) }
+        }
+        return true
+    }
+
+    /// 不替 Claude Code 决定：回“{}”，让它在自己的终端里问。卡被收走、Touch ID 用不了时走这条。
+    func deferToHost(sessionID: String) {
+        guard state == .listening else { return }
+        let changes = model.handled(sessionID: sessionID, at: clock.now())
+        scheduleWake()
+        if !changes.isEmpty { onChange?(changes) }
+        listener?.deferToHost(sessionID: sessionID)
+    }
+
     private func setState(_ value: State) {
         guard state != value else { return }
         state = value; onState?(value)
@@ -316,6 +372,15 @@ struct WS2HookSessions: Sendable {
         let changes = model.receive(event, at: clock.now())
         scheduleWake()
         if !changes.isEmpty { onChange?(changes) }
+        if event.kind == .permissionRequest {
+            // 账上没接住（锁着、满了）或者没有卡可挂：立刻回“{}”，不让 Claude Code 白等。
+            guard let digest = model.waitingDigest(of: event.sessionID), let onPermissionAsk else {
+                deferToHost(sessionID: event.sessionID)
+                return
+            }
+            onPermissionAsk(PermissionAsk(sessionID: event.sessionID, project: model.project(of: event.sessionID),
+                                          tool: event.tool ?? "", digest: digest))
+        }
     }
 
     private func scheduleWake() {
@@ -345,10 +410,13 @@ final class WS2HookListener: @unchecked Sendable {
     private let path: String
     private let deliver: @Sendable (WS2HookEvent) -> Void
     private let report: @Sendable (Bool) -> Void
+    private struct Pending { let client: WS2UnixSocket; let deadline: Double }
     private var socket: WS2UnixSocket?
     private var source: DispatchSourceRead?
     private var stopped = false
     private var afterClose: (@Sendable () -> Void)?
+    /// PermissionRequest 的连接要等审批；键是会话 id，只留最新一次。
+    private var pending: [String: Pending] = [:]
 
     init(path: String, deliver: @escaping @Sendable (WS2HookEvent) -> Void, report: @escaping @Sendable (Bool) -> Void) {
         self.path = path; self.deliver = deliver; self.report = report
@@ -360,6 +428,11 @@ final class WS2HookListener: @unchecked Sendable {
         queue.async {
             self.stopped = true
             self.afterClose = done
+            for (_, entry) in self.pending {
+                try? entry.client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
+                entry.client.closeSocket()
+            }
+            self.pending.removeAll()
             if let source = self.source { self.source = nil; source.cancel() } // 取消处理里关 fd、删文件
             else { self.closeSocket() }
         }
@@ -392,11 +465,50 @@ final class WS2HookListener: @unchecked Sendable {
         guard !stopped, let socket else { return }
         let start = ProcessInfo.processInfo.systemUptime
         guard let client = try? socket.accept(deadline: start + 0.2) else { return }
-        defer { client.closeSocket() }
-        guard let line = try? client.readLine(deadline: start + 1) else { return }
+        guard let line = try? client.readLine(deadline: start + 1) else { client.closeSocket(); return }
         let event = WS2HookEvent.parse(line)
+        // 权限请求要等人在刘海里点：挂住这条连接，别让别的事件在同一个 socket 上排队。
+        if let event, event.kind == .permissionRequest {
+            if let old = pending.removeValue(forKey: event.sessionID) {
+                try? old.client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
+                old.client.closeSocket()
+            }
+            let deadline = ProcessInfo.processInfo.systemUptime + 119
+            pending[event.sessionID] = Pending(client: client, deadline: deadline)
+            queue.asyncAfter(deadline: .now() + 119) { [weak self] in self?.expire(event.sessionID, deadline: deadline) }
+            deliver(event)
+            return
+        }
         try? client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
+        client.closeSocket()
         if let event { deliver(event) }
+    }
+
+    /// 主线程的审批决定：允许这一次或拒绝，然后把挂住的连接回掉。completion 说写成了没有。
+    func decide(sessionID: String, allow: Bool, completion: (@Sendable (Bool) -> Void)? = nil) {
+        queue.async {
+            guard let entry = self.pending.removeValue(forKey: sessionID) else { completion?(false); return }
+            let sent = (try? entry.client.sendLine(WS2HookEvent.reply(allow ? .allow : .deny),
+                                                   deadline: ProcessInfo.processInfo.systemUptime + 1)) != nil
+            entry.client.closeSocket()
+            completion?(sent)
+        }
+    }
+
+    /// 不决定：回“{}”并关掉。
+    func deferToHost(sessionID: String) {
+        queue.async {
+            guard let entry = self.pending.removeValue(forKey: sessionID) else { return }
+            try? entry.client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
+            entry.client.closeSocket()
+        }
+    }
+
+    private func expire(_ sessionID: String, deadline: Double) {
+        guard let entry = pending[sessionID], entry.deadline == deadline else { return }
+        pending.removeValue(forKey: sessionID)
+        try? entry.client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
+        entry.client.closeSocket()
     }
 
     /// 父目录不存在就按 0700 建；已存在的不改权限，交给 WS2UnixSocket 去拒。

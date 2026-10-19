@@ -28,7 +28,7 @@ struct HookServerTests {
         return done()
     }
 
-    @MainActor static func send(_ data: Data, to path: String) -> Data? {
+    static func send(_ data: Data, to path: String) -> Data? {
         guard let client = try? WS2UnixSocket.connect(to: path) else { return nil }
         defer { client.closeSocket() }
         let deadline = ProcessInfo.processInfo.systemUptime + 2
@@ -108,11 +108,12 @@ struct HookServerTests {
         b = event("PreToolUse", tool: "Bash"); b["tool_input"] = ["command": String(repeating: "y", count: 70_000)]
         t.expect(WS2HookEvent.parse(line(b)) == nil, "整行超过 64 KiB")
 
-        t.section("H-04", "应答里没有放行")
+        t.section("H-04", "应答：不决定、拒绝、允许这一次，三种都明确")
         let none = String(decoding: WS2HookEvent.reply(.none), as: UTF8.self)
         let deny = String(decoding: WS2HookEvent.reply(.deny), as: UTF8.self)
-        t.expect(none == "{}" && deny.contains("deny"), "只有“不决定”和“拒绝”")
-        t.expect(!none.contains("allow") && !deny.contains("allow"), "没有 allow")
+        let allow = String(decoding: WS2HookEvent.reply(.allow), as: UTF8.self)
+        t.expect(none == "{}" && deny.contains(#""deny""#) && allow.contains(#""allow""#), "三种各自成形")
+        t.expect(!none.contains("allow"), "不决定里没有放行")
 
         t.section("H-05", "状态转移：开始 → 在跑 → 等你 → 在跑 → 做完了")
         var m = WS2HookSessions()
@@ -128,6 +129,16 @@ struct HookServerTests {
         changes = m.receive(parsed("PostToolUse", tool: "Bash"), at: sec(9))
         t.expect(m.status(of: "s-1") == .running && changes.map(\.status) == [.running], "终端里处理完：回到在跑")
         t.expect(m.store.approvalCount == 0, "占位审批已交回")
+        var decided = WS2HookSessions()
+        _ = decided.receive(parsed("UserPromptSubmit", session: "d"), at: sec(1))
+        _ = decided.receive(parsed("PermissionRequest", session: "d", tool: "Read"), at: sec(2))
+        t.expect(decided.status(of: "d") == .waiting && decided.waitingDigest(of: "d")?.count == 32,
+                 "等你，摘要就位")
+        t.expect(decided.project(of: "d") == "WindowShade", "项目名在账上")
+        let decidedChanges = decided.handled(sessionID: "d", at: sec(3))
+        t.expect(decided.status(of: "d") == .running && decidedChanges.map(\.status) == [.running],
+                 "刘海里定了：不再等你")
+        t.expect(decided.store.approvalCount == 0 && decided.waitingDigest(of: "d") == nil, "占位审批结掉")
         changes = m.receive(parsed("Stop"), at: sec(10))
         t.expect(m.status(of: "s-1") == .completed && changes.map(\.status) == [.completed], "Stop：做完了")
         changes = m.receive(parsed("UserPromptSubmit"), at: sec(11))
@@ -166,6 +177,8 @@ struct HookServerTests {
         let server = WS2HookServer(path: path, clock: WS2ContinuousClock())
         var seen: [WS2HookSessions.Change] = []
         server.onChange = { seen += $0 }
+        // 有人在看卡：PermissionRequest 的连接要挂着，等决定。
+        server.onPermissionAsk = { _ in }
         t.expect(server.state == .off && !FileManager.default.fileExists(atPath: path), "默认关：不监听")
         server.setEnabled(true)
         t.expect(spin { server.state == .listening }, "打开后在听")
@@ -174,20 +187,57 @@ struct HookServerTests {
         t.expect(lstat(root + "/WindowShade", &st) == 0 && st.st_mode & 0o777 == 0o700, "父目录按 0700 建")
         t.expect(send(line(event("UserPromptSubmit", session: "live")), to: path) == Data("{}".utf8), "回“{}”：不替 Claude Code 决定")
         t.expect(spin { server.model.status(of: "live") == .running }, "事件进了会话表")
-        t.expect(send(line(event("PermissionRequest", session: "live", tool: "Bash")), to: path) == Data("{}".utf8), "要权限也只回“{}”")
-        t.expect(spin { server.model.status(of: "live") == .waiting } && seen.contains { $0.status == .waiting }, "等你")
+        final class ReplyBox: @unchecked Sendable {
+            private let lock = NSLock()
+            private var stored: Data?
+            var value: Data? { lock.lock(); defer { lock.unlock() }; return stored }
+            func set(_ value: Data?) { lock.lock(); stored = value; lock.unlock() }
+        }
+        let permission = ReplyBox()
+        let permissionLine = line(event("PermissionRequest", session: "live", tool: "Bash"))
+        DispatchQueue.global().async { permission.set(send(permissionLine, to: path)) }
+        t.expect(spin { server.model.status(of: "live") == .waiting } && seen.contains { $0.status == .waiting }, "要权限：等你")
+        _ = spin(until: { false }, seconds: 0.2)
+        t.expect(permission.value == nil, "决定之前连接挂着，不先回“{}”")
+        t.expect(server.decide(sessionID: "live", allow: true), "审批：允许这一次")
+        t.expect(spin { permission.value != nil }, "挂住的连接收到应答")
+        t.expect(permission.value == Data(#"{"decision":"allow"}"#.utf8), "应答是 allow")
+        t.expect(spin { server.model.status(of: "live") == .running }, "允许后不再显示等你")
         let count = seen.count
         t.expect(send(Data("garbage".utf8), to: path) == Data("{}".utf8), "畸形：回“{}”")
         b = event("PreToolUse", session: "live", tool: "Bash"); b["tool_input"] = ["command": String(repeating: "z", count: 70_000)]
         t.expect(send(line(b), to: path) == nil, "超长：不读完、不应答")
         _ = spin(until: { false }, seconds: 0.2)
-        t.expect(seen.count == count && server.model.status(of: "live") == .waiting, "畸形和超长都没改状态")
+        t.expect(seen.count == count && server.model.status(of: "live") == .running, "畸形和超长都没改状态")
+
+        t.expect(send(line(event("UserPromptSubmit", session: "deny-me")), to: path) == Data("{}".utf8), "第二件：在跑")
+        let deniedAsk = ReplyBox()
+        let deniedLine = line(event("PermissionRequest", session: "deny-me", tool: "Write"))
+        DispatchQueue.global().async { deniedAsk.set(send(deniedLine, to: path)) }
+        t.expect(spin { server.model.status(of: "deny-me") == .waiting }, "第二件要权限")
+        t.expect(server.decide(sessionID: "deny-me", allow: false), "审批：不允许")
+        t.expect(spin { deniedAsk.value != nil }, "第二件收到应答")
+        t.expect(deniedAsk.value == Data(#"{"decision":"deny"}"#.utf8), "应答是 deny")
+        t.expect(spin { server.model.status(of: "deny-me") == .running }, "不允许后也不再等你")
+
+        server.onPermissionAsk = nil
+        let noCard = ReplyBox()
+        let noCardLine = line(event("PermissionRequest", session: "no-card", tool: "Bash"))
+        DispatchQueue.global().async { noCard.set(send(noCardLine, to: path)) }
+        t.expect(spin { noCard.value == Data("{}".utf8) }, "没有卡可挂：立刻回“{}”")
+        t.expect(spin { server.model.status(of: "no-card") == .idle }, "没有卡：也不留在等你")
+        server.onPermissionAsk = { _ in }
         t.expect(server.model.nextWake != nil, "有期限时才排唤醒")
+        let held = ReplyBox()
+        let heldLine = line(event("PermissionRequest", session: "held", tool: "Edit"))
+        DispatchQueue.global().async { held.set(send(heldLine, to: path)) }
+        t.expect(spin { server.isWaiting(sessionID: "held") }, "关掉前还有一件挂住")
         let closed = DispatchSemaphore(value: 0)
         server.setEnabled(false) { closed.signal() }
         t.expect(closed.wait(timeout: .now() + 3) == .success, "停听完成")
         t.expect(lstat(path, &st) != 0 && errno == ENOENT, "关掉后 socket 文件被删除")
         t.expect(server.state == .off && server.model.sessions.isEmpty, "关掉后忘掉会话")
+        t.expect(spin { held.value == Data("{}".utf8) }, "关掉时挂住的连接回“{}”")
 
         t.section("H-09", "崩溃留下的 socket 文件被换掉；父目录是符号链接时不开")
         leaveStaleSocket(at: path)

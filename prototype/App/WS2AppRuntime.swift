@@ -22,6 +22,8 @@ import Cocoa
     private var presenceLock: PresenceLockDriver?
     /// 编程会话（默认关）：Claude Code 的 hook 报到本机 socket，只观测，不放行。
     private var hookServer: WS2HookServer?
+    /// 权限请求在刘海里露面：允许这一次 / 不允许。
+    private var hookApproval: WS2HookApprovalHost?
     /// 旧监听器还没把 socket 文件处理完：这段时间不开新的，等它的 done 回调再对一次开关。
     private var hookStopping = false
     private var sleeping=false
@@ -146,13 +148,20 @@ import Cocoa
         // 快速关了又开：旧监听器还占着 socket，新的会撞上“被占用”落到 failed。等旧的收完再开。
         if on, hookStopping { return }
         if on {
+            guard let owner else { return }
             let server = WS2HookServer(clock: clock)
             server.onChange = { [weak self] changes in self?.codingSessionsChanged(changes) }
             server.onState = { state in if state == .failed { wlog("hooks: socket did not open") } }
+            let approval = WS2HookApprovalHost(server: server, island: island,
+                                               authentication: owner.notch.authentication)
+            server.onPermissionAsk = { [weak self] ask in self?.hookApproval?.arrive(ask) }
+            hookApproval = approval
             hookServer = server
             wireCodingSessions()
             server.setEnabled(true)
         } else {
+            hookApproval?.invalidate(); hookApproval = nil
+            hookServer?.onPermissionAsk = nil
             hookStopping = true
             hookServer?.setEnabled(false, done: { [weak self] in
                 DispatchQueue.main.async { MainActor.assumeIsolated {
@@ -182,6 +191,7 @@ import Cocoa
                 id: change.sessionID, project: change.project, cwd: model.directory(of: change.sessionID),
                 assistant: Self.codingAssistantName, status: status,
                 summary: status == .waiting ? model.waitingSummary(of: change.sessionID) : ""))
+            hookApproval?.statusChanged(sessionID: change.sessionID, status: change.status)
         }
     }
     static let codingAssistantName = "Claude Code"
@@ -530,6 +540,8 @@ import Cocoa
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
         owned?.onChange=nil;owned?.onBrowserURL=nil
         presenceLock?.shutdown(); presenceLock = nil
+        hookApproval?.invalidate(); hookApproval = nil
+        hookServer?.onPermissionAsk = nil
         hookServer?.setEnabled(false); hookServer = nil
         unwireCodingSessions()
         island?.stop(); focus?.stop()
