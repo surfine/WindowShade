@@ -170,7 +170,9 @@ prototype/Core/ConductorSession.swift（纯逻辑：状态机，输入事件 →
   指挥页有 Codex／Claude（只读）切换；Claude 一次只跑一轮（回答中不能再发），停止即结束本轮，
   再发送用 `--resume` 接回同一段对话；转写区显示模型、被拒工具；语音草稿与 Codex 共用。
   机器验收：`tests/run-claude-wire-tests.sh`、`tests/run-claude-session-tests.sh`、
-  `tests/run-claude-conductor-tests.sh`（假 CLI，不发真实模型请求）；页面级可用
-  `WINDOWSHADE_CLAUDE_EXECUTABLE` 指向假 CLI。
+  `tests/run-claude-conductor-tests.sh`（假 CLI，不发真实模型请求）；页面级用
+  `tests/run-conductor-claude-page-probe.sh`（stage 构建＋假 CLI，真开指挥页；脚本自己设 Notch 开关并恢复）。
+  页面级探针抓到的两个崩点：约束必须在 `addArrangedSubview` 之后激活，否则打开指挥页 SIGABRT；
+  没有辅助功能授权时的 Timer 重试不要用 `MainActor.assumeIsolated`，改为 `Task { @MainActor }`。
 - **这一轮先把「指挥模式端到端」接成可真机试用**；所有 WS2 面继续藏在
   `WindowShade.Preview.WS2` 后面，验收过的才逐项露出。
