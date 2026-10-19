@@ -8,7 +8,7 @@ BUILD="$ROOT/.build/part3-core"
 mkdir -p "$BUILD"
 # 与第三份自己的 run-core.sh 同一份清单：三份的纯核 + 这次新加的状态核与支持层。
 CORE=(
-  Contracts ConductorGesture AgentSessions ConductorSession ConductorCapabilities SmoothScroll InputDeviceKind
+  WSL10n PrivacyPaneName WireJSON Contracts ConductorGesture AgentSessions ConductorSession ConductorCapabilities SmoothScroll InputDeviceKind
   MiddleDrag TouchTap SiriRemoteButtons RemoteMode FocusNavigator PresenceLock FocusTimer
   RemoteSessionGate PresenceReadDeadline InteractionCoordinator CodexWire WS2StrictJSON PairingAttemptWindow
   PairingTLV RemoteEventRouter MultitouchQualification HIDMappingTransaction WS2InputEligibility
