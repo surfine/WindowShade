@@ -198,6 +198,21 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 | 手柄的按键、摇杆、触控板、陀螺仪（“控制这台 Mac”开着时；游戏在前台时不读） | 不用问就能读的（GameController） |
 | 遥控器的配对密钥 | 存在这台 Mac 上（钥匙串） |
 
+### 三／四指读取桥的现状（2026-10-19）
+
+`prototype/Private/MultitouchBridge.swift` 只做符号探测与资格候选：加载 MultitouchSupport、确认五个符号、
+按候选布局量 stride 与字段偏移、读已加载镜像的 `LC_UUID` 当框架摘要；不注册回调、不启动设备、不解引用触点。
+资格记录里 `reviewedOnDevice` 保持 false，`InputFeatureGate.touchMayInstall` 因此永远不放行。
+
+真机核对时跑：
+
+```bash
+bash tests/run-multitouch-bridge-tests.sh --json
+```
+
+把输出的 build／arch／stride／fieldOffsets／sourceDigest 与真机核对结果带回来，再把那份记录标成 reviewed 并钉进包。
+核对之前不改 `reviewedOnDevice`，也不接回调。
+
 ## 能耗与延迟
 
 - 主动的滚动钩子只在“平滑滚动”或“方向分开”开着、并且连着滚轮鼠标时装上；拔掉鼠标就拆。

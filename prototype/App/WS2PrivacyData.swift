@@ -646,7 +646,7 @@ enum WS2PrivacyData {
             toggle: WSL10n.text("privacy.input-multitouch.toggle", zh: "三指轻点、四指轻点"),
             status: "planned",
             combined: WSL10n.text("privacy.input-multitouch.combined", zh: "手指位置和轻点次数合起来，能看出你什么时候在用触控板、怎么用。"),
-            interfaces: [],
+            interfaces: ["MTDeviceCreateDefault", "MTDeviceStart", "MTDeviceStop", "MTRegisterContactFrameCallback", "MTUnregisterContactFrameCallback"],
             subtitle: WSL10n.text("privacy.input-multitouch.subtitle", zh: "三指、四指轻点"),
         ),
         WS2PrivacyRow(
