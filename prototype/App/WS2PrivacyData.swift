@@ -401,7 +401,7 @@ enum WS2PrivacyData {
             toggle: WSL10n.text("privacy.speech-input.toggle", zh: "选择麦克风；松手或取消就停"),
             status: "planned",
             combined: WSL10n.text("privacy.speech-input.combined", zh: "语音和转写的文字合起来，能看出你在说什么、什么时候在说。"),
-            interfaces: [],
+            interfaces: ["AVAudioEngine", "AVCaptureDevice", "SFSpeechRecognizer"],
             subtitle: WSL10n.text("privacy.speech-input.subtitle", zh: "说一句，得到草稿"),
         ),
         WS2PrivacyRow(

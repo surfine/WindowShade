@@ -24,6 +24,10 @@
 	<true/>
 	<key>NSAudioCaptureUsageDescription</key>
 	<string>让刘海右边的小点随正在放的歌起伏。声音不会留下。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>按住说话，把你说的话变成草稿。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>在这台 Mac 上把你说的话转成草稿，不上传。</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>在刘海和启动台中显示并控制你正在播放的音乐。</string>
 	<key>NSBonjourServices</key>

@@ -19,6 +19,10 @@ import Cocoa
     private let modelMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let effortMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let editor = NSTextField(string: "")
+    private let speak = NSButton(title: WSL10n.text("conductor.speak", zh: "按住说话"), target: nil, action: nil)
+    private let transcriber: any VoiceTranscriber
+    private var voice: VoiceDraftSession?
+    private var voiceTick: Task<Void, Never>?
     private let write = NSButton(title: WSL10n.text("conductor.adoptDraft", zh: "采用草稿"), target: nil, action: nil)
     private let send = NSButton(title: WSL10n.text("conductor.send", zh: "发送"), target: nil, action: nil)
     private let interrupt = NSButton(title: WSL10n.text("conductor.stopTurn", zh: "停止本轮"), target: nil, action: nil)
@@ -47,8 +51,9 @@ import Cocoa
             window?.isKeyWindow == true && NSApp.isActive && backendEpoch != nil
     }
 
-    init(controller: WS2OwnedLaunchController) {
+    init(controller: WS2OwnedLaunchController, transcriber: any VoiceTranscriber = MacVoiceTranscriber()) {
         self.controller = controller
+        self.transcriber = transcriber
         super.init(frame: .zero)
         let stack = NSStackView()
         stack.orientation = .vertical
@@ -99,7 +104,12 @@ import Cocoa
         interrupt.action = #selector(interruptTurn)
         interrupt.bezelStyle = .rounded
         interrupt.toolTip = WSL10n.text("conductor.stop.tip", zh: "请求停止当前这一轮，等助手确认后才显示已停止。")
-        let actions = NSStackView(views: [write, send, interrupt])
+        speak.target = self
+        speak.action = #selector(speakPressed(_:))
+        _ = speak.sendAction(on: [.leftMouseDown, .leftMouseUp])
+        speak.bezelStyle = .rounded
+        speak.toolTip = WSL10n.text("conductor.speak.tip", zh: "按住说一句，松手得到草稿；只在这台 Mac 上识别。")
+        let actions = NSStackView(views: [speak, write, send, interrupt])
         actions.spacing = 8
         stack.addArrangedSubview(actions)
         receipt.font = .systemFont(ofSize: 11)
@@ -125,6 +135,11 @@ import Cocoa
     }
 
     required init?(coder: NSCoder) { nil }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        if newWindow == nil { cancelVoice() }
+    }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
@@ -390,6 +405,87 @@ import Cocoa
         guard let target = displayedTarget,
               ConductorPageSnapshot.acceptChoice(id, catalogue: choices),
               controller.stageConductorEffort(id, target: target) else { sync(); return }
+    }
+
+    @objc private func speakPressed(_ sender: NSButton) {
+        switch NSApp.currentEvent?.type {
+        case .leftMouseDown: beginVoice()
+        case .leftMouseUp: endVoice()
+        default:
+            if voice == nil { beginVoice() } else { endVoice() }
+        }
+    }
+
+    private func beginVoice() {
+        guard inputIsCurrent(), voice == nil else { return }
+        var session = VoiceDraftSession()
+        guard session.start(at: ProcessInfo.processInfo.systemUptime) else { return }
+        voice = session
+        status.stringValue = WSL10n.text("conductor.voice.listening", zh: "在听…松手出草稿")
+        transcriber.start(onPartial: { [weak self] text in
+            guard let self, var session = self.voice else { return }
+            session.update(text)
+            self.voice = session
+            self.status.stringValue = text
+        }, onFinish: { [weak self] result in
+            self?.finishVoice(result)
+        })
+        voiceTick?.cancel()
+        voiceTick = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(500))
+                guard let self, var session = self.voice else { return }
+                if session.tick(at: ProcessInfo.processInfo.systemUptime) {
+                    self.voice = nil
+                    self.transcriber.cancel()
+                    self.status.stringValue = self.voiceFailureText(.tooLong)
+                    return
+                }
+                self.voice = session
+            }
+        }
+    }
+
+    private func endVoice() {
+        guard var session = voice else { return }
+        session.stop(at: ProcessInfo.processInfo.systemUptime)
+        voice = session
+        status.stringValue = WSL10n.text("conductor.voice.transcribing", zh: "在转写…")
+        transcriber.stop()
+    }
+
+    private func finishVoice(_ result: Result<String, VoiceDraftSession.Failure>) {
+        voiceTick?.cancel(); voiceTick = nil
+        guard var session = voice else { return }
+        session.finish(result)
+        voice = nil
+        if let draft = session.draft {
+            editor.stringValue = draft
+            status.stringValue = ""
+        } else if let failure = session.failure {
+            status.stringValue = voiceFailureText(failure)
+        }
+    }
+
+    private func cancelVoice() {
+        voiceTick?.cancel(); voiceTick = nil
+        transcriber.cancel()
+        voice = nil
+    }
+
+    private func voiceFailureText(_ failure: VoiceDraftSession.Failure) -> String {
+        switch failure {
+        case .notAuthorized:
+            return WSL10n.text("conductor.voice.notAuthorized", zh: "先允许麦克风和语音识别，再按住说话。")
+        case .onDeviceUnavailable:
+            return WSL10n.text("conductor.voice.onDeviceUnavailable", zh: "这台 Mac 不能在本机识别；语音草稿停用，不会改用云端。")
+        case .empty:
+            return WSL10n.text("conductor.voice.empty", zh: "没听清，再说一次。")
+        case .tooLong:
+            return WSL10n.text("conductor.voice.tooLong", zh: "说到 60 秒就停了，草稿没留下。")
+        case .interrupted:
+            return WSL10n.text("conductor.voice.interrupted", zh: "识别中断了，再说一次。")
+        }
     }
 
     @objc private func commitDraft() {

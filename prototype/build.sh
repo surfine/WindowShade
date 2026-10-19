@@ -63,6 +63,7 @@ FRAMEWORKS=(
   -framework QuartzCore
   -framework CoreText
   -framework AVFoundation
+  -framework Speech
   -framework Vision
   -framework ServiceManagement
   -framework Metal

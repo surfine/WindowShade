@@ -68547,6 +68547,213 @@
           }
         }
       }
+    },
+    "conductor.speak": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold to talk"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住说话"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住說話"
+          }
+        }
+      }
+    },
+    "conductor.speak.tip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hold to say a sentence; release for a draft. Recognized on this Mac only."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住说一句，松手得到草稿；只在这台 Mac 上识别。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住說一句，鬆手得到草稿；只在這台 Mac 上辨識。"
+          }
+        }
+      }
+    },
+    "conductor.voice.listening": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listening… release for a draft"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在听…松手出草稿"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在聽…鬆手出草稿"
+          }
+        }
+      }
+    },
+    "conductor.voice.transcribing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Transcribing…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在转写…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在轉寫…"
+          }
+        }
+      }
+    },
+    "conductor.voice.notAuthorized": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow the microphone and speech recognition first."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先允许麦克风和语音识别，再按住说话。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先允許麥克風和語音辨識，再按住說話。"
+          }
+        }
+      }
+    },
+    "conductor.voice.onDeviceUnavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac can't recognize speech on device. Voice drafts are off; nothing is sent to the cloud."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 不能在本机识别；语音草稿停用，不会改用云端。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這台 Mac 不能在本機辨識；語音草稿停用，不會改用雲端。"
+          }
+        }
+      }
+    },
+    "conductor.voice.empty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Didn't catch that. Try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没听清，再说一次。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒聽清，再說一次。"
+          }
+        }
+      }
+    },
+    "conductor.voice.tooLong": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stops at 60 seconds; no draft was kept."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说到 60 秒就停了，草稿没留下。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "說到 60 秒就停了，草稿沒留下。"
+          }
+        }
+      }
+    },
+    "conductor.voice.interrupted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recognition stopped. Try again."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "识别中断了，再说一次。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辨識中斷了，再說一次。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
