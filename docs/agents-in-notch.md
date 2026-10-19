@@ -111,3 +111,4 @@ Codex 桌面版另外接了 app-server 的 JSON-RPC。它还有用量面板、�
 （`prototype/Core/ClaudeWire.swift`）。停止本轮＝停掉子进程；下一次发送用 `--resume <session_id>` 接回。
 工具审批的 host 协议没有公开文档，本阶段不做；`permission-prompts none` 下会被拒的操作列在
 result 的 `permission_denials` 里。假 CLI 的进程级验收在 `tests/run-claude-session-tests.sh`，不发真实模型请求。
+页面级测试可用 `WINDOWSHADE_CLAUDE_EXECUTABLE=<可执行文件>` 覆盖发现路径（只影响该 App 进程，预览功能）。
