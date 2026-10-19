@@ -174,5 +174,8 @@ prototype/Core/ConductorSession.swift（纯逻辑：状态机，输入事件 →
   `tests/run-conductor-claude-page-probe.sh`（stage 构建＋假 CLI，真开指挥页；脚本自己设 Notch 开关并恢复）。
   页面级探针抓到的两个崩点：约束必须在 `addArrangedSubview` 之后激活，否则打开指挥页 SIGABRT；
   没有辅助功能授权时的 Timer 重试不要用 `MainActor.assumeIsolated`，改为 `Task { @MainActor }`。
+  手机遥控：指挥页开着时，播放/选择＝发送当前草稿（Codex 先采用再发送），返回＝收起；
+  页面没开就仍走遥控器自己的层。页面探针已覆盖这两个动作；HID→宿主这一小段还没有合成事件验收，
+  声调/拍子的指挥手势也仍走遥控器自己的 ConductorSession（缺 `.connected` 握手，未接到页面）。
 - **这一轮先把「指挥模式端到端」接成可真机试用**；所有 WS2 面继续藏在
   `WindowShade.Preview.WS2` 后面，验收过的才逐项露出。
