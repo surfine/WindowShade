@@ -95,3 +95,19 @@ Codex 桌面版另外接了 app-server 的 JSON-RPC。它还有用量面板、�
 | A4 | 批准接授权账：普通点一下，高风险 Touch ID | 主模型 |
 | A5 | 和指挥模式共用会话列表 | 主模型 |
 | A6 | 用量卡与恢复提醒（收窄范围见 [usage.md](usage.md)）。待出稿、待进词表后再排；不占 A1–A5 的顺序 | 待定 |
+
+## 2026-10-19 App 拥有的 Claude 会话（只读起步）
+
+`prototype/App/WS2OwnedClaudeSession.swift` 启动本地
+`claude --print --input-format stream-json --output-format stream-json --verbose
+--include-partial-messages --permission-mode plan --permission-prompts none`。
+每次发送一行：
+
+```json
+{"type":"user","message":{"role":"user","content":"…"},"parent_tool_use_id":null}
+```
+
+按行解析 `system/init`、`stream_event` 的 `text_delta`、`assistant`、`result`、`permission_denied`
+（`prototype/Core/ClaudeWire.swift`）。停止本轮＝停掉子进程；下一次发送用 `--resume <session_id>` 接回。
+工具审批的 host 协议没有公开文档，本阶段不做；`permission-prompts none` 下会被拒的操作列在
+result 的 `permission_denials` 里。假 CLI 的进程级验收在 `tests/run-claude-session-tests.sh`，不发真实模型请求。
