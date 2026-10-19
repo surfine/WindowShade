@@ -18,7 +18,21 @@ func controllingTTY() -> String? {
     static func main() {
         var reply = Data("{}\n".utf8)
         do {
-            guard CommandLine.arguments == [CommandLine.arguments[0],"--provider","claude"] else { throw WS2SocketError.invalidPath }
+            // --socket 只给端到端测试；默认仍是用户的 hooks.sock。
+            let arguments = CommandLine.arguments
+            guard arguments.count >= 3, arguments.count <= 5,
+                  arguments[1] == "--provider", arguments[2] == "claude" else {
+                throw WS2SocketError.invalidPath
+            }
+            var socketPath: String?
+            if arguments.count > 3 {
+                guard arguments.count == 5, arguments[3] == "--socket",
+                      arguments[4].hasPrefix("/"),
+                      !arguments[4].unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else {
+                    throw WS2SocketError.invalidPath
+                }
+                socketPath = arguments[4]
+            }
             let data = try WS2BoundedInput.readAll(fd:FileHandle.standardInput.fileDescriptor,deadline:ProcessInfo.processInfo.systemUptime+1)
             guard data.count <= WS2UnixSocket.maximumFrame,
                   let input = try JSONSerialization.jsonObject(with:data) as? [String:Any],
@@ -26,7 +40,7 @@ func controllingTTY() -> String? {
                   ["SessionStart","UserPromptSubmit","PreToolUse","PostToolUse","Stop","PermissionRequest"].contains(event),
                   let session = input["session_id"] as? String,!session.isEmpty else { throw WS2SocketError.tooLarge }
             let home = FileManager.default.homeDirectoryForCurrentUser
-            let path = home.appendingPathComponent("Library/Application Support/WindowShade/hooks.sock").path
+            let path = socketPath ?? home.appendingPathComponent("Library/Application Support/WindowShade/hooks.sock").path
             let client = try WS2UnixSocket.connect(to:path); defer { client.closeSocket() }
             var payload: [String:Any] = ["version":1,"provider":"claude","event":event,"sessionID":session]
             // 不转送 transcript 路径，不读取文件内容；最多转送当前工具的已给定参数。
