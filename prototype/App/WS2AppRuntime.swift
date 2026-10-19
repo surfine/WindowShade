@@ -24,6 +24,8 @@ import Cocoa
     private var hookServer: WS2HookServer?
     /// 权限请求在刘海里露面：允许这一次 / 不允许。
     private var hookApproval: WS2HookApprovalHost?
+    var hookApprovalProbe: WS2HookApprovalHost? { hookApproval }
+    func probeHookApproval(_ ask: WS2HookServer.PermissionAsk) { hookApproval?.arrive(ask) }
     /// 旧监听器还没把 socket 文件处理完：这段时间不开新的，等它的 done 回调再对一次开关。
     private var hookStopping = false
     private var sleeping=false

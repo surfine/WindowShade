@@ -185,6 +185,10 @@ import Cocoa
         presented = nil
         island.dismiss(ifShowing: view)
     }
+
+    // 页面级探针：只在 --hook-approval-probe 里用。
+    var probePresented: WS2HookApprovalView? { presented }
+    func probeDismiss() { dismissCard() }
 }
 
 /// 刘海里的 hook 审批卡。比例照“放行”卡：380×105 的两行卡面，按钮在下一行。
@@ -268,6 +272,9 @@ import Cocoa
         inputIsCurrent = { false }
         allow = nil; deny = nil; useTerminal = nil
     }
+
+    var probePrimaryTitle: String { primary.title }
+    var probeHeadline: String { headline.stringValue }
 
     @objc private func refuse() { guard inputIsCurrent() else { return }; deny?() }
     @objc private func act() {
