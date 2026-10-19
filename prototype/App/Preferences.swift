@@ -408,11 +408,56 @@ extension AppDelegate {
                                  subtitle: WSL10n.setting("settings.shade.originGuess.sub", zh: "按出别的系统的习惯时问一次"),
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:)),
                                  explainer: ExplainerRow.Advanced.originGuess),
+            makeFaceExperimentRow(),
             makePresenceLockRow(),
             makePresenceDeviceRow(),
             BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },
         ])
     }
+
+    /// 刷脸实验：开关、录脸、删除。解释仍用隐私页那两句；不开就不读相机、不读钥匙串。
+    private func makeFaceExperimentRow() -> NSView {
+        let on = UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey)
+        let toggle = NSSwitch()
+        toggle.state = on ? .on : .off
+        toggle.target = self
+        toggle.action = #selector(prefToggleFaceExperiment(_:))
+        toggle.setAccessibilityLabel(WSL10n.text("privacy.face-identity.subtitle", zh: "锁屏后认出是不是你"))
+        let enroll = NSButton(title: WSL10n.text("auth.saveFace", zh: "保存你的脸"),
+                              target: self, action: #selector(prefEnrollFace(_:)))
+        enroll.bezelStyle = .rounded
+        enroll.tag = 1
+        enroll.isEnabled = on
+        let remove = NSButton(title: WSL10n.text("menu.delete", zh: "删除"),
+                              target: self, action: #selector(prefDeleteFace(_:)))
+        remove.bezelStyle = .rounded
+        remove.tag = 2
+        remove.isEnabled = on && FaceScanExperiment.hasTemplates
+        let controls = NSStackView(views: [toggle, enroll, remove])
+        controls.orientation = .horizontal
+        controls.alignment = .centerY
+        controls.spacing = 8
+        return makeUnifiedControlRow(
+            name: WSL10n.text("privacy.face-identity.subtitle", zh: "锁屏后认出是不是你"),
+            subtitle: WSL10n.text("privacy.face-identity.toggle", zh: "实验开关和删除登记；不会标成 Face ID"),
+            control: controls)
+    }
+
+    @objc func prefToggleFaceExperiment(_ sender: NSSwitch) {
+        let on = sender.state == .on
+        if !FaceScanExperiment.setEnabled(on) {
+            sender.state = .off
+            NSSound.beep()
+            return
+        }
+        // 同一行里的两个按钮跟着开关走，不用重开设置页。
+        for case let button as NSButton in (sender.superview as? NSStackView)?.views ?? [] {
+            if button.tag == 1 { button.isEnabled = on }
+            if button.tag == 2 { button.isEnabled = on && FaceScanExperiment.hasTemplates }
+        }
+    }
+    @objc func prefEnrollFace(_ sender: NSButton) { FaceScanExperiment.requestEnrollment() }
+    @objc func prefDeleteFace(_ sender: NSButton) { FaceScanExperiment.requestDelete() }
 
     /// 六口令的个人词（2.1 前半）。词只存这台 Mac；认不认得出还得看实验里的嘴形模板。
     private func makeSilentPhraseCard() -> NSView {

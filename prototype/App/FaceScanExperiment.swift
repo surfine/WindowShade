@@ -38,6 +38,42 @@ import Cocoa
     private static var shared: FaceScanExperiment?
 
     /// 启动时调一次。开关关着就什么都不建：不开相机、不读钥匙串、不挂通知。
+    /// 设置里的开关：打开就当场起，关掉就当场停（不要求重启）。
+    @discardableResult
+    static func setEnabled(_ on: Bool) -> Bool {
+        let defaults = UserDefaults.standard
+        if on {
+            defaults.set(true, forKey: enabledKey)
+            startIfEnabled()
+            guard shared != nil else {
+                // 起不来（模型版本或后端不对）：键也退回去，别让下次启动再白试一次。
+                defaults.set(false, forKey: enabledKey)
+                return false
+            }
+            return true
+        }
+        defaults.set(false, forKey: enabledKey)
+        shared?.stop()
+        shared = nil
+        return true
+    }
+
+    /// 设置里的“保存你的脸”：只记下请求；没锁屏时 refresh 会接上，锁着就等解锁。
+    static func requestEnrollment() {
+        guard let shared else { return }
+        UserDefaults.standard.set(true, forKey: enrollKey)
+        shared.refresh()
+    }
+
+    /// 设置里的“删除”：只记下请求；模板真正删掉之前不会假装已经删了。
+    static func requestDelete() {
+        guard let shared else { return }
+        UserDefaults.standard.set(true, forKey: deleteKey)
+        shared.refresh()
+    }
+
+    static var hasTemplates: Bool { shared?.templates.isEmpty == false }
+
     static func startIfEnabled() {
         let defaults = UserDefaults.standard
         guard shared == nil, defaults.bool(forKey: enabledKey) else { return }
@@ -145,6 +181,14 @@ import Cocoa
         observers.append((distributed, distributed.addObserver(forName: .init("com.apple.screenIsUnlocked"),
             object: nil, queue: .main) { [weak self] _ in
                 MainActor.assumeIsolated { self?.lockChanged(); self?.refresh() } }))
+    }
+
+    /// 关掉实验：录到一半的丢掉，相机关掉，通知全拆。
+    func stop() {
+        endEnrollment(.interrupted)
+        stopCamera()
+        for (center, observer) in observers { center.removeObserver(observer) }
+        observers.removeAll()
     }
 
     deinit { for (center, observer) in observers { center.removeObserver(observer) } }

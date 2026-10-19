@@ -7646,6 +7646,34 @@
    "symbol": "AVAudioEngine",
    "source": "let engine = AVAudioEngine()",
    "signal": "speech-input"
+  },
+  {
+   "path": "prototype/App/FaceScanExperiment.swift",
+   "line": 0,
+   "symbol": "UserDefaults",
+   "source": "let defaults = UserDefaults.standard",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/FaceScanExperiment.swift",
+   "line": 0,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.set(true, forKey: enrollKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/FaceScanExperiment.swift",
+   "line": 0,
+   "symbol": "UserDefaults",
+   "source": "UserDefaults.standard.set(true, forKey: deleteKey)",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/Preferences.swift",
+   "line": 0,
+   "symbol": "UserDefaults",
+   "source": "let on = UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey)",
+   "signal": "settings"
   }
  ],
  "groups": [
