@@ -3,7 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/lock-overlay-lifecycle-tests
-swiftc -parse-as-library prototype/Core/SessionLockState.swift prototype/Core/LockOverlayLifecycle.swift \
+swiftc -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
+  prototype/Core/SessionLockState.swift prototype/Core/LockOverlayLifecycle.swift \
   prototype/Core/FlickMotion.swift prototype/Effects/FoldDriver.swift tests/LockOverlayLifecycleTests.swift \
   -o .build/lock-overlay-lifecycle-tests/lifecycle
 .build/lock-overlay-lifecycle-tests/lifecycle
