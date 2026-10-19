@@ -167,5 +167,10 @@ prototype/Core/ConductorSession.swift（纯逻辑：状态机，输入事件 →
 - **Claude 后端走本地 `claude` CLI 的 stream-json 会话**，由 App 拥有进程，不把 API key 放进 App。
   先用只读（`--permission-mode plan --permission-prompts none`）接通发送与流式回复；
   工具审批的 host 协议之后单独做。
+  指挥页有 Codex／Claude（只读）切换；Claude 一次只跑一轮（回答中不能再发），停止即结束本轮，
+  再发送用 `--resume` 接回同一段对话；转写区显示模型、被拒工具；语音草稿与 Codex 共用。
+  机器验收：`tests/run-claude-wire-tests.sh`、`tests/run-claude-session-tests.sh`、
+  `tests/run-claude-conductor-tests.sh`（假 CLI，不发真实模型请求）；页面级可用
+  `WINDOWSHADE_CLAUDE_EXECUTABLE` 指向假 CLI。
 - **这一轮先把「指挥模式端到端」接成可真机试用**；所有 WS2 面继续藏在
   `WindowShade.Preview.WS2` 后面，验收过的才逐项露出。
