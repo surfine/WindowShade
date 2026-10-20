@@ -303,6 +303,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
     lazy var slideOver = MainActor.assumeIsolated { SlideOverController(owner: self) }
     lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }
+    /// 刷脸实验的录脸取景卡；只在有刘海时露面。
+    lazy var faceEnrollmentHost = MainActor.assumeIsolated { FaceEnrollmentHost(island: notch.leases) }
     lazy var ws2Runtime = MainActor.assumeIsolated { WS2AppRuntime(owner: self) }
     /// 妙控外设连上、电量低时在刘海上说一句（App/DeviceBatteryController.swift）。
     lazy var deviceBattery = MainActor.assumeIsolated { DeviceBatteryController() }

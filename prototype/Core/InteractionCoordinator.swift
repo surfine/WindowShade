@@ -69,7 +69,8 @@ final class InteractionCoordinator {
         case ("authorization",.authorization), ("conductor",.interaction),
              ("conductor",.opened), ("agentReview",.authorization), ("notchShelf",.opened), ("launchpad",.opened),
              ("windowBrowser",.opened), ("pomodoro",.opened), ("nowPlaying",.opened),
-             ("ownedCodex",.opened), ("ownedModelPicker",.opened), ("silent",.opened): return true
+             ("ownedCodex",.opened), ("ownedModelPicker",.opened), ("silent",.opened),
+             ("faceEnrollment",.opened): return true
         default: return false
         }
     }

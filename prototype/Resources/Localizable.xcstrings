@@ -68961,6 +68961,29 @@
           }
         }
       }
+    },
+    "face.enroll.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enrol your face"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录入你的脸"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "錄入你的臉"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

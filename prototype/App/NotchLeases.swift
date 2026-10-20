@@ -37,13 +37,15 @@ final class NotchLeaseHub {
         case ownedCodex, ownedModelPicker
         /// 静音操作。同一刘海，不另开窗口。
         case silent
+        /// 刷脸实验的录脸取景。只在没锁时出现，不授权任何事。
+        case faceEnrollment
 
         var layer: WS2.Layer {
             switch self {
             case .authorization, .agentReview: return .authorization
             case .conductor: return .interaction
             case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .nowPlaying,
-                 .ownedCodex, .ownedModelPicker, .silent: return .opened
+                 .ownedCodex, .ownedModelPicker, .silent, .faceEnrollment: return .opened
             }
         }
     }

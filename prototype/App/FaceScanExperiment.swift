@@ -74,6 +74,13 @@ import Cocoa
 
     static var hasTemplates: Bool { shared?.templates.isEmpty == false }
 
+    /// 录脸卡被收走：这一轮作废，相机也关掉。
+    static func cancelEnrollment() { shared?.cancelEnrollment() }
+    private func cancelEnrollment() {
+        endEnrollment(.cancelled)
+        stopCamera()
+    }
+
     static func startIfEnabled() {
         let defaults = UserDefaults.standard
         guard shared == nil, defaults.bool(forKey: enabledKey) else { return }
@@ -93,6 +100,7 @@ import Cocoa
                                             lockState: { AuthorizationService.shared.lockState() },
                                             ledger: AuthorizationService.shared.ledger,
                                             log: { wlog($0) })
+        experiment.presenter = (NSApp.delegate as? AppDelegate)?.faceEnrollmentHost
         shared = experiment
         let fellBack = requested.map { $0 != backend.name } ?? false
         wlog("face experiment: on, backend=\(backend.name)\(fellBack ? " (requested backend unavailable)" : "")"
@@ -106,6 +114,8 @@ import Cocoa
     private let log: @MainActor (String) -> Void
     private let modelVersion: String
     private let source = FaceObservationSource()
+    /// 录脸取景卡；没有卡（刘海关着）时照旧只走流程。
+    weak var presenter: (any FaceEnrollmentPresenting)?
     private var templates: [FaceTemplate] = []
     private var guardian = FaceScanGuard(templates: [])
     private var lockGeneration: UInt64 = 0
@@ -448,6 +458,7 @@ import Cocoa
         stopCamera()
         enrollmentToken &+= 1
         enrollment = flow
+        presenter?.enrollmentPhase(flow.phase)
         let token = epoch
         cameraTask = Task { [weak self] in
             guard let self else { return }
@@ -466,6 +477,7 @@ import Cocoa
         let restartsBefore = flow.restarts
         flow.receive(Self.enrollmentFrame(frame), lock: lockState())
         enrollment = flow
+        presenter?.enrollmentPhase(flow.phase)
         if flow.restarts != restartsBefore, let reason = flow.lastRestart {
             log("face enrollment: restarted (\(reason == .secondFace ? "second face" : "inconsistent"))")
         }
@@ -516,6 +528,7 @@ import Cocoa
         // 唯一能交出要写的那一组的地方：授权当场按这一组重算的目标消费成功。
         let confirmed = flow.confirm(grant) { consume($0, $1, $2) }
         enrollment = flow
+        presenter?.enrollmentPhase(flow.phase)
         guard let confirmed else { endEnrollment(.notConfirmed); return }
         let store = store, token = enrollmentToken
         Task { [weak self] in
@@ -533,6 +546,7 @@ import Cocoa
             }
             guard self.enrollmentToken == token, var flow = self.enrollment else { return }
             flow.didSave(saved, total: confirmed.templates.count)
+            self.presenter?.enrollmentPhase(flow.phase)
             self.enrollment = nil
         }
     }
@@ -545,6 +559,7 @@ import Cocoa
         flow.end(reason)
         enrollment = nil
         enrollmentToken &+= 1
+        presenter?.enrollmentPhase(.ended(reason))
         switch reason {
         case .notConfirmed: log("face enrollment: not confirmed, nothing saved")
         case .interrupted: log("face enrollment: interrupted, discarded")
