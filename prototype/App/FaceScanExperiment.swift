@@ -430,7 +430,11 @@ import Cocoa
         let cameraClass: IdentityEvidence.CameraClass = scanCamera?.cameraClass == .builtIn ? .builtIn : .external
         let ticket = ledger.record(IdentityEvidence(scan: evidence, cameraClass: cameraClass, tuning: guardian.tuning,
                                                     cues: cues, through: through))
-        log("face evidence: recorded ticket=\(ticket.serial) scan=\(evidence.scanID) (raises a bar only, unlocks nothing)")
+        let presence = (NSApp.delegate as? AppDelegate)?.ws2Runtime.presenceSnapshot
+            ?? (enabled: false, phone: PresenceLock.Status.unknown, watch: PresenceLock.Status.unknown)
+        log("face evidence: recorded ticket=\(ticket.serial) scan=\(evidence.scanID)"
+            + " presence=\(FacePresenceNote.text(enabled: presence.0, phone: presence.1, watch: presence.2))"
+            + " (raises a bar only, unlocks nothing)")
     }
 
     /// 这一次结束：记进次数。代次已变（锁态变了）的不记。日志只写计没计、还剩几次和标签。

@@ -20,6 +20,13 @@ import Cocoa
     private let silent = WS2SilentHost()
     /// 离开就锁（2-7）。默认关；开关在设置的「隐私」页。
     private var presenceLock: PresenceLockDriver?
+
+    /// 刷脸实验记日志用：随身设备现在在不在。只读，不触发扫描。
+    var presenceSnapshot: (enabled: Bool, phone: PresenceLock.Status, watch: PresenceLock.Status) {
+        guard let presenceLock else { return (false, .unknown, .unknown) }
+        let status = presenceLock.deviceStatus
+        return (PresenceLockDriver.isEnabled, status.phone, status.watch)
+    }
     /// 编程会话（默认关）：Claude Code 的 hook 报到本机 socket，只观测，不放行。
     private var hookServer: WS2HookServer?
     /// 权限请求在刘海里露面：允许这一次 / 不允许。

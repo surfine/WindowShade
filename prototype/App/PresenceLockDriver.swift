@@ -267,6 +267,11 @@ final class PresenceMediaControl: @unchecked Sendable {
     private var model = PresenceLock(bootID: UUID())
     private var glue = PresenceLockGlue()
     private var running = false
+
+    /// 只读的在场状态：给刷脸实验记一笔“当时手机在不在”，不做任何判断。
+    var deviceStatus: (phone: PresenceLock.Status, watch: PresenceLock.Status) {
+        (model.status(of: .phone), model.status(of: .watch))
+    }
     private var timer: Timer?
     private var defaultsObserver: NSObjectProtocol?
     private var workspaceObservers: [NSObjectProtocol] = []
