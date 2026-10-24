@@ -74,6 +74,11 @@ import Cocoa
 
     static var hasTemplates: Bool { shared?.templates.isEmpty == false }
 
+    /// 设置行状态：已录入几组模板；nil 是还没起（开关关着或起不来）。
+    static var templateCount: Int? { shared.map { $0.templates.count } }
+    /// 模板变了之后要通知设置行刷新（录完、删完）。主线程上调用。
+    var onTemplatesChanged: (() -> Void)?
+
     /// 录脸卡被收走：这一轮作废，相机也关掉。
     static func cancelEnrollment() { shared?.cancelEnrollment() }
     private func cancelEnrollment() {
@@ -101,6 +106,9 @@ import Cocoa
                                             ledger: AuthorizationService.shared.ledger,
                                             log: { wlog($0) })
         experiment.presenter = (NSApp.delegate as? AppDelegate)?.faceEnrollmentHost
+        experiment.onTemplatesChanged = { [weak owner = NSApp.delegate as? AppDelegate] in
+            owner?.refreshFaceExperimentRowIfOpen()
+        }
         shared = experiment
         let fellBack = requested.map { $0 != backend.name } ?? false
         wlog("face experiment: on, backend=\(backend.name)\(fellBack ? " (requested backend unavailable)" : "")"
@@ -247,9 +255,11 @@ import Cocoa
     }
 
     private func install(_ templates: [FaceTemplate]) {
+        let changed = self.templates.count != templates.count
         self.templates = templates
         guardian = FaceScanGuard(templates: templates)
         scanID = nil
+        if changed { onTemplatesChanged?() }
     }
 
     /// 过了准入的内建镜头；没有就是 nil（见 FaceCameraAdmission）。

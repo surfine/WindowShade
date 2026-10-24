@@ -433,14 +433,28 @@ extension AppDelegate {
         remove.bezelStyle = .rounded
         remove.tag = 2
         remove.isEnabled = on && FaceScanExperiment.hasTemplates
-        let controls = NSStackView(views: [toggle, enroll, remove])
+        let status = NSTextField(labelWithString: Self.faceStatusText(on: on))
+        status.font = .systemFont(ofSize: 12)
+        status.textColor = .secondaryLabelColor
+        status.identifier = NSUserInterfaceItemIdentifier("face-experiment-status")
+        let controls = NSStackView(views: [toggle, enroll, remove, status])
         controls.orientation = .horizontal
         controls.alignment = .centerY
         controls.spacing = 8
+        controls.setAccessibilityLabel(WSL10n.text("privacy.face-identity.subtitle", zh: "锁屏后认出是不是你"))
         return makeUnifiedControlRow(
             name: WSL10n.text("privacy.face-identity.subtitle", zh: "锁屏后认出是不是你"),
             subtitle: WSL10n.text("privacy.face-identity.toggle", zh: "实验开关和删除登记；不会标成 Face ID"),
             control: controls)
+    }
+
+    /// 行尾状态：已录入几组 / 还没有录入。开关关着时不写。
+    static func faceStatusText(on: Bool) -> String {
+        guard on else { return "" }
+        guard let count = FaceScanExperiment.templateCount else {
+            return WSL10n.text("face.enroll.notStarted", zh: "还没有录入")
+        }
+        return WSL10n.text("face.enroll.count", zh: "已录入 %d 组", count)
     }
 
     @objc func prefToggleFaceExperiment(_ sender: NSSwitch) {
@@ -450,14 +464,41 @@ extension AppDelegate {
             NSSound.beep()
             return
         }
-        // 同一行里的两个按钮跟着开关走，不用重开设置页。
-        for case let button as NSButton in (sender.superview as? NSStackView)?.views ?? [] {
-            if button.tag == 1 { button.isEnabled = on }
-            if button.tag == 2 { button.isEnabled = on && FaceScanExperiment.hasTemplates }
-        }
+        // 同一行里的按钮和状态跟着开关走，不用重开设置页。
+        updateFaceRowControls(in: sender.superview, on: on)
     }
     @objc func prefEnrollFace(_ sender: NSButton) { FaceScanExperiment.requestEnrollment() }
     @objc func prefDeleteFace(_ sender: NSButton) { FaceScanExperiment.requestDelete() }
+
+    /// 录完/删完：设置窗口还开着的话，把那一行的按钮和状态刷一遍。
+    func refreshFaceExperimentRowIfOpen() {
+        guard let content = duoController.settingsWindow?.contentViewController?.view
+            ?? duoController.settingsWindow?.window?.contentView else { return }
+        var queue: [NSView] = [content], found: NSView?
+        while let view = queue.popLast(), found == nil {
+            if let field = view as? NSTextField, field.identifier?.rawValue == "face-experiment-status" { found = field }
+            queue.append(contentsOf: view.subviews)
+        }
+        guard let field = found else { return }
+        updateFaceRowControls(in: field.superview, on: nil)
+    }
+
+    private func updateFaceRowControls(in container: NSView?, on explicit: Bool?) {
+        // 状态字段自己带着「开关开着没有」；开关回调给出确切值。
+        var switched = explicit
+        if switched == nil, let stack = container as? NSStackView,
+           let toggle = stack.views.compactMap({ $0 as? NSSwitch }).first {
+            switched = toggle.state == .on
+        }
+        guard let on = switched, let stack = container as? NSStackView else { return }
+        for case let button as NSButton in stack.views {
+            if button.tag == 1 { button.isEnabled = on }
+            if button.tag == 2 { button.isEnabled = on && FaceScanExperiment.hasTemplates }
+        }
+        if let field = stack.views.compactMap({ $0 as? NSTextField }).first(where: { $0.identifier?.rawValue == "face-experiment-status" }) {
+            field.stringValue = Self.faceStatusText(on: on)
+        }
+    }
 
     /// 六口令的个人词（2.1 前半）。词只存这台 Mac；认不认得出还得看实验里的嘴形模板。
     private func makeSilentPhraseCard() -> NSView {
