@@ -425,7 +425,7 @@ enum WS2PrivacyData {
             label: WSL10n.text("privacy.face-identity.label", zh: "脸部特征与比对结果"),
             sensitivity: "private",
             group: "你同意后才读的",
-            reads: WSL10n.text("privacy.face-identity.reads", zh: "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开"),
+            reads: WSL10n.text("privacy.face-identity.reads", zh: "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）"),
             purpose: WSL10n.text("privacy.face-identity.purpose", zh: "锁屏后认出是不是你，只留一条证据，不会解锁"),
             destination: WSL10n.text("privacy.face-identity.destination", zh: "模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存"),
             activation: WSL10n.text("privacy.face-identity.activation", zh: "默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数"),

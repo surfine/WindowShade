@@ -34139,19 +34139,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Experiment: image features cropped from the face (computed by Apple's Vision), the enrolled template, how open the eyes were at enrolment, the enrolment number and the comparison result; with the head-turn challenge, also which way the face turns and whether the eyes are open"
+            "value": "Experiment: face-crop image features (computed by Apple’s Vision), enrolled templates, eye openness at enrolment, enrolment numbers, comparison results; with the turn-challenge on, also head direction and eye openness while turning; when you are recognised, one extra line notes whether your companion devices are present (not recorded when leave-to-lock is off)"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开"
+            "value": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "實驗：臉部裁出來的影像特徵（Apple 的 Vision 算出）、登記過的模板、錄入時眼睛睜開的程度、錄入序號、比對結果；開啟轉頭挑戰後，還有轉頭時臉朝哪邊、眼睛睜沒睜開"
+            "value": "實驗：臉部裁出來的圖像特徵（Apple 的 Vision 算出）、登記過的模板、錄入時眼睛睜開的程度、錄入序號、比對結果；打開轉頭挑戰後，還有轉頭時臉朝哪邊、眼睛睜沒睜開；認出時另記一行隨身裝置在不在（離開就鎖沒開就不記）"
           }
         }
       }
@@ -68981,6 +68981,75 @@
           "stringUnit": {
             "state": "translated",
             "value": "錄入你的臉"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.faceEnroll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "face unlock, face ID, face recognition, face scan, enroll face, enrolment → recognising you after lock"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷脸、人脸解锁、人脸识别、扫脸、录入人脸 → 锁屏后认出是不是你"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷臉、人臉解鎖、人臉識別、掃臉、錄入人臉 → 鎖定後認出是不是你"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.explainer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "guide, tutorial, explainer, tour → the demo strip at the top"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "引导、教程、说明动画、explainer、tour → 顶上那条演示"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "引導、教程、說明動畫、explainer、tour → 頂上那條演示"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.fileShelf": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tray, shelf → file shelf"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tray、shelf → 文件架"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tray、shelf → 檔案架"
           }
         }
       }
