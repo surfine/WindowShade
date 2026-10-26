@@ -79,6 +79,21 @@ import Cocoa
     /// 模板变了之后要通知设置行刷新（录完、删完）。主线程上调用。
     var onTemplatesChanged: (() -> Void)?
 
+    /// 锁屏扫描给外面看的相位（画「认你」那一圈的控制器用它）。主线程上回调。
+    enum ScanPhase: Equatable, Sendable {
+        /// 相机开了，这一轮开始认。
+        case started
+        /// 认出主人（证据已记）。
+        case recognized
+        /// 这一轮没认出。
+        case unrecognized
+        /// 相机用不了（被占、坏了、没权限）。
+        case cameraUnavailable
+        /// 这次锁屏的 3 次用完，只剩 Touch ID 或密码。
+        case lockedOut
+    }
+    var onScanPhase: (@MainActor (ScanPhase) -> Void)?
+
     /// 录脸卡被收走：这一轮作废，相机也关掉。
     static func cancelEnrollment() { shared?.cancelEnrollment() }
     private func cancelEnrollment() {
@@ -108,6 +123,9 @@ import Cocoa
         experiment.presenter = (NSApp.delegate as? AppDelegate)?.faceEnrollmentHost
         experiment.onTemplatesChanged = { [weak owner = NSApp.delegate as? AppDelegate] in
             owner?.refreshFaceExperimentRowIfOpen()
+        }
+        experiment.onScanPhase = { [weak owner = NSApp.delegate as? AppDelegate] phase in
+            owner?.faceScanStatus.show(phase)
         }
         shared = experiment
         let fellBack = requested.map { $0 != backend.name } ?? false
@@ -205,6 +223,7 @@ import Cocoa
     func stop() {
         endEnrollment(.interrupted)
         stopCamera()
+        (NSApp.delegate as? AppDelegate)?.faceScanStatus.stop()
         for (center, observer) in observers { center.removeObserver(observer) }
         observers.removeAll()
     }
@@ -277,7 +296,10 @@ import Cocoa
             // 相机没开着：这是新的一次。每次锁屏最多 3 次；满了这次锁屏就不再开相机，请用密码。
             guard lockState().isReallyLocked else { stopCamera(); return }
             guard attempts.begin(.screenWake, lockGeneration: lockGeneration) else {
-                if attempts.lockedOut { log("face attempt: 3 tries used for this lock, camera stays off") }
+                if attempts.lockedOut {
+                    log("face attempt: 3 tries used for this lock, camera stays off")
+                    onScanPhase?(.lockedOut)
+                }
                 return
             }
             attemptLockGeneration = lockGeneration
@@ -298,6 +320,7 @@ import Cocoa
             scanDeadline = CACurrentMediaTime() + Self.scanLease
         }
         openCamera(camera.id, lease: lease) { [weak self] frame in self?.lockedFrame(frame) }
+        onScanPhase?(.started)
     }
 
     /// 锁屏时的帧：挑战开始后交给挑战，之前交给比对。
@@ -350,10 +373,12 @@ import Cocoa
             } else {
                 log("face evidence: owner match scan=\(evidence.scanID)")
                 recordEvidence(evidence, cues: [])
+                onScanPhase?(.recognized)
                 stopCamera(ending: Self.recognizedEnd)
             }
         case .failed:
             log("face evidence: no owner match scan=\(scanID.map { String($0) } ?? "?")")
+            onScanPhase?(.unrecognized)
             stopCamera(ending: .mismatch)
         case .discarded(.notLocked), .discarded(.noScan), .discarded(.finished):
             stopCamera()
@@ -411,6 +436,7 @@ import Cocoa
             var cues: Set<IdentityEvidence.Cue> = [.turnChallenge]
             if FaceParallax.isConfirmed(window: parallax) { cues.insert(.depthParallax) }
             if let ownerEvidence { recordEvidence(ownerEvidence, cues: cues, through: lastChallengeFrame) }
+            onScanPhase?(.recognized)
             stopCamera(ending: Self.recognizedEnd)
         case .failed(let reason):
             stopCamera(ending: Self.attemptEvent(for: reason))
@@ -619,6 +645,7 @@ import Cocoa
     /// 关相机，录到一半的帧作废。扫描本身由守卫按锁态与代次作废。
     /// 有一次认出正在进行时，按 `ending` 记进次数（默认“被打断”，不计）。
     private func stopCamera(ending event: FaceIdentityEvent = .interrupted) {
+        if case .cameraUnavailable = event { onScanPhase?(.cameraUnavailable) }
         epoch &+= 1
         if var flow = challenge {
             // 挑战没做完相机就没了（租约到、锁态变、休眠）：记一笔中断。

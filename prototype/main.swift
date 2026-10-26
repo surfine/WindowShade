@@ -319,6 +319,13 @@ if CommandLine.arguments.contains("--face-enrollment-probe") {
     withExtendedLifetime(delegate) { app.run() }
     exit(0)
 }
+if CommandLine.arguments.contains("--face-scan-page-probe") {
+    app.setActivationPolicy(.accessory)
+    app.delegate = delegate
+    DispatchQueue.main.async { MainActor.assumeIsolated { FaceEnrollmentProbe.runScanIndicator(owner: delegate) } }
+    withExtendedLifetime(delegate) { app.run() }
+    exit(0)
+}
 // Isolated visual QA: builds real settings views without sensors, event taps,
 // window recovery, or changes to the user's saved effect preferences.
 if CommandLine.arguments.contains("--standard-menu-probe") {

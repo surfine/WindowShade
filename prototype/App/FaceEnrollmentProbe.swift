@@ -31,6 +31,50 @@ enum FaceEnrollmentProbe {
         after(3) { framing(owner, attempts: 20) }
     }
 
+    /// 认你指示的验收：四个相位依次驱动，核对文案、图标与收走（不挂锁屏空间、不锁屏）。
+    static func runScanIndicator(owner: AppDelegate) {
+        log("scan probe start")
+        after(3) { scanStarted(owner) }
+    }
+
+    private static func scanStarted(_ owner: AppDelegate) {
+        let controller = owner.faceScanStatus
+        controller.presentsWithoutLockSpace = true
+        controller.show(.started)
+        after(0.3) { scanCheck(owner, attempts: 20) }
+    }
+
+    private static func scanCheck(_ owner: AppDelegate, attempts: Int) {
+        guard let view = owner.faceScanStatus.probeView else {
+            if attempts > 0 { after(0.15) { scanCheck(owner, attempts: attempts - 1) } }
+            else { log("FAIL face-scan-page: indicator did not appear"); finish(ok: false) }
+            return
+        }
+        var failures = 0
+        func expect(_ ok: Bool, _ text: String) {
+            if !ok { failures += 1 }
+            log("\(ok ? "ok  " : "FAIL") \(text)")
+        }
+        expect(view.probeLabel == WSL10n.text("face.scan.title", zh: "正在认你"), "started shows the scanning line")
+        expect(view.probeRingSpinning, "ring is spinning")
+        expect(view.probeWindowVisible, "indicator is on screen")
+        view.show(.recognized)
+        expect(view.probeLabel == WSL10n.text("face.scan.recognized", zh: "认出了，交给系统"), "recognized line")
+        expect(view.probeCheckVisible, "recognized shows the check")
+        view.show(.lockedOut)
+        expect(view.probeLabel == WSL10n.text("face.scan.lockedOut", zh: "这次锁屏请用 Touch ID 或密码"), "locked-out line")
+        owner.faceScanStatus.show(.cameraUnavailable)
+        after(0.4) { scanGone(owner, prior: failures) }
+    }
+
+    private static func scanGone(_ owner: AppDelegate, prior: Int) {
+        let gone = owner.faceScanStatus.probeView == nil
+        log(gone ? "ok   camera unavailable clears the indicator" : "FAIL camera unavailable leaves the indicator")
+        let failures = prior + (gone ? 0 : 1)
+        log(failures == 0 ? "PASS face-scan-page" : "FAIL face-scan-page: \(failures) failures")
+        finish(ok: failures == 0)
+    }
+
     private static func framing(_ owner: AppDelegate, attempts: Int) {
         let host = owner.faceEnrollmentHost
         host.enrollmentPhase(.framing(hint: .centerFace))
