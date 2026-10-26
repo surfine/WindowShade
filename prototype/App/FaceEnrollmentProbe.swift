@@ -31,6 +31,35 @@ enum FaceEnrollmentProbe {
         after(3) { framing(owner, attempts: 20) }
     }
 
+    /// 补光圈的验收：连续太暗亮、单帧噪声不亮、提示换句即熄、结束归零。
+    static func runFillLight(owner: AppDelegate) {
+        log("fill light probe start")
+        after(3) { fillSequence(owner) }
+    }
+
+    private static func fillSequence(_ owner: AppDelegate) {
+        let light = FaceFillLightController()
+        var failures = 0
+        func expect(_ ok: Bool, _ text: String) {
+            if !ok { failures += 1 }
+            log("\(ok ? "ok  " : "FAIL") \(text)")
+        }
+        light.enrollHint(.tooDark)
+        light.enrollHint(.tooDark)
+        expect(!light.probeLit, "two dark frames do not light it yet")
+        light.enrollHint(.tooDark)
+        expect(light.probeLit, "third dark frame lights the edge glow")
+        expect(light.probeOnScreen, "glow panel is on screen")
+        light.enrollHint(.centerFace)
+        expect(!light.probeLit, "a different hint dims it")
+        light.enrollHint(.tooDark); light.enrollHint(.tooDark); light.enrollHint(.tooDark)
+        expect(light.probeLit, "lights again after another streak")
+        light.enrollHint(nil)
+        expect(!light.probeLit && !light.probeOnScreen, "enrollment over clears it")
+        log(failures == 0 ? "PASS face-fill-light" : "FAIL face-fill-light: \(failures)")
+        finish(ok: failures == 0)
+    }
+
     /// 认你指示的验收：四个相位依次驱动，核对文案、图标与收走（不挂锁屏空间、不锁屏）。
     static func runScanIndicator(owner: AppDelegate) {
         log("scan probe start")

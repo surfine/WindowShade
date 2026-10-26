@@ -142,6 +142,8 @@ import Cocoa
     private let source = FaceObservationSource()
     /// 录脸取景卡；没有卡（刘海关着）时照旧只走流程。
     weak var presenter: (any FaceEnrollmentPresenting)?
+    /// 太暗时的屏幕边光（画质辅助）。
+    private let fillLight = FaceFillLightController()
     private var templates: [FaceTemplate] = []
     private var guardian = FaceScanGuard(templates: [])
     private var lockGeneration: UInt64 = 0
@@ -514,6 +516,8 @@ import Cocoa
 
     private func enrollFrame(_ frame: FaceObservation) {
         guard var flow = enrollment, flow.wantsCamera else { return }
+        if case .framing(let hint) = flow.phase { fillLight.enrollHint(hint) }
+        else { fillLight.enrollHint(nil) }
         let restartsBefore = flow.restarts
         flow.receive(Self.enrollmentFrame(frame), lock: lockState())
         enrollment = flow
@@ -586,6 +590,7 @@ import Cocoa
             }
             guard self.enrollmentToken == token, var flow = self.enrollment else { return }
             flow.didSave(saved, total: confirmed.templates.count)
+            self.fillLight.reset()
             self.presenter?.enrollmentPhase(flow.phase)
             self.enrollment = nil
         }
@@ -599,6 +604,7 @@ import Cocoa
         flow.end(reason)
         enrollment = nil
         enrollmentToken &+= 1
+        fillLight.reset()
         presenter?.enrollmentPhase(.ended(reason))
         switch reason {
         case .notConfirmed: log("face enrollment: not confirmed, nothing saved")
