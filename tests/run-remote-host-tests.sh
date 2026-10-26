@@ -15,6 +15,7 @@ P="$ROOT/prototype"
   "$P/Core/AuthorizationModels.swift" "$P/Core/RemoteLayerHost.swift" "$P/App/WS2RemoteEffects.swift" "$P/App/ConductorSoundPlayer.swift" \
   "$P/Support/WS2PeerRepository.swift" "$P/Support/WS2PairSetupServer.swift" \
   "$P/Support/WS2CompanionCrypto.swift" "$P/Support/WS2CompanionTCPTransport.swift" \
+  "$P/Core/WireJSON.swift" \
   "$P/App/WS2RemoteHost.swift" "$ROOT/tests/RemoteHostLifecycleTests.swift" \
   -o "$OUT/remote-host-tests"
 "$OUT/remote-host-tests"

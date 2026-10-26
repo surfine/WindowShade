@@ -21,7 +21,8 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)
 fi
 swiftc -module-cache-path "$(pwd)/.build/module-cache" -whole-module-optimization -target "$(uname -m)-apple-macosx15.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
-  -I prototype/Native "$NATIVE_DIR/WS2Child.o" \
+  -I prototype/Native -I prototype/Vendor/PLCrashReporter/include \
+  "$NATIVE_DIR/WS2Child.o" prototype/Vendor/PLCrashReporter/libCrashReporter-MacOSX-Static.a -Xlinker -lc++ -Xlinker -lz \
   "${SOURCES[@]}" "$WORK/FileShelfCardViewTests.swift" \
   -framework Cocoa -framework Carbon -framework ApplicationServices -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \

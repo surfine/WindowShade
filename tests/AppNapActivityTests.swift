@@ -72,8 +72,15 @@ struct AppNapActivityTests {
         // 全局宿主存在，并且现在还没被人拿过（真正的持有发生在启动与输入路径上）。
         expect(appNapActivity.snapshot.depth == 0, "全局宿主此时没有租约")
 
-        // 日志里要能看见这些行（观测不只看内存计数）。
-        let text = (try? String(contentsOfFile: logPath, encoding: .utf8)) ?? ""
+        // 日志里要能看见这些行（观测不只看内存计数）。写日志在低优先级队列上异步进行：
+        // 系统忙时这一步要等一等，不能读一次就判输（全量跑测试时它真的会输）。
+        var text = ""
+        let readDeadline = Date().addingTimeInterval(5)
+        while Date() < readDeadline {
+            text = (try? String(contentsOfFile: logPath, encoding: .utf8)) ?? ""
+            if text.contains("nap: released all") { break }
+            Thread.sleep(forTimeInterval: 0.05)
+        }
         expect(text.contains("nap: base hold"), "日志里有基础声明的重取")
         expect(text.contains("nap: interactive"), "日志里有交互租约的取得")
         expect(text.contains("over the"), "日志里记下了超过上限的那一次")

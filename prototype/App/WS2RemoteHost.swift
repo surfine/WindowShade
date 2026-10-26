@@ -679,6 +679,8 @@ enum WS2RemoteCopy {
     }
 
     /// 运行时在指挥页打开/切换会话时推来握手；nil 表示页面关了，断开这段指挥会话。
+    /// 握手的类型住在 App 层的 WS2OwnedLaunchController 里；生命周期测试编不到它，整段跟着 App 宿主一起裁掉。
+    #if !WS2_REMOTE_HOST_TESTING
     func setConductor(_ handshake: WS2OwnedLaunchController.RemoteHandshake?) {
         guard let handshake else {
             guard let context = remoteConductorContext else { return }
@@ -706,6 +708,7 @@ enum WS2RemoteCopy {
             payload: .snapshot(turnID: handshake.turn, actual: handshake.actual))
         handle(conductor.receive(snapshot), source: "remote-snapshot")
     }
+    #endif
 
     /// 指挥页开着时，播放/选择/返回先交给页面；交回 false 才继续走遥控器自己的层。
     var pageAction: (@MainActor (WS2.Button) -> Bool)?

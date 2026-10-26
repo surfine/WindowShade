@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/part2-core"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
+  "$ROOT/prototype/Core/WireJSON.swift" \
   "$ROOT/prototype/Core/Contracts.swift" \
   "$ROOT/prototype/Core/InteractionCoordinator.swift" \
   "$ROOT/prototype/Core/CodexWire.swift" \

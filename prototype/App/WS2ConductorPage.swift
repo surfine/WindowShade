@@ -67,9 +67,10 @@ import Cocoa
             window?.isKeyWindow == true && NSApp.isActive && backendEpoch != nil
     }
 
-    init(controller: WS2OwnedLaunchController, transcriber: any VoiceTranscriber = MacVoiceTranscriber()) {
+    // 默认参数在非隔离上下文求值，MainActor 的构造器不能当默认值；改为体内构造。
+    init(controller: WS2OwnedLaunchController, transcriber: (any VoiceTranscriber)? = nil) {
         self.controller = controller
-        self.transcriber = transcriber
+        self.transcriber = transcriber ?? MacVoiceTranscriber()
         let projectURL: () -> URL = { [weak controller] in
             MainActor.assumeIsolated {
                 controller?.projectURL ?? FileManager.default.homeDirectoryForCurrentUser

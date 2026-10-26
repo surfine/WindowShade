@@ -10,6 +10,7 @@ mkdir -p "$OUT"
   "$ROOT/prototype/Core/PairingAttemptWindow.swift" \
   "$ROOT/prototype/Support/WS2PeerRepository.swift" \
   "$ROOT/prototype/Support/WS2PairSetupServer.swift" \
+  "$ROOT/prototype/Support/WS2PureSRP.swift" \
   "$ROOT/prototype/Support/WS2PairSetupCrypto.swift" \
   "$ROOT/tests/Part5MacPairCryptoTests.swift" -o "$OUT/mac-pair"
 "$OUT/mac-pair" "$ROOT/tests/fixtures/pair-setup-vectors.json"
