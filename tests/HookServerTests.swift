@@ -263,6 +263,69 @@ struct HookServerTests {
         t.expect(!FileManager.default.fileExists(atPath: root + "/real/hooks.sock"), "没在链接目标里留下 socket")
         linked.setEnabled(false)
 
+
+        t.section("H-10", "多会话：两件同时挂，只批一件；断线的那件批不动")
+        let both = WS2HookServer(path: root + "/both.sock", hold: 119, clock: WS2ContinuousClock())
+        var bothSeen: [WS2HookSessions.Change] = []
+        both.onChange = { bothSeen += $0 }
+        both.onPermissionAsk = { _ in }
+        both.setEnabled(true)
+        t.expect(spin { both.state == .listening }, "开听")
+        let first = ReplyBox(), replyB = ReplyBox()
+        DispatchQueue.global().async { first.set(send(line(event("PermissionRequest", session: "a", tool: "Bash")), to: root + "/both.sock")) }
+        DispatchQueue.global().async { replyB.set(send(line(event("PermissionRequest", session: "b", tool: "Write")), to: root + "/both.sock")) }
+        t.expect(spin { both.isWaiting(sessionID: "a") && both.isWaiting(sessionID: "b") }, "两件都挂着")
+        t.expect(both.decide(sessionID: "a", allow: true), "批 a：允许")
+        t.expect(spin { first.value == Data(#"{"decision":"allow"}"#.utf8) }, "a 收到 allow")
+        _ = spin(until: { false }, seconds: 0.2)
+        t.expect(replyB.value == nil, "b 仍挂着，没被 a 的决定带走")
+        t.expect(spin { both.model.status(of: "b") == .waiting } && both.model.status(of: "a") != .waiting, "账上只剩 b 在等")
+        both.decide(sessionID: "b", allow: false)
+        t.expect(spin { replyB.value == Data(#"{"decision":"deny"}"#.utf8) }, "b 收到 deny")
+
+        // 断线的那件：批了也送不出去，completion 如实报 false。
+        let goneClient = try! WS2UnixSocket.connect(to: root + "/both.sock")
+        try! goneClient.sendLine(line(event("PermissionRequest", session: "gone", tool: "Bash")),
+                                 deadline: ProcessInfo.processInfo.systemUptime + 1)
+        t.expect(spin { both.isWaiting(sessionID: "gone") }, "gone 挂上了")
+        goneClient.closeSocket()
+        // completion 会跳回主队列：主线程必须转 runloop 等，不能拿信号量堵住自己。
+        final class DeadVerdict: @unchecked Sendable {
+            private let lock = NSLock(); private var stored: Bool?
+            var value: Bool? { lock.lock(); defer { lock.unlock() }; return stored }
+            func set(_ v: Bool) { lock.lock(); stored = v; lock.unlock() }
+        }
+        let deadVerdict = DeadVerdict()
+        t.expect(both.decide(sessionID: "gone", allow: true, completion: { sent in
+            deadVerdict.set(sent)
+        }), "批断线的那件")
+        // 半关的本地 socket 上 write 可能照样成功（送到已无人读的缓冲），送达与否本来就读不出来；
+        // 这里只保证 completion 一定回、账一定结。
+        t.expect(spin { deadVerdict.value != nil },
+                 "断线那件的 completion 一定回（sent=\(deadVerdict.value.map { String($0) } ?? "nil")）")
+        t.expect(spin { both.model.status(of: "gone") != .waiting }, "账上不再等 gone")
+
+        let bothClosed = DispatchSemaphore(value: 0)
+        both.setEnabled(false) { bothClosed.signal() }
+        t.expect(bothClosed.wait(timeout: .now() + 3) == .success, "both 停听完成")
+        try? FileManager.default.removeItem(atPath: root + "/both.sock")
+
+        t.section("H-11", "挂期到点：没批的那件回“{}”，不替 Claude Code 决定")
+        let shortHold = WS2HookServer(path: root + "/short.sock", hold: 0.5, clock: WS2ContinuousClock())
+        shortHold.onPermissionAsk = { _ in }
+        shortHold.setEnabled(true)
+        t.expect(spin { shortHold.state == .listening }, "开听（短挂期）")
+        let expired = ReplyBox()
+        DispatchQueue.global().async { expired.set(send(line(event("PermissionRequest", session: "slow", tool: "Edit")), to: root + "/short.sock")) }
+        t.expect(spin { shortHold.isWaiting(sessionID: "slow") }, "挂上了")
+        t.expect(spin(until: { expired.value != nil }, seconds: 5), "到点收到应答")
+        t.expect(expired.value == Data("{}".utf8), "到点回“{}”，不是 allow 也不是 deny")
+        t.expect(spin { shortHold.model.status(of: "slow") != .waiting }, "账上不再等 slow")
+        let shortClosed = DispatchSemaphore(value: 0)
+        shortHold.setEnabled(false) { shortClosed.signal() }
+        _ = shortClosed.wait(timeout: .now() + 3)
+        try? FileManager.default.removeItem(atPath: root + "/short.sock")
+
         t.finish()
     }
 }

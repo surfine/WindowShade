@@ -297,9 +297,11 @@ struct WS2HookSessions: Sendable {
     private var listener: WS2HookListener?
     private var wake: DispatchSourceTimer?
     private var generation: UInt64 = 0
+    private let holdSeconds: Double
 
-    init(path: String = WS2HookServer.defaultPath, clock: any WS2Clock) {
+    init(path: String = WS2HookServer.defaultPath, hold: Double = 119, clock: any WS2Clock) {
         self.path = path
+        self.holdSeconds = hold
         self.clock = clock
     }
 
@@ -312,12 +314,15 @@ struct WS2HookSessions: Sendable {
         let current = generation
         if on {
             state = .starting
-            let listener = WS2HookListener(path: path,
+            let listener = WS2HookListener(path: path, hold: holdSeconds,
                 deliver: { [weak self] event in
                     DispatchQueue.main.async { MainActor.assumeIsolated { self?.handle(event, generation: current) } }
                 },
                 report: { [weak self] ok in
                     DispatchQueue.main.async { MainActor.assumeIsolated { self?.started(ok, generation: current, done: done) } }
+                },
+                onExpiry: { [weak self] sessionID in
+                    DispatchQueue.main.async { MainActor.assumeIsolated { self?.deferToHost(sessionID: sessionID) } }
                 })
             self.listener = listener
             listener.start()
@@ -408,8 +413,12 @@ struct WS2HookSessions: Sendable {
 final class WS2HookListener: @unchecked Sendable {
     private let queue = DispatchQueue(label: "WindowShade.hooks", qos: .utility)
     private let path: String
+    /// PermissionRequest 挂住的时长；生产 119 秒，测试注入短值。
+    private let holdSeconds: Double
     private let deliver: @Sendable (WS2HookEvent) -> Void
     private let report: @Sendable (Bool) -> Void
+    /// 挂期到点、连接被回“{}”收走之后调：服务端用它把账上的“等你”立即结掉。
+    private let onExpiry: @Sendable (String) -> Void
     private struct Pending { let client: WS2UnixSocket; let deadline: Double }
     private var socket: WS2UnixSocket?
     private var source: DispatchSourceRead?
@@ -418,8 +427,12 @@ final class WS2HookListener: @unchecked Sendable {
     /// PermissionRequest 的连接要等审批；键是会话 id，只留最新一次。
     private var pending: [String: Pending] = [:]
 
-    init(path: String, deliver: @escaping @Sendable (WS2HookEvent) -> Void, report: @escaping @Sendable (Bool) -> Void) {
-        self.path = path; self.deliver = deliver; self.report = report
+    init(path: String, hold: Double = 119,
+         deliver: @escaping @Sendable (WS2HookEvent) -> Void,
+         report: @escaping @Sendable (Bool) -> Void = { _ in },
+         onExpiry: @escaping @Sendable (String) -> Void = { _ in }) {
+        self.path = path; self.holdSeconds = hold; self.deliver = deliver; self.report = report
+        self.onExpiry = onExpiry
     }
 
     func start() { queue.async { self.open() } }
@@ -473,9 +486,9 @@ final class WS2HookListener: @unchecked Sendable {
                 try? old.client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
                 old.client.closeSocket()
             }
-            let deadline = ProcessInfo.processInfo.systemUptime + 119
+            let deadline = ProcessInfo.processInfo.systemUptime + holdSeconds
             pending[event.sessionID] = Pending(client: client, deadline: deadline)
-            queue.asyncAfter(deadline: .now() + 119) { [weak self] in self?.expire(event.sessionID, deadline: deadline) }
+            queue.asyncAfter(deadline: .now() + holdSeconds) { [weak self] in self?.expire(event.sessionID, deadline: deadline) }
             deliver(event)
             return
         }
@@ -509,6 +522,7 @@ final class WS2HookListener: @unchecked Sendable {
         pending.removeValue(forKey: sessionID)
         try? entry.client.sendLine(WS2HookEvent.reply(.none), deadline: ProcessInfo.processInfo.systemUptime + 1)
         entry.client.closeSocket()
+        onExpiry(sessionID)
     }
 
     /// 父目录不存在就按 0700 建；已存在的不改权限，交给 WS2UnixSocket 去拒。
