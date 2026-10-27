@@ -340,7 +340,7 @@ enum WS2PrivacyData {
             toggle: WSL10n.text("privacy.agent-hooks.toggle", zh: "编程会话（在指挥模式设置里）；关掉就停止接收，删掉本机连接"),
             status: "current",
             combined: WSL10n.text("privacy.agent-hooks.combined", zh: "编程助手的事件合起来，能看出你在做哪个项目、什么时候在写代码。"),
-            interfaces: [],
+            interfaces: ["Data(contentsOf:)", "write(to:)"],
             subtitle: WSL10n.text("privacy.agent-hooks.subtitle", zh: "编程助手的状态放到刘海"),
             appearsWith: "ws2-preview",
         ),

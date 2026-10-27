@@ -7,6 +7,24 @@ enum WS2HookConfiguration {
         guard value.hasPrefix("/"), !value.contains("\n"), !value.contains("\r"),!value.utf8.contains(0) else { throw Failure.invalidExecutable }
         return "'"+value.replacingOccurrences(of:"'",with:"'\\''")+"' --provider claude"
     }
+    /// 文件里现在有没有我们的命令（按结构查，不比序列化字节）。
+    static func contains(original: Data, executable: String, provider: String = "claude") throws -> Bool {
+        guard provider == "claude" else { throw Failure.unsupportedProvider }
+        let command = try quote(executable)
+        guard original.count <= 1_048_576,
+              let root = try JSONSerialization.jsonObject(with: original) as? [String:Any],
+              let hooks = root["hooks"] as? [String:Any] else { return false }
+        for groups in hooks.values {
+            guard let list = groups as? [[String:Any]] else { throw Failure.foreignHooks }
+            for group in list {
+                guard let entries = group["hooks"] as? [[String:Any]] else { throw Failure.foreignHooks }
+                if entries.contains(where: { ($0["type"] as? String) == "command" && ($0["command"] as? String) == command }) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
     static func preview(original: Data, executable: String, connected: Bool, provider: String = "claude") throws -> Preview {
         guard provider == "claude" else { throw Failure.unsupportedProvider }
         guard original.count <= 1_048_576,
@@ -35,7 +53,8 @@ enum WS2HookConfiguration {
             else { hooks.removeValue(forKey:event) }
         }
         if hooks.isEmpty { root.removeValue(forKey:"hooks") } else { root["hooks"] = hooks }
-        let replacement = try JSONSerialization.data(withJSONObject:root,options:[.sortedKeys,.prettyPrinted])+Data([10])
+        let replacement = try JSONSerialization.data(withJSONObject:root,
+            options:[.sortedKeys,.prettyPrinted,.withoutEscapingSlashes])+Data([10])
         return Preview(original:original,replacement:replacement,command:command)
     }
 }

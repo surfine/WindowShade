@@ -8166,29 +8166,6 @@
         }
       }
     },
-    "conductor.settings.hookConfig.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Copy it, then paste it into its settings"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拷贝后粘贴到它的设置里"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "複製後貼上到它的設定裡"
-          }
-        }
-      }
-    },
     "conductor.settings.intro": {
       "extractionState": "manual",
       "localizations": {
@@ -69234,6 +69211,190 @@
           "stringUnit": {
             "state": "translated",
             "value": "臉"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookConnect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "连接"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "連接"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookDisconnect": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "断开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "斷開"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookNotConnected": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未连接"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未連接"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookForeign": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This settings file has hooks from another tool; auto-editing is off — copy and paste manually"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这份配置里有别的工具的 hook，不敢自动改；可拷贝后手动粘贴"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這份配置裡有別的工具的 hook，不敢自動改；可拷貝後手動貼上"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookWriteFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't write; the original file is untouched"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没写进去，原文件没动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒寫進去，原檔案沒動"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookDiffTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About to change this file"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将要改动这个文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將要改動這個檔案"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookDiffBody": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backup will be saved next to it first. These lines will be added:"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会先在旁边存一份备份。将加入下面这几行："
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "會先在旁邊存一份備份。將加入下面這幾行："
+          }
+        }
+      }
+    },
+    "conductor.settings.hookConfig.connectedSub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected — Claude Code reports to the notch. Disconnect here before uninstalling WindowShade"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已连接，Claude Code 会报到刘海。卸载 WindowShade 前先在这里断开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已連接，Claude Code 會報到劉海。解除安裝 WindowShade 前先在這裡斷開"
           }
         }
       }
