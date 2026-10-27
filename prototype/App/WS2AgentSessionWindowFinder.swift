@@ -18,6 +18,23 @@ enum WS2AgentSessionWindowFinder {
     static func go(cwd: String, terminal: TerminalIdentity? = nil, fallback: @escaping @MainActor () -> Void) {
         epoch += 1
         let ticket = epoch
+        if let commands = TerminalBinding.tmuxSelectArguments(for: terminal) { selectTmuxPane(commands) }
+        lookupAsync(cwd: cwd, terminal: terminal) { found in
+            MainActor.assumeIsolated {
+                guard ticket == epoch else { return }
+                if let found {
+                    wlog("agent session: go to terminal window id=\(found.windowID)")
+                    NotchShelf.goTo(id: CGWindowID(found.windowID), pid: found.pid)
+                } else {
+                    fallback()
+                }
+            }
+        }
+    }
+
+    /// 只找不切：会话卡悬停「看一眼」用。结果回主线程；cwd 为空且没有终端身份时直接回 nil。
+    static func lookupAsync(cwd: String, terminal: TerminalIdentity?,
+                            completion: @escaping @MainActor (Found?) -> Void) {
         let wantedIDs = Set(TerminalBinding.searchBundleIDs(for: terminal))
         let pids = NSWorkspace.shared.runningApplications
             .filter { app in
@@ -26,22 +43,20 @@ enum WS2AgentSessionWindowFinder {
             }
             .map(\.processIdentifier)
         let home = NSHomeDirectory()
-        guard !cwd.isEmpty || terminal?.tty.isEmpty == false, !pids.isEmpty else { fallback(); return }
-        if let commands = TerminalBinding.tmuxSelectArguments(for: terminal) { selectTmuxPane(commands) }
+        guard !cwd.isEmpty || terminal?.tty.isEmpty == false, !pids.isEmpty else {
+            completion(nil); return
+        }
         DispatchQueue.global(qos: .userInitiated).async {
             let found = find(cwd: cwd, terminal: terminal, pids: pids, home: home)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated {
-                    guard ticket == epoch else { return }
-                    if let found {
-                        wlog("agent session: go to terminal window id=\(found.windowID)")
-                        NotchShelf.goTo(id: CGWindowID(found.windowID), pid: found.pid)
-                    } else {
-                        fallback()
-                    }
-                }
+                MainActor.assumeIsolated { completion(found) }
             }
         }
+    }
+
+    struct Found {
+        let windowID: UInt32
+        let pid: pid_t
     }
 
     /// tmux：后台依次跑 select-window、select-pane，每条最多等 2 秒；失败不影响抬窗口。
@@ -67,7 +82,7 @@ enum WS2AgentSessionWindowFinder {
 
     /// 后台：窗口列表里挑出这几个终端 App 的普通窗口（从前到后），标题取窗口列表的，文档取辅助功能的
     /// （辅助功能只看得见当前桌面上的窗口，别的桌面的窗口靠标题认）。
-    nonisolated private static func find(cwd: String, terminal: TerminalIdentity?, pids: [pid_t], home: String) -> (windowID: UInt32, pid: pid_t)? {
+    nonisolated private static func find(cwd: String, terminal: TerminalIdentity?, pids: [pid_t], home: String) -> Found? {
         let wanted = Set(pids)
         let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         var documents: [UInt32: String] = [:]
@@ -89,6 +104,6 @@ enum WS2AgentSessionWindowFinder {
             candidates.append(.init(windowID: id, pid: pid, title: info[kCGWindowName as String] as? String, document: documents[id]))
         }
         guard let best = TerminalBinding.best(identity: terminal, cwd: cwd, among: candidates, home: home) else { return nil }
-        return (best.windowID, best.pid)
+        return Found(windowID: best.windowID, pid: best.pid)
     }
 }

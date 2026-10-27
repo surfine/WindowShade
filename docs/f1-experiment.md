@@ -1,5 +1,10 @@
 # F1 蓝牙身份实验·运行手册（Mac 侧已备好，等 iPhone 到场）
 
+> 2026-10-27 路线更新（研究结论见 [f1-homeplay-study.md](f1-homeplay-study.md)）：
+> HomePlay 已真机实证 Mac 扮 iAP2 配件（MFi 身份自备）可与 iPhone 建立密码学 bond，
+> 重连即 pair-verify 即身份。F1 首选改为 **A：自己的 iAP2 在场配件**（排期独立实现）；
+> **B：本地问 HomePlay**（过渡最快）。本手册的 ANCS 探针降为 **C：保底**，工具保留。
+
 目标：补 dynamic-lock.md「F1 实验现在怎么做」第 2 条——**证明连上的就是你那台手机**，
 不是任何一台手机。做法：读一个需要加密的特性（ANCS，iPhone 只对配过对的配件开放），
 迫使系统用配对时的长期密钥加密连接。只有当初配过对的那台做得到。

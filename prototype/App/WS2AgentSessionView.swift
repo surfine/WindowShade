@@ -1,10 +1,16 @@
 import Cocoa
+import ObjectiveC
 /// 有界原生会话列表；observed 会话没有 Stop 按钮。审批卡由 A4 独占。
 @MainActor final class WS2AgentSessionView: NSView, WS2LeaseContent {
     var interactionSize: NSSize { NSSize(width: 520, height: hasSessions ? 320 : interactionMinimumHeight) }
     var onCancel: (() -> Void)?
     var open: ((WS2.Context) -> Void)?
     var stop: ((WS2.Context) -> Void)?
+    /// A3 卡片上停一下「看一眼那扇终端」：参数是会话目录、终端身份、卡片在屏幕上的位置。
+    var peek: ((String, TerminalIdentity?, NSRect) -> Void)?
+    var peekEnd: (() -> Void)?
+    private var peekTimer: Timer?
+    private var peekedRow: ObjectIdentifier?
     var inputIsCurrent: (() -> Bool) = { false }
     private let rows = NSStackView()
     private var hasSessions = false
@@ -29,6 +35,7 @@ import Cocoa
     func render(_ sessions:[AgentSessions.Session]) {
         hasSessions = !sessions.isEmpty
         bindings.removeAll()
+        rowContexts.removeAll()
         for view in rows.arrangedSubviews { rows.removeArrangedSubview(view); view.removeFromSuperview() }
         for session in sessions.prefix(64) {
             let row = NSView(); row.translatesAutoresizingMaskIntoConstraints = false
@@ -67,6 +74,8 @@ import Cocoa
                 button.setContentCompressionResistancePriority(.required, for: .horizontal)
                 bindings[ObjectIdentifier(button)] = (session.context,isStop);actions.addArrangedSubview(button)
             }
+            installHover(row: row, context: session.context)
+            rowContexts[ObjectIdentifier(row)] = session.context
             rows.addArrangedSubview(row)
             NSLayoutConstraint.activate([
                 row.widthAnchor.constraint(equalTo: rows.widthAnchor),
@@ -79,12 +88,73 @@ import Cocoa
         }
         if sessions.isEmpty { rows.addArrangedSubview(NSTextField(labelWithString:WSL10n.text("agent.sessions.none", zh: "还没有编程会话"))) }
     }
+    /// 悬停半秒才看；移开即收。找不找得到窗口由 peek 控制器自己判，这里只报位置。
+    private func installHover(row: NSView, context: WS2.Context) {
+        let tracker = NSTrackingArea(rect: .zero, options: [.inVisibleRect, .mouseEnteredAndExited, .activeAlways],
+                                     owner: self, userInfo: ["row": ObjectIdentifier(row)])
+        row.addTrackingArea(tracker)
+        objc_setAssociatedObject(row, &Self.peekAssociationKey, tracker, .OBJC_ASSOCIATION_RETAIN)
+    }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { cancelPeek() }
+    }
+    override func mouseEntered(with event: NSEvent) {
+        guard let id = event.trackingArea?.userInfo?["row"] as? ObjectIdentifier,
+              let row = rowFor(id), id != peekedRow else { return }
+        cancelPeek()
+        peekedRow = ObjectIdentifier(row)
+        let anchor = row.convert(row.bounds, to: nil)
+        let frame = window?.convertToScreen(anchor) ?? .zero
+        peekTimer = Timer.scheduledTimer(withTimeInterval: WS2SessionTerminalPeekController.dwell, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                guard let cwd = self.cwd(for: row) else { return }
+                self.peek?(cwd, self.terminal(for: row), frame)
+            }
+        }
+    }
+    override func mouseExited(with event: NSEvent) {
+        cancelPeek()
+    }
+    private func rowFor(_ id: ObjectIdentifier) -> NSView? {
+        subviewsRecursive().first { ObjectIdentifier($0) == id }
+    }
+    private func subviewsRecursive() -> [NSView] {
+        var out: [NSView] = []
+        var queue: [NSView] = [self]
+        while let view = queue.popLast() {
+            out.append(view)
+            queue.append(contentsOf: view.subviews)
+        }
+        return out
+    }
+
+    private func cancelPeek() {
+        peekTimer?.invalidate(); peekTimer = nil
+        if peekedRow != nil { peekedRow = nil; peekEnd?() }
+    }
+    /// 行对象 → 会话目录／终端身份：渲染时记下（row 的关联对象存 index）。
+    private var rowContexts: [ObjectIdentifier: WS2.Context] = [:]
+    private func cwd(for row: NSView) -> String? { rowContexts[ObjectIdentifier(row)]?.projectID }
+    private func terminal(for row: NSView) -> TerminalIdentity? {
+        guard let id = rowContexts[ObjectIdentifier(row)]?.session.id else { return nil }
+        return (NSApp.delegate as? AppDelegate)?.ws2Runtime.terminalForSession(id)
+    }
+    private nonisolated(unsafe) static var peekAssociationKey: UInt8 = 0
+
     @objc private func pressed(_ sender:NSButton) {
         guard inputIsCurrent(),let (context,isStop) = bindings[ObjectIdentifier(sender)] else { return }
         if isStop { stop?(context) } else { open?(context) }
     }
     override func cancelOperation(_ sender:Any?) { onCancel?() }
-    func revoke() { inputIsCurrent = { false }; render([]); bindings.removeAll() }
+    func revoke() { inputIsCurrent = { false }; cancelPeek(); render([]); bindings.removeAll() }
+
+    // 页面级探针：不进鼠标事件，直接驱动悬停路径。
+    func probeDwell(context: WS2.Context, frame: NSRect) {
+        peek?(context.projectID, (NSApp.delegate as? AppDelegate)?.ws2Runtime.terminalForSession(context.session.id), frame)
+    }
+    func probeEndPeek() { peekEnd?() }
 }
 
 @MainActor private final class WS2AgentSessionDocumentView: NSView {

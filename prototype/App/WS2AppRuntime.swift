@@ -21,6 +21,14 @@ import Cocoa
     /// 离开就锁（2-7）。默认关；开关在设置的「隐私」页。
     private var presenceLock: PresenceLockDriver?
 
+    /// 会话卡「看一眼」用的终端身份（hook 报过才有）。
+    func terminalForSession(_ id: String) -> TerminalIdentity? {
+        hookServer?.model.terminal(of: id)
+    }
+
+    /// 会话卡的实时终端画面（A3 悬停看一眼）。
+    lazy var sessionPeek = WS2SessionTerminalPeekController()
+
     /// 刷脸实验记日志用：随身设备现在在不在。只读，不触发扫描。
     var presenceSnapshot: (enabled: Bool, phone: PresenceLock.Status, watch: PresenceLock.Status) {
         guard let presenceLock else { return (false, .unknown, .unknown) }
@@ -508,6 +516,8 @@ import Cocoa
     @discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,
                                          stop:@escaping(WS2.Context)->Void) -> Bool {
         let view = WS2AgentSessionView(frame:.zero); view.render(sessions); view.open = open; view.stop = stop
+        view.peek = { [weak self] cwd, terminal, frame in self?.sessionPeek.begin(cwd: cwd, terminal: terminal, anchor: frame) }
+        view.peekEnd = { [weak self] in self?.sessionPeek.end() }
         return island.show(view,ownerID:"notchShelf")
     }
     @discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {

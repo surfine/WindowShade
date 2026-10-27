@@ -319,6 +319,13 @@ if CommandLine.arguments.contains("--face-enrollment-probe") {
     withExtendedLifetime(delegate) { app.run() }
     exit(0)
 }
+if CommandLine.arguments.contains("--session-peek-probe") {
+    app.setActivationPolicy(.accessory)
+    app.delegate = delegate
+    DispatchQueue.main.async { MainActor.assumeIsolated { SessionPeekProbe.run(owner: delegate) } }
+    withExtendedLifetime(delegate) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--face-fill-light-probe") {
     app.setActivationPolicy(.accessory)
     app.delegate = delegate

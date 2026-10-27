@@ -69398,6 +69398,29 @@
           }
         }
       }
+    },
+    "agent.peek.caption": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session terminal · glance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会话的终端 · 看一眼"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "會話的終端機 · 看一眼"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
