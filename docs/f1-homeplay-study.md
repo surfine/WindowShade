@@ -27,12 +27,27 @@
 3. **C（保底）：ANCS 加密读探针**（`tools/probes/f1-identity.sh`，已备好）。
    能走通就够轻；走不通也不碍事——A、B 都在。
 
-## 许可与边界（硬约束）
+## 许可与边界（2026-10-27 Aaron 质疑后重核，修正早前过严的结论）
 
-- HomePlay 是 **GPL-3.0**：只借协议事实与已实证的结论，**一行代码不拷**（与吸收 Open Island 同一纪律）。
-- **MFi 身份绝不进 WindowShade 公开仓库**（Apple 许可证；这里是 MIT 公开树）。永远「用户自备、
-  合法性自负」——沿用我们 `--identity-dir` 的既有边界；HomePlay 把身份放进自家仓库是他们的选择，不外溢。
-- 接 A 或 B 之前先和 Aaron 定：bond 归属（一个身份两App 共用会不会互相踢）、HomePlay 停跑时的降级。
+**Aaron 说得对：项目都是他名下的，他自己的代码当然可以借。** GPL 约束的是从别人那里拿代码的人，
+不约束唯一版权持有人。逐项核清（证据：HomePlay `git log` 239/239 提交全部是 Aaron 一个署名）：
+
+| 代码类别 | 能否进 WindowShade（MIT） | 依据 |
+| --- | --- | --- |
+| Aaron 原创部分（非参照 MacPlay 源码写的） | **可以**，Aaron 有权自行再许可 | 唯一版权持有人 |
+| **参照 MacPlay 源码写的移植**（Session 的配对/加密半边、iAP2 细节——HomePlay 文档自述「参照 pairVerify.ts」「与 MacPlay 逐字节一致」） | **不行，或需处理** | MacPlay 是 GPL-3.0（本机 ~/MacPlay/LICENSE 核过）。移植（翻译）是衍生作品，版权里含 MacPlay 作者的份额；Aaron 无权单方面把这份份额改成 MIT 公开分发。HomePlay 自身选 GPL-3.0 正是这个链条的体现（NOTICE 致谢 LIVI/MacPlay/DiPlay） |
+| MFi 身份文件（pk8/p7b，源自 DiPlay 公开发布物） | **永远不进公开仓库** | 不是 Aaron 的材料可再许可；Apple 许可源头。「用户自备、合法性自负」的既有边界不变 |
+
+**落地办法（不需要纠结上面第二行的两条路）**：
+1. **B 路线（本地问 HomePlay）零拷贝**：只读本机状态，一行代码都不用借，立即合法。
+2. **A 路线的干净做法是净室**：WindowShade 已经有自己独立交叉验证过的 HAP 配对栈
+   （WS2PureSRP 对 srptools＋OpenSSL），iAP2 探针也本是 WindowShade 的原创再搬去 HomePlay 长大的。
+   缺的 MFiSAP/AuthSetup 按**公开协议规格＋测试向量**净室实现（协议行为与向量是事实，不受版权约束；
+   测试身份用自己生成的 P-256 密钥），不读 MacPlay/HomePlay 源码。成本略高，换来 MIT 树完全干净。
+3. 若 Aaron 仍想直接移植 MacPlay 衍生部分：那是他对 MacPlay 作者份额风险的显式担责决定，
+   需要他明确拍板并记录，默认不这么做。
+
+- 接 A 或 B 之前先和 Aaron 定：bond 归属（一个身份两 App 共用会不会互相踢）、HomePlay 停跑时的降级。
 
 ## 对愿景（刷脸解锁两样都对）的落点
 
