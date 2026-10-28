@@ -146,7 +146,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">六 看与指挥（WS2） · 第 28 / 32 张 · 刘海里的编程会话</span><span class="ws-st">稿 · 10-29 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/1vJy6AnRnkMqpmp84fE9Q5">← iPhone 上的遥控器</a><a href="https://claude.ai/artifact/XoqB5LVY9M3dRbsfKPiPjj">认你、指挥页与露出 →</a></nav>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">六 看与指挥（WS2） · 第 28 / 33 张 · 刘海里的编程会话</span><span class="ws-st">稿 · 10-29 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/1vJy6AnRnkMqpmp84fE9Q5">← iPhone 上的遥控器</a><a href="https://claude.ai/artifact/XoqB5LVY9M3dRbsfKPiPjj">认你、指挥页与露出 →</a></nav>
 <div class="wrap">
 
 <header>
@@ -237,7 +237,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <span>竖虚线 = 改道的那一刻</span>
     </div>
   </div>
-  <p class="note" style="margin-top:14px">做法照抄 <code>Notch.swift</code> 的卷帘路径：每个表面持有 <code>FoldSpring</code>，换目标只改 target，每帧 <code>spring.advance(to:dt:)</code>。不用 <code>NSAnimationContext</code> 的时长动画。<br><b>但 <code>FoldSpring</code> 现在不够用</b>（<code>Effects/FoldDriver.swift:39</code>）：它只有临界阻尼，值夹在 0…1，角频率按 5.83 / response 算。所以 <span class="mono">calm</span>、<span class="mono">settle</span> 能直接用；<span class="mono">bloom</span>（ζ 0.84）和 <span class="mono">expand</span>（ζ 0.92）的那一点回弹它画不出来，夹值也会把过冲削平。最小扩展：加一个阻尼比参数，ζ &lt; 1 时走欠阻尼闭式解，夹值改成可选，默认行为一字不改（现有卷帘、合盖路径不受影响）。不另起动画系统。</p>
+  <p class="note" style="margin-top:14px">刘海外框本来就是真弹簧：<code>NotchCanvasView.Spring</code> 按 <code>Motion.notchSpring(for:)</code>（App/Motion.swift:112）把形状映到令牌，换目标时接着当前位置和速度走。新表面接这一条，不用 <code>NSAnimationContext</code> 的时长动画。要补的两处：Notch.swift:6037 的格子位移现在是「calm 的 response 当时长 + ease-out」，改成真弹簧；审批卡内容层的缩放原点（琥珀点）作为参数传进来。<code>FoldSpring</code>（Effects/FoldDriver.swift:39，只有临界阻尼）只给合盖与锁屏覆盖，刘海不用它。</p>
 </section>
 
 <!-- ⑤ 令牌 -->
@@ -275,7 +275,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <tr><td class="num">4</td><td>琥珀色</td><td>规格：琥珀色点</td><td>§4.3 只有 <code>problem</code> = systemOrange（1.5 pt 描边）</td><td>用 systemOrange 实心点；和「出了问题」靠形状区分（点 vs 描边），不另起颜色令牌</td></tr>
       <tr><td class="num">5</td><td>完成提醒主句</td><td>规格写「WindowShade · 完成」</td><td>—</td><td>理解为「项目名 · 完成」；示例项目恰好叫 WindowShade</td></tr>
       <tr><td class="num">7</td><td>完成提醒停留</td><td>规格 agents-in-notch：4 s</td><td>design-system §4.7 <code>alert.hold</code>：2.6 s</td><td>照规格 4 s（要读「改了几个文件」、可能还要点「过去」）；记进 design-grammar 对照账，算会话活动的已知例外</td></tr>
-      <tr><td class="num">6</td><td>弹簧换算</td><td>design-system §4.6：stiffness (2π/response)²，即 ω = 6.28 / response</td><td><code>FoldSpring</code>：ω = 5.83 / response（2% 落定口径）</td><td>同一个令牌在两条路径上快慢差约 8%。这张稿按 §4.6 算；扩展 <code>FoldSpring</code> 时统一口径，算改值，单列单验</td></tr>
+      <tr><td class="num">6</td><td>弹簧换算</td><td>design-system §4.6：stiffness (2π/response)²，即 ω = 6.28 / response</td><td><code>FoldSpring</code>（合盖、锁屏覆盖）：ω = 5.83 / response（2% 落定口径）</td><td>同一个令牌在合盖路径上快约 8%；刘海走 <code>NotchCanvasView.Spring</code>，不受影响。统一口径算改值，单列单验</td></tr>
     </tbody></table></div>
 </section>
 
