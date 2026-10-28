@@ -125,7 +125,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">十 检讨 · 第 34 张 · 窗口的去与回</span><span class="ws-st">检讨稿 · 10-29 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/PW4sinizyKBD28HG6TA3H7">← WindowShade 的一天</a></nav>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">十 检讨 · 第 34 张 · 窗口的去与回</span><span class="ws-st">检讨稿 · 10-29 六问已定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/PW4sinizyKBD28HG6TA3H7">← WindowShade 的一天</a></nav>
 <div class="wrap">
 <header>
   <div class="eyebrow">WINDOWSHADE · 检讨稿 · 2026-10-29 · 只调研，不改代码</div>
@@ -198,7 +198,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <tr><td>两指上 / 上推</td><td>收起（铺满时 = 撤销）</td><td>全部收进刘海（启动台开着时 = 返回）</td><td>Dock 图标：显示这个 App 的全部窗口</td><td>离开：收起、收进刘海</td></tr>
       <tr><td>两指下 / 下拉</td><td>铺满、展开</td><td>放回</td><td class="bad">Dock 图标：让开这个 App</td><td>回来：展开、放回</td></tr>
       <tr><td>捏</td><td>撤销上次排布</td><td class="bad">回到主屏幕</td><td>画中画变小</td><td>变小或撤销</td></tr>
-      <tr><td>张开</td><td>魔法平铺；卷轴里 = 卷轴概览</td><td class="bad">全部收进刘海</td><td>画中画变大</td><td>变大或铺开：刘海上 = 展开那一排</td></tr>
+      <tr><td>张开</td><td>魔法平铺；卷轴里 = 卷轴概览</td><td class="bad">全部收进刘海</td><td>画中画变大</td><td>变大或铺开：刘海上 = 展开那一排（已定）</td></tr>
       <tr><td>点</td><td>双击收起，三击交给系统</td><td>一下主屏幕 / 两下调度中心 / 三下这个 App 的窗口（要等 0.3 秒）</td><td>卷帘条 = 看一眼；缩略图 = 展开</td><td>看或回到原处；单击不等多击</td></tr>
       <tr><td>长按</td><td class="bad">0.55 秒弹出五项菜单（没写进任何文档）</td><td>0.5 秒 = 文件架</td><td>Dock 图标 0.45 秒交给系统</td><td>更多选项，并写进手势表</td></tr>
       <tr><td>晃</td><td class="bad">左右晃，上下晃也算</td><td>—</td><td>—</td><td>只认左右</td></tr>
@@ -217,18 +217,18 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
   <div class="tbl"><table>
     <thead><tr><th>地方</th><th>系统</th><th>WindowShade 现在</th><th>建议</th><th>严重度</th></tr></thead>
     <tbody>
-      <tr><td>标题栏双击</td><td>系统设置里选缩放或最小化；触控 Mac 双击窗口铺满</td><td>默认收起；吞掉第二下；主线程判断超过 500 ms 就放行；任何修饰键都跳过，文档只说 ⌥</td><td>首次打开明说「双击改成收起窗口」；设置给「照系统设置」；判断放到 tap 线程</td><td><span class="sev hi">高</span></td></tr>
+      <tr><td>标题栏双击</td><td>系统设置里选缩放或最小化；触控 Mac 双击窗口铺满</td><td>默认收起；吞掉第二下；主线程判断超过 500 ms 就放行；任何修饰键都跳过，文档只说 ⌥</td><td><b>已定</b>：保持默认收起；首次打开明说；设置可「照系统设置」；判断放到 tap 线程</td><td><span class="sev hi">高</span></td></tr>
       <tr><td>拖到菜单栏</td><td>拖到菜单栏 = 填满桌面；拖穿顶边 = 调度中心</td><td>落点小岛长在菜单栏中央；代码里没找到对这两条的处理</td><td>只在指针进到刘海那一格时出岛；真机核对两套预览</td><td><span class="sev hi">高</span></td></tr>
       <tr><td>拖到左右边、四角</td><td>系统平铺</td><td>贴边 3 点内让给系统；侧拉区内缩 8 点</td><td>保持；启动台分区改成同一顺序</td><td><span class="sev lo">低</span></td></tr>
       <tr><td>绿色按钮</td><td>悬停出 Move &amp; Resize、Fill &amp; Arrange、全屏</td><td>卷帘条 0.55 秒后转给系统；窗口浏览卡片只进入全屏</td><td>保持（10-29 已定）</td><td><span class="sev lo">低</span></td></tr>
       <tr><td>快捷键</td><td>Fn-⌃-方向键是系统平铺；HIG 建议不用 Control 当修饰键</td><td>默认不占；文档举例 ⌃⌘C、⌃⌘↑ 分别和「复制格式」、Finder 同键</td><td>录制时查冲突表并提示</td><td><span class="sev mid">中</span></td></tr>
       <tr><td>调度中心里 ⌘W / ⌘Q</td><td>发给前台 App</td><td>改成关指着的那扇</td><td>讲清楚；考虑默认关</td><td><span class="sev mid">中</span></td></tr>
       <tr><td>窗口圆角</td><td>macOS 27：所有窗口同一个更紧的圆角；没有公开读取接口</td><td>卷帘条、缩略图、画中画沿用写好的半径</td><td>按 14/15、26、27 三档在真机量，进令牌</td><td><span class="sev mid">中</span></td></tr>
-      <tr><td>刘海</td><td>新 MacBook Pro：Dynamic Island 是 Spotlight、实时活动、Siri AI 的新家</td><td>刘海里的岛、实时活动、点一二三下</td><td>见下</td><td><span class="sev hi">高</span></td></tr>
+      <tr><td>刘海</td><td>新 MacBook Pro：Dynamic Island 是 Spotlight、实时活动、Siri AI 的新家</td><td>刘海里的岛、实时活动、点一二三下</td><td><b>已定</b>：让位；11/6 后真机定细节</td><td><span class="sev hi">高</span></td></tr>
     </tbody></table></div>
   <div class="callout">
     <h3>触控 MacBook Pro 与 Mac 上的 Dynamic Island（2026-10-28 发布，11 月 6 日上市）</h3>
-    <p>Apple 新闻稿原话：「The Dynamic Island comes to the Mac, serving as the new home for Spotlight, Live Activities, and Siri AI」，以及「double-tap a window to fill the screen, or flick to tile it into place」。这让「刘海是 Mac 的新入口」第一次遇到系统的正式住户；触控没有悬停，看一眼、刘海悬停展开、窗口浏览在触控下都缺入口。建议 11 月 6 日后先在真机上调研，再定：在有系统岛的机型上不自己画在上面；看一眼在触控下改长按；标题栏双击在触控时让给系统。旧的刘海机型会不会得到 Dynamic Island，Apple 没说。</p>
+    <p>Apple 新闻稿原话：「The Dynamic Island comes to the Mac, serving as the new home for Spotlight, Live Activities, and Siri AI」，以及「double-tap a window to fill the screen, or flick to tile it into place」。这让「刘海是 Mac 的新入口」第一次遇到系统的正式住户；触控没有悬停，看一眼、刘海悬停展开、窗口浏览在触控下都缺入口。Aaron 已定方向为让位：在有系统岛的机型上不自己画在上面，实时活动尽量走系统；标题栏双击在触控时让给系统。11 月 6 日后真机调研再定细节（看一眼在触控下改长按是候选）。旧的刘海机型会不会得到 Dynamic Island，Apple 没说。</p>
   </div>
 </section>
 
@@ -256,14 +256,14 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 </section>
 
 <section id="asks">
-  <div class="sec-head"><span class="n">⑨</span><h2>要 Aaron 定的</h2><p>这一轮不改代码。下面六件定了，才能进下一步的小样。</p></div>
+  <div class="sec-head"><span class="n">⑨</span><h2>Aaron 已定（2026-10-29 下午）</h2><p>六件都照建议定了。只定方向，不动代码；实现顺序接在整合计划的第 13–18 步。</p></div>
   <ol class="asks">
-    <li><b>那一排上用一个回来的词。</b>原处、屏幕边、刘海三种距离都在那一排里，点一下回到原处；各表面自己的动词保留。</li>
-    <li><b>刘海「张开」改成展开那一排</b>，全部收进刘海交给「上推」。</li>
-    <li><b>标题栏双击</b>：保持默认收起并在首次打开明说，还是照系统设置。</li>
-    <li><b>有系统 Dynamic Island 的触控 MacBook Pro</b>上，刘海那颗岛怎么办。</li>
-    <li><b>「收起窗口时的动画」要不要默认开</b>：招牌动作现在默认没有动画。</li>
-    <li><b>撤销扩成排布历史</b>，覆盖收起、收进刘海、侧拉、画中画与排布。</li>
+    <li><b>那一排里点一格叫「回到原处」</b>；别的桌面上的窗口是你过去，仍叫「去」。各表面自己的动词留在各自的表面上。</li>
+    <li><b>刘海张开 = 展开那一排</b>；上推 = 全部收进刘海。</li>
+    <li><b>标题栏双击保持默认收起</b>：首次打开明说原来是缩放；设置可改「照系统设置」；触控 Mac 上手指双击让给系统。</li>
+    <li><b>触控 MacBook Pro 上让位</b>系统的 Dynamic Island；11 月 6 日后真机调研再定细节。</li>
+    <li><b>收起动画默认开</b>；没有屏幕录制时用描边代理。</li>
+    <li><b>撤销扩成排布历史</b>，菜单项写出要撤的那一步。</li>
   </ol>
 </section>
 
