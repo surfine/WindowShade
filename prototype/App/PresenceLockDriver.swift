@@ -371,6 +371,12 @@ final class PresenceMediaControl: @unchecked Sendable {
         }
     }
 
+    /// 第二来源（HomePlay 桥）入口：事件进同一 reducer 批次。
+    func feedExternal(_ events: [PresenceLock.Event]) {
+        guard running else { return }
+        feed(events)
+    }
+
     private func feed(_ events: [PresenceLock.Event]) {
         guard running, !events.isEmpty else { return }
         var pending = events

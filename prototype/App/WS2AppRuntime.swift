@@ -20,6 +20,8 @@ import Cocoa
     private let silent = WS2SilentHost()
     /// 离开就锁（2-7）。默认关；开关在设置的「隐私」页。
     private var presenceLock: PresenceLockDriver?
+    /// F1-B：HomePlay 接收器的 pair-verify 在场桥。接收器没跑时它自己沉默重连，不影响另一路。
+    private var presenceBridge: WS2HomePlayPresenceSource?
 
     /// 会话卡「看一眼」用的终端身份（hook 报过才有）。
     func terminalForSession(_ id: String) -> TerminalIdentity? {
@@ -70,7 +72,12 @@ import Cocoa
             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
         island = owner.notch.leases
         silent.attach(runtime: self, owner: owner)
+        // 双源并存：HomePlay 桥（pair-verify 级身份信号，F1-B）先报用谁；IOBluetooth 轮询兜底。
         presenceLock = PresenceLockDriver(notch: owner.notch, source: WS2BluetoothPresenceSource())
+        presenceBridge = WS2HomePlayPresenceSource()
+        presenceBridge?.start { [weak self] events in
+            MainActor.assumeIsolated { self?.presenceLock?.feedExternal(events) }
+        }
         focusPort = WS2FocusWindowPort(owner: owner)
         focusEffects = WS2FocusEffectExecutor(port: focusPort)
         // T3：窗口效果先走串行计划；端口未准入时只计时，不移动任何窗口。
@@ -559,6 +566,7 @@ import Cocoa
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
         owned?.onChange=nil;owned?.onBrowserURL=nil
         presenceLock?.shutdown(); presenceLock = nil
+        presenceBridge?.stop(); presenceBridge = nil
         hookApproval?.invalidate(); hookApproval = nil
         hookServer?.onPermissionAsk = nil
         hookServer?.setEnabled(false); hookServer = nil

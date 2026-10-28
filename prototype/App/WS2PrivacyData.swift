@@ -279,7 +279,7 @@ enum WS2PrivacyData {
             toggle: WSL10n.text("privacy.settings.toggle", zh: "设置里的各项开关；“重置”只清 WindowShade 自己的值"),
             status: "current",
             combined: WSL10n.text("privacy.settings.combined", zh: "你的设置合起来，能看出你的使用习惯和开过哪些功能。"),
-            interfaces: ["UserDefaults"],
+            interfaces: ["IOBluetooth", "UserDefaults"],
             subtitle: WSL10n.text("privacy.settings.subtitle", zh: "记住你的选择"),
         ),
         WS2PrivacyRow(
