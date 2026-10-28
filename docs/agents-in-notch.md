@@ -112,3 +112,52 @@ Codex 桌面版另外接了 app-server 的 JSON-RPC。它还有用量面板、�
 工具审批的 host 协议没有公开文档，本阶段不做；`permission-prompts none` 下会被拒的操作列在
 result 的 `permission_denials` 里。假 CLI 的进程级验收在 `tests/run-claude-session-tests.sh`，不发真实模型请求。
 页面级测试可用 `WINDOWSHADE_CLAUDE_EXECUTABLE=<可执行文件>` 覆盖发现路径（只影响该 App 进程，预览功能）。
+
+## 2026-10-26 WS2/2.1 对照规格的缺口盘点（机器可做的部分已收口）
+
+对照 Silent Identity Spec v2（~/Downloads/WindowShade-Silent-Identity-Spec-v2.zip）逐条核过：
+
+- **142 条命令**：目录 WS2SilentCatalog 与规格逐条一致（id 集合零差异；effect/confirmation
+  在 snake_case→camel 归一后零差异）；每条在 WS2SilentProductPort/WS2SilentApply 都有执行路径。
+- **237 条验收**：规格自己也标 not_run，且除 16 条（手机批准扩展，Aaron 已决定不做）外，
+  given 全部含「真实 App 构建」前置——都要真机+真人，机器无法代验。
+- **口型链路完整**：录制探针（tools/probes/MouthRecordingProbe + run-mouth-recording.sh）、
+  模板/合并工具（MouthProfileTool + mouth-profile.sh）、App 侧消费
+  （WINDOWSHADE_MOUTH_PROFILE + WINDOWSHADE_MOUTH_CAMERA 两个环境变量）都在，
+  只差 Aaron 本人对着镜头录个人词、生成 profile。
+- 本轮新增的两件产品功能（此前规格有画面、代码没有）：「认你」指示（f688fe9e）、补光圈（cbeedf0f）。
+- r00–r04 静音集成全 PASS；build --check 退 0。
+
+**结论：WS2/2.1 里不依赖 Aaron 硬件/本人的软件件已经收口。** 剩下的每一项都卡在：
+真机锁屏（认你/锁屏开合）、真人录词与真人攻击测试（PAD/重放）、真手机/手表（F1 蓝牙身份）、
+Aaron 拍板放开的系统解锁与代填（D11）。没有可以再「抢先做完」的隐藏件。
+
+## 2026-10-26 A2「连接／断开」兑现（写 ~/.claude/settings.json 的完整流程）
+
+「Claude Code 的配置」那一行从只给「拷贝配置」补齐成规格 A2 的样子：
+
+- **连接**：先弹差异页——要改哪个文件、会先在旁边存一份带时间戳的备份（同秒撞名往后加序号，绝不覆盖）、
+  将加入的每一行（六个事件、各自的 timeout）；点「连接」才写，取消什么都不动。
+- 写入走保守合并（WS2HookConfiguration）：原子的、0600；**只增删自己的行**——配置里有别的工具的 hook、
+  陌生的结构一律拒改（拒改时原文件一个字节不动，界面说明改走手动拷贝）。
+- **断开**：把当初加的那几行原样删掉，别人的 hook 和其它设置原样保留；同样先备份。
+- 连接着的时候副句提醒「卸载 WindowShade 前先在这里断开」。
+- 「拷贝配置」保留，给不想让 App 碰配置文件的人。
+- 状态判定按结构查（文件里有没有我们的命令），不比序列化字节——空文件不会误报已连接。
+
+机器验收：`tests/run-hook-config-store-tests.sh`（临时 HOME：空文件连接、0600、断开清干净、
+别人 hook 保留、断开只剩别人的、陌生结构拒改且原样，全 PASS）。
+隐私登记补了读写点（agent-hooks），隐私页同步。
+真实 Claude Code 对这份 settings.json 的接受度仍要一次真连接确认。
+
+## 2026-10-28 F1-B 落地：HomePlay 桥（pair-verify 级在场信号）
+
+- HomePlay 接收器（322e82b）：`CarPlaySession.phoneAuthenticated` 只读投影 + 每秒读内存投影、
+  翻转才广播 `{"type":"phone-presence","verified":…,"generation":…}`；session-tests 仍全过。
+- WindowShade：`WS2HomePlayPresenceSource`（本机回环 WebSocket，只读布尔，不存设备名/地址），
+  与 IOBluetooth 轮询**双源并存**，都喂同一个 PresenceLock reducer；HomePlay 没跑时它沉默重连。
+- 「离开就锁」从此拿到的是密码学级「那台手机在」的信号（F1 第 2 条的 B 路线），不再只是连接状态。
+- 测试 `tests/run-homeplay-presence-tests.sh`（10 条：解析/去抖/事件序列/拒非法负载）全 PASS；
+  隐私登记 presence-bridge 已入表；`build.sh --check` 退出 0。
+- 需要你：HomePlay 接收器与 iPhone 保持配对状态下跑一次，观察 WindowShade 的「离开就锁」倒数
+  是否随手机验证状态翻转（真机对照，5 分钟）。
