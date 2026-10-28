@@ -1,0 +1,394 @@
+<meta charset="utf-8">
+<title>认你、指挥页与露出</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版式：与《刘海里的编程会话》同一套纸面；三段各有一块示意画面 + 右侧规则。刘海内只用系统语义色。 */
+:root{
+  --paper:#f4f4f1; --sheet:#ffffff; --ink:#18191b; --ink2:#55575c; --ink3:#8a8c91; --rule:#dcdcd6;
+  --accent:#0a64d6; --amber:#ff9f0a; --green:#28b14c; --warn:#d9480f;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.62); --menutext:#1b1b1d;
+  --win:#ececec; --wintext:#1d1d1f; --winline:#d6d6d6; --winsub:#6e6e73;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#131416; --sheet:#1b1c1f; --ink:#ececea; --ink2:#a9abb0; --ink3:#74767c; --rule:#2c2e32;
+  --accent:#4b9bff; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2;
+  --win:#252527; --wintext:#f2f2f2; --winline:#3a3a3c; --winsub:#98989d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#131416; --sheet:#1b1c1f; --ink:#ececea; --ink2:#a9abb0; --ink3:#74767c; --rule:#2c2e32;
+  --accent:#4b9bff; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2;
+  --win:#252527; --wintext:#f2f2f2; --winline:#3a3a3c; --winsub:#98989d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+nav.sys{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:10px 0;font-size:12.5px;border-bottom:1px solid var(--rule);color:var(--ink2)}
+nav.sys a{color:inherit;text-decoration:none}nav.sys a:hover,nav.sys a:focus-visible{color:var(--ink);text-decoration:underline}
+nav.sys .sp{flex:1}
+header{padding:40px 0 8px}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.06em;color:var(--ink3)}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:10px 0 14px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:24px;line-height:1.3;margin:0;text-wrap:balance}
+h3{font-size:16px;margin:0 0 4px}
+.lede{max-width:66ch;color:var(--ink2);margin:0}
+section{padding:52px 0 0}
+.sec-head{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;margin-bottom:18px}
+.sec-head .n{font:500 13px var(--f-mono);color:var(--ink3)}
+.sec-head p{grid-column:2;margin:0;color:var(--ink2);max-width:70ch}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+.two{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:start}
+.two>*{min-width:0}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.rules{margin:0;padding-left:1.2em;color:var(--ink2)}
+.rules li{margin:.3em 0}.rules b{color:var(--ink)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+button.b{font:500 13px/1 var(--f-body);padding:8px 11px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink3)}
+button.b[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.cap{margin-top:10px;font-size:13.5px;color:var(--ink2);min-height:3.2em}
+.cap b{color:var(--ink)}
+
+/* 画面：统一用 pt 画、按容器缩放 */
+.view{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--rule)}
+.canvas{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys)}
+.notch{position:absolute;top:0;background:#000;border-radius:0 0 10px 10px;transition:all .34s cubic-bezier(.3,.9,.3,1)}
+.ear{position:absolute;color:#fff}
+.t13{font-size:13px;font-weight:600;line-height:16px;color:#fff}
+.t11{font-size:11px;line-height:14px;color:rgba(255,255,255,.6)}
+.trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ringspin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:#fff;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.ringspin{animation-duration:3s}}
+.fdot{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.55)}
+.fdot i{width:9px;height:9px;border-radius:50%;border:1.5px solid rgba(255,255,255,.5);display:inline-block}
+.fdot.ok{color:#fff}.fdot.ok i{background:#fff;border-color:#fff}
+.fdot.miss i{border-color:var(--amber);border-style:dashed}.fdot.miss{color:var(--amber)}
+.lock-bg{position:absolute;inset:0;background:radial-gradient(120% 90% at 30% 20%,#9db7d6,#5c6f8f 55%,#2b3348)}
+.clock{position:absolute;left:0;right:0;text-align:center;color:rgba(255,255,255,.92)}
+.avatar{position:absolute;border-radius:50%;background:linear-gradient(#d9d9de,#a7a7ad);box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.pw{position:absolute;border-radius:12px;background:rgba(255,255,255,.28);backdrop-filter:blur(10px);color:#fff;font-size:12px;text-align:center}
+.fill{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s ease;
+  box-shadow:inset 0 0 0 0 transparent;background:
+  linear-gradient(90deg,rgba(255,255,255,.55),rgba(255,255,255,0) 90px) left/90px 100% no-repeat,
+  linear-gradient(270deg,rgba(255,255,255,.55),rgba(255,255,255,0) 90px) right/90px 100% no-repeat,
+  linear-gradient(0deg,rgba(255,255,255,.55),rgba(255,255,255,0) 90px) bottom/100% 90px no-repeat,
+  linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,0) 70px) top/100% 70px no-repeat}
+.fill.on{opacity:1}
+
+/* 指挥页 */
+.desk{position:absolute;inset:0;background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
+.menubar{position:absolute;left:0;right:0;top:0;height:28px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12.5px;color:var(--menutext)}
+.menubar .l,.menubar .r{display:flex;gap:16px;white-space:nowrap}
+.panel{position:absolute;top:0;background:#000;border-radius:0 0 28px 28px;color:#fff}
+.seg{display:inline-flex;background:rgba(255,255,255,.1);border-radius:8px;padding:2px}
+.seg span{font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;color:rgba(255,255,255,.7)}
+.seg span.on{background:rgba(255,255,255,.22);color:#fff}
+.lvl{display:inline-flex;gap:4px}
+.lvl span{font:600 11px/22px var(--f-sys);padding:0 9px;border-radius:11px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.65)}
+.lvl span.on{background:#fff;color:#000}
+.lvl span.next{box-shadow:inset 0 0 0 1.5px #fff;color:#fff}
+.tx{font:11.5px/1.55 var(--f-sys);color:rgba(255,255,255,.82)}
+.tx .who{color:rgba(255,255,255,.45);font-weight:600;margin-right:6px}
+.tx .deny{color:var(--amber)}
+.draft{border-radius:14px;background:rgba(255,255,255,.08);padding:10px 12px}
+.pill{display:inline-block;height:26px;border-radius:13px;padding:0 12px;font:600 12px/26px var(--f-sys);color:#fff;background:rgba(255,255,255,.14);white-space:nowrap}
+.pill.primary{background:var(--accent)}
+.pill.ghost{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.mic{width:34px;height:34px;border-radius:17px;background:rgba(255,255,255,.14);display:grid;place-items:center}
+.mic.live{background:#fff}
+.wave{display:flex;gap:2px;align-items:center;height:18px}
+.wave i{width:2.5px;border-radius:2px;background:#fff;display:block}
+.hint{font:11px/1.4 var(--f-sys);color:rgba(255,255,255,.5)}
+.toast{position:absolute;background:#000;color:#fff;border-radius:0 0 12px 12px}
+
+/* 设置窗口 */
+.win{position:absolute;border-radius:13px;background:var(--win);color:var(--wintext);box-shadow:0 20px 50px rgba(0,0,0,.25);overflow:hidden;font-family:var(--f-sys)}
+.win .tb{height:40px;display:flex;align-items:center;gap:7px;padding:0 14px;border-bottom:1px solid var(--winline)}
+.win .tb i{width:12px;height:12px;border-radius:50%;display:block}
+.win .side{position:absolute;left:0;top:40px;bottom:0;width:170px;border-right:1px solid var(--winline);padding:10px 8px;font-size:12.5px}
+.win .side div{padding:5px 8px;border-radius:6px;display:flex;gap:8px;align-items:center}
+.win .side .on{background:var(--accent);color:#fff}
+.win .main{position:absolute;left:170px;right:0;top:40px;bottom:0;padding:16px 20px}
+.grp{border-radius:12px;background:color-mix(in srgb,var(--wintext) 4%,transparent);border:1px solid var(--winline);margin-top:10px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--winline);font-size:12.5px}
+.row:last-child{border-bottom:0}
+.row .ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;font-size:12px;flex:none}
+.row .tt{flex:1;min-width:0}
+.row .sub{font-size:11px;color:var(--winsub)}
+.sw{width:30px;height:18px;border-radius:9px;background:var(--winline);position:relative;flex:none}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.sw.on{background:var(--green)}.sw.on::after{left:14px}
+.btnm{font-size:12px;padding:3px 10px;border-radius:6px;background:color-mix(in srgb,var(--wintext) 10%,transparent);flex:none}
+.badge{font:600 10px/1 var(--f-sys);padding:3px 6px;border-radius:5px;background:color-mix(in srgb,var(--amber) 22%,transparent);color:var(--wintext);flex:none}
+
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+th{font:500 11.5px var(--f-mono);color:var(--ink3);letter-spacing:.03em;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+.stage-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:700px){.stage-row{grid-template-columns:1fr}}
+.stage-card{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;min-width:0}
+.stage-card .k{font:500 11.5px var(--f-mono);color:var(--ink3)}
+.stage-card h3{margin:4px 0 6px}
+.stage-card p{margin:0;color:var(--ink2);font-size:14px}
+.stage-card code{word-break:break-all}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3)}
+</style>
+
+<div class="wrap">
+<nav class="sys" aria-label="WindowShade 设计系统">
+  <a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a>
+  <span>WindowShade 2 · 认你、指挥页与露出</span><span class="sp"></span>
+  <a href="https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm">← 刘海里的编程会话</a>
+  <a href="https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH">从锁屏到窗口</a>
+  <a href="https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1">指挥模式</a>
+</nav>
+
+<header>
+  <div class="eyebrow">WINDOWSHADE 2 · 设计稿 v3 · 2026-10-29 · 接 face-unlock.md / conductor-v2.md</div>
+  <h1>认你、指挥页与露出</h1>
+  <p class="lede">接《刘海里的编程会话》的另外三件：锁屏上认你的那颗刘海、走进会话以后的指挥页、以及这些表面怎么从预览旗标走到设置里的正常开关。动效令牌都在上一张稿的 §4.6.1 表里，这里不再新增弹簧。</p>
+</header>
+
+<!-- ① 认你 -->
+<section id="recognize">
+  <div class="sec-head"><span class="n">①</span><h2>锁屏上的「认你」</h2>
+    <p>对上《从锁屏到窗口》第 2–4 步。系统锁屏是主角：时钟、头像、密码框一个都不遮。刘海只在两耳和一道矮下巴里说话。</p></div>
+  <div class="two">
+    <div>
+      <div class="view" id="lockView"></div>
+      <div class="tabs" role="group" aria-label="认你的时刻">
+        <button class="b" data-k="scan">正在认你</button>
+        <button class="b" data-k="phone">差手机</button>
+        <button class="b" data-k="ok">认出了</button>
+        <button class="b" data-k="no">没认出</button>
+        <button class="b" data-k="mask">戴着口罩</button>
+        <button class="b" data-k="three">3 次了</button>
+        <button class="b" id="fillT" aria-pressed="false">光线暗 · 补光</button>
+      </div>
+      <div class="cap" id="lockCap"></div>
+    </div>
+    <div>
+      <h3>规则</h3>
+      <ul class="rules">
+        <li><b>长在刘海里，不另开窗。</b>今天的工程样式是一块 320×60 的独立浮窗（<code>FaceScanStatusController</code>，<code>.floating</code>），违反 face-unlock 硬要求第 1 条。换成刘海宿主里的一个活动。</li>
+        <li><b>左耳一圈在转，右耳两枚点：脸、手机。</b>点从空心变实心，哪一样还差一眼就看得出；差的那一样用虚线琥珀圈，不只靠颜色。</li>
+        <li><b>只用耳朵和一道下巴。</b>需要一句话时（没认出、口罩、3 次），刘海往下长 26 pt 写一行，停在时钟上方，不碰头像和密码框。</li>
+        <li><b>结果不由动画决定。</b>对勾只在真的认出之后出现。D11 没放开之前，认出了也只写「认出了 · 用 Touch ID 解锁」，不代填密码。</li>
+        <li><b>一天几十次，不加戏。</b>耳朵用 <span class="mono">calm</span> 长出、<span class="mono">settle</span> 收回，不回弹；对勾是淡入，不用 <span class="mono">pop</span>。</li>
+        <li><b>补光圈和刘海共存。</b>补光贴屏幕四边亮一圈，顶边那一段在菜单栏位置变弱，刘海保持纯黑。亮起用淡入，不用弹簧（亮度没有动量）。</li>
+        <li><b>减少动态效果：</b>转圈改为慢速，两枚点直接换状态，下巴原处淡入。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ② 指挥页 -->
+<section id="conductor">
+  <div class="sec-head"><span class="n">②</span><h2>指挥页</h2>
+    <p>走进那一排里的一个会话就是指挥模式。画进 10-19 定案：语音在这台 Mac 上识别、Claude 先只读、遥控器的播放键和返回键落到这一页。指挥页是刘海展开的一页，不是新窗口。</p></div>
+  <div class="two">
+    <div>
+      <div class="view" id="condView"></div>
+      <div class="tabs" role="group" aria-label="指挥页的时刻">
+        <button class="b" data-c="codex">Codex · 在跑</button>
+        <button class="b" data-c="claude">Claude · 只读</button>
+        <button class="b" data-c="talk">按住说话</button>
+        <button class="b" data-c="remote">遥控 · 三声落档</button>
+      </div>
+      <div class="cap" id="condCap"></div>
+    </div>
+    <div>
+      <h3>一页四块，从上到下</h3>
+      <ul class="rules">
+        <li><b>头：</b>返回那一排的箭头、项目 · 助手、右边 <b>Codex / Claude（只读）</b> 切换。Claude 在回答时切换变灰，写「这一轮结束后再切换」。</li>
+        <li><b>下一轮：</b>模型和程度两组。正在跑的那一档实心，下一轮要用的那一档描边，一眼分清「这一轮」和「下一轮」。</li>
+        <li><b>转写：</b>最近几行。Claude 只读时，被拒的工具用琥珀色单列一行，不藏。</li>
+        <li><b>草稿：</b>按住说话 → 松手出草稿 → <b>采用草稿</b> → <b>发送</b>。在跑时发送键叫 <b>补进本轮</b>。不自动发送。</li>
+        <li><b>遥控提示</b>只在 iPhone 连着时出现，一行：播放键 = 发送，返回 = 收起。</li>
+        <li><b>落档：</b>手机上画的声调先在右耳亮一下（「三声 · high」），再落到「程度」那一格的描边上。来源只说一次，不在页面里重复。</li>
+        <li><b>动效：</b>走进会话用 <span class="mono">expand</span>，返回那一排用 <span class="mono">calm</span> 缩回那一格（从哪来回哪去）；档位描边换格用 <span class="mono">calm</span>，速度连续。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ③ 露出 -->
+<section id="exposure">
+  <div class="sec-head"><span class="n">③</span><h2>露出：预览旗标 → 默认关的开关</h2>
+    <p>今天全部 WS2 表面都藏在 <code>WindowShade.Preview.WS2</code> 后面，要用 <code>defaults write</code> 打开。分两段走：先把验过的表面挪进设置，做成默认关的开关；旗标只留给没验过的。</p></div>
+  <div class="stage-row">
+    <div class="stage-card"><div class="k">第一段 · 现在</div><h3>预览旗标</h3>
+      <p>一个总旗标，开了以后所有 WS2 表面都出现。适合 Aaron 自测，不适合给别人。</p>
+      <p style="margin-top:8px"><code>defaults write com.windowshade.prototype WindowShade.Preview.WS2 -bool YES</code></p></div>
+    <div class="stage-card"><div class="k">第二段 · 每个表面验过一个</div><h3>设置里的开关，默认关</h3>
+      <p>表面过了下表的门槛，就从旗标里搬出来，变成设置里一行默认关的开关；旗标后面只剩还没过的。没有「一次全放开」。</p></div>
+  </div>
+  <div class="two" style="margin-top:22px">
+    <div class="view" id="setView"></div>
+    <div>
+      <h3>放在哪</h3>
+      <ul class="rules">
+        <li><b>设置 → 指挥模式</b>（这一页今天已经在旗标后面存在）：三行。<b>编程会话</b>（在刘海里看 Claude Code 和 Codex，带 <b>连接</b> 按钮）、<b>指挥模式</b>（要先在遥控模式里打开）、<b>提示音</b>。</li>
+        <li><b>设置 → 隐私</b>：<b>刷脸解锁（实验）</b>，带「实验」标签；打开前先走录脸。</li>
+        <li><b>设置 → 离开就锁</b>：已有，不动。</li>
+        <li>还在旗标后面的表面，设置里不出现，不放灰掉的占位行。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="tbl" style="margin-top:22px"><table>
+    <thead><tr><th>表面</th><th>今天</th><th>搬进设置的门槛</th><th>还差</th><th>搬出后</th></tr></thead>
+    <tbody>
+      <tr><td>编程会话（看、过去、看一眼）</td><td>旗标</td><td>新稿落地；真 Claude Code 接受 <code>settings.json</code> 一次；帧间隔记录</td><td>真连接一次；新皮</td><td>设置 → 指挥模式 · 编程会话，默认关</td></tr>
+      <tr><td>审批卡</td><td>旗标</td><td>同上；Touch ID 放行在真机走一遍；2 分钟交回终端真机走一遍</td><td>两次真机</td><td>跟编程会话同一个开关</td></tr>
+      <tr><td>指挥页（Codex / Claude 只读、按住说话）</td><td>旗标</td><td>页面探针已过；真 iPhone 遥控 E1–E5 有记录</td><td>E1–E5</td><td>设置 → 指挥模式 · 指挥模式，默认关</td></tr>
+      <tr><td>认你指示 + 补光圈</td><td>旗标</td><td>挪进刘海宿主；真锁屏开合；攻击矩阵有实测</td><td>宿主搬家、真锁屏、攻击矩阵</td><td>设置 → 隐私 · 刷脸解锁（实验），默认关</td></tr>
+      <tr><td>系统解锁 / 代填密码（D11）</td><td>没有</td><td>Aaron 拍板</td><td>拍板</td><td>不在本稿范围</td></tr>
+    </tbody></table></div>
+  <p class="cap" style="margin-top:12px">每个门槛都要有证据：<code>build.sh --check</code> 退出 0、对应探针、文案过 copy-guide、新读取点登记进隐私页、减少动态效果有替代姿态。缺一项就留在旗标后面。</p>
+</section>
+
+<!-- ④ 对照账 -->
+<section id="ledger">
+  <div class="sec-head"><span class="n">④</span><h2>对照账</h2><p>记进 design-grammar，等 Aaron 拍板，不私下改规格。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>哪里</th><th>现在</th><th>这张稿</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>认你指示的宿主</td><td>独立 320×60 浮窗（<code>FaceScanStatusController</code>）</td><td>刘海宿主里的活动；硬要求第 1 条本来就这么写</td></tr>
+      <tr><td class="num">2</td><td>认出后的话</td><td>「认出了，交给系统」</td><td>D11 前改「认出了 · 用 Touch ID 解锁」：说清下一步，不暗示已经代填</td></tr>
+      <tr><td class="num">3</td><td>补光圈亮度</td><td>四周 160 pt 渐变，白 0.08 → 0（<code>FaceFillLightController</code>）</td><td>0.08 在暗处几乎照不亮脸；示意画到 0.55、90 pt。具体值要在真机暗室里量，算改值，单列单验</td></tr>
+      <tr><td class="num">4</td><td>指挥页的「程度」</td><td>代码用「程度」「思考程度」；《指挥模式》稿用「档位」</td><td>界面用「程度」（代码现值）；「档位」只留在说明里。提议进 copy-guide 固定词汇</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>依据：WindowShade-internal <code>docs/face-unlock.md</code>、<code>docs/conductor-v2.md</code>「2026-10-19 定案」、<code>docs/design-system.md</code>、《从锁屏到窗口》《指挥模式》两稿、<code>main</code> 上的 <code>FaceScanStatusController.swift</code>、<code>FaceFillLightController.swift</code>、<code>WS2ConductorPage.swift</code>、<code>SettingsSections.swift</code>。画面是示意，比例取 MacBook Air 15″（1440×932，刘海 156×28 pt）；项目名、命令和对话是例子。</footer>
+</div>
+
+<script>
+(()=>{
+const NW=156;
+function fit(view,canvas,W,H){const f=()=>{const s=view.clientWidth/W;canvas.style.transform=`scale(${s})`;view.style.height=H*s+'px'};f();new ResizeObserver(f).observe(view)}
+
+// ① 锁屏
+const LW=560,LH=360,lcx=LW/2;
+const lv=document.getElementById('lockView');
+lv.innerHTML=`<div class="canvas" style="width:${LW}px;height:${LH}px">
+  <div class="lock-bg"></div>
+  <div class="clock" style="top:78px;font:500 14px var(--f-sys)">10月29日 星期三</div>
+  <div class="clock" style="top:94px;font:700 64px/1 var(--f-sys);letter-spacing:-1px">7:42</div>
+  <div class="avatar" style="left:${lcx-26}px;top:236px;width:52px;height:52px"></div>
+  <div class="clock" style="top:294px;font:600 12.5px var(--f-sys)">Aaron</div>
+  <div class="pw" style="left:${lcx-70}px;top:316px;width:140px;height:24px;line-height:24px">输入密码</div>
+  <div class="fill" id="fill"></div>
+  <div class="notch" id="lnotch"></div>
+  <div id="learL" class="ear"></div><div id="learR" class="ear"></div><div id="lchin" class="ear" style="text-align:center"></div>
+</div>`;
+const lc=lv.firstElementChild;fit(lv,lc,LW,LH);
+const nL=lc.querySelector('#lnotch'),eL=lc.querySelector('#learL'),eR=lc.querySelector('#learR'),ch=lc.querySelector('#lchin');
+const dot=(cls,t)=>`<span class="fdot ${cls}"><i></i>${t}</span>`;
+const CHK='<svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9" fill="#fff"/><path d="M5 9.3l2.6 2.5L13 6.4" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+const TID='<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M5 9a7 7 0 0 1 14 0"/><path d="M8 11.5a4 4 0 0 1 8 0c0 3-1 6-2.5 8"/><path d="M12 11v2c0 3-1 5-2.5 7"/><path d="M4.5 13c0 2 .3 3.5 1 5"/></g></svg>';
+const L={
+  scan:{l:'<div class="ringspin"></div>',r:dot('','脸')+' '+dot('','手机'),chin:'',cap:'<b>正在认你</b>：开盖、唤醒、或在锁屏上按空格时出现。两枚点都空着。'},
+  phone:{l:'<div class="ringspin"></div>',r:dot('ok','脸')+' '+dot('miss','手机'),chin:'',cap:'<b>差手机</b>：脸对了，手机还没对上。手机那枚是虚线琥珀圈，不只换颜色。'},
+  ok:{l:CHK,r:dot('ok','脸')+' '+dot('ok','手机'),chin:'认出了 · 用 Touch ID 解锁',cap:'<b>认出了</b>：两样都对才打勾。D11 没放开前不代填密码，所以下巴写清下一步。'},
+  no:{l:TID,r:dot('miss','脸')+' '+dot('ok','手机'),chin:'没认出，用 Touch ID 或密码',cap:'<b>没认出</b>：交回系统。左耳换成 Touch ID 符号，告诉你手该放哪。'},
+  mask:{l:TID,r:'',chin:'戴着口罩，用 Touch ID',cap:'<b>戴着口罩</b>：直接说出路，不先转一圈让人干等。'},
+  three:{l:TID,r:'',chin:'这次锁屏请用 Touch ID 或密码',cap:'<b>3 次了</b>：这次锁屏不再认，下次锁屏重新开始。'}};
+function lock(k){const s=L[k];const chinOn=!!s.chin;const wR=s.r?96:30,wL=30;
+  const H=chinOn?54:28;const w=chinOn?Math.max(NW+wL+wR,300):NW+wL+wR;
+  const left=chinOn?lcx-w/2:lcx-NW/2-wL;
+  Object.assign(nL.style,{left:left+'px',width:w+'px',height:H+'px',borderRadius:chinOn?'0 0 18px 18px':'0 0 10px 10px'});
+  eL.innerHTML=s.l;Object.assign(eL.style,{left:(lcx-NW/2-24)+'px',top:'6px'});
+  eR.innerHTML=s.r;Object.assign(eR.style,{left:(lcx+NW/2+8)+'px',top:'7px',display:'flex',gap:'8px'});
+  ch.innerHTML=s.chin?`<span class="t13" style="font-size:12.5px">${s.chin}</span>`:'';Object.assign(ch.style,{left:left+'px',width:w+'px',top:'33px'});
+  document.getElementById('lockCap').innerHTML=s.cap;
+  document.querySelectorAll('[data-k]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k?'true':'false'));}
+document.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>lock(b.dataset.k)));
+document.getElementById('fillT').addEventListener('click',e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);lc.querySelector('#fill').classList.toggle('on',on)});
+lock('phone');
+
+// ② 指挥页
+const CW=640,CH=330,ccx=CW/2,PW=600;
+const cv=document.getElementById('condView');
+cv.innerHTML=`<div class="canvas" style="width:${CW}px;height:${CH}px"><div class="desk"></div>
+ <div class="menubar"><div class="l"><span>&#63743;</span><b>终端</b><span>Shell</span><span>编辑</span></div><div class="r"><span>周三 10月29日 21:40</span></div></div>
+ <div class="panel" style="left:${ccx-PW/2}px;width:${PW}px;height:308px" id="cpanel"></div></div>`;
+const cc=cv.firstElementChild;fit(cv,cc,CW,CH);const P=cc.querySelector('#cpanel');
+const wave=n=>'<span class="wave">'+Array.from({length:n},(_,i)=>`<i style="height:${4+Math.round(12*Math.abs(Math.sin(i*1.7)))}px"></i>`).join('')+'</span>';
+const MIC=(c='#fff')=>`<svg width="12" height="16" viewBox="0 0 12 18" aria-hidden="true"><rect x="3" y="0" width="6" height="11" rx="3" fill="${c}"/><path d="M1 8a5 5 0 0 0 10 0M6 13v4" stroke="${c}" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
+const C={
+ codex:{be:'codex',who:'HomePlay · Codex',run:true,cur:'high',next:'high',model:'模型位置 1 · gpt-5-codex',
+  tx:[['你','把配对重试的上限改成 3 次'],['Codex','读 PairingCoordinator.swift'],['Codex','改 maxRetries 5 → 3，跑 swift test …']],
+  draft:'顺便把日志里的设备名去掉',dstate:'已采用，还没发送',btn:'补进本轮',mic:false,remote:false,
+  cap:'<b>Codex · 在跑</b>：发送键叫「补进本轮」。下一轮的模型和程度可以先改，不动正在跑的这一轮。'},
+ claude:{be:'claude',who:'WindowShade · Claude Code',run:false,cur:'high',next:'high',model:'模型位置 2 · opus',
+  tx:[['你','侧拉的阴影为什么这么重？'],['Claude','阴影来自 SlideOverChrome.swift 的 shadowOpacity 0.32 …'],['deny','想改 SlideOverChrome.swift，只读模式下没有执行']],
+  draft:'',dstate:'',btn:'发送',mic:false,remote:false,
+  cap:'<b>Claude · 只读</b>：本地 claude CLI 的只读会话。被拒的操作用琥珀色单列一行，不藏起来。'},
+ talk:{be:'claude',who:'WindowShade · Claude Code',run:false,cur:'high',next:'high',model:'模型位置 2 · opus',
+  tx:[['Claude','阴影来自 SlideOverChrome.swift 的 shadowOpacity 0.32 …']],
+  draft:'那就降到 0.22，再看看暗色下',dstate:'在这台 Mac 上识别 · 0:06',btn:'采用草稿',mic:true,remote:false,
+  cap:'<b>按住说话</b>：在这台 Mac 上识别，不上网；最长 60 秒；松手出草稿，不自动发送。'},
+ remote:{be:'codex',who:'HomePlay · Codex',run:true,cur:'high',next:'xhigh',model:'模型位置 1 · gpt-5-codex',
+  tx:[['Codex','跑 swift test：42 通过'],['Codex','改 PresenceBridge.swift …']],
+  draft:'把重连间隔也改短',dstate:'已采用，还没发送',btn:'补进本轮',mic:false,remote:true,toast:'四声 · xhigh',
+  cap:'<b>遥控 · 落档</b>：手机上画的声调先在右耳亮一下，再落到「程度」的描边上。播放键 = 发送，返回 = 收起。'}};
+function cond(k){const s=C[k];const L0=['low','medium','high','xhigh','max'];
+  P.innerHTML=`
+  <div style="position:absolute;left:18px;top:38px;right:18px;display:flex;align-items:center;gap:10px">
+    <span class="t11" style="font-size:15px;color:#fff">‹</span><span class="t13">${s.who}</span>
+    ${s.run?'<span class="t11"><span class="ringspin" style="display:inline-block;width:10px;height:10px;border-width:1.6px;vertical-align:-1px"></span> 在跑 · 4 分</span>':''}
+    <span style="flex:1"></span>
+    <span class="seg"><span class="${s.be==='codex'?'on':''}">Codex</span><span class="${s.be==='claude'?'on':''}">Claude（只读）</span></span></div>
+  <div style="position:absolute;left:18px;top:72px;right:18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <span class="t11">下一轮</span>
+    <span class="pill ghost" style="height:22px;line-height:22px;font-size:11px">${s.model} ⌄</span>
+    <span class="t11">程度</span>
+    <span class="lvl">${L0.map(l=>`<span class="${l===s.cur&&s.run?'on':''} ${l===s.next&&(l!==s.cur||!s.run)?'next':''}">${l}</span>`).join('')}</span></div>
+  <div class="tx" style="position:absolute;left:18px;right:18px;top:108px;height:76px;overflow:hidden">
+    ${s.tx.map(([w,t])=>w==='deny'?`<div class="deny">⚠︎ 被拒：${t}</div>`:`<div class="trunc"><span class="who">${w}</span>${t}</div>`).join('')}</div>
+  <div class="draft" style="position:absolute;left:18px;right:18px;top:190px;height:66px;display:flex;gap:12px;align-items:center">
+    <div class="mic ${s.mic?'live':''}">${MIC(s.mic?'#000':'#fff')}</div>
+    <div style="flex:1;min-width:0">
+      <div class="t11">${s.mic?wave(22):'草稿'}${s.dstate?' · '+s.dstate:''}</div>
+      <div class="t13" style="font-weight:500;margin-top:3px;${s.draft?'':'color:rgba(255,255,255,.4)'}">${s.draft||'按住说话，或在这里打字'}</div></div>
+    ${s.draft?'<span class="pill ghost">丢弃</span>':''}
+    <span class="pill ${s.draft&&!s.mic?'primary':''}" style="${s.draft?'':'opacity:.4'}">${s.btn}</span></div>
+  <div class="hint" style="position:absolute;left:18px;right:18px;top:266px;display:flex;justify-content:space-between">
+    <span>${s.remote?'iPhone 已连接 · 播放键 = 发送 · 返回 = 收起':s.be==='claude'?'Claude 一次只跑一轮；回答中不能再发':'停止本轮：等助手确认后才写「已停止」'}</span>
+    <span>${s.run?'停止本轮':''}</span></div>
+  ${s.toast?`<div class="ear t12" style="left:${PW/2+NW/2+8}px;top:6px;font-size:12px;font-weight:600">${s.toast}</div>`:''}`;
+  document.getElementById('condCap').innerHTML=s.cap;
+  document.querySelectorAll('[data-c]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.c===k?'true':'false'));}
+document.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>cond(b.dataset.c)));
+cond('codex');
+
+// ③ 设置
+const SW=640,SH=340;const sv=document.getElementById('setView');
+sv.innerHTML=`<div class="canvas" style="width:${SW}px;height:${SH}px"><div class="desk"></div>
+ <div class="win" style="left:30px;top:20px;width:580px;height:300px">
+  <div class="tb"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;margin-right:40px">指挥模式</span></div>
+  <div class="side">
+    <div>⌘ 快捷键</div><div>▤ 刘海</div><div>◉ 遥控模式</div><div class="on">✦ 指挥模式</div><div>🔒︎ 隐私</div><div>⏏︎ 离开就锁</div></div>
+  <div class="main">
+    <div style="font-size:11px;color:var(--winsub)">选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。</div>
+    <div class="grp">
+      <div class="row"><span class="ic" style="background:#5e5ce6">&gt;_</span><span class="tt">编程会话<div class="sub">在刘海里看 Claude Code 和 Codex</div></span><span class="btnm">连接…</span><span class="sw"></span></div>
+      <div class="row"><span class="ic" style="background:#ff9f0a">✦</span><span class="tt">指挥模式<div class="sub">先在遥控模式里打开</div></span><span class="sw"></span></div>
+      <div class="row"><span class="ic" style="background:#8e8e93">♪</span><span class="tt">提示音<div class="sub">每一拍轻敲一声。</div></span><span class="sw on"></span></div></div>
+    <div style="font-size:11px;color:var(--winsub);margin-top:10px">编程会话和指挥模式默认关；提示音跟着指挥模式走。没过门槛的表面不在这里出现。</div>
+  </div></div></div>`;
+fit(sv,sv.firstElementChild,SW,SH);
+})();
+</script>

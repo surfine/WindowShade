@@ -1,0 +1,558 @@
+<meta charset="utf-8">
+<title>刘海里的编程会话</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版式：一张可玩的刘海（真弹簧）在上，下面依次是四态静帧、审批卡、中途换目标的曲线、令牌表与对照账。
+   页面色是纸面与墨；刘海里的颜色只用系统语义色（白、systemOrange、systemGreen、controlAccentColor）。 */
+:root{
+  --paper:#f4f4f1; --sheet:#ffffff; --ink:#18191b; --ink2:#55575c; --ink3:#8a8c91; --rule:#dcdcd6;
+  --accent:#0a64d6; --amber:#ff9f0a; --green:#28b14c; --warn:#d9480f;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.62); --menutext:#1b1b1d;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#131416; --sheet:#1b1c1f; --ink:#ececea; --ink2:#a9abb0; --ink3:#74767c; --rule:#2c2e32;
+  --accent:#4b9bff; --amber:#ff9f0a; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#131416; --sheet:#1b1c1f; --ink:#ececea; --ink2:#a9abb0; --ink3:#74767c; --rule:#2c2e32;
+  --accent:#4b9bff; --amber:#ff9f0a; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+nav.sys{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:10px 0;font-size:12.5px;border-bottom:1px solid var(--rule);color:var(--ink2)}
+nav.sys a{color:inherit;text-decoration:none}nav.sys a:hover,nav.sys a:focus-visible{color:var(--ink);text-decoration:underline}
+nav.sys .sp{flex:1}
+header{padding:40px 0 8px}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.06em;color:var(--ink3)}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:10px 0 14px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:24px;line-height:1.3;margin:0 0 8px;text-wrap:balance}
+h3{font-size:16px;margin:0 0 4px}
+.lede{max-width:66ch;color:var(--ink2);margin:0}
+section{padding:48px 0 0}
+.sec-head{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;margin-bottom:16px}
+.sec-head .n{font:500 13px var(--f-mono);color:var(--ink3)}
+.sec-head p{flex-basis:100%;margin:0;color:var(--ink2);max-width:70ch}
+p{margin:.4em 0}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+
+/* 舞台 */
+.stage-wrap{position:relative;overflow:hidden;border-radius:14px;background:var(--wall-a);border:1px solid var(--rule)}
+.stage{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys);
+  background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
+.menubar{position:absolute;left:0;right:0;top:0;height:28px;background:var(--menubar);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12.5px;color:var(--menutext)}
+.menubar .l,.menubar .r{display:flex;gap:16px;align-items:center;white-space:nowrap}
+.menubar .l b{font-weight:600}
+.menubar .r .extra{display:none}
+.stage.tight .menubar .r .extra{display:inline}
+.island{position:absolute;top:0;background:#000;overflow:hidden;will-change:left,width,height}
+.island .ink{position:absolute;top:0;height:400px}
+.sh{position:absolute;top:0;pointer-events:none}
+.layer{position:absolute;inset:0;opacity:0;transition:opacity .10s ease,transform .10s ease;pointer-events:none;color:#fff}
+.layer.on{opacity:1;transition:opacity .18s ease,transform .18s ease;pointer-events:auto}
+.stage.reduced .layer{transform:none!important}
+.abs{position:absolute}
+.t13{font-size:13px;font-weight:600;line-height:16px}
+.t12{font-size:12px;font-weight:600;line-height:15px}
+.t11{font-size:11px;line-height:14px;color:rgba(255,255,255,.6)}
+.trunc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tab{font-variant-numeric:tabular-nums}
+.appicon{width:18px;height:18px;border-radius:5px;background:linear-gradient(#3a3a3c,#1c1c1e);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25);
+  font:700 8.5px/18px var(--f-mono);color:#e5e5e5;text-align:center;letter-spacing:-.5px}
+.spin{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:#fff;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.stage.reduced .spin{animation-duration:3s}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+.amber{color:var(--amber)}
+.count{font:600 13px/16px ui-rounded,"SF Pro Rounded",var(--f-sys);font-variant-numeric:tabular-nums}
+.pill{height:26px;border-radius:13px;padding:0 12px;font:600 12px/26px var(--f-sys);color:#fff;background:rgba(255,255,255,.14);border:0;cursor:pointer;white-space:nowrap}
+.pill.primary{background:var(--accent)}
+.pill:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.well{border-radius:10px;background:rgba(255,255,255,.08);font:500 12px/30px var(--f-mono);color:#fff;padding:0 10px}
+.card{border-radius:14px;background:rgba(255,255,255,.08);padding:10px 12px;cursor:pointer;transition:background .18s}
+.card:hover{background:rgba(255,255,255,.13)}
+.chip{display:inline-flex;gap:5px;align-items:center;font-size:11px;font-weight:600}
+.glance{position:absolute;border-radius:12px;background:#1d1f22;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.35);opacity:0;pointer-events:none}
+.glance .bar{height:22px;background:#2b2d31;font:500 10.5px/22px var(--f-sys);color:#b9bbbf;text-align:center}
+.glance pre{margin:0;padding:8px 10px;font:10.5px/1.5 var(--f-mono);color:#d8dadd;white-space:pre}
+.term{position:absolute;border-radius:10px;background:#1d1f22;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden;opacity:0;transition:opacity .18s}
+.term .bar{height:22px;background:#2b2d31;font:500 10.5px/22px var(--f-sys);color:#b9bbbf;text-align:center}
+.term pre{margin:0;padding:8px 10px;font:10.5px/1.5 var(--f-mono);color:#d8dadd}
+.term.hl{box-shadow:0 0 0 2px var(--accent),0 10px 30px rgba(0,0,0,.25)}
+.ghost{position:absolute;border-radius:12px;border:1.5px solid rgba(255,255,255,.7);background:rgba(255,255,255,.08);opacity:0;pointer-events:none}
+.tag{position:absolute;font:500 11px/1 var(--f-mono);padding:5px 7px;border-radius:6px;background:var(--sheet);color:var(--ink2);border:1px solid var(--rule);opacity:0;transition:opacity .18s}
+.tag.on{opacity:1}
+
+/* 控制条 */
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.controls .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.controls .lab{font:500 11px var(--f-mono);color:var(--ink3);margin-right:2px}
+button.b{font:500 13px/1 var(--f-body);padding:8px 11px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink3)}
+button.b[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.readout{margin-top:12px;font:12.5px/1.6 var(--f-mono);color:var(--ink2);background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;min-height:44px}
+.readout b{color:var(--ink);font-weight:500}
+
+/* 静帧 */
+.frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.frame{min-width:0}
+.frame .cap{margin-top:8px;font-size:13.5px;color:var(--ink2)}
+.frame .cap b{color:var(--ink)}
+
+/* 表 */
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+th{font:500 11.5px var(--f-mono);color:var(--ink3);letter-spacing:.03em;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td .tk{font:500 12px var(--f-mono);color:var(--ink)}
+td.num{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.yes{color:var(--green)}.no{color:var(--warn)}
+
+/* 曲线 */
+.plot{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px}
+.plot canvas{width:100%;height:280px;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--ink2);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+.two{display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:start}
+.two>*{min-width:0}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.rules{margin:0;padding-left:1.2em;color:var(--ink2)}
+.rules li{margin:.25em 0}.rules b{color:var(--ink)}
+.note{border-left:3px solid var(--amber);padding:2px 0 2px 12px;color:var(--ink2);max-width:72ch}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3)}
+@media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+</style>
+
+<div class="wrap">
+<nav class="sys" aria-label="WindowShade 设计系统">
+  <a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a>
+  <span>WindowShade 2 · 刘海里的编程会话</span><span class="sp"></span>
+  <a href="https://claude.ai/artifact/9mbRLt1QGpsKLKip991Xe3">看与指挥</a>
+  <a href="https://claude.ai/artifact/Y1xC2moskAEa2bjHNk2JKb">实时活动晋级</a>
+  <a href="https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1">指挥模式</a>
+</nav>
+
+<header>
+  <div class="eyebrow">WINDOWSHADE 2 · 设计稿 v3 · 2026-10-29 · 接 agents-in-notch.md</div>
+  <h1>刘海里的编程会话</h1>
+  <p class="lede">Claude Code 和 Codex 的会话在刘海里只有三种样子：在跑、等你、完成。等你的那一个会从右耳的琥珀点长成审批卡；放行或超时，它沿原路缩回那个点。下面这颗刘海用的是真弹簧，可以随时点别的状态把它中途改道。</p>
+</header>
+
+<!-- ① 模拟器 -->
+<section id="sim">
+  <div class="sec-head"><span class="n">①</span><h2>刘海模拟器</h2>
+    <p>MacBook Air 15″，1440×932 模式，刘海 156×28 pt。随便点，动画没走完也能点下一个：位置和速度都接着走。打开「减少动态效果」看替代姿态，打开「菜单栏挤」看右耳放不下项目名时的退回。</p></div>
+  <div class="stage-wrap" id="mainWrap"></div>
+  <div class="controls" role="group" aria-label="状态">
+    <div class="grp"><span class="lab">一个会话</span>
+      <button class="b" data-s="rest">静止</button>
+      <button class="b" data-s="running">在跑</button>
+      <button class="b" data-s="waiting">等你</button>
+      <button class="b" data-s="done">完成</button></div>
+    <div class="grp"><span class="lab">好几个</span>
+      <button class="b" data-s="multi">三个会话</button>
+      <button class="b" data-s="expanded">展开一排</button>
+      <button class="b" data-s="glance">看一眼</button>
+      <button class="b" data-s="go">过去</button></div>
+    <div class="grp"><span class="lab">批准</span>
+      <button class="b" data-s="approve">审批卡 · 普通</button>
+      <button class="b" data-s="approveHigh">审批卡 · 高风险</button>
+      <button class="b" data-s="preempt">被音量挂起</button>
+      <button class="b" data-s="timeout">2 分钟没人管</button></div>
+  </div>
+  <div class="controls">
+    <div class="grp"><span class="lab">试</span>
+      <button class="b" id="play">从头播一遍</button>
+      <button class="b" id="interrupt">40% 时改道</button></div>
+    <div class="grp"><span class="lab">条件</span>
+      <button class="b" id="tReduced" aria-pressed="false">减少动态效果</button>
+      <button class="b" id="tTight" aria-pressed="false">菜单栏挤</button></div>
+  </div>
+  <div class="readout" id="readout" aria-live="polite">点一个状态。</div>
+</section>
+
+<!-- ② 四态 -->
+<section id="states">
+  <div class="sec-head"><span class="n">②</span><h2>紧凑四态</h2>
+    <p>编程会话是实时活动的一种，和正在播放、番茄钟并排，按《实时活动晋级》的权重 95 排。左耳永远是会话符号，状态只换右耳。符号加不超过 8 个字。</p></div>
+  <div class="frames" id="frames"></div>
+  <div class="tbl" style="margin-top:20px"><table>
+    <thead><tr><th>状态</th><th>左耳</th><th>右耳（够宽）</th><th>右耳（菜单栏挤，&lt; 54 pt）</th><th>会不会自己展开</th></tr></thead>
+    <tbody>
+      <tr><td>在跑</td><td>终端或 App 的图标</td><td>转圈 + 项目名，最长 64 pt 截断</td><td>只留转圈</td><td>不会；有别的活动时只是三个之一</td></tr>
+      <tr><td>等你</td><td>同上</td><td>琥珀点 + <b>等你</b></td><td>只留琥珀点</td><td><b>唯一会主动展开的</b>：先在右耳亮 0.6 s，再长成审批卡；带提示音（和番茄钟共用开关）</td></tr>
+      <tr><td>完成</td><td>绿色对勾</td><td>—（提醒期间句子在刘海下方，不留额头）</td><td>同左</td><td>短暂提醒 4 s；窗口收着或在别的桌面时带一个 <b>过去</b></td></tr>
+      <tr><td>好几个</td><td>最急那个的图标</td><td>个数 <b>3</b> + 最急的状态点</td><td>只留个数</td><td>不会；等你的那个照「等你」单独长卡</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ③ 审批卡 -->
+<section id="approval">
+  <div class="sec-head"><span class="n">③</span><h2>审批卡</h2>
+    <p>换掉今天 380×105 的工程卡。和 <code>WS2CommandReviewView</code> 同构：同一份请求、同一个一次性绑定、同一个 2 分钟期限，只换皮。卡上只写四件事：哪个助手、哪个项目、要做什么、风险。</p></div>
+  <div class="two">
+    <div class="frames" id="approvalFrames" style="grid-template-columns:1fr"></div>
+    <div>
+      <h3>规则</h3>
+      <ul class="rules">
+        <li><b>从右耳的琥珀点长出来。</b>卡的内容以那个点为原点放大；收回时缩回同一个点。放行之后琥珀点换成转圈，原地继续。</li>
+        <li><b>普通</b>（读文件、跑测试、改项目里的文件）：<b>允许一次</b> 是主按钮，旁边 <b>去看看</b> 跳到那扇终端。</li>
+        <li><b>高风险</b>（推送、删除、联网、改项目外的文件）：主按钮换成 <b>用 Touch ID 允许</b>，带 <code>touchid</code> 符号；风险一行用 <code>exclamationmark.triangle</code> 加一句原因，不只靠颜色。</li>
+        <li><b>没有「总是允许」。</b>键盘快捷键不能放行；卡出现后 0.5 s 内的点按不算（防正在点别处的手）。</li>
+        <li>右上角是剩余时间 <span class="mono">1:52</span>，等宽数字，不画进度环（不制造催促感）。</li>
+        <li><b>2 分钟没人管：</b>卡缩回右耳，只留琥珀点，问题交回终端原来的提示；这不是拒绝。</li>
+        <li><b>被挂起</b>（音量、来电这类更高层的租约）：卡让位，回来时直接淡回原样，不重播长出来的动画。挂起不是取消，期限照走。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ④ 曲线 -->
+<section id="curve">
+  <div class="sec-head"><span class="n">④</span><h2>中途改道：位置和速度都连续</h2>
+    <p>每个新动效都过这一关：动画走到 40% 时换目标。下图是模拟器里刘海宽度的真实记录（你点「40% 时改道」或任何中途换状态，这里就更新）。对照线是时长动画在同一时刻重新开始的样子：速度当场归零，曲线上有个折角。</p></div>
+  <div class="plot">
+    <canvas id="cv" width="1000" height="280" aria-label="刘海宽度与速度随时间变化的曲线"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>弹簧改道（刘海宽度）</span>
+      <span><i style="background:var(--amber)"></i>弹簧速度</span>
+      <span><i style="background:var(--ink3)"></i>对照：时长动画重来（不用）</span>
+      <span>竖虚线 = 改道的那一刻</span>
+    </div>
+  </div>
+  <p class="note" style="margin-top:14px">做法照抄 <code>Notch.swift</code> 的卷帘路径：每个表面持有 <code>FoldSpring</code>，换目标只改 target，每帧 <code>spring.advance(to:dt:)</code>。不用 <code>NSAnimationContext</code> 的时长动画。<br><b>但 <code>FoldSpring</code> 现在不够用</b>（<code>Effects/FoldDriver.swift:39</code>）：它只有临界阻尼，值夹在 0…1，角频率按 5.83 / response 算。所以 <span class="mono">calm</span>、<span class="mono">settle</span> 能直接用；<span class="mono">bloom</span>（ζ 0.84）和 <span class="mono">expand</span>（ζ 0.92）的那一点回弹它画不出来，夹值也会把过冲削平。最小扩展：加一个阻尼比参数，ζ &lt; 1 时走欠阻尼闭式解，夹值改成可选，默认行为一字不改（现有卷帘、合盖路径不受影响）。不另起动画系统。</p>
+</section>
+
+<!-- ⑤ 令牌 -->
+<section id="tokens">
+  <div class="sec-head"><span class="n">⑤</span><h2>§4.6.1 WS2 表面的弹簧（拟回写 design-system）</h2>
+    <p>全部用现有令牌，没有新弹簧，没有超过 0.2 的回弹，所以不进 §6 改值账。进、出、被挂起、回来四个方向逐一写明：进场精致、退场潦草的不收。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>表面 · 时刻</th><th>令牌</th><th>response / ζ</th><th>初速度</th><th>可打断</th><th>收尾 / 挂起</th><th>减少动态效果</th></tr></thead>
+    <tbody>
+      <tr><td>紧凑态之间（在跑 ⇄ 等你 ⇄ 好几个）</td><td class="tk">calm</td><td class="num">0.34 / 1.0</td><td>沿用当前</td><td class="yes">是</td><td>右耳内容 fade 0.18 / 0.10，数字用数字过渡</td><td>reduced 0.25 / 1.0，耳宽直接到位</td></tr>
+      <tr><td>完成提醒 · 进</td><td class="tk">bloom</td><td class="num">0.42 / 0.84</td><td>沿用当前</td><td class="yes">是</td><td>出：<span class="tk">calm</span> 收回紧凑；挂起时直接让位，回来不重播</td><td>原处淡入，不鼓</td></tr>
+      <tr><td>展开一排（悬停）</td><td class="tk">expand</td><td class="num">0.40 / 0.92</td><td>沿用当前</td><td class="yes">是</td><td>出：<span class="tk">calm</span></td><td>reduced，卡片原处淡入</td></tr>
+      <tr><td>审批卡 · 进（从琥珀点长）</td><td class="tk">bloom</td><td class="num">0.42 / 0.84</td><td>沿用当前</td><td class="yes">是</td><td>见下两行</td><td>不放大；卡在终位淡入，琥珀点保持</td></tr>
+      <tr><td>审批卡 · 放行 / 超时（缩回琥珀点）</td><td class="tk">settle</td><td class="num">0.38 / 1.0</td><td>沿用当前</td><td class="yes">是</td><td>内容缩向琥珀点并淡出；终点是口子，不回弹</td><td>原处淡出</td></tr>
+      <tr><td>审批卡 · 被挂起后回来</td><td class="tk">calm</td><td class="num">0.34 / 1.0</td><td>沿用当前</td><td class="yes">是</td><td>只淡回内容，不重播放大</td><td>同左</td></tr>
+      <tr><td>看一眼 · 进（从那张会话卡长出）</td><td class="tk">expand</td><td class="num">0.40 / 0.92</td><td>沿用当前</td><td class="yes">是</td><td>出：<span class="tk">calm</span>，缩回同一张卡</td><td>卡下方原处淡入</td></tr>
+      <tr><td>过去（刘海收起，指向那扇窗）</td><td class="tk">settle</td><td class="num">0.38 / 1.0</td><td>沿用当前</td><td class="yes">是</td><td>内容朝窗口方向移出；窗口沿 <span class="tk">flyOut</span> 0.38 / 0.90 带速度到眼前</td><td>刘海原处收，窗口原处淡入</td></tr>
+      <tr><td>认你指示 · 收放（下一张稿）</td><td class="tk">calm</td><td class="num">0.34 / 1.0</td><td>否</td><td class="yes">是</td><td>认出后 <span class="tk">settle</span> 收；一天几十次，不回弹</td><td>停在两枚点的关键帧</td></tr>
+      <tr><td>录脸卡 · 进出（下一张稿）</td><td class="tk">bloom</td><td class="num">0.42 / 0.84</td><td>否</td><td class="yes">是</td><td>出：<span class="tk">settle</span></td><td>原处淡入淡出</td></tr>
+    </tbody></table></div>
+</section>
+
+<!-- ⑥ 对照账 -->
+<section id="ledger">
+  <div class="sec-head"><span class="n">⑥</span><h2>对照账：稿、规格、代码对不上的地方</h2>
+    <p>照规矩不私下改规格。下面每条记进 design-grammar 对照账，等 Aaron 拍板。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>哪里</th><th>说法 A</th><th>说法 B</th><th>这张稿的做法</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>状态用词</td><td>规格：在跑 / 等你 / 完成</td><td>代码 <code>WS2AgentSessionView</code>：进行中 / 等你确认 / 已完成</td><td>照规格；提议把这三个词收进 copy-guide 固定词汇</td></tr>
+      <tr><td class="num">2</td><td>审批卡按钮</td><td>规格：允许一次 · 去看看（高风险：用 Touch ID 允许）</td><td>《实时活动晋级》大卡：拒绝 · 批准 · 打开会话</td><td>照规格。没有「拒绝」：不理会就等于交回终端，拒绝在终端里做</td></tr>
+      <tr><td class="num">3</td><td>右耳宽度</td><td>规格：在跑 = 转圈 + 项目名</td><td>design-system §5.1：<code>sideWidth</code> 最宽 34</td><td>按《实时活动晋级》先量菜单栏空位；≥ 54 pt 放项目名，不够只留转圈</td></tr>
+      <tr><td class="num">4</td><td>琥珀色</td><td>规格：琥珀色点</td><td>§4.3 只有 <code>problem</code> = systemOrange（1.5 pt 描边）</td><td>用 systemOrange 实心点；和「出了问题」靠形状区分（点 vs 描边），不另起颜色令牌</td></tr>
+      <tr><td class="num">5</td><td>完成提醒主句</td><td>规格写「WindowShade · 完成」</td><td>—</td><td>理解为「项目名 · 完成」；示例项目恰好叫 WindowShade</td></tr>
+      <tr><td class="num">6</td><td>弹簧换算</td><td>design-system §4.6：stiffness (2π/response)²，即 ω = 6.28 / response</td><td><code>FoldSpring</code>：ω = 5.83 / response（2% 落定口径）</td><td>同一个令牌在两条路径上快慢差约 8%。这张稿按 §4.6 算；扩展 <code>FoldSpring</code> 时统一口径，算改值，单列单验</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>
+  依据：WindowShade-internal <code>docs/agents-in-notch.md</code>（含 10-26 / 10-28 补记）、<code>docs/design-system.md</code> §4.1–4.9 与 §5.1、<code>docs/copy-guide.md</code>、《实时活动晋级》《看与指挥》两稿、<code>prototype/App/WS2AgentSessionView.swift</code>。弹簧照 WWDC23 10158 换算：stiffness (2π/response)²，damping 4πζ/response，每帧 1/240 s 子步积分。画面是示意，项目名和命令是例子。下一张稿：<a href="https://claude.ai/artifact/XoqB5LVY9M3dRbsfKPiPjj" style="color:inherit">认你、指挥页与露出</a>。
+</footer>
+</div>
+
+<script>
+(()=>{
+const TOK={calm:[.34,1],settle:[.38,1],expand:[.40,.92],bloom:[.42,.84],flyOut:[.38,.90],reduced:[.25,1]};
+const NW=156,NH=28;
+class Spring{constructor(x){this.x=x;this.v=0;this.t=x;this.tok(TOK.calm)}
+  tok(p){this.k=(2*Math.PI/p[0])**2;this.c=4*Math.PI*p[1]/p[0]}
+  step(dt){const a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt}
+  rest(){return Math.abs(this.x-this.t)<.05&&Math.abs(this.v)<.5}}
+
+// 每个状态：左耳 L、右耳 R、高 H、底角 r、肩 e；token 进入时用的弹簧
+function geo(s,tight){
+  const wide=(w)=>({L:(w-NW)/2,R:(w-NW)/2});
+  switch(s){
+    case'rest':return{L:0,R:0,H:NH,r:9,e:6};
+    case'running':return{L:30,R:tight?30:98,H:NH,r:10,e:6};
+    case'waiting':return{L:30,R:tight?30:58,H:NH,r:10,e:6};
+    case'timeout':return{L:30,R:30,H:NH,r:10,e:6};
+    case'multi':return{L:30,R:tight?30:40,H:NH,r:10,e:6};
+    case'done':return{...wide(400),H:NH+52,r:24,e:0};
+    case'expanded':case'glance':return{...wide(576),H:NH+142,r:28,e:0};
+    case'approve':case'approveHigh':return{...wide(460),H:NH+136,r:24,e:0};
+    case'preempt':return{L:46,R:58,H:NH,r:10,e:6};
+    case'go':return{L:30,R:tight?30:98,H:NH,r:10,e:6};
+  }}
+const NAMES={rest:'静止',running:'在跑',waiting:'等你',done:'完成',multi:'三个会话',expanded:'展开一排',glance:'看一眼',go:'过去',approve:'审批卡 · 普通',approveHigh:'审批卡 · 高风险',preempt:'被音量挂起',timeout:'2 分钟没人管'};
+function tokenFor(from,to){
+  if(to==='done'||((to==='approve'||to==='approveHigh')&&from!=='preempt'))return'bloom';
+  if(to==='approve'||to==='approveHigh')return'calm';
+  if(to==='expanded'&&from!=='glance')return'expand';
+  if(to==='glance')return'expand';
+  if((from==='approve'||from==='approveHigh')&&(to==='timeout'||to==='running'||to==='waiting'))return'settle';
+  if(to==='go')return'settle';
+  return'calm';}
+
+const ICON='<div class="appicon">&gt;_</div>';
+const CHECK='<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9" fill="#30d158"/><path d="M5 9.3l2.6 2.5L13 6.4" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const TOUCH='<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><g fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round"><path d="M5 9a7 7 0 0 1 14 0"/><path d="M8 11.5a4 4 0 0 1 8 0c0 3-1 6-2.5 8"/><path d="M12 11v2c0 3-1 5-2.5 7"/><path d="M4.5 13c0 2 .3 3.5 1 5"/><path d="M19.5 12c0 3-.5 5-1.5 7"/></g></svg>';
+const SHIELD='<svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l8 3v6c0 5-3.4 9.3-8 11-4.6-1.7-8-6-8-11V5z" fill="rgba(255,255,255,.55)"/><path d="M8 12l3 3 5-6" stroke="#000" stroke-width="2" fill="none"/></svg>';
+const TRI='<svg width="13" height="12" viewBox="0 0 24 22" aria-hidden="true"><path d="M12 1l11 20H1z" fill="var(--amber)"/><path d="M12 8v6M12 17v1" stroke="#000" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const SPK='<svg width="16" height="14" viewBox="0 0 24 20" aria-hidden="true"><path d="M2 7h4l6-5v16l-6-5H2z" fill="#fff"/><path d="M16 6a5 5 0 0 1 0 8M19 3a9 9 0 0 1 0 14" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
+
+class Stage{
+  constructor(host,{W=640,H=300,state='rest',interactive=false,tight=false,label=''}={}){
+    this.W=W;this.Hs=H;this.cx=W/2;this.host=host;this.interactive=interactive;this.tight=tight;this.reduced=false;
+    this.state=state;this.prev='rest';this.listeners=[];
+    const nx0=this.cx-NW/2,nx1=this.cx+NW/2,cx=this.cx;
+    host.innerHTML=`<div class="stage${tight?' tight':''}" style="width:${W}px;height:${H}px">
+      <div class="term" style="left:36px;top:${H-150}px;width:250px;height:120px"><div class="bar">HomePlay — zsh</div><pre>$ swift test --filter Pairing
+Test Suite 'Pairing' started
+✓ pairVerify (0.41s)
+✓ reconnect (0.88s)
+… 42 通过</pre></div>
+      <div class="menubar"><div class="l"><span>&#63743;</span><b>终端</b><span>Shell</span><span>编辑</span><span>显示</span></div>
+        <div class="r"><span class="extra">◐ ⌘ ☁︎ ✦ ◎ ⌥</span><span>Wi‑Fi</span><span>周三 10月29日 14:32</span></div></div>
+      <div class="sh l"></div><div class="sh r"></div>
+      <div class="island"><div class="ink" style="width:${W}px">
+        <div class="layer" data-l="ear">
+          <div class="abs" style="left:${nx0-25}px;top:5px" data-ear>${ICON}</div></div>
+        <div class="layer" data-l="running"><div class="abs spin" style="left:${nx1+8}px;top:7.5px"></div>
+          <div class="abs t12 trunc nm" style="left:${nx1+28}px;top:6.5px;max-width:64px">WindowShade</div></div>
+        <div class="layer" data-l="waiting"><div class="abs dot" style="left:${nx1+10}px;top:10px"></div>
+          <div class="abs t12 amber nm" style="left:${nx1+24}px;top:6.5px">等你</div></div>
+        <div class="layer" data-l="multi"><div class="abs count" style="left:${nx1+9}px;top:6px">3</div>
+          <div class="abs dot nm" style="left:${nx1+24}px;top:6px;width:6px;height:6px"></div></div>
+        <div class="layer" data-l="done" style="transform-origin:${nx0-16}px 14px">
+          <div class="abs" style="left:${nx0-25}px;top:5px">${CHECK}</div>
+          <div class="abs t13" style="left:${cx-182}px;top:37px">WindowShade · 完成</div>
+          <div class="abs t11" style="left:${cx-182}px;top:56px">改了 3 个文件</div>
+          <button class="abs pill" style="left:${cx+182-54}px;top:39px" tabindex="-1">过去</button></div>
+        <div class="layer" data-l="expanded">
+          ${[['WindowShade','Claude Code','waiting','2 分','要执行 git push origin main'],['HomePlay','Codex','running','12 分','跑 swift test：42 通过'],['官网','Claude Code','done','刚刚','改了 3 个文件']].map((c,i)=>`
+          <div class="abs card" data-card="${i}" style="left:${cx-274+i*186}px;top:44px;width:176px;height:112px">
+            <div class="t13 trunc">${c[0]}</div><div class="t11">${c[1]}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+              <span class="chip ${c[2]==='waiting'?'amber':''}">${c[2]==='running'?'<span class="spin" style="width:10px;height:10px;border-width:1.6px"></span>在跑':c[2]==='waiting'?'<span class="dot" style="width:7px;height:7px"></span>等你':'<span style="color:#30d158">✓</span>完成'}</span>
+              <span class="t11 tab">${c[3]}</span></div>
+            <div class="t11 trunc" style="margin-top:8px">${c[4]}</div></div>`).join('')}
+          <div class="abs count" style="left:${nx1+9}px;top:6px">3</div></div>
+        ${['approve','approveHigh'].map(k=>{const hi=k==='approveHigh';return`
+        <div class="layer" data-l="${k}" style="transform-origin:${nx1+14}px 14px">
+          <div class="abs dot" style="left:${nx1+10}px;top:10px"></div>
+          <div class="abs t13" style="left:${cx-212}px;top:38px">Claude Code · ${hi?'WindowShade':'HomePlay'}</div>
+          <div class="abs t11 tab" style="left:${cx+180}px;top:40px">1:52</div>
+          <div class="abs well trunc" style="left:${cx-212}px;top:62px;width:424px">${hi?'git push origin main':'swift test --filter Pairing'}</div>
+          <div class="abs chip" style="left:${cx-212}px;top:127px;${hi?'color:var(--amber)':'color:rgba(255,255,255,.75)'}">${hi?TRI+'高风险 · 推送到远端':SHIELD+'普通 · 只在项目里跑测试'}</div>
+          <div class="abs" style="right:${W-cx-212}px;top:120px;display:flex;gap:8px">
+            <button class="pill" data-act="look">去看看</button>
+            <button class="pill primary" data-act="allow">${hi?TOUCH+'用 Touch ID 允许':'允许一次'}</button></div></div>`}).join('')}
+        <div class="layer" data-l="preempt"><div class="abs" style="left:${nx0-34}px;top:7px">${SPK}</div>
+          <div class="abs" style="left:${nx1+10}px;top:12px;width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.25)"><div style="width:62%;height:100%;border-radius:2px;background:#fff"></div></div></div>
+        <div class="layer" data-l="timeout"><div class="abs dot" style="left:${nx1+11}px;top:10px"></div></div>
+      </div></div>
+      <div class="glance"><div class="bar">HomePlay — zsh · 看一眼</div><pre>$ swift test --filter Pairing
+Test Suite 'Pairing' started
+✓ pairVerify (0.41s)
+✓ reconnect (0.88s)
+✓ presenceBridge (0.12s)
+… 42 通过</pre></div>
+      <div class="ghost"></div>
+      <div class="tag" style="left:${cx+250}px;top:44px">挂起，不重播</div>
+    </div>`;
+    this.root=host.firstElementChild;this.isl=this.root.querySelector('.island');this.ink=this.root.querySelector('.ink');
+    this.shL=this.root.querySelector('.sh.l');this.shR=this.root.querySelector('.sh.r');
+    this.glanceEl=this.root.querySelector('.glance');this.ghost=this.root.querySelector('.ghost');this.term=this.root.querySelector('.term');
+    this.tagEl=this.root.querySelector('.tag');
+    this.layers={};this.root.querySelectorAll('.layer').forEach(l=>this.layers[l.dataset.l]=l);
+    const g=geo(state,tight);this.sp={};for(const k of['L','R','H','r','e'])this.sp[k]=new Spring(g[k]);
+    this.gl={};for(const k of['x','y','w','h','o'])this.gl[k]=new Spring(0);
+    this.gh={};for(const k of['x','y','w','h','o'])this.gh[k]=new Spring(0);
+    this.applyLayers(state,true);this.render();this.fit();
+    new ResizeObserver(()=>this.fit()).observe(host);
+    if(interactive){
+      this.root.querySelectorAll('[data-card]').forEach(c=>{
+        c.addEventListener('click',()=>this.emit('go',+c.dataset.card));
+        c.addEventListener('mouseenter',()=>{if(this.state==='expanded'&&c.dataset.card==='1')this.hoverT=setTimeout(()=>this.emit('glance'),450)});
+        c.addEventListener('mouseleave',()=>clearTimeout(this.hoverT));});
+      this.root.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>this.emit(b.dataset.act==='allow'?'running':'go')));
+    }
+  }
+  on(f){this.listeners.push(f)}emit(s,x){this.listeners.forEach(f=>f(s,x))}
+  fit(){const w=this.host.clientWidth||this.W;this.scale=w/this.W;this.root.style.transform=`scale(${this.scale})`;this.host.style.height=this.Hs*this.scale+'px'}
+  applyLayers(s,instant){
+    const show=new Set();
+    if(['running','waiting','multi','timeout','go','approve','approveHigh','expanded','glance'].includes(s))show.add('ear');
+    const map={running:'running',go:'running',waiting:'waiting',multi:'multi',done:'done',expanded:'expanded',glance:'expanded',approve:'approve',approveHigh:'approveHigh',preempt:'preempt',timeout:'timeout'};
+    if(map[s])show.add(map[s]);
+    for(const[k,el]of Object.entries(this.layers)){
+      const on=show.has(k);
+      if(instant){el.style.transition='none';requestAnimationFrame(()=>el.style.transition='')}
+      // 审批卡从琥珀点放大；被挂起后回来只淡入
+      if(k==='approve'||k==='approveHigh'){
+        const resume=this.prev==='preempt';
+        el.style.transform=on||resume?'scale(1)':'scale(.55)';
+        if(on&&!resume&&!instant&&!this.reduced){el.style.transition='none';el.style.transform='scale(.55)';el.style.opacity=0;
+          requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transition='opacity .18s ease, transform .42s cubic-bezier(.2,.9,.25,1)';el.style.transform='scale(1)';el.style.opacity='';}));}
+      }
+      if(k==='done'&&!this.reduced)el.style.transform=on?'scale(1)':'scale(.7)';
+      el.classList.toggle('on',on);
+    }
+    // 过去：右耳内容朝窗口方向（左下）移出
+    this.layers.running.style.transform='';
+  }
+  set(s,{instant=false}={}){
+    const from=this.state;this.prev=from;this.state=s;
+    const g=geo(s,this.tight);const tk=this.reduced?'reduced':tokenFor(from,s);
+    for(const k in this.sp){const sp=this.sp[k];sp.tok(TOK[tk]);sp.t=g[k];if(this.reduced)sp.v=0;if(instant){sp.x=g[k];sp.v=0}}
+    this.applyLayers(s,instant);
+    // 看一眼：从第二张卡长出，退回同一张卡
+    const card={x:this.cx-274+186+0,y:44,w:176,h:112};
+    const tgt={x:this.cx-170,y:186,w:340,h:150};
+    const G=this.gl, gt=TOK[this.reduced?'reduced':(s==='glance'?'expand':'calm')];
+    for(const k in G)G[k].tok(gt);
+    if(s==='glance'){if(G.o.x<.05&&!this.reduced){G.x.x=card.x;G.y.x=card.y;G.w.x=card.w;G.h.x=card.h}
+      if(this.reduced){G.x.x=tgt.x;G.y.x=tgt.y;G.w.x=tgt.w;G.h.x=tgt.h}
+      G.x.t=tgt.x;G.y.t=tgt.y;G.w.t=tgt.w;G.h.t=tgt.h;G.o.t=1}
+    else{G.x.t=card.x;G.y.t=card.y;G.w.t=card.w;G.h.t=card.h;G.o.t=0;if(this.reduced){for(const k of['x','y','w','h'])G[k].x=G[k].t}}
+    // 过去：一块轮廓从卡飞到窗口，窗口出现
+    const H=this.gh;
+    if(s==='go'){for(const k in H)H[k].tok(TOK[this.reduced?'reduced':'flyOut']);
+      H.x.x=card.x;H.y.x=card.y;H.w.x=card.w;H.h.x=card.h;H.o.x=1;H.o.v=0;
+      if(!this.reduced){H.x.v=-900;H.y.v=600}
+      H.x.t=36;H.y.t=this.Hs-150;H.w.t=250;H.h.t=120;H.o.t=1;
+      this.term.style.opacity=0;this.term.classList.remove('hl');
+      clearTimeout(this.goT);this.goT=setTimeout(()=>{H.o.t=0;this.term.style.opacity=1;this.term.classList.add('hl');setTimeout(()=>this.term.classList.remove('hl'),900)},this.reduced?150:420);}
+    else if(s!=='running'){H.o.t=0;H.o.x=0;this.term.style.opacity=0}
+    this.tagEl.classList.toggle('on',(s==='approve'||s==='approveHigh')&&from==='preempt');
+    return tk;
+  }
+  setTight(t){this.tight=t;this.root.classList.toggle('tight',t);const g=geo(this.state,t);for(const k in this.sp)this.sp[k].t=g[k]}
+  setReduced(r){this.reduced=r;this.root.classList.toggle('reduced',r)}
+  step(dt){for(const k in this.sp)this.sp[k].step(dt);for(const k in this.gl)this.gl[k].step(dt);for(const k in this.gh)this.gh[k].step(dt)}
+  render(){
+    const{L,R,H,r,e}=Object.fromEntries(Object.entries(this.sp).map(([k,s])=>[k,s.x]));
+    const left=this.cx-NW/2-L,w=NW+L+R,ee=Math.max(0,e);
+    Object.assign(this.isl.style,{left:left+'px',width:w+'px',height:Math.max(NH,H)+'px',borderRadius:`0 0 ${r}px ${r}px`});
+    this.ink.style.left=-left+'px';
+    const shp=(el,x,side)=>Object.assign(el.style,{left:x+'px',width:ee+'px',height:ee+'px',
+      background:`radial-gradient(circle at ${side} 100%, transparent ${ee-.4}px, #000 ${ee}px)`});
+    shp(this.shL,left-ee,'0%');shp(this.shR,left+w,'100%');
+    const G=this.gl;Object.assign(this.glanceEl.style,{left:G.x.x+'px',top:G.y.x+'px',width:Math.max(0,G.w.x)+'px',height:Math.max(0,G.h.x)+'px',opacity:Math.min(1,Math.max(0,G.o.x))});
+    const X=this.gh;Object.assign(this.ghost.style,{left:X.x.x+'px',top:X.y.x+'px',width:Math.max(0,X.w.x)+'px',height:Math.max(0,X.h.x)+'px',opacity:Math.min(1,Math.max(0,X.o.x))});
+  }
+  width(){return NW+this.sp.L.x+this.sp.R.x}
+  widthV(){return this.sp.L.v+this.sp.R.v}
+}
+
+// 主舞台
+const main=new Stage(document.getElementById('mainWrap'),{W:640,H:330,interactive:true});
+const all=[main];
+const rd=document.getElementById('readout');
+const btns=[...document.querySelectorAll('button[data-s]')];
+// 曲线记录
+let rec=null;
+function startRec(){rec={t0:performance.now(),samples:[],mark:null,from:null,to:null}}
+function go(s,{auto=false}={}){
+  clearTimeout(main.preT);
+  if(main.state==='go'&&s!=='go'){}
+  const before=main.state, w0=main.width(), moving=Math.abs(main.widthV())>5;
+  const tk=main.set(s);
+  btns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.s===s?'true':'false'));
+  const p=TOK[tk];
+  rd.innerHTML=`<b>${NAMES[before]} → ${NAMES[s]}</b> · 弹簧 <b>${tk}</b> ${p[0]} s / ζ ${p[1]} · 初速度：${main.reduced?'清零（减少动态效果）':'沿用当前 '+Math.round(main.widthV())+' pt/s'} · ${moving?'<b>中途改道</b>，位置速度连续':'从静止出发'}`;
+  if(moving&&rec&&!rec.mark){const g=geo(s,main.tight);rec.mark=performance.now();rec.from=w0;rec.to=NW+g.L+g.R}
+  else{startRec()}
+  if(s==='preempt'&&!auto){const back=before==='approveHigh'?'approveHigh':'approve';main.preT=setTimeout(()=>go(back,{auto:true}),1600)}
+  if(s==='done'&&!auto){main.preT=setTimeout(()=>go('rest',{auto:true}),4000)}
+  if(s==='go'&&!auto){main.preT=setTimeout(()=>go('running',{auto:true}),1400)}
+}
+main.on(s=>go(s));
+btns.forEach(b=>b.addEventListener('click',()=>{stopPlay();go(b.dataset.s)}));
+document.getElementById('tReduced').addEventListener('click',e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);main.setReduced(on)});
+document.getElementById('tTight').addEventListener('click',e=>{const on=e.currentTarget.getAttribute('aria-pressed')!=='true';e.currentTarget.setAttribute('aria-pressed',on);main.setTight(on)});
+document.getElementById('interrupt').addEventListener('click',()=>{
+  stopPlay();main.set('waiting',{instant:true});go('approveHigh');
+  const w0=main.width(),w1=NW+geo('approveHigh').L+geo('approveHigh').R;
+  const chk=()=>{if((main.width()-w0)/(w1-w0)>=.4){go('waiting')}else requestAnimationFrame(chk)};requestAnimationFrame(chk);
+});
+// 从头播一遍
+let playT=[];function stopPlay(){playT.forEach(clearTimeout);playT=[]}
+document.getElementById('play').addEventListener('click',()=>{stopPlay();main.set('rest',{instant:true});
+  const seq=[[0,'running'],[1400,'waiting'],[2000,'approveHigh'],[4200,'running'],[5600,'multi'],[6600,'expanded'],[8000,'glance'],[9600,'expanded'],[10400,'go'],[12000,'done'],[15000,'rest']];
+  seq.forEach(([t,s])=>playT.push(setTimeout(()=>go(s,{auto:true}),t)));});
+
+// 静帧
+const fr=document.getElementById('frames');
+[['running',false,'<b>在跑</b>：转圈 + 项目名。转圈用 Core Animation，文字只在状态变时刷新。'],
+ ['waiting',false,'<b>等你</b>：琥珀点 + 等你。0.6 s 后长成审批卡。'],
+ ['done',false,'<b>完成</b>：对勾进左耳，句子在刘海下方，4 s 后收回。'],
+ ['multi',false,'<b>好几个</b>：个数 + 最急的那个状态点。'],
+ ['running',true,'<b>菜单栏挤</b>：右耳只剩转圈，项目名去展开里看。'],
+ ['expanded',false,'<b>展开一排</b>：项目 · 助手 · 状态 · 多久 · 最后一句。点一下过去，停一下看一眼。']].forEach(([s,t,cap])=>{
+  const d=document.createElement('div');d.className='frame';d.innerHTML=`<div class="stage-wrap"></div><div class="cap">${cap}</div>`;fr.appendChild(d);
+  const st=new Stage(d.firstElementChild,{W:s==='expanded'||s==='done'?640:300,H:s==='expanded'?190:(s==='done'?100:60),state:s,tight:t});all.push(st);});
+const af=document.getElementById('approvalFrames');
+[['approve','<b>普通</b>：允许一次是主按钮。'],['approveHigh','<b>高风险</b>：用 Touch ID 允许；风险一行用符号 + 原因。']].forEach(([s,cap])=>{
+  const d=document.createElement('div');d.className='frame';d.innerHTML=`<div class="stage-wrap"></div><div class="cap">${cap}</div>`;af.appendChild(d);
+  const st=new Stage(d.firstElementChild,{W:520,H:178,state:s});all.push(st);});
+
+// 帧循环
+let last=performance.now();
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;
+  const n=Math.max(1,Math.round(dt*240));for(let i=0;i<n;i++)main.step(dt/n);main.render();
+  if(rec){const t=(now-rec.t0)/1000;if(t<1.6)rec.samples.push([t,main.width(),main.widthV()]);else if(!rec.done){rec.done=true}}
+  draw();requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+// 曲线
+const cv=document.getElementById('cv'),cx2=cv.getContext('2d');
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+let drawn=0;
+function draw(){
+  if(!rec||rec.samples.length===drawn)return;drawn=rec.samples.length;
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;cx2.setTransform(dpr,0,0,dpr,0,0);
+  cx2.clearRect(0,0,W,H);
+  const S=rec.samples;if(S.length<2)return;
+  const pad={l:52,r:14,t:14,b:26},T=1.6;
+  const wmin=Math.min(...S.map(s=>s[1]))-10,wmax=Math.max(...S.map(s=>s[1]))+10;
+  const vmax=Math.max(60,...S.map(s=>Math.abs(s[2])))*1.1;
+  const half=(H-pad.t-pad.b)/2-6;
+  const X=t=>pad.l+t/T*(W-pad.l-pad.r);
+  const Yw=w=>pad.t+half-(w-wmin)/(wmax-wmin)*half;
+  const Yv=v=>pad.t+half+12+half/2-v/vmax*half/2;
+  cx2.font='11px '+css('--f-mono');cx2.fillStyle=css('--ink3');cx2.strokeStyle=css('--rule');cx2.lineWidth=1;
+  for(let i=0;i<=8;i++){const x=X(i*.2);cx2.beginPath();cx2.moveTo(x,pad.t);cx2.lineTo(x,H-pad.b);cx2.stroke();cx2.fillText((i*.2).toFixed(1)+'s',x-12,H-8)}
+  cx2.fillText(Math.round(wmax)+'pt',4,pad.t+10);cx2.fillText(Math.round(wmin)+'pt',4,pad.t+half);
+  cx2.fillText('宽度',4,pad.t+half/2+4);cx2.fillText('速度',4,Yv(0)+4);
+  cx2.beginPath();cx2.moveTo(pad.l,Yv(0));cx2.lineTo(W-pad.r,Yv(0));cx2.stroke();
+  const line=(pts,col,wd,dash)=>{cx2.strokeStyle=col;cx2.lineWidth=wd;cx2.setLineDash(dash||[]);cx2.beginPath();pts.forEach((p,i)=>i?cx2.lineTo(p[0],p[1]):cx2.moveTo(p[0],p[1]));cx2.stroke();cx2.setLineDash([])};
+  if(rec.mark){const tm=(rec.mark-rec.t0)/1000;cx2.strokeStyle=css('--ink2');cx2.setLineDash([4,4]);cx2.beginPath();cx2.moveTo(X(tm),pad.t);cx2.lineTo(X(tm),H-pad.b);cx2.stroke();cx2.setLineDash([]);
+    // 对照：同一时刻重来一段 0.35 s ease-in-out，速度从 0 开始
+    const w0=rec.from,w1=rec.to,D=.35,cmp=[],cv2=[];
+    for(let t=tm;t<=Math.min(T,tm+.6);t+=.005){const u=Math.min(1,(t-tm)/D),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;cmp.push([X(t),Yw(w0+(w1-w0)*e)]);
+      const de=u<1?(u<.5?12*u*u:3*Math.pow(-2*u+2,2))/D:0;cv2.push([X(t),Yv((w1-w0)*de)])}
+    const pre=S.filter(s=>s[0]<=tm).map(s=>[X(s[0]),Yv(s[2])]);
+    line(cmp,css('--ink3'),1.5,[5,4]);line(pre.length?[pre[pre.length-1],...cv2]:cv2,css('--ink3'),1.5,[5,4]);}
+  line(S.map(s=>[X(s[0]),Yw(s[1])]),css('--accent'),2.2);
+  line(S.map(s=>[X(s[0]),Yv(s[2])]),css('--amber'),1.8);
+}
+// 首屏给曲线一份可读的记录：等你 → 高风险审批卡，40% 时改道回等你
+setTimeout(()=>document.getElementById('interrupt').click(),600);
+})();
+</script>
