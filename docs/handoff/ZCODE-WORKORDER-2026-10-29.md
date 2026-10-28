@@ -6,7 +6,7 @@
 
 ## 做什麼
 
-分兩批，共十步。**甲批四步是共用件，互不依賴，先做**；乙批六步各自獨立，甲批全過後再做。每一步一個 worktree、一個分支、一個提交。
+分兩批，共十一步。**甲批四步是共用件，互不依賴，先做**；乙批七步各自獨立，甲批全過後再做。每一步一個 worktree、一個分支、一個提交。
 
 ### 甲批：共用件
 
@@ -32,6 +32,12 @@
 - 驗收：遷移單元測試（三種舊組合 + 全新安裝）；`tests/run-conductor-sound-tests.sh`、`tests/run-focus-timer-tests.sh` 全過；新字串進 xcstrings。
 
 ### 乙批：各自獨立
+
+**乙 7 · 番茄鐘收聊天：解開閘門，預設關**（第 7 步；拍板第 21 條）
+- `WS2FocusWindowPort.admitted` 由 false 改 true（WS2FocusWindowPort.swift:11），設定裡去掉「現在只計時」（WS2FocusSettings.swift 約第 48 行）。
+- 預設改成**關**：`WS2FocusSettings.tuckChat` 的 `?? true` 改 `?? false`（WS2FocusSettings.swift:11），`Core/ReleaseDefaults.swift` 若有這個鍵就同步。已經在設定裡明確打開過的人照舊。
+- 那一行的名字照 MAIN-MODEL-DECISIONS D02 改回「专注时收起聊天窗口」（現在是「专注时把聊天收进刘海」，WS2FocusSettings.swift:5）；xcstrings 同步，隱私登記表 `tools/privacy/registry.json` 裡的名字（約 :958）與原始碼快照（約 :4728 的 `?? true`）一起更新，再重新生成隱私頁並跑 `tests/run-privacy-page-sync.sh`。
+- 驗收：單元測試「全新安裝不收起；明確打開過的照舊收起」；`tests/run-focus-surface-tests.sh`、`tests/run-focus-timer-tests.sh` 全過；收起／放回的真機探針標為「待 Aaron」。
 
 **乙 8 · 那一排的會話格 → 指揮頁；指揮頁不依賴遙控；返回 = 收起**（第 8 步；拍板第 2、4 條）
 - 會話格點按改成走進指揮頁（NotchActivityController.swift:194-196 → WS2AppRuntime.swift:392-427 的 `openConductor`）；「過去」保留在指揮頁頭部。
@@ -72,7 +78,7 @@
 | 分支 | 每步一個：`zcode/integration-甲1-coordinator` 這樣命名；從**本機 `main`** 用 `git worktree add` 開，不用遠端作基底 |
 | 提交 | 每步一個，訊息說清做了什麼、驗收命令與結果 |
 | 驗收記錄 | 每步一頁，寫到內部倉庫 `docs/handoff/zcode-2026-10-29/<步>.md`：改了哪些檔、跑了哪些命令、退出碼、測試輸出摘要、沒跑成的與原因 |
-| 總報告 | `docs/handoff/zcode-2026-10-29/README.md`：十步各自的狀態（完成／部分／停下）、要 Aaron 真機看的清單 |
+| 總報告 | `docs/handoff/zcode-2026-10-29/README.md`：十一步各自的狀態（完成／部分／停下）、要 Aaron 真機看的清單 |
 
 ## 界線
 
@@ -83,5 +89,5 @@
 5. **新的讀取點先登記** `tools/privacy/registry.json`，再重新生成隱私頁並跑 `run-privacy-page-sync.sh`。
 6. **不發真實模型請求、不發網路請求**；Claude 相關測試用 `tests/fixtures/fake-claude.py`。
 7. **動到主線程隔離或並發的地方**（甲 1 尤其），在報告裡標出，列入「要真機探針」清單：曾經有 `@MainActor` 類別裡的 Mutex 在主線程外被碰到而崩潰。
-8. **不在本單：** 第 7 步（番茄鐘收聊天：「专注时把聊天收进刘海」預設是開，`WS2FocusSettings.swift:11` 的 `?? true`，解開閘門等於替所有番茄鐘使用者打開新行為，要 Aaron 先定預設；這一行的名字也和 MAIN-MODEL-DECISIONS D02 定的「专注时收起聊天窗口」不同）、第 5 步（認你搬進刘海宿主）、第 6 步（代填密碼與聲紋，涉及安全，要真機與主模型）、第 11 步（新表面換皮）、第 12 步（設定兩頁與露出）、增補第 13、14 步（代理先動與描邊代理，設計密集，要先做小樣給 Aaron 看）、第 18 步（觸控 MacBook Pro 真機調研，11 月 6 日後）。碰到這些範圍就停，寫進報告。
+8. **不在本單：** 第 5 步（認你搬進刘海宿主）、第 6 步（代填密碼與聲紋，涉及安全，要真機與主模型）、第 11 步（新表面換皮）、第 12 步（設定兩頁與露出）、增補第 13、14 步（代理先動與描邊代理，設計密集，要先做小樣給 Aaron 看）、第 18 步（觸控 MacBook Pro 真機調研，11 月 6 日後）。碰到這些範圍就停，寫進報告。
 9. 行號對不上、某步的前提不成立（例如找不到用量來源、預設不是關）：**不要猜，寫進報告，接著做下一步。**
