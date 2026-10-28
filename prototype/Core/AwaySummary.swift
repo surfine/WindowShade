@@ -10,7 +10,7 @@ enum AwaySummary {
     /// 刘海上最多列几件，多的折成「还有 N 件」。
     static let maxItems = 4
     /// 摘要在刘海上停多久，之后收回（稿：8 秒后收成数字）。
-    static let holdSeconds: Double = 8
+    static let holdSeconds: Double = MotionHold.awaySummarySeconds
     /// 解锁或唤醒后等多久再收账：让「手机不在时被解锁」这类晚一点才记下的事赶上，也等系统锁态稳定。
     static let settleSeconds: Double = 1.0
     static var heading: String { WSL10n.text("away.heading", zh: "离开期间") }

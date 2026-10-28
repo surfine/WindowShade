@@ -33,7 +33,7 @@ struct PowerFlashOutcome: Equatable, Sendable {
 
 struct PowerFlashPolicy: Sendable {
   /// 紧凑大小里停留的秒数（settle 长出、停 2.6 秒、calm 收回）。
-  static let holdSeconds: Double = 2.6
+  static let holdSeconds: Double = MotionHold.powerFlashSeconds
   /// 这么久以内再次插上不再闪。
   static let plugDebounce: Double = 30
   /// 红色的上限：20% 及以下。

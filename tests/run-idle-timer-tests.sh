@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/idle-timer-tests
-swiftc -parse-as-library -O -swift-version 6 \
+swiftc prototype/Core/Contracts.swift -parse-as-library -O -swift-version 6 \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/SessionLockState.swift \
   prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift \

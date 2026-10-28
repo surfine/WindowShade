@@ -329,9 +329,39 @@ extension WS2 {
 }
 
 /// 设计系统 §4.7 停留时长（位移用弹簧，停多久用 hold）。
+/// 全 App 的一张停留时间表：每个停留只有这里一处定义，各处引用；数值一个都不改。
 enum MotionHold {
-    /// 短暂提醒：`alert.hold`。
+    /// 短暂提醒：`alert.hold`。2.6 秒。
     static let alertSeconds: TimeInterval = 2.6
     /// 协调器用：`alertMilliseconds * WS2.Duration.millisecond`。
     static let alertMilliseconds: UInt64 = 2600
+    /// 音量、亮度、键盘灯两耳：最后一下按键之后多久收。1.2 秒。
+    static let levelSeconds: TimeInterval = 1.2
+    /// 指针停在格子上多久才看这一格（从一格划到另一格不闪）。0.20 秒。
+    static let tileDwellSeconds: TimeInterval = 0.20
+    /// 指针停在刘海上多久才展开（从菜单栏划过去不算）。0.12 秒。
+    static let notchDwellSeconds: TimeInterval = 0.12
+    /// 电量那一下（插电、低电量）：紧凑大小里停留。2.6 秒。
+    static let powerFlashSeconds: Double = 2.6
+    /// 日程大卡至少停留多久。2.6 秒。
+    static let calendarMinimumHold: TimeInterval = 2.6
+    /// 一句提醒按字数伸缩：基数 1.8 秒 + 每字 0.05 秒，最长 4.5 秒。
+    static let sentenceBaseHold: TimeInterval = 1.8
+    static let sentencePerCharacter: TimeInterval = 0.05
+    static let sentenceMaxHold: TimeInterval = 4.5
+    /// 离开期间摘要。8 秒。
+    static let awaySummarySeconds: Double = 8
+    /// 计时器到点的大卡停留。10 秒。
+    static let timerDoneMilliseconds: UInt64 = 10_000_000_000
+    /// 核准卡回执（允许 / 不允许之后停一下）。0.8 秒。
+    static let receiptMilliseconds: UInt64 = 800_000_000
+    /// 认你指示：认出打勾停 1.2 秒；没认出、三次用完的结论停 2.2 秒。
+    static let faceRecognizedSeconds: TimeInterval = 1.2
+    static let faceOutcomeSeconds: TimeInterval = 2.2
+    /// 认你没认出、请用密码那两句（同 alert.hold）。2.6 秒。
+    static let faceNoticeSeconds: TimeInterval = alertSeconds
+    /// 在场锁定：人回来了确认多久才算数。2 秒。
+    static let presenceReturnMilliseconds: UInt64 = 2_000_000_000
+    /// 结束的活动在那一排里停多久（“✓ 完成”那条）。4 秒。
+    static let activityClosingSeconds: Double = 4
 }

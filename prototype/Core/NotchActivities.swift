@@ -242,7 +242,7 @@ struct NotchActivity: Equatable, Sendable {
         case deadline(Double)
 
         static let standard = Closing.linger(standardHold)
-        static let standardHold: Double = 4
+        static let standardHold: Double = MotionHold.activityClosingSeconds
         static let deadlineLimit: Double = 300
 
         /// 结束后最后的样子留多少秒；0 是立即。

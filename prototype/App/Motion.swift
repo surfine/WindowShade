@@ -32,13 +32,13 @@ enum Motion {
 
     /// 设计系统 §4.7 停留时长（与 `MotionHold.alertSeconds` 同值）。
     enum Hold {
-        static let alert: TimeInterval = 2.6
+        static let alert: TimeInterval = MotionHold.alertSeconds
         /// 指针停在格子上多久才看这一格（从一格划到另一格不闪）。原 0.12，对齐总稿 0.20。
-        static let tileDwell: TimeInterval = 0.20
+        static let tileDwell: TimeInterval = MotionHold.tileDwellSeconds
         /// 指针停在刘海上多久才展开（从菜单栏划过去不算）。仍是 0.12。
-        static let notchDwell: TimeInterval = 0.12
+        static let notchDwell: TimeInterval = MotionHold.notchDwellSeconds
         /// 音量、亮度、键盘灯两耳：最后一下按键之后多久收（《音量与亮度》稿“多久出、多久收”）。
-        static let level: TimeInterval = NotchLevelEars.holdSeconds
+        static let level: TimeInterval = MotionHold.levelSeconds
     }
 
     /// 刘海内容的淡入淡出时序（总稿“令牌”节）：形状先动，第一层（符号与主句）在形状走到

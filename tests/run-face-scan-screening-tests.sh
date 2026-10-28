@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/face-scan-screening-tests/module-cache
-swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
+swiftc prototype/Core/Contracts.swift -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/SessionLockState.swift prototype/Core/AuthorizationModels.swift prototype/Core/IdentityEvidence.swift \
   prototype/Core/AuthorizationLedger.swift prototype/Core/FaceCaptureQuality.swift prototype/Core/FaceLivenessCues.swift \
   prototype/Core/FaceIdentityAttempts.swift prototype/Core/FaceScanGuard.swift prototype/Core/FaceScanScreening.swift \

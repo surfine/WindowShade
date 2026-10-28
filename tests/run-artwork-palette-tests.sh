@@ -3,7 +3,7 @@
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 mkdir -p "$root/.build/artwork-palette-tests"
-swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
+swiftc prototype/Core/Contracts.swift -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   "$root/prototype/Core/ArtworkPalette.swift" "$root/prototype/Core/NowPlayingStreamParser.swift" "$root/prototype/Core/NowPlayingCardLogic.swift" \
   "$root/prototype/App/NowPlayingArtwork.swift" "$root/prototype/App/NowPlayingStream.swift" \

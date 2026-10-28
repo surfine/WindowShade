@@ -34,8 +34,8 @@ struct FaceIdentityNotice: Equatable, Sendable {
     /// 停多久再收（秒）；0 = 到租约结束就收。
     let holdSeconds: Double
 
-    static let notRecognized = FaceIdentityNotice(primary: "没认出", secondary: "用 Touch ID 或密码", holdSeconds: 2.6)
-    static let lockedOut = FaceIdentityNotice(primary: "这次请用密码", secondary: "已试了 3 次", holdSeconds: 2.6)
+    static let notRecognized = FaceIdentityNotice(primary: "没认出", secondary: "用 Touch ID 或密码", holdSeconds: MotionHold.faceNoticeSeconds)
+    static let lockedOut = FaceIdentityNotice(primary: "这次请用密码", secondary: "已试了 3 次", holdSeconds: MotionHold.faceNoticeSeconds)
 }
 
 struct FaceIdentityDisposition: Equatable, Sendable {

@@ -28,12 +28,12 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   -o .build/notch-level-tests/control
 .build/notch-level-tests/control
 # LV3：两耳的几何、符号分档与设备符号、读屏那一句、全屏可见性判定。
-swiftc -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift \
+swiftc prototype/Core/Contracts.swift -swift-version 6 -parse-as-library prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift \
   prototype/Core/NotchLevelSuppression.swift prototype/Core/NotchLevelEars.swift prototype/Core/FlickMotion.swift \
   tests/NotchLevelEarsTests.swift -o .build/notch-level-tests/ears
 .build/notch-level-tests/ears
 # LV4：门闸接判定表（全屏可见才出两耳）、输出设备分类、设置那一行的三种副标题与“允许…”的等待。
-swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
+swiftc prototype/Core/Contracts.swift -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift prototype/Core/NotchLevelSuppression.swift \
   prototype/Core/NotchLevelEars.swift prototype/Core/NotchLevelOutput.swift prototype/Core/NotchLevelScreen.swift \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/NotchLevelSetting.swift prototype/Core/ReleaseDefaults.swift prototype/Core/FlickMotion.swift tests/NotchLevelLV4Tests.swift \

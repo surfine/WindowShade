@@ -6,8 +6,8 @@ import Cocoa
 /// 面板走锁屏空间那条已验证的路（LockOverlayController 同款：EffectPanel + LockSpaceBridge）。
 /// 真锁屏上的实测仍要 Aaron；这里先把画面、相位和收尾按规格接好。
 @MainActor final class FaceScanStatusController {
-    static let recognizedHold: TimeInterval = 1.2
-    static let outcomeHold: TimeInterval = 2.2
+    static let recognizedHold: TimeInterval = MotionHold.faceRecognizedSeconds
+    static let outcomeHold: TimeInterval = MotionHold.faceOutcomeSeconds
 
     private var panel: EffectPanel?
     private var view: FaceScanStatusView?
