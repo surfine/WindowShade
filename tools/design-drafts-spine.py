@@ -71,7 +71,22 @@ def errata_html(entries):
             f'（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol>{"".join(lis)}</ol></details></aside>')
 
 
+HEAD_WRAP = ('<!doctype html><html lang="zh-CN"><head><meta charset=utf8><meta name=viewport '
+             'content="width=device-width,initial-scale=1,viewport-fit=cover"><style>')
+
+
+def body_only(text):
+    # Publishing replaces a page's own <head>, so styles kept there are lost online.
+    # Keep these drafts in the body-only form they were first published in.
+    if text.startswith(HEAD_WRAP) and "</style></head><body>" in text:
+        text = "<style>" + text[len(HEAD_WRAP):]
+        text = text.replace("</style></head><body>", "</style>", 1)
+        text = re.sub(r"\s*</body></html>\s*$", "\n", text)
+    return text
+
+
 def apply(text, nav, errata):
+    text = body_only(text)
     text = STYLE_RE.sub("", text)
     text = ERR_RE.sub("", text)
     block = nav + errata
