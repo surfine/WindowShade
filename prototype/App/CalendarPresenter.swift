@@ -298,7 +298,7 @@ final class CalendarPresenter {
         let next = CalendarCard(frame: .zero)
         next.onJoin = { [weak self] in self?.joinCurrent() }
         renderCard(selection, sharing: context().sharing, into: next)
-        let shown = leases.show(next, ownerID: "pomodoro", onDismiss: { [weak self, weak next] _ in
+        let shown = leases.show(next, ownerID: "calendarCard", borrowsSeat: true, onDismiss: { [weak self, weak next] _ in
             guard let self, self.card === next else { return }
             self.card = nil
             self.schedule()

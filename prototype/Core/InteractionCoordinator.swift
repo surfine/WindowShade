@@ -68,7 +68,8 @@ final class InteractionCoordinator {
         switch (r.ownerID,r.layer) {
         case ("authorization",.authorization), ("conductor",.interaction),
              ("conductor",.opened), ("agentReview",.authorization), ("notchShelf",.opened), ("launchpad",.opened),
-             ("windowBrowser",.opened), ("pomodoro",.opened), ("nowPlaying",.opened),
+             ("windowBrowser",.opened), ("pomodoro",.opened), ("countdownTimer",.opened), ("calendarCard",.opened),
+             ("nowPlaying",.opened),
              ("ownedCodex",.opened), ("ownedModelPicker",.opened), ("silent",.opened),
              ("faceEnrollment",.opened): return true
         default: return false
@@ -144,9 +145,12 @@ final class InteractionCoordinator {
                 return .queued(position: queue.count)
             }
             let explicitPageSwitch = expected == old.handle && old.layer == .opened && r.layer == .opened
-            guard r.layer < old.layer || explicitPageSwitch else { return .busy }
+            // 借座位：短暂的自动卡（日程大卡这类）把已打开的那一页挂起，让出后原样回来；不是换页。
+            let borrowsSeat = r.borrowsSeat && old.layer == .opened && r.layer == .opened
+                && old.handle.ownerID != r.ownerID
+            guard r.layer < old.layer || explicitPageSwitch || borrowsSeat else { return .busy }
             // 更高的层把已打开的那一页挂起。换页仍是抢占：旧页不回来。
-            withdraw(explicitPageSwitch ? .preempted : .suspended)
+            withdraw(explicitPageSwitch && !borrowsSeat ? .preempted : .suspended)
             // Synchronous cancellation can disable/lock the app. Never lose that barrier.
             guard epoch == entryEpoch, !exhausted else { return .unavailable }
         }

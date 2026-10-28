@@ -218,6 +218,43 @@ struct RulesMissing: Error {}
             c.remind(.init(key: "y", title: "二"), on: a, at: clock.now())
             t.check(c.alertItems(on: a, at: clock.now()).map(\.key) == ["y"], "outside 600 ms starts a new appearance")
         }
+        t.run("R8 three cards, three owners: the calendar card borrows the seat, the timer comes back as it was") {
+            let clock = RulesClock(), box = Box(); box.env.displays = [a]
+            var revoked: [(WS2.LeaseHandle, WS2.LeaseRevocation)] = []
+            let (c, _) = make(clock, box) { h, r in revoked.append((h, r)) }
+            let start: UInt64 = 1_000 * ms
+            clock.set(start)
+            @MainActor func card(_ owner: String, at t0: UInt64, borrows: Bool = false) throws -> WS2.LeaseHandle {
+                var r = request(owner, .opened, at: t0, deadline: t0 + 1_000_000 * ms)
+                r.borrowsSeat = borrows
+                let decision = c.acquire(r)
+                guard case .acquired(let h) = decision else {
+                    print("DBG deny " + owner + " borrows " + String(borrows) + " at " + String(t0) + " -> " + String(describing: decision))
+                    throw RulesMissing()
+                }
+                return h
+            }
+            // 计时器卡开着（主人 countdownTimer）。
+            let timer = try card("countdownTimer", at: start)
+            t.check(c.isCurrent(timer), "timer card is showing")
+            // 日程卡（calendarCard）借座位：出现，计时器挂起不拆（suspended，不是 preempted）。
+            clock.set(start + 1000 * ms)
+            let calendar = try card("calendarCard", at: start + 1000 * ms, borrows: true)
+            t.check(c.isCurrent(calendar) && !c.isCurrent(timer), "calendar card shows over the timer")
+            t.check(revoked.last?.1 == .suspended, "timer suspended, not torn down")
+            // 日程卡收了：计时器原样回来（宿主另拿一份租约，进场不重播）。
+            clock.set(start + 5000 * ms)
+            c.release(calendar, at: clock.now())
+            let timerAgain = try card("countdownTimer", at: start + 5000 * ms)
+            t.check(c.isCurrent(timerAgain) && timerAgain != timer, "timer card back with a fresh lease")
+            t.check(!revoked.contains(where: { $0.0 == timer && $0.1 == .preempted }), "no preempted teardown")
+            // 同主人显式再开仍是换页（抢占，旧页不回来）。hub.show 走 replacing: 当前页。
+            clock.set(start + 6000 * ms)
+            let pickerRequest = request("countdownTimer", .opened, at: start + 6000 * ms, deadline: start + 1_000_000 * ms)
+            guard case .acquired(let picker) = c.acquire(pickerRequest, replacing: timerAgain) else { throw RulesMissing() }
+            t.check(c.isCurrent(picker), "explicit page switch still works")
+            t.check(revoked.last?.1 == .preempted, "page switch preempts the old page")
+        }
         print("RESULT scenes=\(t.scenes) assertions=\(t.assertions) failures=\(t.failures.count)")
         if !t.failures.isEmpty { exit(1) }
     }
