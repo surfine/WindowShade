@@ -45,7 +45,7 @@ def nav_html(i, items, total_url):
     it = items[i]
     n = len(items)
     prev_it, next_it = items[i - 1] if i else None, items[i + 1] if i + 1 < n else None
-    where = "总稿" if it["file"] == TOTAL else f'{it["group"]} · 第 {i} / {n - 1} 张'
+    where = "总稿" if it["file"] == TOTAL else f'{it["group"]} · 第 {i} 张'
     old = " ws-old" if it.get("errata") else ""
     parts = [
         f'<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="{total_url}"><b>WindowShade 设计系统</b></a>',
