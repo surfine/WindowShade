@@ -122,6 +122,21 @@ button:focus-visible,input:focus-visible,.desk:focus-visible{outline:2px solid v
 </style>
 </head>
 <body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">三 窗口 · 第 15 / 32 张 · 卷轴</span><span class="ws-st ws-old">定稿 · 10-09</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT">← 为什么不用最小化</a><a href="https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs">手边的每一样 →</a></nav>
+<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 2 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：舞台按 MacBook Air 15 英寸画，屏幕 1470 × 956</span> → <b>现在：</b>Air 15 英寸默认是 1710 × 1107（刘海 185 × 33.5 也是这个模式下的数）；1470 × 956 是 Air 13 英寸 <span class="src">（design-system §3.2 表 A）</span></li><li><span class="was">原来：「今天：只有贴边」等现状列</span> → <b>现在：</b>居中三种、放得下就居中、按 App 记列宽已在设置 → 卷帘 → 排布里；卷轴概览随 1.0.16 发布。其余以代码为准 <span class="src">（releases/v1.0.16.md；《1.0.17 精简 小样》）</span></li></ol></details></aside>
 <div class="wrap">
   <h1>卷轴</h1>
   <p class="lede">Mac 上做不了合成器，窗口只能借辅助功能一扇一扇地挪。这一张要证明：卷轴照样能跟上 niri 的四件事，分别是列宽几档、居中、把窗口并进一列和概览里拖着换位置。卷轴还能接上刘海：在概览里把一扇拖进刘海就收起来，从刘海那一排拖出来就放回成一列。舞台按 MacBook Air 15 英寸画，屏幕 1470 × 956，刘海 185 × 33.5。小样只在这一页，不动产品。</p>

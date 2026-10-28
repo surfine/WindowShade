@@ -1,0 +1,235 @@
+{
+ "items": [
+  {
+   "file": "WindowShade 设计系统.html",
+   "group": "总稿",
+   "status": "总稿 · 10-08，统合 10-29",
+   "title": "WindowShade 设计系统",
+   "url": "https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"
+  },
+  {
+   "file": "WindowShade 全景.html",
+   "group": "一 基础",
+   "status": "定稿 · 10-08",
+   "title": "WindowShade 全景",
+   "url": "https://claude.ai/artifact/2AQPp5eEoFPBrCobUBxKsp"
+  },
+  {
+   "file": "WindowShade 设计规范.html",
+   "group": "一 基础",
+   "status": "定稿 · 10-03",
+   "title": "WindowShade 设计规范",
+   "url": "https://claude.ai/artifact/NSQU27GL6xVjhW2UFV9LKn"
+  },
+  {
+   "file": "WindowShade 读到的.html",
+   "group": "一 基础",
+   "status": "定稿 · 10-03",
+   "title": "WindowShade 读到的",
+   "url": "https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA"
+  },
+  {
+   "file": "安静的刘海 动效样片.html",
+   "group": "一 基础",
+   "status": "定稿 · 10-08",
+   "title": "安静的刘海 动效样片",
+   "url": "https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6"
+  },
+  {
+   "file": "一颗岛.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-08",
+   "title": "一颗岛",
+   "url": "https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac"
+  },
+  {
+   "file": "卡住时刘海开口.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-08",
+   "title": "卡住时刘海开口",
+   "url": "https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ"
+  },
+  {
+   "file": "宽形状画肩.html",
+   "group": "二 刘海",
+   "status": "小样 · 等 Aaron 定",
+   "title": "宽形状画肩",
+   "url": "https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph"
+  },
+  {
+   "file": "实时活动晋级.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-09",
+   "title": "实时活动晋级",
+   "url": "https://claude.ai/artifact/Y1xC2moskAEa2bjHNk2JKb"
+  },
+  {
+   "file": "正在播放.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-09",
+   "title": "正在播放",
+   "url": "https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp"
+  },
+  {
+   "file": "音量与亮度.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-09",
+   "title": "音量与亮度",
+   "url": "https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e"
+  },
+  {
+   "file": "日历电量计时器.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-09",
+   "title": "日历、电量与计时器",
+   "url": "https://claude.ai/artifact/JnUmLbVvSb9igvSxs4QSYp"
+  },
+  {
+   "file": "文件架.html",
+   "group": "二 刘海",
+   "status": "定稿 · 10-09",
+   "title": "文件架",
+   "url": "https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j"
+  },
+  {
+   "file": "收成缩略图.html",
+   "group": "三 窗口",
+   "status": "定稿 · 10-08",
+   "title": "收成缩略图",
+   "url": "https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N"
+  },
+  {
+   "file": "为什么不用最小化.html",
+   "group": "三 窗口",
+   "status": "定稿 · 10-08",
+   "title": "为什么不用最小化",
+   "url": "https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT"
+  },
+  {
+   "file": "卷轴.html",
+   "group": "三 窗口",
+   "status": "定稿 · 10-09",
+   "title": "卷轴",
+   "url": "https://claude.ai/artifact/SGBdwfP5ZFr7NDMzPJ7Yvs"
+  },
+  {
+   "file": "手边的每一样.html",
+   "group": "三 窗口",
+   "status": "定稿 · 10-08",
+   "title": "手边的每一样",
+   "url": "https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs"
+  },
+  {
+   "file": "手势分组 小样.html",
+   "group": "三 窗口",
+   "status": "小样 · 10-16",
+   "title": "手势分组 小样",
+   "url": "https://claude.ai/artifact/6ShtJuF4UJnQKxpWXPcsFt"
+  },
+  {
+   "file": "欢迎使用 WindowShade.html",
+   "group": "四 第一次打开与版本",
+   "status": "已被取代 · 见《首次打开》",
+   "title": "欢迎使用 WindowShade",
+   "url": "https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc"
+  },
+  {
+   "file": "首次打开 1.0.17 小样.html",
+   "group": "四 第一次打开与版本",
+   "status": "Aaron 已拍板 · 10-17",
+   "title": "首次打开 1.0.17",
+   "url": "https://claude.ai/artifact/R2h7LCy9eQFF1GgH6kHF8u"
+  },
+  {
+   "file": "1.0.17 精简 小样.html",
+   "group": "四 第一次打开与版本",
+   "status": "已随 1.0.17 发布 · 10-17",
+   "title": "1.0.17 精简",
+   "url": "https://claude.ai/artifact/VC2afTRXho6e2Fvxm7Hyoo"
+  },
+  {
+   "file": "1.0.18 新表面 小样.html",
+   "group": "四 第一次打开与版本",
+   "status": "小样 · 等 Aaron 定",
+   "title": "1.0.18 新表面",
+   "url": "https://claude.ai/artifact/2p7dHpjTEEf5wGqcobQiTG"
+  },
+  {
+   "file": "从锁屏到窗口.html",
+   "group": "五 身份与离开",
+   "status": "定稿 · 10-03",
+   "title": "从锁屏到窗口",
+   "url": "https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH"
+  },
+  {
+   "file": "离开就锁.html",
+   "group": "五 身份与离开",
+   "status": "定稿 · 10-03",
+   "title": "离开就锁",
+   "url": "https://claude.ai/artifact/BPmRiSF26X44bpUqFMAZjs"
+  },
+  {
+   "file": "番茄钟.html",
+   "group": "五 身份与离开",
+   "status": "定稿 · 10-03",
+   "title": "番茄钟",
+   "url": "https://claude.ai/artifact/5fQkwURyoGwZRrFBp2XnWf"
+  },
+  {
+   "file": "看与指挥.html",
+   "group": "六 看与指挥（WS2）",
+   "status": "定稿 · 10-03",
+   "title": "看与指挥",
+   "url": "https://claude.ai/artifact/9mbRLt1QGpsKLKip991Xe3"
+  },
+  {
+   "file": "指挥模式.html",
+   "group": "六 看与指挥（WS2）",
+   "status": "定稿 · 10-08",
+   "title": "指挥模式",
+   "url": "https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1"
+  },
+  {
+   "file": "iPhone 上的遥控器.html",
+   "group": "六 看与指挥（WS2）",
+   "status": "定稿 · 10-08",
+   "title": "iPhone 上的遥控器",
+   "url": "https://claude.ai/artifact/1vJy6AnRnkMqpmp84fE9Q5"
+  },
+  {
+   "file": "刘海里的编程会话.html",
+   "group": "六 看与指挥（WS2）",
+   "status": "稿 · 10-29 等 Aaron 定",
+   "title": "刘海里的编程会话",
+   "url": "https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm"
+  },
+  {
+   "file": "认你、指挥页与露出.html",
+   "group": "六 看与指挥（WS2）",
+   "status": "稿 · 10-29 等 Aaron 定",
+   "title": "认你、指挥页与露出",
+   "url": "https://claude.ai/artifact/XoqB5LVY9M3dRbsfKPiPjj"
+  },
+  {
+   "file": "对标 Atoll、Alcove 与 niri.html",
+   "group": "七 对标",
+   "status": "总账 · 10-09",
+   "title": "对标 Atoll、Alcove 与 niri",
+   "url": "https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC"
+  },
+  {
+   "file": "1.0.18 宣传片 分镜.html",
+   "group": "八 宣传片",
+   "status": "Aaron 已定 · 10-18",
+   "title": "1.0.18 宣传片分镜",
+   "url": "https://claude.ai/artifact/9AqXZMBeDGpTztDGJQyhjY"
+  },
+  {
+   "file": "WindowShade 2 宣传片 分镜.html",
+   "group": "八 宣传片",
+   "status": "分镜 · 10-18",
+   "title": "WindowShade 2 宣传片分镜",
+   "url": "https://claude.ai/artifact/9M2TkLLgiPvNFf3erN3dQ8"
+  }
+ ]
+}

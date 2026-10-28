@@ -6,8 +6,8 @@
 <style>
 /* 版式：与《刘海里的编程会话》同一套纸面；三段各有一块示意画面 + 右侧规则。刘海内只用系统语义色。 */
 :root{
-  --paper:#f4f4f1; --sheet:#ffffff; --ink:#18191b; --ink2:#55575c; --ink3:#8a8c91; --rule:#dcdcd6;
-  --accent:#0a64d6; --amber:#ff9f0a; --green:#28b14c; --warn:#d9480f;
+  --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --ink3:#6e6f76; --rule:rgba(0,0,0,.1);
+  --accent:#0058cc; --amber:#ff9f0a; --green:#28b14c; --warn:#d9480f;
   --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.62); --menutext:#1b1b1d;
   --win:#ececec; --wintext:#1d1d1f; --winline:#d6d6d6; --winsub:#6e6e73;
   --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
@@ -15,13 +15,13 @@
   --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#131416; --sheet:#1b1c1f; --ink:#ececea; --ink2:#a9abb0; --ink3:#74767c; --rule:#2c2e32;
-  --accent:#4b9bff; --green:#32d15a; --warn:#ff7b45;
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --green:#32d15a; --warn:#ff7b45;
   --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2;
   --win:#252527; --wintext:#f2f2f2; --winline:#3a3a3c; --winsub:#98989d; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --paper:#131416; --sheet:#1b1c1f; --ink:#ececea; --ink2:#a9abb0; --ink3:#74767c; --rule:#2c2e32;
-  --accent:#4b9bff; --green:#32d15a; --warn:#ff7b45;
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --green:#32d15a; --warn:#ff7b45;
   --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2;
   --win:#252527; --wintext:#f2f2f2; --winline:#3a3a3c; --winsub:#98989d; color-scheme:dark}
 *{box-sizing:border-box}
@@ -145,14 +145,21 @@ td.num{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
 footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3)}
 </style>
 
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">六 看与指挥（WS2） · 第 29 / 32 张 · 认你、指挥页与露出</span><span class="ws-st">稿 · 10-29 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm">← 刘海里的编程会话</a><a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">对标 Atoll、Alcove 与 niri →</a></nav>
 <div class="wrap">
-<nav class="sys" aria-label="WindowShade 设计系统">
-  <a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a>
-  <span>WindowShade 2 · 认你、指挥页与露出</span><span class="sp"></span>
-  <a href="https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm">← 刘海里的编程会话</a>
-  <a href="https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH">从锁屏到窗口</a>
-  <a href="https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1">指挥模式</a>
-</nav>
 
 <header>
   <div class="eyebrow">WINDOWSHADE 2 · 设计稿 v3 · 2026-10-29 · 接 face-unlock.md / conductor-v2.md</div>
@@ -241,7 +248,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <ul class="rules">
         <li><b>设置 → 指挥模式</b>（这一页今天已经在旗标后面存在）：三行。<b>编程会话</b>（在刘海里看 Claude Code 和 Codex，带 <b>连接</b> 按钮）、<b>指挥模式</b>（要先在遥控模式里打开）、<b>提示音</b>。</li>
         <li><b>设置 → 隐私</b>：<b>刷脸解锁（实验）</b>，带「实验」标签；打开前先走录脸。</li>
-        <li><b>设置 → 离开就锁</b>：已有，不动。</li>
+        <li><b>设置 → 高级 → 实验 · 离开就锁</b>：1.0.17 起就在这里（Aaron 10-17 拍板），不动。</li>
         <li>还在旗标后面的表面，设置里不出现，不放灰掉的占位行。</li>
       </ul>
     </div>
@@ -251,7 +258,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
     <tbody>
       <tr><td>编程会话（看、过去、看一眼）</td><td>旗标</td><td>新稿落地；真 Claude Code 接受 <code>settings.json</code> 一次；帧间隔记录</td><td>真连接一次；新皮</td><td>设置 → 指挥模式 · 编程会话，默认关</td></tr>
       <tr><td>审批卡</td><td>旗标</td><td>同上；Touch ID 放行在真机走一遍；2 分钟交回终端真机走一遍</td><td>两次真机</td><td>跟编程会话同一个开关</td></tr>
-      <tr><td>指挥页（Codex / Claude 只读、按住说话）</td><td>旗标</td><td>页面探针已过；真 iPhone 遥控 E1–E5 有记录</td><td>E1–E5</td><td>设置 → 指挥模式 · 指挥模式，默认关</td></tr>
+      <tr><td>指挥页（Codex / Claude 只读、按住说话）</td><td>旗标</td><td>Mac 本机部分（按住说话、Codex / Claude 只读）：页面探针已过 + 真 Claude 一次；遥控提示那一行另等真 iPhone E1–E5</td><td>真 Claude 一次；E1–E5 只卡遥控提示</td><td>设置 → 指挥模式 · 指挥模式，默认关</td></tr>
       <tr><td>认你指示 + 补光圈</td><td>旗标</td><td>挪进刘海宿主；真锁屏开合；攻击矩阵有实测</td><td>宿主搬家、真锁屏、攻击矩阵</td><td>设置 → 隐私 · 刷脸解锁（实验），默认关</td></tr>
       <tr><td>系统解锁 / 代填密码（D11）</td><td>没有</td><td>Aaron 拍板</td><td>拍板</td><td>不在本稿范围</td></tr>
     </tbody></table></div>
@@ -380,7 +387,7 @@ sv.innerHTML=`<div class="canvas" style="width:${SW}px;height:${SH}px"><div clas
  <div class="win" style="left:30px;top:20px;width:580px;height:300px">
   <div class="tb"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span style="flex:1;text-align:center;font-size:12.5px;font-weight:600;margin-right:40px">指挥模式</span></div>
   <div class="side">
-    <div>⌘ 快捷键</div><div>▤ 刘海</div><div>◉ 遥控模式</div><div class="on">✦ 指挥模式</div><div>🔒︎ 隐私</div><div>⏏︎ 离开就锁</div></div>
+    <div>⌘ 快捷键</div><div>▤ 刘海</div><div>◉ 遥控模式</div><div class="on">✦ 指挥模式</div><div>🔒︎ 隐私</div><div>⚙︎ 高级</div></div>
   <div class="main">
     <div style="font-size:11px;color:var(--winsub)">选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。</div>
     <div class="grp">

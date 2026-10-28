@@ -2,7 +2,9 @@
 
 既有可交互画面稿采用单文件 HTML；2026-10-11 的原生静态补稿采用 Markdown 与实际画面。HTML 可直接打开。做完或改完的稿默认发布成 claude.ai 上的私有页面；已有链接的更新同一个链接。
 
-**先看总稿 [WindowShade 设计系统](WindowShade%20设计系统.html)**（2026-10-08，[线上私有页](https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y)）：把下面十六份收成一套。能玩的刘海模拟器（六层仲裁）、十二条规则、令牌、二十六个零件、十一种交互模式、七条线的表面目录与成熟度、输入统一表、边缘情况总表、宣传片逐幕对照、还没画的用量 / 进度 / 胶囊五态 / 三个住处 / 离开期间，以及怎么分级发布。单张稿仍是各自时刻的画面依据；总稿和单张稿不一致时，以单张稿的画面为准，记进对照账。
+**统合（2026-10-29）**：33 张 HTML 稿顶上是同一条导航（总稿 + 八组：基础、刘海、窗口、第一次打开与版本、身份与离开、看与指挥、对标、宣传片），带序号、状态和前后页；稿后来被新决定改过的，顶上有一栏「这张稿之后又定了 n 件」，正文保留原样、以那一栏为准。导航和勘误由 `tools/design-drafts-spine.py` 按 `_spine.json`、`_errata.json` 生成，改顺序或加勘误改这两个文件再跑脚本。
+
+**先看总稿 [WindowShade 设计系统](WindowShade%20设计系统.html)**（2026-10-08，[线上私有页](https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y)）：把下面十六份收成一套。能玩的刘海模拟器（六层仲裁）、十二条规则、令牌、二十八个零件、十二种交互模式、七条线的表面目录与成熟度、输入统一表、边缘情况总表、宣传片逐幕对照、还没画的用量 / 进度 / 胶囊五态 / 三个住处 / 离开期间，以及怎么分级发布。单张稿仍是各自时刻的画面依据；总稿和单张稿不一致时，以单张稿的画面为准，记进对照账。
 
 书面令牌仍以 [design-system.md](../design-system.md)（2026-09-29 定稿）为准。两边不一致时，片子先照这里的稿做画面，不顺便改设计系统。新表面先过 [design-grammar.md](../design-grammar.md)；对不上的记在那边的对照账，不在这里改数字。
 
@@ -17,10 +19,13 @@
 | [从锁屏到窗口](从锁屏到窗口.html)（[线上](https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH)） | 开盖，认出你，窗口都还在原处 | 概念片第 0 章、opus 的 `lid` |
 | [卡住时刘海开口](卡住时刘海开口.html)（[线上](https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ)） | 刘海在等什么、开口的节奏 | 概念片前段、opus 的开口、1.0 宣传片若改画面 |
 | [收成缩略图](收成缩略图.html)（[线上](https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N)） | 原地缩成缩略图、排到屏幕边、收进刘海 | 概念片收起、1.0 宣传片的收起 |
-| [欢迎使用 WindowShade](欢迎使用%20WindowShade.html)（[线上](https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc)） | 欢迎窗口 | 动效样片里的欢迎、官网 |
+| [欢迎使用 WindowShade](欢迎使用%20WindowShade.html)（[线上](https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc)） | **已被《首次打开 1.0.17 小样》取代，只留作历史。** 欢迎窗口 | 动效样片里的欢迎、官网 |
 | [首次打开 1.0.17 小样](%E9%A6%96%E6%AC%A1%E6%89%93%E5%BC%80%201.0.17%20%E5%B0%8F%E6%A0%B7.html)（[线上](https://claude.ai/artifact/R2h7LCy9eQFF1GgH6kHF8u)） | 1.0.18 首次打开与整个设置的讲解动画：先学双击收起，再一起问辅助功能和屏幕录制（可选），再用一页四段演刘海、窗口浏览、手势与卷轴、菜单栏；升级一页找回授权、一页说新开了什么；每个设置页顶上一条“设备 / 结果”讲解带，行到哪演到哪；末尾是 1.0.18 工作单。**Aaron 10-17 已拍板全部问题** | 取代欢迎窗口现在的三步（Welcome.swift）和各设置页顶部 |
 | [1.0.18 新表面 小样](1.0.18%20%E6%96%B0%E8%A1%A8%E9%9D%A2%20%E5%B0%8F%E6%A0%B7.html)（[线上](https://claude.ai/artifact/2p7dHpjTEEf5wGqcobQiTG)） | Dock 预览卡上的红黄绿（关闭 / 最小化 / 进入全屏）、设置侧栏搜索（⌘F、同义词、跳到行并让讲解带演）、正在播放拖完进度 1.5 秒内信本地、DMG 安装窗口（卷帘背景、两种外观通用）、权限文案统一（辅助功能必需、屏幕录制可选）；附五个待定问题和各自的实现范围。**小样，等 Aaron 定稿** | 不是镜头；1.0.18 第 2–5 天实现的画面依据 |
+| [1.0.17 精简 小样](1.0.17%20%E7%B2%BE%E7%AE%80%20%E5%B0%8F%E6%A0%B7.html)（[线上](https://claude.ai/artifact/VC2afTRXho6e2Fvxm7Hyoo)） | 1.0.17 设置、菜单、刘海那一排的隐藏清单；Aaron 10-17 拍板，已随 1.0.17 发布（实装见 handoff/slim-1017-before-after.md） | 不是镜头 |
+| [手势分组 小样](%E6%89%8B%E5%8A%BF%E5%88%86%E7%BB%84%20%E5%B0%8F%E6%A0%B7.html)（[线上](https://claude.ai/artifact/6ShtJuF4UJnQKxpWXPcsFt)） | 手势怎么分组；已落地为 1.0.17 的「设置 → 手势」页 | 不是镜头 |
 | [1.0.18 宣传片 分镜](1.0.18%20%E5%AE%A3%E4%BC%A0%E7%89%87%20%E5%88%86%E9%95%9C.html)（[线上](https://claude.ai/artifact/9AqXZMBeDGpTztDGJQyhjY)） | 本机 bezelPath 实测刘海（含肩）、现片审片问题、按前 3 秒／完播／封面点击重排的 19 拍 45 s 节拍表、关键帧、三个封面与标题、刘海五个动作样片、声音与验收；五个问题与平台指标 Aaron 10-18 已定 | 1.0.18 宣传片（promo 工程，改片前先对这张） |
+| [WindowShade 2 宣传片 分镜](WindowShade%202%20%E5%AE%A3%E4%BC%A0%E7%89%87%20%E5%88%86%E9%95%9C.html)（[线上](https://claude.ai/artifact/9M2TkLLgiPvNFf3erN3dQ8)） | WindowShade 2 宣传片：节拍、字幕、声音与验收（10-18） | WindowShade 2 宣传片 |
 | [为什么不用最小化](为什么不用最小化.html)（[线上](https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT)） | 看不见的窗口都在刘海里，和最小化的差别 | 1.0 宣传片的收起故事、概念片第 2 章 |
 | [一颗岛](一颗岛.html)（[线上](https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac)） | 岛（紧凑两耳、最小点）与半岛（展开下鼓）、提醒回媒体、内容替换与数字过渡 | 对 Alcove / WWDC23 10194；产品刘海变形；《一句话》与概念片互训 |
 | [手边的每一样](手边的每一样.html)（[线上](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)） | 一个入口，一套动作，任何输入 | 概念片第 4 章 |
@@ -44,6 +49,6 @@
 | [用量详情](用量详情.md) | 账户多窗口与当前会话分区，长模型两行末尾省略 | 2026-10-11候选，未接产品 |
 | [隐私行](隐私行.md) | 名称、原因与当前值分列，长值收住，展开说明照原字号换行 | 2026-10-11原生行样件，整页/来源/动作未验 |
 | [隐私展开](隐私展开.md) | 原稿两列与12号正文，短标签、完整说明 | 2026-10-11候选及真实Row静态组合；整页/来源/动作未验 |
-| [隐私内容列](隐私内容列.md) | 41默认登记行的实际组件静态组合；图标缩进待统一，非生产Page | [证据](../design-review/2026-10-11-privacy-composition-and-motion-baseline/README.md) |
+| [隐私内容列](隐私内容列.md) | 41默认登记行（2026-10-11 基线；1.0.17 默认可见 35 行，需重拍）的实际组件静态组合；图标缩进待统一，非生产Page | [证据](../design-review/2026-10-11-privacy-composition-and-motion-baseline/README.md) |
 
 补稿状态：**用量**已补[静态稿](用量.md)，长在已有的编程会话实时活动里，范围与规则见 [usage.md](../usage.md)；**进度**已补[静态稿](进度.md)，拷贝、移动、下载、导出、备份这类有起点有终点的事，长在已有的实时活动里，三种量（百分比 / 第 k / n / 不确定弧）在同一排里怎么变是这一张要证明的，来源分层与准入见 [progress-in-notch.md](../progress-in-notch.md)。两份静态稿已过有限准入，后续动势与来源继续过 [design-grammar.md](../design-grammar.md) 的准入。
