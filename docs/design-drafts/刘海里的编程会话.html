@@ -197,7 +197,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
     <thead><tr><th>状态</th><th>左耳</th><th>右耳（够宽）</th><th>右耳（菜单栏挤，&lt; 54 pt）</th><th>会不会自己展开</th></tr></thead>
     <tbody>
       <tr><td>在跑</td><td>终端或 App 的图标</td><td>转圈 + 项目名，最长 64 pt 截断</td><td>只留转圈</td><td>不会；有别的活动时只是三个之一</td></tr>
-      <tr><td>等你</td><td>同上</td><td>琥珀点 + <b>等你</b></td><td>只留琥珀点</td><td><b>唯一会主动展开的</b>：先在右耳亮 0.6 s，再长成审批卡；带提示音（和番茄钟共用开关）</td></tr>
+      <tr><td>等你</td><td>同上</td><td>琥珀点 + <b>等你</b></td><td>只留琥珀点</td><td><b>唯一会主动展开的</b>：先在右耳亮 0.6 s，再长成审批卡；带提示音（全 App 一个「提示音」开关）</td></tr>
       <tr><td>完成</td><td>绿色对勾</td><td>—（提醒期间句子在刘海下方，不留额头）</td><td>同左</td><td>短暂提醒 4 s；窗口收着或在别的桌面时带一个 <b>过去</b></td></tr>
       <tr><td>好几个</td><td>最急那个的图标</td><td>个数 <b>3</b> + 最急的状态点</td><td>只留个数</td><td>不会；等你的那个照「等你」单独长卡</td></tr>
     </tbody></table></div>
@@ -357,10 +357,10 @@ Test Suite 'Pairing' started
           ${[['WindowShade','Claude Code','waiting','2 分','要执行 git push origin main'],['HomePlay','Codex','running','12 分','跑 swift test：42 通过'],['官网','Claude Code','done','刚刚','改了 3 个文件']].map((c,i)=>`
           <div class="abs card" data-card="${i}" style="left:${cx-274+i*186}px;top:44px;width:176px;height:112px">
             <div class="t13 trunc">${c[0]}</div><div class="t11">${c[1]}</div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px">
               <span class="chip ${c[2]==='waiting'?'amber':''}">${c[2]==='running'?'<span class="spin" style="width:10px;height:10px;border-width:1.6px"></span>在跑':c[2]==='waiting'?'<span class="dot" style="width:7px;height:7px"></span>等你':'<span style="color:#30d158">✓</span>完成'}</span>
               <span class="t11 tab">${c[3]}</span></div>
-            <div class="t11 trunc" style="margin-top:8px">${c[4]}</div></div>`).join('')}
+            <div class="t11 trunc" style="margin-top:5px">${c[4]}</div><div class="t11 tab" style="margin-top:2px;color:rgba(255,255,255,.45)">${['五小时余 42% · 本周余 61%','五小时余 18% · 本周余 55%','五小时余 42% · 本周余 61%'][i]}</div></div>`).join('')}
           <div class="abs count" style="left:${nx1+9}px;top:6px">3</div></div>
         ${['approve','approveHigh'].map(k=>{const hi=k==='approveHigh';return`
         <div class="layer" data-l="${k}" style="transform-origin:${nx1+14}px 14px">
@@ -514,7 +514,7 @@ const fr=document.getElementById('frames');
  ['done',false,'<b>完成</b>：对勾进左耳，句子在刘海下方，4 s 后收回。'],
  ['multi',false,'<b>好几个</b>：个数 + 最急的那个状态点。'],
  ['running',true,'<b>菜单栏挤</b>：右耳只剩转圈，项目名去展开里看。'],
- ['expanded',false,'<b>展开一排</b>：项目 · 助手 · 状态 · 多久 · 最后一句。点一下过去，停一下看一眼。']].forEach(([s,t,cap])=>{
+ ['expanded',false,'<b>展开一排</b>：项目 · 助手 · 状态 · 多久 · 最后一句，卡底一行用量（Aaron 10-29）。点一下过去，停一下看一眼。']].forEach(([s,t,cap])=>{
   const d=document.createElement('div');d.className='frame';d.innerHTML=`<div class="stage-wrap"></div><div class="cap">${cap}</div>`;fr.appendChild(d);
   const st=new Stage(d.firstElementChild,{W:s==='expanded'||s==='done'?640:300,H:s==='expanded'?190:(s==='done'?100:60),state:s,tight:t});all.push(st);});
 const af=document.getElementById('approvalFrames');

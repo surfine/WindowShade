@@ -161,3 +161,9 @@ Aaron 拍板放开的系统解锁与代填（D11）。没有可以再「抢先�
   隐私登记 presence-bridge 已入表；`build.sh --check` 退出 0。
 - 需要你：HomePlay 接收器与 iPhone 保持配对状态下跑一次，观察 WindowShade 的「离开就锁」倒数
   是否随手机验证状态翻转（真机对照，5 分钟）。
+
+## 2026-10-29 补记（[Aaron 拍板 2026-10-29](handoff/AARON-DECISIONS-2026-10-29.md)）
+
+- 展开的会话卡底加一行用量：「五小时余 42% · 本周余 61%」；快用完时右耳变「剩 p%」，恢复时短暂提醒一次（收窄范围见 usage.md）。
+- 等你的提示音并入全 App 唯一的「提示音」开关。
+- 画面稿：[刘海里的编程会话](https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm)。

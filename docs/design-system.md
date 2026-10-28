@@ -474,6 +474,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 | 提醒 | 宽 max(刘海 + 200, 400)，高 刘海 + 52 | `island.alert` 24 | 无（S3） | `bloom` |
 | 教学 | 宽 max(刘海 + 300, 500)，高 刘海 + 84 | `island.alert` 24 | 无（S3） | `bloom` |
 | 展开一排 | 宽 ≥ 刘海 + 120，高 刘海 + 142 | `island.expanded` 28；格子 14 | 无（S3） | `expand` |
+| 大卡（正在播放等，点耳朵长成） | 宽按内容；高 刘海 + 72（矮档）或 刘海 + 118（高档），72 / 118 是刘海下方的内容高（`peninsulaShort` / `peninsulaTallFloor`） | `island.expanded` 28 | 无（S3） | `expand` |
 
 **肩的硬约束**（帕累托：肩永远不能让用户失去菜单栏空位或点击）：
 - **S1 不占新的菜单栏空位。** 紧凑样式里，主体每侧宽 + e ≤ 现在的 `sideWidth`（34 起，按 NotchWatch 量到的空位收窄）。
@@ -829,3 +830,9 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 - 参考案例：`ds/wf-cases.md`
 - 本机系统读数：`hwfit/getters_out.txt`、`hwfit/screens_out.txt`、`hwfit/wf-hw.md`、`hwfit/wf-api.md`
 - 代码审计与硬件贴合方案、审查：`hwfit/wf-code.md`、`hwfit/wf-design.md`、`hwfit/wf-critique.md`、`ds/wf-review.md`
+
+### 2026-10-29 补记（[Aaron 拍板 2026-10-29](handoff/AARON-DECISIONS-2026-10-29.md)）
+
+- §5.1 加「大卡」一行：提醒 +52、展开那一排 +142 不变；72 / 118 只给大卡两档，总高再加刘海，不再叫半岛。
+- WS2 表面的弹簧拟回写为 §4.6.1，表在《刘海里的编程会话》⑤；全部用现有令牌，不进 §6。`FoldSpring` 只有临界阻尼、ω = 5.83 / response，要扩阻尼比并统一口径才能跑 bloom / expand，这一条算改值，单列单验。
+- 对账留下、尚待回写本文件的：紧凑样式进场 `settle`、退场 `calm`（C01 已落代码）；`pop` 用途补「音量亮度两耳长出」；§4.7 补「编程会话完成 4 s」「计时器时间到 10 s」两个 `alert.hold` 例外；§5.11 的欢迎窗口三步已被《首次打开 1.0.17 小样》取代。

@@ -176,7 +176,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <div class="view" id="lockView"></div>
       <div class="tabs" role="group" aria-label="认你的时刻">
         <button class="b" data-k="scan">正在认你</button>
-        <button class="b" data-k="phone">差手机</button>
+        <button class="b" data-k="phone">差手机或手表</button>
         <button class="b" data-k="ok">认出了</button>
         <button class="b" data-k="no">没认出</button>
         <button class="b" data-k="mask">戴着口罩</button>
@@ -191,7 +191,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
         <li><b>长在刘海里，不另开窗。</b>今天的工程样式是一块 320×60 的独立浮窗（<code>FaceScanStatusController</code>，<code>.floating</code>），违反 face-unlock 硬要求第 1 条。换成刘海宿主里的一个活动。</li>
         <li><b>左耳一圈在转，右耳两枚点：脸、手机。</b>点从空心变实心，哪一样还差一眼就看得出；差的那一样用虚线琥珀圈，不只靠颜色。</li>
         <li><b>只用耳朵和一道下巴。</b>需要一句话时（没认出、口罩、3 次），刘海往下长 26 pt 写一行，停在时钟上方，不碰头像和密码框。</li>
-        <li><b>结果不由动画决定。</b>对勾只在真的认出之后出现。D11 没放开之前，认出了也只写「认出了 · 用 Touch ID 解锁」，不代填密码。</li>
+        <li><b>结果不由动画决定。</b>对勾只在真的认出之后出现；脸和手机或手表都对，才在系统密码框里代填（D11 已解冻，Aaron 10-29）。分数在门槛附近时念一句随机短语补一道（声纹，只加不减）。系统没确认解锁，桌面不展开。</li>
         <li><b>一天几十次，不加戏。</b>耳朵用 <span class="mono">calm</span> 长出、<span class="mono">settle</span> 收回，不回弹；对勾是淡入，不用 <span class="mono">pop</span>。</li>
         <li><b>补光圈和刘海共存。</b>补光贴屏幕四边亮一圈，顶边那一段在菜单栏位置变弱，刘海保持纯黑。亮起用淡入，不用弹簧（亮度没有动量）。</li>
         <li><b>减少动态效果：</b>转圈改为慢速，两枚点直接换状态，下巴原处淡入。</li>
@@ -260,7 +260,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <tr><td>审批卡</td><td>旗标</td><td>同上；Touch ID 放行在真机走一遍；2 分钟交回终端真机走一遍</td><td>两次真机</td><td>跟编程会话同一个开关</td></tr>
       <tr><td>指挥页（Codex / Claude 只读、按住说话）</td><td>旗标</td><td>Mac 本机部分（按住说话、Codex / Claude 只读）：页面探针已过 + 真 Claude 一次；遥控提示那一行另等真 iPhone E1–E5</td><td>真 Claude 一次；E1–E5 只卡遥控提示</td><td>设置 → 指挥模式 · 指挥模式，默认关</td></tr>
       <tr><td>认你指示 + 补光圈</td><td>旗标</td><td>挪进刘海宿主；真锁屏开合；攻击矩阵有实测</td><td>宿主搬家、真锁屏、攻击矩阵</td><td>设置 → 隐私 · 刷脸解锁（实验），默认关</td></tr>
-      <tr><td>系统解锁 / 代填密码（D11）</td><td>没有</td><td>Aaron 拍板</td><td>拍板</td><td>不在本稿范围</td></tr>
+      <tr><td>代填密码与声纹辅助（D11）</td><td>没有（10-29 解冻）</td><td>攻击矩阵五种都有实测；帧率与耗电不比 1.0.15 差；Touch ID 保护的密码会话真机走通</td><td>全部</td><td>跟刷脸解锁（实验）同一个开关，默认关</td></tr>
     </tbody></table></div>
   <p class="cap" style="margin-top:12px">每个门槛都要有证据：<code>build.sh --check</code> 退出 0、对应探针、文案过 copy-guide、新读取点登记进隐私页、减少动态效果有替代姿态。缺一项就留在旗标后面。</p>
 </section>
@@ -272,7 +272,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
     <thead><tr><th>#</th><th>哪里</th><th>现在</th><th>这张稿</th></tr></thead>
     <tbody>
       <tr><td class="num">1</td><td>认你指示的宿主</td><td>独立 320×60 浮窗（<code>FaceScanStatusController</code>）</td><td>刘海宿主里的活动；硬要求第 1 条本来就这么写</td></tr>
-      <tr><td class="num">2</td><td>认出后的话</td><td>「认出了，交给系统」</td><td>D11 前改「认出了 · 用 Touch ID 解锁」：说清下一步，不暗示已经代填</td></tr>
+      <tr><td class="num">2</td><td>认出后的话</td><td>「认出了，交给系统」</td><td>D11 已解冻（10-29）：认出后直接代填，下巴只写「认出了」；没认出才写出路</td></tr>
       <tr><td class="num">3</td><td>补光圈亮度</td><td>四周 160 pt 渐变，白 0.08 → 0（<code>FaceFillLightController</code>）</td><td>0.08 在暗处几乎照不亮脸；示意画到 0.55、90 pt。具体值要在真机暗室里量，算改值，单列单验</td></tr>
       <tr><td class="num">4</td><td>指挥页的「程度」</td><td>代码用「程度」「思考程度」；《指挥模式》稿用「档位」</td><td>界面用「程度」（代码现值）；「档位」只留在说明里。提议进 copy-guide 固定词汇</td></tr>
     </tbody></table></div>
@@ -306,10 +306,10 @@ const dot=(cls,t)=>`<span class="fdot ${cls}"><i></i>${t}</span>`;
 const CHK='<svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9" fill="#fff"/><path d="M5 9.3l2.6 2.5L13 6.4" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 const TID='<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M5 9a7 7 0 0 1 14 0"/><path d="M8 11.5a4 4 0 0 1 8 0c0 3-1 6-2.5 8"/><path d="M12 11v2c0 3-1 5-2.5 7"/><path d="M4.5 13c0 2 .3 3.5 1 5"/></g></svg>';
 const L={
-  scan:{l:'<div class="ringspin"></div>',r:dot('','脸')+' '+dot('','手机'),chin:'',cap:'<b>正在认你</b>：开盖、唤醒、或在锁屏上按空格时出现。两枚点都空着。'},
-  phone:{l:'<div class="ringspin"></div>',r:dot('ok','脸')+' '+dot('miss','手机'),chin:'',cap:'<b>差手机</b>：脸对了，手机还没对上。手机那枚是虚线琥珀圈，不只换颜色。'},
-  ok:{l:CHK,r:dot('ok','脸')+' '+dot('ok','手机'),chin:'认出了 · 用 Touch ID 解锁',cap:'<b>认出了</b>：两样都对才打勾。D11 没放开前不代填密码，所以下巴写清下一步。'},
-  no:{l:TID,r:dot('miss','脸')+' '+dot('ok','手机'),chin:'没认出，用 Touch ID 或密码',cap:'<b>没认出</b>：交回系统。左耳换成 Touch ID 符号，告诉你手该放哪。'},
+  scan:{l:'<div class="ringspin"></div>',r:dot('','脸')+' '+dot('','手机或手表'),chin:'',cap:'<b>正在认你</b>：开盖、唤醒、或在锁屏上按空格时出现。两枚点都空着。'},
+  phone:{l:'<div class="ringspin"></div>',r:dot('ok','脸')+' '+dot('miss','手机或手表'),chin:'',cap:'<b>差手机或手表</b>：脸对了，随身设备还没对上。那一枚是虚线琥珀圈，不只换颜色。'},
+  ok:{l:CHK,r:dot('ok','脸')+' '+dot('ok','手机或手表'),chin:'认出了',cap:'<b>认出了</b>：两样都对才打勾，随后在系统密码框里代填（D11 已于 10-29 解冻）；系统确认解锁后桌面才从刘海展开。'},
+  no:{l:TID,r:dot('miss','脸')+' '+dot('ok','手机或手表'),chin:'没认出，用 Touch ID 或密码',cap:'<b>没认出</b>：交回系统。左耳换成 Touch ID 符号，告诉你手该放哪。'},
   mask:{l:TID,r:'',chin:'戴着口罩，用 Touch ID',cap:'<b>戴着口罩</b>：直接说出路，不先转一圈让人干等。'},
   three:{l:TID,r:'',chin:'这次锁屏请用 Touch ID 或密码',cap:'<b>3 次了</b>：这次锁屏不再认，下次锁屏重新开始。'}};
 function lock(k){const s=L[k];const chinOn=!!s.chin;const wR=s.r?96:30,wL=30;
@@ -392,9 +392,9 @@ sv.innerHTML=`<div class="canvas" style="width:${SW}px;height:${SH}px"><div clas
     <div style="font-size:11px;color:var(--winsub)">选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。</div>
     <div class="grp">
       <div class="row"><span class="ic" style="background:#5e5ce6">&gt;_</span><span class="tt">编程会话<div class="sub">在刘海里看 Claude Code 和 Codex</div></span><span class="btnm">连接…</span><span class="sw"></span></div>
-      <div class="row"><span class="ic" style="background:#ff9f0a">✦</span><span class="tt">指挥模式<div class="sub">先在遥控模式里打开</div></span><span class="sw"></span></div>
+      <div class="row"><span class="ic" style="background:#ff9f0a">✦</span><span class="tt">指挥模式<div class="sub">坐在 Mac 前也能用；iPhone 遥控在「遥控器」页</div></span><span class="sw"></span></div>
       <div class="row"><span class="ic" style="background:#8e8e93">♪</span><span class="tt">提示音<div class="sub">每一拍轻敲一声。</div></span><span class="sw on"></span></div></div>
-    <div style="font-size:11px;color:var(--winsub);margin-top:10px">编程会话和指挥模式默认关；提示音跟着指挥模式走。没过门槛的表面不在这里出现。</div>
+    <div style="font-size:11px;color:var(--winsub);margin-top:10px">编程会话和指挥模式默认关；「提示音」全 App 一个开关（等你、完成、拍子都听它）。没过门槛的表面不在这里出现。</div>
   </div></div></div>`;
 fit(sv,sv.firstElementChild,SW,SH);
 })();
