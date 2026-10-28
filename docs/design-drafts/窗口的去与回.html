@@ -1,0 +1,460 @@
+<style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+</style>
+<title>窗口的去与回</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版式：系列纸面。先给结论，再给两块能动手的样片（去与回地图、代理先动），然后是文法表、屏幕边、与系统共处、记分卡。
+   画面里只用系统语义色：强调色 = controlAccentColor 近似，琥珀 = systemOrange，绿 = systemGreen，红 = systemRed。 */
+:root{
+  --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --ink3:#6e6f76; --rule:rgba(0,0,0,.1);
+  --accent:#0058cc; --amber:#c76a00; --green:#1f8a3b; --red:#c4312a;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.66); --menutext:#1b1b1d; --win:#ffffff; --winbar:#ececec; --wintext:#3a3a3c;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.66); --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.66); --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+header{padding:36px 0 6px}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.06em;color:var(--ink3)}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:10px 0 14px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:24px;line-height:1.3;margin:0;text-wrap:balance}
+h3{font-size:15.5px;margin:0 0 4px}
+.lede{max-width:70ch;color:var(--ink2);margin:0}
+section{padding:52px 0 0}
+.sec-head{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;margin-bottom:18px}
+.sec-head .n{font:500 13px var(--f-mono);color:var(--ink3)}
+.sec-head p{grid-column:2;margin:0;color:var(--ink2);max-width:72ch}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+.sev{display:inline-block;font:600 11px/1 var(--f-mono);padding:4px 6px;border-radius:5px;white-space:nowrap;vertical-align:1px}
+.sev.hi{background:color-mix(in srgb,var(--red) 16%,transparent);color:var(--red)}
+.sev.mid{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.sev.lo{background:color-mix(in srgb,var(--ink) 9%,transparent);color:var(--ink2)}
+.st{font:600 11px/1 var(--f-mono);padding:4px 6px;border-radius:5px;white-space:nowrap}
+.st.ok{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.st.part{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.st.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.concl{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.concl li{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px 14px}
+.concl b{display:block;font-size:15.5px;margin-bottom:2px}
+.concl span.t{color:var(--ink2);font-size:14px}
+.thesis{margin-top:14px;padding:12px 14px;border-left:3px solid var(--accent);color:var(--ink2);max-width:76ch}
+.thesis b{color:var(--ink)}
+
+/* 舞台 */
+.two{display:grid;grid-template-columns:1.25fr .75fr;gap:22px;align-items:start}
+.two>*{min-width:0}
+@media (max-width:880px){.two{grid-template-columns:1fr}}
+.view{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--rule);touch-action:none;user-select:none;-webkit-user-select:none}
+.canvas{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys)}
+.desk{position:absolute;inset:0;background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
+.menubar{position:absolute;left:0;right:0;top:0;height:22px;background:var(--menubar);display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:11px;color:var(--menutext);z-index:3}
+.notch{position:absolute;top:0;height:22px;background:#000;border-radius:0 0 8px 8px;z-index:4}
+.dock{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);height:30px;padding:0 10px;border-radius:10px;background:color-mix(in srgb,var(--sheet) 60%,transparent);display:flex;gap:7px;align-items:center;z-index:3}
+.dock i{width:18px;height:18px;border-radius:5px;display:block}
+.win{position:absolute;background:var(--win);border-radius:9px;box-shadow:0 10px 26px rgba(0,0,0,.2);overflow:hidden;z-index:2}
+.win .bar{height:22px;background:var(--winbar);display:flex;align-items:center;gap:5px;padding:0 8px;font:600 10px/22px var(--f-sys);color:var(--wintext);cursor:grab}
+.win .bar i{width:8px;height:8px;border-radius:50%;display:block}
+.win .body{position:absolute;left:0;right:0;top:22px;bottom:0;padding:10px;font:11px/1.5 var(--f-sys);color:var(--wintext);opacity:.75}
+.win .body p{margin:0 0 4px}
+.ghost{position:absolute;border-radius:9px;border:1.5px dashed color-mix(in srgb,var(--ink) 35%,transparent);z-index:1}
+.target{position:absolute;border-radius:10px;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);z-index:1;pointer-events:none;opacity:0;transition:opacity .12s}
+.hud{position:absolute;left:50%;top:34px;transform:translateX(-50%);width:200px;height:34px;border-radius:17px;background:color-mix(in srgb,var(--sheet) 82%,transparent);box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:5;opacity:0;transition:opacity .12s;font:600 11px/34px var(--f-sys);text-align:center;color:var(--ink)}
+.hud .fill{position:absolute;left:0;top:0;bottom:0;border-radius:17px;background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.hud span{position:relative}
+.ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px}
+.ctrl .lab{font:500 11px var(--f-mono);color:var(--ink3);margin-right:2px}
+button.b{font:500 13px/1 var(--f-body);padding:8px 11px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink3)}
+button.b[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px}
+.card h3{font-size:18px;margin:0 0 6px}
+.card p{margin:0 0 8px;color:var(--ink2);font-size:14px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13.5px}
+.kv dt{color:var(--ink3);font:500 11.5px var(--f-mono);padding-top:3px}
+.kv dd{margin:0}
+.log{margin-top:10px;font:12px/1.6 var(--f-mono);color:var(--ink2);background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:8px 12px;min-height:40px}
+.log b{color:var(--ink);font-weight:500}
+
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:760px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+th{font:500 11.5px var(--f-mono);color:var(--ink3);letter-spacing:.03em;background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.num{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+td.bad{color:var(--red)}
+.screens{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.screens figure{margin:0;min-width:0}
+.screens svg{width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--rule)}
+.screens figcaption{font-size:13px;color:var(--ink2);margin-top:6px}
+.callout{background:var(--sheet);border:1px solid var(--rule);border-left:3px solid var(--red);border-radius:0 12px 12px 0;padding:12px 16px;margin-top:16px}
+.callout h3{margin:0 0 4px}
+.callout p{margin:0;color:var(--ink2);font-size:14px;max-width:80ch}
+ol.asks{margin:0;padding-left:1.3em;color:var(--ink2)}
+ol.asks li{margin:.35em 0}
+ol.asks b{color:var(--ink)}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink3)}
+</style>
+
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">十 检讨 · 第 34 张 · 窗口的去与回</span><span class="ws-st">检讨稿 · 10-29 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/PW4sinizyKBD28HG6TA3H7">← WindowShade 的一天</a></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">WINDOWSHADE · 检讨稿 · 2026-10-29 · 只调研，不改代码</div>
+  <h1>窗口的去与回</h1>
+  <p class="lede">照 Chan Karunamuni 参与的三场讲座、Apple 的人机界面指南、macOS 自己的平铺，以及两个 Apple 设计技能包，把 WindowShade 的窗口管理从头查了一遍：33 张稿、27 种交互、<code>main</code> 上的代码。底子是好的；问题在整体：去处太多、回来的路各不相同、手指动的时候窗口不动、手势没有替身、和系统抢同一块地。</p>
+  <p class="thesis"><b>一句话</b>：窗口去哪里，就从哪里回来；手指在动，窗口就在动；每个手势都有一条不用手势的路。</p>
+</header>
+
+<section id="concl">
+  <div class="sec-head"><span class="n">①</span><h2>结论</h2>
+    <p>完整的十四条发现、证据行号与出处在 <code>docs/design-review/2026-10-29-hci-multitasking/README.md</code>。这里只放最重的几条。</p></div>
+  <ul class="concl">
+    <li><span class="sev hi">高</span><div><b>十一种去处，七个回来的动词</b><span class="t">「看不见的每一扇窗都在刘海里」只兑现了一半：去处都进了那一排，回来的路各走各的。「让开」一个词用在五处。</span></div></li>
+    <li><span class="sev hi">高</span><div><b>手指动的时候窗口不动</b><span class="t">标题栏左右、角、张、捏，键盘与菜单排布，过程中只有一条进度条，松手后窗口瞬移。甩一下、晃一晃、拖到窗口上并排在过程中都没有画面。</span></div></li>
+    <li><span class="sev hi">高</span><div><b>动画中的窗口不接手势</b><span class="t">滑行、收起、飞进刘海的途中都不能接住或改道，而总稿写着「没松手前改方向，窗口跟手回来」。</span></div></li>
+    <li><span class="sev hi">高</span><div><b>手势没有替身</b><span class="t">状态栏菜单没有半屏、铺满、撤销；新装没有快捷键；只能拖的功能没有 VoiceOver 路径。</span></div></li>
+    <li><span class="sev hi">高</span><div><b>和系统抢同一块地</b><span class="t">标题栏双击盖掉系统设置；拖到菜单栏在 macOS 15 起是系统的「填满」，落点小岛正长在那里；10 月 28 日的触控 MacBook Pro 把 Dynamic Island 搬上了 Mac。</span></div></li>
+    <li><span class="sev mid">中</span><div><b>同一个输入，几种意思；意图靠计时器</b><span class="t">捏、张、上、下、点、长按、拖到边各有三四种意思；停留时间从 0.12 到 0.55 秒有十几种。</span></div></li>
+  </ul>
+</section>
+
+<section id="map">
+  <div class="sec-head"><span class="n">②</span><h2>去与回地图</h2>
+    <p>一扇窗离开眼前的每一种去处。点一种，窗口按现在的路去；再点「回来」，看它回来的路是不是去时的反方向。右边写着现在怎么去、怎么回、叫什么，以及建议。</p></div>
+  <div class="two">
+    <div>
+      <div class="view" id="mapView"></div>
+      <div class="ctrl" id="mapBtns" role="group" aria-label="去处"></div>
+      <div class="ctrl"><button class="b" id="mapBack">回来</button><button class="b" id="mapRM" aria-pressed="false">减少动态效果</button></div>
+    </div>
+    <div class="card" id="mapCard" aria-live="polite"></div>
+  </div>
+  <p class="thesis" style="margin-top:18px"><b>建议的模型</b>：离眼前只分三种距离——<b>原处</b>（卷帘条、缩略图）、<b>屏幕边</b>（侧拉、画中画、卷轴屏外）、<b>刘海</b>（收进刘海；系统的最小化、隐藏、别的桌面也显示在那一排里）。规则只有两条：每一种都在刘海那一排里；在那一排里点一下，一律回到原处，回来的路是去时的反方向。系统的三种由我们的代理从你点的那一格长出来，再交给系统还原。</p>
+</section>
+
+<section id="proxy">
+  <div class="sec-head"><span class="n">③</span><h2>代理先动，真窗后到</h2>
+    <p>拖标题栏试试：往左、往右、往上，甩一下，或者在它落定前再抓住它。「现在」是松手才动：过程中只有一条进度条，松手后窗口瞬移。「建议」由我们自己的一层代理 1:1 跟手，目标外框从当前外框长向终点，松手按投影选终点，落定那一刻才写一次真窗口外框。键盘排布走同一条动画。</p></div>
+  <div class="two">
+    <div>
+      <div class="view" id="pxView"></div>
+      <div class="ctrl"><span class="lab">做法</span>
+        <button class="b" id="mNow" aria-pressed="false">现在：松手才动</button>
+        <button class="b" id="mNew" aria-pressed="true">建议：代理先动</button>
+        <button class="b" id="pxRM" aria-pressed="false">减少动态效果</button></div>
+      <div class="ctrl"><span class="lab">键盘</span>
+        <button class="b" data-k="left">⌃⌘← 左半屏</button><button class="b" data-k="right">⌃⌘→ 右半屏</button><button class="b" data-k="fill">⌃⌘↓ 铺满</button><button class="b" data-k="home">撤销上次排布</button></div>
+      <div class="log" id="pxLog" aria-live="polite">拖标题栏开始。</div>
+    </div>
+    <div class="card">
+      <h3>这块样片在证明什么</h3>
+      <dl class="kv">
+        <dt>跟手</dt><dd>代理 1:1 跟着指针，保持你抓住的那一点；拖出屏幕时有橡皮筋阻力（803，Marcos 52:50；Chan 17:01）。</dd>
+        <dt>画结果</dt><dd>目标外框从窗口当前的样子长向终点，不是一条进度条（design-system 原则 7）。</dd>
+        <dt>投影</dt><dd>松手速度乘减速率 0.998 投影出落点，再选最近的终点（803，Nathan 41:06；FlickMotion.projection）。</dd>
+        <dt>可打断</dt><dd>落定前再按住，代理从当前位置和速度接着跟手，不跳、不停（803，Chan 06:51）。</dd>
+        <dt>写一次</dt><dd>辅助功能写外框只在落定时一次；现在是松手后连写两次。</dd>
+        <dt>减少动态效果</dt><dd>代理在原处淡出、终点淡入，不滑（HIG Motion；design-system §4.9）。</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="grammar">
+  <div class="sec-head"><span class="n">④</span><h2>手势文法：一个输入，一种意思</h2>
+    <p>现在同一个输入在不同表面意思不同。建议方向与大小在全 App 只有一种意思：<b>上 = 离开，下 = 回来，捏 = 变小或撤销，张 = 变大或铺开，点 = 看或回到原处，长按 = 更多</b>。红字是和文法相反的现状。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>输入</th><th>标题栏</th><th>刘海</th><th>画中画 / 其他</th><th>建议的意思</th></tr></thead>
+    <tbody>
+      <tr><td>两指上 / 上推</td><td>收起（铺满时 = 撤销）</td><td>全部收进刘海（启动台开着时 = 返回）</td><td>Dock 图标：显示这个 App 的全部窗口</td><td>离开：收起、收进刘海</td></tr>
+      <tr><td>两指下 / 下拉</td><td>铺满、展开</td><td>放回</td><td class="bad">Dock 图标：让开这个 App</td><td>回来：展开、放回</td></tr>
+      <tr><td>捏</td><td>撤销上次排布</td><td class="bad">回到主屏幕</td><td>画中画变小</td><td>变小或撤销</td></tr>
+      <tr><td>张开</td><td>魔法平铺；卷轴里 = 卷轴概览</td><td class="bad">全部收进刘海</td><td>画中画变大</td><td>变大或铺开：刘海上 = 展开那一排</td></tr>
+      <tr><td>点</td><td>双击收起，三击交给系统</td><td>一下主屏幕 / 两下调度中心 / 三下这个 App 的窗口（要等 0.3 秒）</td><td>卷帘条 = 看一眼；缩略图 = 展开</td><td>看或回到原处；单击不等多击</td></tr>
+      <tr><td>长按</td><td class="bad">0.55 秒弹出五项菜单（没写进任何文档）</td><td>0.5 秒 = 文件架</td><td>Dock 图标 0.45 秒交给系统</td><td>更多选项，并写进手势表</td></tr>
+      <tr><td>晃</td><td class="bad">左右晃，上下晃也算</td><td>—</td><td>—</td><td>只认左右</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="edges">
+  <div class="sec-head"><span class="n">⑤</span><h2>拖到屏幕边</h2>
+    <p>同一个「拖到边」，在四个地方算法不同；启动台的顺序和标题栏正好相反。建议全 App 一套分区，由外到里：最外 8 点让给系统平铺 → 侧拉带 → 四角画中画 → 顶部中央刘海。</p></div>
+  <div class="screens" id="screens"></div>
+</section>
+
+<section id="system">
+  <div class="sec-head"><span class="n">⑥</span><h2>与系统共处</h2>
+    <p>macOS 15 起有自己的平铺；macOS 27 统一了窗口圆角；新的触控 MacBook Pro 有触控和 Dynamic Island。下表每一行都有一手出处。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>地方</th><th>系统</th><th>WindowShade 现在</th><th>建议</th><th>严重度</th></tr></thead>
+    <tbody>
+      <tr><td>标题栏双击</td><td>系统设置里选缩放或最小化；触控 Mac 双击窗口铺满</td><td>默认收起；吞掉第二下；主线程判断超过 500 ms 就放行；任何修饰键都跳过，文档只说 ⌥</td><td>首次打开明说「双击改成收起窗口」；设置给「照系统设置」；判断放到 tap 线程</td><td><span class="sev hi">高</span></td></tr>
+      <tr><td>拖到菜单栏</td><td>拖到菜单栏 = 填满桌面；拖穿顶边 = 调度中心</td><td>落点小岛长在菜单栏中央；代码里没找到对这两条的处理</td><td>只在指针进到刘海那一格时出岛；真机核对两套预览</td><td><span class="sev hi">高</span></td></tr>
+      <tr><td>拖到左右边、四角</td><td>系统平铺</td><td>贴边 3 点内让给系统；侧拉区内缩 8 点</td><td>保持；启动台分区改成同一顺序</td><td><span class="sev lo">低</span></td></tr>
+      <tr><td>绿色按钮</td><td>悬停出 Move &amp; Resize、Fill &amp; Arrange、全屏</td><td>卷帘条 0.55 秒后转给系统；窗口浏览卡片只进入全屏</td><td>保持（10-29 已定）</td><td><span class="sev lo">低</span></td></tr>
+      <tr><td>快捷键</td><td>Fn-⌃-方向键是系统平铺；HIG 建议不用 Control 当修饰键</td><td>默认不占；文档举例 ⌃⌘C、⌃⌘↑ 分别和「复制格式」、Finder 同键</td><td>录制时查冲突表并提示</td><td><span class="sev mid">中</span></td></tr>
+      <tr><td>调度中心里 ⌘W / ⌘Q</td><td>发给前台 App</td><td>改成关指着的那扇</td><td>讲清楚；考虑默认关</td><td><span class="sev mid">中</span></td></tr>
+      <tr><td>窗口圆角</td><td>macOS 27：所有窗口同一个更紧的圆角；没有公开读取接口</td><td>卷帘条、缩略图、画中画沿用写好的半径</td><td>按 14/15、26、27 三档在真机量，进令牌</td><td><span class="sev mid">中</span></td></tr>
+      <tr><td>刘海</td><td>新 MacBook Pro：Dynamic Island 是 Spotlight、实时活动、Siri AI 的新家</td><td>刘海里的岛、实时活动、点一二三下</td><td>见下</td><td><span class="sev hi">高</span></td></tr>
+    </tbody></table></div>
+  <div class="callout">
+    <h3>触控 MacBook Pro 与 Mac 上的 Dynamic Island（2026-10-28 发布，11 月 6 日上市）</h3>
+    <p>Apple 新闻稿原话：「The Dynamic Island comes to the Mac, serving as the new home for Spotlight, Live Activities, and Siri AI」，以及「double-tap a window to fill the screen, or flick to tile it into place」。这让「刘海是 Mac 的新入口」第一次遇到系统的正式住户；触控没有悬停，看一眼、刘海悬停展开、窗口浏览在触控下都缺入口。建议 11 月 6 日后先在真机上调研，再定：在有系统岛的机型上不自己画在上面；看一眼在触控下改长按；标题栏双击在触控时让给系统。旧的刘海机型会不会得到 Dynamic Island，Apple 没说。</p>
+  </div>
+</section>
+
+<section id="score">
+  <div class="sec-head"><span class="n">⑦</span><h2>记分卡</h2>
+    <p>窗口这条线，按 803 的原则、HIG 与两个技能包的检查清单逐项打分。</p></div>
+  <div class="tbl"><table id="scoreTbl">
+    <thead><tr><th>维度</th><th>出处</th><th>现在</th><th>一句话</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section id="drafts">
+  <div class="sec-head"><span class="n">⑧</span><h2>稿说的，和做到的</h2>
+    <p>从设计稿出发对代码，十八处对不上里最要紧的七处。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>稿或文档说</th><th>实际</th><th>出处</th></tr></thead>
+    <tbody>
+      <tr><td>每个手势都有菜单或快捷键可以代替（design-system V5）</td><td>菜单没有半屏、铺满、撤销；新装没有快捷键</td><td class="num">MenuBarController.swift:118-150</td></tr>
+      <tr><td>没松手前改方向，窗口跟手回来（总稿 §六）</td><td>动画中不接手势；飞行中不能接住</td><td class="num">TrackpadGestures.swift:931-936</td></tr>
+      <tr><td>收起是招牌的「卷」</td><td>「收起窗口时的动画」默认关，还要屏幕录制</td><td class="num">EffectSession.swift:206</td></tr>
+      <tr><td>减少动态效果时挪位置改淡入淡出（§4.6）</td><td>真窗口仍在滑，只是不回弹</td><td class="num">Motion.swift:126-130</td></tr>
+      <tr><td>教学停 coach.hold 6.6 秒（§4.7）</td><td>手势教学走 alert.hold 2.6 秒</td><td class="num">Notch.swift:1555-1570</td></tr>
+      <tr><td>刘海单击不等双击（§6-14）</td><td>仍等 ≤0.3 秒分辨单双三击</td><td class="num">Notch.swift:3187-3203</td></tr>
+      <tr><td>只用系统语义色（§4.3）</td><td>窗口浏览的红黄绿写死 sRGB</td><td class="num">WindowBrowserTrafficLights.swift:28-33</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="asks">
+  <div class="sec-head"><span class="n">⑨</span><h2>要 Aaron 定的</h2><p>这一轮不改代码。下面六件定了，才能进下一步的小样。</p></div>
+  <ol class="asks">
+    <li><b>那一排上用一个回来的词。</b>原处、屏幕边、刘海三种距离都在那一排里，点一下回到原处；各表面自己的动词保留。</li>
+    <li><b>刘海「张开」改成展开那一排</b>，全部收进刘海交给「上推」。</li>
+    <li><b>标题栏双击</b>：保持默认收起并在首次打开明说，还是照系统设置。</li>
+    <li><b>有系统 Dynamic Island 的触控 MacBook Pro</b>上，刘海那颗岛怎么办。</li>
+    <li><b>「收起窗口时的动画」要不要默认开</b>：招牌动作现在默认没有动画。</li>
+    <li><b>撤销扩成排布历史</b>，覆盖收起、收进刘海、侧拉、画中画与排布。</li>
+  </ol>
+</section>
+
+<footer>依据：Chan Karunamuni 个人网站列出的作品——WWDC18「Designing Fluid Interfaces」（803；原则与教学段是 Chan，弹簧与投影是 Nathan de Vries，点按与滑动是 Marcos Alonso）、WWDC23 10194 后半、WWDC25 219 前段；Apple HIG（Windows、Going full screen、Keyboards、Pointing devices、Drag and drop、Motion、Materials）；support.apple.com「Tile windows on Mac」；WWDC26 Keynote；Apple Newsroom 2026-10-28；技能包 haider-nawaz/liquid-glass-skill 与 dickwu/apple-design-skill；WindowShade 的 33 张稿、design-system、gestures、direction 与 <code>main</code> 代码。画面是示意，比例按 1440×932；样片里的数字（减速率 0.998、橡皮筋、弹簧）取自 design-system §4.6 与 FlickMotion。</footer>
+</div>
+
+<script>
+(()=>{
+const RM_SYS=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SPR={calm:[.34,1],settle:[.38,1],glide:[.42,.88],flyOut:[.38,.9],reduced:[.25,1]};
+class Spring{constructor(x){this.x=x;this.v=0;this.t=x;this.set('settle')}
+  set(n){const p=SPR[n];this.k=(2*Math.PI/p[0])**2;this.c=4*Math.PI*p[1]/p[0]}
+  step(dt){const a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt}
+  rest(){return Math.abs(this.x-this.t)<.3&&Math.abs(this.v)<4}}
+function fit(view,canvas,W,H){const f=()=>{const s=view.clientWidth/W;canvas.style.transform=`scale(${s})`;view.style.height=H*s+'px';view.dataset.s=s};f();new ResizeObserver(f).observe(view)}
+const W=640,H=400,MB=22,NW=110;
+function deskHTML(){return `<div class="desk"></div><div class="menubar"><span>&#63743;&nbsp;&nbsp;<b>备忘录</b>&nbsp;&nbsp;文件&nbsp;&nbsp;编辑</span><span>周三 10:20</span></div>
+ <div class="notch" style="left:${(W-NW)/2}px;width:${NW}px"></div>
+ <div class="dock"><i style="background:#ffcc00"></i><i style="background:#34c759"></i><i style="background:#0a84ff"></i><i style="background:#ff375f"></i><i style="background:#8e8e93"></i></div>`}
+function winHTML(id,title){return `<div class="win" id="${id}"><div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span style="flex:1;text-align:center;margin-right:30px">${title}</span></div><div class="body"><p>周三的会议纪要</p><p>· 卷帘条的圆角按系统版本取值</p><p>· 甩一下要能在半路接住</p><p>· 回来的路 = 去的路</p></div></div>`}
+
+/* ───── ② 去与回地图 ───── */
+const HOME={x:180,y:90,w:280,h:200};
+const DEST=[
+ {k:'strip',name:'卷帘条',frame:{x:180,y:90,w:280,h:22},go:'双击标题栏、两指上推、菜单「收起窗口」',back:'展开窗口：双击卷帘条、两指下拉',row:true,same:'part',note:'同一条路（卷上去、放下来），但「收起窗口时的动画」默认关，还要屏幕录制；关着时是瞬间变成一条。'},
+ {k:'thumb',name:'缩略图',frame:{x:300,y:180,w:120,h:86},go:'同「收起窗口」，设置里「收起后的样子」选缩略图',back:'点一下原地展开',row:true,same:'ok',note:'原地缩小、原地展开，空间一致。'},
+ {k:'notch',name:'收进刘海',frame:{x:(W-36)/2,y:2,w:36,h:18},go:'甩一下标题栏朝刘海、落点小岛、菜单「收进刘海」、刘海上推 / 张开',back:'放回：点那一格、刘海下拉',row:true,same:'part',note:'飞进去、飞出来走同一条路；但飞行中接不住，总稿说的「没松手前改方向」只在松手前成立。'},
+ {k:'slide',name:'侧拉',frame:{x:W-4,y:120,w:200,h:220},go:'拖到屏幕边停 0.25 秒、菜单「侧拉当前窗口」',back:'拉出侧拉的窗口（把手）、退出侧拉',row:true,same:'ok',note:'滑出去、滑回来，同一条路；收边时屏幕上只留 4 点，看不出是一扇窗。'},
+ {k:'pip',name:'画中画',frame:{x:W-176,y:H-150,w:160,h:100},go:'拖到角落停 0.25 秒、菜单「画中画」',back:'回到原处',row:true,same:'ok',note:'缩到角落、按投影落角，回到原处走原路。'},
+ {k:'scroll',name:'卷轴屏外',frame:{x:-270,y:60,w:280,h:300},go:'魔法平铺放不下时自动接成卷轴（隐式）',back:'两指左右滑、卷轴概览',row:false,same:'part',note:'走和回是同一条横向的路，但进入是隐式的，标题栏手势也随之改了意思，只剩 10 点边条。'},
+ {k:'min',name:'最小化（系统）',frame:{x:W/2-12,y:H-34,w:24,h:18},go:'⌘M、黄灯',back:'还原（那一排里标「不是实时画面」）',row:true,same:'no',note:'从刘海那一格点回来时，窗口是系统从程序坞还原的：你点的是刘海，它从下面回来。建议代理从那一格长出，再交给系统还原。'},
+ {k:'hide',name:'隐藏（系统）',frame:{x:180,y:90,w:280,h:200,o:0},go:'⌘H、再点一次 Dock 图标（让开这个 App）',back:'还原；点 Dock 图标',row:true,same:'part',note:'系统没有动画；「让开」一词又用在晃一晃、侧拉、窗口浏览等五处。'},
+ {k:'space',name:'别的桌面（系统）',frame:{x:-300,y:90,w:280,h:200},go:'系统切桌面、拖到边停一下',back:'去（切过去）',row:true,same:'part',note:'停在格子上能看一眼；点一下是你过去，不是窗口过来——这一条与其他去处方向相反。'}];
+const mv=document.getElementById('mapView');
+mv.innerHTML=`<div class="canvas" style="width:${W}px;height:${H}px">${deskHTML()}<div class="ghost" style="left:${HOME.x}px;top:${HOME.y}px;width:${HOME.w}px;height:${HOME.h}px"></div>${winHTML('mwin','会议纪要')}</div>`;
+const mc=mv.firstElementChild;fit(mv,mc,W,H);
+const mwin=mc.querySelector('#mwin');
+let mapRM=RM_SYS;
+const MS={x:new Spring(HOME.x),y:new Spring(HOME.y),w:new Spring(HOME.w),h:new Spring(HOME.h),o:new Spring(1)};
+function mapGo(f,tok){for(const k in MS){MS[k].set(mapRM?'reduced':tok);MS[k].t=(f[k]??(k==='o'?1:MS[k].t));if(mapRM){MS[k].v=0}}
+  if(mapRM){ // 减少动态效果：原处淡出、目标处淡入，不滑
+    mwin.style.transition='opacity .12s';mwin.style.opacity=0;
+    setTimeout(()=>{for(const k in MS){MS[k].x=MS[k].t;MS[k].v=0}paintMap();mwin.style.opacity=f.o??1},140);}}
+function paintMap(){const r={x:MS.x.x,y:MS.y.x,w:Math.max(8,MS.w.x),h:Math.max(6,MS.h.x)};
+  Object.assign(mwin.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'});
+  if(!mapRM)mwin.style.opacity=Math.max(0,Math.min(1,MS.o.x));
+  mwin.querySelector('.body').style.opacity=r.h>60?.75:0;}
+let cur=null;
+const card=document.getElementById('mapCard');
+const SAME={ok:['ok','同一条路'],part:['part','一半'],no:['no','不是同一条路']};
+function showCard(d){const s=SAME[d.same];
+  card.innerHTML=`<h3>${d.name}</h3><p>${d.note}</p><dl class="kv"><dt>怎么去</dt><dd>${d.go}</dd><dt>怎么回</dt><dd>${d.back}</dd>
+  <dt>在那一排里</dt><dd>${d.row?'<span class="st ok">在</span>':'<span class="st no">不在</span>'}</dd><dt>去回同路</dt><dd><span class="st ${s[0]}">${s[1]}</span></dd>
+  <dt>建议</dt><dd>在那一排里点一下 = 回到原处；回来的路是去时的反方向。</dd></dl>`}
+const mb=document.getElementById('mapBtns');
+DEST.forEach(d=>{const b=document.createElement('button');b.className='b';b.textContent=d.name;b.setAttribute('aria-pressed','false');
+  b.onclick=()=>{cur=d;mb.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));showCard(d);mapGo(d.frame,d.k==='notch'?'flyOut':'settle')};mb.appendChild(b)});
+document.getElementById('mapBack').onclick=()=>{mapGo({...HOME,o:1},'settle');mb.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'))};
+document.getElementById('mapRM').onclick=e=>{mapRM=!mapRM;e.currentTarget.setAttribute('aria-pressed',mapRM);mwin.style.transition='';mwin.style.opacity=1};
+document.getElementById('mapRM').setAttribute('aria-pressed',mapRM);
+card.innerHTML='<h3>选一个去处</h3><p>下面九个按钮各是一种「不在眼前」。现在回来的动词有七个：展开、放回、还原、拉出、去、回到原处、拿回画中画，外加撤销。</p>';
+
+/* ───── ③ 代理先动 ───── */
+const pv=document.getElementById('pxView');
+pv.innerHTML=`<div class="canvas" style="width:${W}px;height:${H}px">${deskHTML()}
+  <div class="target" id="tgt"></div><div class="ghost" id="pghost" style="opacity:0"></div>${winHTML('pwin','会议纪要')}
+  <div class="hud" id="hud"><div class="fill" id="hudFill"></div><span id="hudText">左半屏</span></div></div>`;
+const pc=pv.firstElementChild;fit(pv,pc,W,H);
+const pwin=pc.querySelector('#pwin'),tgt=pc.querySelector('#tgt'),hud=pc.querySelector('#hud'),hudFill=pc.querySelector('#hudFill'),hudText=pc.querySelector('#hudText'),pghost=pc.querySelector('#pghost');
+const log=document.getElementById('pxLog');
+const TARGETS={left:{x:0,y:MB,w:W/2,h:H-MB-44,name:'左半屏'},right:{x:W/2,y:MB,w:W/2,h:H-MB-44,name:'右半屏'},fill:{x:0,y:MB,w:W,h:H-MB-44,name:'铺满屏幕'},home:{x:HOME.x,y:HOME.y,w:HOME.w,h:HOME.h,name:'原来的位置'}};
+let mode='new',pxRM=RM_SYS,real={...HOME},last={...HOME},writes=0;
+const P={x:new Spring(HOME.x),y:new Spring(HOME.y),w:new Spring(HOME.w),h:new Spring(HOME.h)};
+const G={x:new Spring(HOME.x),y:new Spring(HOME.y),w:new Spring(HOME.w),h:new Spring(HOME.h),o:new Spring(0)}; // 目标外框（画结果）
+let drag=null,anim=false,pending=null;
+function setReal(f,how){real={...f};writes+=how==='now'?2:1}
+function paintPx(){
+  const r=mode==='new'?{x:P.x.x,y:P.y.x,w:P.w.x,h:P.h.x}:real;
+  Object.assign(pwin.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'});
+  Object.assign(tgt.style,{left:G.x.x+'px',top:G.y.x+'px',width:G.w.x+'px',height:G.h.x+'px',opacity:Math.max(0,Math.min(1,G.o.x))});
+}
+function rubber(x,lo,hi){const d=60;if(x<lo){const o=lo-x;return lo-(1-1/(o*.55/d+1))*d}if(x>hi){const o=x-hi;return hi+(1-1/(o*.55/d+1))*d}return x}
+function tf(k){return k==='home'?{...real,name:'原处'}:TARGETS[k]} // 'home' = 回到真窗口现在的位置（等于取消）
+function pick(px,py){ // 指针投影落点 → 终点
+  if(py<MB+26)return 'fill';
+  if(px<W*.28)return 'left';if(px>W*.72)return 'right';return 'home'}
+function pointerPos(e){const s=+pv.dataset.s||1,b=pv.getBoundingClientRect();return{x:(e.clientX-b.left)/s,y:(e.clientY-b.top)/s}}
+pwin.querySelector('.bar').addEventListener('pointerdown',e=>{
+  e.preventDefault();pwin.querySelector('.bar').setPointerCapture(e.pointerId);
+  const p=pointerPos(e);const r=mode==='new'?{x:P.x.x,y:P.y.x,w:P.w.x,h:P.h.x}:real;
+  const caught=anim&&mode==='new';
+  // 接住：从当前位置和速度接着跟手（不跳、不停）
+  drag={ox:p.x-r.x,oy:p.y-r.y,sx:p.x,sy:p.y,hist:[[performance.now(),p.x,p.y]],w0:r.w,h0:r.h};
+  anim=false;pending=null;
+  if(mode==='new'){for(const k in P){P[k].t=P[k].x}G.o.t=1;pghost.style.opacity=.9;Object.assign(pghost.style,{left:real.x+'px',top:real.y+'px',width:real.w+'px',height:real.h+'px'})}
+  log.innerHTML=caught?'<b>接住了</b>：代理从当前位置和速度接着跟手；真窗口还没写过外框。':(mode==='new'?'<b>跟手中</b>：代理 1:1 跟着指针；虚线是真窗口还在的位置，蓝框是松手后的去处。':'<b>拖动中</b>：窗口不动，只有上面的进度条在走。');
+});
+pv.addEventListener('pointermove',e=>{if(!drag)return;const p=pointerPos(e);drag.hist.push([performance.now(),p.x,p.y]);if(drag.hist.length>6)drag.hist.shift();
+  if(mode==='new'){
+    const nx=rubber(p.x-drag.ox,-40,W-drag.w0+40),ny=rubber(p.y-drag.oy,MB,H-60);
+    P.x.x=nx;P.y.x=ny;P.x.v=P.y.v=0;
+    const v=vel();const k=pick(p.x+proj(v.x),p.y+proj(v.y));const T=tf(k);
+    for(const a of['x','y','w','h'])G[a].t=T[a];G.o.t=k==='home'?0:1;
+  }else{
+    const dx=p.x-drag.sx,dy=p.y-drag.sy;const k=dy<-60?'fill':dx<-20?'left':dx>20?'right':'home';
+    hud.style.opacity=k==='home'?0:1;hudText.textContent=TARGETS[k].name;hudFill.style.width=Math.min(100,Math.abs(k==='fill'?dy:dx)/1.6)+'%';
+    drag.k=k;
+  }});
+function vel(){const h=drag.hist;if(h.length<2)return{x:0,y:0};const a=h[0],b=h[h.length-1];const dt=Math.max(1,b[0]-a[0])/1000;return{x:(b[1]-a[1])/dt,y:(b[2]-a[2])/dt}}
+function proj(v){const r=.998;return v/1000*r/(1-r)}
+pv.addEventListener('pointerup',e=>{if(!drag)return;const p=pointerPos(e);
+  if(mode==='new'){const v=vel();const k=pick(p.x+proj(v.x),p.y+proj(v.y));settleTo(k,v)}
+  else{hud.style.opacity=0;const k=drag.k||'home';if(k!=='home'){last={...real};setReal(TARGETS[k],'now')}paintPx();
+    log.innerHTML=k==='home'?'没过阈值，什么都没发生。':`松手后窗口<b>瞬移</b>到${TARGETS[k].name}；辅助功能写外框 <b>2 次</b>；过程中窗口没有动过。`}
+  drag=null});
+pv.addEventListener('pointercancel',()=>{drag=null});
+function settleTo(k,v){const T=tf(k);pending=k;
+  if(pxRM){ // 减少动态效果：代理原处淡出、终点淡入
+    pwin.style.transition='opacity .12s';pwin.style.opacity=0;G.o.t=0;
+    setTimeout(()=>{for(const a of['x','y','w','h']){P[a].x=P[a].t=T[a];P[a].v=0}commit();pwin.style.opacity=1},140);return}
+  const tok=Math.hypot(v.x,v.y)>300?'glide':'settle';
+  for(const a of['x','y','w','h']){P[a].set(a==='w'||a==='h'?'settle':tok);P[a].t=T[a]}
+  P.x.v=v.x*.6;P.y.v=v.y*.6;G.o.t=0;anim=true;
+  log.innerHTML=`松手：投影落点选中<b>${T.name}</b>，代理沿弹簧过去；落定前随时可以再抓住。`}
+function commit(){const k=pending;anim=false;pending=null;if(!k)return;
+  pghost.style.opacity=0;
+  if(k==='home'){log.innerHTML='没选中任何去处：代理回到真窗口身上，外框一次都没写。';return}
+  const T=TARGETS[k];
+  if(!(real.x===T.x&&real.w===T.w&&real.y===T.y&&real.h===T.h)){last={...real};setReal(T,'new')}
+  log.innerHTML=`落定：真窗口在这一刻写外框 <b>1 次</b>（累计 ${writes} 次）。${pxRM?'减少动态效果：原处淡出、终点淡入，没有滑动。':''}`}
+document.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.k;
+  const T=k==='home'?last:TARGETS[k];
+  if(mode==='now'){last={...real};setReal(T,'now');paintPx();log.innerHTML=`键盘：窗口<b>瞬移</b>到${k==='home'?'上一次的位置':T.name}，写外框 2 次。`;return}
+  TARGETS.home2={...T,name:k==='home'?'上一次的位置':T.name};
+  for(const a of['x','y','w','h'])P[a].set('settle');pending=null;
+  const prev={...real};
+  if(pxRM){pwin.style.transition='opacity .12s';pwin.style.opacity=0;setTimeout(()=>{for(const a of['x','y','w','h']){P[a].x=P[a].t=T[a];P[a].v=0}last=prev;real={...T};writes++;pwin.style.opacity=1;log.innerHTML='键盘（减少动态效果）：原处淡出、终点淡入。'},140);return}
+  for(const a of['x','y','w','h'])P[a].t=T[a];anim=true;pending='home2';
+  log.innerHTML=`键盘：和拖动走<b>同一条</b>弹簧去${TARGETS.home2.name}。`;}));
+function setMode(m){mode=m;document.getElementById('mNow').setAttribute('aria-pressed',m==='now');document.getElementById('mNew').setAttribute('aria-pressed',m==='new');
+  for(const a of['x','y','w','h']){P[a].x=P[a].t=real[a];P[a].v=0}G.o.x=G.o.t=0;hud.style.opacity=0;pghost.style.opacity=0;paintPx();
+  log.textContent=m==='now'?'现在的做法：拖标题栏，过程中只有进度条，松手后瞬移。':'建议的做法：代理跟手，蓝框画结果，松手投影，落定前可再抓住。'}
+document.getElementById('mNow').onclick=()=>setMode('now');
+document.getElementById('mNew').onclick=()=>setMode('new');
+document.getElementById('pxRM').onclick=e=>{pxRM=!pxRM;e.currentTarget.setAttribute('aria-pressed',pxRM)};
+document.getElementById('pxRM').setAttribute('aria-pressed',pxRM);
+
+let lt=performance.now();
+function frame(now){const dt=Math.min(.05,(now-lt)/1000);lt=now;const n=Math.max(1,Math.round(dt*240));
+  for(let i=0;i<n;i++){for(const k in MS)MS[k].step(dt/n);if(!drag){for(const k in P)P[k].step(dt/n)}for(const k in G)G[k].step(dt/n)}
+  paintMap();paintPx();
+  if(anim&&!drag&&['x','y','w','h'].every(a=>P[a].rest())){for(const a of['x','y','w','h']){P[a].x=P[a].t;P[a].v=0}
+    if(pending==='home2'){const T=TARGETS.home2;last={...real};real={x:T.x,y:T.y,w:T.w,h:T.h};writes++;anim=false;pending=null;log.innerHTML+=` 落定时写外框 1 次（累计 ${writes} 次）。`}
+    else commit()}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+/* ───── ⑤ 屏幕边 ───── */
+const SW=220,SH=140;
+function scr(title,zones){return `<figure><svg viewBox="0 0 ${SW} ${SH}" role="img" aria-label="${title}">
+ <rect x="0" y="0" width="${SW}" height="${SH}" fill="var(--sheet)"/><rect x="0" y="0" width="${SW}" height="8" fill="color-mix(in srgb,var(--ink) 10%,transparent)"/>
+ <rect x="${SW/2-18}" y="0" width="36" height="8" rx="2" fill="#000"/>${zones}</svg><figcaption>${title}</figcaption></figure>`}
+const z=(x,y,w,h,c,t)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" opacity=".28"/><text x="${x+w/2}" y="${y+h/2+3}" font-size="8" text-anchor="middle" fill="var(--ink)">${t}</text>`;
+const SYS='var(--ink3)',SL='var(--accent)',PIP='var(--green)',NO='var(--amber)';
+document.getElementById('screens').innerHTML=
+ scr('标题栏拖动（现在）：贴边 3 点让给系统，侧拉带 8–80 点，角落 120×120 画中画，刘海下落点小岛',z(0,8,3,132,SYS,'')+z(3,40,26,60,SL,'侧拉')+z(SW-29,40,26,60,SL,'侧拉')+z(4,SH-44,40,40,PIP,'画')+z(SW-44,SH-44,40,40,PIP,'画')+z(SW/2-55,9,110,28,NO,'落点小岛'))+
+ scr('窗口浏览卡片拖动（现在）：≤40 点 = 半屏，停一下 = 侧拉，顶边 = 铺满',z(0,8,14,132,SYS,'半')+z(SW-14,8,14,132,SYS,'半')+z(30,8,160,10,SL,'铺满'))+
+ scr('启动台拖出图标（现在）：最外圈 = 侧拉，往里 = 半屏，上下四分之一 = 四角（顺序与标题栏相反）',z(0,8,16,132,SL,'侧')+z(SW-16,8,16,132,SL,'侧')+z(16,8,50,132,SYS,'半屏')+z(SW-66,8,50,132,SYS,'半屏'))+
+ scr('建议：全 App 一套，由外到里——系统平铺 8 点 → 侧拉带 → 四角画中画 → 顶部中央刘海',z(0,8,4,132,SYS,'')+z(SW-4,8,4,132,SYS,'')+z(5,36,24,68,SL,'侧拉')+z(SW-29,36,24,68,SL,'侧拉')+z(5,SH-38,34,34,PIP,'画')+z(SW-39,SH-38,34,34,PIP,'画')+z(SW/2-30,9,60,20,NO,'刘海'));
+
+/* ───── ⑦ 记分卡 ───── */
+const SC=[
+ ['立即回应','803 · Chan 05:33','part','刘海单击要等 ≤0.3 秒；HUD 等辅助功能验证回来才出'],
+ ['1:1 跟手、过程中有反馈','803 · Marcos 52:50','no','多数排布过程中窗口不动'],
+ ['随时打断、改道','803 · Chan 06:51','no','动画中的窗口什么手势都不接'],
+ ['空间一致','803 · Chan 11:47','part','收进刘海、侧拉、画中画同路；排布与键盘瞬移'],
+ ['画结果','803 · Chan 13:28；原则 7','part','落点小岛做到了；标题栏只有进度条'],
+ ['投影定去向','803 · Nathan 41:06','ok','甩一下、画中画落角用投影'],
+ ['橡皮筋','803 · Chan 17:01','ok','下拉与卷轴有阻力'],
+ ['意图不靠计时器','803 · Chan 11:17','no','十几种停留时间；悬停防误触默认关'],
+ ['弹簧、不用时长','803 · Nathan 32:30；§4.6','ok','令牌齐；格子位移一处仍是时长'],
+ ['手势文法一致','HIG Gestures','no','同一输入多种意思；拖到边四套算法'],
+ ['每个手势都有替身','HIG「Offer alternatives to gestures」','no','菜单缺排布；新装无快捷键；拖动功能无 VoiceOver 路径'],
+ ['撤销','HIG Undo','part','一扇一格、只记外框'],
+ ['可发现、教一次','803 · Chan 57:38','part','三个行为没写进文档；教学只停 2.6 秒'],
+ ['与系统共处','HIG Pointing devices；support 平铺页','no','双击、菜单栏填满、Dynamic Island'],
+ ['不自制窗口外观','HIG Windows','part','卷帘条本身是自制外观；红黄绿写死颜色'],
+ ['Liquid Glass 分层','WWDC25 219 / 356','ok','三层材质已定'],
+ ['减少动态效果','HIG Motion','part','真窗口仍在滑'],
+ ['触感','HIG Playing haptics','part','七处调用，吸附多处没有']];
+const LB={ok:'好',part:'部分',no:'缺'};
+document.querySelector('#scoreTbl tbody').innerHTML=SC.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td><span class="st ${r[2]}">${LB[r[2]]}</span></td><td>${r[3]}</td></tr>`).join('');
+})();
+</script>

@@ -50,8 +50,10 @@
 
 ## 2. 原则
 
-七个参考案例来自 Chan Karunamuni 个人网站列出的作品：iPhone X 手势界面（2017，fall2017 801）、Designing Fluid Interfaces（WWDC18 803）、
+参考案例来自 Chan Karunamuni 个人网站列出的作品（网站上是 7 个链接，灵动岛与 Liquid Glass 各有作品与讲座两个，合起来六件）：iPhone X 手势界面（2017）、Designing Fluid Interfaces（WWDC18 803）、
 灵动岛（2022）、Design dynamic Live Activities（WWDC23 10194）、iOS 18 手电筒（2024）、Liquid Glass（WWDC25 219）。
+讲座是合讲（2026-10-29 核对逐字稿）：803 的原则、改道、空间一致、橡皮筋与教学段是 Chan，弹簧与投影是 Nathan de Vries（32:30–48:35），点按、滑动与跟手是 Marcos Alonso（50:00–55:00），投影公式在投影片上、逐字稿里没有；10194 只有后半（07:37 起）、219 只有前约 6 分钟是 Chan。
+下表引的「fall2017 801」是讲安全区与主屏幕指示条的 Tech Talk，没有讲者姓名，不是 Chan 的讲座；iPhone X 手势的机制另见专利 US10203866B2（数字是实施例，不是出货常数）。详见 [design-review/2026-10-29-hci-multitasking](design-review/2026-10-29-hci-multitasking/README.md)。
 WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。共同点归成下面十二条。
 
 | # | 原则 | 出处 | 在 WindowShade 里 |
