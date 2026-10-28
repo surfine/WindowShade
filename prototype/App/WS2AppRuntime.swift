@@ -226,9 +226,11 @@ import Cocoa
             guard let self, let owner = self.owner, !self.sleeping, self.lockReasons.isEmpty,
                   AuthorizationService.shared.lockState() == .unlocked else { return }
             let cwd = self.hookServer?.model.directory(of: bloom.sessionID) ?? ""
+            // 优先级 4：排在离开期间摘要（5）、日程（8）之后，但不再跟电量这类默认 0 的排一队。
             owner.notch.announceWhenFree(key: "session." + bloom.sessionID, text: bloom.headline, detail: bloom.detail,
                                          tone: .tip,
                                          symbol: bloom.sessionID == CodingSessionActivities.usageBloomID ? "gauge.with.dots.needle.33percent" : "hand.raised.fill",
+                                         priority: 4,
                                          onClick: { [weak self] in self?.goToCodingSession(cwd: cwd, sessionID: bloom.sessionID) })
         }
         activities.onSessionGo = { [weak self] id, cwd in self?.goToCodingSession(cwd: cwd, sessionID: id) }

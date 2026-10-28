@@ -14,9 +14,14 @@ import Foundation
 final class InteractionCoordinator {
     struct Environment { var unlocked: Bool; var displays: Set<WS2.DisplayID> }
     /// 一条提醒。同一个 key 在合并窗口里只换内容；不同 key 累进同一次露面，由展示层合成一句。
+    /// priority 决定排队的先后（大的先说）；holdMilliseconds 是这一条自己的停留（0 用 alert.hold）；
+    /// expiresAt 过了还没轮到就作废（原队列的 ttl）。展示用的语气、符号、点按仍由宿主按 key 自己带。
     struct AlertItem: Sendable, Equatable {
         let key: String
         let title: String
+        var priority: Int = 0
+        var holdMilliseconds: UInt64 = 0
+        var expiresAt: WS2.Instant? = nil
     }
     /// 同时等着露面的放行，连同正在显示的那件。与 WS2CodexApprovalHost 的 `reviews.count < 8` 一致。
     static let authorizationQueueLimit = 8
@@ -24,6 +29,10 @@ final class InteractionCoordinator {
     static let alertMergeWindow: UInt64 = 600 * WS2.Duration.millisecond
     /// 一次露面最多带几件不同的提醒；更多的不再累进。
     static let alertItemLimit = 8
+    /// 一块屏最多排几条没说的提醒；更多的不再排（与放行队列同一条纪律）。
+    static let reminderQueueLimit = 8
+    /// 提醒申请的结果。宿主据此决定马上说、等下一句说完、还是已经变成了点。
+    enum ReminderOutcome { case showing, merged, queued, dotOnly, dropped }
 
     private struct Active {
         let handle: WS2.LeaseHandle
@@ -44,6 +53,12 @@ final class InteractionCoordinator {
     private var last = WS2.Instant.zero
     private var ongoing: [WS2.DisplayID:[String]] = [:]
     private var alerts: [WS2.DisplayID:Alert] = [:]
+    /// 正在露面的一句还没说完时来的提醒：按优先级排，那句说完接着说（过期的作废）。
+    /// 撞上第 1-3 层就整队消耗成点，不补说。
+    private var pendingAlerts: [WS2.DisplayID:[AlertItem]] = [:]
+    /// 面板本地正在进行的输入（音量亮度两耳、拖放落点）：不占租约，但提醒要让，只留点。
+    /// 宿主报开始与结束；这里再带一个期限，宿主忘了收尾也自己过期。
+    private var hostInteractions: [WS2.DisplayID:WS2.Instant] = [:]
     private var dots: Set<WS2.DisplayID> = []
     /// 因为系统专注模式留下的点：专注一结束就熄。
     private var quietDots: Set<WS2.DisplayID> = []
@@ -86,6 +101,8 @@ final class InteractionCoordinator {
                         shownAt: now, shownAfterSequence: inputSequence)
         // Reminders obscured by an interaction never replay later.
         dots.formUnion(alerts.keys); alerts.removeAll()
+        // 还排着没说的提醒也一起消耗：第 1-3 层占了屏，点就是它们的样子。
+        pendingAlerts.removeAll()
         return h
     }
     /// 屏上的人走了（松手、有结果、过期、取消、撤屏）：排队的放行按先后接上；没人接，点熄。
@@ -109,6 +126,39 @@ final class InteractionCoordinator {
         queue.removeAll { now >= $0.deadline }
         if let a = active, now >= a.deadline { withdraw(.expired); vacated(now) }
         alerts = alerts.filter { now < $0.value.deadline }
+        // 露面说完了：排着的提醒按优先级顶上来；过期的作废。
+        promoteReminders(now)
+        for (display, list) in pendingAlerts {
+            pendingAlerts[display] = list.filter { $0.expiresAt.map { now < $0 } ?? true }
+        }
+        hostInteractions = hostInteractions.filter { now < $0.value }
+    }
+    /// 露面的位子空了（没人占、也没在说）：排着的最高优先级接上，作废的跳过。
+    private func promoteReminders(_ now: WS2.Instant) {
+        for (display, list) in pendingAlerts where !list.isEmpty {
+            guard alerts[display] == nil,
+                  active == nil || active?.handle.display != display,
+                  hostInteractions[display].map({ now < $0 }) != true else { continue }
+            var rest = list
+            var next: AlertItem?
+            while let top = rest.first {
+                rest.removeFirst()
+                if top.expiresAt.map({ now < $0 }) ?? true { next = top; break }
+            }
+            pendingAlerts[display] = rest
+            if let top = next {
+                let hold = top.holdMilliseconds > 0 ? top.holdMilliseconds : MotionHold.alertMilliseconds
+                alerts[display] = Alert(first: now, last: now,
+                                        deadline: now.adding(hold * WS2.Duration.millisecond), items: [top])
+            }
+        }
+    }
+    /// 优先级大的先说；同优先级先来先说（Swift 的 sort 不保序，带上到达序号）。
+    private static func prioritySorted(_ items: [AlertItem]) -> [AlertItem] {
+        items.enumerated().sorted { lhs, rhs in
+            lhs.element.priority != rhs.element.priority
+                ? lhs.element.priority > rhs.element.priority : lhs.offset < rhs.offset
+        }.map(\.element)
     }
     /// 转换结束后再通知轮到的放行，这样宿主收到时能马上用这份租约。
     private func announce() {
@@ -173,6 +223,7 @@ final class InteractionCoordinator {
     private func barrier(_ reason: WS2.LeaseRevocation) {
         if epoch == .max { exhausted = true } else { epoch += 1 }
         ongoing.removeAll(); alerts.removeAll(); dots.removeAll(); quietDots.removeAll(); queue.removeAll(); grants.removeAll()
+        pendingAlerts.removeAll(); hostInteractions.removeAll()
         withdraw(reason)
     }
     func invalidate(_ reason: WS2.LeaseRevocation, at now: WS2.Instant) {
@@ -189,6 +240,7 @@ final class InteractionCoordinator {
         defer { announce() }
         inTransition = true; defer { inTransition = false }; last = max(now,last)
         ongoing[id] = nil; alerts[id] = nil; dots.remove(id); quietDots.remove(id)
+        pendingAlerts[id] = nil; hostInteractions[id] = nil
         queue.removeAll { $0.display == id }
         if active?.handle.display == id { withdraw(.displayRemoved); vacated(last) }
     }
@@ -200,28 +252,99 @@ final class InteractionCoordinator {
     func remind(on display: WS2.DisplayID, at now: WS2.Instant) {
         remind(AlertItem(key: "", title: ""), on: display, at: now)
     }
-    func remind(_ item: AlertItem, on display: WS2.DisplayID, at now: WS2.Instant) {
+    func remind(_ item: AlertItem, on display: WS2.DisplayID, at now: WS2.Instant,
+                holdMilliseconds: UInt64 = 0) {
         guard !inTransition, now >= last, environment().unlocked, environment().displays.contains(display),
               item.key.utf8.count <= 512, item.title.utf8.count <= 4096 else { return }
         last = now
-        // 第 1-3 层占着（包括手在按的时候）：只留次区域的点。
-        if active != nil { dots.insert(display); return }
+        // 第 1-3 层占着（包括手在按的时候、面板本地的两耳与落点）：只留次区域的点。
+        if active != nil || hostInteractions[display].map({ now < $0 }) == true {
+            dots.insert(display); return
+        }
         if quiet() { quietDots.insert(display); return }
         if var a = alerts[display], now < a.deadline,
            now.elapsed(since: a.last) <= Self.alertMergeWindow {
-            // 合并刷新不延长第一次提醒的 `alert.hold` 截止。同 key 只换内容，不同 key 累进。
+            // 合并刷新不延长第一次提醒的 `alert.hold` 截止。同 key 只换内容，不同 key 累进（优先级大的在前面）。
             a.last = now
             if let i = a.items.firstIndex(where: { $0.key == item.key }) {
                 a.items[i] = item
             } else if a.items.count < Self.alertItemLimit {
                 a.items.append(item)
+                a.items = Self.prioritySorted(a.items)
             }
             alerts[display] = a
         } else {
+            let hold = holdMilliseconds > 0 ? holdMilliseconds : MotionHold.alertMilliseconds
             alerts[display] = Alert(first: now, last: now,
-                                    deadline: now.adding(MotionHold.alertMilliseconds * WS2.Duration.millisecond),
+                                    deadline: now.adding(hold * WS2.Duration.millisecond),
                                     items: [item])
         }
+    }
+
+    /// 队列并进第 4 层后的唯一入口：露面位子空着就说、正在说且在合并窗口里就并进那一次露面、
+    /// 正在说但过了窗口就按优先级排队等下一句、撞上第 1-3 层（或面板本地输入）就变成点并消耗。
+    /// 展示属性（语气、符号、点按）宿主按 key 自己带；这里只裁先后与准入。
+    func admit(_ item: AlertItem, on display: WS2.DisplayID, at now: WS2.Instant) -> ReminderOutcome {
+        guard !inTransition, !exhausted, now >= last, environment().unlocked,
+              environment().displays.contains(display),
+              item.key.utf8.count <= 512, item.title.utf8.count <= 4096 else { return .dropped }
+        last = now
+        if active != nil || hostInteractions[display].map({ now < $0 }) == true {
+            dots.insert(display); pendingAlerts[display] = nil
+            return .dotOnly
+        }
+        if quiet() { quietDots.insert(display); return .dotOnly }
+        promoteReminders(now)
+        if var a = alerts[display], now < a.deadline {
+            if now.elapsed(since: a.last) <= Self.alertMergeWindow {
+                a.last = now
+                if let i = a.items.firstIndex(where: { $0.key == item.key }) {
+                    a.items[i] = item
+                } else if a.items.count < Self.alertItemLimit {
+                    a.items.append(item)
+                    a.items = Self.prioritySorted(a.items)
+                }
+                alerts[display] = a
+                return .merged
+            }
+            var list = pendingAlerts[display, default: []]
+            list.removeAll { $0.key == item.key }
+            list.append(item)
+            if list.count > Self.reminderQueueLimit { list.removeLast() }
+            pendingAlerts[display] = Self.prioritySorted(list)
+            return .queued
+        }
+        let hold = item.holdMilliseconds > 0 ? item.holdMilliseconds : MotionHold.alertMilliseconds
+        alerts[display] = Alert(first: now, last: now,
+                                deadline: now.adding(hold * WS2.Duration.millisecond), items: [item])
+        return .showing
+    }
+
+    /// 这块屏此刻该说的那一句（露面的队首）；没在露面时为 nil。宿主渲染完一条、露面结束时来取下一条。
+    func currentAlertItem(on display: WS2.DisplayID, at now: WS2.Instant) -> AlertItem? {
+        guard !inTransition, environment().unlocked else { return nil }
+        promoteReminders(now)
+        guard let a = alerts[display], now < a.deadline, let first = a.items.first else { return nil }
+        return first
+    }
+    /// 这块屏还有没有没说完、没说出的提醒（插电那一下撞上就不出）。
+    func hasReminderWork(on display: WS2.DisplayID, at now: WS2.Instant) -> Bool {
+        if let a = alerts[display], now < a.deadline { return true }
+        if let list = pendingAlerts[display], list.contains(where: { $0.expiresAt.map { now < $0 } ?? true }) { return true }
+        return false
+    }
+    /// 面板本地输入开始（音量亮度、拖放落点）：不占租约，但提醒要让。deadline 是兜底，宿主收尾也要报；
+    /// 同一块屏再报一次就是「还在进行」，期限重新算。
+    func hostInteraction(on display: WS2.DisplayID, at now: WS2.Instant, deadline: WS2.Instant) {
+        guard environment().displays.contains(display) else { return }
+        hostInteractions[display] = deadline
+    }
+    func endHostInteraction(on display: WS2.DisplayID) {
+        hostInteractions[display] = nil
+    }
+    /// 锁屏、睡眠期间宿主收掉排着与露面的提醒（解锁后不补播）。
+    func clearReminders() {
+        alerts.removeAll(); pendingAlerts.removeAll()
     }
     /// 这块屏正在露面的提醒，按先来后到。展示层据此合成一句；没在露面时为空。
     func alertItems(on display: WS2.DisplayID, at now: WS2.Instant) -> [AlertItem] {

@@ -1333,11 +1333,12 @@ final class NotchController {
     /// 刘海关着、或者一排正展开着、落点正垂着时返回 false，调用方另想办法（菜单栏上说）。
     @discardableResult
     /// `ear` 不是 nil 时右边放一个等宽大数字（离开就锁的倒数）；`speaks` 为 false 时只换画面、读屏不念（调用方自己决定念什么）。
+    /// `admitted`：协调器已经准入（队列路径），面板不再问第二遍，免得同一句记两次账。
     func announce(_ text: String, detail: String = "", tone: NotchPanel.Tone = .info, symbol: String? = nil,
                   duration hold: TimeInterval? = nil, ear: String? = nil, speaks: Bool = true,
                   redEar: Bool = false, redIcon: Bool = false,
                   actionLabel: String? = nil, iconImage: NSImage? = nil,
-                  onClick: (() -> Void)? = nil) -> Bool {
+                  onClick: (() -> Void)? = nil, admitted: Bool = false) -> Bool {
         guard Self.isEnabled, !Self.probeSilence, let panel = pointerPanel(), !panel.isExpanded, panel.dropState == .none else { return false }
         let name: String
         var color: NSColor
@@ -1354,7 +1355,7 @@ final class NotchController {
         let duration = hold ?? min(4.5, 1.8 + Double(text.count + detail.count) * 0.05)
         panel.alert(NotchPanel.Alert(id: 0, icon: icon, title: text, subtitle: detail, tone: tone, onClick: onClick ?? {}, ear: ear, earRed: redEar,
                                      actionLabel: actionLabel),
-                    duration: duration)
+                    duration: duration, admitted: admitted)
         if speaks {
             NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
                                  userInfo: [.announcement: detail.isEmpty ? text : "\(text)。\(detail)",
@@ -1364,48 +1365,52 @@ final class NotchController {
         return true
     }
 
-    // MARK: 等刘海空下来再说
+    // MARK: 等刘海空下来再说（排队已并进协调器第 4 层）
 
-    /// 排队中的一句话。同一个 key 只留最新的；过期作废；优先级高的先说。
+    /// 一条提醒的展示属性。先后、过期、撞上第 1-3 层怎么办，都由协调器裁（`InteractionCoordinator.admit`）；
+    /// 语气、符号、点按这些 AppKit 的东西按 key 存在宿主这边，轮到谁说就用谁的。
     private struct PendingAnnouncement {
         let key: String, text: String, detail: String, tone: NotchPanel.Tone, symbol: String?
-        let priority: Int, expiresAt: TimeInterval
-        let hold: TimeInterval?, onClick: (() -> Void)?
+        let hold: TimeInterval, onClick: (() -> Void)?
         var ear: String? = nil, speaks = true, redEar = false, redIcon = false
         var actionLabel: String? = nil, iconImage: NSImage? = nil
     }
-    private var pendingAnnouncements: [PendingAnnouncement] = []
+    private var announcementAttributes: [String: PendingAnnouncement] = [:]
+    /// 排着的提醒的兜底钟：每 0.4 秒问一次协调器轮到谁了。平时面板那句说完协调器就把位子腾出来了。
     private var pendingTimer: Timer?
     /// 锁屏、睡眠、换用户期间不说。排队的和已经挂在岛上的都收掉，解锁后不补播。
     private var announcementsHeld = false
-    /// 这个队列最近说出的那一句（key 和标题）：它还在屏幕上时，同一个 key 的更新（比如电量到了）原位替换，
+    /// 最近说出的那一句（key 和标题）：它还在屏幕上时，同一个 key 的更新（比如电量到了）原位替换，
     /// 不排到后面再弹一次。屏幕上已经换成别人的话时不替换。
     private var shownAnnouncement: (key: String, title: String)?
 
-    /// 和 announce 一样，但刘海正忙（展开、拖放、认证、正在说别的）时不放弃：按 key 合并、到期作废，
-    /// 空下来后按优先级说（以前忙的时候直接丢掉）。返回值没有意义上的“失败”：要么现在说，要么排上了。
+    /// 和 announce 一样，但先过协调器：空着就说、正在说别的就按优先级排队、
+    /// 撞上第 1-3 层（展开、认证、拖放、两耳）就变成次区域的点并消耗，不补说。
     func holdAnnouncements() {
         announcementsHeld = true
         peekTracker.cleared()
-        pendingAnnouncements.removeAll()
+        announcementAttributes.removeAll()
         pendingTimer?.invalidate()
         pendingTimer = nil
         shownAnnouncement = nil
         for panel in panels.values { panel.dismissVisibleAlert(); panel.dismissPowerFlash() }
+        leases.clearReminders()
     }
 
     /// 电量那一下（只在没有别的提醒、持续活动时才出；撞上就不出）。
     @discardableResult
     func showPowerFlash(_ flash: PowerFlash) -> Bool {
-        guard !announcementsHeld, Self.isEnabled, !Self.probeSilence, pendingAnnouncements.isEmpty,
+        guard !announcementsHeld, Self.isEnabled, !Self.probeSilence, !isBusyForPowerFlash,
               let panel = pointerPanel() else { return false }
         return panel.presentPowerFlash(flash)
     }
 
     /// 刘海上现在有没有别的东西：插电那一下用它判断“撞上就不出”。
+    /// 排队已并进第 4 层，还排着、还露着的提醒算协调器的账，不再看本地的队列。
     var isBusyForPowerFlash: Bool {
         guard let panel = pointerPanel() else { return true }
-        return !pendingAnnouncements.isEmpty || panel.isBusyForPowerFlash
+        if let display = panel.displayID, leases.hasReminderWork(on: display) { return true }
+        return panel.isBusyForPowerFlash
     }
 
     func releaseAnnouncements() {
@@ -1420,29 +1425,74 @@ final class NotchController {
                           onClick: (() -> Void)? = nil) {
         guard !announcementsHeld else { return }
         if mergeIntoBurst(key: key, text: text, detail: detail) { return }
-        pendingAnnouncements.removeAll { $0.key == key }
-        if let shown = shownAnnouncement, shown.key == key, let panel = pointerPanel(), !panel.isAuthenticating,
-           panel.alertForProbe?.title == shown.title,
-           announce(text, detail: detail, tone: tone, symbol: symbol, duration: hold, ear: ear, speaks: speaks,
-                    redEar: redEar, redIcon: redIcon, actionLabel: actionLabel, iconImage: iconImage, onClick: onClick) {
-            shownAnnouncement = (key, text)
-            return
+        guard Self.isEnabled, !Self.probeSilence, let panel = pointerPanel(),
+              let display = panel.displayID else { return }
+        // 展示属性按 key 存宿主；同 key 的更新替换（原队列也是只留最新）。
+        let attributes = PendingAnnouncement(key: key, text: text, detail: detail, tone: tone, symbol: symbol,
+                                             hold: hold ?? Motion.Hold.alert, onClick: onClick, ear: ear,
+                                             speaks: speaks, redEar: redEar, redIcon: redIcon,
+                                             actionLabel: actionLabel, iconImage: iconImage)
+        announcementAttributes[key] = attributes
+        let ttlNanos = ttl > 0 ? UInt64(ttl * Double(WS2.Duration.second)) : 0
+        let item = InteractionCoordinator.AlertItem(
+            key: key, title: text, priority: priority,
+            holdMilliseconds: UInt64(attributes.hold * 1000),
+            expiresAt: ttlNanos > 0 ? leases.now.adding(ttlNanos) : nil)
+        switch leases.admitAnnouncement(item, on: display) {
+        case .showing:
+            // 空着：马上说。同 key 的那句还挂着时原位替换，不重播进场。
+            let replacing = shownAnnouncement?.key == key && !panel.isAuthenticating
+                && panel.alertForProbe?.title == shownAnnouncement?.title
+            _ = announce(text, detail: detail, tone: tone, symbol: symbol, duration: hold, ear: ear, speaks: speaks,
+                         redEar: redEar, redIcon: redIcon, actionLabel: actionLabel, iconImage: iconImage,
+                         onClick: onClick, admitted: true)
+            if replacing || panel.isAlerting { shownAnnouncement = (key, text) }
+        case .merged:
+            // 并进正在露面的那一次：同 key 原位换内容；不同 key 由展示层合成一句（C02），现在不另开口。
+            if shownAnnouncement?.key == key, !panel.isAuthenticating,
+               panel.alertForProbe?.title == shownAnnouncement?.title {
+                _ = announce(text, detail: detail, tone: tone, symbol: symbol, duration: attributes.hold,
+                             ear: ear, speaks: speaks, redEar: redEar, redIcon: redIcon,
+                             actionLabel: actionLabel, iconImage: iconImage, onClick: onClick, admitted: true)
+                shownAnnouncement = (key, text)
+            }
+        case .queued:
+            wlog("notch: queued \(key) (coordinator layer 4)")
+            schedulePendingTimer()
+        case .dotOnly, .dropped:
+            break // 点已由协调器记下；作废的不再补说。
         }
-        let item = PendingAnnouncement(key: key, text: text, detail: detail, tone: tone, symbol: symbol,
-                                       priority: priority, expiresAt: ProcessInfo.processInfo.systemUptime + ttl,
-                                       hold: hold, onClick: onClick, ear: ear, speaks: speaks, redEar: redEar, redIcon: redIcon,
-                                       actionLabel: actionLabel, iconImage: iconImage)
-        if pendingAnnouncements.isEmpty, isFreeToAnnounce(),
-           announce(text, detail: detail, tone: tone, symbol: symbol, duration: hold, ear: ear, speaks: speaks,
-                    redEar: redEar, redIcon: redIcon, actionLabel: actionLabel, iconImage: iconImage, onClick: onClick) {
-            shownAnnouncement = (key, text)
-            return
-        }
-        pendingAnnouncements.append(item)
-        wlog("notch: queued \(key) (\(pendingAnnouncements.count) waiting)")
+    }
+
+    /// 排着的提醒的兜底钟：每 0.4 秒问一次协调器轮到谁了。
+    private func schedulePendingTimer() {
         guard pendingTimer == nil else { return }
         pendingTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.drainPendingAnnouncements() }
+            MainActor.assumeIsolated { self?.pullNextAnnouncement() }
+        }
+    }
+
+    /// 面板那句说完（或兜底钟走了一拍）：问协调器轮到谁了，轮到就原样说；没活儿了钟就停。
+    func pullNextAnnouncement() {
+        for panel in panels.values {
+            guard !panel.isAlerting, !panel.isAuthenticating, !panel.isExpanded, panel.dropState == .none,
+                  let display = panel.displayID,
+                  let item = leases.currentAlertItem(on: display),
+                  item.key != shownAnnouncement?.key,
+                  let attributes = announcementAttributes[item.key] else { continue }
+            _ = announce(attributes.text, detail: attributes.detail, tone: attributes.tone, symbol: attributes.symbol,
+                         duration: attributes.hold, ear: attributes.ear, speaks: attributes.speaks,
+                         redEar: attributes.redEar, redIcon: attributes.redIcon,
+                         actionLabel: attributes.actionLabel, iconImage: attributes.iconImage,
+                         onClick: attributes.onClick, admitted: true)
+            shownAnnouncement = (item.key, attributes.text)
+        }
+        if let panel = pointerPanel(), let display = panel.displayID,
+           leases.hasReminderWork(on: display) {
+            schedulePendingTimer()
+        } else {
+            pendingTimer?.invalidate()
+            pendingTimer = nil
         }
     }
 
@@ -1523,31 +1573,6 @@ final class NotchController {
                              guard let presenter = self?.activities.calendar else { return }
                              if bloom.link != nil { presenter.join(bloom) } else { presenter.openCard() }
                          })
-    }
-
-    private func isFreeToAnnounce() -> Bool {
-        guard let panel = pointerPanel() else { return false }
-        return !panel.isAlerting && !panel.isAuthenticating && !panel.isExpanded && panel.dropState == .none
-    }
-
-    private func drainPendingAnnouncements() {
-        let now = ProcessInfo.processInfo.systemUptime
-        pendingAnnouncements.removeAll { $0.expiresAt <= now }
-        if let index = pendingAnnouncements.indices.max(by: {
-            (pendingAnnouncements[$0].priority, -$0) < (pendingAnnouncements[$1].priority, -$1)
-        }), isFreeToAnnounce() {
-            let item = pendingAnnouncements[index]
-            if announce(item.text, detail: item.detail, tone: item.tone, symbol: item.symbol,
-                        duration: item.hold, ear: item.ear, speaks: item.speaks,
-                        redEar: item.redEar, redIcon: item.redIcon,
-                        actionLabel: item.actionLabel, iconImage: item.iconImage, onClick: item.onClick) {
-                pendingAnnouncements.remove(at: index)
-                shownAnnouncement = (item.key, item.text)
-            }
-        }
-        if pendingAnnouncements.isEmpty {
-            pendingTimer?.invalidate(); pendingTimer = nil
-        }
     }
 
     /// 看准时机教一下（规则见 GestureCoach）：岛里演一遍手指怎么动，旁边一句话；点一下这条就不再出。
@@ -2758,7 +2783,9 @@ final class NotchPanel: NSPanel {
         pressWork?.cancel(); pressWork = nil
         hoverTimer?.invalidate(); hinting = false; pulled = 0
         _ = hoverPolicy.exit(); hoverGuarded = false
-        alertTimer?.invalidate(); alertInfo = nil; dropState = .none; stripLanding = false
+        alertTimer?.invalidate(); alertInfo = nil
+        if dropState != .none { noteDropInteraction(false) }
+        dropState = .none; stripLanding = false
         authenticationView = view
         canvas.setAuthentication(view)
         updateVisibility(); apply(animated: animated)
@@ -3330,21 +3357,22 @@ final class NotchPanel: NSPanel {
     /// 那一排已经打开、正在认证或落点进行时，不插进这句，只留一个点，以后也不重播。
     /// 正在播放、岛还没收成一排时，这句话分到旁边那颗岛上，播完再合并。
     /// 提醒：短暂展开说一句，`alert.hold` 后收回（指针停在上面时展开的是一排，不插提醒）。
-    func alert(_ info: Alert, duration: TimeInterval = Motion.Hold.alert) {
+    /// `admitted`：队列路径已经过协调器准入，这里不再问第二遍（问了会把同一句记两次账）。
+    func alert(_ info: Alert, duration: TimeInterval = Motion.Hold.alert, admitted: Bool = false) {
         // 你正在按音量亮度键（交互层）：这一句变成一个点并消耗掉，不回来补说。
         if meter != nil, !isAuthenticating {
-            if let leases, let displayID { _ = leases.remind(on: displayID) }
+            if !admitted, let leases, let displayID { _ = leases.remind(on: displayID) }
             showsSecondaryDot = true
             apply(animated: false)
             return
         }
         let blocked = isAuthenticating || isExpanded || dropState != .none
         if blocked {
-            if let leases, let displayID { _ = leases.remind(on: displayID) }
+            if !admitted, let leases, let displayID { _ = leases.remind(on: displayID) }
             pullSecondaryDot()
             return
         }
-        if let leases, let displayID, !leases.remind(on: displayID) {
+        if !admitted, let leases, let displayID, !leases.remind(on: displayID) {
             pullSecondaryDot()
             return
         }
@@ -3456,6 +3484,8 @@ final class NotchPanel: NSPanel {
         }
         meter = Level(kind: kind, value: clamped, muted: muted, output: output, stretch: stretch, edge: edge,
                       edgePushes: pushes)
+        // 面板本地的输入也报给协调器：不占租约，但提醒要让（两耳期间来的提醒只留点）。
+        if let displayID { leases?.noteHostInteraction(on: displayID, holdMilliseconds: UInt64((Motion.Hold.level + 1.0) * 1000)) }
         updateVisibility()
         apply(animated: true)
         levelTimer?.invalidate()
@@ -3519,6 +3549,7 @@ final class NotchPanel: NSPanel {
         meter = nil
         levelEdges.reset()
         levelYieldOpen = false
+        if let displayID { leases?.endHostInteraction(on: displayID) }
         apply(animated: true, spring: NotchCanvasView.Spring(response: Motion.Spring.calm.response,
                                                               bounce: Motion.Spring.calm.bounce))
     }
@@ -3673,6 +3704,7 @@ final class NotchPanel: NSPanel {
             MainActor.assumeIsolated {
                 guard let self, self.dropState == .confirmed else { return }
                 self.dropState = .none
+                self.noteDropInteraction(false)
                 self.apply(animated: true)
             }
         }
@@ -3762,6 +3794,7 @@ final class NotchPanel: NSPanel {
         if had { canvas.registerForDraggedTypes([.fileURL]) }
         if wasShown {
             dropState = .none
+            noteDropInteraction(false)
             updateVisibility()
             apply(animated: true)
         }
@@ -3807,8 +3840,16 @@ final class NotchPanel: NSPanel {
         if state == .armed { NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now) }
         dropChoice = nextChoice
         dropState = state
+        noteDropInteraction(state != .none)
         updateVisibility()
         apply(animated: true)
+    }
+
+    /// 落点进行与否报给协调器（面板本地的输入，不占租约，但提醒要让）。
+    private func noteDropInteraction(_ active: Bool) {
+        guard let displayID else { return }
+        if active { leases?.noteHostInteraction(on: displayID, holdMilliseconds: 4_000) }
+        else { leases?.endHostInteraction(on: displayID) }
     }
 
     /// 卷轴概览里拖着一扇窗靠近刘海（SS-04）：长成落点（用 catch 弹簧），离开用 calm 收回。
@@ -3818,13 +3859,17 @@ final class NotchPanel: NSPanel {
             guard !stripLanding, !isAuthenticating, dropState == .none, fileDrop == nil else { return }
             stripLanding = true
             dropState = .offered
+            noteDropInteraction(true)
             if !Motion.reduced { NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now) }
             updateVisibility()
             apply(animated: true)
         } else {
             guard stripLanding else { return }
             stripLanding = false
-            if dropState == .offered { dropState = .none }
+            if dropState == .offered {
+                dropState = .none
+                noteDropInteraction(false)
+            }
             updateVisibility()
             apply(animated: true, spring: Self.calmSpring)
         }
