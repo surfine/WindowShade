@@ -16,9 +16,25 @@
 - 在 `claude/zcode-integ` 依序合 甲 3 → 甲 2 → 甲 1；唯一冲突在 `tests/InteractionCoordinatorRulesTests.swift`（两边都新增案例），两边都保留：14 场景、103 断言、0 失败。
 - 整合检查跑了两轮（改名前后各一次）：`./prototype/build.sh --check` 退出 0，加上协调器、番茄钟、动效令牌、动效 lint、全部 `run-notch-*`、日程、离开摘要、会话活动等，以及甲 3 动过的全部测试脚本，**共 82 项 PASS、0 失败**。
 
+## 真机探针（主模型 2026-10-29 11:37–11:50，本机 M5 MacBook Air，macOS 27）
+
+`f81cbd17` 用开发证书 B3CE57C3… `./build.sh --stage`（退出 0），每组等 HID 闲置 ≥120 s、拿 `/private/tmp/ws-ui.lock` 后跑 `tests/run-glance-probe.sh`；正式版 WindowShade 照常开着。输出在整合 worktree 的 `.build/probes-jia123/`。
+
+| 组 | 结果 |
+| --- | --- |
+| browser-more（当年抓到 Mutex 崩溃的那组） | 5 PASS |
+| wins | 8 PASS（跑两次都过；结束时闲置归零，两次都一样，是探针自己的合成输入） |
+| fold-timing／restore-guard／fold-unminimizable／orphan | 2／4／4／3 PASS |
+| launchpad（刘海租约） | 14 PASS |
+| pins／hold／home | 5／9／4 PASS |
+| notch | 21 PASS（交接里列为环境性失败，这次全过） |
+| shelf-glance --minimize | 9 PASS |
+
+0 FAIL，退出码没有 133，`~/Library/Logs/DiagnosticReports` 没有新的 WindowShade 崩溃报告。另补跑 `run-appkit-tests.sh`：NotchLeaseHostTests 17 例 0 失败、CountdownTimerCardTests、CalendarCardTests 全过。
+
+结论：甲 1–3 动过的主线程／租约路径在真机上没有触发运行期隔离检查。**探针覆盖不到提醒碰撞的画面**（现有探针都不会制造电量、日程、离开摘要事件），下面几项仍要人看。
+
 ## 仍待真机（Aaron）
 
 - 甲 1：① 那一排展开时来的电量提醒（应只亮点）；② 日程提醒盖在番茄钟卡上，说完番茄钟原样回来；③ 离开摘要 8 秒期间来的低电量（应排队接着说）。
 - 甲 2：日程大卡盖在计时器卡上、关掉后计时器原样回来，进场不重播。
-- 甲 1 动过主线程上的协调器调用路径：照「@MainActor 类里的 Mutex」那次教训，跑一轮真机探针。
-- `tests/run-appkit-tests.sh NotchLeaseHostTests` 在 ZCode 环境没跑成（`run-appkit-tests.sh all` 在 `NotchActivityViewTests` 因 Metal 环境崩，与本单无关），待复核。
