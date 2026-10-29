@@ -98,6 +98,20 @@ extension AppDelegate {
         playShadeSound(soundName(defaultsKey: shadeUnfoldSoundDefaultsKey, fallback: shadeDefaultUnfoldSound))
     }
 
+    /// 提醒声（拍板 2026-10-29 第 1 条）：编程会话等你、完成，番茄钟休息，计时器到点都听「提示音」这一个开关。
+    /// 用既有的播放器和系统自带的声音，不新增音档；卷帘收起 / 展开的效果声走 playShadeSound（开关还是它自己的那行）。
+    func playReminderSound(_ name: String) {
+        guard AlertSoundPreference.isEnabled(in: .standard) else { return }
+        shadeSounds.play(name)
+    }
+
+    /// 番茄钟休息的开始 / 结束：以前借效果声的开关（ShadeSoundEnabled），现在听「提示音」。
+    /// 声还是收起 / 展开那两个文件，不新增音档。
+    func playFocusRestSound(started: Bool) {
+        playReminderSound(started ? soundName(defaultsKey: shadeFoldSoundDefaultsKey, fallback: shadeDefaultFoldSound)
+                                  : soundName(defaultsKey: shadeUnfoldSoundDefaultsKey, fallback: shadeDefaultUnfoldSound))
+    }
+
     func prewarmUnfoldSound() {
         prewarmShadeSound(soundName(defaultsKey: shadeUnfoldSoundDefaultsKey, fallback: shadeDefaultUnfoldSound))
     }
@@ -207,7 +221,7 @@ extension AppDelegate {
     func makeShadeSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot(explainer: .shade)
         stack.addArrangedSubview(makeSettingsHeader(
-            title: "卷帘", subtitle: WSL10n.setting("settings.shade.sub", zh: "设置怎么收起窗口、收起后什么样、要不要提示音。"),
+            title: "卷帘", subtitle: WSL10n.setting("settings.shade.sub", zh: "设置怎么收起窗口、收起后什么样、要不要音效。"),
             symbolName: "rectangle.compress.vertical"))
 
         let trigger = makeUnifiedSettingsCard([
@@ -1059,10 +1073,6 @@ extension AppDelegate {
             ? WSL10n.setting("settings.shade.followSound.subDenied", zh: "没有允许系统音频录制")
             : WSL10n.setting("settings.shade.followSound.sub", zh: "刘海右边的小点随歌起伏")
     }
-    @objc func prefToggleTimerChime(_ sender: NSSwitch) {
-        CountdownTimerSettings.chimeEnabled = sender.state == .on
-    }
-
     // MARK: 日程（CAL-3、CAL-4）
 
     /// 设置里"日程"一行：符号 + 名字 + 一行副标题，右边提前量和开关。没有权限时开关关着，副标题写原因，点一下去系统设置。

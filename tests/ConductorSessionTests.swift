@@ -139,6 +139,7 @@ struct ConductorSessionTests {
         for (n,e) in [(1,"low"),(2,"medium"),(3,"high"),(4,"xhigh")] {
             var x=Driver();_=x.draw(beats(n));t.expect(x.state.nextConfig?.effort==e && x.state.nextConfig?.model==x.model && x.state.candidate==nil,"\(n) 拍")
         }
+        var mute=Driver(twoModels:true);t.expect(mute.click(.mute)==[.togglePromptSound],"静音键拨「提示音」那一个开关，会话里不另记一份")
         var noDomain=Driver(twoModels:true);_=noDomain.click(.tv);_=noDomain.draw(beats(2))
         t.expect(noDomain.state.nextConfig?.effort=="medium" && noDomain.state.nextConfig?.model==noDomain.model,"点过电视键，两拍仍是 medium，不是第二个模型")
         var fiveAfterTV=Driver();_=fiveAfterTV.only(.tv);_=fiveAfterTV.draw(beats(5))

@@ -106,9 +106,10 @@ enum CountdownTimerSettings {
     /// 只有单线程的测试会在使用前换掉它再换回；App 里从不赋值。
     nonisolated(unsafe) static var store: UserDefaults = .standard
 
+    /// 到时间响一声听「提示音」（拍板 2026-10-29 第 1 条）；chimeKey 只剩迁移时当旧键读。
     static var chimeEnabled: Bool {
-        get { store.object(forKey: chimeKey) as? Bool ?? true }
-        set { store.set(newValue, forKey: chimeKey) }
+        get { AlertSoundPreference.isEnabled(in: store) }
+        set { AlertSoundPreference.set(newValue, in: store) }
     }
     static var lastMinutes: Int {
         get { CountdownTimerPicker.initial(last: store.integer(forKey: lastMinutesKey)) }

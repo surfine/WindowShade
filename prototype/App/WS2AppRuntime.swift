@@ -200,6 +200,8 @@ import Cocoa
     }
     /// 编程会话的状态变化成为刘海上的持续活动（在跑 / 等你 / 做完了），不再各说一句 announce。
     /// 睡着、锁屏时控制器自己只记状态不上刘海；这里再把关“等你”那一句开口（项目名不上锁屏）。
+    /// 会话上一次报来的状态：等你 / 完成的提示音只在跳变时响一次（同一状态重复报不再响）。
+    private var sessionSoundStates: [String: AgentSessions.Status] = [:]
     private func codingSessionsChanged(_ changes: [WS2HookSessions.Change]) {
         guard let owner, let server = hookServer else { return }
         let model = server.model
@@ -216,6 +218,12 @@ import Cocoa
                 assistant: Self.codingAssistantName, status: status,
                 summary: status == .waiting ? model.waitingSummary(of: change.sessionID) : ""))
             hookApproval?.statusChanged(sessionID: change.sessionID, status: change.status)
+            // 提示音（拍板 2026-10-29 第 1 条）：等你、完成各响一声，跳变才响。
+            if sessionSoundStates[change.sessionID] != change.status {
+                if change.status == .waiting { owner.playReminderSound("Ping") }
+                if change.status == .completed { owner.playReminderSound("Glass") }
+            }
+            sessionSoundStates[change.sessionID] = change.status
         }
     }
     static let codingAssistantName = "Claude Code"
@@ -613,8 +621,8 @@ import Cocoa
                     ? { [weak self] in MainActor.assumeIsolated { self?.startFocus() } } : nil
                 owner?.notch.announce(reminder.title, detail: reminder.detail, tone: .done, symbol: reminder.symbol,
                                       duration: reminder.hold, onClick: next)
-            case .sound(.restStarted): owner?.playFoldSound()
-            case .sound(.restFinished): owner?.playUnfoldSound()
+            case .sound(.restStarted): owner?.playFocusRestSound(started: true)
+            case .sound(.restFinished): owner?.playFocusRestSound(started: false)
             case .tuckChat(let token):
                 guard WS2FocusWindowPort.admitted else {
                     wlog("focus: window effects not admitted yet; counting only")

@@ -124,6 +124,8 @@ struct ConductorSession: Sendable {
         case approvalChoice(WS2.ApprovalKey, confirm: Bool, deny: Bool, beganAt: WS2.Instant, sequence: UInt64, voicePassed: Bool)
         case requestVoiceChallenge(WS2.Token, WS2.ApprovalKey)
         case disconnect, volume(up: Bool), sound(String), fault(WS2.Fault)
+        /// 静音键：拨「提示音」那一个开关（拍板 2026-10-29 第 1 条）；执行的一方拨完照实显示开 / 关。
+        case togglePromptSound
     }
     struct Draft: Equatable, Sendable {
         let text: String; let digest: WS2.Digest; let revision: UInt64; let owner: WS2.Context
@@ -166,7 +168,6 @@ struct ConductorSession: Sendable {
     private(set) var candidate: ConductorCostCandidate?
     /// 第 3 层：四个模型位置展开时焦点所在的下标。
     private(set) var modelPicker: Int?
-    private(set) var muted = false
     private(set) var backendReady = false
     private var lastEpoch: UInt64 = 0
     private var gate = WS2.EventGate()
@@ -402,7 +403,8 @@ struct ConductorSession: Sendable {
         case .back, .up: return back(now: now)
         case .down: return openModels()
         case .left, .right: return moveModel(button == .right ? 1 : -1)
-        case .mute: muted.toggle(); return show(.muted(muted))
+        // 静音键拨的就是「提示音」那一个开关（拍板 2026-10-29 第 1 条），和遥控其它层一样；拍子由播放器按它决定响不响。
+        case .mute: return [.togglePromptSound]
         case .power:
             // 收工不是退出：不断开遥控器、不发 interrupt、不睡眠 Mac；会话和草稿都留着。
             let active = runningTurn != nil || command != nil || uncertainCommand != nil
@@ -714,7 +716,7 @@ struct ConductorSession: Sendable {
         }
         guard notch != value else { return [] }; notch = value; return [.showNotch(value)]
     }
-    private func sound(_ name: String) -> [Effect] { muted ? [] : [.sound(name)] }
+    private func sound(_ name: String) -> [Effect] { [.sound(name)] }
     private func validID(_ text: String) -> Bool { !text.isEmpty && text.utf8.count <= 512 }
     private func validCapabilities(_ caps: [ConductorCapabilities]) -> Bool {
         !caps.isEmpty && caps.count <= 256 && caps.allSatisfy(\.isValid) && Set(caps.map(\.model)).count == caps.count

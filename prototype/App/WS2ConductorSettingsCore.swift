@@ -5,7 +5,6 @@ import Cocoa
 /// 指挥模式的设置只记在这台 Mac 上。开关在“遥控模式”下面（总开关关着时跟着关），这一页只放它的细项。
 enum WS2ConductorSettings {
     static let enabledKey = "WindowShade.Conductor.Enabled"
-    static let soundKey = "WindowShade.Conductor.Sound"
     static func slotKey(_ index: Int) -> String { "WindowShade.Conductor.ModelSlot.\(index)" }
     /// 编程会话：Claude Code 的 hook 报到本机 socket（WS2HookServer）。默认关，不依赖遥控模式。
     static let codingSessionsKey = "WindowShade.Conductor.CodingSessions"

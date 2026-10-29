@@ -46,6 +46,10 @@ enum ReleaseDefaults {
         Entry(key: "Dock.clickToHide", designed: true, deviceVerified: false, ownerDecided: true),
         // Dock 悬停查看窗口：1.0.15 起就有的键，那时没设过是关；Aaron 拍板 2026-10-17 起默认开
         Entry(key: "WindowBrowserDockEnabled", designed: true, deviceVerified: false, ownerDecided: true),
+        // 提示音（拍板 2026-10-29 第 1 条统成一个开关）：等你、完成、番茄钟、计时器到点、指挥拍子。
+        // 默认开——计时器到点 1.0.17 起就默认响（Timer.chimeEnabled 没设过是开），统一后新装不丢这一声（帕累托）；
+        // 番茄钟休息、指挥拍子原来默认不响，新装起跟着它响。ownerDecided 记的是第 1 条「一个开关」，默认值待 Aaron 复核。
+        Entry(key: "WindowShade.AlertSound", designed: true, deviceVerified: false, ownerDecided: true),
         // 启动台卸载（右键菜单「卸载 App…」，进废纸篓可找回；真机 fixture 流过了才翻 deviceVerified）
         Entry(key: "Launchpad.uninstall.enabled", designed: true, deviceVerified: false),
         // 账本写明签名构建上探针跑过（build 16，9/30–10/1），之后没再改过：按设计值发

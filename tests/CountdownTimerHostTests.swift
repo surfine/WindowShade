@@ -143,7 +143,7 @@ struct CountdownTimerHostTests {
         t.expect(i.host.nextWake(at: sec(700)) == sec(720), "超时满一分钟后每分钟换字")
         i.host.stop()
 
-        t.section("TMR2-10", "设置：到时间响一声默认开；上次的分钟数")
+        t.section("TMR2-10", "设置：到时间响一声听「提示音」，默认开；上次的分钟数")
         let suiteName = "ws.tmr2.tests.\(UUID().uuidString)"
         let suite = UserDefaults(suiteName: suiteName)!
         let saved = CountdownTimerSettings.store

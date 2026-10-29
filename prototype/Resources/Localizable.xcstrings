@@ -8350,52 +8350,6 @@
         }
       }
     },
-    "conductor.settings.sound": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sound cues"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提示音"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "提示音"
-          }
-        }
-      }
-    },
-    "conductor.settings.sound.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One soft tap per beat"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每一拍轻敲一声。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "每一拍輕敲一聲。"
-          }
-        }
-      }
-    },
     "conductor.stage.accepted": {
       "extractionState": "manual",
       "localizations": {
@@ -8632,7 +8586,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cues muted"
+            "value": "Alert sound off"
           }
         },
         "zh-Hans": {
@@ -8908,7 +8862,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cues on"
+            "value": "Alert sound on"
           }
         },
         "zh-Hans": {
@@ -54794,6 +54748,52 @@
         }
       }
     },
+    "settings.shade.alertSound.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alert sound"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示音"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提示音"
+          }
+        }
+      }
+    },
+    "settings.shade.alertSound.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plays a sound when a coding session waits for you or finishes, at pomodoro breaks, when a timer ends, and on conductor beats."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等你、完成、番茄钟休息、计时器到点和指挥拍子都响一声"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "等你、完成、番茄鐘休息、計時器到點和指揮拍子都響一聲"
+          }
+        }
+      }
+    },
     "settings.shade.appearance.name": {
       "extractionState": "manual",
       "localizations": {
@@ -57175,13 +57175,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "设置怎么收起窗口、收起后什么样、要不要提示音。"
+            "value": "设置怎么收起窗口、收起后什么样、要不要音效。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "設定怎麼收起視窗、收起後什麼樣、要不要提示音。"
+            "value": "設定怎麼收起視窗、收起後什麼樣、要不要音效。"
           }
         }
       }
@@ -57550,52 +57550,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "縮圖半透明"
-          }
-        }
-      }
-    },
-    "settings.shade.timerChime.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chime when a timer ends"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "计时器到时间响一声"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "計時器到時間響一聲"
-          }
-        }
-      }
-    },
-    "settings.shade.timerChime.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "One system alert, no repeat; silent when the system is muted"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "响一次系统提示音，不循环；系统静音时不响"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "響一次系統提示音，不迴圈；系統靜音時不響"
           }
         }
       }

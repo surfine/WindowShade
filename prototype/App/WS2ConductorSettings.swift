@@ -25,16 +25,12 @@ extension AppDelegate {
         header.setContentHuggingPriority(.required, for: .horizontal)
         stack.addArrangedSubview(header)
         let on = WS2InputPreferences.load(from: store).remoteMode && WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store)
-        let sound = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: store),
-                                    action: #selector(prefConductorSound(_:)), name: WSL10n.text("conductor.settings.sound", zh: "提示音"))
+        // 提示音只剩「实时活动」那一栏的一行（拍板 2026-10-29 第 1 条）；拍子听它，这一页不再重复摆。
         var rows = [
             conductorRow(name: WSL10n.setting("conductor.settings.mode", zh: "指挥模式"),
                          subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "先在遥控模式里打开"), symbol: nil,
                          control: conductorStatus(on ? WSL10n.text("conductor.settings.on", zh: "开着")
                                                       : WSL10n.text("conductor.settings.off", zh: "关着"))),
-            conductorRow(name: WSL10n.setting("conductor.settings.sound", zh: "提示音"),
-                         subtitle: WSL10n.setting("conductor.settings.sound.sub", zh: "每一拍轻敲一声。"), symbol: nil,
-                         control: sound),
         ]
         let coding = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: store),
                                      action: #selector(prefConductorCodingSessions(_:)), name: WSL10n.text("notch.kind.session", zh: "编程会话"))
@@ -87,9 +83,6 @@ extension AppDelegate {
         return root
     }
 
-    @objc func prefConductorSound(_ sender: NSSwitch) {
-        WS2ConductorSettings.setFlag(sender.state == .on, WS2ConductorSettings.soundKey, in: .standard)
-    }
     @objc func prefConductorCodingSessions(_ sender: NSSwitch) {
         WS2ConductorSettings.setFlag(sender.state == .on, WS2ConductorSettings.codingSessionsKey, in: .standard)
     }

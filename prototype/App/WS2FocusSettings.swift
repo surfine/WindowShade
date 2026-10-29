@@ -19,8 +19,8 @@ import Cocoa
     private let presets = NSPopUpButton()
     private let tuck = NSButton(checkboxWithTitle: WSL10n.text("settings.shade.focus.tuck", zh: WS2FocusSettings.tuckChatTitle),
                                 target: nil, action: nil)
-    /// 计时器到时间响一声（1.0.17 从单独一行并进来；键还是 Timer.chimeEnabled）。
-    private let chime = NSButton(checkboxWithTitle: WSL10n.text("settings.shade.timerChime.name", zh: "计时器到时间响一声"),
+    /// 提示音（拍板 2026-10-29 第 1 条）：等你、完成、番茄钟、计时器到点、指挥拍子共用的唯一一行。
+    private let chime = NSButton(checkboxWithTitle: WSL10n.text("settings.shade.alertSound.name", zh: "提示音"),
                                  target: nil, action: nil)
     init(runtime: WS2AppRuntime) {
         self.runtime = runtime; super.init(frame: .zero)
@@ -36,9 +36,12 @@ import Cocoa
         presets.setContentHuggingPriority(.required, for: .horizontal)
         presets.toolTip = WSL10n.text("settings.shade.focus.presetTooltip", zh: "新的时长从下一轮开始生效。正在进行的一轮保持原时长。")
         addArrangedSubview(row)
-        chime.state = CountdownTimerSettings.chimeEnabled ? .on : .off; chime.target = self; chime.action = #selector(changeChime)
-        chime.toolTip = WSL10n.text("settings.shade.timerChime.sub", zh: "响一次系统提示音，不循环；系统静音时不响")
+        chime.state = AlertSoundPreference.isEnabled(in: .standard) ? .on : .off; chime.target = self; chime.action = #selector(changeChime)
+        chime.toolTip = WSL10n.text("settings.shade.alertSound.sub", zh: "等你、完成、番茄钟休息、计时器到点和指挥拍子都响一声")
         chime.setAccessibilityHelp(chime.toolTip)
+        // 设置搜索找得到「提示音」：指挥页那一行拿掉后，这是它唯一的入口。
+        SettingsSearchRegistry.register(chime, name: WSL10n.setting("settings.shade.alertSound.name", zh: "提示音"),
+                                        subtitle: WSL10n.setting("settings.shade.alertSound.sub", zh: "等你、完成、番茄钟休息、计时器到点和指挥拍子都响一声"))
         addArrangedSubview(chime)
         // 专注时收私人 App 还没放行（WS2FocusWindowPort.admitted），是 WindowShade 2 的一部分：预览旗标打开才摆出来。
         guard WS2Preview.isOn else { return }
@@ -56,6 +59,6 @@ import Cocoa
     }
     required init?(coder: NSCoder) { nil }
     @objc private func changePreset() { WS2FocusSettings.set(preset: presets.indexOfSelectedItem == 1 ? .minutes50 : .minutes25); runtime?.refreshFocusSettings() }
-    @objc private func changeChime() { CountdownTimerSettings.chimeEnabled = chime.state == .on }
+    @objc private func changeChime() { AlertSoundPreference.set(chime.state == .on, in: .standard) }
     @objc private func changeTuck() { WS2FocusSettings.set(tuckChat: tuck.state == .on); runtime?.refreshFocusSettings() }
 }

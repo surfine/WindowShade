@@ -4809,7 +4809,7 @@
       "path": "prototype/App/WS2RemoteEffects.swift",
       "line": 283,
       "symbol": "UserDefaults",
-      "source": "isEnabled: { WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: UserDefaults.standard) },",
+      "source": "isEnabled: { AlertSoundPreference.isEnabled(in: UserDefaults.standard) },",
       "signal": "settings"
     },
     {
@@ -7786,6 +7786,27 @@
       "symbol": "URLSession",
       "source": "nonisolated func urlSession(_ session: URLSession, task: URLSessionTask,",
       "signal": "presence-bridge"
+    },
+    {
+      "path": "prototype/Core/AlertSound.swift",
+      "line": 20,
+      "symbol": "UserDefaults",
+      "source": "static func isEnabled(in defaults: UserDefaults) -> Bool {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/AlertSound.swift",
+      "line": 27,
+      "symbol": "UserDefaults",
+      "source": "static func migrateIfNeeded(in defaults: UserDefaults) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/AlertSound.swift",
+      "line": 32,
+      "symbol": "UserDefaults",
+      "source": "static func set(_ on: Bool, in defaults: UserDefaults) {",
+      "signal": "settings"
     }
   ],
   "groups": [

@@ -574,6 +574,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             unfoldSoundName = shadeDefaultUnfoldSound
         }
         defaults.set(2, forKey: shadeSoundMigrationVersionDefaultsKey)
+        // 三个旧提醒开关并成「提示音」（拍板 2026-10-29 第 1 条）：落一次盘，之后卷帘那一行不再牵动它。
+        AlertSoundPreference.migrateIfNeeded(in: defaults)
     }
 
 

@@ -157,6 +157,7 @@ extension WS2RemoteEffectPort {
             switch effect {
             case .showNotch(let notch): onConductorNotch?(notch)
             case .stageConfig(let config): onConductorConfig?(config)
+            case .togglePromptSound: onConductorNotch?(.muted(!port.togglePromptSound()))
             default: break
             }
         }
@@ -335,15 +336,16 @@ extension WS2RemoteEffectPort {
     }
 
     private lazy var conductorSound = ConductorSoundPlayer(
-        isEnabled: { WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: UserDefaults.standard) },
+        isEnabled: { AlertSoundPreference.isEnabled(in: UserDefaults.standard) },
         output: ConductorAudioEngineOutput())
 
     func play(cue: ConductorSoundCue) { conductorSound.play(cue) }
 
     func togglePromptSound() -> Bool {
         let store = UserDefaults.standard
-        let on = !WS2ConductorSettings.flag(WS2ConductorSettings.soundKey, in: store)
-        WS2ConductorSettings.setFlag(on, WS2ConductorSettings.soundKey, in: store)
+        // 拍板 2026-10-29 第 1 条：遥控器静音键拨的就是「提示音」这一个开关。
+        let on = !AlertSoundPreference.isEnabled(in: store)
+        AlertSoundPreference.set(on, in: store)
         return on
     }
 
