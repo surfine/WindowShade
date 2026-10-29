@@ -1548,25 +1548,31 @@ final class NotchController {
         return true
     }
 
-    /// 回来了：刘海说一句「离开期间」，停 8 秒收回。点一下，摘要里第一扇还在的窗口：在这一排里就回到原处，
-    /// 在别的桌面上就去（拍板 10-29 第 15 条，和点那一排里的格子同一条路 `open`）；其余几项（设备、下载）点了不做什么。不补播，说过就清。
+    /// 回来了：刘海说一句「离开期间」，停 8 秒收回。点一下，那一行说的第一项若是窗口：在这一排里就回到原处，
+    /// 在别的桌面上就去（拍板 10-29 第 15 条，和点那一排里的格子同一条路 `open`）；第一项不是窗口时照旧：有收着的窗口就展开那一排。不补播，说过就清。
     fileprivate func showAwaySummary(_ summary: AwaySummary.Summary) {
         let tappable = summary.tapAction(whereabouts: { [weak self] in self?.awayWhereabouts(CGWindowID($0)) ?? .gone }) != nil
+        let opensRow = summary.firstWindowID.map { isTucked(CGWindowID($0)) } ?? false
         announceWhenFree(key: "away.summary", text: AwaySummary.heading, detail: summary.compactDetail,
                          symbol: "lock.open", priority: 5, ttl: 30, hold: AwaySummary.holdSeconds,
-                         onClick: tappable ? { [weak self] in
+                         onClick: tappable || opensRow ? { [weak self] in
                              MainActor.assumeIsolated {
                                  guard let self else { return }
-                                 summary.tap(whereabouts: self.away.windowWhereabouts,
-                                             backToPlace: { self.open(CGWindowID($0)) },
-                                             goThere: { self.open(CGWindowID($0)) })
+                                 if summary.tap(whereabouts: self.away.windowWhereabouts,
+                                                backToPlace: { self.open(CGWindowID($0)) },
+                                                goThere: { self.open(CGWindowID($0)) }) { return }
+                                 guard let panel = self.pointerPanel(), !panel.isExpanded, !self.tucked.isEmpty else { return }
+                                 panel.expand(with: self.tiles())
+                                 self.requestThumbnails()
                              }
                          } : nil)
     }
 
     /// 摘要里的窗口此刻在哪：收起、收进刘海、侧拉等都在这一排里；货架里「在别的桌面」的是要去的。
     private func awayWhereabouts(_ id: CGWindowID) -> AwaySummary.Whereabouts {
-        if isTucked(id) || owner.shaded[id] != nil { return .inRow }
+        if isTucked(id) { return .inRow }
+        // 收起的条在别的桌面上：要去的是那张桌面（条本身在那边的窗口层）。
+        if let state = owner.shaded[id] { return state.overlay?.isOnActiveSpace == false ? .otherDesktop : .inRow }
         if let item = shelf.item(id) { return item.kind == .elsewhere ? .otherDesktop : .inRow }
         return .gone
     }

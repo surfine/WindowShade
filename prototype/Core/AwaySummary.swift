@@ -66,17 +66,16 @@ enum AwaySummary {
         /// 点一下能去的第一扇窗口。
         var firstWindowID: UInt32? { items.lazy.compactMap(\.windowID).first }
 
-        /// 点一下摘要会发生什么（拍板 10-29 第 15 条）：第一扇还在的窗口，在这一排里就「回到原处」，在别的桌面上就「去」。
-        /// 一扇都不在了（回来的这几秒里被放回、关掉）返回 nil，点了不做什么。
+        /// 点一下摘要会发生什么（拍板 10-29 第 15 条）：只认刘海上那一行说的第一项——它是窗口，且还在，
+        /// 在这一排里就「回到原处」，在别的桌面上就「去」。第一项不是窗口、或窗口已经不在了（回来的这几秒里被放回、关掉），
+        /// 返回 nil，不碰一扇那一行没提到的窗口。
         func tapAction(whereabouts: (UInt32) -> Whereabouts) -> TapAction? {
-            for id in items.compactMap(\.windowID) {
-                switch whereabouts(id) {
-                case .inRow: return .backToPlace(id)
-                case .otherDesktop: return .goThere(id)
-                case .gone: continue
-                }
+            guard let id = items.first?.windowID else { return nil }
+            switch whereabouts(id) {
+            case .inRow: return .backToPlace(id)
+            case .otherDesktop: return .goThere(id)
+            case .gone: return nil
             }
-            return nil
         }
 
         /// 点一下：照 `tapAction` 调对应的那一个；做了返回 true。
