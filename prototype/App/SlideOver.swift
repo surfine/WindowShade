@@ -39,6 +39,8 @@ final class SlideOverController {
         didSet {
             // 维护定时器只在有侧拉窗口时跑。
             if docked != nil { maintenance?.start() } else { maintenance?.stop() }
+            // 不再侧拉（不论走哪条路退出）：排布历史里那几步侧拉作废。
+            if let old = oldValue, old.id != docked?.id { owner.gestures.forgetSteps(.slideOver, id: old.id) }
         }
     }
     private var glide: WindowGlide?
@@ -138,7 +140,9 @@ final class SlideOverController {
                         self.owner.quietNotice(WSL10n.text("notice.slideOver.noWindow", zh: "没有可以侧拉的窗口"), kind: .problem, log: "slide-over: no focused window")
                         return
                     }
+                    let before = cgWindowInfo(id).flatMap(cgWindowBounds)
                     self.enter(win, id: id, pid: pid)
+                    self.owner.gestures.noteStep(.slideOver, id: id, element: win, before: before)
                 }
             }
         }
@@ -240,7 +244,8 @@ final class SlideOverController {
     }
 
     /// 退出侧拉：窗口留下（收着的先拉回来），不再置顶。
-    func exit(reason: String, restoringPosition: Bool = true) {
+    /// backTo：收着的那扇拉回到这里（排布历史撤销侧拉：回到侧拉之前），不给就拉回靠边处。
+    func exit(reason: String, restoringPosition: Bool = true, backTo: CGRect? = nil) {
         guard let current = docked else { return }
         let needsRestore = current.hidden || edgeDrag != nil || (restoringPosition && glide != nil)
         generation &+= 1
@@ -260,10 +265,11 @@ final class SlideOverController {
         docked = nil
         wlog("slide-over: exit id=\(current.id) reason=\(reason)")
         if needsRestore, let now = frameNow(current) {
+            let target = backTo ?? current.frame
             let g = WindowGlide(id: current.id, element: current.element,
-                                path: .honoringMotion(from: now, to: current.frame, velocity: .zero), after: previousGlide)
+                                path: .honoringMotion(from: now, to: target, velocity: .zero), after: previousGlide)
             g.start { [weak self] report in
-                if !report.cancelled, abs(report.observed.minX - current.frame.minX) < 8 {
+                if !report.cancelled, abs(report.observed.minX - target.minX) < 8 {
                     SlideOverRecovery.clear(id: current.id)
                     if current.restorePin { self?.restoreOriginalPin(current) }
                 }

@@ -216,6 +216,8 @@ enum StatusMenuLayout {
     static let accessibilityRowID = "ws.menu.dynamic.accessibility"
     /// “整理▸”里的卷轴概览（子菜单项，不算顶层 9 项）。
     static let stripOverviewRowID = "ws.menu.arrange.stripOverview"
+    /// “整理▸”第一项：撤销排布历史里最近一步（见 TrackpadGestures 的排布历史一节）。
+    static let undoStepRowID = "ws.menu.arrange.undoStep"
 
     /// 固定 9 项，按顺序。
     static var fixedTopLevel: [(id: String, title: String)] {

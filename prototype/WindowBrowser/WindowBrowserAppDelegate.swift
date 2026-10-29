@@ -117,6 +117,7 @@ extension AppDelegate {
         }
         let token = MainActor.assumeIsolated { registerFoldWaiter(id: id, completion: completion) }
         shade(element, id, trustElement: true)
+        MainActor.assumeIsolated { gestures.noteStep(.shade, id: id) }
         return token
     }
 

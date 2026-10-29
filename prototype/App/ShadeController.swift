@@ -83,6 +83,7 @@ extension AppDelegate {
         } else {
             let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
             shade(win, id, options: options)
+            MainActor.assumeIsolated { gestures.noteStep(.shade, id: id) }
         }
     }
     func performNativeStickiesShade(_ win: AXUIElement) {

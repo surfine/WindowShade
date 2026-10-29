@@ -31,6 +31,8 @@
   rectangle.topthird.inset.filled  收进刘海
   pin                         置顶                ⌃⌘P
   rectangle.split.2x1         排列 ▸
+        arrow.uturn.backward 撤销〈最近一步〉   （排布历史，没有可撤的时候灰着；见 gestures.md「排布历史」）
+        ────────
         sidebar.right   侧拉              ⌃⌘S
         pip             画中画
         wand.and.stars  魔法平铺          ⌃⌘M

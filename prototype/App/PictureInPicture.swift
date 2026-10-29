@@ -66,7 +66,12 @@ final class PictureInPictureController {
                         self.owner.notch.announce(WSL10n.text("pip.noWindow", zh: "没有可放的窗口"), detail: WSL10n.text("pip.tapFirst", zh: "先点一下要放的窗口"), tone: .problem)
                         return
                     }
-                    if self.sessions[id] != nil { self.exit(id, activate: true) } else { self.enter(win, id: id, pid: pid) }
+                    if self.sessions[id] != nil {
+                        self.exit(id, activate: true)
+                    } else {
+                        self.enter(win, id: id, pid: pid)
+                        self.owner.gestures.noteStep(.pictureInPicture, id: id)
+                    }
                 }
             }
         }
@@ -185,6 +190,7 @@ final class PictureInPictureController {
         guard let s = sessions[id] else { return }
         sessions[id] = nil
         exiting[id] = s
+        owner.gestures.forgetSteps(.pictureInPicture, id: id)
         order.removeAll { $0 == id }
         s.animation?.invalidate()
         s.panel.ignoresMouseEvents = true
@@ -249,6 +255,7 @@ final class PictureInPictureController {
     private func abandon(_ s: PiPSession, reason: String) {
         guard sessions[s.id] === s else { return }
         sessions[s.id] = nil
+        owner.gestures.forgetSteps(.pictureInPicture, id: s.id)
         order.removeAll { $0 == s.id }
         s.animation?.invalidate()
         s.capture.stop()

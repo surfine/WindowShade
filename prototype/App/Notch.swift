@@ -41,7 +41,13 @@ final class NotchController {
     }
 
     unowned let owner: AppDelegate
-    private var tucked: [Tucked] = []
+    private var tucked: [Tucked] = [] {
+        didSet {
+            // 从刘海里拿出来了（不论走哪条路）：排布历史里那几步收进刘海作废。
+            let now = Set(tucked.map(\.id))
+            for id in Set(oldValue.map(\.id)).subtracting(now) { owner.gestures.forgetSteps(.tuck, id: id) }
+        }
+    }
     /// 甩进来的窗口：卷帘条第一次装上时摆到这个位置（展开时按卷帘条的位置算落点）。
     private var parkOnInstall: [CGWindowID: NSPoint] = [:]
 
@@ -1697,6 +1703,7 @@ final class NotchController {
         }
         tuck(match.element, id: match.window.id, pid: match.window.pid,
              landed: match.window.frame, home: match.window.frame, velocity: .zero)
+        owner.gestures.noteStep(.tuck, id: match.window.id)
         coachUsed(.notchHome)
         return true
     }

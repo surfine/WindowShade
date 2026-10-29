@@ -30,6 +30,10 @@ extension AppDelegate {
         MainActor.assumeIsolated { _ = gestures.magicTile() }
     }
 
+    @objc func undoArrangementStepAction() {
+        MainActor.assumeIsolated { _ = gestures.undoLatestStep() }
+    }
+
     @objc func tuckAllAction() {
         MainActor.assumeIsolated { _ = notch.tuckAll() }
     }
