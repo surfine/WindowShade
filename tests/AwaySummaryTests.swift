@@ -132,6 +132,26 @@ struct AwaySummaryTests {
         if case .summary = log.finish(unlocked: true, at: 400, reality: reality()) { expect(true, "a clock step back still reports the start instant") }
         else { expect(false, "a clock step back still reports the start instant") }
 
+        // 点一项（拍板 10-29 第 15 条）：在这一排里回到原处，在别的桌面上去，都不在了不做什么
+        let tapSummary = S.build(
+            windows: [.init(id: 7, app: "终端", at: 150), .init(id: 9, app: "备忘录", at: 130)],
+            tuckedCount: 0, interval: span)!
+        var calls: [String] = []
+        func tap(_ where_: @escaping (UInt32) -> S.Whereabouts) -> Bool {
+            calls.removeAll()
+            return tapSummary.tap(whereabouts: where_, backToPlace: { calls.append("back \($0)") }, goThere: { calls.append("go \($0)") })
+        }
+        expect(tap { _ in .inRow } && calls == ["back 7"], "tapping with the shown window in the row puts it back")
+        expect(tap { _ in .otherDesktop } && calls == ["go 7"], "tapping with the shown window on another desktop goes there")
+        expect(!tap { $0 == 7 ? .gone : .inRow } && calls.isEmpty, "a shown window that is already gone does nothing, not another window")
+        expect(!tap { _ in .gone } && calls.isEmpty, "nothing left to go to does nothing")
+        let deviceFirst = S.build(
+            devices: [.init(deviceID: "m", name: "妙控鼠标", part: nil, percent: 8, at: 110)],
+            windows: [.init(id: 7, app: "终端", at: 150)], tuckedCount: 0, interval: span)!
+        expect(deviceFirst.tapAction(whereabouts: { _ in .inRow }) == nil, "a line that leads with a device never acts on a window it does not mention")
+        let noWindow = S.build(downloads: [.init(name: "a.zip", at: 110)], tuckedCount: 3, interval: span)!
+        expect(noWindow.tapAction(whereabouts: { _ in .inRow }) == nil, "an item without a window has nothing to go to")
+
         print(failures == 0 ? "all passed" : "\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
     }
