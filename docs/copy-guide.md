@@ -217,7 +217,7 @@
 | 已遮住 / 尚未遮住 | **Covered / Not covered yet** | privacy on、mask applied |
 | 不解锁 / 不代填（能力边界句） | **Won't unlock / Won't fill passwords** | cannot unlock、filling disabled |
 | 第 N 列 / 第 N 页 | **Column N / Page N** | strip position N、page N of M |
-| 按住 Option 双击不收起（#39 修饰键出口） | **hold Option to skip** | bypass、disable、temporary off |
+| 按住 Option 双击不收起（#39 修饰键出口；实际任一修饰键 Option、Command、Shift、Control 都放行，界面只写 Option） | **hold Option to skip** | bypass、disable、temporary off |
 
 
 ## 改前改后（真实例子）

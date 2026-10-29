@@ -608,7 +608,17 @@ extension AppDelegate {
             wlog("titlebar-double-click: miss source=\(source) at=(\(Int(point.x)),\(Int(point.y)))")
             return false
         }
-
+        beginTitleBarDoubleClick(win: win, id: id, pid: pid, point: point, source: source)
+        return true
+    }
+    /// 钩子线程已在后台认定是标题栏双击、事件已吞下（拍板 10-29 第 17 条，见 TitlebarTapRoute.swift）：
+    /// 回到主线程接着做，和上面吞下之后那段一样。主线程卡着时它排在队里，轮到时照常收起。
+    func acceptTitlebarDoubleClickFromTap(_ hit: TitlebarTapHit, point: CGPoint) {
+        guard titlebarDoubleClickEnabled else { return }
+        beginTitleBarDoubleClick(win: hit.window, id: hit.id, pid: hit.pid, point: point, source: "ax-hit-off-main")
+    }
+    private func beginTitleBarDoubleClick(win: AXUIElement, id: CGWindowID, pid: pid_t,
+                                          point: CGPoint, source: String) {
         pendingTitlebarTripleClick?.intent.cancel()
         let pending: PendingTitlebarTripleClick?
         if titlebarFoldCanBegin(id: id), systemTitlebarDoubleClickAction() != .none {
@@ -623,7 +633,6 @@ extension AppDelegate {
             self?.performTitleBarDoubleClickAction(win: win, id: id, pid: pid,
                                                    point: point, source: source, pending: pending)
         }
-        return true
     }
     private func performTitleBarDoubleClickAction(win: AXUIElement, id: CGWindowID, pid: pid_t,
                                                   point: CGPoint, source: String,

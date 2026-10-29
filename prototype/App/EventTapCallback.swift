@@ -1,6 +1,7 @@
 // 全局鼠标事件钩子（CGEventTap）的 C 回调与标题栏带预过滤。
 
 import Cocoa
+import Synchronization
 
 // MARK: - 全局鼠标事件钩子（CGEventTap）
 
@@ -46,9 +47,68 @@ func pointMayLieInTitlebarBandUsingFreshCache(_ point: CGPoint) -> Bool? {
 /// 要不要吞掉（标题栏双击收起、三击铺满本来就要问那个 App）。
 nonisolated(unsafe) var mouseDownTapPort: CFMachPort?
 
-/// 双击、三击时问主线程的结果。只给一次截止时间：到点还没定案就作废并放行，
+/// 双击、三击时判定的截止时间，整次点击只给一次：先在后台判定标题栏双击（不等主线程），
+/// 拿不准再问主线程，两段共用这一个截止时间。问主线程那段到点还没定案就作废并放行，
 /// 且迟到的任务不会再折叠（见 TapDecision 的原子状态迁移）。
 private let tapDecisionTimeout: DispatchTimeInterval = .milliseconds(500)
+
+/// 本进程号：自己补发的双击（三击补系统动作，见 postSystemTitlebarDoubleClick）认它，照旧问主线程。
+private let tapOwnProcessID = ProcessInfo.processInfo.processIdentifier
+
+/// 「双击标题栏」开关在钩子这边的副本：后台判定不读主线程上的 AppDelegate。
+/// 主线程装钩子时、每次改开关时写入（WindowShade.swift 的 titlebarDoubleClickEnabled）。
+let titlebarDoubleClickTapEnabled = Atomic<Bool>(true)
+
+/// 后台判定命中的那扇窗。
+struct TitlebarTapHit: Sendable {
+    let window: AXUIElement
+    let id: CGWindowID
+    let pid: pid_t
+}
+
+/// 后台判定标题栏双击（增补第 15 步）：只问辅助功能和 WindowServer，不碰主线程上的状态，
+/// 判断和主线程的 handleTitleBarDoubleClick(at:) 同一套。要用主线程状态的分支（点在自己的窗口上，
+/// 覆盖层就在其中）和几何回退（命中测试出错、AX 树残缺）交回主线程（undecided），
+/// 那里照旧走完整判定，结论与以前一致。
+func classifyTitlebarDoubleClickOffMain(at point: CGPoint) -> TitlebarTapClass<TitlebarTapHit> {
+    guard titlebarDoubleClickTapEnabled.load(ordering: .relaxed) else { return .notTitlebar }
+    guard AXIsProcessTrusted() else { return .notTitlebar }
+    let sysWide = AXUIElementCreateSystemWide()
+    var elRef: AXUIElement?
+    guard AXUIElementCopyElementAtPosition(sysWide, Float(point.x), Float(point.y), &elRef) == .success,
+          let el = elRef else { return .undecided }
+    var hitPID: pid_t = 0
+    guard AXUIElementGetPid(el, &hitPID) == .success, hitPID != tapOwnProcessID else { return .undecided }
+    // 交通灯、地址栏、搜索框、工具栏按钮等控件不抢；标签放行（见谓词注释）。
+    let role = axRole(el)
+    if stealsTitlebarDoubleClick(role) {
+        wlog("titlebar-double-click: refused control role=\(role ?? "?") at=(\(Int(point.x)),\(Int(point.y))) off-main")
+        return .notTitlebar
+    }
+    // AX 树残缺（After Effects 等）要走几何回退，那条路要读前台 App 和焦点窗口，交回主线程。
+    guard let win = containingWindow(el) else { return .undecided }
+    // 找到了窗口，结论就定了：主线程这里也是没对上就放行，不再走几何回退。
+    guard let (id, pid) = titlebarContainsOffMain(point: point, in: win) else {
+        wlog("titlebar-double-click: miss source=ax-hit at=(\(Int(point.x)),\(Int(point.y))) off-main")
+        return .notTitlebar
+    }
+    return .titlebar(TitlebarTapHit(window: win, id: id, pid: pid))
+}
+
+/// AppDelegate.titlebarContains 的后台版：同一套判断，带高先看画像副本（ChromeHitHeightMirror），
+/// 没有再当场量。覆盖层是本进程的窗口，调用方已经把本进程的点击交回主线程，这里不用再看。
+func titlebarContainsOffMain(point: CGPoint, in win: AXUIElement) -> (CGWindowID, pid_t)? {
+    guard let id = windowID(of: win), !isDesktopWidgetWindow(id: id) else { return nil }
+    guard let pos = axPosition(win), let size = axSize(win) else { return nil }
+    var pid: pid_t = 0
+    AXUIElementGetPid(win, &pid)
+    if isStickies(pid: pid) { return nil }
+    let barH = ChromeHitHeightMirror.shared.cachedHitBarHeight(id: id, win: win, size: size)
+        ?? measuredTitlebarHitHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
+    guard point.y >= pos.y, point.y <= pos.y + barH,
+          point.x >= pos.x, point.x <= pos.x + size.width else { return nil }
+    return (id, pid)
+}
 
 func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
                       event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
@@ -66,6 +126,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     let clickState = event.getIntegerValueField(.mouseEventClickState)
     guard clickState >= 2 else { return Unmanaged.passUnretained(event) }   // 单击：不问主线程
     let location = event.location
+    let deadline = DispatchTime.now() + tapDecisionTimeout
     // #39 防线一：修饰键按住的多击完整交还系统（选词、⌥拖拽、系统缩放/最小化）。
     // 不吞、不折叠、不建三击 pending——修饰键是这个手势的"临时跳过"。
     // 放在带内预过滤之前：带内判定有 AX/缓存成本，修饰键路径零成本放行。
@@ -82,6 +143,30 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
             wlog("prefilter: hit=\(c.hit) miss=\(c.miss) nil=\(c.unknown)")
         }
         if verdict == false { return Unmanaged.passUnretained(event) }
+        // 拍板 10-29 第 17 条：标题栏双击在后台判定，不排主线程的队——主线程卡多久，这一下都不漏给系统。
+        // 自己补发的双击照旧问主线程（那里认补发窗口，见 shouldBypassTitlebarEventTap）。
+        let source = pid_t(truncatingIfNeeded: event.getIntegerValueField(.eventSourceUnixProcessID))
+        if source != tapOwnProcessID {
+            let route = routeTitlebarDoubleClick(deadline: deadline,
+                                                 classify: { classifyTitlebarDoubleClickOffMain(at: location) },
+                                                 deliver: { hit in
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { appDelegate?.acceptTitlebarDoubleClickFromTap(hit, point: location) }
+                }
+            })
+            switch route {
+            case .swallow:
+                return nil   // 吞掉，阻止系统「双击缩放」；收起已排到主线程
+            case .pass:
+                return Unmanaged.passUnretained(event)
+            case .timedOut:
+                // 规格 R29：目标 App 没回辅助功能查询，这一下交给了它。
+                wlog("titlebar-tap: off-main decision timed out; passed click to app clickState=\(clickState) at=(\(Int(location.x)),\(Int(location.y)))")
+                return Unmanaged.passUnretained(event)
+            case .askMain:
+                break
+            }
+        }
     }
     let decision = TapDecision()
     DispatchQueue.main.async {
@@ -102,7 +187,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     }
     // 单一截止时间。到点仍未定案：主线程还没开始时作废并放行；已经开始时吞下事件，
     // 避免系统双击和迟到的折叠同时发生。两条路都不会无界等待。
-    if decision.waitForResult(timeout: .now() + tapDecisionTimeout) {
+    if decision.waitForResult(timeout: deadline) {
         return decision.swallow ? nil : Unmanaged.passUnretained(event)
     }
     if decision.abandon() {
