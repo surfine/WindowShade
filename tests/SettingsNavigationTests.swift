@@ -312,7 +312,7 @@ struct SettingsNavigationTests {
         precondition(!shade.contains(gone), "卷帘页不该再有：\(gone)")
       }
       let notch = await texts(.notch)
-      for here in ["有变化时提醒", "实时活动", "番茄钟", "计时器到时间响一声", "改回用系统的提示", "文件架", "设备的电量", "之前常用"] {
+      for here in ["有变化时提醒", "实时活动", "番茄钟", "提示音", "改回用系统的提示", "文件架", "设备的电量", "之前常用"] {
         precondition(notch.filter { $0 == here }.count == 1, "刘海页应有且只有一处：\(here)")
       }
       for gone in ["回来时说一下离开期间的事", "跟着声音跳", "专注时把聊天收进刘海"] {
