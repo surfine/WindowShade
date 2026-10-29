@@ -122,7 +122,7 @@ enum NotchLevelEars {
     /// 最后一下之后多久念一次，不逐格念。
     static let announceDelay: TimeInterval = 0.5
     /// 最后一下之后多久收（`Motion.Hold.level` 取这个值）。
-    static let holdSeconds: TimeInterval = 1.2
+    static let holdSeconds: TimeInterval = MotionHold.levelSeconds
 
     // MARK: 全屏里看不看得见
 

@@ -265,7 +265,7 @@ struct CalendarReminderEngine: Sendable {
     }
 
     /// 最少停留（秒），同短暂提醒。
-    static let minimumHold: TimeInterval = 2.6
+    static let minimumHold: TimeInterval = MotionHold.calendarMinimumHold
     /// 记住多少个鼓过的日程；超过就忘最早的（一天里不会有这么多，只是不让它无限长）。
     static let memory = 64
     /// 解锁、唤醒后这么久之内，最后 10 秒的那一下一律作废。

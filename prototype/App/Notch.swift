@@ -1351,7 +1351,7 @@ final class NotchController {
         let icon = iconImage ?? NSImage(systemSymbolName: name, accessibilityDescription: nil)?
             .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 22, weight: .semibold)
                 .applying(.init(paletteColors: [color])))
-        let duration = hold ?? min(4.5, 1.8 + Double(text.count + detail.count) * 0.05)
+        let duration = hold ?? min(MotionHold.sentenceMaxHold, MotionHold.sentenceBaseHold + Double(text.count + detail.count) * MotionHold.sentencePerCharacter)
         panel.alert(NotchPanel.Alert(id: 0, icon: icon, title: text, subtitle: detail, tone: tone, onClick: onClick ?? {}, ear: ear, earRed: redEar,
                                      actionLabel: actionLabel),
                     duration: duration)

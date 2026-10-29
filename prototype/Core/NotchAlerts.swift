@@ -77,9 +77,9 @@ enum NowPlayingPeek {
     static let gap = 6.0
     /// 文字离两边的留白。
     static let sideMargin = 14.0
-    static let baseHold: TimeInterval = 1.8
-    static let perCharacter: TimeInterval = 0.05
-    static let maxHold: TimeInterval = 4.5
+    static let baseHold: TimeInterval = MotionHold.sentenceBaseHold
+    static let perCharacter: TimeInterval = MotionHold.sentencePerCharacter
+    static let maxHold: TimeInterval = MotionHold.sentenceMaxHold
     /// 别的提醒占着时，这一瞥排在后面等多久；超过就放弃（稿“排在后面”，Aaron 定 4.5 秒）。
     static let queueLimit: TimeInterval = 4.5
     /// 封面交叉淡化（沿用紧凑两耳的淡过去，同一个数）。

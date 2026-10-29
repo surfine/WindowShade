@@ -32,7 +32,7 @@ final class AppDelegate: NSObject {}
 }
 enum EffectSecurityBoundary { static var lockState: SessionLockState { .unlocked } }
 SWIFT
-swiftc -swift-version 6 -O "$WORK/UIBindings.swift" "$WORK/AuthenticationTests.swift" \
+swiftc prototype/Core/Contracts.swift -swift-version 6 -O "$WORK/UIBindings.swift" "$WORK/AuthenticationTests.swift" \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/SessionLockState.swift prototype/Core/AuthorizationModels.swift prototype/Core/IdentityEvidence.swift prototype/Core/AuthorizationLedger.swift \
   prototype/App/AuthorizationCopy.swift prototype/App/AuthorizationService.swift prototype/App/DeviceAuthorizationKey.swift \

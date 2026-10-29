@@ -7,7 +7,7 @@ import Cocoa
 /// 绝不替它决定。只读工具点一下就能允许，其余（shell、写入、MCP）一律要 Touch ID。
 @MainActor final class WS2HookApprovalHost {
     static let agentName = "Claude Code"
-    static let receiptHold: UInt64 = 800 * WS2.Duration.millisecond
+    static let receiptHold: UInt64 = MotionHold.receiptMilliseconds
     private let server: WS2HookServer
     private let island: NotchLeaseHub
     private let authentication: NotchAuthenticationController

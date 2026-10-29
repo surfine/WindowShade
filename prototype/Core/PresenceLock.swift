@@ -63,7 +63,7 @@ struct PresenceLock: Sendable {
     static let cameraIdle: UInt64 = 30 * WS2.Duration.second
     static let cameraMissing: UInt64 = 10 * WS2.Duration.second // 推荐，需由主模型冻结。
     static let cameraFreshness: UInt64 = 2 * WS2.Duration.second
-    static let returnHold: UInt64 = 2 * WS2.Duration.second
+    static let returnHold: UInt64 = MotionHold.presenceReturnMilliseconds
     static let rssiFreshness: UInt64 = 1 * WS2.Duration.second
     static let lockReceiptTimeout: UInt64 = 3 * WS2.Duration.second // 推荐，超时不认作自己锁定。
     // 唤醒后蓝牙栈要一会儿才可用：0.5 秒复查锁态，1 秒重启扫描（思路参考 BLEUnlock，未用其代码）。
