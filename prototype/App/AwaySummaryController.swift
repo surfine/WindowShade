@@ -18,6 +18,8 @@ import Cocoa
     var tuckedCount: () -> Int = { 0 }
     var windowIsCurrent: (UInt32) -> Bool = { _ in false }
     var deviceIsCurrent: (_ deviceID: String, _ part: String?) -> Bool = { _, _ in false }
+    /// 摘要里的窗口此刻在哪（点的时候现问：说完到点之间它可能已经放回或关掉）。
+    var windowWhereabouts: (UInt32) -> AwaySummary.Whereabouts = { _ in .gone }
     /// 把摘要说到刘海上。
     var present: (AwaySummary.Summary) -> Void = { _ in }
     var isUnlocked: () -> Bool = { EffectSecurityBoundary.lockState == .unlocked }

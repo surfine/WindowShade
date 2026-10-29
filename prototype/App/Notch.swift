@@ -312,6 +312,7 @@ final class NotchController {
         activities.onDownloadsFinished = { [weak self] names in self?.away.noteDownloads(names) }
         away.tuckedCount = { [weak self] in self?.tuckedCount ?? 0 }
         away.windowIsCurrent = { [weak self] id in self?.owner.shaded[id] != nil }
+        away.windowWhereabouts = { [weak self] id in self?.awayWhereabouts(CGWindowID(id)) ?? .gone }
         away.present = { [weak self] summary in self?.showAwaySummary(summary) }
         // 收起的窗口来来去去（双击、快捷键、菜单），每 2 秒对一次账：只加减观察者，不问任何 App。
         // 刘海上有东西时顺便看看两边的菜单栏空位是不是该重新量了（量在后台）。
@@ -1547,19 +1548,27 @@ final class NotchController {
         return true
     }
 
-    /// 回来了：刘海说一句「离开期间」，停 8 秒收回。点一下，有收着的窗口就展开那一排，在那里看一眼、放回；
-    /// 其余几项（设备、下载）点了不做什么。不补播，说过就清。
+    /// 回来了：刘海说一句「离开期间」，停 8 秒收回。点一下，摘要里第一扇还在的窗口：在这一排里就回到原处，
+    /// 在别的桌面上就去（拍板 10-29 第 15 条，和点那一排里的格子同一条路 `open`）；其余几项（设备、下载）点了不做什么。不补播，说过就清。
     fileprivate func showAwaySummary(_ summary: AwaySummary.Summary) {
-        let opensRow = summary.firstWindowID.map { isTucked(CGWindowID($0)) } ?? false
+        let tappable = summary.tapAction(whereabouts: { [weak self] in self?.awayWhereabouts(CGWindowID($0)) ?? .gone }) != nil
         announceWhenFree(key: "away.summary", text: AwaySummary.heading, detail: summary.compactDetail,
                          symbol: "lock.open", priority: 5, ttl: 30, hold: AwaySummary.holdSeconds,
-                         onClick: opensRow ? { [weak self] in
+                         onClick: tappable ? { [weak self] in
                              MainActor.assumeIsolated {
-                                 guard let self, let panel = self.pointerPanel(), !panel.isExpanded, !self.tucked.isEmpty else { return }
-                                 panel.expand(with: self.tiles())
-                                 self.requestThumbnails()
+                                 guard let self else { return }
+                                 summary.tap(whereabouts: self.away.windowWhereabouts,
+                                             backToPlace: { self.open(CGWindowID($0)) },
+                                             goThere: { self.open(CGWindowID($0)) })
                              }
                          } : nil)
+    }
+
+    /// 摘要里的窗口此刻在哪：收起、收进刘海、侧拉等都在这一排里；货架里「在别的桌面」的是要去的。
+    private func awayWhereabouts(_ id: CGWindowID) -> AwaySummary.Whereabouts {
+        if isTucked(id) || owner.shaded[id] != nil { return .inRow }
+        if let item = shelf.item(id) { return item.kind == .elsewhere ? .otherDesktop : .inRow }
+        return .gone
     }
 
     /// 日程最后 10 秒：鼓一张提醒，主句是日程标题（共享屏幕时是“日程”），次句“马上开始 · 地点”，有会议链接时右边是“加入”。

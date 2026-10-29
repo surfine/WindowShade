@@ -38,6 +38,15 @@ enum AwaySummary {
     struct WindowEntry: Equatable, Sendable { let id: UInt32; let app: String; let at: Double }
     struct DownloadEntry: Equatable, Sendable { let name: String; let at: Double }
 
+    /// 摘要里一扇窗口此刻在哪：这一排里（收起、收进刘海、侧拉…）、别的桌面上、已经不在了。
+    enum Whereabouts: Equatable, Sendable { case inRow, otherDesktop, gone }
+
+    /// 点摘要一项：窗口回到原处，或去它所在的桌面。
+    enum TapAction: Equatable, Sendable {
+        case backToPlace(UInt32)
+        case goThere(UInt32)
+    }
+
     struct Item: Equatable, Sendable {
         let kind: Kind
         let text: String
@@ -56,6 +65,29 @@ enum AwaySummary {
 
         /// 点一下能去的第一扇窗口。
         var firstWindowID: UInt32? { items.lazy.compactMap(\.windowID).first }
+
+        /// 点一下摘要会发生什么（拍板 10-29 第 15 条）：第一扇还在的窗口，在这一排里就「回到原处」，在别的桌面上就「去」。
+        /// 一扇都不在了（回来的这几秒里被放回、关掉）返回 nil，点了不做什么。
+        func tapAction(whereabouts: (UInt32) -> Whereabouts) -> TapAction? {
+            for id in items.compactMap(\.windowID) {
+                switch whereabouts(id) {
+                case .inRow: return .backToPlace(id)
+                case .otherDesktop: return .goThere(id)
+                case .gone: continue
+                }
+            }
+            return nil
+        }
+
+        /// 点一下：照 `tapAction` 调对应的那一个；做了返回 true。
+        @discardableResult
+        func tap(whereabouts: (UInt32) -> Whereabouts, backToPlace: (UInt32) -> Void, goThere: (UInt32) -> Void) -> Bool {
+            switch tapAction(whereabouts: whereabouts) {
+            case .backToPlace(let id)?: backToPlace(id); return true
+            case .goThere(let id)?: goThere(id); return true
+            case nil: return false
+            }
+        }
 
         /// 刘海上那一行：第一件事，多的折成件数。
         var compactDetail: String {
