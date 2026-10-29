@@ -2,13 +2,13 @@ import Cocoa
 @MainActor enum WS2FocusSettings {
     /// 这一组设置属于"实时活动"那一栏；搬动由收尾包（R09）做，这里只暴露视图 WS2FocusSettingsRows。
     static let sectionTitle = "实时活动"
-    static let tuckChatTitle = "专注时把聊天收进刘海"
+    static let tuckChatTitle = "专注时收起聊天窗口"
     static let presetKey = "WS2.focus.preset"
     static let tuckChatKey = "WS2.focus.tuckChat"
     static var preset: FocusTimer.Preset {
         UserDefaults.standard.string(forKey: presetKey) == "50/10" ? .minutes50 : .minutes25
     }
-    static var tuckChat: Bool { UserDefaults.standard.object(forKey: tuckChatKey) as? Bool ?? true }
+    static var tuckChat: Bool { FocusTimer.tuckChatPreference(stored: UserDefaults.standard.object(forKey: tuckChatKey) as? Bool) }
     static func set(preset: FocusTimer.Preset) {
         UserDefaults.standard.set(preset == .minutes50 ? "50/10" : "25/5", forKey: presetKey)
     }
@@ -43,17 +43,15 @@ import Cocoa
         SettingsSearchRegistry.register(chime, name: WSL10n.setting("settings.shade.alertSound.name", zh: "提示音"),
                                         subtitle: WSL10n.setting("settings.shade.alertSound.sub", zh: "等你、完成、番茄钟休息、计时器到点和指挥拍子都响一声"))
         addArrangedSubview(chime)
-        // 专注时收私人 App 还没放行（WS2FocusWindowPort.admitted），是 WindowShade 2 的一部分：预览旗标打开才摆出来。
+        // 专注时收私人 App 是 WindowShade 2 的一部分：预览旗标打开才摆出来。
         guard WS2Preview.isOn else { return }
         tuck.state = WS2FocusSettings.tuckChat ? .on : .off; tuck.target = self; tuck.action = #selector(changeTuck)
-        tuck.toolTip = WSL10n.text("settings.shade.focus.tuckTooltip", zh: "只收私人 App 名单里的窗口；名单为空或这项还没开放时不可用，也不会拿“收起全部窗口”顶替。")
+        tuck.toolTip = WSL10n.text("settings.shade.focus.tuckTooltip", zh: "只收私人 App 名单里的窗口；名单为空时不可用，也不会拿“收起全部窗口”顶替。")
         let listed = !PrivateAppList.shared.isEmpty
-        tuck.isEnabled = listed && WS2FocusWindowPort.admitted
+        tuck.isEnabled = listed
         addArrangedSubview(tuck)
         if !tuck.isEnabled {
-            let note = NSTextField(wrappingLabelWithString: listed
-                ? WSL10n.text("settings.shade.focus.noteCounting", zh: "现在只计时，还不会收起窗口。")
-                : WSL10n.text("settings.shade.focus.noteNoApps", zh: "名单里还没有 App"))
+            let note = NSTextField(wrappingLabelWithString: WSL10n.text("settings.shade.focus.noteNoApps", zh: "名单里还没有 App"))
             note.textColor = .secondaryLabelColor; note.font = .systemFont(ofSize:11); addArrangedSubview(note)
         }
     }

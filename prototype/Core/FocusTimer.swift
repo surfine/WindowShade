@@ -3,6 +3,8 @@ import Foundation
 
 /// 按连续时钟截止时刻结算的番茄钟。窗口动作只携带本轮编号，实际所有权由 T3 核实。
 struct FocusTimer: Sendable {
+    /// “专注时收起聊天窗口”：全新安装（没存过）默认关；明确打开过的人照旧（拍板 2026-10-29 第 21 条）。
+    static func tuckChatPreference(stored: Bool?) -> Bool { stored ?? false }
     enum Phase: String, Sendable { case idle, focus, rest }
     enum PauseReason: String, Hashable, Sendable { case manual, locked, sleeping }
     enum Preset: Sendable {

@@ -264,10 +264,9 @@ import Cocoa
         "settings.shade.collapse.sub": "Keep, one consistent bar, or thumbnail",
         "settings.shade.calendar.subNotAsked": "Counts down before meetings; macOS asks once",
         "settings.shade.calendar.subGranted": "Counts down; join when there's a link",
-        "settings.shade.focus.tuck": "Tuck chats while focusing",
+        "settings.shade.focus.tuck": "Tuck chat windows while focusing",
         "settings.shade.focus.presetTooltip": "New lengths apply from the next round.",
         "settings.shade.focus.tuckTooltip": "Only windows from the private app list.",
-        "settings.shade.focus.noteCounting": "For now it only counts time.",
         // R24：带录制按钮的快捷键行，预算放宽后仍放不下的两句。
         "settings.shortcuts.focusTimer.sub": "Starts, pauses or resumes the focus timer",
         "settings.shortcuts.countdownTimer.sub": "Pick minutes, then Return",

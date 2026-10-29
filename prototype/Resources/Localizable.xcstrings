@@ -34530,19 +34530,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Focus timer lengths with whether chat is tucked into the notch show the rhythm of your work."
+            "value": "Focus timer lengths with whether chat windows are tucked show the rhythm of your work."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "番茄钟的时长和是否把聊天收进刘海合起来，能看出你的工作节奏。"
+            "value": "番茄钟的时长和是否收起聊天窗口合起来，能看出你的工作节奏。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "番茄鐘的時長和是否把聊天收進瀏海合起來，能看出你的工作節奏。"
+            "value": "番茄鐘的時長和是否收起聊天視窗合起來，能看出你的工作節奏。"
           }
         }
       }
@@ -34622,19 +34622,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Focus lengths (25/5 or 50/10) and Tuck chat into the notch during Focus"
+            "value": "Focus lengths (25/5 or 50/10) and Tuck chat windows while focusing"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "专注时长（25/5 或 50/10）和“专注时把聊天收进刘海”"
+            "value": "专注时长（25/5 或 50/10）和“专注时收起聊天窗口”"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "專注時長（25/5 或 50/10）和“專注時把聊天收進瀏海”"
+            "value": "專注時長（25/5 或 50/10）和“專注時收起聊天視窗”"
           }
         }
       }
@@ -55783,29 +55783,6 @@
         }
       }
     },
-    "settings.shade.focus.noteCounting": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "For now it only counts time; windows aren't tucked yet."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "现在只计时，还不会收起窗口。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "現在只計時，還不會收起視窗。"
-          }
-        }
-      }
-    },
     "settings.shade.focus.noteNoApps": {
       "extractionState": "manual",
       "localizations": {
@@ -55904,19 +55881,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Tuck chats into the notch while focusing"
+            "value": "Tuck chat windows while focusing"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "专注时把聊天收进刘海"
+            "value": "专注时收起聊天窗口"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "專注時把聊天收進瀏海"
+            "value": "專注時收起聊天視窗"
           }
         }
       }
@@ -55927,19 +55904,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Only windows from the private app list; unavailable when the list is empty or this isn't ready, and never replaced by rolling up everything."
+            "value": "Only windows from the private app list; unavailable when the list is empty, and never replaced by rolling up everything."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "只收私人 App 名单里的窗口；名单为空或这项还没开放时不可用，也不会拿“收起全部窗口”顶替。"
+            "value": "只收私人 App 名单里的窗口；名单为空时不可用，也不会拿“收起全部窗口”顶替。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "只收私人 App 名單裡的視窗；名單為空或這項還沒開放時不可用，也不會拿“收起全部視窗”頂替。"
+            "value": "只收私人 App 名單裡的視窗；名單為空時不可用，也不會拿“收起全部視窗”頂替。"
           }
         }
       }

@@ -159,6 +159,11 @@ struct FocusTimerTests {
         _ = pw.handle(.tick, at: sec(1850), calendar: cal)
         t.expect(pw.phase == .idle && pw.lastEnd == .lapsed && !pw.lingersAfterEnd, "休息晚到很久才结算：不留")
 
+        t.section("M10-tuck", "专注时收起聊天窗口：全新安装不收起；明确打开过的照旧收起")
+        t.expect(!FocusTimer.tuckChatPreference(stored: nil), "没存过：默认关")
+        t.expect(FocusTimer.tuckChatPreference(stored: true), "明确打开过：照旧收起")
+        t.expect(!FocusTimer.tuckChatPreference(stored: false), "明确关过：不收起")
+
         t.finish()
     }
 }
