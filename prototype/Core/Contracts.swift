@@ -354,16 +354,16 @@ enum MotionHold {
     /// 离开期间摘要。8 秒。
     static let awaySummarySeconds: Double = 8
     /// 计时器到点的大卡停留。10 秒。
-    static let timerDoneMilliseconds: UInt64 = 10_000_000_000
+    static let timerDoneDuration: UInt64 = 10 * WS2.Duration.second
     /// 核准卡回执（允许 / 不允许之后停一下）。0.8 秒。
-    static let receiptMilliseconds: UInt64 = 800_000_000
+    static let receiptDuration: UInt64 = 800 * WS2.Duration.millisecond
     /// 认你指示：认出打勾停 1.2 秒；没认出、三次用完的结论停 2.2 秒。
     static let faceRecognizedSeconds: TimeInterval = 1.2
     static let faceOutcomeSeconds: TimeInterval = 2.2
     /// 认你没认出、请用密码那两句（同 alert.hold）。2.6 秒。
     static let faceNoticeSeconds: TimeInterval = alertSeconds
     /// 在场锁定：人回来了确认多久才算数。2 秒。
-    static let presenceReturnMilliseconds: UInt64 = 2_000_000_000
+    static let presenceReturnDuration: UInt64 = 2 * WS2.Duration.second
     /// 结束的活动在那一排里停多久（“✓ 完成”那条）。4 秒。
     static let activityClosingSeconds: Double = 4
 }

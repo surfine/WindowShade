@@ -10,7 +10,7 @@ import Cocoa
     /// 普通风险免指纹的“允许这一次”要账本出一种不靠签名的授权，现在没有；这里不开那条路。
     static let commandRisk = AgentSessions.risk(of: .shell)
     /// 回执在卡上停留的时间，与原生认证成功后对勾停留的时间一致。
-    static let receiptHold: UInt64 = MotionHold.receiptMilliseconds
+    static let receiptHold: UInt64 = MotionHold.receiptDuration
     private(set) var wire: CodexWire
     let connectionID: UUID
     private let clock: any WS2Clock

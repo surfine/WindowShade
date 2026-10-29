@@ -260,7 +260,7 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
 @MainActor
 final class CountdownTimerPresenter {
     /// 时间到的卡片停几秒（稿：10 秒）。
-    static let doneHold: UInt64 = MotionHold.timerDoneMilliseconds
+    static let doneHold: UInt64 = MotionHold.timerDoneDuration
 
     let host: CountdownTimerHost
     /// 宿主状态变了：发布两耳（NotchActivityController 接）。
