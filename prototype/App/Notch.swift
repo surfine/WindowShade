@@ -530,6 +530,17 @@ final class NotchController {
                 default: break
                 }
             }
+            // 张开 = 展开那一排；上推（onNavigation 的 .back）= 全部收进刘海（拍板 10-29 第 16 条）。
+            // 主屏幕开着时张开照旧是主屏幕的返回：先收起这一排，再退一层（和原来同一条路）。
+            panel.onSpread = { [weak self, weak panel] in
+                guard let self, let panel else { return }
+                if self.owner.launchpad.isShowing {
+                    panel.collapse()
+                    self.owner.launchpad.navigate(to: .back)
+                    return
+                }
+                self.spreadRow(on: panel)
+            }
             panel.onPress = { [weak self] clicks, rect in self?.homeKey(clicks, from: rect) }
             panel.onFiles = { [weak self] files, rect in self?.owner.launchpad.openWith(files, from: rect) }
             panel.onFileDrop = { [weak self, weak panel] release, pasteboard in
@@ -1066,6 +1077,18 @@ final class NotchController {
                 refresh()
             }
         }
+    }
+
+    /// 两指在刘海上张开：展开那一排。和悬停展开同一套条件（隐形刘海里什么都没有时不展开），
+    /// 只是不等指针停稳、也不受“悬停不误触”拦；不接键盘（接键盘的是点开、长按）。已经展开着就不动。
+    private func spreadRow(on panel: NotchPanel) {
+        guard !panel.isAuthenticating, !panel.isExpanded else { return }
+        forgetGone()
+        refreshShelf()
+        if panel.isVirtual && tucked.isEmpty && changed.isEmpty && activities.store.visible.isEmpty { return }
+        wlog("notch: expand on spread")
+        panel.expand(with: tiles())
+        requestThumbnails()
     }
 
     /// 点了一排里的某一格：让它回到它该在的地方。
@@ -2709,6 +2732,8 @@ final class NotchPanel: NSPanel {
     /// 那一排收起时，里面摆过结束了的活动：看过了，控制器据此调 `rowSeen()`。
     var onRowSeen: (() -> Void)?
     var onLongPress: (() -> Void)?
+    /// 两指在刘海上张开：展开那一排；主屏幕开着时照旧是返回（控制器决定）。
+    var onSpread: (() -> Void)?
     /// 真正的长按（不含智能展开、右键菜单）先问这里：返回 true 表示已处理，不再走 onLongPress。CarPlay 全屏开着时用。
     var onHold: (() -> Bool)?
     /// 这块屏的展示权表。nil 表示还没接上（探针与单独搭的面板），这时不拦任何东西。
@@ -2990,6 +3015,7 @@ final class NotchPanel: NSPanel {
             if destination == .back { self?.collapse() }
             self?.onNavigation?(destination)
         }
+        canvas.onSpread = { [weak self] in self?.onSpread?() }
         canvas.onPress = { [weak self] clicks in self?.pressed(clicks) }
         canvas.onNowPlayingEar = { [weak self] in self?.openNowPlayingCard() }
         canvas.onFiles = { [weak self] files in
@@ -4630,6 +4656,8 @@ final class NotchCanvasView: NSView {
     var onLongPress: (() -> Void)?
     var onAuxiliaryClick: ((NSEvent) -> Void)?
     var onSmartExpand: (() -> Void)?
+    /// 两指在刘海上张开（拍板 10-29 第 16 条：张 = 变大）。
+    var onSpread: (() -> Void)?
     private var holdTimer: Timer?
     private var holdUsed = false
     private var horizontalSamples: [(TimeInterval, CGFloat)] = []
@@ -5625,7 +5653,7 @@ final class NotchCanvasView: NSView {
         if event.phase == .cancelled { pinchAmount = 0; return }
         if event.phase == .ended {
             if pinchAmount < -0.18 { onNavigation?(.home) }
-            else if pinchAmount > 0.18 { onNavigation?(.back) }
+            else if pinchAmount > 0.18 { onSpread?() }
             pinchAmount = 0
         }
     }
@@ -7513,13 +7541,11 @@ final class NotchTileView: NSView {
     /// 点下去会发生什么（和菜单里的说法一致）。
     static func verb(_ kind: NotchTile.Kind) -> String {
         switch kind {
-        case .tucked: return WSL10n.text("notch.verb.putBack", zh: "放回")
-        case .strip, .thumbnail: return WSL10n.text("notch.verb.unroll", zh: "展开")
-        case .slideOver: return WSL10n.text("notch.verb.pullOut", zh: "拉出")
-        case .carried: return WSL10n.text("notch.verb.returnTo", zh: "回到")
-        case .minimized, .hiddenApp: return WSL10n.text("notch.verb.restore", zh: "还原")
+        // 那一排里窗口回到你面前的都叫“回到原处”，别的桌面上的是你过去，叫“去”（拍板 10-29 第 15 条）。
+        // 各表面自己的动词（卷帘条上展开、侧拉拉出、刘海放回）留在各自的表面上，不在这一排里。
+        case .tucked, .strip, .thumbnail, .slideOver, .carried, .minimized, .hiddenApp, .parked:
+            return WSL10n.text("notch.verb.backInPlace", zh: "回到原处")
         case .elsewhere: return WSL10n.text("notch.verb.goTo", zh: "去")
-        case .parked: return WSL10n.text("notch.verb.slideIn", zh: "滑进来")
         case .session: return WSL10n.text("notch.action.goThere", zh: "过去")
         case .playing, .activity: return WSL10n.text("notch.action.open", zh: "打开")
         }
