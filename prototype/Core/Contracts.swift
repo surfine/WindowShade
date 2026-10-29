@@ -300,6 +300,8 @@ extension WS2 {
         let requestedAt: Instant
         let deadline: Instant
         let containsPrivateContent: Bool
+        /// 短暂的自动卡（日程大卡这类）来借座位：把已打开的那一页挂起，让出后原样回来，不是换页。
+        var borrowsSeat: Bool = false
     }
     struct LeaseHandle: Hashable, Sendable {
         let token: Token

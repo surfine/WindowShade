@@ -30,6 +30,10 @@ final class NotchLeaseHub {
         /// notchShelf 是“刘海那一排”：收着的窗口和正在进行的事（播放、编程会话）是同一排、同一个主人（M11）。
         /// 会话的“去看看”详情页也用这个主人露面。
         case authorization, conductor, notchShelf, launchpad, windowBrowser, pomodoro
+        /// 计时器卡（选分钟、正在走、时间到）自己的主人：番茄钟、计时器、日程卡各有各的名字，show 不再互相顶掉。
+        case countdownTimer
+        /// 日程大卡自己的主人。它是短暂的自动卡：出现时把已打开的那一页挂起（借座位），让出后原样回来。
+        case calendarCard
         /// 正在播放大卡自己的主人：不再借番茄钟的名字，免得与番茄钟、计时器、日程卡互相当成自己。
         case nowPlaying
         case agentReview
@@ -44,7 +48,7 @@ final class NotchLeaseHub {
             switch self {
             case .authorization, .agentReview: return .authorization
             case .conductor: return .interaction
-            case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .nowPlaying,
+            case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .countdownTimer, .calendarCard, .nowPlaying,
                  .ownedCodex, .ownedModelPicker, .silent, .faceEnrollment: return .opened
             }
         }
@@ -124,9 +128,10 @@ final class NotchLeaseHub {
     }
 
     /// 显式的用户动作换掉我们自己的旧内容，但永远不换掉原生认证。
+    /// `borrowsSeat`：短暂的自动卡（日程大卡）来借座位——已打开的那一页挂起、让出后原样回来，不算换页。
     @discardableResult
     func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,
-              animated: Bool = true,
+              animated: Bool = true, borrowsSeat: Bool = false,
               onDismiss: @escaping (WS2.LeaseRevocation) -> Void = { _ in }) -> Bool {
         guard !locked(), controller?.authentication.isPresenting != true,
               let panel = controller?.authenticationPanel(),
@@ -138,9 +143,9 @@ final class NotchLeaseHub {
         let now = clock.now()
         let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: layer,
                                        requestedAt: now, deadline: now.adding(120 * WS2.Duration.second),
-                                       containsPrivateContent: true)
+                                       containsPrivateContent: true, borrowsSeat: borrowsSeat)
         // 审批宿主要同步知道有没有露面，没有「以后再出现」的接法：放行不排队，照旧答忙。
-        guard case .acquired(let lease) = coordinator.acquire(request, replacing: previous, queueing: false),
+        guard case .acquired(let lease) = coordinator.acquire(request, replacing: borrowsSeat ? nil : previous, queueing: false),
               coordinator.isCurrent(lease) else { return false }
         held[display] = (owner, lease)
         contentView = content; contentPanel = panel; contentHandle = lease; contentDismissed = onDismiss

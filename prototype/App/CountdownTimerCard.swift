@@ -315,7 +315,7 @@ final class CountdownTimerPresenter {
         next.onEnd = { [weak self] in self?.host.end(); self?.dismissCard() }
         next.onAgain = { [weak self] in self?.host.again() }
         next.render(host.model, at: host.now)
-        let shown = leases.show(next, ownerID: "pomodoro", onDismiss: { [weak self, weak next] _ in
+        let shown = leases.show(next, ownerID: "countdownTimer", onDismiss: { [weak self, weak next] _ in
             guard let self, self.card === next else { return }
             self.card = nil
             self.holdTask?.cancel(); self.holdTask = nil
@@ -337,7 +337,7 @@ final class CountdownTimerPresenter {
         alert.onEnd = { [weak self] in self?.host.end(); self?.dismissCard() }
         alert.onAgain = { [weak self] in self?.host.again() }
         alert.render(host.model, at: host.now)
-        let shown = leases.show(alert, ownerID: "pomodoro", onDismiss: { [weak self, weak alert] _ in
+        let shown = leases.show(alert, ownerID: "countdownTimer", onDismiss: { [weak self, weak alert] _ in
             guard let self, self.card === alert else { return }
             self.card = nil
             self.holdTask?.cancel(); self.holdTask = nil
