@@ -24519,6 +24519,29 @@
         }
       }
     },
+    "notch.usage.back": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quota refreshed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "额度已刷新"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "額度已刷新"
+          }
+        }
+      }
+    },
     "notch.usage.low": {
       "extractionState": "manual",
       "localizations": {
@@ -65853,6 +65876,52 @@
           "stringUnit": {
             "state": "translated",
             "value": "剩 %@%%"
+          }
+        }
+      }
+    },
+    "usage.limit.fiveHour": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 h: %@%% left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五小时余 %@%%"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "五小時餘 %@%%"
+          }
+        }
+      }
+    },
+    "usage.limit.week": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Week: %@%% left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本周余 %@%%"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本週餘 %@%%"
           }
         }
       }

@@ -1021,6 +1021,8 @@ struct CodingSessionActivities {
     private(set) var usage: CodingSessionUsage?
     /// 已经提醒过“额度快用完了”的额度窗口；每个窗口一次。回到 10% 以上就忘掉，下一个窗口再提醒。
     private var usageAlerted: Set<String> = []
+    /// 上一次读数是“快用完”：额度回到 10% 以上时说一次“额度已刷新”，说完就忘掉。
+    private var usageWasLow = false
 
     init() {}
 
@@ -1029,7 +1031,14 @@ struct CodingSessionActivities {
     mutating func applyUsage(_ next: CodingSessionUsage?) -> Bloom? {
         usage = next
         guard let next else { return nil }
-        guard next.isLow else { usageAlerted.remove(next.windowKey); return nil }
+        guard next.isLow else {
+            usageAlerted.remove(next.windowKey)
+            // 恢复的话来自新的读数（等待用量更新不算）：只提醒一次。
+            guard usageWasLow else { return nil }
+            usageWasLow = false
+            return Bloom(sessionID: Self.usageBloomID, headline: WSL10n.text("notch.usage.back", zh: "额度已刷新"), detail: "")
+        }
+        usageWasLow = true
         guard usageAlerted.insert(next.windowKey).inserted else { return nil }
         if usageAlerted.count > 16, let drop = usageAlerted.first(where: { $0 != next.windowKey }) { usageAlerted.remove(drop) }
         return Bloom(sessionID: Self.usageBloomID, headline: WSL10n.text("notch.usage.low", zh: "额度快用完了"),
@@ -1075,7 +1084,7 @@ struct CodingSessionActivities {
         }
     }
 
-    mutating func reset() { sessions = [:]; bloomed = []; lastDone = [:]; done = nil; usage = nil; usageAlerted = [] }
+    mutating func reset() { sessions = [:]; bloomed = []; lastDone = [:]; done = nil; usage = nil; usageAlerted = []; usageWasLow = false }
 
     /// 在跑和等你的会话，先来的在前。
     var live: [Live] { sessions.values.sorted { ($0.since, $0.id) < ($1.since, $1.id) } }
