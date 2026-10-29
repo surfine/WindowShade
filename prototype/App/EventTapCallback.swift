@@ -130,43 +130,64 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     // #39 防线一：修饰键按住的多击完整交还系统（选词、⌥拖拽、系统缩放/最小化）。
     // 不吞、不折叠、不建三击 pending——修饰键是这个手势的"临时跳过"。
     // 放在带内预过滤之前：带内判定有 AX/缓存成本，修饰键路径零成本放行。
-    if !event.flags.intersection([.maskAlternate, .maskCommand, .maskShift, .maskControl]).isEmpty {
-        DispatchQueue.main.async { MainActor.assumeIsolated { appDelegate?.clearPendingTitlebarTripleClickForModifierSkip() } }
-        return Unmanaged.passUnretained(event)
-    }
     // 快照新鲜且点击明显不在任何在屏窗口的标题栏带内：tap 线程上直接放行，不打扰主线程。
     // 三击另有不依赖 AX 的 pending 匹配，不走这条预过滤。
-    if clickState == 2 {
-        let verdict = pointMayLieInTitlebarBandUsingFreshCache(location)
-        if Diagnostics.stallSamplerOn {
-            let c = PrefilterStats.shared.note(verdict == nil ? .unknown : (verdict! ? .miss : .hit))
-            wlog("prefilter: hit=\(c.hit) miss=\(c.miss) nil=\(c.unknown)")
-        }
-        if verdict == false { return Unmanaged.passUnretained(event) }
-        // 拍板 10-29 第 17 条：标题栏双击在后台判定，不排主线程的队——主线程卡多久，这一下都不漏给系统。
-        // 自己补发的双击照旧问主线程（那里认补发窗口，见 shouldBypassTitlebarEventTap）。
-        let source = pid_t(truncatingIfNeeded: event.getIntegerValueField(.eventSourceUnixProcessID))
-        if source != tapOwnProcessID {
-            let route = routeTitlebarDoubleClick(deadline: deadline,
-                                                 classify: { classifyTitlebarDoubleClickOffMain(at: location) },
-                                                 deliver: { hit in
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { appDelegate?.acceptTitlebarDoubleClickFromTap(hit, point: location) }
-                }
-            })
-            switch route {
-            case .swallow:
-                return nil   // 吞掉，阻止系统「双击缩放」；收起已排到主线程
-            case .pass:
-                return Unmanaged.passUnretained(event)
-            case .timedOut:
-                // 规格 R29：目标 App 没回辅助功能查询，这一下交给了它。
-                wlog("titlebar-tap: off-main decision timed out; passed click to app clickState=\(clickState) at=(\(Int(location.x)),\(Int(location.y)))")
-                return Unmanaged.passUnretained(event)
-            case .askMain:
-                break
+    // 拍板 10-29 第 17 条：其余双击在后台判定，不排主线程的队——主线程卡多久，这一下都不漏给系统。
+    // 自己补发的双击照旧问主线程（那里认补发窗口，见 shouldBypassTitlebarEventTap）。
+    // 顺序见 titlebarTapStep（TitlebarTapRoute.swift，有单测）。
+    let step = titlebarTapStep(
+        clickState: clickState,
+        modifierHeld: !event.flags.intersection([.maskAlternate, .maskCommand, .maskShift, .maskControl]).isEmpty,
+        inBand: {
+            let verdict = pointMayLieInTitlebarBandUsingFreshCache(location)
+            if Diagnostics.stallSamplerOn {
+                let c = PrefilterStats.shared.note(verdict == nil ? .unknown : (verdict! ? .miss : .hit))
+                wlog("prefilter: hit=\(c.hit) miss=\(c.miss) nil=\(c.unknown)")
             }
+            return verdict
+        },
+        source: pid_t(truncatingIfNeeded: event.getIntegerValueField(.eventSourceUnixProcessID)),
+        ownPID: tapOwnProcessID)
+    switch step {
+    case .passModifier:
+        DispatchQueue.main.async { MainActor.assumeIsolated { appDelegate?.clearPendingTitlebarTripleClickForModifierSkip() } }
+        return Unmanaged.passUnretained(event)
+    case .passPrefilter:
+        return Unmanaged.passUnretained(event)
+    case .offMain:
+        let route = routeTitlebarDoubleClick(deadline: deadline,
+                                             classify: { classifyTitlebarDoubleClickOffMain(at: location) },
+                                             deliver: { hit in
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { appDelegate?.acceptTitlebarDoubleClickFromTap(hit, point: location) }
+            }
+        }, askMainLate: {
+            // 已吞下、后台拿不准：照旧由主线程做完整判定（和以前判定跑过截止时间时一样）。
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let delegate = appDelegate, !delegate.shouldBypassTitlebarEventTap else { return }
+                    _ = delegate.handleTitleBarDoubleClick(at: location)
+                }
+            }
+        })
+        switch route {
+        case .swallow:
+            return nil   // 吞掉，阻止系统「双击缩放」；收起已排到主线程
+        case .pass:
+            return Unmanaged.passUnretained(event)
+        case .timedOut:
+            // 规格 R29：判定没来得及开始，这一下交给了 App 自己。
+            wlog("titlebar-tap: off-main decision timed out; passed click to app clickState=\(clickState) at=(\(Int(location.x)),\(Int(location.y)))")
+            return Unmanaged.passUnretained(event)
+        case .swallowLate:
+            // 目标 App 回辅助功能慢：已吞下，结论出来后再做（不交给系统缩放）。
+            wlog("titlebar-tap: off-main decision late; swallowed, acting when it lands at=(\(Int(location.x)),\(Int(location.y)))")
+            return nil
+        case .askMain:
+            break
         }
+    case .askMain:
+        break
     }
     let decision = TapDecision()
     DispatchQueue.main.async {
