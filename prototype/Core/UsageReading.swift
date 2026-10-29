@@ -18,6 +18,10 @@ struct CodingSessionUsage: Equatable, Sendable {
     var windowKey: String
     /// “五小时余 42% · 本周余 61%”：各窗口分开写，不用一个没有标签的数代替。只收认得时长的窗口；一个都不认得就是 nil。
     var limitsLine: String?
+    /// 读数里最紧那个窗口的时长（分钟）。恢复要看同一个窗口回来了，才不会被只带另一个窗口的零散更新骗过。
+    var windowMinutes: Int? = nil
+    /// 这次读数带了哪些窗口（时长）。零散更新只带一部分。
+    var windowsSeen: [Int?] = []
 
     static let lowThreshold = 10
     var isLow: Bool { leftPercent <= Self.lowThreshold }
@@ -95,7 +99,7 @@ struct UsageReading: Equatable, Sendable {
                                   recovery: pending ? nil : window.resetsAt.map { Self.recoveryText(resetsAt: $0, now: now, calendar: calendar) },
                                   recoveryPending: pending,
                                   model: model, effort: effort, windowKey: window.key,
-                                  limitsLine: Self.limitsLine(windows))
+                                  limitsLine: Self.limitsLine(windows), windowMinutes: window.windowMinutes, windowsSeen: windows.map(\.windowMinutes))
     }
 
     /// 各窗口按时长从短到长排：五小时在前，本周在后。

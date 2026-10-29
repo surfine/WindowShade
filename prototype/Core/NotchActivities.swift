@@ -984,6 +984,8 @@ struct CodingSessionActivities {
         var sessionID: String
         var headline: String
         var detail: String
+        /// 点一下去哪：额度恢复时是之前那个项目的目录；其余为空，由接收方按会话查。
+        var cwd: String = ""
     }
 
     /// 一条活动要写成什么样（controller 把它放进 store）。
@@ -1023,6 +1025,9 @@ struct CodingSessionActivities {
     private var usageAlerted: Set<String> = []
     /// 上一次读数是“快用完”：额度回到 10% 以上时说一次“额度已刷新”，说完就忘掉。
     private var usageWasLow = false
+    /// 变“快用完”时卡住的窗口时长，和当时最近在做的项目；恢复提醒要同一个窗口回来，并带上那个项目。
+    private var usageLowMinutes: Int?
+    private var usageLowProject: (label: String, cwd: String)?
 
     init() {}
 
@@ -1034,11 +1039,17 @@ struct CodingSessionActivities {
         guard next.isLow else {
             usageAlerted.remove(next.windowKey)
             // 恢复的话来自新的读数（等待用量更新不算）：只提醒一次。
-            guard usageWasLow else { return nil }
+            // Codex 会发只带一个窗口的零散更新：别的窗口回来了不算，卡住的那个窗口要回来才说。
+            guard usageWasLow, next.windowsSeen.contains(usageLowMinutes) else { return nil }
             usageWasLow = false
-            return Bloom(sessionID: Self.usageBloomID, headline: WSL10n.text("notch.usage.back", zh: "额度已刷新"), detail: "")
+            let project = usageLowProject
+            usageLowProject = nil
+            return Bloom(sessionID: Self.usageBloomID, headline: WSL10n.text("notch.usage.back", zh: "额度已刷新"),
+                         detail: project?.label ?? "", cwd: project?.cwd ?? "")
         }
         usageWasLow = true
+        usageLowMinutes = next.windowMinutes
+        if let live = sessions.values.max(by: { $0.heardAt < $1.heardAt }) { usageLowProject = (live.label, live.cwd) }
         guard usageAlerted.insert(next.windowKey).inserted else { return nil }
         if usageAlerted.count > 16, let drop = usageAlerted.first(where: { $0 != next.windowKey }) { usageAlerted.remove(drop) }
         return Bloom(sessionID: Self.usageBloomID, headline: WSL10n.text("notch.usage.low", zh: "额度快用完了"),
@@ -1084,7 +1095,7 @@ struct CodingSessionActivities {
         }
     }
 
-    mutating func reset() { sessions = [:]; bloomed = []; lastDone = [:]; done = nil; usage = nil; usageAlerted = []; usageWasLow = false }
+    mutating func reset() { sessions = [:]; bloomed = []; lastDone = [:]; done = nil; usage = nil; usageAlerted = []; usageWasLow = false; usageLowMinutes = nil; usageLowProject = nil }
 
     /// 在跑和等你的会话，先来的在前。
     var live: [Live] { sessions.values.sorted { ($0.since, $0.id) < ($1.since, $1.id) } }

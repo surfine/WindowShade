@@ -35,6 +35,7 @@ import Foundation
         testWaitingNotOutranked()
         testSessionCardLine()
         testRecoveryBloomOnce()
+        testSparseUpdateAndRecoveryProject()
         print("UsageReadingTests: \(assertions) assertions passed")
     }
 
@@ -150,6 +151,21 @@ import Foundation
         var r = running()
         _ = r.applyUsage(both(95, 20)); r.reset()
         expect(r.applyUsage(both(2, 20)) == nil, "会话关掉就忘掉，不补说")
+    }
+
+    /// 乙 9 复核：零散更新（只带 5 小时窗口）不能在周窗口仍用尽时说“额度已刷新”；恢复带之前的项目，点击带目录。
+    static func testSparseUpdateAndRecoveryProject() {
+        var m = CodingSessionActivities()
+        _ = m.apply(.init(id: "s1", project: "WindowShade", cwd: "/tmp/ws", assistant: "Codex", status: .running, summary: ""), now: 100)
+        let weeklyLow = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":40,"windowDurationMins":300,"resetsAt":1800003600},"secondary":{"usedPercent":95,"windowDurationMins":10080,"resetsAt":1800400000}}}"#))!
+        expect(m.applyUsage(weeklyLow.sessionUsage(now: now, calendar: calendar))?.headline == "额度快用完了", "周窗口快用完")
+        let sparse = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":40,"windowDurationMins":300,"resetsAt":1800003600}}}"#))!
+        expect(m.applyUsage(sparse.sessionUsage(now: now, calendar: calendar)) == nil, "只带 5 小时窗口的零散更新不算周额度回来")
+        _ = m.applyUsage(weeklyLow.sessionUsage(now: now, calendar: calendar))
+        expect(m.applyUsage(sparse.sessionUsage(now: now, calendar: calendar)) == nil, "来回交替也不误报")
+        let weeklyBack = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":40,"windowDurationMins":300,"resetsAt":1800003600},"secondary":{"usedPercent":30,"windowDurationMins":10080,"resetsAt":1800900000}}}"#))!
+        let back = m.applyUsage(weeklyBack.sessionUsage(now: now, calendar: calendar))
+        expect(back?.headline == "额度已刷新" && back?.detail == "WindowShade" && back?.cwd == "/tmp/ws", "确认恢复：副句是之前的项目，点击带目录: \(String(describing: back))")
     }
 
     static func testNoDataFallsBack() {
