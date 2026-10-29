@@ -1658,6 +1658,7 @@ final class NotchController {
         }
         tuck(match.element, id: match.window.id, pid: match.window.pid,
              landed: match.window.frame, home: match.window.frame, velocity: .zero)
+        owner.gestures.noteStep(.tuck, id: match.window.id)
         coachUsed(.notchHome)
         return true
     }

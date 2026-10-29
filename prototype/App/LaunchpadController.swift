@@ -552,7 +552,9 @@ final class LaunchpadController {
         case .open:
             break
         case .slideOver(let left):
+            let before = cgWindowInfo(id).flatMap(cgWindowBounds)
             owner.slideOver.enter(window, id: id, pid: pid, side: left ? .left : .right)
+            owner.gestures.noteStep(.slideOver, id: id, element: window, before: before)
         case .half(let left):
             _ = owner.gestures.placeFromLaunchpad(window, id: id, action: left ? .leftHalf : .rightHalf, screen: screen)
         case .quarter(let left, let top):
@@ -563,6 +565,7 @@ final class LaunchpadController {
             let frame = CGRect(origin: position, size: size)
             if owner.slideOver.isSlideOver(id) { owner.slideOver.exit(reason: "launchpad to notch") }
             owner.notch.tuck(window, id: id, pid: pid, landed: frame, home: frame, velocity: .zero)
+            owner.gestures.noteStep(.tuck, id: id)
         case .fill:
             _ = owner.gestures.placeFromLaunchpad(window, id: id, action: .fill, screen: screen)
         }

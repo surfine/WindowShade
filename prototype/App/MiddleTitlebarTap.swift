@@ -275,6 +275,7 @@ extension AppDelegate {
             _ = unshade(id)
         } else {
             shade(win, id)
+            MainActor.assumeIsolated { gestures.noteStep(.shade, id: id) }
         }
     }
 

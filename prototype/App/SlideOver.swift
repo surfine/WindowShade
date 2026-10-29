@@ -138,7 +138,9 @@ final class SlideOverController {
                         self.owner.quietNotice(WSL10n.text("notice.slideOver.noWindow", zh: "没有可以侧拉的窗口"), kind: .problem, log: "slide-over: no focused window")
                         return
                     }
+                    let before = cgWindowInfo(id).flatMap(cgWindowBounds)
                     self.enter(win, id: id, pid: pid)
+                    self.owner.gestures.noteStep(.slideOver, id: id, element: win, before: before)
                 }
             }
         }

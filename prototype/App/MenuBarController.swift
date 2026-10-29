@@ -137,6 +137,14 @@ extension AppDelegate {
     arrangeItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
     arrangement.delegate = self
     arrangeItem.submenu = arrangement; statusMenu.addItem(arrangeItem)
+    // 排布历史：撤销最近一步（收起、收进刘海、侧拉、画中画、排布）。还成不成立只看内存里的状态和 CGWindow 外框，
+    // 不问 App；历史是空的时候什么都不读。没有可撤的时候灰着，不隐藏。
+    let undoTitle = MainActor.assumeIsolated { gestures.latestStepUndoTitle() }
+    action(undoTitle ?? WSL10n.text("browser.menu.undoArrange", zh: "撤销上次排布"), "arrow.uturn.backward",
+           #selector(undoArrangementStepAction), menu: arrangement, id: StatusMenuLayout.undoStepRowID)
+    // 菜单自动启用：没有 action 的项才会变灰。
+    if undoTitle == nil { arrangement.items.last?.action = nil }
+    arrangement.addItem(.separator())
     action(MainActor.assumeIsolated { slideOver.menuTitle }, "sidebar.right", #selector(toggleSlideOverAction), .slideOver, enabled: ax && screen, menu: arrangement)
     if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
       action(WSL10n.text("menu.exitSlideOver", zh: "退出侧拉"), "sidebar.right", #selector(exitSlideOverAction), menu: arrangement)

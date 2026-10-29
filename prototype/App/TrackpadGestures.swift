@@ -138,7 +138,14 @@ final class TrackpadGestureController {
     }
     /// 松手时还没确认的那一下（见 finish）：新手势开始、手势被取消时作废，和进行中的手势一样。
     private var unconfirmed: Session?
-    var undoRecords: [CGWindowID: PlacementUndo] = [:]
+    var undoRecords: [CGWindowID: PlacementUndo] = [:] {
+        // 每记下一次新的排布，排布历史也跟着记一步（换屏排回只是改写，不算新的一步）。
+        didSet { noteNewPlacements(since: oldValue) }
+    }
+    /// 排布历史：收起、收进刘海、侧拉、画中画、排布最近 20 步，状态栏菜单“整理▸撤销…”一步步往回撤（见本文件末尾一节）。
+    var history = ArrangementHistory<ArrangementPayload>()
+    /// 换屏排回时改写撤销记录：不往排布历史里记新的一步。
+    private var refittingPlacements = false
     /// 一次拖分屏把手同时改了两扇：两边互相登记，撤销其中一扇时另一扇也回去（见 SplitView.swift）。
     var undoPartners: [CGWindowID: CGWindowID] = [:]
     /// 最近一次魔法平铺：捏合其中任何一扇都整批撤回（见 MagicTilingRun.swift）。
@@ -1124,11 +1131,14 @@ final class TrackpadGestureController {
         case .shade:
             if session.following {
                 session.following = false
-                return owner.duoController.windowEffects.commitTracking(id: id)
+                let committed = owner.duoController.windowEffects.commitTracking(id: id)
+                if committed { noteStep(.shade, id: id) }
+                return committed
             }
             guard let win = session.element, owner.titlebarFoldCanBegin(id: id) else { return false }
             let options = owner.focusRejoinEntries[id] != nil ? owner.focusShadeOptions : nil
             owner.shade(win, id, options: options, trustElement: true)
+            noteStep(.shade, id: id)
             return true
         case .expand:
             if session.glancePulling {
@@ -1483,6 +1493,7 @@ final class TrackpadGestureController {
            let win = drag.element ?? appWindows(pid: drag.pid).first(where: { windowID(of: $0) == drag.id }) {
             owner.notch.cancelDrag()
             owner.slideOver.enter(win, id: drag.id, pid: drag.pid, side: drop.side, on: drop.screen)
+            noteStep(.slideOver, id: drag.id, element: win, before: drag.frameAtDown)
             wlog("gesture: dropped title bar into slide-over id=\(drag.id)")
             return nil
         }
@@ -1494,6 +1505,7 @@ final class TrackpadGestureController {
             // 回到原处回的是按住标题栏之前的地方，不是拖到角落的落点。
             owner.pip.enter(win, id: drag.id, pid: drag.pid, corner: pipDrop.corner, on: pipDrop.screen,
                             home: drag.frameAtDown)
+            noteStep(.pictureInPicture, id: drag.id)
             wlog("gesture: dropped title bar into picture in picture id=\(drag.id)")
             return nil
         }
@@ -1510,6 +1522,7 @@ final class TrackpadGestureController {
             case .tuck:
                 owner.notch.tuck(win, id: drag.id, pid: drag.pid, landed: landed, home: drag.frameAtDown, velocity: .zero,
                                  pictures: Self.dragStillOpen(source) ? drag.pictures : nil)
+                noteStep(.tuck, id: drag.id)
             case .leftHalf, .rightHalf, .fill:
                 let action: GestureAction = choice == .leftHalf ? .leftHalf : choice == .rightHalf ? .rightHalf : .fill
                 guard let plan = placementTarget(action, current: landed, screen: owner.notch.screen(containing: release)) else { break }
@@ -1660,6 +1673,7 @@ final class TrackpadGestureController {
             // 朝着刘海往上甩：窗口飞进刘海，原处不留卷帘条。
             owner.notch.tuck(win, id: id, pid: drag.pid, landed: landed, home: drag.frameAtDown, velocity: velocity,
                              pictures: Self.dragStillOpen(source) ? drag.pictures : nil)
+            noteStep(.tuck, id: id)
             lastPerformed = (action, id)
             return true
         case .shade, .expand:
@@ -2104,6 +2118,8 @@ final class TrackpadGestureController {
     }
 
     private func refitPlacedWindows() {
+        refittingPlacements = true
+        defer { refittingPlacements = false }
         for (id, record) in undoRecords {
             // 不在原处的（画中画、收起、收进刘海、侧拉）归它们自己管，这里去排会把真窗口拉回屏幕。
             guard let win = record.element, let layout = record.layout,
@@ -2120,6 +2136,13 @@ final class TrackpadGestureController {
             // 撤销仍然可用：排之前的样子按两块屏幕的比例换算到新屏幕上。
             undoRecords[id] = PlacementUndo(before: DisplayRefit.mapped(record.before, from: record.area, to: area),
                                             after: observed, element: win, layout: layout, area: area)
+            let mappedBefore = DisplayRefit.mapped(record.before, from: record.area, to: area)
+            history.update { step in
+                guard step.kind == .placement, step.windowID == id, let after = step.payload.after,
+                      sameFrame(after, record.after) else { return }
+                step.payload.before = mappedBefore
+                step.payload.after = observed
+            }
             wlog("gesture: refit after screen change id=\(id) layout=\(layout.rawValue) frame=(\(Int(observed.minX)),\(Int(observed.minY)) \(Int(observed.width))x\(Int(observed.height)))")
         }
     }
@@ -2157,6 +2180,97 @@ final class TrackpadGestureController {
         setFrame(element, record.before)
         wlog("gesture: undo partner id=\(id) with the other half of the split")
     }
+
+    // MARK: - 排布历史（状态栏菜单“整理▸撤销…”）
+
+    /// 用户自己做的一步收起窗口、收进刘海、侧拉、画中画：记进排布历史。在动作之后调用（没做成的那一步撤的时候不成立，直接丢掉）。
+    /// 专注、离开时自动收起、魔法平铺、晃一晃这些不是这一下手做的，不记。
+    /// before：侧拉之前窗口在哪（AX 坐标），撤销时露着的那扇回到这里；调用方在进侧拉之前读好。
+    func noteStep(_ kind: ArrangementStepKind, id: CGWindowID, element: AXUIElement? = nil, before: CGRect? = nil) {
+        history.record(ArrangementStep(kind: kind, windowID: id, payload: ArrangementPayload(element: element, before: before)))
+        wlog("arrangement-history: note \(kind.rawValue) id=\(id) steps=\(history.steps.count)")
+    }
+
+    private func noteNewPlacements(since old: [CGWindowID: PlacementUndo]) {
+        guard !refittingPlacements else { return }
+        for (id, record) in undoRecords {
+            if let previous = old[id], sameFrame(previous.before, record.before), sameFrame(previous.after, record.after) { continue }
+            // 魔法平铺给没动的那几扇记的占位（排前排后一样）不算一步。
+            guard !sameFrame(record.before, record.after) else { continue }
+            history.record(ArrangementStep(kind: .placement, windowID: id,
+                                           payload: ArrangementPayload(element: record.element, before: record.before, after: record.after)))
+        }
+    }
+
+    /// 这一步现在还成立吗：窗口还收着、还在刘海里、还在侧拉或画中画里、还停在排好的位置。
+    /// 排布看外框只读 CGWindow，不问 App（菜单重建时也会问到这里，不能卡在一个不响应的 App 上）。
+    private func stepStands(_ step: ArrangementStep<ArrangementPayload>) -> Bool {
+        let id = step.windowID
+        switch step.kind {
+        case .shade: return owner.shaded[id] != nil && !owner.notch.isTucked(id)
+        case .tuck: return owner.notch.isTucked(id)
+        case .slideOver: return owner.slideOver.isSlideOver(id)
+        case .pictureInPicture: return owner.pip.isInPictureInPicture(id)
+        case .placement:
+            guard step.payload.element != nil, let after = step.payload.after, awayStep(id) == nil,
+                  !owner.slideOver.isSlideOver(id),
+                  let info = cgWindowInfo(id), let frame = cgWindowBounds(info) else { return false }
+            return sameFrame(frame, after)
+        }
+    }
+
+    /// 菜单上那一项的名字：“撤销”加最近一步还成立的那一步；没有可撤的返回 nil（菜单项变灰）。
+    func latestStepUndoTitle() -> String? {
+        guard !history.isEmpty, let step = history.latest(where: stepStands) else { return nil }
+        switch step.kind {
+        case .shade: return WSL10n.text("menu.undoStep.shade", zh: "撤销收起窗口")
+        case .tuck: return WSL10n.text("menu.undoStep.tuck", zh: "撤销收进刘海")
+        case .slideOver: return WSL10n.text("menu.undoStep.slideOver", zh: "撤销侧拉")
+        case .pictureInPicture: return WSL10n.text("menu.undoStep.pictureInPicture", zh: "撤销画中画")
+        case .placement: return WSL10n.text("browser.menu.undoArrange", zh: "撤销上次排布")
+        }
+    }
+
+    /// 撤最近一步还成立的那一步；比它新、已经不成立的（被人手挪过、已经放回来、关掉了）一起丢掉，不去动那些窗口。
+    @discardableResult
+    func undoLatestStep() -> Bool {
+        guard let step = history.popLatest(where: stepStands) else { return false }
+        let id = step.windowID
+        wlog("arrangement-history: undo \(step.kind.rawValue) id=\(id) left=\(history.steps.count)")
+        switch step.kind {
+        case .shade:
+            return owner.unshade(id)
+        case .tuck:
+            owner.notch.release(id, reason: "undo step")
+            return true
+        case .pictureInPicture:
+            owner.pip.exit(id, activate: true)
+            return true
+        case .slideOver:
+            // 收在屏幕边外的那扇由退出侧拉自己拉回靠边处；露着的回到侧拉之前的地方。
+            let hidden = owner.slideOver.isHidden
+            owner.slideOver.exit(reason: "undo step", restoringPosition: false)
+            if !hidden, let element = step.payload.element, let before = step.payload.before { setFrame(element, before) }
+            return true
+        case .placement:
+            guard let element = step.payload.element, let before = step.payload.before, let after = step.payload.after else { return false }
+            // 还是这扇窗最近那一次排布：和捏合走同一条路（拖分屏把手的另一扇、魔法平铺那一批一起回去）。
+            if let record = undoRecords[id], sameFrame(record.after, after) { return undoPlacement(element, id: id) }
+            glides.removeValue(forKey: id)?.cancelAndWait()
+            owner.cancelRestorePin(for: id)
+            setFrame(element, before)
+            return true
+        }
+    }
+}
+
+/// 排布历史里每一步撤回去要用的东西。
+struct ArrangementPayload {
+    var element: AXUIElement?
+    /// 排布：排之前；侧拉：进侧拉之前（AX 坐标）。
+    var before: CGRect?
+    /// 排布：排好以后（AX 坐标）；用来认出窗口被人手挪过。
+    var after: CGRect?
 }
 
 private func axParent(_ element: AXUIElement) -> AXUIElement? {

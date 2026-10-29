@@ -2528,7 +2528,9 @@ final class WindowBrowserController: NSObject {
                 let owner = self.owner
                 let entered = MainActor.assumeIsolated { () -> Bool in
                     guard let owner else { return false }
+                    let before = cgWindowInfo(id).flatMap(cgWindowBounds)
                     owner.slideOver.enter(element, id: id, pid: pid, side: left ? .left : .right, on: screen)
+                    owner.gestures.noteStep(.slideOver, id: id, element: element, before: before)
                     return owner.slideOver.isSlideOver(id)
                 }
                 wlog("window-browser: slide-over from card id=\(id) entered=\(entered)")
