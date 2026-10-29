@@ -296,6 +296,9 @@ final class NotchLeaseHub {
 
     // MARK: - 提醒与持续活动
 
+    /// 协调器此刻的时间：宿主算提醒的 ttl 用它，跟协调器同一只表。
+    var now: WS2.Instant { clock.now() }
+
     /// 记一条提醒。返回 true 表示它现在能露面；false 表示被上面的层挡着——
     /// 这时只留一个小点，按规则以后也不重播。
     @discardableResult
@@ -313,6 +316,39 @@ final class NotchLeaseHub {
         coordinator.remind(item, on: display, at: now)
         guard let snapshot = coordinator.snapshots(at: now).first(where: { $0.display == display }) else { return false }
         return snapshot.layer == .alert
+    }
+
+    /// 队列并进第 4 层后的申请入口：露面位子空着就说、正在说就并进那一次露面或按优先级排队、
+    /// 撞上第 1-3 层（或面板本地的两耳与落点）就变成点并消耗。宿主据返回值决定渲染。
+    func admitAnnouncement(_ item: InteractionCoordinator.AlertItem, on display: WS2.DisplayID)
+        -> InteractionCoordinator.ReminderOutcome {
+        coordinator.admit(item, on: display, at: clock.now())
+    }
+
+    /// 这块屏此刻该说的那一句（露面的队首）。露面结束时宿主来取下一条。
+    func currentAlertItem(on display: WS2.DisplayID) -> InteractionCoordinator.AlertItem? {
+        coordinator.currentAlertItem(on: display, at: clock.now())
+    }
+
+    /// 这块屏还有没有没说完、没说出的提醒（插电那一下撞上就不出）。
+    func hasReminderWork(on display: WS2.DisplayID) -> Bool {
+        coordinator.hasReminderWork(on: display, at: clock.now())
+    }
+
+    /// 面板本地输入开始（音量亮度两耳、拖放落点）：不占租约，但提醒要让。
+    /// holdMilliseconds 只作宿主忘报收尾时的兜底期限。
+    func noteHostInteraction(on display: WS2.DisplayID, holdMilliseconds: UInt64) {
+        let now = clock.now()
+        coordinator.hostInteraction(on: display, at: now,
+                                    deadline: now.adding(holdMilliseconds * WS2.Duration.millisecond))
+    }
+    func endHostInteraction(on display: WS2.DisplayID) {
+        coordinator.endHostInteraction(on: display)
+    }
+
+    /// 锁屏、睡眠期间收掉排着与露面的提醒（解锁后不补播）。点不在这里动，归协调器的屏障管。
+    func clearReminders() {
+        coordinator.clearReminders()
     }
 
     /// 这块屏正在露面的提醒，按先来后到；展示层据此合成一句。

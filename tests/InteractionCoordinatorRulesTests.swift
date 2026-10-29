@@ -255,6 +255,81 @@ struct RulesMissing: Error {}
             t.check(c.isCurrent(picker), "explicit page switch still works")
             t.check(revoked.last?.1 == .preempted, "page switch preempts the old page")
         }
+        t.run("R5 the queue lives in layer 4: a reminder hitting layers 1-3 becomes a dot and is consumed") {
+            let clock = RulesClock(), box = Box(); box.env.displays = [a]
+            let (c, _) = make(clock, box)
+            let start: UInt64 = 1_000 * ms
+            clock.set(start)
+            // 第 3 层（你打开的一页）占着：提醒只留点，不排队、不补说。
+            let page = try lease(c.acquire(request("pomodoro", .opened, at: start, deadline: start + 100_000 * ms)))
+            let outcome = c.admit(.init(key: "battery.low", title: "耳机电量低"), on: a, at: clock.now())
+            t.check(outcome == .dotOnly, "covered reminder becomes dotOnly (\(outcome))")
+            t.check(c.snapshots(at: clock.now()).first?.hasSecondaryDot == true, "dot recorded")
+            t.check(c.currentAlertItem(on: a, at: clock.now()) == nil, "nothing to say while covered")
+            clock.set(start + 1000 * ms)
+            c.release(page, at: clock.now())
+            t.check(c.snapshots(at: clock.now()).first?.hasSecondaryDot == false, "dot consumed when the page ends")
+            t.check(c.currentAlertItem(on: a, at: clock.now()) == nil, "never replayed")
+            // 露面正说着，一页进来：那一次露面也变成点（原样），排着的整队消耗。
+            clock.set(start + 2000 * ms)
+            t.check(c.admit(.init(key: "x", title: "一"), on: a, at: clock.now()) == .showing, "says it when free")
+            clock.set(start + 3000 * ms)
+            t.check(c.admit(.init(key: "y", title: "二"), on: a, at: clock.now()) == .queued, "next one queues behind")
+            let page2 = try lease(c.acquire(request("notchShelf", .opened, at: start + 3000 * ms, deadline: start + 100_000 * ms)))
+            t.check(c.snapshots(at: clock.now()).first?.hasSecondaryDot == true, "appearance becomes a dot")
+            t.check(c.currentAlertItem(on: a, at: clock.now()) == nil, "queued item consumed with it")
+            c.release(page2, at: clock.now())
+            t.check(c.currentAlertItem(on: a, at: clock.now()) == nil, "no replay after the page ends")
+        }
+        t.run("R6 three sources queue in priority order: calendar (8), away summary (5), session (4)") {
+            let clock = RulesClock(), box = Box(); box.env.displays = [a]
+            let (c, _) = make(clock, box)
+            let start: UInt64 = 1_000 * ms
+            clock.set(start)
+            let sessionHold: UInt64 = 5_000
+            t.check(c.admit(.init(key: "session.s1", title: "等你", priority: 4,
+                                  holdMilliseconds: sessionHold), on: a, at: clock.now()) == .showing, "first says now")
+            clock.set(start + 700 * ms) // 出了 0.6 秒合并窗口
+            t.check(c.admit(.init(key: "calendar.c1", title: "日程", priority: 8), on: a, at: clock.now()) == .queued, "calendar queues")
+            clock.set(start + 800 * ms)
+            t.check(c.admit(.init(key: "away.summary", title: "离开期间", priority: 5), on: a, at: clock.now()) == .queued, "away queues")
+            clock.set(start + 900 * ms)
+            t.check(c.admit(.init(key: "session.s2", title: "做完了", priority: 4), on: a, at: clock.now()) == .queued, "session queues")
+            // 会话那句说完（5 秒）：日程（8）先上，然后离开摘要（5），会话（4）最后；顺序跟原来的队列一致。
+            clock.set(start + sessionHold * ms)
+            _ = c.snapshots(at: clock.now())
+            t.check(c.currentAlertItem(on: a, at: clock.now())?.key == "calendar.c1", "calendar (8) first")
+            clock.set(start + sessionHold * ms + MotionHold.alertMilliseconds * ms)
+            _ = c.snapshots(at: clock.now())
+            t.check(c.currentAlertItem(on: a, at: clock.now())?.key == "away.summary", "away summary (5) next")
+            clock.set(start + sessionHold * ms + 2 * MotionHold.alertMilliseconds * ms)
+            _ = c.snapshots(at: clock.now())
+            t.check(c.currentAlertItem(on: a, at: clock.now())?.key == "session.s2", "session (4) last")
+            clock.set(start + sessionHold * ms + 3 * MotionHold.alertMilliseconds * ms)
+            _ = c.snapshots(at: clock.now())
+            t.check(c.currentAlertItem(on: a, at: clock.now()) == nil, "queue drained")
+        }
+        t.run("R7 host interactions (level ears, drop target) make reminders dots; expired queue entries are skipped") {
+            let clock = RulesClock(), box = Box(); box.env.displays = [a]
+            let (c, _) = make(clock, box)
+            let start: UInt64 = 1_000 * ms
+            clock.set(start)
+            // 面板本地的两耳：不占租约，但提醒要让。
+            c.hostInteraction(on: a, at: clock.now(), deadline: .init(nanoseconds: start + 2_200 * ms))
+            t.check(c.admit(.init(key: "battery.low", title: "耳机电量低"), on: a, at: clock.now()) == .dotOnly, "dot only during the ears")
+            clock.set(start + 100 * ms)
+            c.endHostInteraction(on: a)
+            t.check(c.admit(.init(key: "battery.low", title: "耳机电量低"), on: a, at: clock.now()) == .showing, "says it after the ears end")
+            // 排队里过期的作废，轮到下一条（都在合并窗口外才排得上）。
+            clock.set(start + 900 * ms)
+            t.check(c.admit(.init(key: "stale", title: "过期的", holdMilliseconds: 100,
+                                  expiresAt: .init(nanoseconds: start + 100 * ms)), on: a, at: clock.now()) == .queued, "stale entry queues")
+            clock.set(start + 1000 * ms)
+            t.check(c.admit(.init(key: "fresh", title: "没过期的", priority: 1), on: a, at: clock.now()) == .queued, "fresh entry queues")
+            clock.set(start + MotionHold.alertMilliseconds * ms + 1100 * ms)
+            _ = c.snapshots(at: clock.now())
+            t.check(c.currentAlertItem(on: a, at: clock.now())?.key == "fresh", "expired entry skipped at promotion")
+        }
         print("RESULT scenes=\(t.scenes) assertions=\(t.assertions) failures=\(t.failures.count)")
         if !t.failures.isEmpty { exit(1) }
     }
