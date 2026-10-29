@@ -19,6 +19,9 @@ import Cocoa
     var onKeepDraft: ((KeptDraft?) -> Void)?
     /// 从那一排的会话格走进来时才有：页头的“过去”。
     var goThere: (() -> Void)? { didSet { goButton.isHidden = goThere == nil } }
+    /// 切到 Codex 时先把 Claude 那一侧的草稿收在这里，切回来放回；草稿只用“丢弃”丢。
+    private var claudeDraft = ""
+    private var claudeShown = false
 
     private let controller: WS2OwnedLaunchController
     private let title = NSTextField(labelWithString: WSL10n.text("conductor.title", zh: "指挥"))
@@ -344,9 +347,10 @@ import Cocoa
         input.revoke()
         claudeConductor.stop()
         // 收起不删东西：先把 Claude 那一侧的草稿交出去，再清这一页（拍板 10-29 第 2 条）。
-        let text = editor.stringValue
-        onKeepDraft?(isClaudeBackend && !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let text = isClaudeBackend ? editor.stringValue : claudeDraft
+        onKeepDraft?(!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                      ? KeptDraft(claude: true, text: text) : nil)
+        claudeDraft = ""
         inputIsCurrent = { false }
         expectedLease = nil
         focusObservers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -522,7 +526,9 @@ import Cocoa
         } else {
             claudeConductor.stop()
         }
-        editor.stringValue = ""
+        if claudeShown { claudeDraft = editor.stringValue }
+        claudeShown = isClaudeBackend
+        editor.stringValue = isClaudeBackend ? claudeDraft : ""
         remoteNotch("")
         updateBackendVisibility()
         remoteTargetChanged?(isClaudeBackend ? nil : controller.conductorTarget?.context)
@@ -619,7 +625,8 @@ import Cocoa
         editor.stringValue = ""
         if isClaudeBackend { renderClaude(); return }
         adoptedDraft = nil
-        if controller.conductorTarget != nil { _ = controller.editDraft("") }
+        // 没有目标时 controller 里也可能还留着草稿（会话断开／停下），一样清掉，否则下一次 sync 会放回来。
+        _ = controller.editDraft("")
         syncActions()
     }
 
@@ -637,6 +644,7 @@ import Cocoa
     var probeClaudeStatus: ClaudeConductor.Status { claudeConductor.status }
     var probeClaudeTranscript: String { claudeConductor.transcript }
     func probeSelectClaude() { backendMenu.selectItem(at: 1); pickBackend() }
+    func probeSelectCodex() { backendMenu.selectItem(at: 0); pickBackend() }
     func probeSetDraft(_ text: String) { editor.stringValue = text; renderClaude() }
     func probeSend() { sendClaudeDraft() }
     func probeStop() { stopClaude() }
