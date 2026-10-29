@@ -4725,7 +4725,7 @@
       "path": "prototype/App/WS2FocusSettings.swift",
       "line": 0,
       "symbol": "UserDefaults",
-      "source": "static var tuckChat: Bool { FocusTimer.tuckChatPreference(stored: UserDefaults.standard.object(forKey: tuckChatKey) as? Bool) }",
+      "source": "static var tuckChat: Bool { FocusTimer.tuckChatPreference(object: UserDefaults.standard.object(forKey:)) }",
       "signal": "settings"
     },
     {

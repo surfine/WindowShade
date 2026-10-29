@@ -4,11 +4,11 @@ import Cocoa
     static let sectionTitle = "实时活动"
     static let tuckChatTitle = "专注时收起聊天窗口"
     static let presetKey = "WS2.focus.preset"
-    static let tuckChatKey = "WS2.focus.tuckChat"
+    static let tuckChatKey = FocusTimer.tuckChatKey
     static var preset: FocusTimer.Preset {
         UserDefaults.standard.string(forKey: presetKey) == "50/10" ? .minutes50 : .minutes25
     }
-    static var tuckChat: Bool { FocusTimer.tuckChatPreference(stored: UserDefaults.standard.object(forKey: tuckChatKey) as? Bool) }
+    static var tuckChat: Bool { FocusTimer.tuckChatPreference(object: UserDefaults.standard.object(forKey:)) }
     static func set(preset: FocusTimer.Preset) {
         UserDefaults.standard.set(preset == .minutes50 ? "50/10" : "25/5", forKey: presetKey)
     }

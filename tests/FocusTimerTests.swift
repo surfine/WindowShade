@@ -163,6 +163,15 @@ struct FocusTimerTests {
         t.expect(!FocusTimer.tuckChatPreference(stored: nil), "没存过：默认关")
         t.expect(FocusTimer.tuckChatPreference(stored: true), "明确打开过：照旧收起")
         t.expect(!FocusTimer.tuckChatPreference(stored: false), "明确关过：不收起")
+        let suite = "ws.focus.tuck.test.\(UUID().uuidString)"
+        if let d = UserDefaults(suiteName: suite) {
+            t.expect(!FocusTimer.tuckChatPreference(object: d.object(forKey:)), "真实读取：全新（键没写过）默认关")
+            d.set(true, forKey: "WS2.focus.tuckChat")
+            t.expect(FocusTimer.tuckChatPreference(object: d.object(forKey:)), "真实读取：WS2.focus.tuckChat 写 true 照旧收起")
+            d.set(false, forKey: FocusTimer.tuckChatKey)
+            t.expect(!FocusTimer.tuckChatPreference(object: d.object(forKey:)), "真实读取：写 false 不收起")
+            d.removePersistentDomain(forName: suite)
+        }
 
         t.finish()
     }
