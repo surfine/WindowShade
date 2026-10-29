@@ -190,6 +190,7 @@ final class PictureInPictureController {
         guard let s = sessions[id] else { return }
         sessions[id] = nil
         exiting[id] = s
+        owner.gestures.forgetSteps(.pictureInPicture, id: id)
         order.removeAll { $0 == id }
         s.animation?.invalidate()
         s.panel.ignoresMouseEvents = true
@@ -254,6 +255,7 @@ final class PictureInPictureController {
     private func abandon(_ s: PiPSession, reason: String) {
         guard sessions[s.id] === s else { return }
         sessions[s.id] = nil
+        owner.gestures.forgetSteps(.pictureInPicture, id: s.id)
         order.removeAll { $0 == s.id }
         s.animation?.invalidate()
         s.capture.stop()

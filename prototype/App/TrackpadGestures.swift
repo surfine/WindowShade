@@ -966,10 +966,7 @@ final class TrackpadGestureController {
         return sameFrame(frame, area) || sameFrame(frame, ArrangeGap.apply(area, in: area))
     }
 
-    func sameFrame(_ a: CGRect, _ b: CGRect) -> Bool {
-        abs(a.minX - b.minX) <= 4 && abs(a.minY - b.minY) <= 4
-            && abs(a.width - b.width) <= 4 && abs(a.height - b.height) <= 4
-    }
+    func sameFrame(_ a: CGRect, _ b: CGRect) -> Bool { ArrangementRules.sameFrame(a, b) }
 
     // MARK: - 进行中与结束
 
@@ -2191,6 +2188,14 @@ final class TrackpadGestureController {
         wlog("arrangement-history: note \(kind.rawValue) id=\(id) steps=\(history.steps.count)")
     }
 
+    /// 这扇窗的这一类状态结束了（放回来、展开、退出，不论走哪条路）：记着的那几步作废。
+    /// 收起、刘海、侧拉、画中画各自在状态结束的地方调用。
+    func forgetSteps(_ kind: ArrangementStepKind, id: CGWindowID) {
+        let count = history.steps.count
+        history.forget(kind, windowID: id)
+        if history.steps.count != count { wlog("arrangement-history: forget \(kind.rawValue) id=\(id) left=\(history.steps.count)") }
+    }
+
     private func noteNewPlacements(since old: [CGWindowID: PlacementUndo]) {
         guard !refittingPlacements else { return }
         for (id, record) in undoRecords {
@@ -2202,21 +2207,23 @@ final class TrackpadGestureController {
         }
     }
 
-    /// 这一步现在还成立吗：窗口还收着、还在刘海里、还在侧拉或画中画里、还停在排好的位置。
+    /// 这一步现在还成立吗（规则在 Core 的 ArrangementRules.stands，单元测试测的就是它）。
     /// 排布看外框只读 CGWindow，不问 App（菜单重建时也会问到这里，不能卡在一个不响应的 App 上）。
     private func stepStands(_ step: ArrangementStep<ArrangementPayload>) -> Bool {
         let id = step.windowID
+        var facts = ArrangementWindowFacts()
         switch step.kind {
-        case .shade: return owner.shaded[id] != nil && !owner.notch.isTucked(id)
-        case .tuck: return owner.notch.isTucked(id)
-        case .slideOver: return owner.slideOver.isSlideOver(id)
-        case .pictureInPicture: return owner.pip.isInPictureInPicture(id)
+        case .shade: facts.shaded = owner.shaded[id] != nil; facts.tucked = owner.notch.isTucked(id)
+        case .tuck: facts.tucked = owner.notch.isTucked(id)
+        case .slideOver: facts.slideOver = owner.slideOver.isSlideOver(id)
+        case .pictureInPicture: facts.pictureInPicture = owner.pip.isInPictureInPicture(id)
         case .placement:
-            guard step.payload.element != nil, let after = step.payload.after, awayStep(id) == nil,
-                  !owner.slideOver.isSlideOver(id),
-                  let info = cgWindowInfo(id), let frame = cgWindowBounds(info) else { return false }
-            return sameFrame(frame, after)
+            guard step.payload.element != nil, step.payload.after != nil else { return false }
+            facts.awayArranged = awayStep(id) != nil
+            facts.slideOver = owner.slideOver.isSlideOver(id)
+            if !facts.awayArranged, !facts.slideOver { facts.frame = cgWindowInfo(id).flatMap(cgWindowBounds) }
         }
+        return ArrangementRules.stands(step.kind, after: step.payload.after, canMove: step.payload.element != nil, facts: facts)
     }
 
     /// 菜单上那一项的名字：“撤销”加最近一步还成立的那一步；没有可撤的返回 nil（菜单项变灰）。
@@ -2237,25 +2244,34 @@ final class TrackpadGestureController {
         guard let step = history.popLatest(where: stepStands) else { return false }
         let id = step.windowID
         wlog("arrangement-history: undo \(step.kind.rawValue) id=\(id) left=\(history.steps.count)")
-        switch step.kind {
-        case .shade:
+        // 做什么由 Core 的 ArrangementRules.undo 定（单元测试测的就是它），这里只照着做。
+        let action = ArrangementRules.undo(step.kind, before: step.payload.before, after: step.payload.after,
+                                           canMove: step.payload.element != nil, latestPlacementAfter: undoRecords[id]?.after)
+        switch action {
+        case nil:
+            return false
+        case .unshade?:
             return owner.unshade(id)
-        case .tuck:
+        case .releaseFromNotch?:
             owner.notch.release(id, reason: "undo step")
             return true
-        case .pictureInPicture:
+        case .exitPictureInPicture?:
             owner.pip.exit(id, activate: true)
             return true
-        case .slideOver:
-            // 收在屏幕边外的那扇由退出侧拉自己拉回靠边处；露着的回到侧拉之前的地方。
-            let hidden = owner.slideOver.isHidden
-            owner.slideOver.exit(reason: "undo step", restoringPosition: false)
-            if !hidden, let element = step.payload.element, let before = step.payload.before { setFrame(element, before) }
+        case .exitSlideOver(let before)?:
+            // 露着的、收在屏幕边外的都回到侧拉之前的地方（收着的由退出侧拉自己滑回去，不另写外框和它抢）。
+            if owner.slideOver.isHidden {
+                owner.slideOver.exit(reason: "undo step", restoringPosition: false, backTo: before)
+            } else {
+                owner.slideOver.exit(reason: "undo step", restoringPosition: false)
+                if let element = step.payload.element, let before { setFrame(element, before) }
+            }
             return true
-        case .placement:
-            guard let element = step.payload.element, let before = step.payload.before, let after = step.payload.after else { return false }
-            // 还是这扇窗最近那一次排布：和捏合走同一条路（拖分屏把手的另一扇、魔法平铺那一批一起回去）。
-            if let record = undoRecords[id], sameFrame(record.after, after) { return undoPlacement(element, id: id) }
+        case .undoLatestPlacement?:
+            guard let element = step.payload.element else { return false }
+            return undoPlacement(element, id: id)
+        case .moveBack(let before)?:
+            guard let element = step.payload.element else { return false }
             glides.removeValue(forKey: id)?.cancelAndWait()
             owner.cancelRestorePin(for: id)
             setFrame(element, before)
