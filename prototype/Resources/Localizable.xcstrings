@@ -69467,6 +69467,98 @@
           }
         }
       }
+    },
+    "settings.shade.doubleClick.choice.shade": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起視窗"
+          }
+        }
+      }
+    },
+    "settings.shade.doubleClick.choice.system": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow System Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照系统设置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照系統設定"
+          }
+        }
+      }
+    },
+    "welcome.a1.ledeWasMinimize": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It becomes a roll-up bar. Everything inside stays put. Double-clicking a title bar now rolls up the window (it used to minimize)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口收成一条卷帘条，里面的东西都还在。双击标题栏改成收起窗口（原来是最小化）。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗收成一條捲簾條，裡面的東西都還在。按兩下標題列改成收起視窗（原來是最小化）。"
+          }
+        }
+      }
+    },
+    "welcome.a1.ledeWasZoom": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It becomes a roll-up bar. Everything inside stays put. Double-clicking a title bar now rolls up the window (it used to zoom)."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口收成一条卷帘条，里面的东西都还在。双击标题栏改成收起窗口（原来是缩放）。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視窗收成一條捲簾條，裡面的東西都還在。按兩下標題列改成收起視窗（原來是縮放）。"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

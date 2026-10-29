@@ -183,8 +183,8 @@ final class ChromeProfileCache {
     }
 
     private var entries: [CGWindowID: Entry] = [:]
-    private let ttl: TimeInterval = 2.0
-    private let sizeTolerance: CGFloat = 0.5
+    private let ttl: TimeInterval = ChromeHitHeightMirror.ttl
+    private let sizeTolerance: CGFloat = ChromeHitHeightMirror.sizeTolerance
     private let maxEntries = 64
 
     func profile(id: CGWindowID, win: AXUIElement, pos: CGPoint, size: CGSize,
@@ -195,8 +195,10 @@ final class ChromeProfileCache {
         let resolved = resolveWindowChromeProfileUncached(win: win, id: id, pos: pos,
                                                           size: size, pid: pid, title: title,
                                                           localChromeHeight: localWindowChromeHeight(id: id, pid: pid))
-        entries[id] = Entry(element: win, profile: resolved, size: size,
-                            resolvedAt: CFAbsoluteTimeGetCurrent())
+        let now = CFAbsoluteTimeGetCurrent()
+        entries[id] = Entry(element: win, profile: resolved, size: size, resolvedAt: now)
+        ChromeHitHeightMirror.shared.record(id: id, element: win, size: size,
+                                            height: resolved.hitBarHeight, at: now)
         pruneIfNeeded()
         return resolved
     }
@@ -232,6 +234,8 @@ final class ChromeProfileCache {
             guard let profile = resolvedProfiles[index] else { continue }
             entries[request.id] = Entry(element: request.win, profile: profile,
                                         size: request.size, resolvedAt: now)
+            ChromeHitHeightMirror.shared.record(id: request.id, element: request.win, size: request.size,
+                                                height: profile.hitBarHeight, at: now)
             warmed[request.id] = profile
         }
         pruneIfNeeded()
@@ -269,6 +273,42 @@ final class ChromeProfileCache {
             guard let oldest = entries.min(by: { $0.value.resolvedAt < $1.value.resolvedAt }) else { break }
             entries.removeValue(forKey: oldest.key)
         }
+    }
+}
+
+/// 画像带高的线程安全副本（增补第 15 步）：标题栏双击的判定挪到了后台队列（TitlebarTapRoute.swift），
+/// 要和主线程按同一个带高判断，而 ChromeProfileCache 只在主线程读写。主线程写缓存时顺手抄一份进来，
+/// 新鲜度规则（TTL、元素身份、尺寸容差）与缓存一致。独立的类、自带锁，不挂在任何主线程类上。
+final class ChromeHitHeightMirror: Sendable {
+    static let shared = ChromeHitHeightMirror()
+    static let ttl: TimeInterval = 2.0
+    static let sizeTolerance: CGFloat = 0.5
+    private static let maxEntries = 64
+
+    private struct Entry {
+        let element: AXUIElement
+        let size: CGSize
+        let height: CGFloat
+        let at: CFAbsoluteTime
+    }
+    private let entries = Mutex([CGWindowID: Entry]())
+
+    func record(id: CGWindowID, element: AXUIElement, size: CGSize, height: CGFloat, at: CFAbsoluteTime) {
+        entries.withLock { table in
+            table[id] = Entry(element: element, size: size, height: height, at: at)
+            guard table.count > Self.maxEntries else { return }
+            table = table.filter { at - $0.value.at < Self.ttl }
+        }
+    }
+
+    /// 和 ChromeProfileCache.cachedHitBarHeight 同一条新鲜度规则；任意线程可调。
+    func cachedHitBarHeight(id: CGWindowID, win: AXUIElement, size: CGSize) -> CGFloat? {
+        let entry = entries.withLock { $0[id] }
+        guard let entry, CFAbsoluteTimeGetCurrent() - entry.at < Self.ttl,
+              CFEqual(win, entry.element),
+              abs(size.width - entry.size.width) <= Self.sizeTolerance,
+              abs(size.height - entry.size.height) <= Self.sizeTolerance else { return nil }
+        return entry.height
     }
 }
 

@@ -14,6 +14,7 @@
 // 编译与运行见 prototype/build.sh（自动收集源文件，签名身份走环境变量）。
 
 import Cocoa
+import Synchronization
 import os
 import Carbon.HIToolbox
 import ApplicationServices
@@ -278,7 +279,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var titlebarDoubleClickEnabled: Bool = {
         if UserDefaults.standard.object(forKey: shadeTitlebarDoubleClickDefaultsKey) == nil { return true }
         return UserDefaults.standard.bool(forKey: shadeTitlebarDoubleClickDefaultsKey)
-    }()
+    }() {
+        // 钩子线程在后台判定双击，读的是这份副本（EventTapCallback.swift）。
+        didSet { titlebarDoubleClickTapEnabled.store(titlebarDoubleClickEnabled, ordering: .relaxed) }
+    }
     var floatingOnTop: Bool = {
         if UserDefaults.standard.object(forKey: shadeFloatingOnTopDefaultsKey) == nil { return true }
         return UserDefaults.standard.bool(forKey: shadeFloatingOnTopDefaultsKey)
@@ -1012,6 +1016,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                           callback: eventTapCallback, userInfo: nil) else { return false }
         eventTap = tap
         mouseDownTapPort = tap
+        titlebarDoubleClickTapEnabled.store(titlebarDoubleClickEnabled, ordering: .relaxed)
         EventTapHealth.shared.register(tap, label: "titlebar-click")
         // 钩子跑在自己的线程上：主线程卡住时，全系统的单击不用等它（见 eventTapCallback）。
         let thread = Thread {

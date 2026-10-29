@@ -382,7 +382,7 @@ final class WelcomeView: NSView {
         titleLabel.isHidden = false
         titleLabel.stringValue = WelcomeFlow.practiceTitle
         lede.isHidden = false
-        lede.stringValue = WelcomeFlow.practiceLede
+        lede.stringValue = Self.practiceLede
         status.isHidden = false
         optionNote.isHidden = false
         optionNote.stringValue = Self.optionNote
@@ -493,6 +493,15 @@ final class WelcomeView: NSView {
     }
 
     // MARK: A1
+
+    /// 拍板 10-29 第 17 条：首次打开就明说双击标题栏改了，原来是什么（照系统设置里的那一项）；原来不做事就不提。
+    private static var practiceLede: String {
+        switch systemTitlebarDoubleClickAction() {
+        case .zoom: return WSL10n.text("welcome.a1.ledeWasZoom", zh: "窗口收成一条卷帘条，里面的东西都还在。双击标题栏改成收起窗口（原来是缩放）。")
+        case .minimize: return WSL10n.text("welcome.a1.ledeWasMinimize", zh: "窗口收成一条卷帘条，里面的东西都还在。双击标题栏改成收起窗口（原来是最小化）。")
+        case .none: return WelcomeFlow.practiceLede
+        }
+    }
 
     /// 底下那行小字：怎么回到系统的双击（系统设置里双击是“缩放”或“最小化”时，照设置页“双击标题栏”那一行的副标题）。
     private static var optionNote: String {

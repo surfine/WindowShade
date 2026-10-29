@@ -1032,8 +1032,22 @@ extension AppDelegate {
         }
     }
 
-    @objc func prefToggleTitlebarDoubleClick(_ sender: NSSwitch) {
-        titlebarDoubleClickEnabled = sender.state == .on
+    /// 拍板 10-29 第 17 条：双击标题栏两种做法，默认收起窗口；选「照系统设置」就把双击交给系统
+    /// （系统设置里的缩放、最小化或不做）。存的仍是原来那个开关，开 = 收起窗口。
+    private func makeTitlebarDoubleClickPopup() -> NSPopUpButton {
+        let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+        popup.addItem(withTitle: WSL10n.text("settings.shade.doubleClick.choice.shade", zh: "收起窗口"))
+        popup.addItem(withTitle: WSL10n.text("settings.shade.doubleClick.choice.system", zh: "照系统设置"))
+        popup.selectItem(at: titlebarDoubleClickEnabled ? 0 : 1)
+        popup.setAccessibilityLabel(WSL10n.text("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"))
+        popup.target = self
+        popup.action = #selector(prefPickTitlebarDoubleClick(_:))
+        popup.setContentHuggingPriority(.required, for: .horizontal)
+        return popup
+    }
+
+    @objc func prefPickTitlebarDoubleClick(_ sender: NSPopUpButton) {
+        titlebarDoubleClickEnabled = sender.indexOfSelectedItem == 0
         UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)
         rebuildMenu()
     }
@@ -1782,9 +1796,9 @@ extension AppDelegate {
                 fingers: WSL10n.setting("settings.gesture.chip.titleBar", zh: "两指 · 标题栏 · 滑动 / 张合 / 滚轮"), kind: .primitive, table: titleBarTable,
                 explainer: ExplainerRow.Gestures.titleBar),
             GestureRows.decorate(
-                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"),
-                                     subtitle: titlebarDoubleClickPreferenceSubtitle(),
-                                     isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
+                makeUnifiedControlRow(name: WSL10n.setting("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"),
+                                      subtitle: titlebarDoubleClickPreferenceSubtitle(),
+                                      control: makeTitlebarDoubleClickPopup()),
                 fingers: WSL10n.setting("settings.gesture.chip.doubleClick", zh: "双击 · 标题栏"), kind: .primitive,
                 explainer: ExplainerRow.Gestures.doubleClick),
         ]
