@@ -14,6 +14,8 @@ import Cocoa
     private weak var ownedView:WS2OwnedSessionView?
     private weak var modelPicker: WS2ModelPickerView?
     private weak var conductorPage: WS2ConductorPageView?
+    /// 收起指挥页时留下的 Claude 草稿；下次打开放回。锁屏、退出时丢掉。
+    private var conductorKeptDraft: WS2ConductorPageView.KeptDraft?
     private weak var conductorSample: WS2ConductorView?
     private var deviceHost: WS2DeviceActionHost?
     private var conductorOwnsDeviceHost = false
@@ -162,6 +164,7 @@ import Cocoa
         } else {
             owned?.environmentChanged()
             island.invalidate(.locked)
+            conductorKeptDraft = nil
             focus.handle(.locked)
         }
     }
@@ -242,6 +245,7 @@ import Cocoa
                                          onClick: { [weak self] in self?.goToCodingSession(cwd: cwd, sessionID: bloom.sessionID) })
         }
         activities.onSessionGo = { [weak self] id, cwd in self?.goToCodingSession(cwd: cwd, sessionID: id) }
+        activities.onSessionEnter = { [weak self] id, cwd in self?.openConductor(goingTo: (id, cwd)) ?? false }
         activities.onSessionMenuChange = { [weak self] in self?.owner?.rebuildMenu() }
         // 用量（实验）：随编程会话开关。只吃自己启动的 Codex 会话发来的额度事件。
         owned.onUsage = { [weak self] reading in
@@ -258,7 +262,7 @@ import Cocoa
     }
     private func unwireCodingSessions() {
         guard let activities = owner?.notch.activities else { return }
-        activities.onSessionBloom = nil; activities.onSessionGo = nil; activities.onSessionMenuChange = nil
+        activities.onSessionBloom = nil; activities.onSessionGo = nil; activities.onSessionEnter = nil; activities.onSessionMenuChange = nil
         owned?.onUsage = nil
         activities.ws2ResetSessions()
     }
@@ -399,10 +403,14 @@ import Cocoa
             return false
         }
     }
-    @discardableResult func openConductor() -> Bool {
+    /// 指挥页不看遥控模式开没开（拍板 10-29 第 4 条）：按住说话、Codex／Claude（只读）都只在这台 Mac 上。
+    /// `goingTo`：从那一排的会话格走进来时带上，页头多一个“过去”。
+    @discardableResult func openConductor(goingTo session: (id: String, cwd: String)? = nil) -> Bool {
         guard NotchController.isEnabled, !sleeping, lockReasons.isEmpty,
               AuthorizationService.shared.lockState() == .unlocked else { return false }
         let view = WS2ConductorPageView(controller: owned)
+        // 返回／点外面只收起页面，草稿留着（拍板 10-29 第 2 条）；丢草稿只用页面上的“丢弃”。
+        view.onKeepDraft = { [weak self] in self?.conductorKeptDraft = $0 }
         guard island.show(view, ownerID: "conductor", onDismiss: { [weak self, weak view] _ in
             guard let self, self.conductorPage === view else { return }
             if self.conductorOwnsDeviceHost {
@@ -415,6 +423,13 @@ import Cocoa
             self.remoteHandshakeKey = nil
         }), let lease = island.inputHandle(for: view) else { return false }
         conductorPage = view
+        if let session {
+            view.goThere = { [weak self, weak view] in
+                guard let self, let view else { return }
+                self.island.dismiss(ifShowing: view)
+                self.goToCodingSession(cwd: session.cwd, sessionID: session.id)
+            }
+        }
         view.remoteTargetChanged = { [weak self] _ in self?.pushRemoteConductorHandshake() }
         view.onCancel = { [weak self, weak view] in
             guard let self, let view else { return }
@@ -433,6 +448,8 @@ import Cocoa
                 return self.conductorPage === view && !self.sleeping && self.lockReasons.isEmpty
             }
         }
+        // 放回要在 show 之后：同 owner 换页时，旧页收起那一下先把它的草稿留下。
+        if let kept = conductorKeptDraft { view.restore(kept) }
         attachConductorDevices(view)
         view.sync()
         pushRemoteConductorHandshake()
@@ -571,7 +588,7 @@ import Cocoa
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
     func stop() {
-        deviceHost?.stop(); deviceHost=nil; modelPicker=nil; conductorPage=nil; conductorSample=nil
+        deviceHost?.stop(); deviceHost=nil; modelPicker=nil; conductorPage=nil; conductorSample=nil; conductorKeptDraft=nil
         conductorOwnsDeviceHost=false
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
         owned?.onChange=nil;owned?.onBrowserURL=nil

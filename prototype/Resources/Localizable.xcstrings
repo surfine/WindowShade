@@ -6441,6 +6441,52 @@
         }
       }
     },
+    "conductor.discard": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丢弃"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丟棄"
+          }
+        }
+      }
+    },
+    "conductor.discard.tip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clears this draft. Going back or putting the page away keeps it."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清空这份草稿。返回或收起页面不会清空。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清空這份草稿。返回或收起頁面不會清空。"
+          }
+        }
+      }
+    },
     "conductor.draftFooter": {
       "extractionState": "manual",
       "localizations": {
