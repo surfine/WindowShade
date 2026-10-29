@@ -949,18 +949,18 @@
       "group": "去了哪里",
       "reader": "",
       "rule": "",
-      "verification": "source-inventory-only; 窗口效果适配器未接时控件不可用",
+      "verification": "source-inventory-only",
       "retention": "see destination; no new polling or telemetry",
       "log_policy": "no raw private values",
       "id": "focus-preferences",
       "label": "番茄钟的设置",
       "status": "current",
-      "reads": "专注时长（25/5 或 50/10）和“专注时把聊天收进刘海”",
+      "reads": "专注时长（25/5 或 50/10）和“专注时收起聊天窗口”",
       "purpose": "按你选的时长计时",
       "destination": "存在这台 Mac 上，不发送",
       "activation": "打开设置、改选项或开始计时时",
       "toggle": "设置里的番茄钟两项",
-      "combined": "番茄钟的时长和是否把聊天收进刘海合起来，能看出你的工作节奏。",
+      "combined": "番茄钟的时长和是否收起聊天窗口合起来，能看出你的工作节奏。",
       "subtitle": "番茄钟的时长和选项",
       "en": {
         "label": "Focus timer settings",
@@ -969,8 +969,8 @@
         "destination": "On this Mac; never sent",
         "toggle": "The focus timer's two rows in Settings",
         "activation": "When Settings opens, an option changes or a countdown starts",
-        "combined": "Focus timer lengths with whether chat is tucked into the notch show the rhythm of your work.",
-        "reads": "Focus lengths (25/5 or 50/10) and Tuck chat into the notch during Focus"
+        "combined": "Focus timer lengths with whether chat windows are tucked show the rhythm of your work.",
+        "reads": "Focus lengths (25/5 or 50/10) and Tuck chat windows while focusing"
       }
     },
     {
@@ -4725,7 +4725,7 @@
       "path": "prototype/App/WS2FocusSettings.swift",
       "line": 0,
       "symbol": "UserDefaults",
-      "source": "static var tuckChat: Bool { UserDefaults.standard.object(forKey: tuckChatKey) as? Bool ?? true }",
+      "source": "static var tuckChat: Bool { FocusTimer.tuckChatPreference(object: UserDefaults.standard.object(forKey:)) }",
       "signal": "settings"
     },
     {

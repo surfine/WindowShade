@@ -2,13 +2,16 @@ import Cocoa
 
 /// T3 的真实窗口端口：只走既有的逐窗收起与放回，不用有切换语义的 `tuckAll`。
 ///
-/// 准入前 `admitted` 保持 false：番茄钟只计时，不移动任何窗口；设置里也显示“仅计时”。
-/// 打开它之前必须在真机上跑完工单 06 的时序表（截图未完成就结束、用户手动挪动、PID 复用、
-/// 迟到完成、部分恢复失败、锁中回调），并留录制与脱敏事务日志。
+/// 2026-10-29 拍板第 21 条：闸门放开，但“专注时收起聊天窗口”默认关（WS2FocusSettings.tuckChat），
+/// 没明确打开过的人行为不变。休息时的 `tuckAll` 不在此列：它另有一道闸（restTuckAdmitted），仍关着。真机时序表（截图未完成就结束、用户手动挪动、PID 复用、
+/// 迟到完成、部分恢复失败、锁中回调）的收起／放回探针待 Aaron 在真机上跑。
 @MainActor
 final class WS2FocusWindowPort: WS2FocusMutationPort {
-    /// 真机时序尚未验收；这里是唯一的准入开关。
-    static let admitted = false
+    /// 唯一的准入开关；是否真的收起仍由设置里那一行（默认关）决定。
+    static let admitted = true
+    /// 休息阶段的整屏收起（`tuckAll`）没有对应设置，拍板第 21 条只放开收聊天；这里保持不放行，
+    /// 免得没打开过任何设置的人在每次休息时被收起整屏窗口。要放开须单独拍板并过真机。
+    static let restTuckAdmitted = false
 
     private weak var owner: AppDelegate?
     init(owner: AppDelegate) { self.owner = owner }

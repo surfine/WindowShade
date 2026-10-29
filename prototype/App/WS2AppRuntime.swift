@@ -602,7 +602,7 @@ import Cocoa
         for effect in effects {
             switch effect {
             case .tuckAll(let token):
-                guard WS2FocusWindowPort.admitted else {
+                guard WS2FocusWindowPort.restTuckAdmitted else {
                     wlog("focus: window effects not admitted yet; counting only")
                     continue
                 }
