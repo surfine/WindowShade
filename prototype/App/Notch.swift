@@ -1097,7 +1097,7 @@ final class NotchController {
         refresh()
     }
 
-    /// 点了（或按了 Return）竖线右边的某一格：音乐播放 / 暂停（这一排留着），其它都收起这一排再去（会话是“过去”）。
+    /// 点了（或按了 Return）竖线右边的某一格：音乐播放 / 暂停（这一排留着），其它都收起这一排再去（会话是走进指挥页）。
     private func activateOngoing(_ id: CGWindowID) {
         endPeek()
         if ongoingIDs.activityID(for: id) == NotchRow.fileShelfActivityID { openFileShelfCard(); return }
@@ -1107,7 +1107,8 @@ final class NotchController {
         else { return }
         if cell.closesRow { panels.values.forEach { $0.collapse() } }
         activities.select(activityID)
-        activities.perform(cell.action)
+        // 会话格走进指挥页（拍板 10-29 第 2 条）；展开卡上的“过去”仍走 `.open`。
+        if cell.isSession { activities.ws2EnterSession(activityID: activityID) } else { activities.perform(cell.action) }
     }
 
     /// 那一格右下角的小键（现在只有音乐的播放 / 暂停）：这一排留着，不收。

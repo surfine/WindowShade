@@ -146,6 +146,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     /// “过去”：去那个会话所在的终端窗口；找不到时由接手的人打开会话页。参数是会话所在的目录。
     /// 参数：会话编号、会话所在目录。
     var onSessionGo: ((String, String) -> Void)?
+    /// 那一排里点会话格：走进指挥页（拍板 10-29 第 2、4 条）。参数同上；返回 false（指挥页开不了）就照旧“过去”。
+    var onSessionEnter: ((String, String) -> Bool)?
     /// 等你的会话变了（菜单要重建一行）。
     var onSessionMenuChange: (() -> Void)?
     private(set) var sessions = CodingSessionActivities()
@@ -194,6 +196,13 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     func ws2GoToSession(_ id: String) {
         guard let cwd = sessions.cwd(ofSession: id) else { return }
         onSessionGo?(id, cwd)
+    }
+
+    /// 那一排里点会话格（不是展开卡上的“过去”）：走进指挥页，开不了再“过去”。
+    func ws2EnterSession(activityID id: String) {
+        guard let target = sessions.target(forActivity: id, at: ProcessInfo.processInfo.systemUptime) else { return }
+        if onSessionEnter?(target.sessionID, target.cwd) == true { return }
+        onSessionGo?(target.sessionID, target.cwd)
     }
 
     /// 把模型对到 store：持续那一条（在跑却 120 秒没消息就过期）、做完那一条（4 秒后自己过期）。

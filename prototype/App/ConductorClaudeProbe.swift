@@ -102,6 +102,10 @@ enum ConductorClaudeProbe {
             log("\(ok ? "ok  " : "FAIL") \(text)")
         }
         expect(page.probeClaudeStatus == .ended, "stopping ends the turn")
+        page.probeSetDraft("keep me")
+        // Switching to Codex must not drop the Claude draft; back from the Codex side still keeps it.
+        page.probeSelectCodex()
+        expect(page.probeDraft.isEmpty, "Codex side shows its own (empty) draft")
         guard owner.ws2Runtime.remoteConductorAction(.back) else {
             log("FAIL conductor-claude-page: remote back did not reach the page")
             finish(ok: false)
@@ -113,7 +117,50 @@ enum ConductorClaudeProbe {
     private static func stepBack(_ owner: AppDelegate, prior: Int) {
         let dismissed = owner.ws2Runtime.conductorPageForProbe == nil
         log(dismissed ? "ok   back dismisses the conductor page" : "FAIL back did not dismiss the conductor page")
-        let failures = prior + (dismissed ? 0 : 1)
+        var failures = prior + (dismissed ? 0 : 1)
+        // 10-29 #2: back keeps the draft; entering from a session cell shows "go there" in the header.
+        guard owner.ws2Runtime.openConductor(goingTo: ("probe-session", NSHomeDirectory())),
+              let page = owner.ws2Runtime.conductorPageForProbe else {
+            log("FAIL conductor-claude-page: cannot reopen conductor page")
+            finish(ok: false)
+            return
+        }
+        func expect(_ ok: Bool, _ text: String) {
+            if !ok { failures += 1 }
+            log("\(ok ? "ok  " : "FAIL") \(text)")
+        }
+        expect(page.probeIsClaude && page.probeDraft == "keep me", "back kept the draft (draft=\(page.probeDraft.debugDescription))")
+        expect(page.probeHasGoThere, "entering from a session shows go-there in the header")
+        page.probeSelectCodex()
+        page.probeSelectClaude()
+        expect(page.probeDraft == "keep me", "Codex and back keeps the Claude draft (draft=\(page.probeDraft.debugDescription))")
+        page.probeDiscard()
+        expect(page.probeDraft.isEmpty, "discard clears the draft")
+        _ = owner.ws2Runtime.remoteConductorAction(.back)
+        after(0.6) { stepAfterDiscard(owner, prior: failures) }
+    }
+
+    private static func stepAfterDiscard(_ owner: AppDelegate, prior: Int) {
+        var failures = prior
+        func expect(_ ok: Bool, _ text: String) {
+            if !ok { failures += 1 }
+            log("\(ok ? "ok  " : "FAIL") \(text)")
+        }
+        expect(owner.ws2Runtime.conductorPageForProbe == nil, "back dismisses the reopened page")
+        guard owner.ws2Runtime.openConductor(), let page = owner.ws2Runtime.conductorPageForProbe else {
+            log("FAIL conductor-claude-page: cannot open conductor page a third time")
+            finish(ok: false)
+            return
+        }
+        expect(!page.probeIsClaude && page.probeDraft.isEmpty, "after discard nothing comes back")
+        expect(!page.probeHasGoThere, "opening from the menu has no go-there")
+        // Codex side with no target: a draft left in the controller must stay gone after discard.
+        _ = owner.ws2Runtime.owned.editDraft("codex left")
+        page.sync()
+        expect(page.probeDraft == "codex left", "Codex draft without a target is shown")
+        page.probeDiscard()
+        page.sync()
+        expect(page.probeDraft.isEmpty && owner.ws2Runtime.owned.draft.isEmpty, "discard without a target does not come back")
         log(failures == 0 ? "PASS conductor-claude-page" : "FAIL conductor-claude-page: \(failures)")
         finish(ok: failures == 0)
     }

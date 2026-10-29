@@ -13,9 +13,20 @@ import Cocoa
     var enableDevice: ((UUID) -> Bool)?
     var disableDevice: ((UUID) -> Void)?
     var changedEnvironment: (() -> Void)?
+    /// 收起时留下的草稿（只有 Claude 那一侧要留：Codex 的草稿本来就记在 controller 上）。
+    struct KeptDraft: Equatable { let claude: Bool; let text: String }
+    /// 页面收起（返回、点外面、换页）时交出草稿；nil = 没有要留的。
+    var onKeepDraft: ((KeptDraft?) -> Void)?
+    /// 从那一排的会话格走进来时才有：页头的“过去”。
+    var goThere: (() -> Void)? { didSet { goButton.isHidden = goThere == nil } }
+    /// 切到 Codex 时先把 Claude 那一侧的草稿收在这里，切回来放回；草稿只用“丢弃”丢。
+    private var claudeDraft = ""
+    private var claudeShown = false
 
     private let controller: WS2OwnedLaunchController
     private let title = NSTextField(labelWithString: WSL10n.text("conductor.title", zh: "指挥"))
+    private let goButton = NSButton(title: WSL10n.text("notch.action.goThere", zh: "过去"), target: nil, action: nil)
+    private let discard = NSButton(title: WSL10n.text("conductor.discard", zh: "丢弃"), target: nil, action: nil)
     private let sessions = NSStackView()
     private let modelMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let effortMenu = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -92,7 +103,14 @@ import Cocoa
             stack.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12),
         ])
         title.font = .systemFont(ofSize: 15, weight: .semibold)
-        stack.addArrangedSubview(title)
+        // 页头：标题 + “过去”（去会话所在的终端窗口）。
+        goButton.target = self
+        goButton.action = #selector(goToSession)
+        goButton.bezelStyle = .rounded
+        goButton.isHidden = true
+        let header = NSStackView(views: [title, goButton])
+        header.spacing = 8
+        stack.addArrangedSubview(header)
         backendMenu.addItems(withTitles: [
             WSL10n.text("conductor.backend.codex", zh: "Codex"),
             WSL10n.text("conductor.backend.claude", zh: "Claude（只读）"),
@@ -129,8 +147,18 @@ import Cocoa
         editor.isEditable = true
         editor.isBezeled = true
         editor.delegate = self
-        stack.addArrangedSubview(editor)
-        editor.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        // 丢弃挨着草稿框：两种助手共用这一个框，也共用这一个键。草稿只在这里丢；返回、收起都留着。
+        discard.target = self
+        discard.action = #selector(discardDraft)
+        discard.bezelStyle = .rounded
+        discard.toolTip = WSL10n.text("conductor.discard.tip", zh: "清空这份草稿。返回或收起页面不会清空。")
+        discard.setContentHuggingPriority(.required, for: .horizontal)
+        discard.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let draftRow = NSStackView(views: [editor, discard])
+        draftRow.distribution = .fill
+        draftRow.spacing = 8
+        stack.addArrangedSubview(draftRow)
+        draftRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         write.target = self
         write.action = #selector(commitDraft)
         write.bezelStyle = .rounded
@@ -271,6 +299,7 @@ import Cocoa
                                                    : WSL10n.text("conductor.send.steer", zh: "补进本轮")
         send.isEnabled = inputIsCurrent() && !marked && adoptedDraft?.text == editor.stringValue && adoptedDraft != nil
         interrupt.isEnabled = inputIsCurrent() && controller.canInterrupt && displayedTarget != nil && displayedTurn != nil
+        discard.isEnabled = inputIsCurrent() && !editor.stringValue.isEmpty
     }
 
     func controlTextDidChange(_ notification: Notification) {
@@ -317,6 +346,11 @@ import Cocoa
     func revoke() {
         input.revoke()
         claudeConductor.stop()
+        // 收起不删东西：先把 Claude 那一侧的草稿交出去，再清这一页（拍板 10-29 第 2 条）。
+        let text = isClaudeBackend ? editor.stringValue : claudeDraft
+        onKeepDraft?(!text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                     ? KeptDraft(claude: true, text: text) : nil)
+        claudeDraft = ""
         inputIsCurrent = { false }
         expectedLease = nil
         focusObservers.forEach { NotificationCenter.default.removeObserver($0) }
@@ -492,7 +526,9 @@ import Cocoa
         } else {
             claudeConductor.stop()
         }
-        editor.stringValue = ""
+        if claudeShown { claudeDraft = editor.stringValue }
+        claudeShown = isClaudeBackend
+        editor.stringValue = isClaudeBackend ? claudeDraft : ""
         remoteNotch("")
         updateBackendVisibility()
         remoteTargetChanged?(isClaudeBackend ? nil : controller.conductorTarget?.context)
@@ -524,6 +560,7 @@ import Cocoa
         claudeSend.isEnabled = inputIsCurrent() && hasText &&
             claudeConductor.status != .missing && claudeConductor.status != .running
         claudeStop.isEnabled = inputIsCurrent() && claudeConductor.status == .running
+        discard.isEnabled = inputIsCurrent() && !editor.stringValue.isEmpty
     }
 
     private func claudeBackendStatus() -> String {
@@ -570,8 +607,30 @@ import Cocoa
         return adoptedDraft == nil
     }
 
-    /// 手机遥控的返回：收起指挥页。
+    /// 手机遥控的返回：收起指挥页，草稿留着（收起时 `revoke` 交给 `onKeepDraft`）。
     func remoteBack() { onCancel?() }
+
+    /// 打开时放回上次收起留下的草稿。
+    func restore(_ kept: KeptDraft) {
+        guard kept.claude else { return }
+        backendMenu.selectItem(at: 1)
+        pickBackend()
+        editor.stringValue = kept.text
+        renderClaude()
+    }
+
+    @objc private func discardDraft() {
+        guard inputIsCurrent() else { return }
+        cancelVoice()
+        editor.stringValue = ""
+        if isClaudeBackend { renderClaude(); return }
+        adoptedDraft = nil
+        // 没有目标时 controller 里也可能还留着草稿（会话断开／停下），一样清掉，否则下一次 sync 会放回来。
+        _ = controller.editDraft("")
+        syncActions()
+    }
+
+    @objc private func goToSession() { goThere?() }
 
     /// 手机遥控会话的即时提示（画到第几拍、认出了什么、等待确认……）。
     func remoteNotch(_ text: String) {
@@ -585,9 +644,13 @@ import Cocoa
     var probeClaudeStatus: ClaudeConductor.Status { claudeConductor.status }
     var probeClaudeTranscript: String { claudeConductor.transcript }
     func probeSelectClaude() { backendMenu.selectItem(at: 1); pickBackend() }
+    func probeSelectCodex() { backendMenu.selectItem(at: 0); pickBackend() }
     func probeSetDraft(_ text: String) { editor.stringValue = text; renderClaude() }
     func probeSend() { sendClaudeDraft() }
     func probeStop() { stopClaude() }
+    var probeDraft: String { editor.stringValue }
+    var probeHasGoThere: Bool { goThere != nil && !goButton.isHidden }
+    func probeDiscard() { discardDraft() }
 
     @objc private func speakPressed(_ sender: NSButton) {
         switch NSApp.currentEvent?.type {

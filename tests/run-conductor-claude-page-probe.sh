@@ -12,7 +12,14 @@ mkdir -p "$OUT"
 LOG="$OUT/run.txt"
 rm -f "$LOG"
 PREV=$(defaults read com.windowshade.prototype Notch.enabled 2>/dev/null || echo "__UNSET__")
+# 10-29 #4: the page must work with remote mode off; run with it off and put it back afterwards.
+PREV_REMOTE=$(defaults read com.windowshade.prototype WindowShade.Input.RemoteMode 2>/dev/null || echo "__UNSET__")
 restore() {
+  case "$PREV_REMOTE" in
+    "__UNSET__") defaults delete com.windowshade.prototype WindowShade.Input.RemoteMode 2>/dev/null || true ;;
+    1|true|YES|yes) defaults write com.windowshade.prototype WindowShade.Input.RemoteMode -bool true ;;
+    *) defaults write com.windowshade.prototype WindowShade.Input.RemoteMode -bool false ;;
+  esac
   case "$PREV" in
     "__UNSET__") defaults delete com.windowshade.prototype Notch.enabled 2>/dev/null || true ;;
     1|true|YES|yes) defaults write com.windowshade.prototype Notch.enabled -bool true ;;
@@ -23,6 +30,8 @@ restore() {
 }
 trap restore EXIT
 defaults write com.windowshade.prototype Notch.enabled -bool YES
+defaults write com.windowshade.prototype WindowShade.Input.RemoteMode -bool NO
+echo "remote mode for this run: $(defaults read com.windowshade.prototype WindowShade.Input.RemoteMode)"
 launchctl setenv WINDOWSHADE_CLAUDE_EXECUTABLE "$ROOT/tests/fixtures/fake-claude.py"
 launchctl setenv WINDOWSHADE_PROBE_OUT "$LOG"
 open -n "$APP" --args --conductor-claude-probe

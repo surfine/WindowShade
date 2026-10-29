@@ -175,7 +175,7 @@ enum NotchRow {
         /// 等你的会话格：键盘焦点默认落在它上面（NotchTile.waiting）。
         var waiting: Bool { phase == .waiting }
         var isSession: Bool { kind == .session }
-        /// 点一下（或 Return）做什么：音乐是长成正在播放大卡（NP-4），别的都是“打开”（会话是“过去”）。
+        /// 点一下（或 Return）做什么：音乐是长成正在播放大卡（NP-4），别的都是“打开”（会话格走进指挥页，见 NotchController.activateOngoing）。
         var action: NotchActivityAction { kind == .music ? .nowPlayingOpen : .open }
         /// 做完这件事以后这一排要不要收起：都收。音乐是这一排长成了大卡，别的都要去别处。
         var closesRow: Bool { true }
