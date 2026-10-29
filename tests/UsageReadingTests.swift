@@ -33,6 +33,9 @@ import Foundation
         testAlertOncePerWindow()
         testNoDataFallsBack()
         testWaitingNotOutranked()
+        testSessionCardLine()
+        testRecoveryBloomOnce()
+        testSparseUpdateAndRecoveryProject()
         print("UsageReadingTests: \(assertions) assertions passed")
     }
 
@@ -104,9 +107,65 @@ import Foundation
         expect(m.applyUsage(usage(95)) == nil, "同一窗口不再提醒")
         expect(m.applyUsage(usage(99)) == nil, "同一窗口继续用也不再提醒")
         expect(m.applyUsage(usage(92, reset: 1_800_090_000)) != nil, "下一个窗口再提醒一次")
-        expect(m.applyUsage(usage(10, reset: 1_800_090_000)) == nil, "额度回来不提醒")
+        let back = m.applyUsage(usage(10, reset: 1_800_090_000))
+        expect(back?.headline == "额度已刷新", "额度回来提醒一次（乙 9）")
         let weekly = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":5,"windowDurationMins":300,"resetsAt":1800090000},"secondary":{"usedPercent":97,"windowDurationMins":10080,"resetsAt":1800400000}}}"#))!
         expect(m.applyUsage(weekly.sessionUsage(now: now, calendar: calendar)) != nil, "周窗口单独提醒")
+    }
+
+    static func both(_ fiveUsed: Int, _ weekUsed: Int, reset: Int = 1_800_003_600) -> CodingSessionUsage? {
+        UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":\#(fiveUsed),"windowDurationMins":300,"resetsAt":\#(reset)},"secondary":{"usedPercent":\#(weekUsed),"windowDurationMins":10080,"resetsAt":1800400000}}}"#))?
+            .sessionUsage(now: now, model: "gpt-5", effort: "高", calendar: calendar)
+    }
+
+    /// 乙 9：三档假数据——充足、快用完、未知。
+    static func testSessionCardLine() {
+        let plenty = both(58, 39)!
+        expect(plenty.limitsLine == "五小时余 42% · 本周余 61%", "充足：两个窗口各带标签: \(plenty.limitsLine ?? "nil")")
+        expect(plenty.detailText.hasPrefix("五小时余 42% · 本周余 61% · "), "展开格底一行以两窗口余量开头")
+        expect(plenty.compactText == "剩 42%" && !plenty.isLow, "充足：右耳照旧")
+        let low = both(95, 39)!
+        expect(low.limitsLine == "五小时余 5% · 本周余 61%" && low.isLow && low.compactText == "剩 5%", "快用完：右耳剩 5%，两窗口仍分开写")
+        var m = running()
+        _ = m.applyUsage(plenty)
+        expect(m.liveSpec?.subtitle.hasPrefix("五小时余 42% · 本周余 61%") == true, "展开格实际带这一行")
+        expect(reading(76).sessionUsage(now: now, calendar: calendar)?.limitsLine == "五小时余 24%", "只有一个窗口就只写一个")
+        let odd = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":30,"windowDurationMins":123}}}"#))!
+        expect(odd.sessionUsage(now: now, calendar: calendar)?.limitsLine == nil, "不认得的窗口时长不编名字")
+        let noLen = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":30}}}"#))!
+        expect(noLen.sessionUsage(now: now, calendar: calendar)?.detailText == "", "未知：没给时长也没给恢复时刻，展开格不写任何数")
+        var unknown = running()
+        _ = unknown.applyUsage(nil)
+        expect(unknown.liveSpec?.trailing == "" && unknown.liveSpec?.phase == .running, "未知：没有数据回到会话状态，不画成无限")
+    }
+
+    static func testRecoveryBloomOnce() {
+        var m = running()
+        expect(m.applyUsage(both(50, 20)) == nil, "没低过就没有恢复提醒")
+        expect(m.applyUsage(both(95, 20)) != nil, "掉到 10% 以内开口")
+        expect(m.applyUsage(both(95, 20, reset: Int(now) - 5))?.headline != "额度已刷新", "等待用量更新（仍是旧的低读数）不算恢复")
+        expect(m.applyUsage(nil) == nil, "读数断了不算恢复")
+        let back = m.applyUsage(both(2, 20, reset: 1_800_090_000))
+        expect(back?.headline == "额度已刷新" && back?.sessionID == CodingSessionActivities.usageBloomID, "来了新读数且回到 10% 以上：说一次")
+        expect(m.applyUsage(both(3, 20, reset: 1_800_090_000)) == nil, "同一次恢复不再说")
+        var r = running()
+        _ = r.applyUsage(both(95, 20)); r.reset()
+        expect(r.applyUsage(both(2, 20)) == nil, "会话关掉就忘掉，不补说")
+    }
+
+    /// 乙 9 复核：零散更新（只带 5 小时窗口）不能在周窗口仍用尽时说“额度已刷新”；恢复带之前的项目，点击带目录。
+    static func testSparseUpdateAndRecoveryProject() {
+        var m = CodingSessionActivities()
+        _ = m.apply(.init(id: "s1", project: "WindowShade", cwd: "/tmp/ws", assistant: "Codex", status: .running, summary: ""), now: 100)
+        let weeklyLow = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":40,"windowDurationMins":300,"resetsAt":1800003600},"secondary":{"usedPercent":95,"windowDurationMins":10080,"resetsAt":1800400000}}}"#))!
+        expect(m.applyUsage(weeklyLow.sessionUsage(now: now, calendar: calendar))?.headline == "额度快用完了", "周窗口快用完")
+        let sparse = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":40,"windowDurationMins":300,"resetsAt":1800003600}}}"#))!
+        expect(m.applyUsage(sparse.sessionUsage(now: now, calendar: calendar)) == nil, "只带 5 小时窗口的零散更新不算周额度回来")
+        _ = m.applyUsage(weeklyLow.sessionUsage(now: now, calendar: calendar))
+        expect(m.applyUsage(sparse.sessionUsage(now: now, calendar: calendar)) == nil, "来回交替也不误报")
+        let weeklyBack = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":40,"windowDurationMins":300,"resetsAt":1800003600},"secondary":{"usedPercent":30,"windowDurationMins":10080,"resetsAt":1800900000}}}"#))!
+        let back = m.applyUsage(weeklyBack.sessionUsage(now: now, calendar: calendar))
+        expect(back?.headline == "额度已刷新" && back?.detail == "WindowShade" && back?.cwd == "/tmp/ws", "确认恢复：副句是之前的项目，点击带目录: \(String(describing: back))")
     }
 
     static func testNoDataFallsBack() {

@@ -16,14 +16,20 @@ struct CodingSessionUsage: Equatable, Sendable {
     var effort: String?
     /// 额度窗口的身份（时长加恢复时刻）：同一个窗口只提醒一次。
     var windowKey: String
+    /// “五小时余 42% · 本周余 61%”：各窗口分开写，不用一个没有标签的数代替。只收认得时长的窗口；一个都不认得就是 nil。
+    var limitsLine: String?
+    /// 读数里最紧那个窗口的时长（分钟）。恢复要看同一个窗口回来了，才不会被只带另一个窗口的零散更新骗过。
+    var windowMinutes: Int? = nil
+    /// 这次读数带了哪些窗口（时长）。零散更新只带一部分。
+    var windowsSeen: [Int?] = []
 
     static let lowThreshold = 10
     var isLow: Bool { leftPercent <= Self.lowThreshold }
     var compactText: String { WSL10n.text("usage.left", zh: "剩 %@%%", String(leftPercent)) }
-    /// 展开格里的一段：恢复时间 · 模型 · 强度，缺哪个省哪个。
+    /// 展开格里的一段：各窗口余量 · 恢复时间 · 模型 · 强度，缺哪个省哪个。
     var recoveryDetail: String? { recoveryPending ? WSL10n.text("usage.waiting", zh: "等待用量更新") : recovery.map { WSL10n.text("usage.recoveryAt", zh: "%@恢复", $0) } }
     var detailText: String {
-        [recoveryDetail, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+        [limitsLine, recoveryDetail, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
     }
 }
 
@@ -38,6 +44,14 @@ struct UsageWindow: Equatable, Sendable {
 
     var leftPercent: Int { Int((100 - usedPercent).rounded()) }
     /// 窗口的身份：同一窗口只提醒一次。
+    /// 五小时窗口、一周窗口的行内说法；别的时长不编名字（来源没说清就不写）。
+    var limitText: String? {
+        switch windowMinutes {
+        case 300?: return WSL10n.text("usage.limit.fiveHour", zh: "五小时余 %@%%", String(leftPercent))
+        case 10_080?: return WSL10n.text("usage.limit.week", zh: "本周余 %@%%", String(leftPercent))
+        default: return nil
+        }
+    }
     var key: String { "\(windowMinutes.map(String.init) ?? "?")@\(resetsAt.map { String(Int($0)) } ?? "?")" }
 }
 
@@ -84,7 +98,14 @@ struct UsageReading: Equatable, Sendable {
         return CodingSessionUsage(leftPercent: min(100, max(0, window.leftPercent)),
                                   recovery: pending ? nil : window.resetsAt.map { Self.recoveryText(resetsAt: $0, now: now, calendar: calendar) },
                                   recoveryPending: pending,
-                                  model: model, effort: effort, windowKey: window.key)
+                                  model: model, effort: effort, windowKey: window.key,
+                                  limitsLine: Self.limitsLine(windows), windowMinutes: window.windowMinutes, windowsSeen: windows.map(\.windowMinutes))
+    }
+
+    /// 各窗口按时长从短到长排：五小时在前，本周在后。
+    private static func limitsLine(_ windows: [UsageWindow]) -> String? {
+        let parts = windows.sorted { ($0.windowMinutes ?? .max) < ($1.windowMinutes ?? .max) }.compactMap(\.limitText)
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     private static var weekdays: [String] {

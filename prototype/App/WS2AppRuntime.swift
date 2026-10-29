@@ -236,7 +236,7 @@ import Cocoa
         activities.onSessionBloom = { [weak self] bloom in
             guard let self, let owner = self.owner, !self.sleeping, self.lockReasons.isEmpty,
                   AuthorizationService.shared.lockState() == .unlocked else { return }
-            let cwd = self.hookServer?.model.directory(of: bloom.sessionID) ?? ""
+            let cwd = bloom.cwd.isEmpty ? (self.hookServer?.model.directory(of: bloom.sessionID) ?? "") : bloom.cwd
             // 优先级 4：排在离开期间摘要（5）、日程（8）之后，但不再跟电量这类默认 0 的排一队。
             owner.notch.announceWhenFree(key: "session." + bloom.sessionID, text: bloom.headline, detail: bloom.detail,
                                          tone: .tip,
