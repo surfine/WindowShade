@@ -7,7 +7,7 @@ GLASS_DEFINE=()
 if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h" ]; then
   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)
 fi
-swiftc prototype/Core/Contracts.swift ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} prototype/Core/LaunchpadModel.swift prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift \
+swiftc prototype/Core/Contracts.swift ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} prototype/Core/LaunchpadModel.swift prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/IslandMetrics.swift prototype/Core/ReleaseDefaults.swift \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/FlickMotion.swift prototype/Core/ScrollShape.swift tests/LaunchpadMotionStub.swift \
   prototype/App/Launchpad.swift prototype/App/LaunchpadBackdrop.swift prototype/Core/WS2AppUninstallPlan.swift prototype/App/WS2AppUninstallScanner.swift prototype/App/LaunchpadUninstall.swift prototype/App/LaunchpadView.swift \

@@ -73,7 +73,7 @@ struct ExplainerTests {
         }
         // 刘海页：每段 id 唯一、有读屏句和关键帧；三段“之前常用”下标对上 SwitcherOrigin.answers（Windows / iPad / Mac）。
         let notch: [ExplainerSpec] = [ExplainerScenes.notchAlert, ExplainerScenes.notchLiveActivity, ExplainerScenes.notchNowPlaying,
-            ExplainerScenes.notchDownload, ExplainerScenes.notchMergedRow, ExplainerScenes.notchHoverGuard, ExplainerScenes.notchFileShelf,
+            ExplainerScenes.notchDownload, ExplainerScenes.notchMergedRow, ExplainerScenes.notchFileShelf,
             ExplainerScenes.notchDeviceBattery, ExplainerScenes.originWindows, ExplainerScenes.originIpad, ExplainerScenes.originMac]
         expect(Set((notch + scenes).map(\.id)).count == notch.count + scenes.count, "notch scene ids are unique and do not clash with the library")
         for spec in notch {

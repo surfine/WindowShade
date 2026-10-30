@@ -35,7 +35,7 @@ enum Motion {
         static let alert: TimeInterval = MotionHold.alertSeconds
         /// 指针停在格子上多久才看这一格（从一格划到另一格不闪）。原 0.12，对齐总稿 0.20。
         static let tileDwell: TimeInterval = MotionHold.tileDwellSeconds
-        /// 指针停在刘海上多久才展开（从菜单栏划过去不算）。仍是 0.12。
+        /// 指针停在刘海上多久才算停上来（教一下刘海能做什么；从菜单栏划过去不算）。仍是 0.12。
         static let notchDwell: TimeInterval = MotionHold.notchDwellSeconds
         /// 音量、亮度、键盘灯两耳：最后一下按键之后多久收（《音量与亮度》稿“多久出、多久收”）。
         static let level: TimeInterval = MotionHold.levelSeconds

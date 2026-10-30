@@ -95,12 +95,12 @@ struct NotchMinimalTests {
         t.expect(NotchMinimalPresentation.alertPlan(hasActivities: false, meterShowing: false, enabled: true) == .bloom,
                  "开着 + 没有活动：照旧直接出提醒")
 
-        t.section("M13-06", "几何：有刘海 36×28，没有刘海 26×22")
-        t.expect(NotchMinimalPresentation.size(for: .notched) == CGSize(width: 36, height: 28), "刘海屏 36×28")
+        t.section("M13-06", "几何：有刘海是直径 36.67 的圆（照系统的岛，暂定），没有刘海 26×22")
+        t.expect(NotchMinimalPresentation.size(for: .notched) == CGSize(width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter), "刘海屏：正圆 36.67")
         t.expect(NotchMinimalPresentation.size(for: .capsule) == CGSize(width: 26, height: 22), "无刘海胶囊 26×22")
-        let island = CGRect(x: 100, y: 800, width: 200, height: 32)
+        let island = CGRect(x: 100, y: 800, width: 200, height: IslandMetrics.compactHeight)
         let one = NotchMinimalPresentation.frames(island: island, count: 1, placement: .notched)
-        t.expect(one == [CGRect(x: 306, y: 802, width: 36, height: 28)], "贴着右边缘 + 6，竖直居中")
+        t.expect(one == [CGRect(x: 306, y: 800, width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter)], "贴着右边缘 + 6，和紧凑同高所以竖直居中")
         let both = NotchMinimalPresentation.frames(island: island, count: 2, placement: .notched)
         t.expect(both.count == 2 && both[1].minX == both[0].maxX + NotchMinimalPresentation.gap, "两颗之间也是 6")
         t.expect(both.allSatisfy { $0.minX >= island.maxX }, "都在岛的右侧，不压到岛")
@@ -111,7 +111,8 @@ struct NotchMinimalTests {
         t.section("M13-07", "空位不够就不画，不压到菜单栏图标")
         let need1 = NotchMinimalPresentation.roomNeeded(count: 1, placement: .notched)
         let need2 = NotchMinimalPresentation.roomNeeded(count: 2, placement: .notched)
-        t.expect(need1 == 54 + 6 + 36 && need2 == 54 + 6 + 36 + 6 + 36, "刘海屏：岛伸出 54 + 6 + 每颗 36（颗间 6）")
+        let ear = IslandMetrics.compactEarWidth, dot = IslandMetrics.minimalDiameter
+        t.expect(need1 == ear + 6 + dot && need2 == ear + 6 + dot + 6 + dot, "刘海屏：岛伸出一只耳 + 6 + 每颗一个直径（颗间 6）")
         t.expect(NotchMinimalPresentation.measuredReach(for: .notched) == need2, "量空位量到放得下两颗为止")
         t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need2, placement: .notched) == 2, "刚好放得下两颗")
         t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need2 - 1, placement: .notched) == 1, "差 1 点：只画一颗")

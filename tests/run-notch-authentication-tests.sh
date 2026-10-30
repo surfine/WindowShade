@@ -36,7 +36,7 @@ swiftc prototype/Core/Contracts.swift -swift-version 6 -O "$WORK/UIBindings.swif
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift \
   prototype/Core/SessionLockState.swift prototype/Core/AuthorizationModels.swift prototype/Core/IdentityEvidence.swift prototype/Core/AuthorizationLedger.swift \
   prototype/App/AuthorizationCopy.swift prototype/App/AuthorizationService.swift prototype/App/DeviceAuthorizationKey.swift \
-  prototype/App/Motion.swift prototype/Core/NotchLevelEars.swift prototype/Core/NotchLevelStep.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift prototype/Core/FlickMotion.swift \
+  prototype/App/Motion.swift prototype/Core/NotchLevelEars.swift prototype/Core/IslandMetrics.swift prototype/Core/NotchLevelStep.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift prototype/Core/FlickMotion.swift \
   -framework Cocoa -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI -framework CryptoKit -framework Security \
   -o "$WORK/tests"
 "$WORK/tests"

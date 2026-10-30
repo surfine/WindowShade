@@ -497,19 +497,36 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     }
 
     func perform(_ action: NotchActivityAction) {
+        perform(action, on: store.selected)
+    }
+
+    /// 点最小形（小圆）：打开它那件活动的 App，不和紧凑那件互换（照系统的岛，暂定）。
+    func openActivity(id: String) {
+        guard let item = store.visible.first(where: { $0.id == id }) else { return }
+        switch item.kind {
+        case .download, .copy, .remote:
+            // 这几种没有 App 可开：照今天，和紧凑那件互换。
+            select(id)
+        default:
+            perform(.open, on: item)
+        }
+    }
+
+    /// `selected`：这一下作用在哪一件活动上。平时是选中的那件；点小圆时是小圆那件。
+    private func perform(_ action: NotchActivityAction, on selected: NotchActivity?) {
         guard Self.isEnabled, !suspended else { return }
         configure()
         if action == .timerOpen { countdown.openCard(); return }
         if action == .nowPlayingOpen { onOpenNowPlayingCard?(); return }
-        if action == .open, store.selected?.kind == .shelf { onOpenFileShelf?(); return }
-        if store.selected?.kind == .calendar {
+        if action == .open, selected?.kind == .shelf { onOpenFileShelf?(); return }
+        if selected?.kind == .calendar {
             switch action {
             case .open: calendar.openCard(); return
             case .join: calendar.joinCurrent(); return
             default: break
             }
         }
-        if store.selected?.kind == .timer {
+        if selected?.kind == .timer {
             switch action {
             case .open: countdown.openCard(); return
             case .end: countdown.end(); return
@@ -517,7 +534,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             default: break
             }
         }
-        if store.selected?.kind == .focus && [.open, .end, .focusTogglePause, .focusSkip].contains(action) {
+        if selected?.kind == .focus && [.open, .end, .focusTogglePause, .focusSkip].contains(action) {
             ws2FocusAction?(action); return
         }
         switch action {
@@ -531,12 +548,12 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         case .route: chooseRoute()
         case .voiceMemos: openApp("com.apple.VoiceMemos")
         case .end:
-            guard let selected = store.selected, selected.kind == .route else { return }
+            guard let selected, selected.kind == .route else { return }
             routeEpoch += 1; routeTask?.cancel(); routeTask = nil; routeItems = []
             store.end(id: selected.id, generation: selected.generation, now: ProcessInfo.processInfo.systemUptime)
             publish()
         case .open:
-            guard let selected = store.selected else { return }
+            guard let selected else { return }
             switch selected.kind {
             case .focus: return
             case .music: openApp(selected.detail)
