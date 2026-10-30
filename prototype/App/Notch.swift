@@ -310,7 +310,7 @@ final class NotchController {
             guard let self, !self.redactsTile(id) else { return }
             for panel in self.panels.values where panel.isExpanded { panel.updateTileSnapshot(id: id, image: image) }
         }
-        activities.onDownloadsFinished = { [weak self] names in self?.away.noteDownloads(names) }
+        activities.onDownloadsFinished = { [weak self] names in self?.away.noteDownloads(names, folder: self?.activities.downloadsFolder) }
         away.tuckedCount = { [weak self] in self?.tuckedCount ?? 0 }
         away.windowIsCurrent = { [weak self] id in self?.owner.shaded[id] != nil }
         away.windowWhereabouts = { [weak self] id in self?.awayWhereabouts(CGWindowID(id)) ?? .gone }
@@ -562,6 +562,12 @@ final class NotchController {
                 return self != nil
             }
             panel.onTileHover = { [weak self] id, inside, rect in
+                // 离开期间的格子：只有窗口格能看一眼，看的是它说的那扇窗。
+                if AwayList.isAwayID(UInt32(id)) {
+                    guard let self, let window = self.awayList?.cells.first(where: { $0.id == UInt32(id) })?.item.windowID else { return }
+                    if inside { self.showPeek(CGWindowID(window), tile: rect) } else { self.endPeek() }
+                    return
+                }
                 // 竖线右边的格子不是窗口，没有“看一眼”。
                 if NotchRow.isOngoingID(id) { return }
                 // 停在屏幕外的卷轴列不是收着的窗口，没有“看一眼”。
@@ -570,7 +576,9 @@ final class NotchController {
             }
             panel.onFocusKind = { [weak self] kind in self?.onShelfFocusKind?(kind) }
             panel.onMusicEarChange = { [weak self] in self?.syncAudioLevels() }
-            panel.onAlertEnded = { [weak self] in self?.retryPendingPeek() }
+            panel.onAlertEnded = { [weak self] in self?.retryPendingPeek(); self?.awayAlertEnded() }
+            panel.onRowExpanded = { [weak self] in self?.awayRowOpened() }
+            panel.onRowCollapsed = { [weak self] in self?.awayRowClosed() }
             panel.setMusicWave(audioLevels.wave)
         }
         for (id, panel) in panels where !alive.contains(id) {
@@ -982,7 +990,8 @@ final class NotchController {
     }
 
     /// 从刘海飞回原来的位置。origin：从哪里起飞（点的那一格里的画面、拉出来的图标）；没有就从刘海下沿。
-    func release(_ id: CGWindowID, reason: String, from origin: NSRect? = nil) {
+    /// `keepingRow`：从离开期间的格子放回——那一排不收，只拿掉这一格，其余留着。
+    func release(_ id: CGWindowID, reason: String, from origin: NSRect? = nil, keepingRow: Bool = false) {
         endPeek()
         guard let index = tucked.firstIndex(where: { $0.id == id }) else { return }
         let item = tucked.remove(at: index)
@@ -990,7 +999,7 @@ final class NotchController {
         changed.removeValue(forKey: id)
         wlog("notch: release id=\(id) reason=\(reason)")
         func collapseRow() {
-            panels.values.forEach { $0.collapse() }
+            if keepingRow { refreshOpenRow() } else { panels.values.forEach { $0.collapse() } }
             refresh()
         }
         guard owner.shaded[id] != nil else { collapseRow(); return }
@@ -1004,7 +1013,7 @@ final class NotchController {
                 self?.restore(item, landing: landing)
             }
             // 窗口先起飞，那一排晚一点点才收（减少动态效果时一起收）。
-            if Motion.reduced {
+            if Motion.reduced || keepingRow {
                 collapseRow()
             } else {
                 DispatchQueue.main.asyncAfter(deadline: .now() + NotchSmallBehaviour.rowCollapseLag) { [weak self] in
@@ -1104,7 +1113,8 @@ final class NotchController {
     }
 
     /// 点了一排里的某一格：让它回到它该在的地方。
-    private func open(_ id: CGWindowID, from origin: NSRect? = nil) {
+    private func open(_ id: CGWindowID, from origin: NSRect? = nil, keepingRow: Bool = false) {
+        if AwayList.isAwayID(UInt32(id)) { activateAway(id, from: origin); return }
         if NotchRow.isOngoingID(id) { activateOngoing(id); return }
         // 停在屏幕外的卷轴列：点一下把那一列滑进来，不是放回（SS-04）。
         if let sink = stripReturn, sink.isOn(), sink.slideIn(id) {
@@ -1116,10 +1126,10 @@ final class NotchController {
         changed.removeValue(forKey: id)
         endPeek()
         if isTucked(id) {
-            release(id, reason: "tile", from: origin)
+            release(id, reason: "tile", from: origin, keepingRow: keepingRow)
             return
         }
-        panels.values.forEach { $0.collapse() }
+        if !keepingRow { panels.values.forEach { $0.collapse() } }
         if owner.slideOver.isSlideOver(id) {
             owner.slideOver.reveal(reason: "notch")
         } else if owner.carry.isCarried(id) {
@@ -1130,6 +1140,7 @@ final class NotchController {
             shelf.restore(item)
         }
         refresh()
+        if keepingRow { refreshOpenRow() }
     }
 
     /// 点了（或按了 Return）竖线右边的某一格：音乐播放 / 暂停（这一排留着），其它都收起这一排再去（会话是走进指挥页）。
@@ -1429,6 +1440,7 @@ final class NotchController {
         pendingTimer?.invalidate()
         pendingTimer = nil
         shownAnnouncement = nil
+        awayRowClosed()
         for panel in panels.values { panel.dismissVisibleAlert(); panel.dismissPowerFlash() }
         leases.clearReminders()
     }
@@ -1583,24 +1595,181 @@ final class NotchController {
         return true
     }
 
-    /// 回来了：刘海说一句「离开期间」，停 8 秒收回。点一下，那一行说的第一项若是窗口：在这一排里就回到原处，
-    /// 在别的桌面上就去（拍板 10-29 第 15 条，和点那一排里的格子同一条路 `open`）；第一项不是窗口时照旧：有收着的窗口就展开那一排。不补播，说过就清。
+    /// 回来了：刘海说一句「离开期间」，停 8 秒收回。点一下一律展开那一排，列表摆在最前面（不再要求有收着的窗口，也不再替你放回第一扇窗）；
+    /// 每个格子各点各的（`activateAway`）。列表在回来这一刻定下，说过就清、不补播：提醒收回时还没点开就清掉，点开以后不再计时，
+    /// 那一排收起（指针移开、Esc、点别处）也清掉。
     fileprivate func showAwaySummary(_ summary: AwaySummary.Summary) {
-        let tappable = summary.tapAction(whereabouts: { [weak self] in self?.awayWhereabouts(CGWindowID($0)) ?? .gone }) != nil
-        let opensRow = summary.firstWindowID.map { isTucked(CGWindowID($0)) } ?? false
-        announceWhenFree(key: "away.summary", text: AwaySummary.heading, detail: summary.compactDetail,
+        awayList = AwayList(summary)
+        // 兜底：提醒排了队一直没轮到、或被顶掉，列表也不能一直留着（排队最多 30 秒 + 停 8 秒）。
+        awayFallback?.invalidate()
+        awayFallback = Timer.scheduledTimer(withTimeInterval: 30 + AwaySummary.holdSeconds + 2, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.awayAlertEnded(force: true) }
+        }
+        announceWhenFree(key: Self.awayKey, text: AwaySummary.heading, detail: summary.compactDetail,
                          symbol: "lock.open", priority: 5, ttl: 30, hold: AwaySummary.holdSeconds,
-                         onClick: tappable || opensRow ? { [weak self] in
+                         onClick: { [weak self] in
                              MainActor.assumeIsolated {
-                                 guard let self else { return }
-                                 if summary.tap(whereabouts: self.away.windowWhereabouts,
-                                                backToPlace: { self.open(CGWindowID($0)) },
-                                                goThere: { self.open(CGWindowID($0)) }) { return }
-                                 guard let panel = self.pointerPanel(), !panel.isExpanded, !self.tucked.isEmpty else { return }
+                                 guard let self, self.awayList != nil, let panel = self.pointerPanel(), !panel.isExpanded else { return }
                                  panel.expand(with: self.tiles())
                                  self.requestThumbnails()
                              }
-                         } : nil)
+                         })
+    }
+
+    nonisolated static let awayKey = "away.summary"
+    /// 回来那一刻定下的列表；nil 就是没有（清掉了或从来没有）。
+    private(set) var awayList: AwayList?
+    private var awayFallback: Timer?
+
+    /// 那一排展开了：停表。
+    fileprivate func awayRowOpened() {
+        guard awayList != nil else { return }
+        awayList?.rowOpened()
+        awayFallback?.invalidate(); awayFallback = nil
+    }
+
+    /// 那一排收起了：清掉，不补播。
+    fileprivate func awayRowClosed() {
+        awayList = nil
+        awayFallback?.invalidate(); awayFallback = nil
+    }
+
+    /// 提醒收回了（或兜底钟到了）：还没点开就清掉。
+    fileprivate func awayAlertEnded(force: Bool = false) {
+        guard awayList != nil, force || shownAnnouncement?.key == Self.awayKey else { return }
+        if awayList?.alertEnded() == true { awayList = nil; awayFallback?.invalidate(); awayFallback = nil }
+    }
+
+    /// 向现状问话：窗口此刻在哪、文件还在不在。展开那一排时问一遍，点的那一下再问一遍。
+    private var awayProbe: AwaySummary.Probe {
+        AwaySummary.Probe(whereabouts: { [weak self] in self?.awayWhereabouts(CGWindowID($0)) ?? .gone },
+                          fileExists: { FileManager.default.fileExists(atPath: $0.path) })
+    }
+
+    /// 最前面那一段的格子（列表还活着才有）。
+    private func awayTiles() -> [NotchTile] {
+        guard let list = awayList, !list.isEmpty else { return [] }
+        let probe = awayProbe
+        var result: [NotchTile] = list.cells.map { cell in
+            let state = cell.item.state(probe)
+            var away = awayCellText(cell.item, state: state)
+            away.item = cell.item
+            away.state = state
+            var icon: NSImage?
+            if case .window(_, _, let id) = cell.item.content { icon = awayIcon(CGWindowID(id)) }
+            var tile = NotchTile(id: cell.id, kind: .away, snapshot: nil, icon: icon, title: away.title, changed: false)
+            tile.away = away
+            return tile
+        }
+        if list.showsOmittedCell {
+            let head = WSL10n.text("away.cell.moreHead", zh: "还有")
+            let count = WSL10n.text("away.cell.moreCount", zh: "%@ 件", String(list.omitted))
+            var away = NotchTile.AwayCell(item: nil, omitted: list.omitted, state: .informational,
+                                          spoken: WSL10n.text("away.moreItems", zh: "还有 %@ 件", String(list.omitted)), help: "")
+            away.title = head
+            away.subtitle = count
+            var tile = NotchTile(id: AwayList.omittedID, kind: .away, snapshot: nil, icon: nil, title: head, changed: false)
+            tile.away = away
+            result.append(tile)
+        }
+        return result
+    }
+
+    private func awayIcon(_ id: CGWindowID) -> NSImage? {
+        let pid = tucked.first(where: { $0.id == id })?.pid ?? owner.shaded[id]?.pid ?? shelf.item(id)?.pid
+        return pid.flatMap { NSRunningApplication(processIdentifier: $0)?.icon }
+    }
+
+    /// 一格上写什么、读屏念什么（动词在名字前面：「回到原处 终端」）。
+    private func awayCellText(_ item: AwaySummary.Item, state: AwaySummary.CellState) -> NotchTile.AwayCell {
+        var cell = NotchTile.AwayCell(item: item, omitted: 0, state: state, spoken: item.text, help: "")
+        let goneText = WSL10n.text("away.cell.gone", zh: "已经不在了")
+        switch item.content {
+        case .intrusion:
+            cell.title = item.text
+            cell.symbol = "exclamationmark.shield.fill"
+            cell.spoken = item.text
+        case .device(_, let name, let part, let percent):
+            cell.title = [name, part].compactMap { $0 }.joined(separator: " ")
+            cell.big = "\(percent)%"
+            cell.subtitle = WSL10n.text("away.cell.lowBattery", zh: "电量低")
+            cell.verb = WSL10n.text("away.verb.bluetooth", zh: "打开蓝牙设置")
+            cell.spoken = WSL10n.text("away.spoken.bluetooth", zh: "打开蓝牙设置 %@", cell.title)
+            cell.help = WSL10n.text("battery.percent", zh: "电量 %@%%", String(percent))
+        case .window(let app, let count, _):
+            let name = app.isEmpty ? WSL10n.text("menu.window", zh: "窗口") : app
+            cell.title = name
+            cell.symbol = "macwindow"
+            let changed = count > 1 ? WSL10n.text("away.cell.changedMany", zh: "%@ 扇有变化", String(count))
+                                    : WSL10n.text("away.cell.changed", zh: "有变化")
+            switch state {
+            case .actionable(.goThere):
+                cell.subtitle = WSL10n.text("away.cell.changedElsewhere", zh: "%@，在别的桌面上", changed)
+                cell.verb = NotchTileView.verb(.elsewhere)
+                cell.spoken = "\(cell.verb ?? "") \(NotchFocusController.label(for: name))"
+            case .gone:
+                cell.subtitle = goneText
+                cell.spoken = WSL10n.text("away.spoken.gone", zh: "%@，已经不在了", name)
+            default:
+                cell.subtitle = changed
+                cell.verb = WSL10n.text("notch.verb.backInPlace", zh: "回到原处")
+                cell.spoken = WSL10n.text("notch.tile.backInPlaceSpoken", zh: "回到原处 %@", NotchFocusController.label(for: name))
+            }
+            cell.help = state == .gone ? "" : item.text
+        case .download(let names, _):
+            cell.symbol = "arrow.down.circle.fill"
+            let many = names.count > 1
+            cell.title = many ? WSL10n.text("away.cell.files", zh: "%@ 个文件", String(names.count)) : AwaySummary.clipped(names.first ?? "")
+            cell.subtitle = state == .gone ? goneText : WSL10n.text("away.cell.downloaded", zh: "下载好了")
+            if state != .gone {
+                cell.verb = many ? WSL10n.text("away.verb.downloads", zh: "打开「下载」文件夹")
+                                 : WSL10n.text("away.verb.reveal", zh: "在访达里显示")
+                cell.spoken = many ? WSL10n.text("away.spoken.downloads", zh: "打开「下载」文件夹，%@ 个文件", String(names.count))
+                                   : WSL10n.text("away.spoken.reveal", zh: "在访达里显示 %@", names.first ?? "")
+                cell.help = WSL10n.text("away.cell.downloaded", zh: "下载好了")
+            } else {
+                cell.spoken = WSL10n.text("away.spoken.gone", zh: "%@，已经不在了", cell.title)
+            }
+        }
+        return cell
+    }
+
+    /// 点了列表里的一格：每格各点各的。点的那一下再问一次现状，以第二次为准。
+    /// 「回到原处」只拿掉这一格，那一排不收；去、在访达里显示、打开蓝牙设置做完，那一排收起、整张列表清掉。
+    private func activateAway(_ id: CGWindowID, from origin: NSRect?) {
+        guard var list = awayList else { return }
+        endPeek()
+        let result = list.tap(id, probe: awayProbe)
+        awayList = list.isEmpty ? nil : list
+        guard case .perform(let action) = result else {
+            // 没有反应：不出声；窗口或文件刚好不在了，让那一格变灰。
+            refreshOpenRow()
+            return
+        }
+        switch action {
+        case .backToPlace(let window):
+            open(CGWindowID(window), from: origin, keepingRow: true)
+        case .goThere(let window):
+            open(CGWindowID(window), from: origin)
+        case .revealFile(let url):
+            panels.values.forEach { $0.collapse() }
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        case .openDownloadsFolder:
+            panels.values.forEach { $0.collapse() }
+            let folder = activities.downloadsFolder ?? FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
+            if let folder { NSWorkspace.shared.open(folder) }
+        case .openBluetoothSettings:
+            panels.values.forEach { $0.collapse() }
+            if let url = URL(string: "x-apple.systempreferences:com.apple.BluetoothSettings") { NSWorkspace.shared.open(url) }
+        }
+    }
+
+    /// 展开着的那一排按现状重排（格子拿掉、变灰）；一格也没有了就收起。滚动位置由面板带过去（补位不跳）。
+    private func refreshOpenRow() {
+        for panel in panels.values where panel.isExpanded {
+            let row = tiles()
+            if row.isEmpty { panel.collapse() } else { panel.expand(with: row, animated: true) }
+        }
     }
 
     /// 摘要里的窗口此刻在哪：收起、收进刘海、侧拉等都在这一排里；货架里「在别的桌面」的是要去的。
@@ -2092,8 +2261,11 @@ final class NotchController {
 
     /// 展开后的一排。合成一排关着时只有窗口（旧样子）；开着时窗口在前（左段），正在进行的事在后（右段，竖线隔开）。
     private func tiles() -> [NotchTile] {
-        let windows = windowTiles()
-        return Self.mergedRowEnabled ? windows + ongoingTiles() : windows
+        // 离开期间的窗口只在最前面那一段出现一次：普通格子不再重复它们。
+        let listed = awayList?.windowIDs ?? []
+        let windows = windowTiles().filter { !listed.contains(UInt32($0.id)) }
+        let away = awayTiles()
+        return Self.mergedRowEnabled ? away + windows + ongoingTiles() : away + windows
     }
 
     /// 竖线右边的格：正在播放的、编程会话，以及下载、路线、录音这类正在进行的事。活动 id 到格子编号的对应一直不变。
@@ -2402,13 +2574,34 @@ struct NotchTile {
         case session, playing, activity
         /// 卷轴停在屏幕外的一列（SS-04）：左段收着的窗口后面，角上 ← 或 →，点一下把那一列滑进来。
         case parked
+        /// 最前面「离开期间」的格子（回来后那一阵才有，Core/AwaySummary 的 AwayList）。
+        case away
 
         var isOngoing: Bool {
             switch self {
             case .session, .playing, .activity: return true
-            case .tucked, .strip, .thumbnail, .slideOver, .carried, .minimized, .hiddenApp, .elsewhere, .parked: return false
+            case .tucked, .strip, .thumbnail, .slideOver, .carried, .minimized, .hiddenApp, .elsewhere, .parked, .away: return false
             }
         }
+        var isAway: Bool { self == .away }
+    }
+
+    /// 离开期间的一格：内容、此刻能不能点、读屏念什么。`item` 是 nil 的是窄格「还有 N 件」。
+    struct AwayCell: Equatable {
+        var item: AwaySummary.Item?
+        var omitted: Int
+        var state: AwaySummary.CellState
+        var spoken: String
+        var help: String
+        /// 格子上写的字：名字、大号数字、副句、底部动词（没有动词就是不能点），以及一个符号名（没有 App 图标时画它）。
+        var title = ""
+        var big: String? = nil
+        var subtitle = ""
+        var verb: String? = nil
+        var symbol: String? = nil
+        var isNarrow: Bool { item == nil }
+        var isGone: Bool { state == .gone }
+        var isActionable: Bool { if case .actionable = state { return true } else { return false } }
     }
     let id: CGWindowID
     let kind: Kind
@@ -2428,6 +2621,8 @@ struct NotchTile {
     var searchTerms: [String] = []
     /// 卷轴停在屏幕外的列才有（kind == .parked）。
     var parked: StripNotchExchange.ParkedCell? = nil
+    /// 离开期间的格子才有（kind == .away）。
+    var away: AwayCell? = nil
 
     struct Ongoing: Equatable {
         var activityID: String
@@ -3099,7 +3294,8 @@ final class NotchPanel: NSPanel {
     private func focusCells() -> [NotchFocusController.Cell] {
         tiles.map {
             NotchFocusController.Cell(id: $0.id, title: $0.title, waiting: $0.waiting, tucked: $0.kind == .tucked,
-                                      ongoing: $0.kind.isOngoing, session: $0.kind == .session, spoken: $0.ongoing?.spoken,
+                                      ongoing: $0.kind.isOngoing, away: $0.kind.isAway, session: $0.kind == .session,
+                                      spoken: $0.ongoing?.spoken ?? $0.away?.spoken,
                                       terms: $0.searchTerms)
         }
     }
@@ -3171,6 +3367,7 @@ final class NotchPanel: NSPanel {
             reportFocusKind()
             wlog("notch: focus begin cells=\(focus.cells.count)")
         case .moved(let id, let line):
+            endKeyboardPeek()
             canvas.setTileFocus(id)
             announceFocus(line)
             reportFocusKind()
@@ -3184,14 +3381,28 @@ final class NotchPanel: NSPanel {
             apply(animated: true)
             announceFocus(line)
             reportFocusKind()
+        case .peek(let id):
+            // 空格：看一眼亮着的这一格；再按一次收起。只有窗口格有（正在进行的格、离开期间的非窗口格没有）。
+            if keyboardPeekID == id { keyboardPeekID = nil; onTileHover?(id, false, nil); return true }
+            keyboardPeekID = id
+            onTileHover?(id, true, canvas.tileScreenRect(id))
         case .activate(let id):
+            endKeyboardPeek()
             // 和指针点一下同一条路：onTileClicked → NotchController.open（放回、去、还原，flyOut 弹簧），之后这一排收起。
             if !canvas.activateTile(id) { onTileClicked?(id, nil) }
         case .end:
+            endKeyboardPeek()
             wlog("notch: focus end")
             collapse()
         }
         return true
+    }
+
+    private var keyboardPeekID: CGWindowID?
+    private func endKeyboardPeek() {
+        guard let id = keyboardPeekID else { return }
+        keyboardPeekID = nil
+        onTileHover?(id, false, nil)
     }
 
     private func announceFocus(_ text: String) {
@@ -3701,11 +3912,12 @@ final class NotchPanel: NSPanel {
         mergedRow = merged
         lastShelfChangeAnimated = animated
         // 照系统的岛：岛宽固定，格子全部排出，放不下就左右滚（NotchContentView），不再按屏宽少放几张。
-        let windows = tiles.filter { !$0.kind.isOngoing }
+        let away = tiles.filter { $0.kind.isAway }
+        let windows = tiles.filter { !$0.kind.isOngoing && !$0.kind.isAway }
         let ongoing = tiles.filter { $0.kind.isOngoing }
         let fit = NotchRow.fit(windows: windows.count, ongoing: ongoing.count,
-                               tail: ongoing.contains { $0.ongoing?.shelfCount != nil })
-        self.tiles = Array(windows.prefix(fit.windows)) + Array(ongoing.prefix(fit.ongoing))
+                               tail: ongoing.contains { $0.ongoing?.shelfCount != nil }, away: away.count)
+        self.tiles = away + Array(windows.prefix(fit.windows)) + Array(ongoing.prefix(fit.ongoing))
         if focus.isActive {
             // 键盘焦点在时，那一排被重新排过（缩略图之外的内容变了）：焦点还在就留着，没了重选。
             focus.setCells(focusCells())
@@ -3715,7 +3927,12 @@ final class NotchPanel: NSPanel {
         }
         updateVisibility()
         apply(animated: animated)
+        onRowExpanded?()
     }
+
+    /// 那一排展开了、收起了（离开期间的列表据此停表、清掉）。
+    var onRowExpanded: (() -> Void)?
+    var onRowCollapsed: (() -> Void)?
 
     /// 某一格的画面到了（后台截的）：只换这一格的图，不走 expand（那会清掉提醒、重算整个岛）。
     func updateTileSnapshot(id: CGWindowID, image: CGImage?) {
@@ -3746,6 +3963,7 @@ final class NotchPanel: NSPanel {
         apply(animated: true)
         releaseLease(.notchShelf)
         if showedEnded { onRowSeen?() }
+        onRowCollapsed?()
     }
 
     /// 收下了：托盘换成对勾，触控板轻轻一下；0.55 秒后收回（刘海两边这时已经露出图标和个数）。
@@ -4010,7 +4228,10 @@ final class NotchPanel: NSPanel {
     /// 一排格子要占的岛宽（含两边 14 的边距和竖线）。一格没有时按一格算，和原来一样。
     private var rowLayout: NotchRow.Layout {
         let shown = shownTiles
-        return NotchRow.layout(windows: shown.filter { !$0.kind.isOngoing }.count, ongoing: shown.filter { $0.kind.isOngoing }.count)
+        let away = shown.filter { $0.kind.isAway }
+        return NotchRow.layout(windows: shown.filter { !$0.kind.isOngoing && !$0.kind.isAway }.count,
+                               ongoing: shown.filter { $0.kind.isOngoing }.count,
+                               away: away.count, awayNarrow: away.last?.away?.isNarrow == true)
     }
     private var rowIslandWidth: Double {
         // 筛选之后一格也没有：写“没有匹配的”，那一排不窄于两格（LA-7）。
@@ -4665,6 +4886,7 @@ final class NotchCanvasView: NSView {
     }
     @discardableResult
     func activateTile(_ id: CGWindowID) -> Bool { current?.activateTile(id) ?? false }
+    func tileScreenRect(_ id: CGWindowID) -> NSRect? { current?.tileScreenRect(id) }
     /// 提醒里的图标在屏幕上的位置（点提醒时窗口从这里起飞）。
     var alertIconScreenRect: NSRect? { current?.alertIconScreenRect }
     private var authenticationView: (NSView & NotchInteractiveContent)?
@@ -5918,6 +6140,10 @@ final class NotchContentView: NSView {
     private let alertView = NotchAlertView()
     /// 左段窗口和右段正在进行的之间那一条竖线（只在两段都有格子时露出）。
     private let divider = NotchRowDivider()
+    /// 第二条竖线（离开期间、窗口、正在进行的三段都有时）。
+    private let divider2 = NotchRowDivider()
+    /// 离开期间那一段的小标题：写在刘海左边，读屏念「离开期间，N 件」（这一组的名字）。
+    private let awayHeading = NSTextField(labelWithString: "")
     /// 那一排的滚动：视口（固定、裁边、左右淡出）里放一张比它宽的文档，格子和竖线都在文档上，滚动就是挪文档。
     private let rowViewport = NSView()
     private let rowDocument = NSView()
@@ -5969,6 +6195,13 @@ final class NotchContentView: NSView {
         addSubview(alertView)
         addSubview(activityView)
         divider.isHidden = true
+        divider2.isHidden = true
+        awayHeading.font = .systemFont(ofSize: 13, weight: .semibold)
+        awayHeading.textColor = NSColor.white.withAlphaComponent(0.85)
+        awayHeading.alignment = .right
+        awayHeading.lineBreakMode = .byClipping
+        awayHeading.isHidden = true
+        awayHeading.setAccessibilityRole(.staticText)
         rowViewport.wantsLayer = true
         rowViewport.layer?.masksToBounds = true
         rowFade.startPoint = CGPoint(x: 0, y: 0.5)
@@ -5977,6 +6210,7 @@ final class NotchContentView: NSView {
         rowViewport.layer?.mask = rowFade
         rowDocument.wantsLayer = true
         rowDocument.addSubview(divider)
+        rowDocument.addSubview(divider2)
         rowViewport.addSubview(rowDocument)
         addSubview(rowViewport)
         queryLabel.font = .systemFont(ofSize: 13, weight: .semibold)
@@ -5992,6 +6226,7 @@ final class NotchContentView: NSView {
         noMatchLabel.textColor = NSColor.white.withAlphaComponent(0.6)
         noMatchLabel.alignment = .center
         noMatchLabel.isHidden = true
+        addSubview(awayHeading)
         addSubview(queryLabel)
         addSubview(queryCursor)
         addSubview(noMatchLabel)
@@ -6136,6 +6371,12 @@ final class NotchContentView: NSView {
         }
     }
 
+    /// 某一格此刻在屏幕上的位置（键盘「看一眼」要从这里长出来）。
+    func tileScreenRect(_ id: CGWindowID) -> NSRect? {
+        guard let view = tileViews.first(where: { $0.tileID == id }), let window = view.window else { return nil }
+        return window.convertToScreen(view.convert(view.bounds, to: nil))
+    }
+
     /// 键盘上的 Return 打开某一格。找不到这一格返回 false。
     @discardableResult
     func activateTile(_ id: CGWindowID) -> Bool {
@@ -6202,7 +6443,9 @@ final class NotchContentView: NSView {
         }
         let shownCount = (0..<tileViews.count).filter(isShown).count
         let ongoingCount = (0..<tileViews.count).filter { isShown($0) && $0 < content.tiles.count && content.tiles[$0].kind.isOngoing }.count
-        let layout = NotchRow.layout(windows: shownCount - ongoingCount, ongoing: ongoingCount)
+        let awayShown = (0..<tileViews.count).filter { isShown($0) && $0 < content.tiles.count && content.tiles[$0].kind.isAway }
+        let layout = NotchRow.layout(windows: shownCount - ongoingCount - awayShown.count, ongoing: ongoingCount,
+                                     away: awayShown.count, awayNarrow: awayShown.last.map { content.tiles[$0].away?.isNarrow == true } ?? false)
         // 那一排固定高：格子 124 × 104（稿）。活动卡叠在窗口上面的旧样子（activitiesExpanded）仍按剩下的高度算。
         let cellsHeight = content.activitiesExpanded
             ? max(0, top - 22 - 142)
@@ -6241,7 +6484,7 @@ final class NotchContentView: NSView {
                 continue
             }
             let frame = NSRect(x: origin + CGFloat(layout.x(ofCell: rank)), y: 0,
-                               width: CGFloat(NotchRow.cellWidth), height: cellsHeight)
+                               width: CGFloat(layout.width(ofCell: rank)), height: cellsHeight)
             ranks[tile.tileID] = rank
             let wasHidden = tile.isHidden
             if wasHidden {
@@ -6277,13 +6520,16 @@ final class NotchContentView: NSView {
         rowRank = ranks
         placedShownIDs = shownIDs
         placedOnce = true
-        if let dividerX = layout.dividerX {
-            divider.frame = NSRect(x: origin + CGFloat(dividerX), y: CGFloat(NotchRow.dividerInset), width: CGFloat(NotchRow.dividerWidth),
-                                   height: max(0, cellsHeight - 2 * CGFloat(NotchRow.dividerInset)))
-            divider.isHidden = false
-        } else {
-            divider.isHidden = true
+        for (index, line) in [divider, divider2].enumerated() {
+            if index < layout.dividerXs.count {
+                line.frame = NSRect(x: origin + CGFloat(layout.dividerXs[index]), y: CGFloat(NotchRow.dividerInset), width: CGFloat(NotchRow.dividerWidth),
+                                    height: max(0, cellsHeight - 2 * CGFloat(NotchRow.dividerInset)))
+                line.isHidden = false
+            } else {
+                line.isHidden = true
+            }
         }
+        placeAwayHeading(content, rect: rect, tileIndexes: awayShown)
         placeQuery(content, rect: rect, cellsMinY: 14, cellsHeight: cellsHeight, shownCount: shownCount)
         hint.stringValue = content.hint ?? ""
         hint.isHidden = content.hint == nil
@@ -6351,6 +6597,22 @@ final class NotchContentView: NSView {
 }
 
 extension NotchContentView {
+    /// 离开期间的小标题：写在刘海左边（右对齐、紧挨刘海）；没有刘海的屏、正在打字筛选、没有这一段时不画。
+    fileprivate func placeAwayHeading(_ content: NotchCanvasView.Content, rect: NSRect, tileIndexes: [Int]) {
+        let visible = !tileIndexes.isEmpty && content.query.isEmpty && content.notchHeight > 0
+        awayHeading.isHidden = !visible
+        guard visible else { return }
+        let cells = tileIndexes.map { content.tiles[$0].away }
+        let total = cells.reduce(0) { $0 + ($1?.isNarrow == true ? ($1?.omitted ?? 0) : 1) }
+        awayHeading.stringValue = AwaySummary.heading
+        awayHeading.setAccessibilityLabel(WSL10n.text("away.group", zh: "离开期间，%@ 件", String(total)))
+        let right = (rect.width - content.notchWidth) / 2 - 8
+        let room = max(0, right - CGFloat(NotchRow.edgeMargin))
+        let width = min(room, ceil((AwaySummary.heading as NSString).size(withAttributes: [.font: awayHeading.font as Any]).width) + 2)
+        let height: CGFloat = 16
+        awayHeading.frame = NSRect(x: right - width, y: rect.height - content.notchHeight / 2 - height / 2, width: width, height: height)
+    }
+
     /// 打字筛选（LA-7）：字写在刘海左边那一段（右对齐、紧挨刘海，13 半粗，后面一个光标）；一格也没有时在格子那一块写“没有匹配的”。
     /// 左边放不下整串就留最后几个字。不用计时器：光标不闪，免得空闲时还在重画。
     fileprivate func placeQuery(_ content: NotchCanvasView.Content, rect: NSRect, cellsMinY: CGFloat, cellsHeight: CGFloat,
@@ -7659,6 +7921,14 @@ final class NotchTileView: NSView {
 
     /// 提示和读屏念的话。竖线右边的格子念整句（“项目，在等你”），不加动词。
     private func describe() {
+        if let away = tile.away {
+            toolTip = [away.title, away.subtitle].filter { !$0.isEmpty }.joined(separator: "\n")
+            setAccessibilityLabel(away.spoken)
+            setAccessibilityRole(away.isActionable ? .button : .staticText)
+            // 灰掉的格子标为不可用（念出原因在 label 里：「已经不在了」），不只靠变灰。
+            setAccessibilityEnabled(!away.isGone)
+            return
+        }
         if let ongoing = tile.ongoing {
             toolTip = ongoing.subtitle.isEmpty ? tile.title : "\(tile.title)\n\(ongoing.subtitle)"
             setAccessibilityLabel(ongoing.spoken)
@@ -7742,7 +8012,9 @@ final class NotchTileView: NSView {
 
     /// 读屏念“第几个，共几个”（和焦点挪动时的播报同一个说法）。
     func setPosition(_ index: Int, of count: Int) {
-        setAccessibilityHelp(WSL10n.text("notch.alert.index", zh: "第 %@ 个，共 %@ 个", String(index + 1), String(count)))
+        let position = WSL10n.text("notch.alert.index", zh: "第 %@ 个，共 %@ 个", String(index + 1), String(count))
+        if let help = tile.away?.help, !help.isEmpty { setAccessibilityHelp(help + "，" + position); return }
+        setAccessibilityHelp(position)
     }
 
     /// 亮起或熄灭键盘焦点。`bump` 不为空：到头了，朝那个方向轻轻顶 6 点再弹回。
@@ -7814,6 +8086,7 @@ final class NotchTileView: NSView {
         case .elsewhere: return WSL10n.text("notch.verb.goTo", zh: "去")
         case .session: return WSL10n.text("notch.action.goThere", zh: "过去")
         case .playing, .activity: return WSL10n.text("notch.action.open", zh: "打开")
+        case .away: return ""
         }
     }
 
@@ -7831,13 +8104,14 @@ final class NotchTileView: NSView {
         case .session: return WSL10n.text("notch.kind.session", zh: "编程会话")
         case .playing: return WSL10n.text("say.preview.playing", zh: "正在播放")
         case .activity: return WSL10n.text("notch.where.activity", zh: "正在进行")
+        case .away: return AwaySummary.heading
         }
     }
 
     private static func badge(_ kind: NotchTile.Kind) -> NSImage? {
         let name: String
         switch kind {
-        case .tucked, .elsewhere, .session, .playing, .activity, .parked: return nil
+        case .tucked, .elsewhere, .session, .playing, .activity, .parked, .away: return nil
         case .strip: name = "rectangle.topthird.inset.filled"
         // 缩略图格子的专属角标，和卷帘条的 rectangle.topthird 区分。
         case .thumbnail: name = "photo"
@@ -8061,7 +8335,74 @@ final class NotchTileView: NSView {
         return NSRect(x: card.midX - drawn.width / 2, y: card.midY - drawn.height / 2, width: drawn.width, height: drawn.height)
     }
 
+    /// 离开期间的一格（稿「每个格子」）：同样大的圆角卡；窗口是 App 图标加名字加副句，设备是名字加大号百分比，
+    /// 下载是文件名，有人动过是盾牌加原话，窄格只写「还有」「N 件」。已经不在了的整格变灰。底部一行是动词（不能点的没有）。
+    private func drawAwayCell(_ away: NotchTile.AwayCell) {
+        let card = self.card
+        NSColor(white: hovering && away.isActionable ? 0.22 : 0.14, alpha: 1).setFill()
+        NSBezierPath(roundedRect: card, xRadius: 14, yRadius: 14).fill()
+        let dim: CGFloat = away.isGone ? 0.4 : 1
+        func draw(_ text: String, size: CGFloat, weight: NSFont.Weight = .regular, alpha: CGFloat, in rect: NSRect,
+                  rounded: Bool = false, align: NSTextAlignment = .center) {
+            guard !text.isEmpty, rect.width > 0, rect.height > 0 else { return }
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.alignment = align
+            paragraph.lineBreakMode = .byTruncatingTail
+            var font = NSFont.systemFont(ofSize: size, weight: weight)
+            if rounded, let descriptor = font.fontDescriptor.withDesign(.rounded), let r = NSFont(descriptor: descriptor, size: size) { font = r }
+            NSAttributedString(string: text, attributes: [
+                .font: font, .foregroundColor: NSColor.white.withAlphaComponent(alpha * dim), .paragraphStyle: paragraph,
+            ]).draw(with: rect, options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+        }
+        let inner = card.insetBy(dx: 8, dy: 0)
+        if away.isNarrow {
+            draw(away.title, size: 11, alpha: 0.6, in: NSRect(x: card.minX, y: card.midY + 1, width: card.width, height: 14))
+            draw(away.subtitle, size: 13, weight: .semibold, alpha: 0.92, in: NSRect(x: card.minX, y: card.midY - 17, width: card.width, height: 16))
+        } else {
+            var top = card.maxY - 10
+            if let big = away.big {
+                draw(away.title, size: 11, weight: .semibold, alpha: 0.92, in: NSRect(x: inner.minX, y: top - 14, width: inner.width, height: 14))
+                top -= 18
+                draw(big, size: 26, weight: .semibold, alpha: 0.95, in: NSRect(x: inner.minX, y: top - 32, width: inner.width, height: 32), rounded: true)
+                top -= 32
+                draw(away.subtitle, size: 10.5, alpha: 0.6, in: NSRect(x: inner.minX, y: top - 14, width: inner.width, height: 14))
+            } else {
+                let side: CGFloat = 24
+                let slot = NSRect(x: card.midX - side / 2, y: top - side, width: side, height: side)
+                if let icon = tile.icon {
+                    NSGraphicsContext.saveGraphicsState()
+                    icon.draw(in: slot, from: .zero, operation: .sourceOver, fraction: dim)
+                    NSGraphicsContext.restoreGraphicsState()
+                } else if let name = away.symbol,
+                          let image = Self.symbolImage(name, pointSize: 20, color: NSColor.white.withAlphaComponent(0.92 * dim)) {
+                    let size = image.size
+                    image.draw(in: NSRect(x: slot.midX - size.width / 2, y: slot.midY - size.height / 2, width: size.width, height: size.height))
+                }
+                top -= side + 4
+                let isSentence = tile.away?.item?.kind == .intrusion
+                if isSentence {
+                    draw(away.title, size: 10.5, alpha: 0.85, in: NSRect(x: inner.minX, y: card.minY + 4, width: inner.width, height: top - card.minY - 4))
+                } else {
+                    draw(away.title, size: 11, weight: .semibold, alpha: 0.92, in: NSRect(x: inner.minX, y: top - 14, width: inner.width, height: 14))
+                    top -= 16
+                    draw(away.subtitle, size: 10.5, alpha: 0.6, in: NSRect(x: inner.minX, y: card.minY + 3, width: inner.width, height: top - card.minY - 3))
+                }
+            }
+            if let verb = away.verb {
+                draw(verb, size: 11, weight: .medium, alpha: hovering ? 1 : 0.8, in: NSRect(x: 4, y: 3, width: bounds.width - 8, height: 14))
+            }
+        }
+        if keyboardFocused {
+            let width = CGFloat(NotchFocusController.Style.stroke(increasedContrast: SystemAppearanceCapabilities.current.increaseContrast))
+            NSColor.white.setStroke()
+            let ring = NSBezierPath(roundedRect: card.insetBy(dx: width / 2, dy: width / 2), xRadius: 14 - width / 2, yRadius: 14 - width / 2)
+            ring.lineWidth = width
+            ring.stroke()
+        }
+    }
+
     override func draw(_ dirtyRect: NSRect) {
+        if let away = tile.away { drawAwayCell(away); return }
         let card = self.card
         NSColor(white: hovering ? 0.22 : 0.14, alpha: 1).setFill()
         NSBezierPath(roundedRect: card, xRadius: 14, yRadius: 14).fill()

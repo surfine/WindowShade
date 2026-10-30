@@ -218,6 +218,18 @@ struct NotchRowMergeTests {
         t.section("M11-11", "格子在一页里的坐标：右段比左段多空出竖线那一格（只影响方向判断）")
         t.expect(NotchRow.dividerExtra == 9, "竖线多占 1+8")
 
+        t.section("S11-D", "离开期间那一段排在最前：先它、竖线、再窗口；窄格 56 宽")
+        let aw = NotchRow.layout(windows: 2, ongoing: 0, away: 2)
+        t.expect(aw.count == 4 && aw.hasAwayDivider && !aw.hasWindowsDivider, "离开期间和窗口之间一条竖线")
+        t.expect(aw.dividerXs == [2 * pitch] && aw.x(ofCell: 2) == 2 * pitch + 9 && aw.x(ofCell: 1) == pitch, "竖线在离开期间最后一格右边；窗口格让出 9")
+        t.expect(aw.contentWidth == 4 * pitch - 8 + 9, "宽度多一条竖线")
+        let awn = NotchRow.layout(windows: 1, ongoing: 1, away: 3, awayNarrow: true)
+        t.expect(awn.width(ofCell: 2) == 56 && awn.width(ofCell: 1) == 124, "最后一个离开期间格是窄格")
+        t.expect(awn.dividerXs == [3 * pitch - 68, 4 * pitch - 68 + 9], "两条竖线，窄格让出 68")
+        t.expect(awn.x(ofCell: 3) == 3 * pitch - 68 + 9 && awn.contentWidth == 5 * pitch - 8 - 68 + 18, "窄格之后的格子左移")
+        t.expect(NotchRow.layout(windows: 0, ongoing: 0, away: 2).hasDivider == false, "只有离开期间时没有竖线")
+        t.expect(NotchRow.fit(windows: 20, ongoing: 0, away: 4) == NotchRow.Layout(away: 4, windows: 8, ongoing: 0), "离开期间不被窗口上限裁")
+
         // MARK: 主人合并
 
         let display = WS2.DisplayID(value: 1)

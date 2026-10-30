@@ -51,51 +51,87 @@ enum NotchRow {
 
     // MARK: 分段
 
-    /// 这一排实际放几格、怎么摆。`windows` 在左，`ongoing` 在右。
+    /// 窄格（「还有 N 件」）的宽。
+    static let narrowCellWidth = 56.0
+
+    /// 这一排实际放几格、怎么摆。最前面是「离开期间」的格子（`away`，回来后那一阵才有），然后是 `windows`，最后是 `ongoing`；
+    /// 相邻的两段都有格子时，中间各隔一条竖线。`awayNarrow`：离开期间的最后一格是 56 宽的「还有 N 件」窄格。
     struct Layout: Equatable, Sendable {
+        var away = 0
+        var awayNarrow = false
         let windows: Int
         let ongoing: Int
-        var count: Int { windows + ongoing }
-        /// 只有左右两段都有格子才有竖线。
-        var hasDivider: Bool { windows > 0 && ongoing > 0 }
+        var count: Int { away + windows + ongoing }
+        /// 离开期间那一段和后面隔一条竖线。
+        var hasAwayDivider: Bool { away > 0 && windows + ongoing > 0 }
+        /// 窗口段和正在进行的段之间隔一条竖线。
+        var hasWindowsDivider: Bool { windows > 0 && ongoing > 0 }
+        /// 有没有竖线（任何一条）。
+        var hasDivider: Bool { hasAwayDivider || hasWindowsDivider }
+        private var dividerCount: Int { (hasAwayDivider ? 1 : 0) + (hasWindowsDivider ? 1 : 0) }
+        /// 窄格比普通格窄多少（没有窄格是 0）。
+        private var narrowShortfall: Double { awayNarrow && away > 0 ? cellWidth - narrowCellWidth : 0 }
+        /// 第 index 格多宽。
+        func width(ofCell index: Int) -> Double {
+            awayNarrow && away > 0 && index == away - 1 ? narrowCellWidth : cellWidth
+        }
         /// 所有格子加上间隙（和竖线）占多宽；没有格子是 0。
         var contentWidth: Double {
             guard count > 0 else { return 0 }
-            return Double(count) * pitch - cellGap + (hasDivider ? dividerExtra : 0)
+            return Double(count) * pitch - cellGap - narrowShortfall + Double(dividerCount) * dividerExtra
         }
-        /// 第 index 格（从左数，先窗口后正在进行的）的左边缘，相对于内容的左边。
+        /// 第 index 格（从左数，先离开期间、再窗口、最后正在进行的）的左边缘，相对于内容的左边。
         func x(ofCell index: Int) -> Double {
             let i = max(0, index)
-            return Double(i) * pitch + (hasDivider && i >= windows ? dividerExtra : 0)
+            var x = Double(i) * pitch
+            if awayNarrow, away > 0, i >= away { x -= narrowShortfall }
+            if hasAwayDivider, i >= away { x += dividerExtra }
+            if hasWindowsDivider, i >= away + windows { x += dividerExtra }
+            return x
         }
-        /// 竖线的左边缘，相对于内容的左边；没有竖线是 nil。
-        var dividerX: Double? { hasDivider ? Double(windows) * pitch : nil }
+        /// 每一条竖线的左边缘，相对于内容的左边（从左到右）。
+        var dividerXs: [Double] {
+            var result: [Double] = []
+            if hasAwayDivider { result.append(Double(away) * pitch - narrowShortfall) }
+            if hasWindowsDivider {
+                result.append(Double(away + windows) * pitch - narrowShortfall + (hasAwayDivider ? dividerExtra : 0))
+            }
+            return result
+        }
+        /// 第一条竖线的左边缘；没有竖线是 nil。
+        var dividerX: Double? { dividerXs.first }
         /// 岛至少多宽：内容加两边的边距，不小于 `minimum`。
         func islandWidth(minimum: Double) -> Double {
             max(minimum, count == 0 ? 0 : contentWidth + 2 * edgeMargin)
         }
         /// 内容在一排里居中时的左边缘。
         func leading(inRowWidth width: Double) -> Double { (width - contentWidth) / 2 }
-        /// 竖线的外框：x 在一排里的位置，y 与高度按格子的竖直范围算（上下各留 10）。
+        /// 第一条竖线的外框：x 在一排里的位置，y 与高度按格子的竖直范围算（上下各留 10）。
         func dividerFrame(inRowWidth width: Double, cellsMinY: Double, cellsHeight: Double)
             -> (x: Double, y: Double, width: Double, height: Double)? {
-            guard let dividerX else { return nil }
-            return (leading(inRowWidth: width) + dividerX, cellsMinY + dividerInset, dividerWidth,
-                    max(0, cellsHeight - 2 * dividerInset))
+            dividerFrames(inRowWidth: width, cellsMinY: cellsMinY, cellsHeight: cellsHeight).first
+        }
+        /// 每一条竖线的外框。
+        func dividerFrames(inRowWidth width: Double, cellsMinY: Double, cellsHeight: Double)
+            -> [(x: Double, y: Double, width: Double, height: Double)] {
+            dividerXs.map {
+                (leading(inRowWidth: width) + $0, cellsMinY + dividerInset, dividerWidth, max(0, cellsHeight - 2 * dividerInset))
+            }
         }
     }
 
     /// 按数量排版，不裁。
-    static func layout(windows: Int, ongoing: Int) -> Layout {
-        Layout(windows: max(0, windows), ongoing: max(0, ongoing))
+    static func layout(windows: Int, ongoing: Int, away: Int = 0, awayNarrow: Bool = false) -> Layout {
+        Layout(away: max(0, away), awayNarrow: away > 0 && awayNarrow, windows: max(0, windows), ongoing: max(0, ongoing))
     }
 
     /// 最多几格：窗口最多 8 格、正在进行的最多 3 格。照系统的岛，那一排宽固定（408）、格子全部排出、放不下就左右滚，
-    /// 不再按屏宽裁格；这里只留数量上限（每一段的上限和以前一样，不是宽度裁剪）。
+    /// 不再按屏宽裁格；这里只留数量上限（每一段的上限和以前一样，不是宽度裁剪）。离开期间的格子不裁（它自己有上限 4 + 窄格）。
     ///
     /// `tail`：右段末尾多一格文件架（FS-04）。它不算进“最多 3 件”（多放一格）。
-    static func fit(windows: Int, ongoing: Int, tail: Bool = false) -> Layout {
-        Layout(windows: min(max(0, windows), windowLimit), ongoing: min(max(0, ongoing), ongoingLimit + (tail ? 1 : 0)))
+    static func fit(windows: Int, ongoing: Int, tail: Bool = false, away: Int = 0, awayNarrow: Bool = false) -> Layout {
+        Layout(away: max(0, away), awayNarrow: away > 0 && awayNarrow,
+               windows: min(max(0, windows), windowLimit), ongoing: min(max(0, ongoing), ongoingLimit + (tail ? 1 : 0)))
     }
 
     // MARK: 滚动
@@ -128,7 +164,7 @@ enum NotchRow {
         guard layout.count > 0, content > viewport else { return 0 }
         let i = min(max(0, index), layout.count - 1)
         let left = layout.x(ofCell: i)
-        let right = left + cellWidth
+        let right = left + layout.width(ofCell: i)
         let target: Double
         if left - (i > 0 ? fade : 0) < current { target = left - (i > 0 ? fade : 0) }
         else if right + (i < layout.count - 1 ? fade : 0) > current + viewport { target = right + (i < layout.count - 1 ? fade : 0) - viewport }
