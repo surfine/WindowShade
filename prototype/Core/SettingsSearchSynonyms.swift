@@ -46,6 +46,8 @@ enum SettingsSearchSynonyms {
             WSL10n.setting("settings.search.synonym.moveDisplay", zh: "移到另一显示器、跨屏、下一个显示器 → 移到另一块屏幕、移到上一块屏幕"),
             WSL10n.setting("settings.search.synonym.halves", zh: "顶部一半、Top Half → 上半屏、下半屏"),
             WSL10n.setting("settings.search.synonym.largerSmaller", zh: "放大、缩小、Make Larger → 大一点、小一点"),
+            WSL10n.setting("settings.search.synonym.backInPlace", zh: "放回、还原、拉出、滑进来 → 回到原处"),
+            WSL10n.setting("settings.search.synonym.spreadRow", zh: "撑开 → 展开那一排"),
             WSL10n.setting("settings.search.synonym.heightCenter", zh: "最大化高度、Maximize Height → 高度占满、居中"),
             WSL10n.setting("settings.search.synonym.rectangle", zh: "导入 Rectangle、迁移、兼容模式 → 用 Rectangle 的快捷键、更多排法"),
             WSL10n.setting("settings.search.synonym.welcome", zh: "使用说明、新手教程、Onboarding、导览 → 欢迎使用 WindowShade"),

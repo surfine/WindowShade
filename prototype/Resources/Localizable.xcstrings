@@ -52908,6 +52908,52 @@
         }
       }
     },
+    "settings.search.synonym.backInPlace": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "put back, restore, pull out, slide in → Back where it was"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放回、还原、拉出、滑进来 → 回到原处"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放回、還原、拉出、滑進來 → 回到原處"
+          }
+        }
+      }
+    },
+    "settings.search.synonym.spreadRow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "spread open → Open the notch row"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撑开 → 展开那一排"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撐開 → 展開那一排"
+          }
+        }
+      }
+    },
     "settings.search.synonym.thirds": {
       "extractionState": "manual",
       "localizations": {
