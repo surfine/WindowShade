@@ -300,6 +300,52 @@
         }
       }
     },
+    "agent.risk.high": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Higher risk"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "风险较高"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "風險較高"
+          }
+        }
+      }
+    },
+    "agent.risk.unknown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "May change files or use the network"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可能改动文件或联网"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可能改動檔案或連網"
+          }
+        }
+      }
+    },
     "agent.status.done": {
       "extractionState": "manual",
       "localizations": {
@@ -312,13 +358,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "已完成"
+            "value": "完成"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已完成"
+            "value": "完成"
           }
         }
       }
@@ -381,13 +427,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "进行中"
+            "value": "在跑"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "進行中"
+            "value": "在跑"
           }
         }
       }
@@ -427,13 +473,13 @@
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "等你确认"
+            "value": "等你"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "等你確認"
+            "value": "等你"
           }
         }
       }

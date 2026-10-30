@@ -191,19 +191,26 @@ import Cocoa
     func probeDismiss() { dismissCard() }
 }
 
-/// 刘海里的 hook 审批卡。比例照“放行”卡：380×105 的两行卡面，按钮在下一行。
+/// 刘海里的 hook 审批卡。尺寸和摆法照稿《刘海里的编程会话》§3：408 宽、压进岛的上限；
+/// 只写四件事（哪个助手、哪个项目、要做什么、风险），内容从右耳的琥珀点长出来。放行逻辑不在这里。
 @MainActor final class WS2HookApprovalView: NSView, WS2LeaseContent {
-    static let size = NSSize(width: 380, height: 105)
+    static let size = NSSize(width: SessionCardStyle.cardSize.width, height: SessionCardStyle.cardSize.height)
     var onCancel: (() -> Void)?
     var inputIsCurrent: (() -> Bool) = { false }
     var interactionSize: NSSize { Self.size }
     var allow: (() -> Void)?
     var deny: (() -> Void)?
     var useTerminal: (() -> Void)?
+    /// 琥珀点在卡里的位置（卡的坐标）；不传就用右耳那颗点的中心。
+    var bloomOrigin: CGPoint?
+    private let content = NSView()
+    private let bloom = WS2SessionCardChrome.Bloom()
     private let headline: NSTextField
     private let byline: NSTextField
     private let waiting = NSTextField(labelWithString: AgentApprovalCard.waiting)
-    private let ear = NSImageView()
+    private let dot = WS2SessionCardChrome.makeAmberDot()
+    private let ear = WS2SessionCardChrome.makeEar()
+    private let riskLine: WS2SessionCardChrome.RiskLine?
     private let no: NSButton
     private let primary: NSButton
     private let primaryIsTerminal: Bool
@@ -215,29 +222,27 @@ import Cocoa
         headline = NSTextField(labelWithString: AgentApprovalCard.headline(summary: tool))
         byline = NSTextField(labelWithString: AgentApprovalCard.byline(agent: WS2HookApprovalHost.agentName,
                                                                        project: project))
+        riskLine = AgentApprovalCard.riskNote(risk).map { WS2SessionCardChrome.RiskLine(note: $0) }
         no = NSButton(title: AgentApprovalCard.title(.deny), target: nil, action: nil)
         primary = NSButton(title: AgentApprovalCard.title(
             terminal ? .handleInTerminal : (needsTouchID ? .allowWithTouchID : .allowOnce)),
             target: nil, action: nil)
         super.init(frame: .zero)
         wantsLayer = true; appearance = NSAppearance(named: .darkAqua)
-        ear.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
-        ear.contentTintColor = .white; ear.symbolConfiguration = .init(pointSize: 13, weight: .semibold)
+        content.wantsLayer = true
         waiting.font = .systemFont(ofSize: 11, weight: .semibold)
         waiting.textColor = .systemOrange; waiting.alignment = .right
         headline.font = .systemFont(ofSize: 13, weight: .semibold); headline.textColor = .white
         headline.lineBreakMode = .byTruncatingTail; headline.maximumNumberOfLines = 1
         byline.font = .systemFont(ofSize: 11); byline.textColor = .white.withAlphaComponent(0.65)
         byline.lineBreakMode = .byTruncatingTail; byline.maximumNumberOfLines = 1
-        for (button, primaryStyle) in [(no, false), (primary, true)] {
-            button.isBordered = false; button.wantsLayer = true
-            button.layer?.cornerRadius = 8
-            button.layer?.backgroundColor = (primaryStyle ? NSColor.white : NSColor.white.withAlphaComponent(0.16)).cgColor
-            button.attributedTitle = NSAttributedString(string: button.title, attributes: [
-                .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
-                .foregroundColor: primaryStyle ? NSColor.black : NSColor.white])
-        }
-        for view in [ear, waiting, headline, byline, no, primary] as [NSView] { addSubview(view) }
+        WS2SessionCardChrome.stylePill(no, primary: false)
+        WS2SessionCardChrome.stylePill(primary, primary: true,
+                                       symbol: needsTouchID && !terminal ? "touchid" : nil)
+        addSubview(content)
+        var parts: [NSView] = [ear, dot, waiting, headline, byline, no, primary]
+        if let riskLine { parts.append(riskLine) }
+        for view in parts { content.addSubview(view) }
         no.target = self; no.action = #selector(refuse)
         primary.target = self; primary.action = #selector(act)
         setAccessibilityRole(.group)
@@ -247,21 +252,24 @@ import Cocoa
 
     override func layout() {
         super.layout()
-        let w = bounds.width, h = bounds.height, inset: CGFloat = 16
-        ear.frame = NSRect(x: inset, y: h - 32, width: 18, height: 18)
-        waiting.frame = NSRect(x: w - inset - 48, y: h - 31, width: 48, height: 16)
-        headline.frame = NSRect(x: inset + 26, y: h - 32, width: max(0, w - 2 * inset - 26 - 54), height: 18)
-        byline.frame = NSRect(x: inset + 26, y: h - 50, width: max(0, w - 2 * inset - 26), height: 15)
-        var x = w - inset
-        for button in [primary, no] {
-            let width = ceil(button.attributedTitle.size().width) + 20
-            x -= width; button.frame = NSRect(x: x, y: 12, width: width, height: 24); x -= 8
+        content.frame = bounds
+        let frames = SessionCardStyle.layout(in: bounds.size, showsRisk: riskLine != nil, showsDetails: false)
+        ear.frame = frames.ear; dot.frame = frames.dot; waiting.frame = frames.waiting
+        headline.frame = frames.headline; byline.frame = frames.byline
+        if let risk = frames.risk { riskLine?.frame = risk }
+        WS2SessionCardChrome.layoutPills([primary, no], rightEdge: bounds.width - SessionCardStyle.inset)
+        if window != nil {
+            bloom.playOnce(on: content, origin: SessionCardStyle.bloomOrigin(layout: frames, override: bloomOrigin))
         }
+    }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil { needsLayout = true }
     }
 
     func showReceipt(_ text: String) {
         byline.stringValue = text; byline.textColor = .white
-        no.isHidden = true; primary.isHidden = true
+        no.isHidden = true; primary.isHidden = true; riskLine?.isHidden = true
         allow = nil; deny = nil; useTerminal = nil
         needsLayout = true
         NSAccessibility.post(element: self, notification: .announcementRequested,

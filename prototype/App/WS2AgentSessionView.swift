@@ -39,13 +39,19 @@ import ObjectiveC
         for view in rows.arrangedSubviews { rows.removeArrangedSubview(view); view.removeFromSuperview() }
         for session in sessions.prefix(64) {
             let row = NSView(); row.translatesAutoresizingMaskIntoConstraints = false
+            // 稿里的会话卡：圆角 14、白 8% 底，停上去亮到 13%。
+            row.wantsLayer = true; row.layer?.cornerRadius = Self.cardRadius
+            row.layer?.backgroundColor = Self.cardFill.cgColor
             let status:String
-            switch session.status { case .idle:status=WSL10n.text("agent.status.idle", zh: "空闲");case .running:status=WSL10n.text("agent.status.running", zh: "进行中");case .waiting:status=WSL10n.text("agent.status.waiting", zh: "等你确认");
-                case .completed:status=WSL10n.text("agent.status.done", zh: "已完成");case .failed:status=WSL10n.text("agent.status.failed", zh: "发生错误");case .stale:status=WSL10n.text("agent.status.stale", zh: "状态待确认");case .disconnected:status=WSL10n.text("owned.status.disconnected", zh: "已断开") }
+            switch session.status { case .idle:status=WSL10n.text("agent.status.idle", zh: "空闲");case .running:status=WSL10n.text("agent.status.running", zh: "在跑");case .waiting:status=WSL10n.text("agent.status.waiting", zh: "等你");
+                case .completed:status=WSL10n.text("agent.status.done", zh: "完成");case .failed:status=WSL10n.text("agent.status.failed", zh: "发生错误");case .stale:status=WSL10n.text("agent.status.stale", zh: "状态待确认");case .disconnected:status=WSL10n.text("owned.status.disconnected", zh: "已断开") }
             let provider = NSTextField(labelWithString: session.context.session.provider.displayName)
             provider.font = .systemFont(ofSize: 13, weight: .semibold)
             let state = NSTextField(labelWithString: status)
             state.font = .systemFont(ofSize: 11); state.textColor = .white.withAlphaComponent(0.68)
+            // 等你用琥珀色、完成用绿色；字永远在，颜色只是帮忙。
+            if session.status == .waiting { state.textColor = .systemOrange; state.font = .systemFont(ofSize: 11, weight: .semibold) }
+            if session.status == .completed { state.textColor = .systemGreen }
             let icon = NSImageView()
             icon.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: nil)
             icon.contentTintColor = .white.withAlphaComponent(0.68)
@@ -79,11 +85,11 @@ import ObjectiveC
             rows.addArrangedSubview(row)
             NSLayoutConstraint.activate([
                 row.widthAnchor.constraint(equalTo: rows.widthAnchor),
-                content.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+                content.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
                 content.trailingAnchor.constraint(equalTo: actions.leadingAnchor, constant: -12),
-                content.topAnchor.constraint(equalTo: row.topAnchor),
-                content.bottomAnchor.constraint(equalTo: row.bottomAnchor),
-                actions.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+                content.topAnchor.constraint(equalTo: row.topAnchor, constant: 10),
+                content.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -10),
+                actions.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
                 actions.centerYAnchor.constraint(equalTo: row.centerYAnchor)])
         }
         if sessions.isEmpty { rows.addArrangedSubview(NSTextField(labelWithString:WSL10n.text("agent.sessions.none", zh: "还没有编程会话"))) }
@@ -99,7 +105,13 @@ import ObjectiveC
         super.viewDidMoveToWindow()
         if window == nil { cancelPeek() }
     }
+    private static let cardRadius: CGFloat = 14
+    private static let cardFill = NSColor.white.withAlphaComponent(0.08)
+    private static let cardFillHover = NSColor.white.withAlphaComponent(0.13)
     override func mouseEntered(with event: NSEvent) {
+        if let id = event.trackingArea?.userInfo?["row"] as? ObjectIdentifier, let row = rowFor(id) {
+            row.layer?.backgroundColor = Self.cardFillHover.cgColor
+        }
         guard let id = event.trackingArea?.userInfo?["row"] as? ObjectIdentifier,
               let row = rowFor(id), id != peekedRow else { return }
         cancelPeek()
@@ -115,6 +127,9 @@ import ObjectiveC
         }
     }
     override func mouseExited(with event: NSEvent) {
+        if let id = event.trackingArea?.userInfo?["row"] as? ObjectIdentifier, let row = rowFor(id) {
+            row.layer?.backgroundColor = Self.cardFill.cgColor
+        }
         cancelPeek()
     }
     private func rowFor(_ id: ObjectIdentifier) -> NSView? {
