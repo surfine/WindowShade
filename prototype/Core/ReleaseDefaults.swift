@@ -50,6 +50,11 @@ enum ReleaseDefaults {
         // 默认开——计时器到点 1.0.17 起就默认响（Timer.chimeEnabled 没设过是开），统一后新装不丢这一声（帕累托）；
         // 番茄钟休息、指挥拍子原来默认不响，新装起跟着它响。ownerDecided 记的是第 1 条「一个开关」，默认值待 Aaron 复核。
         Entry(key: "WindowShade.AlertSound", designed: true, deviceVerified: false, ownerDecided: true),
+        // WindowShade 2 的几个开关（整合计划第 12 步）：设计上就默认关，露出与否看 WS2Exposure 的门槛账，不看这里。
+        // 记在总账里是为了“默认关”有据可查；这三行不会因为 deviceVerified／ownerDecided 翻成开。
+        Entry(key: "WindowShade.Conductor.CodingSessions", designed: false, deviceVerified: false),
+        Entry(key: "WindowShade.Conductor.Enabled", designed: false, deviceVerified: false),
+        Entry(key: "FaceScan.experiment.enabled", designed: false, deviceVerified: false),
         // 启动台卸载（右键菜单「卸载 App…」，进废纸篓可找回；真机 fixture 流过了才翻 deviceVerified）
         Entry(key: "Launchpad.uninstall.enabled", designed: true, deviceVerified: false),
         // 账本写明签名构建上探针跑过（build 16，9/30–10/1），之后没再改过：按设计值发

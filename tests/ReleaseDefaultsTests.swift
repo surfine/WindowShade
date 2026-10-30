@@ -49,6 +49,12 @@ struct ReleaseDefaultsTests {
             expect(ReleaseDefaults.value(key), "1.0.18 起默认开：\(key)")
         }
         expect(ReleaseDefaults.value("Launchpad.uninstall.enabled") == false, "启动台卸载没验过没拍板：仍关")
+        // WindowShade 2 的开关（第 12 步）：设计上就默认关，在账上；即使以后记了验过也不翻成开。
+        for key in ["WindowShade.Conductor.CodingSessions", "WindowShade.Conductor.Enabled", "FaceScan.experiment.enabled"] {
+            let entry = ledger.first { $0.key == key }
+            expect(entry != nil && entry?.designed == false && entry?.release == false, "WindowShade 2 开关记在账上、默认关：\(key)")
+            expect(!ReleaseDefaults.value(key), "WindowShade 2 开关没设过 → 关：\(key)")
+        }
 
         // 读设置的实际出口：键里没有值时跟总账走，显式设过的原样用。
         let suite = "ReleaseDefaultsTests.\(UUID().uuidString)"

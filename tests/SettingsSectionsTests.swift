@@ -33,6 +33,36 @@ struct SettingsSectionsTests {
     precondition(rowsOnly.readsSomething && remoteOn.readsSomething && conductorOn.readsSomething && !pointerOn.readsSomething,
                  "隐私页的 WindowShade 2 行：遥控、指挥／编程会话、CarPlay 开着就列出来；只改了滚动不算")
 
+    // 露出账（第 12 步）：每个门槛表里的表面一行；过了才有证据，证据不许是空串；没有证据的表面一律不搬。
+    typealias X = WS2Exposure
+    precondition(Set(X.ledger.map(\.surface)) == Set(X.Surface.allCases) && X.ledger.count == X.Surface.allCases.count,
+                 "露出账：门槛表里的五个表面各一行")
+    precondition(X.ledger.allSatisfy { $0.evidence == nil || !$0.evidence!.trimmingCharacters(in: .whitespaces).isEmpty },
+                 "露出账：写了证据就不能是空的")
+    precondition(X.ledger.allSatisfy { !$0.gate.isEmpty }, "露出账：每行都抄着门槛")
+    precondition(X.moved(in: X.ledger.map { X.Entry(surface: $0.surface, gate: $0.gate, evidence: nil) }).isEmpty, "没证据：一个也不搬")
+    func passed(_ surfaces: [X.Surface]) -> [X.Entry] {
+      X.Surface.allCases.map { X.Entry(surface: $0, gate: "g", evidence: surfaces.contains($0) ? "e" : nil) }
+    }
+    // 编程会话单独过不算：审批卡跟它同一个开关，两个都要有证据才搬。
+    precondition(X.moved(in: passed([.codingSessions])).isEmpty, "只过编程会话：开关一开审批卡也出来，所以不搬")
+    precondition(X.moved(in: passed([.approvalCard])).isEmpty)
+    precondition(X.moved(in: passed([.codingSessions, .approvalCard])) == [.codingSessions, .approvalCard])
+    precondition(X.moved(in: passed([.conductorPage])) == [.conductorPage], "指挥页 Mac 本机部分单独搬")
+    precondition(X.moved(in: passed([.faceUnlock])).isEmpty && X.moved(in: passed([.faceUnlock, .autofillVoiceprint])).count == 2)
+    // 搬出来的表面带出它那一页，别的页照旧藏；旗标开着、已经开着的开关都照旧。
+    let movedPage = WS2Preview.visibleSections(previewOn: false, live: .none, moved: [.conductorPage])
+    precondition(movedPage == off + [.conductor], "指挥页搬出来：指挥模式那页出现，其余照旧；实际 \(movedPage)")
+    precondition(WS2Preview.visibleSections(previewOn: false, live: .none, moved: [.conductorPage, .codingSessions, .approvalCard]) == off + [.conductor])
+    precondition(WS2Preview.visibleSections(previewOn: false, live: .none, moved: [.faceUnlock, .autofillVoiceprint]) == off,
+                 "刷脸解锁不在侧栏的 WindowShade 2 页里：不带出页")
+    precondition(WS2Preview.visibleSections(previewOn: true, live: .none, moved: [.conductorPage]) == on)
+    // 页内的行：旗标开或这一页因开着的开关而在，全放；否则只放搬出来的表面。
+    precondition(X.showsRow(.codingSessions, previewOn: true, pageAlreadyShown: false, moved: []))
+    precondition(X.showsRow(.codingSessions, previewOn: false, pageAlreadyShown: true, moved: []))
+    precondition(!X.showsRow(.codingSessions, previewOn: false, pageAlreadyShown: false, moved: [.conductorPage]))
+    precondition(X.showsRow(.conductorPage, previewOn: false, pageAlreadyShown: false, moved: [.conductorPage]))
+
     // 行号 ↔ 分节：在这次的可见列表里查，不拿 rawValue 当行号。
     for (row, section) in off.enumerated() {
       precondition(S.section(atRow: row, in: off) == section)
