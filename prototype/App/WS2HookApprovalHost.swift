@@ -26,8 +26,8 @@ import Cocoa
     private var idleTask: Task<Void, Never>?
     private var parkingForIdle = false
     private(set) var isParked = false
-    /// 卡的租约比 2 分钟多留一点：没人管的收卡由这里的计时说了算，租约到期只是兜底（仍交回终端）。
-    static let leaseSeconds: UInt64 = 130
+    /// 第 36 条按「期限不改」落地：卡的租约照旧 120 秒，到期交回终端，交回时卡缩回琥珀点（租约到期播缩回）。
+    /// 不另起「停放」计时：停放后不交回终端，外面的 Claude Code 会一直等这里回覆。
     private static func uptime() -> Double { ProcessInfo.processInfo.systemUptime }
 
     init(server: WS2HookServer, island: NotchLeaseHub, authentication: NotchAuthenticationController,
@@ -127,7 +127,7 @@ import Cocoa
         view.allow = { [weak self] in self?.allow() }
         view.deny = { [weak self] in self?.deny() }
         view.useTerminal = { [weak self] in self?.deferToHost() }
-        guard island.show(view, ownerID: "agentReview", layer: .authorization, lifetimeSeconds: Self.leaseSeconds,
+        guard island.show(view, ownerID: "agentReview", layer: .authorization,
                           onDismiss: { [weak self] _ in self?.dismissed() }) else {
             if restoring { return false }
             // 刘海正被别的东西占着：不抢，交回终端。
@@ -136,7 +136,6 @@ import Cocoa
             return false
         }
         presented = view
-        armIdle()
         NSAccessibility.post(element: view, notification: .announcementRequested, userInfo: [
             .announcement: AgentApprovalCard.announcement(agent: Self.agentName, summary: tool),
             .priority: NSAccessibilityPriorityLevel.high.rawValue])
