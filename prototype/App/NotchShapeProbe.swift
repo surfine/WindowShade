@@ -3,7 +3,7 @@
 // 先把每块屏的形状记下来：从哪来（bezelPath / 机型表 / 现版本）、pxPerPt、刘海底角和肩、屏幕的角、和机型表差多少面板像素；
 // 再问一遍，确认是按屏缓存的（不重复算，不增加常驻耗电）。然后在带刘海那块屏上直接摆出几种样子，量岛和肩：
 // - 静止：岛不画，肩和硬件的肩重合；
-// - 紧凑样式、两边空 34 点：肩从两侧扣（S1），外沿和面板都和现版本一样宽，肩贴在岛的上角，肩那层窗口不接指针（S2）；
+// - 紧凑样式、两边空 60 点（耳宽照 IslandMetrics）：肩从两侧扣（S1），外沿和面板都和现版本一样宽，肩贴在岛的上角，肩那层窗口不接指针（S2）；
 // - 紧凑样式、两边只空 30 点：扣完不够 26 点，不画肩，和现版本一样；
 // - 下巴（一边只空 10 点）：主体和刘海一样宽，肩和硬件的肩重合；
 // - 展开一排：肩直接收掉（从和硬件重合的地方出发，不先亮出来再缩；S3）；收回下巴时一路不长，停稳后换回和硬件重合；
@@ -43,7 +43,14 @@ extension GlanceProbe {
     }
     // 中途被取消（Task.sleep 抛错）也要收回原样：硬件形状、展开、紧凑样式。
     let original = panel.hardware
+    // 真机上可能正有活动（音乐、计时器、编程会话）把岛撑在紧凑：先记下来、清空，量完放回。
+    let activities = panel.activitiesForProbe
+    if !activities.items.isEmpty {
+      print("INFO notch-shape: clearing \(activities.items.count) live activities for the run (\(activities.items.map { "\($0.kind)" }.joined(separator: ", ")))")
+      panel.setActivities([], selected: nil)
+    }
     defer {
+      if !activities.items.isEmpty { panel.setActivities(activities.items, selected: activities.selected) }
       panel.hardware = original
       panel.collapse()
       panel.setCompact(nil, room: nil)
@@ -65,6 +72,7 @@ extension GlanceProbe {
         }
         if steady >= 3 { return panel.shapeForProbe }
       }
+      print("INFO notch-shape: did not settle: \(panel.stateForProbe) island \(panel.shapeForProbe.map { "\($0.island)" } ?? "-")")
       return nil
     }
     func near(_ a: CGFloat, _ b: CGFloat, _ tolerance: CGFloat = 0.01) -> Bool { abs(a - b) <= tolerance }
@@ -95,21 +103,23 @@ extension GlanceProbe {
     } == true
     print("\(bareOK && notch.isBareNotch ? "PASS" : "FAIL") notch-shape: at rest the island is the notch itself, hugged with its own \(String(format: "%.2f", curves.bottomRadius)) pt corners, and the shoulders sit on the hardware ones (\(bare.map { "\($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "did not settle"))")
 
-    // 紧凑样式，两边空 34 点：S1 从两侧扣掉肩；外沿、面板和现版本一样宽；肩贴在岛的上角，不接指针。
-    let full = MenuBarRoom.Sides(leading: 34, trailing: 34)
+    // 紧凑样式，两边空 60 点（够一只整耳，IslandMetrics.compactEarWidth）：S1 从两侧扣掉肩；外沿、面板不超过整耳；肩贴在岛的上角，不接指针。
+    let full = MenuBarRoom.Sides(leading: 60, trailing: 60)
     let sides = try await settle({ panel.setCompact(fake, room: full) }, until: { $0.width > rect.width + 40 })
     let sidesOK = sides.map { s in
       let body = sideWidth - e
       let expectedPanel = NSIntegralRectWithOptions(rect.insetBy(dx: -sideWidth, dy: 0), .alignAllEdgesOutward)
-      return near(s.island.minX, rect.minX - body) && near(s.island.maxX, rect.maxX + body) && s.panel == expectedPanel
-        && near(s.radius, curves.bottomRadius)
+      return near(s.island.minX, rect.minX - body) && near(s.island.maxX, rect.maxX + body)
+        // 耳宽 52.33 不是整数，面板按整点取整，差不到 1 点（肩在另一层窗口，不受影响）。
+        && near(s.panel.minX, expectedPanel.minX, 1) && near(s.panel.maxX, expectedPanel.maxX, 1)
+        && near(s.radius, IslandMetrics.compactCornerRadius)
         && s.shoulders.map {
           $0.ignoresMouse && $0.leading.scale == 1 && $0.trailing.scale == 1
             && near($0.leading.corner.x, s.island.minX) && near($0.trailing.corner.x, s.island.maxX)
             && near($0.leading.corner.x - $0.extent, rect.minX - sideWidth) && near($0.trailing.corner.x + $0.extent, rect.maxX + sideWidth)
         } == true
     } == true
-    print("\(sidesOK && notch.islandFillsPanel ? "PASS" : "FAIL") notch-shape: compact sides with 34 pt free take the shoulders out of the sides (body \(String(format: "%.2f", sideWidth - e)) + shoulder \(String(format: "%.2f", e))), reach no further than before, keep the panel as wide as before, and the shoulders ride the island's top corners without taking clicks (\(sides.map { "island \($0.island) panel \($0.panel) \(describe($0.shoulders))" } ?? "did not settle"))")
+    print("\(sidesOK && notch.islandFillsPanel ? "PASS" : "FAIL") notch-shape: compact sides with 60 pt free take the shoulders out of the sides (body \(String(format: "%.2f", sideWidth - e)) + shoulder \(String(format: "%.2f", e))), reach no further than before, keep the panel as wide as before, and the shoulders ride the island's top corners without taking clicks (\(sides.map { "island \($0.island) panel \($0.panel) \(describe($0.shoulders))" } ?? "did not settle"))")
 
     // 两边只空 30 点：扣完不够 26 点，不画肩，和现版本一样。
     let narrow = try await settle({ panel.setCompact(fake, room: MenuBarRoom.Sides(leading: 30, trailing: 30)) },
@@ -150,14 +160,14 @@ extension GlanceProbe {
     let backOK = back?.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1 && !$0.resizing } == true
     print("\(snapped && held && backOK ? "PASS" : "FAIL") notch-shape: from the chin the unseen shoulders go at once when the row expands (not shown and shrunk), stay off on the way back, and sit on the hardware ones again once settled (snap \(snapped), held \(held), \(back.map { describe($0.shoulders) } ?? "did not settle"))")
 
-    // 假装不知道硬件形状：没有肩那层窗口，底角回到 10 / 12，紧凑样式两侧 34 点（和现版本逐一相等）。
+    // 假装不知道硬件形状：没有肩那层窗口，静止底角回到 10，紧凑样式两耳照 IslandMetrics（底角 = 高的一半）。
     panel.hardware = nil
     let legacyBare = try await settle({ panel.setCompact(nil, room: nil) }, until: { $0 == rect })
     let legacySides = try await settle({ panel.setCompact(fake, room: full) }, until: { near($0.width, rect.width + 2 * sideWidth) })
     panel.hardware = curves
     let legacyOK = legacyBare.map { $0.shoulders == nil && near($0.radius, 10) } == true
-      && legacySides.map { $0.shoulders == nil && near($0.radius, 12) && near($0.island.minX, rect.minX - sideWidth) } == true
-    print("\(legacyOK ? "PASS" : "FAIL") notch-shape: with the shape unknown the island is exactly today's (no shoulders, 10 pt at rest, 12 pt compact, 34 pt sides) (\(legacySides.map { "\($0.island) r\($0.radius)" } ?? "did not settle"))")
+      && legacySides.map { $0.shoulders == nil && near($0.radius, IslandMetrics.compactCornerRadius) && near($0.island.minX, rect.minX - sideWidth) } == true
+    print("\(legacyOK ? "PASS" : "FAIL") notch-shape: with the shape unknown there are no shoulders, 10 pt at rest, and compact ears \(sideWidth) pt wide with \(IslandMetrics.compactCornerRadius) pt corners (\(legacySides.map { "\($0.island) r\($0.radius)" } ?? "did not settle, last \(panel.shapeForProbe.map { "\($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "-") settled \(panel.isSettledForProbe)"))")
   }
 
   /// 亲眼校准（--notch-calibrate，设计系统 §7.3）：自动测试只能证明“和 bezelPath 一致”，这一步看它和实物是不是一致。

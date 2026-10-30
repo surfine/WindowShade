@@ -13,6 +13,12 @@ enum ConductorClaudeProbe {
     private static let logURL = URL(fileURLWithPath:
         ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_OUT"] ?? "/tmp/windowshade-conductor-probe.txt")
 
+    /// WINDOWSHADE_PROBE_REAL_CLAUDE=1：接真 Claude 跑一次（AARON-DECISIONS 第 37 条）。问一个只有模型会答出来的数，等久一点。
+    private static let real = ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_REAL_CLAUDE"] == "1"
+    private static let prompt = real ? "What is 17 plus 25? Reply with only the number." : "hello"
+    private static let expectedReply = real ? "42" : "reply: hello"
+    private static let pollAttempts = real ? 900 : 60
+
     private static func log(_ line: String) {
         let data = Data((line + "\n").utf8)
         if let handle = try? FileHandle(forWritingTo: logURL) {
@@ -59,27 +65,28 @@ enum ConductorClaudeProbe {
             return
         }
         log("backend selected")
-        page.probeSetDraft("hello")
+        page.probeSetDraft(prompt)
         guard owner.ws2Runtime.remoteConductorAction(.playPause) else {
             log("FAIL conductor-claude-page: remote send did not reach the page")
             finish(ok: false)
             return
         }
         log("sent hello via remote play")
-        poll(page, attempts: 60, owner: owner)
+        poll(page, attempts: pollAttempts, owner: owner)
     }
 
     private static func poll(_ page: WS2ConductorPageView, attempts: Int, owner: AppDelegate) {
         let transcript = page.probeClaudeTranscript
-        if transcript.contains("reply: hello"), page.probeClaudeStatus == .ready {
+        if transcript.contains(expectedReply), page.probeClaudeStatus == .ready {
             var failures = 0
             func expect(_ ok: Bool, _ text: String) {
                 if !ok { failures += 1 }
                 log("\(ok ? "ok  " : "FAIL") \(text)")
             }
             expect(page.probeInputIsCurrent, "page is current (was always false before the fix)")
-            expect(transcript.contains("hello"), "transcript has the sent text")
-            expect(transcript.contains("reply: hello"), "transcript has the fake CLI reply")
+            expect(transcript.contains(prompt), "transcript has the sent text")
+            expect(transcript.contains(expectedReply), "transcript has the \(real ? "real Claude" : "fake CLI") reply")
+            if real { log("transcript: \(transcript)") }
             expect(page.probeClaudeStatus == .ready, "the turn ended back in ready")
             page.probeSetDraft("second")
             page.probeSend()
@@ -88,7 +95,7 @@ enum ConductorClaudeProbe {
             return
         }
         guard attempts > 0 else {
-            log("FAIL conductor-claude-page: no reply in 6s (status=\(page.probeClaudeStatus))")
+            log("FAIL conductor-claude-page: no reply in \(pollAttempts / 10)s (status=\(page.probeClaudeStatus)) transcript: \(transcript)")
             finish(ok: false)
             return
         }

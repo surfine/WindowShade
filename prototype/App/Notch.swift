@@ -3043,6 +3043,9 @@ final class NotchPanel: NSPanel {
         canvas.setAuthentication(view, retreating: retreating && animated)
         updateVisibility(); apply(animated: animated)
     }
+    /// 形状探针：此刻挂着的活动（有活动时岛停在紧凑，量不到静止态），以及暂时清空、事后放回。
+    var activitiesForProbe: (items: [NotchActivity], selected: String?) { (activityItems, activitySelection) }
+
     func setActivities(_ items: [NotchActivity], selected: String?) {
         guard activityItems != items || activitySelection != selected else { return }
         let changedShape = activityItems.isEmpty != items.isEmpty
@@ -3173,6 +3176,10 @@ final class NotchPanel: NSPanel {
     /// 最近一次停稳的是哪一次变形（探针用：等到这一次真的停下、面板缩回、肩换好了再量）。
     private var settledGeneration = 0
     var isSettledForProbe: Bool { settledGeneration == settleGeneration }
+    /// 形状探针停不下来时，说清是谁撑着岛。
+    var stateForProbe: String {
+        "compact \(compact.map { "count \($0.count)" } ?? "nil") display \(displayCompact().map { "count \($0.count) leading \($0.leading ?? "-")" } ?? "nil") meter \(meter != nil) flash \(powerFlashState != nil) alert \(alertInfo != nil) expanded \(isExpanded) pulled \(pulled) drop \(dropState) gen \(settledGeneration)/\(settleGeneration)"
+    }
 
     /// 落点小岛（Cocoa 坐标）：刘海正下方、菜单栏下面，横着排五个去处。
     var dropZone: NSRect {
