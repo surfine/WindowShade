@@ -48,7 +48,7 @@ extension GlanceProbe {
     try postHabitKey(8, .maskControl, to: fixture)
     try await wait("copy tip", timeout: 4) { notch.announcementForProbe?.demo == .habit }
     let copyTip = notch.announcementForProbe
-    print("\(copyTip?.title == "Mac 上拷贝按 ⌘C" && copyTip?.tone == .tip ? "PASS" : "FAIL") habits: ⌃C that did nothing is taught once "
+    print("\(copyTip?.title == HabitWords.lines(.copy, menuTitle: "拷贝").title && copyTip?.tone == .tip ? "PASS" : "FAIL") habits: ⌃C that did nothing is taught once "
           + "on the notch with the menu's own word (\(copyTip?.title ?? "nothing"); \(lastVerdicts(center)))")
     try await wait("copy tip gone", timeout: 9) { !notch.isAlerting }
     try postHabitKey(8, .maskControl, to: fixture)
@@ -84,7 +84,7 @@ extension GlanceProbe {
     let saveTip = notch.announcementForProbe
     notch.tapAnnouncementForProbe()
     try await wait("saved by the tip", timeout: 4) { savedCount(fixture) > before }
-    print("\(saveTip?.title == "Mac 上存储按 ⌘S" && center.memory.ledger.used.contains("save") ? "PASS" : "FAIL") habits: clicking the tip "
+    print("\(saveTip?.title == HabitWords.lines(.save, menuTitle: "存储").title && center.memory.ledger.used.contains("save") ? "PASS" : "FAIL") habits: clicking the tip "
           + "saves for him and the rule is learned (\(saveTip?.title ?? "nothing"); saved \(before) → \(savedCount(fixture)))")
 
     // 5. 小叉：位置记下了，点它只关这一次，下次还会说。

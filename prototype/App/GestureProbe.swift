@@ -119,7 +119,7 @@ extension GlanceProbe {
       }
     }
     try await Task.sleep(for: .milliseconds(400), clock: .suspending)
-    guard unavailableTitle == "没有可撤销的排布", gestures.lastPerformed == nil,
+    guard unavailableTitle == WSL10n.text("browser.reason.nothingToUndo", zh: "没有可撤销的排布"), gestures.lastPerformed == nil,
           let still = bounds(id), closeTo(still, original) else {
       throw EffectError.unavailable("pinch without undo: title=\(unavailableTitle ?? "nil") performed=\(String(describing: gestures.lastPerformed))")
     }
@@ -764,7 +764,7 @@ extension GlanceProbe {
     let half = GestureAction.leftHalf.tile!.frame(in: area)
     let sameSize = abs(after.width - before.width) <= 2 && abs(after.height - before.height) <= 2
     let centered = abs(after.midX - half.midX) <= 4 && abs(after.midY - half.midY) <= 4
-    print("\(sameSize && centered && title == "这个窗口不能改大小，放在了正中" ? "PASS" : "FAIL") grid: a window that can't be resized keeps its size, lands in the middle of the left half and the bubble says so (before=\(before) after=\(after) title=\(title ?? "nil"))")
+    print("\(sameSize && centered && title == WSL10n.text("gesture.note.fixedSizeCentered", zh: "这个窗口不能改大小，放在了正中") ? "PASS" : "FAIL") grid: a window that can't be resized keeps its size, lands in the middle of the left half and the bubble says so (before=\(before) after=\(after) title=\(title ?? "nil"))")
     setAXPosition(small, before.origin)
   }
 
@@ -781,7 +781,7 @@ extension GlanceProbe {
 
     owner.quietNotice(WSL10n.text("notice.probe.noWindows", zh: "没有可以收起的窗口"), kind: .problem)
     let problem = notch.announcementForProbe
-    print("\(problem?.tone == .problem && problem?.title == "没有可以收起的窗口" ? "PASS" : "FAIL") coach: a failure is said on the notch with the problem tone, not in the menu bar (\(problem.map { "\($0.title)" } ?? "nothing"))")
+    print("\(problem?.tone == .problem && problem?.title == WSL10n.text("notice.probe.noWindows", zh: "没有可以收起的窗口") ? "PASS" : "FAIL") coach: a failure is said on the notch with the problem tone, not in the menu bar (\(problem.map { "\($0.title)" } ?? "nothing"))")
     try await wait("problem gone", timeout: 6) { !notch.isAlerting }
 
     owner.quietNotice(WSL10n.text("notice.probe.carried", zh: "已带到每张桌面"), kind: .done)
@@ -1603,11 +1603,11 @@ extension GlanceProbe {
     try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let hidden = !pins.panelVisibleForProbe(id: id) && pins.isSuspended(id: id) && !pins.isRunning(id: id)
     let during = pins.suspendAllMenuTitle()
-    print("\(hidden && pins.isPreviewing(id: id) && before == "暂时取消全部置顶" && during == "恢复全部置顶" ? "PASS" : "FAIL") pins: suspending hides the pinned panel and stops its picture but keeps the pin (menu: \(before) → \(during))")
+    print("\(hidden && pins.isPreviewing(id: id) && before == pinsSuspendTitle && during == pinsResumeTitle ? "PASS" : "FAIL") pins: suspending hides the pinned panel and stops its picture but keeps the pin (menu: \(before) → \(during))")
     pins.toggleSuspendAll()
     try await wait("resumed", timeout: 5) { pins.panelVisibleForProbe(id: self.id) && !pins.isSuspended(id: self.id) }
     let panelBack = bounds(id)
-    print("\(pins.suspendAllMenuTitle() == "暂时取消全部置顶" ? "PASS" : "FAIL") pins: pressing again puts it back where it was (window \(panelBack.map { "\($0)" } ?? "-"))")
+    print("\(pins.suspendAllMenuTitle() == pinsSuspendTitle ? "PASS" : "FAIL") pins: pressing again puts it back where it was (window \(panelBack.map { "\($0)" } ?? "-"))")
     // 暂停期间源窗口没了：恢复时不复活一个指向空窗口的面板。
     pins.toggleSuspendAll()
     try await Task.sleep(for: .milliseconds(200), clock: .suspending)
@@ -2453,3 +2453,7 @@ extension GlanceProbe {
     task.waitUntilExit()
   }
 }
+
+/// 置顶暂停菜单项的当前语言文字：探针跟着界面语言比对，不写死简体（界面跟系统时可能是繁体或英文）。
+private var pinsSuspendTitle: String { WSL10n.text("settings.shortcut.suspendPins", zh: "暂时取消全部置顶") }
+private var pinsResumeTitle: String { WSL10n.text("menu.resumeAllPins", zh: "恢复全部置顶") }
