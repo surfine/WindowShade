@@ -131,6 +131,8 @@ struct NotchActivity: Equatable, Sendable {
     var sessionPhase: NotchSessionPhase?
     /// 日程的两耳怎么画（只有 `.calendar` 种类有值）：日历颜色、开始后能不能加入、有没有会议链接。
     var calendar: NotchCalendarFace?
+    /// 编程会话：现在有几个会话（右耳“好几个”时写个数）。只有 `.session` 种类有值，做完那条是 nil。
+    var sessionCount: Int? = nil
     /// 来源给的相关度 0–4（越大越要紧）。只在同一种类里分先后（两个会话，在等你的那个 +4），不能让音乐跨过下载。
     var relevance: Int
     /// 过期时间（稿里的“过期”，单调秒）：到点还没新消息或新进展，内容降到 0.5、右耳“—”、读屏“可能已停”。nil 是不会过期。
@@ -995,6 +997,8 @@ struct CodingSessionActivities {
         var symbol: String
         var trailing: String
         var phase: NotchSessionPhase
+        /// 现在有几个会话；做完那条是 nil。
+        var sessionCount: Int? = nil
         /// 去哪里：完整目录。
         var cwd: String
         var sessionID: String
@@ -1127,7 +1131,7 @@ struct CodingSessionActivities {
                                                        : WSL10n.text("notch.session.running", zh: "%@在跑", first.assistant),
                                   symbol: Self.symbol,
                                   trailing: waitingNow ? WSL10n.text("notch.session.waitingTag", zh: "等你") : "",
-                                  phase: waitingNow ? .waiting : .running,
+                                  phase: waitingNow ? .waiting : .running, sessionCount: 1,
                                   cwd: first.cwd, sessionID: first.id, expiresAt: nil))
         }
         return withUsage(Spec(title: WSL10n.text("notch.session.count", zh: "%@ 个会话", String(all.count)),
@@ -1136,7 +1140,7 @@ struct CodingSessionActivities {
                                   : WSL10n.text("notch.session.countWaiting", zh: "%@ 个在等你", String(waiting.count)),
                               symbol: Self.symbol,
                               trailing: waiting.isEmpty ? "" : WSL10n.text("notch.session.waitingTag", zh: "等你"),
-                              phase: waiting.isEmpty ? .running : .waiting,
+                              phase: waiting.isEmpty ? .running : .waiting, sessionCount: all.count,
                               cwd: target.cwd, sessionID: target.id, expiresAt: nil))
     }
 
@@ -1195,6 +1199,60 @@ enum NotchSessionEar {
     static let spinnerPeriod: Double = 1.0
     /// 琥珀色“等你”用 systemOrange（视图层取色）。
     static var waitingText: String { WSL10n.text("notch.session.waitingTag", zh: "等你") }
+
+    // MARK: 紧凑右耳的四态（稿《刘海里的编程会话》②）
+
+    /// 右耳上的样子：符号 + 字。在跑 = 转圈 + 项目名；等你 = 琥珀点 + “等你”；做完 = 对勾；好几个 = 个数 + 最急的状态点。
+    struct Face: Equatable, Sendable {
+        enum Mark: Equatable, Sendable { case spinner, amberDot, quietDot, check }
+        var mark: Mark?
+        /// 已经按 `IslandMetrics.sessionNameMaxWidth` 截过宽的字；空 = 只留符号。
+        var text: String
+        var textWidth: CGFloat
+        /// 字是个数（好几个会话），画在符号前面。
+        var isCount = false
+    }
+
+    /// 两边菜单栏的空位够不够放字。`room` = 两边量到的空位的小者；没量到按挤算。
+    static func hasRoomForText(_ room: CGFloat?) -> Bool {
+        (room.map { floor($0) } ?? 0) >= IslandMetrics.sessionTextMinimumRoom
+    }
+
+    /// 右耳画什么。额度那两种（右耳写“剩 p%”）不归这里，返回 nil。
+    /// 挤的时候：在跑只留转圈、等你只留琥珀点、好几个只留个数。
+    static func face(phase: NotchSessionPhase, sessionCount: Int, projectName: String,
+                     room: CGFloat?, measure: (String) -> CGFloat) -> Face? {
+        guard phase == .running || phase == .waiting || phase == .done else { return nil }
+        let roomy = hasRoomForText(room)
+        if phase == .done { return Face(mark: .check, text: "", textWidth: 0) }
+        if sessionCount > 1 {
+            let count = String(sessionCount)
+            return Face(mark: roomy ? (phase == .waiting ? .amberDot : .quietDot) : nil, text: count, textWidth: measure(count), isCount: true)
+        }
+        switch phase {
+        case .running:
+            guard roomy, !projectName.isEmpty else { return Face(mark: .spinner, text: "", textWidth: 0) }
+            return Face(mark: .spinner, text: projectName, textWidth: min(IslandMetrics.sessionNameMaxWidth, measure(projectName)))
+        default:
+            guard roomy else { return Face(mark: .amberDot, text: "", textWidth: 0) }
+            let tag = waitingText
+            return Face(mark: .amberDot, text: tag, textWidth: measure(tag))
+        }
+    }
+
+    /// 这一副样子要每耳多宽：挤的时候就是耳宽；够宽时按内容放，至多到量到的空位。
+    static func earSide(face: Face, earWidth: CGFloat, room: CGFloat?) -> CGFloat {
+        guard face.mark != .check, hasRoomForText(room), let room else { return earWidth }
+        let mark: CGFloat
+        switch face.mark {
+        case .spinner?: mark = IslandMetrics.sessionSpinnerDiameter
+        case .amberDot?, .quietDot?: mark = IslandMetrics.sessionDotDiameter
+        default: mark = 0
+        }
+        let gap = mark > 0 && face.textWidth > 0 ? IslandMetrics.sessionEarGap : 0
+        let need = 2 * IslandMetrics.sessionEarInset + mark + gap + face.textWidth
+        return max(earWidth, min(need, floor(room)))
+    }
 }
 
 /// “过去”：按会话所在的目录，在终端窗口的标题或 AXDocument 里认出是哪一扇。纯逻辑；取标题和文档的是 App 那一层。

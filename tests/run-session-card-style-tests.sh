@@ -6,7 +6,7 @@ BUILD="$ROOT/.build/session-card-style"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/Core/Contracts.swift" \
-  "$ROOT/prototype/Core/AgentSessions.swift" "$ROOT/prototype/Core/SessionCardStyle.swift" \
+  "$ROOT/prototype/Core/AgentSessions.swift" "$ROOT/prototype/Core/IslandMetrics.swift" "$ROOT/prototype/Core/SessionCardStyle.swift" \
   "$ROOT/tests/support/WS2TestSupport.swift" "$ROOT/tests/SessionCardStyleTests.swift" \
   -o "$BUILD/tests"
 "$BUILD/tests"

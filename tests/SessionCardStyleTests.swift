@@ -69,6 +69,47 @@ struct SessionCardStyleTests {
                  && AgentApprovalCard.needsTouchID(.normal) == (AgentApprovalCard.riskNote(.normal) != nil),
                  "有风险行的正是要 Touch ID 的")
 
+        t.section("S11B2-01", "尺寸只从 IslandMetrics 来")
+        t.expect(S.cardSize.width == IslandMetrics.expandedWidth && S.notchReferenceHeight == IslandMetrics.compactHeight, "卡宽、耳高取自 IslandMetrics")
+
+        t.section("S11B2-02", "缩回：弹簧解析解的位置与速度")
+        for z in [1.0, 0.84] {
+            let run = S.SpringRun(response: 0.38, dampingRatio: z, from: 0, to: 1)
+            t.expect(abs(run.position(at: 0)) < 1e-12 && abs(run.velocity(at: 0)) < 1e-12, "z=\(z)：起点在 from、初速 0")
+            t.expect(abs(run.position(at: 3) - 1) < 1e-6, "z=\(z)：最后落在 to")
+            for time in [0.05, 0.15, 0.3] {
+                let h = 1e-5
+                let numeric = (run.position(at: time + h) - run.position(at: time - h)) / (2 * h)
+                t.expect(abs(numeric - run.velocity(at: time)) < 1e-4, "z=\(z)：t=\(time) 速度与位置的导数一致")
+            }
+        }
+        let critical = S.SpringRun(response: 0.38, dampingRatio: 1, from: 0, to: 1)
+        t.expect((0...300).allSatisfy { critical.position(at: Double($0) / 100) <= 1 + 1e-9 }, "settle 不回弹：从不越过口子")
+        let mid = S.SpringRun(response: 0.38, dampingRatio: 1, from: 0.4, to: 1, initialVelocity: 2)
+        t.expect(abs(mid.velocity(at: 0) - 2) < 1e-12 && abs(mid.position(at: 0) - 0.4) < 1e-12, "接着走：起点和初速都是给的")
+
+        t.section("S11B2-03", "缩回的姿态：缩放和透明度由同一个进度推出")
+        let retreat = S.plan(.retreat, reduced: false)
+        t.expect(S.pose(progress: 0, plan: retreat) == (1, 1) && S.pose(progress: 1, plan: retreat) == (S.enterScale, 0), "0 是整卡，1 是缩进点里并淡没")
+        let reducedPose = S.pose(progress: 1, plan: S.plan(.retreat, reduced: true))
+        t.expect(reducedPose.scale == 1 && reducedPose.opacity == 0, "减少动态效果：原处淡出，不缩放")
+        t.expect(S.pose(progress: -1, plan: retreat).scale == 1 && S.pose(progress: 9, plan: retreat).opacity == 0, "进度越界取边")
+
+        t.section("S11B2-04", "2 分钟没人管：缩回琥珀点，不回答、不改期限")
+        var rule = S.IdleRule(shownAt: 100, requestDeadline: 130)
+        t.expect(S.IdleRule.idleSeconds == 120, "2 分钟")
+        t.expect(rule.fire(now: 219.9) == .none && !rule.parked, "没到点不动")
+        t.expect(rule.fire(now: 220) == .retreatToDot && rule.parked, "到点：缩回琥珀点")
+        t.expect(rule.requestDeadline == 130, "请求的期限原样没动（Codex 的 30 秒、Claude Code 的无期限都不碰）")
+        t.expect(rule.fire(now: 500) == .none, "只缩回一次")
+        t.expect(rule.restore(now: 600) && !rule.parked && rule.shownAt == 600, "点耳朵把卡请回来，重新计 2 分钟")
+        t.expect(rule.fire(now: 719) == .none && rule.fire(now: 720) == .retreatToDot, "请回来后又是 2 分钟")
+        var answered = S.IdleRule(shownAt: 0)
+        answered.cancel()
+        t.expect(answered.fire(now: 999) == .none && !answered.restore(now: 1000), "已回答或交给 Touch ID 的不再触发、不再回来")
+        var never = S.IdleRule(shownAt: 0, requestDeadline: nil)
+        t.expect(!never.restore(now: 1), "没缩回去就谈不上请回来")
+
         t.finish()
     }
 }
