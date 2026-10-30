@@ -68,7 +68,6 @@ struct AwaySummaryTests {
             downloads: [.init(name: "a.zip", at: 150)], tuckedCount: 3, interval: span)
         expect(all?.items.map(\.kind) == [.intrusion, .device, .window, .download], "kinds come out intrusion, device, window, download")
         expect(all?.lines == ["收着 3 扇窗口", "被解锁了一次", "妙控鼠标 18%", "终端有变化", "下载好了 · a.zip"], "lines lead with the tucked count")
-        expect(all?.firstWindowID == 1, "the first reachable window is found past non-window items")
         expect(all?.compactDetail == "被解锁了一次，还有 3 件", "the compact line is the first item plus how many more")
         expect(all?.spoken == "收着 3 扇窗口；被解锁了一次；妙控鼠标 18%；终端有变化；下载好了 · a.zip", "the spoken form joins every line")
         let lowFirst = S.build(devices: [
@@ -132,25 +131,67 @@ struct AwaySummaryTests {
         if case .summary = log.finish(unlocked: true, at: 400, reality: reality()) { expect(true, "a clock step back still reports the start instant") }
         else { expect(false, "a clock step back still reports the start instant") }
 
-        // 点一项（拍板 10-29 第 15 条）：在这一排里回到原处，在别的桌面上去，都不在了不做什么
-        let tapSummary = S.build(
-            windows: [.init(id: 7, app: "终端", at: 150), .init(id: 9, app: "备忘录", at: 130)],
-            tuckedCount: 0, interval: span)!
-        var calls: [String] = []
-        func tap(_ where_: @escaping (UInt32) -> S.Whereabouts) -> Bool {
-            calls.removeAll()
-            return tapSummary.tap(whereabouts: where_, backToPlace: { calls.append("back \($0)") }, goThere: { calls.append("go \($0)") })
+        // 每个格子各点各的（稿对照账 1、3、4、5）
+        let url1 = URL(fileURLWithPath: "/tmp/Downloads/a.zip")
+        let url2 = URL(fileURLWithPath: "/tmp/Downloads/b.zip")
+        let mixed = S.build(
+            intrusions: [.init(text: "被解锁了一次", at: 150)],
+            devices: [.init(deviceID: "m", name: "妙控鼠标", part: nil, percent: 18, at: 150)],
+            windows: [.init(id: 7, app: "终端", at: 150)],
+            downloads: [.init(name: "a.zip", at: 150, url: url1)], tuckedCount: 0, interval: span)!
+        func probe(_ w: @escaping (UInt32) -> S.Whereabouts = { _ in .inRow }, files: Set<URL> = [url1, url2]) -> S.Probe {
+            S.Probe(whereabouts: w, fileExists: { files.contains($0) })
         }
-        expect(tap { _ in .inRow } && calls == ["back 7"], "tapping with the shown window in the row puts it back")
-        expect(tap { _ in .otherDesktop } && calls == ["go 7"], "tapping with the shown window on another desktop goes there")
-        expect(!tap { $0 == 7 ? .gone : .inRow } && calls.isEmpty, "a shown window that is already gone does nothing, not another window")
-        expect(!tap { _ in .gone } && calls.isEmpty, "nothing left to go to does nothing")
-        let deviceFirst = S.build(
-            devices: [.init(deviceID: "m", name: "妙控鼠标", part: nil, percent: 8, at: 110)],
-            windows: [.init(id: 7, app: "终端", at: 150)], tuckedCount: 0, interval: span)!
-        expect(deviceFirst.tapAction(whereabouts: { _ in .inRow }) == nil, "a line that leads with a device never acts on a window it does not mention")
-        let noWindow = S.build(downloads: [.init(name: "a.zip", at: 110)], tuckedCount: 3, interval: span)!
-        expect(noWindow.tapAction(whereabouts: { _ in .inRow }) == nil, "an item without a window has nothing to go to")
+        let states = mixed.items.map { $0.state(probe()) }
+        expect(states == [.informational, .actionable(.openBluetoothSettings), .actionable(.backToPlace(7)), .actionable(.revealFile(url1))],
+               "each item carries its own action: nothing, Bluetooth, back to place, reveal in Finder")
+        expect(mixed.items[2].state(probe({ _ in .otherDesktop })) == .actionable(.goThere(7)), "a window on another desktop is 'go there'")
+        expect(mixed.items[2].state(probe({ _ in .gone })) == .gone, "a window that is gone is gray")
+        expect(mixed.items[3].state(probe(files: [])) == .gone, "a download whose file is gone is gray")
+        let two = S.build(downloads: [.init(name: "a.zip", at: 150, url: url1), .init(name: "b.zip", at: 140, url: url2)], tuckedCount: 0, interval: span)!
+        expect(two.items[0].state(probe()) == .actionable(.openDownloadsFolder), "several files open the Downloads folder")
+        expect(two.items[0].state(probe(files: [url2])) == .actionable(.openDownloadsFolder), "several files with one left still open the folder")
+        let noURL = S.build(downloads: [.init(name: "a.zip", at: 150)], tuckedCount: 0, interval: span)!
+        expect(noURL.items[0].state(probe(files: [])) == .actionable(.openDownloadsFolder), "an unknown location falls back to the folder")
+        if case .device(_, let name, _, let percent) = mixed.items[1].content { expect(name == "妙控鼠标" && percent == 18, "device content is structured") }
+        else { expect(false, "device content is structured") }
+        expect(S.TapAction.backToPlace(1).leavesRow == false && S.TapAction.goThere(1).leavesRow
+               && S.TapAction.openBluetoothSettings.leavesRow && S.TapAction.openDownloadsFolder.leavesRow, "only back-to-place stays")
+
+        // 列表寿命、还有 N 件、去重、再问一次现状
+        var list = AwayList(mixed)!
+        expect(list.cells.count == 4 && list.windowIDs == [7] && !list.showsOmittedCell, "list is fixed from the summary; windows exposed for dedupe")
+        let big = S.build(intrusions: [.init(text: "x", at: 150)],
+                          devices: (0..<3).map { .init(deviceID: "d\($0)", name: "d\($0)", part: nil, percent: 5 + $0, at: 150) },
+                          windows: [.init(id: 7, app: "终端", at: 150), .init(id: 8, app: "备忘录", at: 150)],
+                          downloads: [.init(name: "a", at: 150)], tuckedCount: 0, interval: span)!
+        let bigList = AwayList(big)!
+        expect(big.omitted == 3 && bigList.omitted == 3 && bigList.showsOmittedCell && bigList.totalCount == 7, "the narrow cell counts only the omitted items")
+        expect(AwayList.isAwayID(AwayList.omittedID) && !AwayList.isAwayID(0xF000_0001) && !AwayList.isAwayID(77), "away ids do not collide")
+        var expiring = AwayList(mixed)!
+        expect(expiring.alertEnded() && expiring.isEmpty, "the alert ending before it was opened clears the list")
+        var opened = AwayList(mixed)!
+        opened.rowOpened()
+        expect(!opened.alertEnded() && !opened.isEmpty, "opening the row stops the timer")
+        opened.rowClosed()
+        expect(opened.isEmpty, "closing the row clears the list")
+        let backID = list.cells[2].id
+        expect(list.tap(backID, probe: probe()) == .perform(.backToPlace(7)) && list.cells.count == 3 && list.windowIDs.isEmpty,
+               "back to place removes only that cell")
+        expect(list.tap(backID, probe: probe()) == .refused, "a removed cell cannot be tapped again")
+        expect(list.tap(list.cells[0].id, probe: probe()) == .refused && list.cells.count == 3, "an informational cell does nothing")
+        var again = AwayList(mixed)!
+        let before = again.states(probe())[again.cells[2].id]
+        expect(before == .actionable(.backToPlace(7)), "the row asks when it opens")
+        expect(again.tap(again.cells[2].id, probe: probe({ _ in .gone })) == .refused && again.cells.count == 4,
+               "the second asking wins: a window gone by the tap does nothing")
+        expect(again.states(probe({ _ in .gone }))[again.cells[2].id] == .gone, "and the cell shows gray")
+        expect(again.tap(again.cells[1].id, probe: probe()) == .perform(.openBluetoothSettings) && again.isEmpty,
+               "a leaving action clears the whole list")
+        var last = AwayList(S.build(windows: [.init(id: 7, app: "终端", at: 150)], tuckedCount: 0, interval: span)!)!
+        _ = last.tap(last.cells[0].id, probe: probe())
+        expect(last.isEmpty && !last.showsOmittedCell, "the last cell leaving empties the list")
+        expect(AwayList(S.Summary(items: [], omitted: 0, tuckedCount: 2)) == nil, "no items, no list")
 
         print(failures == 0 ? "all passed" : "\(failures) FAILED")
         exit(failures == 0 ? 0 : 1)
