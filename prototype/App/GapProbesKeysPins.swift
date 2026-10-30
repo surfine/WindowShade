@@ -163,7 +163,7 @@ extension GlanceProbe {
         targets.allSatisfy { pins.panelVisibleForProbe(id: $0.1.id) && !pins.isSuspended(id: $0.1.id) }
       }
       let after = try await settledOrder()
-      print("\(away && during == "恢复全部置顶" && after == before ? "PASS" : "FAIL") pins order: with three windows pinned, 暂时取消全部置顶 puts all three away and 恢复全部置顶 brings them back in the same front-to-back order (round \(round): before \(describe(before)), after \(describe(after)))")
+      print("\(away && during == WSL10n.text("menu.resumeAllPins", zh: "恢复全部置顶") && after == before ? "PASS" : "FAIL") pins order: with three windows pinned, 暂时取消全部置顶 puts all three away and 恢复全部置顶 brings them back in the same front-to-back order (round \(round): before \(describe(before)), after \(describe(after)))")
     }
   }
 }
