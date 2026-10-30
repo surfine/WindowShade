@@ -17,6 +17,7 @@
 | [WindowShade 读到的](WindowShade%20读到的.html)（[线上](https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA)） | 读了什么、为什么读、去了哪里 | 不是镜头；隐私说明 |
 | [安静的刘海 动效样片](安静的刘海%20动效样片.html)（[线上](https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6)） | 十一根弹簧、卡住开口、收进刘海、欢迎窗口、官网首屏、《一句话》80 秒分镜 | [motion-direction.md](../motion-direction.md)、[film/ws2-opus](../../film/ws2-opus) |
 | [从锁屏到窗口](从锁屏到窗口.html)（[线上](https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH)） | 开盖，认出你，窗口都还在原处 | 概念片第 0 章、opus 的 `lid` |
+| [离开期间](%E7%A6%BB%E5%BC%80%E6%9C%9F%E9%97%B4.html)（[线上](https://claude.ai/artifact/EtfWmxmmpuFzM7FG8hcqtH)） | 2026-10-30：回来时今天的 +52 提醒不变，点开后那一排最前面是离开期间的格子，每一格各点各的（回到原处 / 去 / 已不在变灰）；「还有 N 件」不能点；列表何时清、读屏、减少动态效果、对照账 18 行。设备、下载可点是提议。**稿，等 Aaron 定** | 取代《从锁屏到窗口》「找窗口」的文字条；离开期间摘要的点按 |
 | [卡住时刘海开口](卡住时刘海开口.html)（[线上](https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ)） | 刘海在等什么、开口的节奏 | 概念片前段、opus 的开口、1.0 宣传片若改画面 |
 | [收成缩略图](收成缩略图.html)（[线上](https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N)） | 原地缩成缩略图、排到屏幕边、收进刘海 | 概念片收起、1.0 宣传片的收起 |
 | [欢迎使用 WindowShade](欢迎使用%20WindowShade.html)（[线上](https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc)） | **已被《首次打开 1.0.17 小样》取代，只留作历史。** 欢迎窗口 | 动效样片里的欢迎、官网 |
@@ -28,6 +29,7 @@
 | [WindowShade 2 宣传片 分镜](WindowShade%202%20%E5%AE%A3%E4%BC%A0%E7%89%87%20%E5%88%86%E9%95%9C.html)（[线上](https://claude.ai/artifact/9M2TkLLgiPvNFf3erN3dQ8)） | WindowShade 2 宣传片：节拍、字幕、声音与验收（10-18） | WindowShade 2 宣传片 |
 | [为什么不用最小化](为什么不用最小化.html)（[线上](https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT)） | 看不见的窗口都在刘海里，和最小化的差别 | 1.0 宣传片的收起故事、概念片第 2 章 |
 | [一颗岛](一颗岛.html)（[线上](https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac)） | 岛（紧凑两耳、最小点）与半岛（展开下鼓）、提醒回媒体、内容替换与数字过渡 | 对 Alcove / WWDC23 10194；产品刘海变形；《一句话》与概念片互训 |
+| [照系统的岛](%E7%85%A7%E7%B3%BB%E7%BB%9F%E7%9A%84%E5%B2%9B.html)（[线上](https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR)） | 2026-10-30：没有系统灵动岛的刘海机型上，我们的岛照 MacBook Pro 系统岛的范式：紧凑两耳、最小一颗圆、展开四块；那一排压进展开上限（约 408 × 160，暂定 iOS 尺寸）左右滚动；第二个活动分出小圆；点耳朵打开 App；悬停不再展开。能玩的模拟器、状态对照表、交互表、11 月 6 日后真机量的清单、对照账 8 行、对《离开期间》的改动 | AARON-DECISIONS-2026-10-29 第 28 至 32 条；HIG Live Activities；《一颗岛》《离开期间》 |
 | [手边的每一样](手边的每一样.html)（[线上](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)） | 一个入口，一套动作，任何输入 | 概念片第 4 章 |
 | [看与指挥](看与指挥.html)（[线上](https://claude.ai/artifact/9mbRLt1QGpsKLKip991Xe3)） | 坐在 Mac 前看，躺在沙发上指挥 | 概念片第 5–6 章、opus 的 `draw` / `hold` |
 | [指挥模式](指挥模式.html)（[线上](https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1)） | 手里一部 iPhone，指挥一屏的 Codex 和 Claude | 概念片第 6 章、opus 的 `hold` |

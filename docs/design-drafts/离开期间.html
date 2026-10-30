@@ -1,0 +1,771 @@
+<meta charset="utf-8">
+<title>离开期间</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版式：一颗可玩的刘海（真弹簧）在上；下面依次是每个格子长什么样、「还有 N 件」、同类怎么做、规则、中途改道曲线、弹簧表、对照账。
+   页面色是纸面与墨；刘海里只用白、系统灰和强调色。沿用《刘海里的编程会话》的外观，两张稿并排看是一套。
+   页面字级只有四档：32、20、15、13。舞台和样张格子里的字号照产品，不算在内。 */
+:root{
+  --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --ink3:#6e6f76; --rule:rgba(0,0,0,.1);
+  --accent:#0058cc; --amber:#ff9f0a; --green:#28b14c; --warn:#d9480f;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.62); --menutext:#1b1b1d;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ff9f0a; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ff9f0a; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);font-variant-numeric:tabular-nums;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+header{padding:40px 0 8px}
+h1{font-size:32px;line-height:1.2;margin:0 0 14px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:20px;line-height:1.3;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;font-weight:600;margin:0 0 4px}
+.lede{max-width:66ch;color:var(--ink2);margin:0}
+.lede+.lede{margin-top:8px}
+section{padding:48px 0 0}
+.sec-head{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;margin-bottom:16px}
+.sec-head p{flex-basis:100%;margin:0;color:var(--ink2);max-width:70ch}
+p{margin:.4em 0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
+
+/* 舞台 */
+.stage,.gal .blk{font-variant-numeric:normal}
+.stage-wrap{position:relative;overflow:hidden;border-radius:14px;background:var(--wall-a);border:1px solid var(--rule)}
+.stage{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys);overflow:hidden;
+  background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
+.desk2{position:absolute;left:0;top:0;width:100%;height:100%;background:linear-gradient(200deg,var(--wall-b),var(--wall-a));will-change:transform,opacity}
+.menubar{position:absolute;left:0;right:0;top:0;height:28px;background:var(--menubar);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12.5px;color:var(--menutext)}
+.menubar .l,.menubar .r{display:flex;gap:16px;align-items:center;white-space:nowrap}
+.menubar .l b{font-weight:600}
+.island{position:absolute;top:0;background:#000;overflow:hidden;will-change:left,width,height;color:#fff}
+.island:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.island.btn{cursor:pointer}
+.ink{position:absolute;top:0;height:400px}
+.sh{position:absolute;top:0;pointer-events:none}
+.layer{position:absolute;inset:0;opacity:0;transition:opacity .10s ease;pointer-events:none;color:#fff}
+.layer.on{opacity:1;transition:opacity .18s ease;pointer-events:auto}
+.abs{position:absolute}
+.count{font:600 13px/16px ui-rounded,"SF Pro Rounded",var(--f-sys);font-variant-numeric:tabular-nums}
+.dotw{width:8px;height:8px;border-radius:50%;background:#fff}
+.win{position:absolute;left:40px;top:214px;width:300px;height:124px;border-radius:10px;background:#1d1f22;box-shadow:0 10px 30px rgba(0,0,0,.25);overflow:hidden;opacity:0;transition:opacity .18s}
+.win .bar{height:22px;background:#2b2d31;font:500 10.5px/22px var(--f-sys);color:#b9bbbf;text-align:center}
+.win pre{margin:0;padding:8px 10px;font:10.5px/1.5 var(--f-mono);color:#d8dadd;white-space:pre}
+.win.hl{box-shadow:0 0 0 2px var(--accent),0 10px 30px rgba(0,0,0,.25)}
+.ghost{position:absolute;border-radius:14px;border:1.5px solid rgba(255,255,255,.7);background:rgba(255,255,255,.1);opacity:0;pointer-events:none}
+.chipdesk{font:500 11px var(--f-mono);padding:2px 7px;border-radius:6px;border:1px solid currentColor;opacity:.8}
+
+/* 那一排里的格子（舞台和下面的样张共用） */
+.hd{position:absolute;top:28px;font:600 11px/14px var(--f-sys);color:rgba(255,255,255,.6);white-space:nowrap;transition:opacity .18s}
+.dv{position:absolute;top:52px;width:1px;height:94px;background:rgba(255,255,255,.2);transition:opacity .18s}
+.c{position:absolute;top:42px;width:124px;height:114px;border-radius:14px;background:rgba(255,255,255,.09);padding:10px 11px;color:#fff;
+  display:flex;flex-direction:column;opacity:0;transition:opacity .18s,background .18s;outline:none;overflow:hidden;text-align:left}
+.c.on{opacity:1}
+.c.btn{cursor:pointer}
+.c.btn:hover{background:rgba(255,255,255,.15)}
+.c:focus-visible{box-shadow:0 0 0 2px #fff}
+.c.dim.on{opacity:.45;cursor:default}
+.c.prop{}
+.c.more{width:56px;padding:10px 4px;align-items:center;justify-content:center;text-align:center;background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);font:500 11.5px/16px var(--f-sys)}
+.c .g{display:flex;align-items:center;gap:6px;height:18px;font:500 11px/14px var(--f-sys);color:rgba(255,255,255,.6)}
+.c .tt{font:600 13px/16px var(--f-sys);margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c .sb{font:11px/14px var(--f-sys);color:rgba(255,255,255,.6);margin-top:2px}
+.c .big{font:600 22px/26px ui-rounded,"SF Pro Rounded",var(--f-sys);font-variant-numeric:tabular-nums;margin-top:4px}
+.c .tx{font:500 12px/16px var(--f-sys);margin-top:8px;color:#fff}
+.c .v{margin-top:auto;display:flex;gap:5px;align-items:center;font:600 11.5px/14px var(--f-sys);white-space:nowrap}
+.c .th{height:54px;border-radius:8px;background:rgba(255,255,255,.07);margin-top:2px;position:relative;overflow:hidden}
+.c .th i{position:absolute;left:8px;height:5px;border-radius:3px;background:rgba(255,255,255,.18)}
+.c.tile .tt{margin-top:10px}
+.appicon{width:18px;height:18px;border-radius:5px;background:linear-gradient(#3a3a3c,#1c1c1e);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25);
+  font:700 8.5px/18px var(--f-mono);color:#e5e5e5;text-align:center;letter-spacing:-.5px;flex:none}
+
+/* 控制条 */
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px}
+.controls .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.controls .lab{font-size:13px;color:var(--ink3);margin-right:2px}
+button.b{font:500 15px/1 var(--f-body);padding:8px 12px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink3)}
+button.b[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.readout{margin-top:12px;font-size:13px;line-height:1.6;color:var(--ink2);background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;min-height:44px;overflow-wrap:anywhere}
+.readout b{color:var(--ink);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink2);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+
+/* 样张 */
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:16px}
+.gal .it{min-width:0}
+.gal .blk{background:#000;border-radius:18px;padding:14px;display:flex;justify-content:center}
+.gal .c{position:relative;top:0;opacity:1}
+.gal .c.dim{opacity:.45}
+.gal .cap{margin-top:8px;font-size:13px;color:var(--ink2)}
+
+/* 表 */
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:760px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+th{font-size:13px;font-weight:500;color:var(--ink3);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td .tk{font:500 13px var(--f-mono);color:var(--ink)}
+td.num{white-space:nowrap}
+.yes{color:var(--green)}
+
+/* 曲线 */
+.plot{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:12px}
+.plot canvas{width:100%;height:280px;display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.rules{margin:0;padding-left:1.2em;color:var(--ink2)}
+.rules li{margin:.35em 0}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink3)}
+footer p{margin:.3em 0}
+@media (prefers-reduced-motion:reduce){.layer,.c{transition-duration:.01s}}
+</style>
+
+
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">五 身份与离开 · 第 24 张 · 离开期间</span><span class="ws-st ws-old">定稿 · 10-30</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH">← 从锁屏到窗口</a><a href="https://claude.ai/artifact/BPmRiSF26X44bpUqFMAZjs">离开就锁 →</a></nav>
+<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 1 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：展开那一排高度按刘海 + 142，最宽屏宽 − 44，十个格子左右；空格也是点</span> → <b>现在：</b>那一排压进展开上限：宽 408、高 160（暂定，iOS 尺寸），一屏约 3 格，其余左右滚动；Return 是点，空格是看一眼；指针移开是否收起待定。改动清单见《照系统的岛》末节 <span class="src">（AARON-DECISIONS-2026-10-29 第 29、32 条；《照系统的岛》）</span></li></ol></details></aside>
+<div class="wrap">
+
+<header>
+  <h1>离开期间</h1>
+  <p class="lede">你走开的时候，Mac 上发生了几件事。回来时，刘海先轻轻亮一下。点开它，那一排最前面就是这几件事。每一件是一个格子，各点各的。窗口格子点一下，回到原处。在别的桌面上的，点一下就去。窗口不在了，格子变灰，不能点。</p>
+  <p class="lede">这是 2026-10-30 的设计稿，接《从锁屏到窗口》的第 3、4 步。</p>
+</header>
+
+<section id="sim">
+  <div class="sec-head"><h2>刘海模拟器</h2>
+    <p>模拟的是 MacBook Air 15″，1440×932 模式，刘海 156×28 pt。展开后的那一排，高度按刘海 + 142 算（Aaron 10-29 第 9 条）。先按「回来了」，再点那条提醒，或点下面的按钮。动画没走完，也能点下一个，位置和速度都接着走。设备和下载的格子点了有去处，Aaron 10-30 定的。按「对照今天」，看今天的样子：读得到，点不了。</p></div>
+  <div class="stage-wrap" id="mainWrap"></div>
+  <div class="controls" role="group" aria-label="流程">
+    <div class="grp"><span class="lab">流程</span>
+      <button class="b" id="bBack">回来了</button>
+      <button class="b" id="bOpen">点提醒，展开</button>
+      <button class="b" id="bExpire">8 秒后</button>
+      <button class="b" id="bClose">收起这一排</button></div>
+    <div class="grp"><span class="lab">点格子</span>
+      <button class="b" data-tap="w1">窗口</button>
+      <button class="b" data-tap="d1">设备</button>
+      <button class="b" data-tap="f1">下载</button>
+      <button class="b" data-tap="i">有人动过</button>
+      <button class="b" data-tap="more">还有 N 件</button></div>
+  </div>
+  <div class="controls" role="group" aria-label="条件">
+    <div class="grp"><span class="lab">条件</span>
+      <button class="b" id="tReduced" aria-pressed="false">减少动态效果</button>
+      <button class="b" id="tGone" aria-pressed="false">一个窗口已不在</button>
+      <button class="b" id="tOther" aria-pressed="false">别的桌面</button>
+      <button class="b" id="tMany" aria-pressed="false">多于四件</button>
+      <button class="b" id="tProp" aria-pressed="false">对照今天</button>
+      <button class="b" id="tTheme" aria-pressed="false">页面明暗</button></div>
+    <div class="grp"><span class="lab">试</span>
+      <button class="b" id="bInterrupt">40% 时改道</button></div>
+  </div>
+  <div class="readout" id="readout" aria-live="polite">按「回来了」开始。</div>
+</section>
+
+<section id="cells">
+  <div class="sec-head"><h2>每个格子</h2>
+    <p>格子和那一排里的普通格子同宽同高（124×114），圆角和间距也一样。差别只有两处：前面有一行小标题「离开期间」，和后面的普通格子隔一条竖线。顺序是代码里已有的：有人动过、设备、窗口、下载。</p></div>
+  <div class="gal" id="gal"></div>
+  <div class="tbl" style="margin-top:20px"><table>
+    <thead><tr><th>种类</th><th>格子里写什么</th><th>点一下</th><th>读屏怎么念</th><th>今天能点吗</th></tr></thead>
+    <tbody>
+      <tr><td>有人动过</td><td>盾牌符号加原话「手机不在身边时，这台 Mac 被解锁了一次」。排第一。是文字，不画窗口缩略图。</td><td>不能点</td><td>念原话，不加「按钮」</td><td>一致：今天也没有去处</td></tr>
+      <tr><td>窗口（在那一排里）</td><td>App 图标、名字和「有变化」。底部动词是「回到原处」。</td><td>窗口从这个格子飞回它原来的位置。这个格子退场，其余留着，那一排不收。</td><td>「回到原处 终端」，说明「终端有变化」</td><td>只有摘要上第一项能点。这里每个格子各点各的。</td></tr>
+      <tr><td>窗口（在别的桌面）</td><td>同上，副句是「有变化，在别的桌面上」。底部动词是「去」。</td><td>切到那张桌面。那一排收起，整张列表随之清掉。</td><td>「去 终端」，说明「终端有变化，在别的桌面上」</td><td>同上</td></tr>
+      <tr><td>窗口（已不在）</td><td>整个格子变灰，副句是「已经不在了」，没有动词。</td><td>不能点（没有反应，不出声）</td><td>「终端，已经不在了」，标为不可用</td><td>今天点了没反应，格子也不变灰</td></tr>
+      <tr><td>设备电量低</td><td>设备名、大号百分比和「电量低」。耳机带「左耳」「右耳」「充电盒」。</td><td>打开系统设置的蓝牙页，那一排收起。今天没有任何去处，这是最小的已有目的地。</td><td>「打开蓝牙设置 妙控鼠标」，说明「电量 18%」</td><td>不能点</td></tr>
+      <tr><td>下载好了</td><td>文件名（超过 14 个字截断）和「下载好了」。多个文件写「3 个文件」。</td><td>在访达里显示这个文件，那一排收起。多个文件时，打开「下载」文件夹。</td><td>「在访达里显示 报价单.pdf」，说明「下载好了」</td><td>不能点</td></tr>
+      <tr><td>还有 N 件</td><td>窄格（56 宽），只写「还有」和「N 件」，除底色外不画别的。</td><td>不能点，理由见下一节</td><td>「还有 2 件没有列出」</td><td>一致（只是一句话）</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="overflow">
+  <div class="sec-head"><h2>满四件之后的「还有 N 件」</h2>
+    <p>最多列四个格子（今天的上限，不改），其余折成一个窄格。这个窄格<b>不能点</b>。</p></div>
+  <ul class="rules">
+    <li>窄格不能点，因为排在后面的是最不急的几件。顺序已经定了：有人动过、设备、窗口、下载。被折起来的窗口没有丢，它们在后面的普通格子里照样能点。打开上面的「多于四件」可以看到：备忘录就在竖线后面。要让窄格可点，就得再加一层「展开全部」，在小列表里再套一个列表。这比让四个格子以外的两件事晚一点才看到更重。</li>
+    <li>代价是被折起来的设备和下载，这一轮没有地方可点。静默指令「离开期间」仍会把它们读出来。</li>
+    <li>N 只数没列出来的。刘海上今天那句「终端有变化，还有 3 件」不是同一个数，因为那一句把已列出的其余几件也算进去了。</li>
+    <li>空间还够。那一排最宽可到屏宽 − 44，1440 模式下放得下十个格子左右。以后想把上限从四提到六，要单独决定，这一稿不动。</li>
+  </ul>
+</section>
+
+<section id="peers">
+  <div class="sec-head"><h2>同类怎么做</h2>
+    <p>没有刘海类 App 做过这样的「离开期间」列表，没有现成的可抄。下面是最接近的几种做法，以及我们采用或不采用的部分。</p></div>
+  <div class="tbl"><table style="min-width:640px">
+    <thead><tr><th>谁</th><th>怎么做</th><th>出处</th></tr></thead>
+    <tbody>
+      <tr><td>boring.notch、Atoll、Alcove</td><td>都没有这种摘要。boring.notch 的路线图把通知列为考虑中。Alcove 官网写了「Instant Notifications」，没有细节。</td><td><a href="https://github.com/TheBoredTeam/boring.notch">boring.notch</a>、<a href="https://github.com/Ebullioscopic/Atoll">Atoll</a>、<a href="https://tryalcove.com">Alcove</a></td></tr>
+      <tr><td>Apple 通知摘要</td><td>收成一叠送达。点一组，打开这一组的通知。每条通知照常可以单独打开或清除。显示方式有计数、堆叠、列表三种。</td><td><a href="https://support.apple.com/en-us/108781">support.apple.com/en-us/108781</a></td></tr>
+      <tr><td>macOS 通知中心的叠放</td><td>点一下展开。可以清除一条，或「全部清除」。</td><td><a href="https://discussions.apple.com/thread/255976868">discussions.apple.com/thread/255976868</a>，只看到搜索摘要</td></tr>
+      <tr><td>Slack Catch up</td><td>处理一个会话，再进入下一个。「全部标为已读」可以撤销。打开着的视图不会刷新，要重新打开才更新。</td><td><a href="https://slack.com/help/articles/226410907">slack.com/help/articles/226410907</a>，只看到搜索摘要</td></tr>
+    </tbody></table></div>
+  <div class="tbl" style="margin-top:20px"><table style="min-width:640px">
+    <thead><tr><th>取舍</th><th>做法</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td>采用</td><td>每个格子单独处理。点了「回到原处」后，列表留着。</td><td>Apple 通知摘要里，每条通知可以单独打开或清除。Slack Catch up 处理完一个会话，就进入下一个。</td></tr>
+      <tr><td>采用</td><td>收起那一排，就是全部清除。不另做按钮。</td><td>macOS 通知中心的叠放有「全部清除」。</td></tr>
+      <tr><td>采用</td><td>照事件原样显示，不写改写过的摘要。</td><td>Apple 在一次新闻标题出错后，暂停了新闻 App 的 AI 摘要（<a href="https://macrumors.com/2025/01/16/ios-18-3-news-notifications-removed">MacRumors</a>，只看到搜索摘要）。</td></tr>
+      <tr><td>不采用</td><td>回放窗口，或历史列表。</td><td>和「不补播」冲突。静默指令「离开期间」已经能再读一遍。</td></tr>
+      <tr><td>不采用</td><td>你回来之后的新事件，标「+1 新的」。</td><td>列表在你回来的那一刻定下（见规则）。之后的事走刘海上的普通提醒，不加进这份列表。</td></tr>
+      <tr><td>暂不采用</td><td>让「还有 N 件」可点。</td><td>理由不变，见上一节。</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="rules">
+  <div class="sec-head"><h2>规则</h2></div>
+  <div class="two">
+    <div>
+      <h3>不补播，什么时候清</h3>
+      <ul class="rules">
+        <li>这份列表只属于「刚回来」这一次，只说一遍。说过就清，不排队，不在下一次开盖时重放。</li>
+        <li>回来后 8 秒没人理，提醒就收回，今天就是这样。列表同时清掉。想再看，用静默指令「离开期间」读一遍。读只是读，不会把格子再摆出来。</li>
+        <li>点开那一排以后，不再计时。你在看的时候不收。</li>
+        <li>点了「回到原处」，这个格子退场，其余留着，那一排不收。这样想一次放回几扇窗口，不用来回开。</li>
+        <li>点了会带你离开这里的格子（去、在访达里显示、打开蓝牙设置），那一排收起，整张列表随之清掉。</li>
+        <li>那一排收起时（指针移开、Esc、点别处），列表清掉，不补播。</li>
+        <li>同一扇窗口只出现一次。它在列表里时，竖线后面的普通格子不再重复它。列表清掉后，它回到普通格子里（如果还收着）。</li>
+        <li>放不下时，先裁普通格子，再裁离开期间的格子。离开期间的格子保住。</li>
+        <li>没有收着的窗口也能点。只要有一件事，点提醒就展开。不再要求有窗口可放回。</li>
+        <li>列表在你回来的那一刻定下。之后发生的事走刘海上的普通提醒，不加进这份列表，也不标「+1 新的」。</li>
+      </ul>
+    </div>
+    <div>
+      <h3>键盘与读屏</h3>
+      <ul class="rules">
+        <li>回来时，VoiceOver 照旧报一句，今天已经有：「离开期间」加副句。提醒本身是一个按钮，名字是「离开期间，（副句），展开」。</li>
+        <li>展开后，这一组读作「离开期间，4 件」。里面每个格子是一个元素，按那一排的顺序走。</li>
+        <li>左右键在那一排的所有格子之间走，包括不能点的格子，所以读屏和键盘听到的是同一份清单。Return 或空格是点，Esc 收起那一排。那一排今天已有格子焦点（<code>App/Notch.swift:4708</code> <code>focusedTileID</code>）。离开期间的格子加进同一条路。左右键的具体按键，以现有那一排为准。</li>
+        <li>动词永远在名字前面：「回到原处 终端」「去 终端」。动词念出来，就知道点下去会发生什么，不用靠看。</li>
+        <li>灰掉的格子标为不可用，并念出原因「已经不在了」，不只靠变灰。</li>
+        <li>有人动过用盾牌符号加原话，不靠颜色。</li>
+      </ul>
+      <h3 style="margin-top:14px">减少动态效果</h3>
+      <ul class="rules">
+        <li>全部换成 <code>reduced</code>（0.25 / 1.0），不带速度，不飞行。</li>
+        <li>在刘海上，提醒直接到位，展开的那一排在原处淡入。</li>
+        <li>回到原处时，窗口不从格子飞出来。格子在原处淡出，窗口在它的位置淡入。</li>
+        <li>去的时候，桌面不滑过去，两张桌面交叉淡入淡出。</li>
+        <li>点开后其余格子补位，也用 <code>reduced</code>，不回弹。</li>
+      </ul>
+      <h3 style="margin-top:14px">中途改道（图在后面）</h3>
+      <ul class="rules">
+        <li>展开走到 40% 时改成收起。位置和速度都接着走，不归零，曲线上没有折角。</li>
+        <li>点开后马上又点别的，同样叠加播放，不等上一段停稳。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="notadopted" style="padding-top:28px">
+  <h3>没采用</h3>
+  <p style="color:var(--ink2);max-width:72ch">《从锁屏到窗口》「回来了」那一步画了「两耳加点」：左耳是收着的窗口数，右耳是一个点，8 秒后收成数字。这次没有采用。这次的要求只是「每一项各点各的」，不是换一种提醒的样子。提醒保持今天的 +52，只改点开之后的东西。</p>
+</section>
+
+<section id="curve">
+  <div class="sec-head"><h2>中途改道：位置和速度都连续</h2>
+    <p>按上面的「40% 时改道」：先回来了，再展开，走到 40% 时改成收起。图是模拟器里刘海宽度的真实记录。竖虚线是改道的那一刻。灰色虚线是对照：时长动画在同一时刻重新开始，速度当场归零，曲线上有折角。</p></div>
+  <div class="plot">
+    <canvas id="cv" width="1000" height="280" aria-label="刘海宽度与速度随时间变化的曲线"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>弹簧改道（刘海宽度）</span>
+      <span><i style="background:var(--amber)"></i>弹簧速度</span>
+      <span><i style="background:var(--ink3)"></i>对照：时长动画重来（不用）</span>
+    </div>
+  </div>
+</section>
+
+<section id="tokens">
+  <div class="sec-head"><h2>弹簧：全部用现有令牌</h2>
+    <p>没有新弹簧，没有超过 0.2 的回弹，所以不进 design-system §6 的改值账。进、出、补位、收回逐一写明。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>时刻</th><th>令牌</th><th>response / ζ</th><th>初速度</th><th>可打断</th><th>收尾</th><th>减少动态效果</th></tr></thead>
+    <tbody>
+      <tr><td>回来了：提醒出现（今天的）</td><td class="tk">bloom</td><td class="num">0.42 / 0.84</td><td>否</td><td class="yes">是</td><td>8 秒后 <span class="tk">calm</span> 收回</td><td>reduced，直接到位</td></tr>
+      <tr><td>点提醒：展开那一排（刘海 + 52 → + 142）</td><td class="tk">expand</td><td class="num">0.40 / 0.92</td><td>沿用当前</td><td class="yes">是</td><td>格子随岛展开淡入 0.18 s</td><td>reduced，格子原处淡入</td></tr>
+      <tr><td>回到原处：窗口出发</td><td class="tk">flyOut</td><td class="num">0.38 / 0.90</td><td>必须（朝窗口方向）</td><td class="yes">是</td><td>到位后窗口描一圈强调色 0.9 s</td><td>格子原处淡出，窗口原处淡入</td></tr>
+      <tr><td>回到原处：其余格子补位、岛变窄</td><td class="tk">calm</td><td class="num">0.34 / 1.0</td><td>沿用当前</td><td class="yes">是</td><td>退场的格子淡出 0.18 s</td><td>reduced</td></tr>
+      <tr><td>去：桌面滑过去</td><td class="tk">settle</td><td class="num">0.38 / 1.0</td><td>否</td><td class="yes">是</td><td>那一排同时 <span class="tk">calm</span> 收起</td><td>交叉淡入淡出</td></tr>
+      <tr><td>收起这一排 / 8 秒收回</td><td class="tk">calm</td><td class="num">0.34 / 1.0</td><td>沿用当前</td><td class="yes">是</td><td>格子淡出 0.10 s</td><td>reduced</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="ledger">
+  <div class="sec-head"><h2>对照账：稿、规格、代码对不上的地方</h2>
+    <p>代码是真相。下面每一行，是这张稿要求的、和现在代码不同的地方。改代码的人照这里改。路径都相对于 WindowShade 仓库的 <code>prototype/</code>，分支是 <code>zcode/integration-yi</code>。规格不私下改：先记进 design-grammar 的对照账，等 Aaron 拍板。</p></div>
+  <div class="tbl"><table style="min-width:960px">
+    <thead><tr><th>#</th><th>哪里</th><th>这张稿</th><th>现在的代码</th><th>要改什么</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td>点摘要</td><td>每个格子各点各的</td><td><code>Core/AwaySummary.swift:66-67, 72-79</code>：<code>firstWindowID</code> 和 <code>tapAction</code> 只看 <code>items.first</code>。<code>:81-89</code> 的 <code>tap</code> 只做一个动作。</td><td>每个 <code>Item</code> 自带自己的动作。<code>tapAction</code> 改成按格子问，不再只认第一项。</td></tr>
+      <tr><td class="num">2</td><td>摘要一项的内容</td><td>设备要分出名字、部件、百分比。下载要有文件位置。</td><td><code>:50-55</code> <code>Item</code> 只有 <code>kind / text / windowID</code>。<code>:136</code> 设备被拼成一句字符串。<code>:163</code> 下载同样。</td><td><code>Item</code> 带结构化内容（名字、部件、百分比、文件名）。格子自己排版，不再切字符串。</td></tr>
+      <tr><td class="num">3</td><td>动作种类</td><td>回到原处、去、在访达里显示、打开蓝牙设置</td><td><code>:45-48</code> <code>TapAction</code> 只有 <code>backToPlace</code> 和 <code>goThere</code></td><td>加两个：在访达里显示、打开蓝牙设置（Aaron 10-30 采用）。</td></tr>
+      <tr><td class="num">4</td><td>下载的去处</td><td>在访达里显示这个文件</td><td><code>Core/AwaySummary.swift:39</code> <code>DownloadEntry</code> 只有 <code>name</code>。<code>Core/DownloadActivity.swift:41-48</code> <code>DownloadUpdate.finished</code> 只是文件名数组。<code>App/NotchActivityController.swift:390</code> 把名字交给账本。已有的同类动作是 <code>App/FileShelfView.swift:304-306</code> 的 <code>activateFileViewerSelecting</code>，但那是文件架里的文件，不是下载。</td><td>账本记下文件位置。多个文件时，去「下载」文件夹。文件已不在，这个格子变灰，做法同窗口。</td></tr>
+      <tr><td class="num">5</td><td>设备的去处</td><td>打开蓝牙设置</td><td>设备电量只在刘海上说一句，没有卡片。<code>WindowShade.swift:488-490</code> <code>onLow</code> 只记账。<code>App/DeviceBatteryController.swift</code> 里没有任何可点的去处。</td><td>点了打开系统设置的蓝牙页（Aaron 10-30 采用）。以后要做自己的电量卡，另起一稿。</td></tr>
+      <tr><td class="num">6</td><td>提醒的样子</td><td>今天的 +52 提醒：符号 <code>lock.open</code>、标题「离开期间」、副句 <code>compactDetail</code>，停 8 秒</td><td><code>App/Notch.swift:1586-1587</code>、<code>Core/Contracts.swift:355</code></td><td>一致，不改。《从锁屏到窗口》的「两耳加点」没采用（见「没采用」）。</td></tr>
+      <tr><td class="num">7</td><td>点了以后</td><td>点一下摘要，展开那一排。列表在那一排最前面。</td><td><code>App/Notch.swift:1588-1598</code>：第一项是窗口就直接放回，不是窗口才展开 <code>tiles()</code>（<code>:1596-1597</code>）。没有收着的窗口时，<code>onClick</code> 是 nil（<code>:1588</code> <code>tappable \|\| opensRow</code>）。</td><td>点提醒一律展开。有离开期间的格子就够，不要求有收着的窗口。</td></tr>
+      <tr><td class="num">8</td><td>一排里的分段</td><td>三段：离开期间、竖线、普通格子，各有自己的竖线</td><td><code>Core/NotchRow.swift:49-82</code> <code>Layout</code> 只有 <code>windows</code> 和 <code>ongoing</code> 两段、一条竖线。<code>:97-110</code> <code>capacity</code> 和 <code>fit</code> 不认第三段。<code>App/Notch.swift:6125</code> 格子位置按 <code>layout.x(ofCell:)</code>。</td><td>加最前面的一段。放不下时，先裁普通格子。离开期间的格子宽度仍是 <code>cellWidth</code> 124，窄的「还有 N 件」另算 56。</td></tr>
+      <tr><td class="num">9</td><td>回到原处后那一排</td><td>不收，这个格子退场，其余留着</td><td><code>App/Notch.swift:1102-1142</code> <code>open</code> 和 <code>:985-1015</code> <code>release</code>：放回后一定 <code>collapse</code> 那一排（<code>rowCollapseLag</code> 0.04 s，<code>Core/CarryShelfLayout.swift:85</code>）。</td><td>从离开期间的格子点的，放回后保持展开，只把这个格子移出列表。「去」仍然收起，因为桌面都变了。普通格子的行为不变。这是对 #15 的小补充，记账。</td></tr>
+      <tr><td class="num">10</td><td>窗口不在了</td><td>格子变灰，写「已经不在了」，不能点</td><td><code>App/Notch.swift:1602-1608</code> <code>awayWhereabouts</code> 有 <code>.gone</code>，但只在点的那一下和出提醒的那一刻问。<code>Core/AwaySummary.swift:251</code> 账本收账时已把不在的窗口筛掉，所以画面上从来没有灰格子。</td><td>展开那一排时，再问一遍每扇窗口此刻在哪（<code>.inRow / .otherDesktop / .gone</code>）。点的那一下再问一次。两次结果不同，以第二次为准。</td></tr>
+      <tr><td class="num">11</td><td>同一窗口只出现一次</td><td>列表里有的，普通格子不重复</td><td><code>App/Notch.swift:2089</code> <code>tiles()</code> 不知道离开期间。</td><td>把列表里的窗口号交给 <code>tiles()</code> 排除。列表清掉后恢复。</td></tr>
+      <tr><td class="num">12</td><td>8 秒</td><td>点开那一排后不再计时。到点列表清掉。</td><td><code>Core/AwaySummary.swift:13</code> <code>holdSeconds</code> 只管提醒停多久。<code>App/AwaySummaryController.swift:30, 38, 138-139</code> <code>lastSummary</code> 一直留到下一次离开，给静默指令读。</td><td>列表的存活交给刘海这边（展开则停表）。<code>lastSummary</code> 仍只给静默指令读，不再用来摆格子，保证不补播。</td></tr>
+      <tr><td class="num">13</td><td>「还有 N 件」</td><td>N = 没列出来的件数。格子不能点。</td><td><code>Core/AwaySummary.swift:92-95</code> <code>compactDetail</code> 写的是 <code>count - 1</code>（连已列出的其余几件一起算）。<code>:167-168</code> <code>omitted</code> 才是没列出的。<code>:11</code> 上限 4。</td><td>格子用 <code>omitted</code>。<code>compactDetail</code> 只给读屏那一句用。两个数字别混。</td></tr>
+      <tr><td class="num">14</td><td>「收着 N 扇窗口」</td><td>不单列一个格子。收着的窗口就在竖线后面的普通格子里</td><td><code>:98-106</code> <code>lines</code> 把「收着 N 扇窗口」放在列表第一行。<code>:109</code> <code>spoken</code> 读出来。</td><td>画面上不再有这一行。<code>spoken</code>（静默指令）保留原样，不动。</td></tr>
+      <tr><td class="num">15</td><td>「有人动过」的原话</td><td>用代码里的原话</td><td><code>Core/PresenceLock.swift:52</code>：「手机不在身边时，这台 Mac 被解锁了一次」。<code>Core/AwaySummary.swift:18</code> 注释里写的「有人动过你的 Mac」只是口头说法，代码里没有这句。</td><td>不改原话。注释里的说法顺手对齐。</td></tr>
+      <tr><td class="num">16</td><td>窗口格子的名字</td><td>App 名加「有变化」。同一个 App 的多扇窗口合成一个格子。</td><td><code>Core/AwaySummary.swift:139-153</code> 已按 App 合并。点过去的是最近有变化的那一扇（<code>group.latest</code>）。</td><td>一致。多扇时，副句写「2 扇有变化」，点的仍是最近那一扇，读屏说明里说清。</td></tr>
+      <tr><td class="num">17</td><td>设备的写法</td><td>名字、大号百分比和「电量低」</td><td><code>Core/AwaySummary.swift:134-137</code>：「妙控鼠标 18%」一句。<code>docs/copy-guide.md</code> 的固定写法是主句「妙控鼠标电量低」、副句「电量 18%」。</td><td>格子里拆成两行，用词不变。读不到电量时不进摘要，今天的筛法 <code>deviceIsCurrent</code> 已保证。</td></tr>
+      <tr><td class="num">18</td><td>前一张稿</td><td>《从锁屏到窗口》「找窗口」一步有一行文字条，写着离开期间、构建日志有变化、妙控鼠标 18%，中间用圆点隔开。这一条换成真格子。</td><td>那张稿里还是一行小字（<code>docs/design-drafts/从锁屏到窗口.html</code> 的 <code>showRow</code> 前一步）</td><td>在 <code>_errata.json</code> 加一条「这张稿之后又定了」，指向本稿。</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>
+  <p>依据：Aaron 2026-10-30 的决定（离开期间做成可展开、每项可点的列表）；AARON-DECISIONS-2026-10-29 第 9 条（提醒 +52，展开那一排 +142）和第 15 条（回到原处、去）。</p>
+  <p>参照：<code>docs/design-system.md</code> §4.6、§4.9，<code>docs/copy-guide.md</code>，《从锁屏到窗口》，《刘海里的编程会话》。</p>
+  <p>画面是示意，App 名和文件名是例子。弹簧照 WWDC23 10158 换算：stiffness = (2π/response)²，damping = 4πζ/response，每帧按 1/240 s 子步积分。</p>
+</footer>
+</div>
+<script>
+(()=>{
+const TOK={calm:[.34,1],settle:[.38,1],expand:[.40,.92],bloom:[.42,.84],flyOut:[.38,.90],reduced:[.25,1]};
+const NW=156,NH=28,CW=124,GAP=8,MARG=14,DIVX=9,CY=42,CH=114,OVW=56,W=1120,H=360,CX=W/2;
+const WIN={x:40,y:214,w:300,h:124};
+class Spring{constructor(x){this.x=x;this.v=0;this.t=x;this.tok(TOK.calm)}
+  tok(p){this.k=(2*Math.PI/p[0])**2;this.c=4*Math.PI*p[1]/p[0]}
+  step(dt){const a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt}}
+
+/* ---------- 状态 ---------- */
+const S={phase:'rest',reduced:false,gone:false,other:false,many:false,prop:true,listOn:false,items:[],omitted:0,deadline:0,desk:1};
+const BASE_TILES=['访达','预览'];
+function buildItems(){
+  const all=[{id:'i',kind:'intrusion',text:'手机不在身边时，这台 Mac 被解锁了一次'}];
+  if(S.many)all.push({id:'d0',kind:'device',name:'妙控键盘',pct:9});
+  all.push({id:'d1',kind:'device',name:'妙控鼠标',pct:18});
+  all.push({id:'w1',kind:'window',app:'终端'});
+  if(S.many)all.push({id:'w2',kind:'window',app:'备忘录'});
+  all.push({id:'f1',kind:'download',name:'报价单.pdf'});
+  S.items=all.slice(0,4).map(x=>({...x,removed:false}));S.omitted=Math.max(0,all.length-4);
+  S.hiddenWin=S.many?{app:'备忘录'}:null;
+}
+const where=it=>it.id==='w1'?(S.gone?'gone':S.other?'other':'in'):'in';
+const canTap=it=>{
+  if(it.kind==='window')return where(it)!=='gone';
+  if(it.kind==='device'||it.kind==='download')return S.prop;
+  return false;};
+function tiles(){
+  const t=BASE_TILES.slice();
+  if(S.hiddenWin)t.push(S.hiddenWin.app);
+  if(!S.listOn){const w=S.items.find(i=>i.id==='w1');if(w&&!w.removed&&where(w)==='in')t.unshift('终端')}
+  return t;}
+function tucked(){
+  const w=S.items.find(i=>i.id==='w1');
+  return BASE_TILES.length+(S.hiddenWin?1:0)+(w&&!w.removed&&where(w)==='in'?1:0);}
+
+/* ---------- 图标 ---------- */
+const svg=(d,extra='')=>`<svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" ${extra}><g fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${d}</g></svg>`;
+const IC={
+  shield:svg('<path d="M12 3l7 2.6v5.6c0 4.4-3 8.2-7 9.8-4-1.6-7-5.4-7-9.8V5.6z"/><path d="M12 8.5v4M12 15.6v.2"/>'),
+  battery:svg('<rect x="2.5" y="7" width="16" height="10" rx="2.5"/><path d="M21 10.5v3"/><path d="M6 10.5v3"/>'),
+  down:svg('<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/>'),
+  back:svg('<path d="M9 7L4.5 11.5 9 16"/><path d="M5 11.5h9a5 5 0 0 1 0 10h-3"/>'),
+  go:svg('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+  finder:svg('<rect x="4" y="5" width="16" height="14" rx="3"/><path d="M12 5v14"/>'),
+  gear:svg('<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>')
+};
+const icon=t=>`<span class="appicon">${t}</span>`;
+
+/* ---------- 一格的内容（舞台和样张共用） ---------- */
+function cellInner(it){
+  switch(it.kind){
+    case'intrusion':return`<div class="g">${IC.shield}</div><div class="tx">${it.text}</div>`;
+    case'device':return`<div class="g">${IC.battery}${it.part||''}</div><div class="tt">${it.name}</div><div class="big">${it.pct}%</div><div class="sb">电量低</div>`+(it.verb?`<div class="v">${IC.gear}${it.verb}</div>`:'');
+    case'download':return`<div class="g">${IC.down}</div><div class="tt">${it.name}</div><div class="sb">下载好了</div>`+(it.verb?`<div class="v">${IC.finder}${it.verb}</div>`:'');
+    case'window':{const w=it.where||'in';
+      const sub=w==='gone'?'已经不在了':w==='other'?'有变化，在别的桌面上':'有变化';
+      const verb=w==='gone'?'':w==='other'?`<div class="v">${IC.go}去</div>`:`<div class="v">${IC.back}回到原处</div>`;
+      return`<div class="g">${icon('&gt;_')}</div><div class="tt">${it.app}</div><div class="sb">${sub}</div>${verb}`;}
+    case'more':return`<div>还有<br>${it.n} 件</div>`;
+    case'tile':return`<div class="th"><i style="top:10px;width:60%"></i><i style="top:22px;width:44%"></i><i style="top:34px;width:52%"></i></div><div class="tt">${it.name}</div>`;
+  }}
+function liveItem(it){
+  const o={...it};
+  if(it.kind==='window'){o.where=where(it)}
+  if(it.kind==='device'&&S.prop)o.verb='打开蓝牙设置';
+  if(it.kind==='download'&&S.prop)o.verb='在访达里显示';
+  return o;}
+function label(it){
+  switch(it.kind){
+    case'intrusion':return[it.text,''];
+    case'window':{const w=where(it);
+      if(w==='gone')return[`${it.app}，已经不在了`,''];
+      return[(w==='other'?'去 ':'回到原处 ')+it.app,`${it.app}有变化`+(w==='other'?'，在别的桌面上':'')];}
+    case'device':return[S.prop?`打开蓝牙设置 ${it.name}`:`${it.name} 电量低`,`电量 ${it.pct}%`];
+    case'download':return[S.prop?`在访达里显示 ${it.name}`:`下载好了 ${it.name}`,'下载好了'];
+  }return['',''];}
+
+/* ---------- 舞台 ---------- */
+const host=document.getElementById('mainWrap');
+host.innerHTML=`<div class="stage" style="width:${W}px;height:${H}px">
+  <div class="win" id="win"><div class="bar" id="winBar">终端 — zsh</div><pre id="winPre">$ swift build
+Build complete! (38.2s)
+✓ 构建日志有新内容</pre></div>
+  <div class="desk2" id="desk2"><div class="win" id="win2" style="opacity:1"><div class="bar">终端 — zsh</div><pre>$ swift build
+Build complete! (38.2s)
+✓ 构建日志有新内容</pre></div></div>
+  <div class="menubar"><div class="l"><span>&#63743;</span><b>访达</b><span>文件</span><span>编辑</span><span>显示</span></div>
+    <div class="r"><span class="chipdesk" id="deskChip">桌面 1</span><span>Wi‑Fi</span><span>周五 10月30日 14:32</span></div></div>
+  <div class="sh l" id="shL"></div><div class="sh r" id="shR"></div>
+  <div class="island" id="isl" aria-label="刘海"><div class="ink" id="ink" style="width:${W}px">
+    <div class="layer" data-l="alert">
+      <div class="abs" style="left:${CX-NW/2-25}px;top:5px;color:#fff"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></g></svg></div>
+      <div class="abs" style="left:${CX-182}px;top:37px;font:600 13px/16px var(--f-sys)">离开期间</div>
+      <div class="abs" id="alertLine" style="left:${CX-182}px;top:56px;font:11px/14px var(--f-sys);color:rgba(255,255,255,.6);white-space:nowrap"></div></div>
+    <div class="layer" data-l="row" id="rowL"></div>
+  </div></div>
+  <div class="ghost" id="ghost"></div>
+</div>`;
+const $=id=>document.getElementById(id);
+const root=host.firstElementChild,isl=$('isl'),ink=$('ink'),rowL=$('rowL'),alertLine=$('alertLine'),win=$('win'),win2=$('win2'),desk2=$('desk2'),ghost=$('ghost'),deskChip=$('deskChip');
+const layers={};root.querySelectorAll('.layer').forEach(l=>layers[l.dataset.l]=l);
+const shL=$('shL'),shR=$('shR');
+let scale=1;
+function fit(){const w=host.clientWidth||W;scale=w/W;root.style.transform=`scale(${scale})`;host.style.height=H*scale+'px'}
+new ResizeObserver(fit).observe(host);fit();
+
+const sp={L:new Spring(0),R:new Spring(0),H:new Spring(NH),r:new Spring(9),e:new Spring(6)};
+const GH={x:new Spring(0),y:new Spring(0),w:new Spring(0),h:new Spring(0),o:new Spring(0)};
+const DK={x:new Spring(W),o:new Spring(0)};   // 另一张桌面：滑入 / 淡入
+let cells=[],hd=null,dv=null,dvSp=new Spring(0);
+
+/* ---------- 排版：离开期间的格子、竖线、普通格子 ---------- */
+function plan(){
+  const away=S.listOn?S.items.filter(i=>!i.removed):[];
+  const seq=[];
+  away.forEach(i=>seq.push({k:i.id,w:CW}));
+  if(away.length&&S.omitted>0)seq.push({k:'more',w:OVW});
+  const hasAway=seq.length>0,tl=tiles();
+  let cur=0,divAt=null;const pos={};
+  seq.forEach(c=>{pos[c.k]=cur;cur+=c.w+GAP});
+  if(hasAway&&tl.length){divAt=cur;cur+=DIVX}
+  tl.forEach((n,i)=>{pos['t:'+n]=cur;cur+=CW+GAP});
+  const content=Math.max(0,cur-GAP);
+  const total=Math.max(576,content+2*MARG);
+  return{pos,content,divAt,lead:CX-content/2,total,hasAway,tl};
+}
+function setTok(name){const p=TOK[S.reduced?'reduced':name];for(const k in sp)sp[k].tok(p);cells.forEach(c=>c.sp.tok(p));dvSp.tok(p)}
+function relayout(tokName='calm'){
+  const P=plan();setTok(tokName);
+  cells.forEach(c=>{if(c.removed)return;const x=P.pos[c.key];if(x!==undefined)c.sp.t=P.lead+x});
+  dvSp.t=P.divAt===null?dvSp.t:P.lead+P.divAt;
+  if(dv)dv.style.opacity=P.divAt===null?0:1;
+  if(hd)hd.style.opacity=P.hasAway?1:0;
+  return P;}
+function mkCell(key,html,cls,x,it){
+  const el=document.createElement('div');el.className='c '+cls;el.innerHTML=html;el.dataset.key=key;
+  rowL.appendChild(el);return{key,el,sp:Object.assign(new Spring(x),{}),it};}
+function createCells(){
+  rowL.innerHTML='';cells=[];
+  const P=plan();
+  hd=document.createElement('div');hd.className='hd';hd.textContent='离开期间';hd.setAttribute('aria-hidden','true');rowL.appendChild(hd);
+  dv=document.createElement('div');dv.className='dv';rowL.appendChild(dv);dvSp=new Spring(P.divAt===null?0:P.lead+P.divAt);
+  dv.style.opacity=P.divAt===null?0:1;hd.style.opacity=P.hasAway?1:0;
+  S.items.filter(i=>!i.removed).forEach(i=>{
+    const c=mkCell(i.id,'','',P.lead+P.pos[i.id],i);cells.push(c);decorate(c)});
+  if(P.hasAway&&S.omitted>0){const c=mkCell('more','','more',P.lead+P.pos.more,{id:'more',kind:'more'});cells.push(c);decorate(c)}
+  P.tl.forEach(n=>{const c=mkCell('t:'+n,cellInner({kind:'tile',name:n}),'tile btn',P.lead+P.pos['t:'+n],{kind:'tile',name:n});
+    c.el.tabIndex=0;c.el.setAttribute('role','button');c.el.setAttribute('aria-label','回到原处 '+n);cells.push(c)});
+  const first=cells.find(c=>c.it.kind!=='tile');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>cells.forEach(c=>c.el.classList.add('on'))));
+}
+function decorate(c){
+  const it=c.it,el=c.el;
+  if(it.kind==='more'){el.innerHTML=cellInner({kind:'more',n:S.omitted});el.tabIndex=0;el.setAttribute('role','group');el.setAttribute('aria-label',`还有 ${S.omitted} 件没有列出`);return}
+  el.innerHTML=cellInner(liveItem(it));
+  const tap=canTap(it),dim=it.kind==='window'&&where(it)==='gone';
+  el.classList.toggle('btn',tap);el.classList.toggle('dim',dim);
+  el.classList.toggle('prop',S.prop&&(it.kind==='device'||it.kind==='download'));
+  el.tabIndex=0;el.setAttribute('role',tap?'button':'group');
+  const[l,d]=label(it);el.setAttribute('aria-label',l);if(d)el.setAttribute('aria-description',d);else el.removeAttribute('aria-description');
+  if(dim)el.setAttribute('aria-disabled','true');else el.removeAttribute('aria-disabled');
+}
+function refreshCells(){cells.forEach(c=>{if(c.it.kind!=='tile'&&!c.removed)decorate(c)})}
+
+/* ---------- 阶段 ---------- */
+function geoFor(p){
+  switch(p){
+    case'rest':return{L:0,R:0,H:NH,r:9,e:6};
+    case'compact':return{L:122,R:122,H:NH+52,r:24,e:0};
+    case'number':return{L:0,R:0,H:NH,r:9,e:6};
+    case'row':{const s=(plan().total-NW)/2;return{L:s,R:s,H:NH+142,r:28,e:0}}}}
+function showLayers(p){
+  layers.alert.classList.toggle('on',p==='compact');
+  isl.classList.toggle('btn',p==='compact');
+  isl.tabIndex=p==='compact'?0:-1;
+  isl.setAttribute('role',p==='compact'?'button':'img');
+  const n=S.items.length+S.omitted;
+  isl.setAttribute('aria-label',p==='compact'?`离开期间，${compactDetail()}，展开`:p==='row'?`离开期间，${n} 件`:'刘海');
+  alertLine.textContent=compactDetail();
+}
+function compactDetail(){const n=S.items.length+S.omitted,f=S.items[0];return f?(n>1?`${f.text||''}，还有 ${n-1} 件`:f.text):''}
+let rec=null;
+const NAMES={rest:'静止',compact:'提醒（+52）',number:'提醒收回',row:'展开那一排'};
+function tokFor(from,to){
+  if(to==='compact')return'bloom';
+  if(to==='row')return'expand';
+  return'calm';}
+function apply(p,{instant=false,tok}={}){
+  const from=S.phase;S.phase=p;
+  if(p==='row'&&from!=='row')createCells();
+  const g=geoFor(p),tk=S.reduced?'reduced':(tok||tokFor(from,p));
+  for(const k in sp){sp[k].tok(TOK[tk]);sp[k].t=g[k];if(S.reduced&&!instant)sp[k].v=0;if(instant){sp[k].x=g[k];sp[k].v=0}}
+  showLayers(p);
+  return{from,tk};}
+function go(p,opts={}){
+  const w0=islWidth(),moving=Math.abs(sp.L.v+sp.R.v)>5;
+  const{from,tk}=apply(p,opts);
+  const q=TOK[tk];
+  if(!opts.quiet)say(`<b>${NAMES[from]} → ${NAMES[p]}</b>。弹簧 <code>${tk}</code>，${q[0]} s，ζ ${q[1]}。初速度：${S.reduced?'清零（减少动态效果）':'沿用当前 '+Math.round(sp.L.v+sp.R.v)+' pt/s'}。${moving?'中途改道，位置速度连续。':'从静止出发。'}`);
+  if(moving&&rec&&!rec.mark){const g=geoFor(p);rec.mark=performance.now();rec.from=w0;rec.to=NW+g.L+g.R}
+  else rec={t0:performance.now(),samples:[],mark:null};
+}
+const islWidth=()=>NW+sp.L.x+sp.R.x;
+function say(h){$('readout').innerHTML=h}
+
+/* ---------- 计时：8 秒 ---------- */
+let tick=null;
+function startTimer(){S.deadline=performance.now()+8000;clearInterval(tick);
+  tick=setInterval(()=>{
+    if(S.phase!=='compact'){clearInterval(tick);return}
+    const left=S.deadline-performance.now();
+    if(left<=0){clearInterval(tick);expire()}
+  },100);}
+function stopTimer(){clearInterval(tick)}
+function expire(){
+  if(S.phase!=='compact')return;
+  S.listOn=false;go('number');
+  say(`<b>8 秒后</b>，没人点。提醒收回，列表清掉，不补播。想再听一遍，用静默指令「离开期间」。`);}
+
+/* ---------- 流程 ---------- */
+function reset(){
+  stopTimer();clearTimeout(winT);
+  buildItems();S.listOn=true;S.desk=1;
+  rowL.innerHTML='';cells=[];
+  win.style.opacity=0;win.classList.remove('hl');setWin('终端 — zsh','$ swift build\nBuild complete! (38.2s)\n✓ 构建日志有新内容');
+  DK.x.x=DK.x.t=W;DK.o.x=DK.o.t=0;DK.x.v=0;deskChip.textContent='桌面 1';GH.o.x=GH.o.t=0;
+  win2.classList.remove('hl');}
+function back(){
+  reset();apply('rest',{instant:true});
+  go('compact');startTimer();
+  say(`<b>回来了</b>。今天的提醒（刘海 + 52）：标题「离开期间」，副句「${compactDetail()}」。8 秒不点就收回。点它展开那一排（刘海 + 142），离开期间的格子排最前。VoiceOver 同时念这一句。`);}
+function open(){
+  if(S.phase==='number'||S.phase==='rest'){say('列表已经清掉。提醒已收回，不补播。按「回来了」重来。');return}
+  if(S.phase==='row')return;
+  stopTimer();go('row');}
+function close(note){
+  if(S.phase!=='row'){say('那一排没开。');return}
+  S.listOn=false;go('number');
+  say(note||`<b>收起这一排</b>。离开期间的格子清掉，不补播。`);}
+$('bBack').addEventListener('click',back);
+$('bOpen').addEventListener('click',open);
+$('bExpire').addEventListener('click',()=>{if(S.phase==='compact'){stopTimer();expire()}else say('现在没有提醒，没有 8 秒可走。')});
+$('bClose').addEventListener('click',()=>close());
+isl.addEventListener('click',()=>{if(S.phase==='compact')open()});
+isl.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&S.phase==='compact'){e.preventDefault();open()}});
+
+/* ---------- 点一格 ---------- */
+let winT=null;
+function setWin(title,text){$('winBar').textContent=title;$('winPre').textContent=text}
+function cellRect(c){return{x:c.sp.x,y:CY,w:c.it.kind==='more'?OVW:CW,h:CH}}
+function flyTo(from,to){
+  for(const k in GH)GH[k].tok(TOK[S.reduced?'reduced':'flyOut']);
+  if(S.reduced)return false;
+  GH.x.x=from.x;GH.y.x=from.y;GH.w.x=from.w;GH.h.x=from.h;GH.o.x=1;GH.o.v=0;
+  GH.x.v=(to.x-from.x)*2.2;GH.y.v=(to.y-from.y)*2.2;GH.w.v=GH.h.v=0;
+  GH.x.t=to.x;GH.y.t=to.y;GH.w.t=to.w;GH.h.t=to.h;GH.o.t=1;
+  setTimeout(()=>{GH.o.t=0},420);return true;}
+function reveal(w,delay){
+  clearTimeout(winT);
+  winT=setTimeout(()=>{w.style.opacity=1;w.classList.add('hl');setTimeout(()=>w.classList.remove('hl'),900)},delay);}
+function removeCell(c){
+  c.removed=true;c.it.removed=true;c.el.classList.remove('on');
+  setTimeout(()=>{if(c.el.parentNode)c.el.remove()},220);
+  cells=cells.filter(x=>x!==c);}
+function tapById(id){
+  if(S.phase==='compact'){open();say('先点开提醒。');return}
+  if(S.phase!=='row'){say('现在没有那一排。列表只活到那一排收起，不补播。按「回来了」重来。');return}
+  const c=cells.find(x=>x.key===id);
+  if(!c){say('这个格子已经退场，不补播。');return}
+  tap(c);}
+function tap(c){
+  const it=c.it;
+  if(it.kind==='tile'){say(`<b>普通格子 ${it.name}</b>。照旧：窗口回到原处，那一排收起。`);return}
+  if(it.kind==='intrusion'){say('<b>有人动过</b>是文字，不能点。读屏照念原话。');return}
+  if(it.kind==='more'){say(`<b>还有 ${S.omitted} 件</b>不能点。没列出的窗口在后面的普通格子里照样能点。没列出的设备和下载这一轮没有地方点，静默指令「离开期间」读得到。`);return}
+  if(it.kind==='window'){
+    const w=where(it);
+    if(w==='gone'){say(`${it.app} 已经不在了。格子是灰的，点了没有反应，也不出声。窗口被放回或关掉发生在这几秒里，所以展开时和点的那一下各问一遍。`);return}
+    if(w==='other'){
+      say(`<b>去 ${it.app}</b>。桌面按 ${S.reduced?'<code>reduced</code>，交叉淡入淡出':'<code>settle</code> 0.38 / 1.0'} 切过去。那一排同时收起，整张列表清掉。`);
+      S.listOn=false;go('number',{tok:'calm',quiet:true});
+      for(const k in DK)DK[k].tok(TOK[S.reduced?'reduced':'settle']);
+      if(S.reduced){DK.x.x=DK.x.t=0;DK.o.x=0;DK.o.t=1}else{DK.x.t=0;DK.o.x=DK.o.t=1}
+      S.desk=2;deskChip.textContent='桌面 2';reveal(win2,S.reduced?150:380);setTimeout(()=>win2.classList.add('hl'),S.reduced?150:380);setTimeout(()=>win2.classList.remove('hl'),1300);
+      return}
+    const from=cellRect(c),to={...WIN};
+    const flew=flyTo(from,to);
+    removeCell(c);relayout('calm');
+    const j=relayoutIsland();
+    S.listOn=true;showLayers('row');
+    reveal(win,S.reduced?150:420);
+    say(`<b>回到原处 ${it.app}</b>。${flew?'窗口沿 <code>flyOut</code> 0.38 / 0.90，带着速度从这个格子飞回原位':'减少动态效果：格子在原处淡出，窗口在原位淡入'}。这个格子退场，其余格子用 <code>${S.reduced?'reduced':'calm'}</code> 补位，那一排不收。`);
+    return}
+  if(it.kind==='device'){
+    if(!S.prop){say(`${it.name} 电量 ${it.pct}%。今天没有去处，不能点。`);return}
+    say(`<b>打开蓝牙设置</b>。系统设置的蓝牙页在前面出现。那一排收起，列表清掉。`);
+    leaveTo('系统设置 — 蓝牙',`${it.name}\n电量 ${it.pct}%\n已连接`);return}
+  if(it.kind==='download'){
+    if(!S.prop){say(`下载好了 ${it.name}。今天没有去处，不能点。`);return}
+    say(`<b>在访达里显示 ${it.name}</b>。访达打开「下载」并选中这个文件。那一排收起，列表清掉。`);
+    leaveTo('访达 — 下载',`▸ ${it.name}   （已选中）\n  旧账单.pdf\n  截图 2026-10-29.png`);return}
+}
+function leaveTo(title,text){
+  S.listOn=false;go('number',{tok:'calm',quiet:true});setWin(title,text);reveal(win,S.reduced?150:300);}
+function relayoutIsland(){
+  const g=geoFor('row');for(const k in sp){sp[k].t=g[k]}}
+document.querySelectorAll('[data-tap]').forEach(b=>b.addEventListener('click',()=>tapById(b.dataset.tap)));
+rowL.addEventListener('click',e=>{
+  const el=e.target.closest('.c');if(!el)return;const c=cells.find(x=>x.el===el);if(c)tap(c)});
+root.addEventListener('keydown',e=>{
+  if(S.phase!=='row')return;
+  const list=cells.map(c=>c.el);const i=list.indexOf(document.activeElement);
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();
+    const n=list.length;if(!n)return;const j=i<0?0:(i+(e.key==='ArrowRight'?1:-1)+n)%n;list[j].focus()}
+  else if((e.key==='Enter'||e.key===' ')&&i>=0){e.preventDefault();const c=cells.find(x=>x.el===list[i]);if(c)tap(c)}
+  else if(e.key==='Escape'){e.preventDefault();close()}
+});
+
+/* ---------- 条件 ---------- */
+function toggle(id,fn){const b=$(id);b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);fn(on)})}
+toggle('tReduced',on=>{S.reduced=on;root.classList.toggle('reduced',on);say(on?'<b>减少动态效果</b>。全部换成 <code>reduced</code> 0.25 / 1.0，不带速度，不飞行。':'动效已恢复。')});
+toggle('tGone',on=>{S.gone=on;refreshCells();showLayers(S.phase);say(on?'终端的窗口已不在了（回来的这几秒里被关掉）。格子变灰，写「已经不在了」。':'窗口又在了。')});
+toggle('tOther',on=>{S.other=on;refreshCells();showLayers(S.phase);say(on?'终端在别的桌面上。动词从「回到原处」换成「去」。':'终端在这张桌面的那一排里。')});
+toggle('tMany',on=>{S.many=on;say(on?'多于四件。要重新按「回来了」才生效。前四件上格，其余折成「还有 2 件」。备忘录的窗口留在后面的普通格子里。':'回到四件。');if(S.phase!=='rest')back()});
+toggle('tProp',on=>{S.prop=!on;refreshCells();say(on?'今天的样子：设备和下载读得到，点不了。':'定下来的样子：设备和下载的格子点了有去处。')});
+$('tTheme').addEventListener('click',e=>{const b=e.currentTarget,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);
+  const el=document.documentElement,dark=matchMedia('(prefers-color-scheme:dark)').matches;
+  el.setAttribute('data-theme',on?(dark?'light':'dark'):(dark?'dark':'light'));
+  if(!on)el.removeAttribute('data-theme');});
+
+/* ---------- 40% 时改道 ---------- */
+$('bInterrupt').addEventListener('click',()=>{
+  reset();apply('rest',{instant:true});apply('compact',{instant:true});
+  S.listOn=true;rec=null;
+  go('row');
+  const w0=islWidth(),w1=NW+geoFor('row').L+geoFor('row').R;
+  const chk=()=>{if((islWidth()-w0)/(w1-w0)>=.4){S.listOn=false;go('number')}else requestAnimationFrame(chk)};requestAnimationFrame(chk);
+});
+
+/* ---------- 帧循环与绘制 ---------- */
+function render(){
+  const L=sp.L.x,R=sp.R.x,Hh=sp.H.x,r=sp.r.x,e=Math.max(0,sp.e.x);
+  const left=CX-NW/2-L,w=NW+L+R;
+  Object.assign(isl.style,{left:left+'px',width:w+'px',height:Math.max(NH,Hh)+'px',borderRadius:`0 0 ${r}px ${r}px`});
+  ink.style.left=-left+'px';
+  const shp=(el,x,side)=>Object.assign(el.style,{left:x+'px',width:e+'px',height:e+'px',background:`radial-gradient(circle at ${side} 100%, transparent ${e-.4}px, #000 ${e}px)`});
+  shp(shL,left-e,'0%');shp(shR,left+w,'100%');
+  cells.forEach(c=>{c.el.style.left=c.sp.x+'px'});
+  if(dv)dv.style.left=dvSp.x+'px';
+  if(hd&&cells[0]){const f=cells.find(c=>c.it.kind!=='tile');if(f)hd.style.left=f.sp.x+'px'}
+  Object.assign(ghost.style,{left:GH.x.x+'px',top:GH.y.x+'px',width:Math.max(0,GH.w.x)+'px',height:Math.max(0,GH.h.x)+'px',opacity:Math.min(1,Math.max(0,GH.o.x))});
+  desk2.style.transform=`translateX(${DK.x.x}px)`;desk2.style.opacity=S.reduced?Math.min(1,Math.max(0,DK.o.x)):(DK.o.x>0?1:0);
+}
+let last=performance.now();
+function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  const n=Math.max(1,Math.round(dt*240));
+  for(let i=0;i<n;i++){const d=dt/n;for(const k in sp)sp[k].step(d);cells.forEach(c=>c.sp.step(d));dvSp.step(d);for(const k in GH)GH[k].step(d);for(const k in DK)DK[k].step(d)}
+  render();
+  if(rec){const t=(now-rec.t0)/1000;if(t<1.6)rec.samples.push([t,islWidth(),sp.L.v+sp.R.v])}
+  draw();requestAnimationFrame(frame);}
+buildItems();showLayers('rest');render();
+requestAnimationFrame(frame);
+
+/* ---------- 样张 ---------- */
+(function(){
+  const gal=$('gal');
+  const items=[
+    [{kind:'intrusion',text:'手机不在身边时，这台 Mac 被解锁了一次'},'','有人动过：文字，排第一，不能点。'],
+    [{kind:'window',app:'终端',where:'in'},'','窗口（在那一排里）：回到原处。'],
+    [{kind:'window',app:'终端',where:'other'},'','窗口（在别的桌面）：去。'],
+    [{kind:'window',app:'终端',where:'gone'},'dim','窗口（已不在）：灰，不能点。'],
+    [{kind:'device',name:'妙控鼠标',pct:18,verb:'打开蓝牙设置'},'prop','设备：名字加百分比，点了打开蓝牙设置。'],
+    [{kind:'device',name:'AirPods Pro',part:'左耳',pct:12,verb:'打开蓝牙设置'},'prop','设备（耳机）：带左耳、右耳或充电盒。'],
+    [{kind:'download',name:'报价单.pdf',verb:'在访达里显示'},'prop','下载：一个文件。'],
+    [{kind:'download',name:'3 个文件',verb:'在访达里显示'},'prop','下载（多个）：打开「下载」文件夹。'],
+    [{kind:'more',n:2},'more','还有 N 件：窄格，不能点。']];
+  items.forEach(([it,cls,cap])=>{
+    const d=document.createElement('div');d.className='it';
+    const btn=(it.kind==='window'&&it.where!=='gone')||it.verb?'btn':'';
+    d.innerHTML=`<div class="blk"><div class="c on ${cls} ${btn}" style="${it.kind==='more'?'':''}">${cellInner(it)}</div></div><div class="cap">${cap}</div>`;
+    gal.appendChild(d);});
+})();
+
+/* ---------- 曲线 ---------- */
+const cv=$('cv'),cx2=cv.getContext('2d');
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+let drawn=0;
+function draw(){
+  if(!rec||rec.samples.length===drawn)return;drawn=rec.samples.length;
+  const dpr=window.devicePixelRatio||1,Wd=cv.clientWidth,Hd=cv.clientHeight;cv.width=Wd*dpr;cv.height=Hd*dpr;cx2.setTransform(dpr,0,0,dpr,0,0);
+  cx2.clearRect(0,0,Wd,Hd);
+  const Sm=rec.samples;if(Sm.length<2)return;
+  const pad={l:52,r:22,t:14,b:26},T=1.6;
+  const wmin=Math.min(...Sm.map(s=>s[1]))-10,wmax=Math.max(...Sm.map(s=>s[1]))+10;
+  const vmax=Math.max(60,...Sm.map(s=>Math.abs(s[2])))*1.1;
+  const half=(Hd-pad.t-pad.b)/2-6;
+  const X=t=>pad.l+t/T*(Wd-pad.l-pad.r);
+  const Yw=w=>pad.t+half-(w-wmin)/(wmax-wmin)*half;
+  const Yv=v=>pad.t+half+12+half/2-v/vmax*half/2;
+  cx2.font='13px '+css('--f-body');cx2.fillStyle=css('--ink3');cx2.strokeStyle=css('--rule');cx2.lineWidth=1;
+  cx2.textAlign='center';for(let i=0;i<=4;i++){const x=X(i*.4);cx2.beginPath();cx2.moveTo(x,pad.t);cx2.lineTo(x,Hd-pad.b);cx2.stroke();cx2.fillText((i*.4).toFixed(1)+'s',x,Hd-8)}cx2.textAlign='left';
+  cx2.fillText(Math.round(wmax)+'pt',4,pad.t+10);cx2.fillText(Math.round(wmin)+'pt',4,pad.t+half);
+  cx2.fillText('宽度',4,pad.t+half/2+4);cx2.fillText('速度',4,Yv(0)+4);
+  cx2.beginPath();cx2.moveTo(pad.l,Yv(0));cx2.lineTo(Wd-pad.r,Yv(0));cx2.stroke();
+  const line=(pts,col,wd,dash)=>{cx2.strokeStyle=col;cx2.lineWidth=wd;cx2.setLineDash(dash||[]);cx2.beginPath();pts.forEach((p,i)=>i?cx2.lineTo(p[0],p[1]):cx2.moveTo(p[0],p[1]));cx2.stroke();cx2.setLineDash([])};
+  if(rec.mark){const tm=(rec.mark-rec.t0)/1000;cx2.strokeStyle=css('--ink2');cx2.setLineDash([4,4]);cx2.beginPath();cx2.moveTo(X(tm),pad.t);cx2.lineTo(X(tm),Hd-pad.b);cx2.stroke();cx2.setLineDash([]);
+    const w0=rec.from,w1=rec.to,D=.35,cmp=[],cv2=[];
+    for(let t=tm;t<=Math.min(T,tm+.6);t+=.005){const u=Math.min(1,(t-tm)/D),e=u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2;cmp.push([X(t),Yw(w0+(w1-w0)*e)]);
+      const de=u<1?(u<.5?12*u*u:3*Math.pow(-2*u+2,2))/D:0;cv2.push([X(t),Yv((w1-w0)*de)])}
+    const pre=Sm.filter(s=>s[0]<=tm).map(s=>[X(s[0]),Yv(s[2])]);
+    line(cmp,css('--ink3'),1.5,[5,4]);line(pre.length?[pre[pre.length-1],...cv2]:cv2,css('--ink3'),1.5,[5,4]);}
+  line(Sm.map(s=>[X(s[0]),Yw(s[1])]),css('--accent'),2.2);
+  line(Sm.map(s=>[X(s[0]),Yv(s[2])]),css('--amber'),1.8);
+}
+})();
+</script>
