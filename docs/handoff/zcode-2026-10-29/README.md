@@ -84,3 +84,51 @@
 ## 同日新定（AARON-DECISIONS 第 22–33 条）
 
 里程碑以整合计划 18 步合入为准（现 11/18），下一条线是第 11 步换皮 + 第 12 步露出（Sonnet 子代理实现）。新稿：[离开期间](../../design-drafts/离开期间.html)（定稿）、[照系统的岛](../../design-drafts/照系统的岛.html)（等 11 月 6 日后真机量）。照系统的岛会改到第 11 步的尺寸：那一排压进 408×160 并横向滚动、拿掉悬停展开、点耳朵打开活动、第二个活动分出小圆。
+
+## 第 11 步换皮与第 12 步露出：主模型 2026-10-30／31 复核
+
+本机 `main` 快进到 `1e76fdd7`（未推送），WS2 里程碑现 **13/18**。整合分支 `claude/integ-s11`（worktree `../WindowShade-s11-integ`）＝`8f4d9f86` 合下面各包，主模型审差异、补修后合入；Sonnet 子代理实现。
+
+| 包 | 内容 | 主模型补修 |
+| --- | --- | --- |
+| 探针按语言取字 | pins、gesture、habits 的比对文字改按键名取当前语言 | 类型名写错（`HabitWords`）一次 |
+| 12 露出机制 | `WS2Exposure` 账：有证据的表面才离开预览旗标；这一批没有表面搬出（证据都缺） | — |
+| 11-C 指挥页 | 460×360 内四块，新 `WS2ConductorControls` | 两支测试脚本补编 `IslandMetrics`；指挥模式副句改文案（繁体用「瀏海」） |
+| 11-B 审批卡与会话列表 | 换皮，`SessionCardStyle`、`WS2SessionCardChrome` | — |
+| 11-A 照系统的岛 | 新 `IslandMetrics`（暂定 iOS 尺寸）；那一排 408×160 横向滚动；拿掉悬停展开与「悬停不误触」设置；点耳朵开活动；长按有东西就展开；提醒 408×84 | — |
+| 11-B2 编程会话两耳 | 四态脸、审批卡缩回琥珀点 | **改回 120 秒租约**：子代理把租约改成 130 秒并加了闲置停靠，审批请求不会交回终端，Claude Code 会一直等；按第 36 条更正「只做缩回，不改期限」 |
+| 11-D 离开期间 | 摘要变展开清单，逐项可点（设备开蓝牙设置，下载在 Finder 里显示） | — |
+| 探针修正 `1e76fdd7` | 刘海形状探针认新尺寸；指挥页探针加一次真 Claude 模式 | — |
+
+检查：`./prototype/build.sh --check` 退出 0；整套 229 支测试脚本全过；开发证书签 `--stage` 成功。
+
+### 真机探针（2026-10-31 02:33–05:49，本机 M5 MacBook Air，macOS 27）
+
+| 组 | 结果 |
+| --- | --- |
+| notch、browser-more、wins、fold-timing、restore-guard、fold-unminimizable、orphan、pins、pins-order、hold、home、shelf-glance、finder-alias、grid、coach、pip | 全 PASS |
+| launchpad、habits、slide-over | 第一次超时，重跑全过（habits 那次闲置只有 5 秒，有人在用） |
+| notch-shape | 形状都对上新尺寸（耳 52.33、底角 18.33、高 36.67、肩从耳里扣）。剩两项「静止」等不到：真机上正在放的歌「Eyes Closed」把岛撑在紧凑，**环境问题** |
+| gesture | 「键盘：放下」超时；在不含这一批的 `claude/probe-lang` 上对照跑一模一样，**不是这一批引入的**，另查 |
+
+无新崩溃。
+
+### 指挥页那一次真 Claude（第 37 条）
+
+跑了：页面打开、切到 Claude、发出一句、CLI 回来、页面回到就绪，这条路通。但本机 `~/.local/bin/claude` 的登录过期（`OAuth session expired and could not be refreshed`），模型没有回答，所以**指挥页仍留在预览旗标里**。Aaron 在终端跑一次 `claude` 重新登录后，用 `tests/fixtures/real-claude-once.py` 再跑一次（只放第一句过去）；这算不算用掉第 37 条的那一次，等 Aaron 定。
+
+## 仍待真机（Aaron，第 11 步）
+
+- 尺寸是 iOS 暂定值，11 月 6 日后用 MacBook Pro 量过，只改 `prototype/Core/IslandMetrics.swift`。
+- 那一排 408×160 横向滚动、右缘淡出；长按有东西就展开；点耳朵开活动、点刘海本体回首页。
+- 审批卡 120 秒到时缩回琥珀点、请求交回终端。
+- 离开期间清单：点设备开蓝牙设置，点下载在 Finder 里显示（多个时开下载文件夹）。
+- 英文读屏念整句。
+
+## 后续
+
+- `WS2HookApprovalHost` 里闲置停靠的代码已不再调用，清掉。
+- xcstrings `conductor.settings.hookConfig.connectedSub` 繁体用了「劉海」，改「瀏海」。
+- 《从锁屏到窗口》《离开就锁》《一颗岛》线上导览未更新；《从锁屏到窗口》勘误（D 账第 18 行）。
+- 启动台「今天」的新入口待定。
+- gesture「键盘：放下」超时（`main` 上同样有），另查。
