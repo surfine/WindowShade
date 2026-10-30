@@ -21,19 +21,18 @@ struct FileShelfCardTests {
                  "叠三张缩略图，不够就有几张叠几张")
         t.expect(cell?.spoken == "文件架，6 个", "读屏念“文件架，6 个”")
 
-        t.section("FS04-02", "末格在右段最后，不算进“最多 3 件”，放不下先被裁掉")
-        t.expect(NotchRow.fit(windows: 2, ongoing: 3, room: 2000) == NotchRow.Layout(windows: 2, ongoing: 3),
+        t.section("FS04-02", "末格在右段最后，不算进“最多 3 件”")
+        t.expect(NotchRow.fit(windows: 2, ongoing: 3) == NotchRow.Layout(windows: 2, ongoing: 3),
                  "没有末格：行为不变（右段最多 3）")
-        t.expect(NotchRow.fit(windows: 0, ongoing: 9, room: 2000) == NotchRow.Layout(windows: 0, ongoing: 3), "没有末格时仍裁成 3")
-        t.expect(NotchRow.fit(windows: 2, ongoing: 4, room: 2000, tail: true) == NotchRow.Layout(windows: 2, ongoing: 4),
+        t.expect(NotchRow.fit(windows: 0, ongoing: 9) == NotchRow.Layout(windows: 0, ongoing: 3), "没有末格时仍裁成 3")
+        t.expect(NotchRow.fit(windows: 2, ongoing: 4, tail: true) == NotchRow.Layout(windows: 2, ongoing: 4),
                  "三件加末格：多放一格，共 4")
-        t.expect(NotchRow.fit(windows: 2, ongoing: 9, room: 2000, tail: true) == NotchRow.Layout(windows: 2, ongoing: 4),
+        t.expect(NotchRow.fit(windows: 2, ongoing: 9, tail: true) == NotchRow.Layout(windows: 2, ongoing: 4),
                  "有末格时右段最多 4")
-        t.expect(NotchRow.fit(windows: 0, ongoing: 1, room: 2000, tail: true) == NotchRow.Layout(windows: 0, ongoing: 1),
+        t.expect(NotchRow.fit(windows: 0, ongoing: 1, tail: true) == NotchRow.Layout(windows: 0, ongoing: 1),
                  "只有文件架：自己一格，没有竖线")
-        t.expect(NotchRow.fit(windows: 3, ongoing: 1, room: 2000, tail: true).hasDivider, "窗口加文件架：中间有竖线")
-        let tight = NotchRow.fit(windows: 8, ongoing: 4, room: 600, tail: true)
-        t.expect(tight == NotchRow.Layout(windows: 2, ongoing: 2), "600 宽：右段至多一半（其余由 prefix 从后面裁，末格最先没）")
+        t.expect(NotchRow.fit(windows: 3, ongoing: 1, tail: true).hasDivider, "窗口加文件架：中间有竖线")
+        t.expect(NotchRow.fit(windows: 8, ongoing: 4, tail: true) == NotchRow.Layout(windows: 8, ongoing: 4), "不再按屏宽裁：8 + 4 全排出，放不下滚")
         t.expect(NotchRow.fileShelfActivityID == "fileShelf" && NotchRow.fileShelfSymbol == "tray.full", "编号用的活动号与符号")
 
         // MARK: 卡的尺寸（稿里的数字）

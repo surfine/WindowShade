@@ -11800,75 +11800,6 @@
         }
       }
     },
-    "explainer.notch.hoverGuard.ax": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Demo: the notch stays closed while the pointer passes over it, and opens only when the pointer pauses."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "演示：指针路过刘海不展开，停一下才展开。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "示範：指標路過瀏海不展開，停一下才展開。"
-          }
-        }
-      }
-    },
-    "explainer.notch.hoverGuard.line": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Opens only when you pause"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "停一下才展开"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "停一下才展開"
-          }
-        }
-      }
-    },
-    "explainer.notch.hoverGuard.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Passing by does nothing"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "路过不展开"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "路過不展開"
-          }
-        }
-      }
-    },
     "explainer.notch.live.ax": {
       "extractionState": "manual",
       "localizations": {
@@ -11967,19 +11898,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Demo: with the pointer resting on the notch, windows and what is in progress line up in one row."
+            "value": "Demo: press and hold the notch, and windows and what is in progress line up in one row."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "演示：指针停在刘海上，窗口和正在进行的事排成一排。"
+            "value": "演示：长按刘海，窗口和正在进行的事排成一排。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "示範：指標停在瀏海上，視窗和正在進行的事排成一排。"
+            "value": "示範：長按瀏海，視窗和正在進行的事排成一排。"
           }
         }
       }
@@ -12036,19 +11967,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pointer rests on the notch"
+            "value": "Press and hold the notch"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "指针停在刘海上"
+            "value": "长按刘海"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "指標停在瀏海上"
+            "value": "長按瀏海"
           }
         }
       }
@@ -48354,52 +48285,6 @@
         }
       }
     },
-    "settings.hoverGuard.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Hover guard"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "悬停不误触"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "停留不誤觸"
-          }
-        }
-      }
-    },
-    "settings.hoverGuard.sub": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Expands the notch only when the pointer rests on it, not when it passes by"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "指针在刘海上停一下才展开，路过不展开"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "指標在瀏海上停一下才展開，路過不展開"
-          }
-        }
-      }
-    },
     "settings.info.caption": {
       "extractionState": "manual",
       "localizations": {
@@ -54547,19 +54432,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "merge row, hover protection → One merged row, Hover guard"
+            "value": "merge row → One merged row"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "merge row、hover protection → 合成一排、悬停不误触"
+            "value": "merge row → 合成一排"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "merge row、hover protection → 合成一排、停留不誤觸"
+            "value": "merge row → 合成一排"
           }
         }
       }
@@ -57767,19 +57652,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Flick a title bar toward the notch to tuck the window; rest on the notch and click to bring it back"
+            "value": "Flick a title bar toward the notch to tuck the window; press and hold the notch, then click the window to bring it back"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"
+            "value": "朝刘海甩一下标题栏，窗口就收进刘海；长按刘海，点窗口放回"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "朝瀏海甩一下標題列，視窗就收進瀏海；指標停在瀏海上，點一下放回"
+            "value": "朝瀏海甩一下標題列，視窗就收進瀏海；長按瀏海，點視窗放回"
           }
         }
       }

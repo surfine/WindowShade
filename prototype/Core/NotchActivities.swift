@@ -1352,13 +1352,13 @@ enum NotchMinimalPresentation {
 
     static func size(for placement: Placement) -> CGSize {
         switch placement {
-        case .notched: return CGSize(width: 36, height: 28)
+        case .notched: return CGSize(width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter)
         case .capsule: return CGSize(width: 26, height: 22)
         }
     }
 
     /// 最小形和岛右边缘、最小形和最小形之间的空隙。
-    static let gap: CGFloat = 6
+    static let gap: CGFloat = IslandMetrics.minimalGap
     /// 最多同时排几颗（可见活动最多 3 条，一条是紧凑）。
     static let maxShapes = 2
     /// 进度弧的线宽、绕着圆点的弧的直径、圆点直径。
@@ -1366,9 +1366,9 @@ enum NotchMinimalPresentation {
     static let arcDiameter: CGFloat = 16
     static let dotDiameter: CGFloat = 8
 
-    /// 有活动时紧凑岛从刘海（或正中）往右伸出多远：真刘海 54，隐形刘海那颗 200 宽的胶囊是 100。
+    /// 有活动时紧凑岛从刘海（或正中）往右伸出多远：真刘海是一只紧凑耳的宽，隐形刘海那颗 200 宽的胶囊是 100。
     static func islandExtent(for placement: Placement) -> CGFloat {
-        placement == .notched ? 54 : 100
+        placement == .notched ? IslandMetrics.compactEarWidth : 100
     }
 
     /// 要放下 `count` 颗，从刘海边（隐形刘海是正中）往外至少要空多宽。

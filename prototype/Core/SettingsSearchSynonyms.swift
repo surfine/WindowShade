@@ -107,7 +107,7 @@ enum SettingsSearchSynonyms {
             WSL10n.setting("settings.search.synonym.language", zh: "语言、UI language、Requires restart → 界面语言"),
             WSL10n.setting("settings.search.synonym.followSystem", zh: "Auto、System default → 跟随系统"),
             WSL10n.setting("settings.search.synonym.resetDiagnostics", zh: "factory reset、debug log、重置、日志 → 恢复动态效果默认值、诊断日志"),
-            WSL10n.setting("settings.search.synonym.mergedHover", zh: "merge row、hover protection → 合成一排、悬停不误触"),
+            WSL10n.setting("settings.search.synonym.mergedHover", zh: "merge row → 合成一排"),
             WSL10n.setting("settings.search.synonym.sound", zh: "声音、音效、sound、audio、chime → 音效、响一声、提示音"),
             WSL10n.setting("settings.search.synonym.animation", zh: "动画、动效、animation、motion → 动画、动态效果"),
             WSL10n.setting("settings.search.synonym.music", zh: "音乐、歌、媒体、music、media、song → 正在播放、实时活动、跟着声音跳"),

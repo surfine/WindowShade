@@ -48,35 +48,49 @@ struct NotchRowMergeTests {
         let rightOnly = NotchRow.layout(windows: 0, ongoing: 2)
         t.expect(!rightOnly.hasDivider && rightOnly.x(ofCell: 1) == pitch, "没有窗口时右段从头排，不留竖线的位置")
 
-        t.section("M11-04", "放不下就裁：窗口最多 8、正在进行的最多 3，右段至多一半")
-        let room = 1000.0
-        t.expect(NotchRow.capacity(room: room, divider: false) == 7 && NotchRow.capacity(room: room, divider: true) == 7,
-                 "1000 宽放 7 格（竖线多占的 9 点这里没有挤掉一格）")
-        t.expect(NotchRow.capacity(room: 1056, divider: false) == 8 && NotchRow.capacity(room: 1056, divider: true) == 7,
-                 "有竖线时要扣掉它多占的 9 点")
-        t.expect(NotchRow.capacity(room: 10, divider: false) == 1, "再窄也至少一格（原来的 max(1, …)）")
-        t.expect(NotchRow.fit(windows: 20, ongoing: 0, room: 2000) == NotchRow.Layout(windows: 8, ongoing: 0), "只有窗口：最多 8 格")
-        t.expect(NotchRow.fit(windows: 5, ongoing: 0, room: 400) == NotchRow.Layout(windows: 3, ongoing: 0), "窄屏：按屏宽少放几格，沿用原来的算法")
-        t.expect(NotchRow.fit(windows: 0, ongoing: 9, room: 2000) == NotchRow.Layout(windows: 0, ongoing: 3), "只有右段：最多 3 格")
-        t.expect(NotchRow.fit(windows: 3, ongoing: 2, room: 2000) == NotchRow.Layout(windows: 3, ongoing: 2), "放得下就都放")
-        t.expect(NotchRow.fit(windows: 8, ongoing: 3, room: 2000) == NotchRow.Layout(windows: 8, ongoing: 3), "8+3 都放（宽屏）")
-        t.expect(NotchRow.fit(windows: 8, ongoing: 3, room: 1000) == NotchRow.Layout(windows: 4, ongoing: 3), "1000 宽：右段 3 格，窗口让出剩下的 4 格")
-        t.expect(NotchRow.fit(windows: 8, ongoing: 3, room: 600) == NotchRow.Layout(windows: 2, ongoing: 2), "600 宽：共 4 格，右段至多一半")
-        t.expect(NotchRow.fit(windows: 8, ongoing: 3, room: 300) == NotchRow.Layout(windows: 1, ongoing: 1), "两格：各一格")
-        t.expect(NotchRow.fit(windows: 8, ongoing: 3, room: 140) == NotchRow.Layout(windows: 1, ongoing: 0), "连两格都放不下：只留窗口，没有竖线")
-        t.expect(NotchRow.fit(windows: 1, ongoing: 1, room: 300) == NotchRow.Layout(windows: 1, ongoing: 1), "1+1")
-        t.expect(NotchRow.fit(windows: 0, ongoing: 0, room: 300) == NotchRow.Layout(windows: 0, ongoing: 0), "空的一排")
-        for w in 0...9 {
-            for o in 0...4 {
-                for room in stride(from: 100.0, through: 1500.0, by: 100.0) {
-                    let fit = NotchRow.fit(windows: w, ongoing: o, room: room)
-                    // 原来的算法：n×132 ≤ 屏宽−44 就放得下（岛宽 n×132+20 超出的 20 点是两边的边距，岛本身再按屏宽夹住）；至少一格。
-                    let fits = fit.count <= 1 || fit.islandWidth(minimum: 0) <= room + 20
-                    t.expect(fit.windows <= w && fit.ongoing <= o && fit.count <= max(1, NotchRow.capacity(room: room, divider: fit.hasDivider)) && fits,
-                             "组合 \(w)+\(o) 宽 \(Int(room))：不超数量、不超宽度")
-                }
-            }
-        }
+        t.section("M11-04", "数量上限：窗口最多 8、正在进行的最多 3；不再按屏宽裁格（照系统的岛）")
+        t.expect(NotchRow.fit(windows: 20, ongoing: 0) == NotchRow.Layout(windows: 8, ongoing: 0), "只有窗口：最多 8 格")
+        t.expect(NotchRow.fit(windows: 5, ongoing: 0) == NotchRow.Layout(windows: 5, ongoing: 0), "窄也不裁：5 格全排出（原来 400 宽会裁成 3）")
+        t.expect(NotchRow.fit(windows: 0, ongoing: 9) == NotchRow.Layout(windows: 0, ongoing: 3), "只有右段：最多 3 格")
+        t.expect(NotchRow.fit(windows: 3, ongoing: 2) == NotchRow.Layout(windows: 3, ongoing: 2), "都放")
+        t.expect(NotchRow.fit(windows: 8, ongoing: 3) == NotchRow.Layout(windows: 8, ongoing: 3), "8+3 都放，不让右段只占一半")
+        t.expect(NotchRow.fit(windows: 1, ongoing: 1) == NotchRow.Layout(windows: 1, ongoing: 1), "1+1")
+        t.expect(NotchRow.fit(windows: 0, ongoing: 0) == NotchRow.Layout(windows: 0, ongoing: 0), "空的一排")
+        t.expect(NotchRow.fit(windows: -3, ongoing: -1) == NotchRow.Layout(windows: 0, ongoing: 0), "负数当 0")
+
+        t.section("M11-04b", "滚动：岛宽固定 408，视口 380，放不下滚、放得下居中，边缘淡出，键盘焦点滚进视口")
+        t.expect(NotchRow.islandWidth == 408 && NotchRow.viewportWidth == 380, "岛 408，视口 = 408 − 2 × 14")
+        let wide = NotchRow.layout(windows: 8, ongoing: 3)
+        let cw = wide.contentWidth
+        t.expect(cw > NotchRow.viewportWidth, "11 格比视口宽")
+        t.expect(NotchRow.maxScrollOffset(contentWidth: cw) == cw - 380, "最多滚到最后一格贴着右边")
+        t.expect(NotchRow.maxScrollOffset(contentWidth: 200) == 0, "放得下就不能滚")
+        t.expect(NotchRow.clampedOffset(-5, contentWidth: cw) == 0 && NotchRow.clampedOffset(1e6, contentWidth: cw) == cw - 380, "夹在 0…最远")
+        t.expect(NotchRow.contentOrigin(contentWidth: 124) == (380 - 124) / 2, "一格居中")
+        t.expect(NotchRow.contentOrigin(contentWidth: cw) == 0, "放不下从左边起排")
+        t.expect(NotchRow.layout(windows: 3, ongoing: 0).contentWidth == 3 * 132 - 8, "3 格 388 点，比视口略宽一点：约 3 格")
+        let fadesAtStart = NotchRow.edgeFades(offset: 0, contentWidth: cw)
+        t.expect(!fadesAtStart.leading && fadesAtStart.trailing, "在最左：只有右边淡出")
+        let fadesMid = NotchRow.edgeFades(offset: 100, contentWidth: cw)
+        t.expect(fadesMid.leading && fadesMid.trailing, "中间：两边都淡出")
+        let fadesEnd = NotchRow.edgeFades(offset: cw - 380, contentWidth: cw)
+        t.expect(fadesEnd.leading && !fadesEnd.trailing, "在最右：只有左边淡出")
+        let none = NotchRow.edgeFades(offset: 0, contentWidth: 200)
+        t.expect(!none.leading && !none.trailing, "放得下：不淡出")
+        t.expect(NotchRow.offset(toReveal: 0, in: wide, current: 500) == 0, "焦点回第一格：滚回最左")
+        t.expect(NotchRow.offset(toReveal: 1, in: wide, current: 0) == 0, "第二格已在视口里：不动")
+        let revealed = NotchRow.offset(toReveal: 5, in: wide, current: 0)
+        t.expect(revealed > 0 && wide.x(ofCell: 5) + 124 <= revealed + 380, "第六格在视口外：滚到看得全它")
+        let last = NotchRow.offset(toReveal: wide.count - 1, in: wide, current: 0)
+        t.expect(last == cw - 380, "最后一格：滚到头，不超过最远")
+        t.expect(NotchRow.offset(toReveal: 2, in: NotchRow.layout(windows: 2, ongoing: 0), current: 0) == 0, "放得下的一排永远是 0")
+        let back = NotchRow.offset(toReveal: 4, in: wide, current: 800)
+        t.expect(back < 800 && wide.x(ofCell: 4) >= back, "往回走：左边缘进视口")
+        t.expect(NotchRow.scrollDelta(precise: true, deltaX: 12, deltaY: 3) == -12, "触控板：内容跟手指（手指往右，位置往回）")
+        t.expect(NotchRow.scrollDelta(precise: false, deltaX: 0, deltaY: 2) == -20, "滚轮：竖滚轮也横着滚，一行 10 点")
+        t.expect(NotchRow.scrollBelongsToRow(precise: true, deltaX: 8, deltaY: 2) && !NotchRow.scrollBelongsToRow(precise: true, deltaX: 1, deltaY: 6),
+                 "触控板横向为主才归那一排")
+        t.expect(NotchRow.scrollBelongsToRow(precise: false, deltaX: 0, deltaY: 3), "普通滚轮归那一排")
 
         // MARK: 格子编号
 

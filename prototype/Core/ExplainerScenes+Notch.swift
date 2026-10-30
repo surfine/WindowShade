@@ -1,5 +1,5 @@
 // 设置 → 刘海 的讲解（设计稿《首次打开 1.0.17 小样》E 节逐页表“刘海”）。页默认是收进刘海；
-// 每一行演自己的一段：有变化时提醒、实时活动、正在播放、浏览器下载、合成一排、悬停不误触、文件架、设备的电量，
+// 每一行演自己的一段：有变化时提醒、实时活动、正在播放、浏览器下载、合成一排、文件架、设备的电量，
 // “之前常用”三段各一个场景。数字逐个照稿里的帧数据抄；通用的“刘海说一句”在 ExplainerScenes+Common.swift。
 
 import CoreGraphics
@@ -54,13 +54,13 @@ extension ExplainerScenes {
                   size: CGSize(width: 150, height: 28))
     }
 
-    /// 合成一排：指针停在刘海上，窗口和正在进行的事排成一排。
+    /// 合成一排：长按刘海，窗口和正在进行的事排成一排。
     static var notchMergedRow: ExplainerSpec {
         notchSays(id: "notch.merged",
-                  when: WSL10n.setting("explainer.notch.merged.when", zh: "指针停在刘海上"),
+                  when: WSL10n.setting("explainer.notch.merged.when", zh: "长按刘海"),
                   line: WSL10n.setting("explainer.notch.merged.line", zh: "2 扇窗口 · 1 项下载"),
                   detail: WSL10n.setting("explainer.notch.merged.sub", zh: "排在同一排"),
-                  description: WSL10n.setting("explainer.notch.merged.ax", zh: "演示：指针停在刘海上，窗口和正在进行的事排成一排。"),
+                  description: WSL10n.setting("explainer.notch.merged.ax", zh: "演示：长按刘海，窗口和正在进行的事排成一排。"),
                   size: CGSize(width: 200, height: 40),
                   pointerTo: P(x: 156, y: 6), pointer: P(x: 236, y: 120, opacity: 1))
     }
@@ -73,24 +73,6 @@ extension ExplainerScenes {
                   detail: WSL10n.setting("explainer.notch.battery.sub", zh: "电量 82%"),
                   description: WSL10n.setting("explainer.notch.battery.ax", zh: "演示：AirPods 连上时，刘海说一声电量。"),
                   size: CGSize(width: 160, height: 36))
-    }
-
-    /// 悬停不误触：指针路过刘海不展开，停一下才展开。
-    static var notchHoverGuard: ExplainerSpec {
-        ExplainerSpec(
-            id: "notch.hoverGuard", device: .point,
-            initial: [.windowA: window0, .pointer: P(x: 30, y: 6, opacity: 1), .notch: P(w: 40, h: 10), .notchLine: P(opacity: 0)],
-            frames: [
-                F("passes by: stays closed", .calm, [.pointer: P(x: 280)], hold: 0.4, story: true),
-                F("comes back and rests", .calm, [.pointer: P(x: 156)], hold: 0.12, story: true),
-                F("rests: it opens", .calm, [.notch: P(w: 150, h: 30, easing: .expand), .notchLine: P(opacity: 1, easing: .fade)],
-                  hold: 1.2, key: true),
-                F("", .calm, [.notch: P(w: 40, h: 10), .notchLine: P(opacity: 0), .pointer: P(x: 30)], hold: 0.6),
-            ],
-            arrows: ExplainerArrows(result: "M30 16 L280 16"),
-            description: WSL10n.setting("explainer.notch.hoverGuard.ax", zh: "演示：指针路过刘海不展开，停一下才展开。"),
-            notchLine: (WSL10n.setting("explainer.notch.hoverGuard.line", zh: "停一下才展开"),
-                        WSL10n.setting("explainer.notch.hoverGuard.sub", zh: "路过不展开")))
     }
 
     /// 文件架：把文件拖到刘海，它进文件架。
@@ -159,7 +141,6 @@ extension ExplainerRow {
         static var downloads: ExplainerRow { .loop(ExplainerScenes.notchDownload) }
         static var deviceBattery: ExplainerRow { .loop(ExplainerScenes.notchDeviceBattery) }
         static var mergedRow: ExplainerRow { .loop(ExplainerScenes.notchMergedRow) }
-        static var hoverGuard: ExplainerRow { .loop(ExplainerScenes.notchHoverGuard) }
         static var fileShelf: ExplainerRow { .loop(ExplainerScenes.notchFileShelf) }
         /// 分段顺序同 SwitcherOrigin.answers：Windows / iPad / 一直用 Mac。
         static var origin: ExplainerRow {

@@ -5,6 +5,6 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/notch-room-policy"
 mkdir -p "$BUILD"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/NotchRoomPolicy.swift" \
+  "$ROOT/prototype/Core/Contracts.swift" "$ROOT/prototype/Core/NotchRoomPolicy.swift" "$ROOT/prototype/Core/IslandMetrics.swift" \
   "$ROOT/tests/support/WS2TestSupport.swift" "$ROOT/tests/NotchRoomPolicyTests.swift" -o "$BUILD/notch-room-policy-tests"
 "$BUILD/notch-room-policy-tests"

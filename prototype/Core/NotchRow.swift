@@ -48,8 +48,6 @@ enum NotchRow {
     /// 左段最多几格、右段最多几格（实时活动可见上限是 3）。
     static let windowLimit = 8
     static let ongoingLimit = 3
-    /// 窄屏上岛不出屏幕边：两边各留的宽度（和原来的 屏宽 - 44 一致）。
-    static let screenReserve = 44.0
 
     // MARK: 分段
 
@@ -92,25 +90,68 @@ enum NotchRow {
         Layout(windows: max(0, windows), ongoing: max(0, ongoing))
     }
 
-    /// 宽度放得下几格：`room` 是这块屏上岛最多能占的宽度（屏宽 - 44）。
-    /// 没有竖线时沿用原来的算法（一格 132 点，至少一格），有竖线时扣掉竖线多占的一格间隙。
-    static func capacity(room: Double, divider: Bool) -> Int {
-        max(1, Int((room - (divider ? dividerExtra : 0)) / pitch))
+    /// 最多几格：窗口最多 8 格、正在进行的最多 3 格。照系统的岛，那一排宽固定（408）、格子全部排出、放不下就左右滚，
+    /// 不再按屏宽裁格；这里只留数量上限（每一段的上限和以前一样，不是宽度裁剪）。
+    ///
+    /// `tail`：右段末尾多一格文件架（FS-04）。它不算进“最多 3 件”（多放一格）。
+    static func fit(windows: Int, ongoing: Int, tail: Bool = false) -> Layout {
+        Layout(windows: min(max(0, windows), windowLimit), ongoing: min(max(0, ongoing), ongoingLimit + (tail ? 1 : 0)))
     }
 
-    /// 放不下就裁：窗口最多 8 格、正在进行的最多 3 格。两段都有时，右段至多占一半（至少 1 格），左段拿剩下的；
-    /// 连两格都放不下时只留左段（没有竖线）。只有一段时沿用原来的上限。
-    ///
-    /// `tail`：右段末尾多一格文件架（FS-04）。它不算进“最多 3 件”（多放一格），也排最后：放不下时它先被裁掉。
-    static func fit(windows: Int, ongoing: Int, room: Double, tail: Bool = false) -> Layout {
-        let w = min(max(0, windows), windowLimit)
-        let o = min(max(0, ongoing), ongoingLimit + (tail ? 1 : 0))
-        if o == 0 { return Layout(windows: min(w, capacity(room: room, divider: false)), ongoing: 0) }
-        if w == 0 { return Layout(windows: 0, ongoing: min(o, capacity(room: room, divider: false))) }
-        let cap = capacity(room: room, divider: true)
-        guard cap >= 2 else { return Layout(windows: min(w, capacity(room: room, divider: false)), ongoing: 0) }
-        let right = min(o, max(1, cap / 2), cap - 1)
-        return Layout(windows: min(w, cap - right), ongoing: right)
+    // MARK: 滚动
+
+    /// 岛固定宽：照系统的岛，展开上限 408（数字在 IslandMetrics，暂定，iOS 尺寸）。
+    static var islandWidth: Double { Double(IslandMetrics.expandedWidth) }
+    /// 滚动视口：岛宽减两边的边距（408 时是 380）。
+    static var viewportWidth: Double { islandWidth - 2 * edgeMargin }
+
+    /// 内容比视口宽多少，就是最多能滚多远；放得下是 0。
+    static func maxScrollOffset(contentWidth: Double, viewport: Double = viewportWidth) -> Double {
+        max(0, contentWidth - viewport)
+    }
+
+    /// 滚动位置夹在 0…最远之间。
+    static func clampedOffset(_ offset: Double, contentWidth: Double, viewport: Double = viewportWidth) -> Double {
+        min(max(0, offset), maxScrollOffset(contentWidth: contentWidth, viewport: viewport))
+    }
+
+    /// 内容放得下视口时居中，放不下从左边起排（再靠滚动看别的格）。返回内容左边缘在视口里的位置。
+    static func contentOrigin(contentWidth: Double, viewport: Double = viewportWidth) -> Double {
+        max(0, (viewport - contentWidth) / 2)
+    }
+
+    /// 键盘焦点走到第 index 格时，滚动位置要变成多少才看得全它（原位置够用就不动）。
+    /// 后面（或前面）还有内容的那一侧多留一段淡出的宽度，免得焦点格被淡出盖住。
+    static func offset(toReveal index: Int, in layout: Layout, current: Double, viewport: Double = viewportWidth,
+                       fade: Double = Double(IslandMetrics.rowEdgeFadeWidth)) -> Double {
+        let content = layout.contentWidth
+        guard layout.count > 0, content > viewport else { return 0 }
+        let i = min(max(0, index), layout.count - 1)
+        let left = layout.x(ofCell: i)
+        let right = left + cellWidth
+        let target: Double
+        if left - (i > 0 ? fade : 0) < current { target = left - (i > 0 ? fade : 0) }
+        else if right + (i < layout.count - 1 ? fade : 0) > current + viewport { target = right + (i < layout.count - 1 ? fade : 0) - viewport }
+        else { target = current }
+        return clampedOffset(target, contentWidth: content, viewport: viewport)
+    }
+
+    /// 视口左右两边要不要淡出：左边滚过了、右边后面还有。
+    static func edgeFades(offset: Double, contentWidth: Double, viewport: Double = viewportWidth) -> (leading: Bool, trailing: Bool) {
+        let limit = maxScrollOffset(contentWidth: contentWidth, viewport: viewport)
+        return (offset > 0.5, offset < limit - 0.5)
+    }
+
+    /// 滚轮、触控板一下滚多少：触控板双指的横向位移（精确值，点）直接用；普通滚轮按行算（一行 10 点，竖滚轮也横着滚）。
+    static func scrollDelta(precise: Bool, deltaX: Double, deltaY: Double) -> Double {
+        if precise { return -deltaX }
+        let lines = abs(deltaX) >= abs(deltaY) ? deltaX : deltaY
+        return -lines * 10
+    }
+
+    /// 这一下滚动是不是归那一排（横着为主）。精确滚动（触控板）看横竖哪个大；普通滚轮没有横向分量时也归那一排。
+    static func scrollBelongsToRow(precise: Bool, deltaX: Double, deltaY: Double) -> Bool {
+        precise ? abs(deltaX) > abs(deltaY) : true
     }
 
     // MARK: 格子编号

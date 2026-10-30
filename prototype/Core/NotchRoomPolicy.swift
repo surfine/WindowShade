@@ -10,12 +10,12 @@ import Foundation
 enum NotchRoomPolicy {
     // MARK: 数字（照稿）
 
-    /// 宽裕时每只耳朵多宽（两耳各 34：主体 26.6 + 肩 7.4）。
-    static let fullSide: CGFloat = 34
+    /// 宽裕时每只耳朵多宽（照系统的岛：每耳 52.33，数字在 IslandMetrics，暂定，iOS 尺寸）。
+    static let fullSide: CGFloat = IslandMetrics.compactEarWidth
     /// 最窄的耳朵：图标 18 点、两边各 4 点。再窄就退回下巴。
     static let narrowestSide: CGFloat = 26
-    /// 活动紧凑以前按每边 54 画（LA-2）：只有量过、空位真有 54 才这么宽。
-    static let legacyActivitySide: CGFloat = 54
+    /// 活动紧凑画多宽（LA-2）：只有量过、空位真有这么宽才画满。以前是 54，现在和紧凑耳同宽。
+    static let legacyActivitySide: CGFloat = IslandMetrics.compactEarWidth
     /// 读数比现在用的大这么多才算要长。
     static let growMargin: CGFloat = 4
     /// 每个事件后复核一次、要长时复核一次，都等这么久。
@@ -32,9 +32,9 @@ enum NotchRoomPolicy {
     static let probesPerSide = 10
     /// 一次量最多问几次：每边 10 个点 + 1 次读帧。
     static var queryBudget: Int { 2 * (probesPerSide + 1) }
-    /// 刘海屏最小形：36 × 28，和岛、彼此之间隔 6；最多两颗。
-    static let minimalWidth: CGFloat = 36
-    static let minimalGap: CGFloat = 6
+    /// 刘海屏最小形：直径 36.67 的圆（IslandMetrics），和岛、彼此之间隔 6；最多两颗。
+    static let minimalWidth: CGFloat = IslandMetrics.minimalDiameter
+    static let minimalGap: CGFloat = IslandMetrics.minimalGap
     static let maxMinimal = 2
 
     // MARK: 怎么量
@@ -96,7 +96,7 @@ enum NotchRoomPolicy {
         return room >= legacyActivitySide ? legacyActivitySide : earWidth
     }
 
-    /// 从刘海边往外放下 `count` 颗最小形要空多宽：耳宽 + 6 + 每颗 36（颗间 6）。耳宽 34 时一颗 76、两颗 118。
+    /// 从刘海边往外放下 `count` 颗最小形要空多宽：耳宽 + 6 + 每颗一个直径（颗间 6）。
     static func minimalRoomNeeded(count: Int, earWidth: CGFloat) -> CGFloat {
         guard count > 0 else { return 0 }
         return earWidth + minimalGap + CGFloat(count) * minimalWidth + CGFloat(count - 1) * minimalGap

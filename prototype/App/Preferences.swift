@@ -381,10 +381,6 @@ extension AppDelegate {
                                  subtitle: WSL10n.setting("settings.shade.mergedRow.sub", zh: "窗口和正在进行的事排在同一排"),
                                  isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:)),
                                  explainer: ExplainerRow.Notch.mergedRow),
-            makeUnifiedToggleRow(name: WSL10n.text("settings.hoverGuard.name", zh: "悬停不误触"),
-                                 subtitle: WSL10n.text("settings.hoverGuard.sub", zh: "指针在刘海上停一下才展开，路过不展开"),
-                                 isOn: NotchController.hoverGuardEnabled, action: #selector(prefToggleHoverGuard(_:)),
-                                 explainer: ExplainerRow.Notch.hoverGuard),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.fileShelf.name", zh: "文件架"),
                                  subtitle: WSL10n.setting("settings.shade.fileShelf.sub", zh: "拖到刘海暂存的文件放在这里；关掉后清空"),
                                  isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:)),
@@ -1821,7 +1817,7 @@ extension AppDelegate {
         group(WSL10n.text("settings.shade.group.notch", zh: "刘海"), [
             GestureRows.decorate(
                 makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.tuckNotch.name", zh: "收进刘海"),
-                                     subtitle: WSL10n.setting("settings.shade.tuckNotch.sub", zh: "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"),
+                                     subtitle: WSL10n.setting("settings.shade.tuckNotch.sub", zh: "朝刘海甩一下标题栏，窗口就收进刘海；长按刘海，点窗口放回"),
                                      isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
                 fingers: WSL10n.setting("settings.gesture.chip.tuck", zh: "甩一下标题栏 → 刘海"), kind: .combination,
                 explainer: ExplainerRow.Gestures.tuck),
@@ -2058,10 +2054,6 @@ extension AppDelegate {
     @objc func prefToggleCenterWhenFits(_ sender: NSSwitch) {
         ScrollStrip.store(whenFits: sender.state == .on)
         MainActor.assumeIsolated { gestures.strips.refreshCentering() }
-    }
-
-    @objc func prefToggleHoverGuard(_ sender: NSSwitch) {
-        NotchHoverPolicy.setEnabled(sender.state == .on)
     }
 
     @objc func prefToggleStripWidths(_ sender: NSSwitch) {

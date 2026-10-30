@@ -3260,13 +3260,6 @@
     },
     {
       "path": "prototype/App/Notch.swift",
-      "line": 165,
-      "symbol": "UserDefaults",
-      "source": "UserDefaults.standard.object(forKey: NotchHoverPolicy.defaultsKey) as? Bool ?? NotchHoverPolicy.defaultEnabled",
-      "signal": "settings"
-    },
-    {
-      "path": "prototype/App/Notch.swift",
       "line": 235,
       "symbol": "bezelPath",
       "source": "// 刘海底角和肩按每块屏的形状画（DisplayShape：bezelPath → 机型表）；还没算好的屏先照现版本画，算好了再换上。",
@@ -5216,13 +5209,6 @@
       "line": 884,
       "symbol": "UserDefaults",
       "source": "static func isEnabled(in defaults: UserDefaults) -> Bool {",
-      "signal": "settings"
-    },
-    {
-      "path": "prototype/Core/NotchHoverPolicy.swift",
-      "line": 38,
-      "symbol": "UserDefaults",
-      "source": "static func setEnabled(_ on: Bool, _ defaults: UserDefaults = .standard) {",
       "signal": "settings"
     },
     {
