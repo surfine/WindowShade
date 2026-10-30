@@ -197,7 +197,7 @@
 | 恢复默认值 / 诊断日志 | **Reset defaults / Diagnostics log** | factory reset、debug log |
 | 窗口之间留缝 | **Gap between windows**；档位 **None / Narrow / Wide** | spacing、margin |
 | 浮在其他窗口上面 | **Float above other windows** | always on top、pin |
-| 合成一排 / 悬停不误触 | **One merged row / Hover guard** | merge row、hover protection |
+| 合成一排 | **One merged row** | merge row |
 | 文件架 / 之前常用 | **File shelf / Used before** | tray、shelf、source、migration |
 | 番茄钟 | **Focus timer** | Pomodoro（只在与用户原有习惯对照时提） |
 | 计时器到时间响一声 / 展开音 / 收起音 | **Chime when a timer ends / Unroll sound / Roll-up sound** | timer alarm |
