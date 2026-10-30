@@ -7432,7 +7432,14 @@ final class NotchTileView: NSView {
             if let parked = tile.parked {
                 setAccessibilityLabel(parked.spoken(title: tile.title))
             } else {
-                setAccessibilityLabel("\(Self.verb(tile.kind)) \(NotchFocusController.label(for: tile.title))")
+                let name = NotchFocusController.label(for: tile.title)
+                switch tile.kind {
+                case .elsewhere, .session, .playing, .activity:
+                    setAccessibilityLabel("\(Self.verb(tile.kind)) \(name)")
+                default:
+                    // 「回到原处」念成整句，英文把窗口名放进句子里（Aaron 10-30）。
+                    setAccessibilityLabel(WSL10n.text("notch.tile.backInPlaceSpoken", zh: "回到原处 %@", name))
+                }
             }
         }
     }
