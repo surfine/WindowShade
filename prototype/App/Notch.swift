@@ -2570,6 +2570,8 @@ final class NotchPanel: NSPanel {
         var dotTone: NotchInfoDot.Tone = .accent
         /// 编程会话的这一步：右耳在跑画转圈、等你写橙色“等你”、做完画对勾。其它活动是 nil。
         var sessionPhase: NotchSessionPhase? = nil
+        /// 编程会话右耳的样子（转圈加项目名、琥珀点加“等你”、个数加状态点）。nil = 不是会话，或额度那两种。
+        var sessionFace: NotchSessionEar.Face? = nil
         /// 音量、亮度、键盘灯的两耳（《音量与亮度》稿）：左耳符号、右耳白条，不写百分比。有值时左右耳都按它画。
         var level: LevelEar? = nil
         /// 正在播放的紧凑两耳（NP-2）：左耳封面、右耳 5 个静止取色点。nil = 今天的样子（歌名 + 符号 + 右耳的字）。
@@ -2588,6 +2590,7 @@ final class NotchPanel: NSPanel {
                 && leading == other.leading && leadingSymbol == other.leadingSymbol && trailing == other.trailing
                 && progress == other.progress && quantity == other.quantity && progressTone == other.progressTone
                 && progressStyle == other.progressStyle && dotTone == other.dotTone && sessionPhase == other.sessionPhase
+                && sessionFace == other.sessionFace
                 && level == other.level && music == other.music && flash == other.flash && calendar == other.calendar
                 && shelfSpoken == other.shelfSpoken
                 && stale == other.stale
@@ -2833,7 +2836,8 @@ final class NotchPanel: NSPanel {
     func setAuthentication(_ view: NotchAuthenticationView?, animated: Bool = true) {
         setInteraction(view, animated: animated)
     }
-    func setInteraction(_ view: (NSView & NotchInteractiveContent)?, animated: Bool = true) {
+    /// `retreating`：被收走的是编程会话审批卡，先让它缩回琥珀点（视图由画布留到播完）。
+    func setInteraction(_ view: (NSView & NotchInteractiveContent)?, animated: Bool = true, retreating: Bool = false) {
         canvas.resetInteractions()
         pressWork?.cancel(); pressWork = nil
         hoverTimer?.invalidate(); pulled = 0
@@ -2841,7 +2845,7 @@ final class NotchPanel: NSPanel {
         if dropState != .none { noteDropInteraction(false) }
         dropState = .none; stripLanding = false
         authenticationView = view
-        canvas.setAuthentication(view)
+        canvas.setAuthentication(view, retreating: retreating && animated)
         updateVisibility(); apply(animated: animated)
     }
     func setActivities(_ items: [NotchActivity], selected: String?) {
@@ -4198,9 +4202,9 @@ final class NotchPanel: NSPanel {
             case .sides:
                 // LA-2：画多宽就要量到多宽。以前按 max(sideWidth, 54) 画、只验 ≥ 26，26–54 点的图标会被盖住。
                 // 电量那一下：宽 = 刘海 + 68（每耳 34）、高同刘海。
-                return (compactEarsRect(side: ears.flash != nil ? sideWidth
-                                        : NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading,
-                                                                       trailing: room?.trailing)),
+                let activitySide = ears.sessionFace.map { NotchSessionEar.earSide(face: $0, earWidth: sideWidth, room: sessionRoom) }
+                    ?? NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
+                return (compactEarsRect(side: ears.flash != nil ? sideWidth : activitySide),
                         IslandStyle(cornerRadius: IslandMetrics.compactCornerRadius, allCorners: false, fill: .black, border: 0))
             case .chin:
                 if isVirtual {
@@ -4471,6 +4475,11 @@ final class NotchPanel: NSPanel {
                                trailing: item.trailing, dotTone: .accent, shelfSpoken: NotchShelfEars.spoken(count: count))
             }
             // 番茄钟：左耳一圈环加“专注”或“休息”，不画符号，也不画横条。计时器：左耳只有橙环，没有字。
+            let sessionFace: NotchSessionEar.Face? = {
+                guard item.kind == .session, !item.isStale, let phase = item.sessionPhase else { return nil }
+                return NotchSessionEar.face(phase: phase, sessionCount: item.sessionCount ?? 1, projectName: item.title,
+                                            room: sessionRoom, measure: NotchCompactView.textWidth)
+            }()
             return Compact(pid: compact?.pid, icon: compact?.icon, count: compact?.count ?? 0, changed: false,
                            leading: item.title,
                            leadingSymbol: focus ? nil : (item.symbol.isEmpty ? "circle.fill" : item.symbol),
@@ -4479,10 +4488,16 @@ final class NotchPanel: NSPanel {
                            quantity: focus || item.isStale ? .unknown : item.progress,
                            progressTone: tone, progressStyle: focus ? .ring : .bar, dotTone: NotchInfoDot.tone(for: item),
                            // 过期的不转圈、不猜：右耳只剩“—”。
-                           sessionPhase: item.isStale ? nil : item.sessionPhase, music: music, calendar: item.calendar,
-                           stale: item.isStale)
+                           sessionPhase: item.isStale ? nil : item.sessionPhase, sessionFace: sessionFace,
+                           music: music, calendar: item.calendar, stale: item.isStale)
         }
         return compact
+    }
+
+    /// 两边菜单栏量到的空位的小者；没量到是 nil。
+    private var sessionRoom: CGFloat? {
+        guard let leading = room?.leading, let trailing = room?.trailing else { return nil }
+        return min(leading, trailing)
     }
 
     /// 右耳的字：来源给了就用来源的；百分比只给本身是百分比的种类（`NotchEarText`）。
@@ -4653,10 +4668,29 @@ final class NotchCanvasView: NSView {
     /// 提醒里的图标在屏幕上的位置（点提醒时窗口从这里起飞）。
     var alertIconScreenRect: NSRect? { current?.alertIconScreenRect }
     private var authenticationView: (NSView & NotchInteractiveContent)?
-    func setAuthentication(_ view: (NSView & NotchInteractiveContent)?) {
-        authenticationView?.removeFromSuperview()
+    /// 正在缩回琥珀点的卡：画布替它留着视图，播完才拿掉。新卡或新页面来了就接着它的位置和速度（或直接拿掉）。
+    private var retreatingView: (NSView & SessionCardRetreating)?
+    func setAuthentication(_ view: (NSView & NotchInteractiveContent)?, retreating: Bool = false) {
+        let old = authenticationView
+        let inFlight = retreatingView
         authenticationView = view
-        if let view { clipHost.addSubview(view) }
+        if let inFlight, inFlight !== old {
+            // 上一次缩回还没播完：新卡接着它此刻的状态；不是卡就直接拿掉。
+            if let snapshot = inFlight.retreatSnapshot(), let card = view as? SessionCardRetreating { card.adoptRetreat(snapshot) }
+            inFlight.removeFromSuperview(); retreatingView = nil
+        }
+        if let old, retreating, view == nil, let card = old as? (NSView & SessionCardRetreating), card.retreatsOnRemoval {
+            retreatingView = card
+            card.beginRetreat { [weak self, weak card] in
+                guard let self, let card, self.retreatingView === card else { return }
+                card.removeFromSuperview(); self.retreatingView = nil
+            }
+        } else if old !== view {
+            old?.removeFromSuperview()
+        }
+        if let view {
+            if view.superview == nil { clipHost.addSubview(view) }
+        }
         current?.isHidden = view != nil
     }
     func placeAuthentication(in rect: NSRect) {
@@ -5332,7 +5366,7 @@ final class NotchCanvasView: NSView {
 
     /// 落定：旧的一层都撤掉。
     func settle() {
-        for view in clipHost.subviews where view !== current && view !== authenticationView { view.removeFromSuperview() }
+        for view in clipHost.subviews where view !== current && view !== authenticationView && view !== retreatingView { view.removeFromSuperview() }
         current?.alphaValue = 1
     }
 
@@ -6470,7 +6504,7 @@ final class NotchCompactView: NSView {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
         return font.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: font.pointSize) } ?? font
     }
-    private static func textWidth(_ text: String) -> CGFloat {
+    static func textWidth(_ text: String) -> CGFloat {
         text.isEmpty ? 0 : ceil(NSAttributedString(string: text, attributes: [.font: earFont()]).size().width)
     }
 
@@ -6686,12 +6720,12 @@ final class NotchCompactView: NSView {
 
     /// 右耳的转圈：只在编程会话“在跑”时有。位置贴着右耳的右边缘，竖直居中。
     private func updateSpinner() {
-        let running = compact?.sessionPhase == .running && slots != nil
+        let running = compact?.sessionFace?.mark == .spinner && slots != nil
         if running, let slots {
             wantsLayer = true
             if spinner.superlayer == nil { layer?.addSublayer(spinner) }
             let side = NotchSessionSpinner.diameter
-            spinner.position = CGPoint(x: slots.trailing.maxX - 6 - side / 2, y: slots.trailing.midY)
+            spinner.position = CGPoint(x: slots.trailing.minX + IslandMetrics.sessionEarInset + side / 2, y: slots.trailing.midY)
             spinner.isHidden = false
             NotchSessionSpinner.start(spinner)
         } else {
@@ -6865,6 +6899,16 @@ final class NotchCompactView: NSView {
                 }
                 return
             }
+            // 编程会话（在跑、等你、好几个）：左耳只留符号，右耳画转圈或点加字。做完仍走下面的对勾。
+            if let face = compact.sessionFace, face.mark != .check {
+                drawEar("", symbol: compact.leadingSymbol, ring: nil, in: slots.leading, align: .left)
+                drawSessionFace(face, in: slots.trailing)
+                if compact.count > 0 {
+                    compact.dotTone.color.setFill()
+                    NSBezierPath(ovalIn: NotchInfoDot.rect(in: bounds)).fill()
+                }
+                return
+            }
             // 编程会话：在跑是转圈（子图层）、等你是橙色的字、做完是对勾。
             // 活动的量：环（或弧）是子图层，字让出它的位置。
             drawEar(compact.shelfSpoken != nil ? "" : (earText ?? ""), symbol: nil, ring: nil, in: slots.trailing, align: .right,
@@ -7032,6 +7076,41 @@ final class NotchCompactView: NSView {
         let textY = slot.midY - size.height / 2 + (hasBar ? 2 : 0)
         string.draw(with: NSRect(x: drawX, y: textY, width: min(size.width, maxWidth), height: size.height),
                     options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+    }
+
+    /// 会话右耳：转圈（子图层）或状态点在左，字跟在后面；好几个时个数在前、点在后。
+    private func drawSessionFace(_ face: NotchSessionEar.Face, in slot: NSRect) {
+        let inset = IslandMetrics.sessionEarInset, gap = IslandMetrics.sessionEarGap
+        let dotSide = IslandMetrics.sessionDotDiameter
+        func dot(at x: CGFloat, _ color: NSColor) {
+            color.setFill()
+            NSBezierPath(ovalIn: NSRect(x: x, y: slot.midY - dotSide / 2, width: dotSide, height: dotSide)).fill()
+        }
+        func text(_ string: String, at x: CGFloat, width: CGFloat, color: NSColor) {
+            let attributed = NSAttributedString(string: string, attributes: [.font: Self.earFont(), .foregroundColor: color])
+            let size = attributed.size()
+            attributed.draw(with: NSRect(x: x, y: slot.midY - size.height / 2, width: width, height: size.height),
+                            options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+        }
+        var x = slot.minX + inset
+        if face.isCount {
+            text(face.text, at: x, width: face.textWidth, color: NSColor.white.withAlphaComponent(0.92))
+            x += face.textWidth + gap
+            switch face.mark {
+            case .amberDot?: dot(at: x, .systemOrange)
+            case .quietDot?: dot(at: x, NSColor.white.withAlphaComponent(0.55))
+            default: break
+            }
+            return
+        }
+        switch face.mark {
+        case .spinner?: x += IslandMetrics.sessionSpinnerDiameter + gap
+        case .amberDot?: dot(at: x, .systemOrange); x += dotSide + gap
+        default: break
+        }
+        guard !face.text.isEmpty else { return }
+        let color = face.mark == .amberDot ? NSColor.systemOrange : NSColor.white.withAlphaComponent(0.92)
+        text(face.text, at: x, width: min(face.textWidth, max(0, slot.maxX - inset - x)), color: color)
     }
 
     private func drawProgress(_ progress: Double, in slot: NSRect) {

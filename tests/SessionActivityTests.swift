@@ -32,6 +32,7 @@ import Foundation
         testMenuRowsAppearAndDisappear()
         testWaitingDirectoriesAndTarget()
         testWindowMatch()
+        testCompactFaces()
         print("PASS session activity (\(assertions) assertions)")
     }
 
@@ -239,5 +240,46 @@ import Foundation
         expect(M.best(cwd: "/Users/a/proj", among: candidates, home: home)?.windowID == 2, "完整匹配优先于弱匹配，同强度取前面的")
         expect(M.best(cwd: "/Users/a/none", among: candidates, home: home) == nil, "找不到是 nil，由调用方打开会话页")
         expect(M.best(cwd: "/Users/a/proj", among: [], home: home) == nil, "没有终端窗口是 nil")
+    }
+
+    // 8) 紧凑右耳四态（稿《刘海里的编程会话》②）：状态到样子的映射，和菜单栏挤时只留转圈或点。
+    static func testCompactFaces() {
+        typealias E = NotchSessionEar
+        let measure: (String) -> CGFloat = { CGFloat($0.count) * 10 }
+        let roomy: CGFloat = 80, tight: CGFloat = 40
+        let running = E.face(phase: .running, sessionCount: 1, projectName: "WindowShade", room: roomy, measure: measure)
+        expect(running?.mark == .spinner && running?.text == "WindowShade", "在跑：转圈 + 项目名")
+        expect(running?.textWidth == IslandMetrics.sessionNameMaxWidth, "项目名最长 64 点，再长截断")
+        expect(E.face(phase: .running, sessionCount: 1, projectName: "ab", room: roomy, measure: measure)?.textWidth == 20, "短名字按实际宽")
+        let runningTight = E.face(phase: .running, sessionCount: 1, projectName: "WindowShade", room: tight, measure: measure)
+        expect(runningTight == E.Face(mark: .spinner, text: "", textWidth: 0), "菜单栏挤：只留转圈")
+        let waiting = E.face(phase: .waiting, sessionCount: 1, projectName: "x", room: roomy, measure: measure)
+        expect(waiting?.mark == .amberDot && waiting?.text == E.waitingText, "等你：琥珀点 + “等你”")
+        expect(E.face(phase: .waiting, sessionCount: 1, projectName: "x", room: tight, measure: measure)
+               == E.Face(mark: .amberDot, text: "", textWidth: 0), "菜单栏挤：只留琥珀点")
+        expect(E.face(phase: .done, sessionCount: 1, projectName: "x", room: roomy, measure: measure)?.mark == .check, "做完：对勾")
+        let many = E.face(phase: .waiting, sessionCount: 3, projectName: "x", room: roomy, measure: measure)
+        expect(many?.isCount == true && many?.text == "3" && many?.mark == .amberDot, "好几个：个数 + 最急的状态点（有人等你是琥珀）")
+        expect(E.face(phase: .running, sessionCount: 3, projectName: "x", room: roomy, measure: measure)?.mark == .quietDot, "都在跑：安静的点")
+        let manyTight = E.face(phase: .waiting, sessionCount: 3, projectName: "x", room: tight, measure: measure)
+        expect(manyTight?.text == "3" && manyTight?.mark == nil, "菜单栏挤：只留个数")
+        expect(E.face(phase: .running, sessionCount: 1, projectName: "x", room: nil, measure: measure)?.text == "", "没量到空位按挤算")
+        expect(E.face(phase: .quota, sessionCount: 1, projectName: "x", room: roomy, measure: measure) == nil
+               && E.face(phase: .quotaLow, sessionCount: 1, projectName: "x", room: roomy, measure: measure) == nil, "额度那两种不归这里")
+        // 耳宽
+        let ear = IslandMetrics.compactEarWidth
+        expect(E.earSide(face: runningTight!, earWidth: ear, room: tight) == ear, "挤：就是耳宽")
+        let side = E.earSide(face: running!, earWidth: ear, room: roomy)
+        expect(side > ear && side <= roomy, "够宽：按内容放，不超过量到的空位")
+        expect(E.earSide(face: running!, earWidth: ear, room: 55) == 55, "空位刚够就到空位为止")
+        expect(E.earSide(face: E.Face(mark: .check, text: "", textWidth: 0), earWidth: ear, room: roomy) == ear, "对勾不加宽")
+        // 会话个数从 Spec 带出来
+        var model = CodingSessionActivities()
+        _ = model.apply(change("a", .running), now: 1)
+        expect(model.liveSpec?.sessionCount == 1, "一个会话 sessionCount = 1")
+        _ = model.apply(change("b", .waiting, project: "blog", cwd: "/b"), now: 2)
+        expect(model.liveSpec?.sessionCount == 2, "两个会话 sessionCount = 2")
+        _ = model.apply(change("a", .completed), now: 3)
+        expect(model.doneSpec(at: 3)?.sessionCount == nil, "做完那条没有个数")
     }
 }

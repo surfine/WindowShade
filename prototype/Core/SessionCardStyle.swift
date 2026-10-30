@@ -6,11 +6,11 @@ import Foundation
 import CoreGraphics
 
 enum SessionCardStyle {
-    /// 展开的岛至多这么宽、这么高（含刘海那一截）。
-    static let islandMaxWidth: CGFloat = 408
-    static let islandMaxHeight: CGFloat = 160
-    /// 紧凑耳朵的高（36.67）：刘海那一截的参照，卡的内容高度 = 岛的上限 - 它，取整。
-    static let notchReferenceHeight: CGFloat = 36.67
+    /// 展开的岛至多这么宽、这么高（含刘海那一截）：都取自 `IslandMetrics`。
+    static let islandMaxWidth: CGFloat = IslandMetrics.expandedWidth
+    static let islandMaxHeight: CGFloat = IslandMetrics.expandedMaximumHeight
+    /// 紧凑耳朵的高：刘海那一截的参照，卡的内容高度 = 岛的上限 - 它，取整。
+    static let notchReferenceHeight: CGFloat = IslandMetrics.compactHeight
     static let cardSize = CGSize(width: islandMaxWidth, height: (islandMaxHeight - notchReferenceHeight).rounded(.down))
 
     static let inset: CGFloat = 16
@@ -19,7 +19,7 @@ enum SessionCardStyle {
     static let buttonHeight: CGFloat = 28
     static let buttonBottom: CGFloat = 12
     static let buttonGap: CGFloat = 8
-    static let dotDiameter: CGFloat = 8
+    static let dotDiameter: CGFloat = IslandMetrics.sessionDotDiameter
     /// 卡出现后这么久内的点按不算（防正在点别处的手）；Codex 那条路已有同样的新鲜度判断，这里只记数。
     static let freshPressSeconds: Double = 0.5
 
@@ -108,6 +108,90 @@ enum SessionCardStyle {
     }
     /// 卡刚从点里出来时的大小比例。
     static let enterScale: CGFloat = 0.4
+}
+
+// MARK: 缩回琥珀点：进度、弹簧的位置与速度
+
+extension SessionCardStyle {
+    /// 卡的“收回程度” p：0 = 完整的卡，1 = 缩进点里。缩放与透明度都由它推出，打断时位置和速度一起接着走。
+    static func pose(progress p: Double, plan: Plan) -> (scale: CGFloat, opacity: Float) {
+        let clamped = min(1, max(0, p))
+        return (1 - CGFloat(clamped) * (1 - plan.scale), Float(1 - clamped))
+    }
+
+    /// 一次弹簧（质量 1，Apple 的 response / dampingRatio 口径：ω = 2π / response）的解析解，
+    /// 用来在中途改道时读出当下的位置和速度。位置单位同 `from` / `to`，速度是每秒。
+    struct SpringRun: Equatable, Sendable {
+        var response: Double
+        var dampingRatio: Double
+        var from: Double
+        var to: Double
+        var initialVelocity: Double = 0
+
+        func position(at t: Double) -> Double { to + displacement(at: max(0, t)).e }
+        func velocity(at t: Double) -> Double { displacement(at: max(0, t)).v }
+
+        private func displacement(at t: Double) -> (e: Double, v: Double) {
+            let w = 2 * Double.pi / max(0.001, response)
+            let z = max(0.01, dampingRatio)
+            let e0 = from - to, v0 = initialVelocity
+            if z >= 1 {
+                // 临界阻尼（过阻尼按临界算，令牌里没有）。
+                let b = v0 + w * e0
+                let decay = exp(-w * t)
+                return ((e0 + b * t) * decay, (b - w * (e0 + b * t)) * decay)
+            }
+            let wd = w * (1 - z * z).squareRoot()
+            let decay = exp(-z * w * t)
+            let c = e0, d = (v0 + z * w * e0) / wd
+            let cosT = cos(wd * t), sinT = sin(wd * t)
+            let e = decay * (c * cosT + d * sinT)
+            let v = decay * (v0 * cosT - ((z * w * v0 + w * w * e0) / wd) * sinT)
+            return (e, v)
+        }
+    }
+
+    /// 缩回途中某一刻的状态，交给接上来的新卡：从这个位置、这个速度接着走。
+    struct RetreatSnapshot: Equatable, Sendable {
+        var progress: Double
+        /// p 每秒变多少（缩回时为正）。
+        var velocity: Double
+    }
+
+    /// 编程会话审批卡“没人管”这条规则（拍板 10-29 第 36 条）：2 分钟没人动，卡缩回琥珀点，请求仍挂着。
+    /// 规则本身只会说“缩回去”，不带任何“回答”或“改期限”：Claude Code（无期限）和 Codex（30 秒）各自的期限它不碰。
+    struct IdleRule: Equatable, Sendable {
+        static let idleSeconds: Double = 120
+        /// 本规则不拥有的期限，原样记着，只为说明它不被改动。
+        let requestDeadline: Double?
+        private(set) var shownAt: Double
+        private(set) var parked = false
+        private(set) var cancelled = false
+
+        enum Effect: Equatable, Sendable { case none, retreatToDot }
+
+        init(shownAt: Double, requestDeadline: Double? = nil) {
+            self.shownAt = shownAt; self.requestDeadline = requestDeadline
+        }
+
+        func isDue(now: Double) -> Bool { !parked && !cancelled && now - shownAt >= Self.idleSeconds }
+
+        mutating func fire(now: Double) -> Effect {
+            guard isDue(now: now) else { return .none }
+            parked = true
+            return .retreatToDot
+        }
+
+        /// 点点或耳朵把卡请回来：重新计 2 分钟。已放行、已回答（cancel）的不再回来。
+        mutating func restore(now: Double) -> Bool {
+            guard parked, !cancelled else { return false }
+            parked = false; shownAt = now
+            return true
+        }
+
+        /// 有人回答了、交给 Touch ID、请求没了：不再触发。
+        mutating func cancel() { cancelled = true }
+    }
 }
 
 extension AgentApprovalCard {

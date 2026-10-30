@@ -131,7 +131,7 @@ final class NotchLeaseHub {
     /// `borrowsSeat`：短暂的自动卡（日程大卡）来借座位——已打开的那一页挂起、让出后原样回来，不算换页。
     @discardableResult
     func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,
-              animated: Bool = true, borrowsSeat: Bool = false,
+              animated: Bool = true, borrowsSeat: Bool = false, lifetimeSeconds: UInt64 = 120,
               onDismiss: @escaping (WS2.LeaseRevocation) -> Void = { _ in }) -> Bool {
         guard !locked(), controller?.authentication.isPresenting != true,
               let panel = controller?.authenticationPanel(),
@@ -142,7 +142,7 @@ final class NotchLeaseHub {
         let previous = contentHandle
         let now = clock.now()
         let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: layer,
-                                       requestedAt: now, deadline: now.adding(120 * WS2.Duration.second),
+                                       requestedAt: now, deadline: now.adding(lifetimeSeconds * WS2.Duration.second),
                                        containsPrivateContent: true, borrowsSeat: borrowsSeat)
         // 审批宿主要同步知道有没有露面，没有「以后再出现」的接法：放行不排队，照旧答忙。
         guard case .acquired(let lease) = coordinator.acquire(request, replacing: borrowsSeat ? nil : previous, queueing: false),
@@ -157,7 +157,7 @@ final class NotchLeaseHub {
         panel.setInteraction(content, animated: animated)
         panel.makeKeyAndOrderFront(nil)
         contentDeadline = Task { [weak self] in
-            do { try await Task.sleep(for: .nanoseconds(120 * WS2.Duration.second), clock: .suspending) } catch { return }
+            do { try await Task.sleep(for: .nanoseconds(lifetimeSeconds * WS2.Duration.second), clock: .suspending) } catch { return }
             guard let self, self.contentHandle == lease else { return }
             _ = self.coordinator.snapshots(at: self.clock.now())
         }
@@ -165,7 +165,12 @@ final class NotchLeaseHub {
     }
 
     /// 关掉预览并且不向审批宿主报告取消：下一步交给原生认证。
-    func handOffToAuthorization() { contentDismissed = nil; dismiss() }
+    func handOffToAuthorization() {
+        contentDismissed = nil
+        // 交给 Touch ID 的画面换上来，不播缩回。
+        (contentView as? SessionCardRetreating)?.retreatsOnRemoval = false
+        dismiss()
+    }
 
     func dismiss() {
         guard let handle = contentHandle else { return }
@@ -415,7 +420,11 @@ final class NotchLeaseHub {
             } else {
                 contentHandle = nil; contentView = nil; contentPanel = nil; contentDismissed = nil
                 content?.revoke()
-                if let content, panel?.isShowingInteraction(content) == true { panel?.setInteraction(nil) }
+                if let content, panel?.isShowingInteraction(content) == true {
+                    // 只有人点掉、放走、没人管到期才播缩回；锁屏、睡眠、被顶掉、换会话都立刻收走。
+                    let plays = (reason == .released || reason == .expired) && (content as? SessionCardRetreating)?.retreatsOnRemoval == true
+                    panel?.setInteraction(nil, retreating: plays)
+                }
                 callback?(reason)
             }
         }

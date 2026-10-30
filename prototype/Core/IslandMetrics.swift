@@ -18,6 +18,18 @@ enum IslandMetrics {
     /// 紧凑底角 = 高的一半（稿的假设，圆角系统没有公布）。
     static var compactCornerRadius: CGFloat { compactHeight / 2 }
 
+    // MARK: 紧凑右耳里的编程会话（稿《刘海里的编程会话》②，同样暂定）
+
+    /// 项目名在右耳里最长这么宽，再长截断。
+    static let sessionNameMaxWidth: CGFloat = 64
+    /// 两边菜单栏的空位至少这么宽，右耳才放项目名、“等你”；不够只留转圈或琥珀点（稿 ⑥ 第 3 行）。
+    static let sessionTextMinimumRoom: CGFloat = 54
+    /// 右耳里：内边距、符号与字的间隙、转圈直径、状态点直径。
+    static let sessionEarInset: CGFloat = 6
+    static let sessionEarGap: CGFloat = 5
+    static let sessionSpinnerDiameter: CGFloat = 12
+    static let sessionDotDiameter: CGFloat = 8
+
     // MARK: 最小（一颗小圆）
 
     /// 最小圆直径（iOS 36.67 至 45，取下限）。

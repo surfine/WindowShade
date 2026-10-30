@@ -337,6 +337,8 @@ import Cocoa
     private(set) var buttonKinds: [AgentApprovalCard.Button]
     /// 琥珀点在卡里的位置（卡的坐标）；不传就用右耳那颗点的中心。
     var bloomOrigin: CGPoint?
+    /// 被岛收走时缩回琥珀点；交给 Touch ID 的那一下关掉。
+    var retreatsOnRemoval = true
     private let content = NSView()
     private let bloom = WS2SessionCardChrome.Bloom()
     private let ear = WS2SessionCardChrome.makeEar()
@@ -479,4 +481,13 @@ struct WS2ApprovalLabels {
     var workingDirectory: String { WSL10n.text("agent.approval.cwd", zh: "工作目录") }
     func thread(_ value: String) -> String { WSL10n.text("agent.approval.thread", zh: "线程 %@", WS2ApprovalReview.visible(value)) }
     func turn(_ value: String) -> String { WSL10n.text("agent.approval.turn", zh: "轮次 %@", WS2ApprovalReview.visible(value)) }
+}
+
+extension WS2CommandReviewView: SessionCardRetreating {
+    func beginRetreat(completion: @escaping () -> Void) {
+        let frames = SessionCardStyle.layout(in: bounds.size, showsRisk: riskLine != nil, showsDetails: showsDetails)
+        bloom.retreat(on: content, origin: SessionCardStyle.bloomOrigin(layout: frames, override: bloomOrigin), completion: completion)
+    }
+    func retreatSnapshot() -> SessionCardStyle.RetreatSnapshot? { bloom.snapshot() }
+    func adoptRetreat(_ snapshot: SessionCardStyle.RetreatSnapshot) { bloom.resume = snapshot }
 }

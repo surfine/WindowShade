@@ -244,6 +244,7 @@ import Cocoa
                                          priority: 4,
                                          onClick: { [weak self] in self?.goToCodingSession(cwd: cwd, sessionID: bloom.sessionID) })
         }
+        activities.onSessionRestoreCard = { [weak self] id in self?.hookApproval?.restoreParked(sessionID: id) ?? false }
         activities.onSessionGo = { [weak self] id, cwd in self?.goToCodingSession(cwd: cwd, sessionID: id) }
         activities.onSessionEnter = { [weak self] id, cwd in self?.openConductor(goingTo: (id, cwd)) ?? false }
         activities.onSessionMenuChange = { [weak self] in self?.owner?.rebuildMenu() }
@@ -262,7 +263,7 @@ import Cocoa
     }
     private func unwireCodingSessions() {
         guard let activities = owner?.notch.activities else { return }
-        activities.onSessionBloom = nil; activities.onSessionGo = nil; activities.onSessionEnter = nil; activities.onSessionMenuChange = nil
+        activities.onSessionBloom = nil; activities.onSessionRestoreCard = nil; activities.onSessionGo = nil; activities.onSessionEnter = nil; activities.onSessionMenuChange = nil
         owned?.onUsage = nil
         activities.ws2ResetSessions()
     }

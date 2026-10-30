@@ -145,6 +145,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     var onSessionBloom: ((CodingSessionActivities.Bloom) -> Void)?
     /// “过去”：去那个会话所在的终端窗口；找不到时由接手的人打开会话页。参数是会话所在的目录。
     /// 参数：会话编号、会话所在目录。
+    /// 点会话的耳朵：有收成琥珀点的审批卡就把它请回来（返回 true），不再去终端。
+    var onSessionRestoreCard: ((String) -> Bool)?
     var onSessionGo: ((String, String) -> Void)?
     /// 那一排里点会话格：走进指挥页（拍板 10-29 第 2、4 条）。参数同上；返回 false（指挥页开不了）就照旧“过去”。
     var onSessionEnter: ((String, String) -> Bool)?
@@ -211,7 +213,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             if let spec {
                 // 收场立即：做完时“✓ 完成”那一条（completionID，留 4 秒）就是最后的样子，持续那一条不再另留一份。
                 put(id: id, kind: .session, title: spec.title, subtitle: spec.subtitle, symbol: spec.symbol, detail: spec.cwd,
-                    trailing: spec.trailing, sessionPhase: spec.phase, expires: spec.expiresAt,
+                    trailing: spec.trailing, sessionPhase: spec.phase, sessionCount: spec.sessionCount, expires: spec.expiresAt,
                     stale: .at(spec.staleAt), closing: .immediate, now: now)
             } else if let old = store.live(id: id) {
                 store.end(id: id, generation: old.generation, now: now)
@@ -408,7 +410,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
 
     private func put(id: String, kind: NotchActivityKind, title: String, subtitle: String,
                      symbol: String, progress: NotchActivity.Quantity = .unknown, paused: Bool = false, detail: String = "",
-                     trailing: String? = nil, sessionPhase: NotchSessionPhase? = nil, calendar: NotchCalendarFace? = nil,
+                     trailing: String? = nil, sessionPhase: NotchSessionPhase? = nil, sessionCount: Int? = nil, calendar: NotchCalendarFace? = nil,
                      expires: Double? = nil, relevance: Int = 0, stale: Staleness = .never, appearAfter: Double = 0,
                      closing: NotchActivity.Closing? = nil, finalLook: NotchActivity.FinalLook? = nil,
                      now: Double = ProcessInfo.processInfo.systemUptime) {
@@ -421,6 +423,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
                                  progress: progress, isPaused: paused, detail: detail, trailing: trailing,
                                  sessionPhase: sessionPhase, calendar: calendar, relevance: relevance, appearAfter: appearAfter,
                                  closing: closing ?? kind.closing, finalLook: finalLook)
+        next.sessionCount = sessionCount
         // 内容没变（轮询又报了一遍）不算更新：排序里的“最近更新”和“没进展”都只认真的变化。
         let unchanged = old.map { Self.sameContent($0, next) } ?? false
         if unchanged, let old { next.updatedAt = old.updatedAt }
@@ -443,7 +446,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     private static func sameContent(_ a: NotchActivity, _ b: NotchActivity) -> Bool {
         a.title == b.title && a.subtitle == b.subtitle && a.symbol == b.symbol && a.progress == b.progress
             && a.isPaused == b.isPaused && a.detail == b.detail && a.trailing == b.trailing
-            && a.sessionPhase == b.sessionPhase && a.relevance == b.relevance && a.expiresAt == b.expiresAt
+            && a.sessionPhase == b.sessionPhase && a.sessionCount == b.sessionCount && a.relevance == b.relevance && a.expiresAt == b.expiresAt
     }
 
     /// 那一排结束了还没看过的那几件，跟在能露面的后面（稿：结束后那一排里留到看过一次，或 15 分钟）。
@@ -480,7 +483,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         func equivalent(_ a: NotchActivity, _ b: NotchActivity) -> Bool {
             a.id == b.id && a.generation == b.generation && a.title == b.title && a.subtitle == b.subtitle
                 && a.symbol == b.symbol && a.progress == b.progress && a.isPaused == b.isPaused && a.detail == b.detail
-                && a.trailing == b.trailing && a.sessionPhase == b.sessionPhase && a.calendar == b.calendar
+                && a.trailing == b.trailing && a.sessionPhase == b.sessionPhase && a.sessionCount == b.sessionCount && a.calendar == b.calendar
                 && a.isStale == b.isStale && a.endedAt == b.endedAt && a.relevance == b.relevance
         }
         guard lastVisible.count != visible.count || !zip(lastVisible, visible).allSatisfy({ equivalent($0, $1) })
@@ -561,7 +564,10 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             case .route: if !routeItems.isEmpty { MKMapItem.openMaps(with: routeItems, launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]) }
             case .download, .copy, .remote, .calendar, .timer, .shelf: return
             case .session:
-                if let target = sessions.target(forActivity: selected.id, at: ProcessInfo.processInfo.systemUptime) { onSessionGo?(target.sessionID, target.cwd) }
+                if let target = sessions.target(forActivity: selected.id, at: ProcessInfo.processInfo.systemUptime) {
+                    if onSessionRestoreCard?(target.sessionID) == true { return }
+                    onSessionGo?(target.sessionID, target.cwd)
+                }
             case .airPods: NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)
             case .airDrop:
                 let app = URL(fileURLWithPath: "/System/Library/CoreServices/Finder.app/Contents/Applications/AirDrop.app")

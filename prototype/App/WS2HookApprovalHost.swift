@@ -21,6 +21,14 @@ import Cocoa
     private var closed = false
     /// 换卡时故意收走旧卡：这次收走不算“人交回终端”。
     private var replacing = false
+    /// 2 分钟没人管（拍板 10-29 第 36 条）：卡缩回琥珀点，请求仍挂着、不回答、不改期限；点耳朵把卡请回来。
+    private var idle: SessionCardStyle.IdleRule?
+    private var idleTask: Task<Void, Never>?
+    private var parkingForIdle = false
+    private(set) var isParked = false
+    /// 第 36 条按「期限不改」落地：卡的租约照旧 120 秒，到期交回终端，交回时卡缩回琥珀点（租约到期播缩回）。
+    /// 不另起「停放」计时：停放后不交回终端，外面的 Claude Code 会一直等这里回覆。
+    private static func uptime() -> Double { ProcessInfo.processInfo.systemUptime }
 
     init(server: WS2HookServer, island: NotchLeaseHub, authentication: NotchAuthenticationController,
          service: AuthorizationService = .shared) {
@@ -44,6 +52,7 @@ import Cocoa
         dismissCard()
         replacing = false
         current = ask
+        isParked = false
         present()
     }
 
@@ -51,6 +60,7 @@ import Cocoa
     func statusChanged(sessionID: String, status: AgentSessions.Status) {
         guard let ask = current, ask.sessionID == sessionID, status != .waiting else { return }
         current = nil
+        isParked = false
         dismissCard()
     }
 
@@ -62,13 +72,53 @@ import Cocoa
         receiptTask?.cancel(); receiptTask = nil
         authInFlight = false
         current = nil
+        isParked = false
+        cancelIdle()
         replacing = true
         dismissCard()
         replacing = false
     }
 
-    private func present() {
-        guard !closed, let ask = current, presented == nil, receiptTask == nil else { return }
+    /// 点耳朵或点：把收成琥珀点的卡请回来。请不回来（刘海正被占着）就仍挂着，返回 false，点按照旧去终端。
+    func restoreParked(sessionID: String) -> Bool {
+        guard !closed, isParked, let ask = current, ask.sessionID == sessionID, presented == nil, !authInFlight else { return false }
+        if var rule = idle, rule.restore(now: Self.uptime()) { idle = rule }
+        let shown = present(restoring: true)
+        if shown { isParked = false }
+        return shown
+    }
+
+    private func cancelIdle() {
+        idleTask?.cancel(); idleTask = nil
+        idle?.cancel()
+    }
+
+    private func armIdle() {
+        idleTask?.cancel()
+        let start = Self.uptime()
+        if idle == nil || idle?.cancelled == true || idle?.parked == false { idle = SessionCardStyle.IdleRule(shownAt: start) }
+        let wait = SessionCardStyle.IdleRule.idleSeconds
+        idleTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(wait), clock: .suspending) } catch { return }
+            self?.idleFired()
+        }
+    }
+
+    private func idleFired() {
+        idleTask = nil
+        guard !closed, !authInFlight, receiptTask == nil, current != nil, let view = presented, var rule = idle,
+              rule.fire(now: Self.uptime()) == .retreatToDot else { return }
+        idle = rule
+        isParked = true
+        parkingForIdle = true
+        presented = nil
+        island.dismiss(ifShowing: view)
+    }
+
+    @discardableResult
+    private func present(restoring: Bool = false) -> Bool {
+        parkingForIdle = false
+        guard !closed, let ask = current, presented == nil, receiptTask == nil else { return false }
         let tool = ask.tool.isEmpty ? "tool" : ask.tool
         let risk = Self.risk(tool: tool)
         let touchIDAvailable = authentication.canAuthorize
@@ -77,18 +127,19 @@ import Cocoa
         view.allow = { [weak self] in self?.allow() }
         view.deny = { [weak self] in self?.deny() }
         view.useTerminal = { [weak self] in self?.deferToHost() }
-        guard island.show(view, ownerID: "agentReview", layer: .authorization, onDismiss: { [weak self] _ in
-            self?.dismissed()
-        }) else {
+        guard island.show(view, ownerID: "agentReview", layer: .authorization,
+                          onDismiss: { [weak self] _ in self?.dismissed() }) else {
+            if restoring { return false }
             // 刘海正被别的东西占着：不抢，交回终端。
             current = nil
             server.deferToHost(sessionID: ask.sessionID)
-            return
+            return false
         }
         presented = view
         NSAccessibility.post(element: view, notification: .announcementRequested, userInfo: [
             .announcement: AgentApprovalCard.announcement(agent: Self.agentName, summary: tool),
             .priority: NSAccessibilityPriorityLevel.high.rawValue])
+        return true
     }
 
     /// 允许这一次。高风险先过 Touch ID；验过了再消费一次性授权，最后才回 allow。
@@ -103,6 +154,7 @@ import Cocoa
         ])
         attempt &+= 1; let mine = attempt
         authInFlight = true
+        cancelIdle()
         guard island.handOffToAuthorization(ifShowing: view) else {
             authInFlight = false
             deferToHost()
@@ -145,6 +197,7 @@ import Cocoa
         guard !closed, let ask = current, let view = presented, !authInFlight,
               view.inputIsCurrent() else { return }
         current = nil
+        cancelIdle()
         guard server.decide(sessionID: ask.sessionID, allow: false) else {
             presented = nil
             island.dismiss(ifShowing: view)
@@ -156,7 +209,7 @@ import Cocoa
             guard let self else { return }
             self.receiptTask = nil
             if let view, self.presented === view { self.presented = nil; self.island.dismiss(ifShowing: view) }
-            self.present()
+            _ = self.present()
         }
     }
 
@@ -164,6 +217,8 @@ import Cocoa
     private func deferToHost() {
         guard let ask = current else { return }
         current = nil
+        isParked = false
+        cancelIdle()
         let view = presented
         presented = nil
         server.deferToHost(sessionID: ask.sessionID)
@@ -172,8 +227,12 @@ import Cocoa
 
     /// 卡被岛收走（Esc、换页、锁屏）：等同交回终端。
     private func dismissed() {
+        // 2 分钟没人管的收卡：请求仍挂着，不回答。
+        if parkingForIdle { parkingForIdle = false; return }
         guard !closed, !replacing, let ask = current else { return }
         current = nil
+        isParked = false
+        cancelIdle()
         server.deferToHost(sessionID: ask.sessionID)
     }
 
@@ -181,6 +240,7 @@ import Cocoa
     private func authorizationGone() {}
 
     private func dismissCard() {
+        cancelIdle()
         guard let view = presented else { return }
         presented = nil
         island.dismiss(ifShowing: view)
@@ -203,6 +263,8 @@ import Cocoa
     var useTerminal: (() -> Void)?
     /// 琥珀点在卡里的位置（卡的坐标）；不传就用右耳那颗点的中心。
     var bloomOrigin: CGPoint?
+    /// 被岛收走时缩回琥珀点；交给 Touch ID 的那一下关掉。
+    var retreatsOnRemoval = true
     private let content = NSView()
     private let bloom = WS2SessionCardChrome.Bloom()
     private let headline: NSTextField
@@ -290,4 +352,13 @@ import Cocoa
         if primaryIsTerminal { useTerminal?() } else { allow?() }
     }
     override func cancelOperation(_ sender: Any?) { onCancel?() }
+}
+
+extension WS2HookApprovalView: SessionCardRetreating {
+    func beginRetreat(completion: @escaping () -> Void) {
+        let frames = SessionCardStyle.layout(in: bounds.size, showsRisk: riskLine != nil, showsDetails: false)
+        bloom.retreat(on: content, origin: SessionCardStyle.bloomOrigin(layout: frames, override: bloomOrigin), completion: completion)
+    }
+    func retreatSnapshot() -> SessionCardStyle.RetreatSnapshot? { bloom.snapshot() }
+    func adoptRetreat(_ snapshot: SessionCardStyle.RetreatSnapshot) { bloom.resume = snapshot }
 }
