@@ -11,6 +11,8 @@ final class DownloadActivitySource {
     }
 
     var onChange: ((DownloadUpdate) -> Void)?
+    /// 正在盯着的「下载」文件夹（离开期间的下载格要知道文件在哪）；没开始盯就是 nil。
+    private(set) var folder: URL?
     private let queue = DispatchQueue(label: "com.windowshade.activities.downloads", qos: .utility)
     private var watcher: DispatchSourceFileSystemObject?
     private var tracker = DownloadTracker()
@@ -23,6 +25,7 @@ final class DownloadActivitySource {
         guard watcher == nil, Self.isEnabled,
               let folder = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else { return }
         let path = folder.path
+        self.folder = folder
         let fd = Darwin.open(path, O_EVTONLY)
         guard fd >= 0 else { return }
         epoch += 1
@@ -41,6 +44,7 @@ final class DownloadActivitySource {
     func stop() {
         epoch += 1
         watcher?.cancel(); watcher = nil
+        folder = nil
         scanQueued = false; scanAgain = false
         tracker = DownloadTracker()
     }

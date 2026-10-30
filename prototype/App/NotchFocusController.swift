@@ -23,6 +23,8 @@ struct NotchFocusController: Sendable {
         var tucked = false
         /// 竖线右边正在进行的格（正在播放的、编程会话）。
         var ongoing = false
+        /// 最前面「离开期间」的格子：默认焦点落在它们上面。
+        var away = false
         /// 编程会话格：焦点落在它上面时要告诉遥控器（RemoteLayerHost.Focus.session）。
         var session = false
         /// 读屏念的整句（“项目，在等你”）。有它就不再按窗口标题截断。
@@ -53,6 +55,8 @@ struct NotchFocusController: Sendable {
         case bump(direction: Direction, announcement: String)
         /// 打开亮着的那一格：走和指针点击同一条路（放回、去、还原，沿用 flyOut 弹簧）。
         case activate(id: UInt32)
+        /// 空格：看一眼亮着的那一格（Return 是点）。宿主决定这一格能不能看；再按一次、焦点挪走、收起时结束。
+        case peek(id: UInt32)
         /// 筛选的字变了（或被清掉）：宿主按 `cells` 重排这一排，`announcement` 念“剩 n 项”。
         case filtered(announcement: String)
         /// 收起这一排、交还键盘。
@@ -136,7 +140,7 @@ struct NotchFocusController: Sendable {
     // MARK: 默认焦点
 
     static func defaultFocus(in cells: [Cell]) -> UInt32? {
-        cells.first(where: \.waiting)?.id ?? cells.first(where: \.tucked)?.id ?? cells.first?.id
+        cells.first(where: \.waiting)?.id ?? cells.first(where: \.away)?.id ?? cells.first(where: \.tucked)?.id ?? cells.first?.id
     }
 
     // MARK: 按键 → 动作
@@ -241,7 +245,13 @@ struct NotchFocusController: Sendable {
     /// 按键对应的输入交给这里。
     mutating func apply(_ input: TypedInput) -> Effect {
         switch input {
-        case .insert(let text): return type(text)
+        case .insert(let text):
+            // 还没有筛选字时，空格是「看一眼」（照系统的岛：Return 是点，空格是看一眼）；字中间的空格照旧是筛选字。
+            if query.isEmpty, acceptsTyping, !text.isEmpty, text.allSatisfy(\.isWhitespace) {
+                guard let id = visibleFocusID else { return .none }
+                return .peek(id: id)
+            }
+            return type(text)
         case .deleteBackward: return deleteBackward()
         }
     }

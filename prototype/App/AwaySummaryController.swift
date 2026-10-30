@@ -102,7 +102,7 @@ import Cocoa
 
     func noteWindowChange(id: UInt32, app: String) { log.noteWindowChange(id: id, app: app, at: now()) }
 
-    func noteDownloads(_ names: [String]) { log.noteDownloads(names, at: now()) }
+    func noteDownloads(_ names: [String], folder: URL? = nil) { log.noteDownloads(names, folder: folder, at: now()) }
 
     // MARK: 区间
 

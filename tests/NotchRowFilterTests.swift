@@ -131,6 +131,14 @@ struct NotchRowFilterTests {
         t.expect(s.type(" ") == .none && s.query.isEmpty, "第一个字不能是空格")
         _ = s.type("w"); _ = s.type(" "); _ = s.type("s")
         t.expect(s.query == "w s", "空格可以在字中间")
+        var peeker = started()
+        if let focused = peeker.visibleFocusID {
+            t.expect(peeker.apply(.insert(" ")) == .peek(id: focused) && peeker.query.isEmpty, "还没有筛选字时，空格是看一眼，不进筛选字")
+        } else { t.expect(false, "有焦点格") }
+        var away = NotchFocusController()
+        away.setCells([.init(id: 1, title: "a", tucked: true), .init(id: 0xE000_0000, title: "离开期间", away: true)])
+        _ = away.begin(origin: .press)
+        t.expect(away.focusedID == 0xE000_0000, "默认焦点先落在离开期间的格子上")
         var long = started()
         _ = long.type(String(repeating: "a", count: 60))
         t.expect(long.query.count == NotchRowFilter.maxQueryLength, "筛选字有上限")

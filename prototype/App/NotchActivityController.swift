@@ -228,6 +228,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     private let copies = CopyProgressSource()
     /// 下好了的文件名（「离开期间」摘要记一笔；只在摘要开着、人不在时才有人收）。
     var onDownloadsFinished: (([String]) -> Void)?
+    /// 下载文件夹（离开期间的下载格用它拼出文件位置）。
+    var downloadsFolder: URL? { downloads.folder }
     private var generation: UInt64 = 0
     private var running = false
     private var expiry: Timer?
