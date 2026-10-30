@@ -35,7 +35,7 @@ extension AppDelegate {
         // 提示音只剩「实时活动」那一栏的一行（拍板 2026-10-29 第 1 条）；拍子听它，这一页不再重复摆。
         var rows: [NSView] = shows(.conductorPage) ? [
             conductorRow(name: WSL10n.setting("conductor.settings.mode", zh: "指挥模式"),
-                         subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "先在遥控模式里打开"), symbol: nil,
+                         subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "在刘海那一排点编程会话"), symbol: nil,
                          control: conductorStatus(on ? WSL10n.text("conductor.settings.on", zh: "开着")
                                                       : WSL10n.text("conductor.settings.off", zh: "关着"))),
         ] : []

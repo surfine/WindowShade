@@ -8333,19 +8333,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Turn it on from Remote mode"
+            "value": "Click a coding session in the notch row"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "先在遥控模式里打开"
+            "value": "在刘海那一排点编程会话"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "先在遙控模式裡開啟"
+            "value": "在瀏海那一排點程式設計工作階段"
           }
         }
       }
