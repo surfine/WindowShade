@@ -25,18 +25,27 @@ extension AppDelegate {
         header.setContentHuggingPriority(.required, for: .horizontal)
         stack.addArrangedSubview(header)
         let on = WS2InputPreferences.load(from: store).remoteMode && WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store)
+        // 哪些行露出：旗标开着或这一页因已开着的开关而出现时全放；否则只放露出账里搬出来的表面（WS2Exposure）。
+        let moved = WS2Exposure.moved()
+        let previewOn = WS2Preview.isOn
+        let alreadyShown = WS2Preview.live.conductor
+        func shows(_ surface: WS2Exposure.Surface) -> Bool {
+            WS2Exposure.showsRow(surface, previewOn: previewOn, pageAlreadyShown: alreadyShown, moved: moved)
+        }
         // 提示音只剩「实时活动」那一栏的一行（拍板 2026-10-29 第 1 条）；拍子听它，这一页不再重复摆。
-        var rows = [
+        var rows: [NSView] = shows(.conductorPage) ? [
             conductorRow(name: WSL10n.setting("conductor.settings.mode", zh: "指挥模式"),
                          subtitle: WSL10n.setting("conductor.settings.mode.sub", zh: "先在遥控模式里打开"), symbol: nil,
                          control: conductorStatus(on ? WSL10n.text("conductor.settings.on", zh: "开着")
                                                       : WSL10n.text("conductor.settings.off", zh: "关着"))),
-        ]
+        ] : []
         let coding = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: store),
                                      action: #selector(prefConductorCodingSessions(_:)), name: WSL10n.text("notch.kind.session", zh: "编程会话"))
-        rows.append(conductorRow(name: WSL10n.setting("notch.kind.session", zh: "编程会话"),
-                                 subtitle: WSL10n.setting("conductor.settings.coding.sub", zh: "在刘海里看 Claude Code 在跑还是在等你"),
-                                 symbol: nil, control: coding))
+        if shows(.codingSessions) {
+            rows.append(conductorRow(name: WSL10n.setting("notch.kind.session", zh: "编程会话"),
+                                     subtitle: WSL10n.setting("conductor.settings.coding.sub", zh: "在刘海里看 Claude Code 在跑还是在等你"),
+                                     symbol: nil, control: coding))
+        }
         let connect = NSButton(title: WSL10n.text("conductor.settings.hookConnect", zh: "连接"), target: self,
                                 action: #selector(prefConductorConnectHook(_:)))
         connect.bezelStyle = .rounded
@@ -62,10 +71,12 @@ extension AppDelegate {
             ? WSL10n.setting("conductor.settings.hookConfig.connectedSub", zh: "已连接，Claude Code 会报到刘海。卸载 WindowShade 前先在这里断开")
             : (helperReady ? WSL10n.setting("conductor.settings.hookNotConnected", zh: "未连接")
                            : WSL10n.setting("conductor.settings.hookConfig.missing", zh: "这个版本里没有"))
-        rows.append(conductorRow(name: WSL10n.setting("conductor.settings.hookConfig", zh: "Claude Code 的配置"),
-                                 subtitle: subtitle,
-                                 symbol: nil, control: controls))
-        for index in 1...4 {
+        if shows(.codingSessions) {
+            rows.append(conductorRow(name: WSL10n.setting("conductor.settings.hookConfig", zh: "Claude Code 的配置"),
+                                     subtitle: subtitle,
+                                     symbol: nil, control: controls))
+        }
+        for index in 1...4 where shows(.conductorPage) {
             let field = NSTextField(string: WS2ConductorSettings.text(WS2ConductorSettings.slotKey(index), in: store))
             field.placeholderString = WSL10n.text("conductor.settings.notFilled", zh: "还没填")
             field.identifier = NSUserInterfaceItemIdentifier(String(index))

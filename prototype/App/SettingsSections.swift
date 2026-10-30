@@ -85,6 +85,81 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
   }
 }
 
+/// WindowShade 2 的「露出账」（整合计划第 12 步，设计稿《认你、指挥页与露出》③ 门槛表）。
+/// 表面过了门槛才从预览旗标里搬进设置里默认关的开关；没有证据就留在旗标后面，没有「一次全放开」。
+/// `evidence` 是那一行门槛的证据（哪次真机、哪条探针、记在哪），空着就是还没过——**不许凭「应该过了」填**。
+/// 没在这张表里的 WindowShade 2 页和行（鼠标与触控板、遥控器、CarPlay、中键、静音口令）门槛表里没有它们，一律留在旗标后面。
+enum WS2Exposure {
+  /// 门槛表里的表面。
+  enum Surface: String, CaseIterable, Sendable {
+    /// 编程会话（看、过去、看一眼）和它的连接。
+    case codingSessions
+    /// 审批卡：跟编程会话同一个开关。
+    case approvalCard
+    /// 指挥页，Mac 本机部分（按住说话、Codex／Claude 只读）；遥控提示那一行另等真 iPhone。
+    case conductorPage
+    /// 认你指示 + 补光圈，设置 → 隐私 · 刷脸解锁（实验）。
+    case faceUnlock
+    /// 代填密码与声纹辅助（D11），跟刷脸解锁同一个开关。
+    case autofillVoiceprint
+
+    /// 设置里放在哪一页；nil = 不是侧栏里的 WindowShade 2 页（隐私页那一行另有位置）。
+    var section: WindowShadeSettingsSection? {
+      switch self {
+      case .codingSessions, .approvalCard, .conductorPage: return .conductor
+      case .faceUnlock, .autofillVoiceprint: return nil
+      }
+    }
+  }
+
+  struct Entry: Equatable, Sendable {
+    let surface: Surface
+    /// 门槛表（认你、指挥页与露出.html ③）里对应的那一行；门槛内容在稿里，这里只记是哪一行。
+    let gate: String
+    /// 过了的证据；nil = 留在旗标后面。
+    let evidence: String?
+    var moved: Bool { evidence != nil }
+  }
+
+  /// 每个表面一行。过了门槛就把证据写进 `evidence`，页面和行自己就出来了。
+  static let ledger: [Entry] = [
+    Entry(surface: .codingSessions,
+          gate: "gate row coding-sessions", evidence: nil),
+    Entry(surface: .approvalCard,
+          gate: "gate row approval-card", evidence: nil),
+    Entry(surface: .conductorPage,
+          gate: "gate row conductor-page (Mac-local part)", evidence: nil),
+    Entry(surface: .faceUnlock,
+          gate: "gate row face-unlock", evidence: nil),
+    Entry(surface: .autofillVoiceprint,
+          gate: "gate row autofill-voiceprint", evidence: nil),
+  ]
+
+  /// 搬出来的表面。同一个开关管着的几个表面要一起过才算：审批卡是编程会话那个开关的一部分，
+  /// 编程会话单独过了，开关一开审批卡也跟着出来，所以两个都要有证据；代填密码跟刷脸解锁同理。
+  static func moved(in ledger: [Entry] = WS2Exposure.ledger) -> Set<Surface> {
+    let passed = Set(ledger.filter(\.moved).map(\.surface))
+    var result = passed
+    if !(passed.contains(.codingSessions) && passed.contains(.approvalCard)) {
+      result.subtract([.codingSessions, .approvalCard])
+    }
+    if !(passed.contains(.faceUnlock) && passed.contains(.autofillVoiceprint)) {
+      result.subtract([.faceUnlock, .autofillVoiceprint])
+    }
+    return result
+  }
+
+  /// 这一页有没有表面搬出来了。
+  static func sectionIsMoved(_ section: WindowShadeSettingsSection, moved: Set<Surface>) -> Bool {
+    moved.contains { $0.section == section }
+  }
+
+  /// 页内一行（属于哪个表面）要不要露出来：旗标开着、这一页是因为已经开着的开关才露出（全部行照旧），或者这个表面搬出来了。
+  static func showsRow(_ surface: Surface, previewOn: Bool, pageAlreadyShown: Bool, moved: Set<Surface>) -> Bool {
+    previewOn || pageAlreadyShown || moved.contains(surface)
+  }
+}
+
 /// WindowShade 2 预览旗标（1.0.17）：只管设置里露不露 WindowShade 2 的页和行，不碰任何功能的运行——
 /// 功能照旧由各自的键管（默认都关）。设置里没有它的开关，只能用
 /// `defaults write com.windowshade.prototype WindowShade.Preview.WS2 -bool YES` 打开，重开设置窗口生效。
@@ -115,9 +190,12 @@ enum WS2Preview {
   }
 
   /// 侧栏这次放哪几页、按什么顺序：旗标开着全放；关着时藏起 WindowShade 2 的页，已经开着的那页除外。
-  static func visibleSections(previewOn: Bool, live: Live) -> [WindowShadeSettingsSection] {
+  /// `moved` 是露出账里已经搬出来的表面：它们所在的页不用旗标也出现（默认关的开关在页里）。
+  static func visibleSections(previewOn: Bool, live: Live,
+                              moved: Set<WS2Exposure.Surface> = WS2Exposure.moved()) -> [WindowShadeSettingsSection] {
     WindowShadeSettingsSection.allCases.filter { section in
       guard section.isWS2, !previewOn else { return true }
+      if WS2Exposure.sectionIsMoved(section, moved: moved) { return true }
       switch section {
       case .pointer: return live.pointer
       case .remote: return live.remote
