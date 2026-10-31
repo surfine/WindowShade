@@ -29,7 +29,7 @@ import Cocoa
     private let title = NSTextField(labelWithString: WSL10n.text("conductor.title", zh: "指挥"))
     private let runningLabel = NSTextField(labelWithString: WSL10n.text("notch.row.running", zh: "在跑"))
     private let goButton = WS2ConductorPill(title: WSL10n.text("notch.action.goThere", zh: "过去"), kind: .ghost)
-    private let backend = NSSegmentedControl()
+    private let backend = WS2BackendControl()
     // 块 2 · 下一轮：模型、程度。
     private let menus = NSStackView()
     private let modelMenu = NSPopUpButton(frame: .zero, pullsDown: false)
@@ -66,6 +66,8 @@ import Cocoa
     private var voice: VoiceDraftSession?
     private var voiceTick: Task<Void, Never>?
     private let claudeConductor: ClaudeConductor
+    /// 这台 Mac 上没有 claude 时，点灰着的 Claude 开关打开设置里的编程会话那一行（不弹窗）。
+    var onOpenCodingSettings: (() -> Void)?
     private var adoptedDraft: WS2OwnedLaunchController.ConductorDraft?
     private var displayedTarget: WS2OwnedLaunchController.ConductorTarget?
     private var displayedTurn: String?
@@ -101,7 +103,9 @@ import Cocoa
                 controller?.projectURL ?? FileManager.default.homeDirectoryForCurrentUser
             }
         }
-        self.claudeConductor = ClaudeConductor(workingDirectory: projectURL, mayUse: { true })
+        self.claudeConductor = ClaudeConductor(
+            workingDirectory: projectURL, mayUse: { true },
+            notLoggedInLine: WSL10n.text("conductor.claude.notLoggedIn", zh: "Claude 没登录。在终端里运行 claude 登录后再试"))
         super.init(frame: .zero)
         // 刘海是黑的：页面在深色外观里画，不跟系统外观走。
         appearance = NSAppearance(named: .darkAqua)
@@ -153,6 +157,8 @@ import Cocoa
         backend.target = self
         backend.action = #selector(pickBackend)
         backend.setAccessibilityLabel(WSL10n.text("conductor.backend.label", zh: "助手"))
+        backend.onUnavailableClaudeClick = { [weak self] in self?.onOpenCodingSettings?() }
+        refreshClaudeSwitch()
         backend.setContentHuggingPriority(.required, for: .horizontal)
         let spacer = NSView()
         spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -325,6 +331,22 @@ import Cocoa
     override func viewWillMove(toWindow newWindow: NSWindow?) {
         super.viewWillMove(toWindow: newWindow)
         if newWindow == nil { cancelVoice(); claudeConductor.stop() }
+    }
+
+    /// 应用退出：把 Claude 的子进程一起停掉（页面这时可能还挂在刘海里，不会走 viewWillMove）。
+    func shutdownBackends() { claudeConductor.stop() }
+
+    /// Claude 开关：没装就灰着并说明；上一轮没登录就在名字后面标出来。
+    private func refreshClaudeSwitch() {
+        let installed = claudeConductor.isInstalled
+        let base = WSL10n.text("conductor.backend.claude", zh: "Claude（只读）")
+        let marked = claudeConductor.needsLogin
+            ? base + " · " + WSL10n.text("conductor.backend.signedOut", zh: "没登录") : base
+        if backend.label(forSegment: 1) != marked { backend.setLabel(marked, forSegment: 1) }
+        backend.setEnabled(installed, forSegment: 1)
+        backend.claudeUnavailable = !installed
+        backend.toolTip = installed ? nil
+            : WSL10n.text("conductor.claude.notInstalled", zh: "这台 Mac 上没有找到 Claude Code")
     }
 
     override func viewDidMoveToWindow() {
@@ -697,6 +719,7 @@ import Cocoa
 
     private func renderClaude() {
         guard isClaudeBackend else { return }
+        refreshClaudeSwitch()
         claudeStatus.stringValue = claudeBackendStatus()
         if shownTranscript != claudeConductor.transcript {
             shownTranscript = claudeConductor.transcript
@@ -808,6 +831,8 @@ import Cocoa
     var probeIsClaude: Bool { isClaudeBackend }
     var probeClaudeStatus: ClaudeConductor.Status { claudeConductor.status }
     var probeClaudeTranscript: String { claudeConductor.transcript }
+    var probeClaudeNeedsLogin: Bool { claudeConductor.needsLogin }
+    var probeBackendLabelMentionsLogin: Bool { (backend.label(forSegment: 1) ?? "").contains(WSL10n.text("conductor.backend.signedOut", zh: "没登录")) }
     func probeSelectClaude() { backend.selectedSegment = 1; pickBackend() }
     func probeSelectCodex() { backend.selectedSegment = 0; pickBackend() }
     func probeSetDraft(_ text: String) { editor.stringValue = text; renderClaude() }
@@ -968,5 +993,21 @@ import Cocoa
                 ? WSL10n.text("conductor.pad.status.turnOffInSettings", zh: "先在设置里关掉控制这台 Mac")
                 : WSL10n.text("conductor.pad.status.enableFailed", zh: "未能启用。请点一下这一页，再松开所有按键。")
         }
+    }
+}
+
+/// 助手开关。Claude 那一格没装时是灰的，但点它要能打开设置：灰掉的格子系统不回应，所以在这里接住。
+@MainActor final class WS2BackendControl: NSSegmentedControl {
+    var claudeUnavailable = false
+    var onUnavailableClaudeClick: (() -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        guard claudeUnavailable, segmentCount == 2 else { super.mouseDown(with: event); return }
+        let attributes: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)]
+        let first = NSAttributedString(string: label(forSegment: 0) ?? "", attributes: attributes).size().width
+        let second = NSAttributedString(string: label(forSegment: 1) ?? "", attributes: attributes).size().width
+        let boundary = bounds.width * first / max(first + second, 1)
+        if convert(event.locationInWindow, from: nil).x > boundary { onUnavailableClaudeClick?() }
+        else { super.mouseDown(with: event) }
     }
 }

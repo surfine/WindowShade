@@ -10,6 +10,7 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -mmacosx-version-min=14.0 \
   -I "$ROOT/prototype/Native" "$OUT/WS2Child.o" \
   "$ROOT/prototype/Core/WireJSON.swift" \
   "$ROOT/prototype/Core/ClaudeWire.swift" \
+  "$ROOT/prototype/Core/ClaudeConductorRules.swift" \
   "$ROOT/prototype/Core/WS2BoundedOutbox.swift" \
   "$ROOT/prototype/Core/WS2DiagnosticTail.swift" \
   "$ROOT/prototype/Support/WS2DuplexProcess.swift" \
@@ -17,4 +18,4 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -mmacosx-version-min=14.0 \
   "$ROOT/prototype/App/ClaudeConductor.swift" \
   "$ROOT/tests/ClaudeConductorTests.swift" \
   -o "$OUT/claude-conductor-tests"
-"$OUT/claude-conductor-tests" "$ROOT/tests/fixtures/fake-claude.py" "$@"
+"$OUT/claude-conductor-tests" "$ROOT/tests/fixtures/fake-claude.py" "$ROOT/tests/fixtures/fake-claude-auth-expired.py" "$@"

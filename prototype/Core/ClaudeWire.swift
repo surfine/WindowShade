@@ -15,6 +15,8 @@ enum ClaudeWire {
         let costUSD: Double?
         let sessionID: String?
         let permissionDenials: [String]
+        /// result 里的 api_error_status（比如 401）；认不出就是 nil。
+        var apiErrorStatus: Int? = nil
     }
 
     enum Event: Equatable, Sendable {
@@ -69,7 +71,8 @@ enum ClaudeWire {
                 text: root["result"]?.text,
                 costUSD: root["total_cost_usd"]?.doubleValue,
                 sessionID: root["session_id"]?.text,
-                permissionDenials: denials))
+                permissionDenials: denials,
+                apiErrorStatus: root["api_error_status"]?.intValue))
         default:
             return .unknown
         }

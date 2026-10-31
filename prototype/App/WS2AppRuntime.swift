@@ -412,6 +412,7 @@ import Cocoa
         let view = WS2ConductorPageView(controller: owned)
         // 返回／点外面只收起页面，草稿留着（拍板 10-29 第 2 条）；丢草稿只用页面上的“丢弃”。
         view.onKeepDraft = { [weak self] in self?.conductorKeptDraft = $0 }
+        view.onOpenCodingSettings = { [weak self] in self?.owner?.showSettingsWindow(section: .conductor) }
         guard island.show(view, ownerID: "conductor", onDismiss: { [weak self, weak view] _ in
             guard let self, self.conductorPage === view else { return }
             if self.conductorOwnsDeviceHost {
@@ -589,6 +590,7 @@ import Cocoa
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
     func stop() {
+        conductorPage?.shutdownBackends()
         deviceHost?.stop(); deviceHost=nil; modelPicker=nil; conductorPage=nil; conductorSample=nil; conductorKeptDraft=nil
         conductorOwnsDeviceHost=false
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
