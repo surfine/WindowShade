@@ -147,6 +147,9 @@ import Cocoa
 
     private let defaults: UserDefaults
     private let store: FaceTemplateKeychainStore
+    /// 标定结果（门槛、目标误认率）；钥匙串里有且合法才算标定过，没有就沿用阈值表里的占位门槛。
+    private let calibrationStore = FaceThresholdCalibrationStore()
+    private var calibration: FaceThresholdCalibration?
     private let lockState: @MainActor () -> SessionLockState
     private let log: @MainActor (String) -> Void
     private let modelVersion: String
@@ -265,7 +268,7 @@ import Cocoa
         let enrollRequested = defaults.bool(forKey: Self.enrollKey)
         if deleteRequested { defaults.removeObject(forKey: Self.deleteKey) }
         if enrollRequested { defaults.removeObject(forKey: Self.enrollKey) }
-        let store = store, version = modelVersion
+        let store = store, version = modelVersion, calibrationStore = calibrationStore
         Task { [weak self] in
             let loaded = await Task.detached(priority: .utility) { () -> Result<[FaceTemplate], Error> in
                 Result {
@@ -273,7 +276,13 @@ import Cocoa
                     return try store.load(modelVersion: version)
                 }
             }.value
+            // 删除登记时标定结果一起删（它是和这份登记一起存的）；读不到就当没标定，不退回别处。
+            let loadedCalibration = await Task.detached(priority: .utility) { () -> FaceThresholdCalibration? in
+                if deleteRequested { try? calibrationStore.delete(modelVersion: version); return nil }
+                return try? calibrationStore.load(modelVersion: version)
+            }.value
             guard let self else { return }
+            self.calibration = loadedCalibration
             switch loaded {
             case .success(let templates):
                 if deleteRequested { self.log("face experiment: templates deleted") }
@@ -289,7 +298,7 @@ import Cocoa
     private func install(_ templates: [FaceTemplate]) {
         let changed = self.templates.count != templates.count
         self.templates = templates
-        guardian = FaceScanGuard(templates: templates)
+        guardian = FaceScanGuard(templates: templates, tuning: FaceScanTuning().applying(calibration))
         scanID = nil
         if changed { onTemplatesChanged?() }
     }
