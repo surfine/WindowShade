@@ -1003,7 +1003,7 @@ import Cocoa
 
     override func mouseDown(with event: NSEvent) {
         guard claudeUnavailable, segmentCount == 2 else { super.mouseDown(with: event); return }
-        let attributes: [NSAttributedString.Key: Any] = [.font: font]
+        let attributes: [NSAttributedString.Key: Any] = [.font: font ?? NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)]
         let first = NSAttributedString(string: label(forSegment: 0) ?? "", attributes: attributes).size().width
         let second = NSAttributedString(string: label(forSegment: 1) ?? "", attributes: attributes).size().width
         let boundary = bounds.width * first / max(first + second, 1)
