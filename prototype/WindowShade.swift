@@ -309,8 +309,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }
     /// 刷脸实验的录脸取景卡；只在有刘海时露面。
     lazy var faceEnrollmentHost = MainActor.assumeIsolated { FaceEnrollmentHost(island: notch.leases) }
-    /// 锁屏「认你」的指示（转圈 + 脸/手机两枚点）。
-    lazy var faceScanStatus = MainActor.assumeIsolated { FaceScanStatusController() }
+    /// 锁屏「认你」：刘海宿主里第 1 层的一个活动（转圈 + 脸、手机或手表两枚点 + 一句话的下巴）。
+    lazy var faceRecognition = MainActor.assumeIsolated { NotchFaceRecognitionHost.live(owner: self) }
     lazy var ws2Runtime = MainActor.assumeIsolated { WS2AppRuntime(owner: self) }
     /// 妙控外设连上、电量低时在刘海上说一句（App/DeviceBatteryController.swift）。
     lazy var deviceBattery = MainActor.assumeIsolated { DeviceBatteryController() }

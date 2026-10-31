@@ -129,6 +129,14 @@ import Cocoa
     }
   }
 
+  /// 这台 Mac 自己的电量（锁屏上认出脸之后那一行用，决定 68）。只读账本里已有的读数，不另读；没在看、读不到就是 nil。
+  var macBatteryNow: (percent: Int, charging: Bool)? {
+    guard watching, book.connected.contains(InternalBattery.deviceID),
+          let reading = book.readings[DeviceBatteryBook.Key(deviceID: InternalBattery.deviceID, component: .main)],
+          let percent = reading.percent else { return nil }
+    return (percent, reading.charging == .charging)
+  }
+
   /// 这个部件现在还连着、读数够新、仍在最高一档提醒线以下、没在充电：摘要里才还算「低电量」。
   func isStillLow(deviceID: String, part: String?) -> Bool {
     guard book.connected.contains(deviceID),

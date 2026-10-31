@@ -270,7 +270,35 @@ import Cocoa
         expect(hub.screenClaim(on: bare) == .refused, "宿主：锁屏时表外的屏也不开")
         locked = false
 
-        print(failures == 0 ? "PASS NotchLeaseHostTests: 17 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
+        print("CASE LEASE-H18 | 锁屏上的「认你」：第 1 层、只在锁着时、只给 faceRecognition")
+        expect(NotchLeaseHub.Owner.faceRecognition.layer == .authorization, "认你在第 1 层（和认证提示同层）")
+        expect(!hub.acquireLockScreen(.faceRecognition, on: main), "没锁：拿不到锁屏租约")
+        expect(!hub.acquire(.faceRecognition, on: main), "没锁的刘海里也不给认你占位")
+        locked = true
+        hub.invalidate(.locked)
+        expect(!hub.acquireLockScreen(.authorization, on: main), "锁屏上别的主人拿不到")
+        expect(!hub.acquireLockScreen(.nowPlaying, on: main), "正在播放不能自己上锁屏")
+        expect(hub.acquireLockScreen(.faceRecognition, on: main), "锁着：认你拿到这块屏的锁屏租约")
+        expect(hub.acquireLockScreen(.faceRecognition, on: main), "重复申请是幂等的")
+        expect(hub.isLockScreenCurrent(.faceRecognition, on: main), "租约当前")
+        expect(hub.lockScreenOwner(of: main) == .faceRecognition, "锁屏上这块屏归认你")
+        expect(!hub.acquire(.notchShelf, on: main), "锁着时那一排照旧拿不到")
+        hub.invalidate(.locked)
+        expect(hub.isLockScreenCurrent(.faceRecognition, on: main), "锁屏这一下不撤认你")
+        locked = false
+        expect(!hub.isLockScreenCurrent(.faceRecognition, on: main), "系统确认解开：租约不再算数")
+        expect(hub.lockScreenOwner(of: main) == nil, "解开后锁屏上没有主人")
+        locked = true
+        expect(!hub.isLockScreenCurrent(.faceRecognition, on: main), "再锁上不复活旧的那份")
+        expect(hub.acquireLockScreen(.faceRecognition, on: main), "再申请才有")
+        hub.invalidate(.sleeping)
+        expect(!hub.isLockScreenCurrent(.faceRecognition, on: main), "睡眠撤掉认你")
+        expect(hub.acquireLockScreen(.faceRecognition, on: main), "醒来再申请")
+        hub.releaseLockScreen(.faceRecognition, on: main)
+        expect(!hub.isLockScreenCurrent(.faceRecognition, on: main), "收走后不算数")
+        locked = false
+
+        print(failures == 0 ? "PASS NotchLeaseHostTests: 18 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
         if failures > 0 { exit(1) }
     }
 }

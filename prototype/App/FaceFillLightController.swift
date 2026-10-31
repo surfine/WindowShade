@@ -35,10 +35,17 @@ import Cocoa
     private func light() {
         guard panel == nil else { return }
         let screen = NSScreen.main ?? NSScreen.screens[0]
-        let panel = EffectPanel(frame: screen.frame, desktop: false)
-        panel.level = .floating
+        let panel = EffectPanel(frame: screen.frame, desktop: true)
+        // 独立的屏幕边缘层，压在菜单栏和刘海之下：顶边那一段被菜单栏压弱，刘海保持纯黑（《认你、指挥页与露出》稿 ①）。
+        panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) - 1)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
-        panel.contentView = FaceFillLightView(frame: NSRect(origin: .zero, size: screen.frame.size))
+        let view = FaceFillLightView(frame: NSRect(origin: .zero, size: screen.frame.size))
+        // 刘海那一块（连同两耳的宽）不画光：刘海是黑的，不让边光从它周围透出来。
+        view.notchCutout = NotchController.notchRect(on: screen).map {
+            $0.offsetBy(dx: -screen.frame.minX, dy: -screen.frame.minY)
+                .insetBy(dx: -NotchFaceRecognitionView.earWidth, dy: 0)
+        }
+        panel.contentView = view
         self.panel = panel
         panel.orderFrontRegardless()
         lit = true
@@ -58,10 +65,15 @@ import Cocoa
 /// 四边的柔和白光：边缘最亮约 8%，向内 160 点淡出到没有。屏幕中央完全不动，
 /// 不照脸、不挡任何内容（只是画面四周的暗光）。
 @MainActor final class FaceFillLightView: NSView {
+    /// 刘海（含两耳）在这块屏上的位置（视图坐标）；这一块不亮。
+    var notchCutout: NSRect? { didSet { needsDisplay = true } }
+
     override func draw(_ dirtyRect: NSRect) {
         let inset: CGFloat = 160
         let edge = NSBezierPath(rect: bounds)
         edge.append(NSBezierPath(rect: bounds.insetBy(dx: inset, dy: inset)))
+        // 奇偶规则：刘海那块落在边光带里，再叠一层就被挖掉。
+        if let notchCutout { edge.append(NSBezierPath(rect: notchCutout.intersection(bounds))) }
         edge.windingRule = .evenOdd
         guard let gradient = NSGradient(starting: NSColor(white: 1, alpha: 0.08),
                                         ending: NSColor(white: 1, alpha: 0)) else { return }

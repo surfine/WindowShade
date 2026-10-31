@@ -3070,7 +3070,7 @@ final class NotchPanel: NSPanel {
             canvas.setAuthentication(nil)
             updateVisibility(); apply(animated: false)
         case .launchpad, .windowBrowser, .conductor, .pomodoro, .countdownTimer, .calendarCard, .nowPlaying,
-             .agentReview, .ownedCodex, .ownedModelPicker, .silent, .faceEnrollment:
+             .agentReview, .ownedCodex, .ownedModelPicker, .silent, .faceEnrollment, .faceRecognition:
             break
         }
     }
