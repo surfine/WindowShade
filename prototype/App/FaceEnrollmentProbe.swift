@@ -60,23 +60,25 @@ enum FaceEnrollmentProbe {
         finish(ok: failures == 0)
     }
 
-    /// 认你指示的验收：四个相位依次驱动，核对文案、图标与收走（不挂锁屏空间、不锁屏）。
+    /// 认你指示的验收（刘海宿主里的那一层）：各种样子依次驱动，核对两耳、两枚点、下巴那一句、
+    /// 不出下巴以下、不是 .floating 浮窗，以及收走（不挂锁屏空间、不锁屏）。
     static func runScanIndicator(owner: AppDelegate) {
         log("scan probe start")
         after(3) { scanStarted(owner) }
     }
 
     private static func scanStarted(_ owner: AppDelegate) {
-        let controller = owner.faceScanStatus
-        controller.presentsWithoutLockSpace = true
-        controller.show(.started)
-        after(0.3) { scanCheck(owner, attempts: 20) }
+        let host = owner.faceRecognition
+        host.presentsWithoutLockSpace = true
+        host.show(.started)
+        after(0.4) { scanCheck(owner, attempts: 20) }
     }
 
     private static func scanCheck(_ owner: AppDelegate, attempts: Int) {
-        guard let view = owner.faceScanStatus.probeView else {
+        let host = owner.faceRecognition
+        guard let view = host.probeView, let panel = host.probePanel else {
             if attempts > 0 { after(0.15) { scanCheck(owner, attempts: attempts - 1) } }
-            else { log("FAIL face-scan-page: indicator did not appear"); finish(ok: false) }
+            else { log("FAIL face-scan-page: indicator did not appear (notch host off?)"); finish(ok: false) }
             return
         }
         var failures = 0
@@ -84,21 +86,48 @@ enum FaceEnrollmentProbe {
             if !ok { failures += 1 }
             log("\(ok ? "ok  " : "FAIL") \(text)")
         }
-        expect(view.probeLabel == WSL10n.text("face.scan.title", zh: "正在认你"), "started shows the scanning line")
-        expect(view.probeRingSpinning, "ring is spinning")
-        expect(view.probeWindowVisible, "indicator is on screen")
-        view.show(.recognized)
-        expect(view.probeLabel == WSL10n.text("face.scan.recognized", zh: "认出了，交给系统"), "recognized line")
-        expect(view.probeCheckVisible, "recognized shows the check")
-        view.show(.lockedOut)
-        expect(view.probeLabel == WSL10n.text("face.scan.lockedOut", zh: "这次锁屏请用 Touch ID 或密码"), "locked-out line")
-        owner.faceScanStatus.show(.cameraUnavailable)
-        after(0.4) { scanGone(owner, prior: failures) }
+        expect(panel.level != .floating, "not a .floating window")
+        expect(panel.ignoresMouseEvents && !panel.canBecomeKey, "does not take the pointer or the keyboard")
+        let screen = panel.screen ?? NSScreen.main
+        if let screen {
+            let slot = NotchController.slotRect(on: screen).rect
+            expect(abs(panel.frame.maxY - screen.frame.maxY) < 0.5, "hangs from the top edge like the notch")
+            expect(panel.frame.height <= slot.height + NotchFaceRecognitionView.chinHeight + 0.5,
+                   "never reaches below notch + 26 pt chin")
+            expect(abs(panel.frame.midX - slot.midX) < 0.5, "centred on the notch")
+        }
+        expect(view.probeRingSpinning, "scanning: left ear spinner")
+        expect(view.probeSentence == nil && !view.probeChinShown, "scanning: no chin")
+        let states: [(FaceRecognitionIndicator, String?, String)] = [
+            (.init(state: .faceOnly, secondFactorPresent: false),
+             WSL10n.text("face.scan.secondMissing", zh: "差手机或手表，用 Touch ID 或密码"), "face ok, phone or watch missing"),
+            (.init(state: .notRecognised, secondFactorPresent: true),
+             WSL10n.text("face.scan.unrecognized", zh: "没认出，用 Touch ID 或密码"), "not recognised"),
+            (.init(state: .masked, secondFactorPresent: true),
+             WSL10n.text("face.scan.masked", zh: "戴着口罩，用 Touch ID 或密码"), "mask"),
+            (.init(state: .lockedOut, secondFactorPresent: false),
+             WSL10n.text("face.scan.lockedOut", zh: "这次锁屏请用 Touch ID 或密码"), "3 failures"),
+            (.init(state: .recognised, secondFactorPresent: true), nil, "recognised"),
+        ]
+        for (indicator, line, name) in states {
+            host.present(indicator)
+            guard let current = host.probeView else { expect(false, "\(name): view gone"); continue }
+            expect(current.probeIndicator == indicator, "\(name): state applied")
+            if let line {
+                expect(current.probeSentence == line && current.probeChinShown, "\(name): chin says the next step")
+            } else {
+                expect(current.probeSentence == nil, "\(name): no sentence")
+            }
+            expect(current.probeCheckVisible == (indicator.leftEar == .check), "\(name): check only after the face matched")
+        }
+        host.show(.cameraUnavailable)
+        after(0.8) { scanGone(owner, prior: failures) }
     }
 
     private static func scanGone(_ owner: AppDelegate, prior: Int) {
-        let gone = owner.faceScanStatus.probeView == nil
+        let gone = owner.faceRecognition.probeView == nil
         log(gone ? "ok   camera unavailable clears the indicator" : "FAIL camera unavailable leaves the indicator")
+        owner.faceRecognition.presentsWithoutLockSpace = false
         let failures = prior + (gone ? 0 : 1)
         log(failures == 0 ? "PASS face-scan-page" : "FAIL face-scan-page: \(failures) failures")
         finish(ok: failures == 0)

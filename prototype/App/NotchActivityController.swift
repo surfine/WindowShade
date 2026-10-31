@@ -286,9 +286,18 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         if shelfCount > 0 { syncShelf() }
     }
 
-    private func suspend(_ reason: String) { suspensions.insert(reason); calendar.suspend(); stop() }
+    private func suspend(_ reason: String) {
+        // 锁上的那一刻记下正在播放在放还是停着（不记歌名）：锁屏上认出脸之后那一行用（决定 68）。来源随即停下。
+        if reason == "lock", !suspended { lockedPlayback = LockScreenExposure.playback(from: store.visible) }
+        suspensions.insert(reason); calendar.suspend(); stop()
+    }
     /// 回来时：锁着或睡着时过去的最后 10 秒不补；来源重新起来后（configure）会重新算一次，直接出紧凑。
-    private func resume(_ reason: String) { suspensions.remove(reason); calendar.noteResume(); configure() }
+    private func resume(_ reason: String) {
+        if reason == "lock" { lockedPlayback = nil }
+        suspensions.remove(reason); calendar.noteResume(); configure()
+    }
+    /// 锁上那一刻的正在播放（只有播放还是暂停、暂停时的进度）；没锁、锁时没在放就是 nil。
+    private(set) var lockedPlayback: LockScreenExposure.Content.Playback?
     private func stop() {
         running = false; operationEpoch += 1; choosingFiles = false
         sources.stop()

@@ -125,7 +125,7 @@ import Cocoa
             owner?.refreshFaceExperimentRowIfOpen()
         }
         experiment.onScanPhase = { [weak owner = NSApp.delegate as? AppDelegate] phase in
-            owner?.faceScanStatus.show(phase)
+            owner?.faceRecognition.show(phase)
         }
         shared = experiment
         let fellBack = requested.map { $0 != backend.name } ?? false
@@ -225,7 +225,7 @@ import Cocoa
     func stop() {
         endEnrollment(.interrupted)
         stopCamera()
-        (NSApp.delegate as? AppDelegate)?.faceScanStatus.stop()
+        (NSApp.delegate as? AppDelegate)?.faceRecognition.stop()
         for (center, observer) in observers { center.removeObserver(observer) }
         observers.removeAll()
     }

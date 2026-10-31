@@ -43,10 +43,13 @@ final class NotchLeaseHub {
         case silent
         /// 刷脸实验的录脸取景。只在没锁时出现，不授权任何事。
         case faceEnrollment
+        /// 锁屏上的「认你」（第 1 层，和别的认证提示同层）。只在锁着时拿得到，见 `acquireLockScreen`；
+        /// 它只决定谁在锁屏的刘海里露面，不放行、不代填任何东西。
+        case faceRecognition
 
         var layer: WS2.Layer {
             switch self {
-            case .authorization, .agentReview: return .authorization
+            case .authorization, .agentReview, .faceRecognition: return .authorization
             case .conductor: return .interaction
             case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .countdownTimer, .calendarCard, .nowPlaying,
                  .ownedCodex, .ownedModelPicker, .silent, .faceEnrollment: return .opened
@@ -78,6 +81,9 @@ final class NotchLeaseHub {
     private var contentDismissed: ((WS2.LeaseRevocation) -> Void)?
     private var contentDeadline: Task<Void, Never>?
     private var authHandle: WS2.LeaseHandle?
+    /// 锁屏上的展示权（只有 `.faceRecognition` 申请得到）。锁着时协调器整个在屏障后面、一份租约都发不出，
+    /// 锁屏上的刘海就只此一位主人，账记在这里；系统确认解开的那一刻它就不再算数。
+    private var lockScreenHeld: [WS2.DisplayID: Owner] = [:]
     /// 更高的层打断「你打开的」之后留下的那一页。旧租约不复活；让出后另拿一份，进场不重播。
     private var parkedShelf: [WS2.DisplayID: Owner] = [:]
     private struct ParkedContent {
@@ -221,6 +227,33 @@ final class NotchLeaseHub {
         resumeParked(on: display)
     }
 
+    // MARK: - 锁屏上的展示权（第 1 层）
+
+    /// 锁屏上的「认你」申请这块屏的刘海。只在确知锁着时给；只给 `.faceRecognition`（别的主人锁屏上一律不露面）。
+    /// 同一主人重复申请是幂等的。
+    @discardableResult
+    func acquireLockScreen(_ owner: Owner, on display: WS2.DisplayID) -> Bool {
+        guard owner == .faceRecognition, owner.layer == .authorization, locked() else { return false }
+        lockScreenHeld[display] = owner
+        return true
+    }
+
+    func releaseLockScreen(_ owner: Owner, on display: WS2.DisplayID) {
+        guard lockScreenHeld[display] == owner else { return }
+        lockScreenHeld[display] = nil
+    }
+
+    /// 锁屏租约此刻还算不算：解开了就不算（之后由系统确认解锁那条路接手）。
+    func isLockScreenCurrent(_ owner: Owner, on display: WS2.DisplayID) -> Bool {
+        guard locked() else { lockScreenHeld.removeAll(); return false }
+        return lockScreenHeld[display] == owner
+    }
+
+    /// 锁屏上这块屏现在是谁的（没锁时一律 nil）。
+    func lockScreenOwner(of display: WS2.DisplayID) -> Owner? {
+        locked() ? lockScreenHeld[display] : nil
+    }
+
     // MARK: - 申请与释放
 
     /// 申请这块屏的展示权。同一主人重复申请是幂等的；被别人占着返回 false，调用方不要抢。
@@ -228,6 +261,8 @@ final class NotchLeaseHub {
     func acquire(_ owner: Owner, on display: WS2.DisplayID,
                  lifetime: UInt64 = NotchLeaseHub.defaultLifetime) -> Bool {
         if held[display]?.owner == owner { return true }
+        // 「认你」只走锁屏那一份（acquireLockScreen），不在没锁的刘海里占位。
+        guard owner != .faceRecognition else { return false }
         let now = clock.now()
         let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: owner.layer,
                                        requestedAt: now, deadline: now.adding(lifetime),
@@ -372,11 +407,14 @@ final class NotchLeaseHub {
         // 先走屏障：撤销活跃租约、通知收尾，route 会清掉那一格；剩下的记账在这里兜底清空。
         parkedShelf.removeAll()
         parkedContent = nil
+        // 锁屏本身不撤锁屏上的「认你」；睡眠、换会话、关掉功能一并撤。
+        if reason != .locked { lockScreenHeld.removeAll() }
         coordinator.invalidate(reason, at: clock.now())
         held.removeAll()
     }
 
     func removeDisplay(_ display: WS2.DisplayID) {
+        lockScreenHeld[display] = nil
         coordinator.removeDisplay(display, at: clock.now())
         held[display] = nil
     }

@@ -70112,48 +70112,71 @@
         }
       }
     },
-    "face.scan.phone": {
+    "face.scan.secondMissing": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Phone"
+            "value": "Phone or watch not nearby — use Touch ID or your password"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "手机"
+            "value": "差手机或手表，用 Touch ID 或密码"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "手機"
+            "value": "差手機或手錶，用 Touch ID 或密碼"
           }
         }
       }
     },
-    "face.scan.face": {
+    "face.scan.masked": {
       "extractionState": "manual",
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Face"
+            "value": "Mask on — use Touch ID or your password"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "脸"
+            "value": "戴着口罩，用 Touch ID 或密码"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "臉"
+            "value": "戴著口罩，用 Touch ID 或密碼"
+          }
+        }
+      }
+    },
+    "face.scan.exposure.session": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A coding session is waiting for you"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有编程会话在等你"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有程式設計工作階段在等你"
           }
         }
       }
