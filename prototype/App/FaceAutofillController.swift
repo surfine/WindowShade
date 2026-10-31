@@ -1,7 +1,7 @@
 import Cocoa
 
-/// 念短语那一侧（麦克风 + 本机识别 + 这一段声音的说话人特征）。今天没有真实现：没有说话人模型，开麦克风也比对不了，
-/// 所以 live 环境里是 nil，声纹那条路直接按「比对用不了」交回。接真模型时实现它，并把 `UnavailableSpeakerVerifier` 换掉。
+/// 念短语那一侧（麦克风 + 本机识别 + 这一段声音）。真实现是 `SpeechVoiceprintCapture`；
+/// 没有说话人模型（包里没带）或没登记声音时，验证器报用不了，这里根本不会被叫起来——声纹那条路按「比对用不了」交回（失败即关）。
 @MainActor protocol FaceVoiceprintCapturing: AnyObject {
     func capture(phrase: String, until deadline: Double,
                  done: @escaping @MainActor (_ heard: String, _ sample: [Float]?) -> Void)
@@ -68,8 +68,9 @@ extension WS2RemoteHost: CompanionLockVerifying {}
                 gaze: { $0.gaze },
                 lockUI: { LockScreenPasswordField.state(lock: $0) },
                 typer: CGEventPasswordTyper(),
-                verifier: UnavailableSpeakerVerifier(),
-                capture: nil,
+                // 说话人比对：包里有模型且登记过声音才可用；否则等同 UnavailableSpeakerVerifier（失败即关，不开麦克风）。
+                verifier: SpeakerVoiceKit.shared.verifier,
+                capture: SpeakerVoiceKit.shared.capture,
                 store: UnlockPasswordKeychainStore(),
                 present: { [weak owner] state, phrase in owner?.faceRecognition.presentIfShowing(state, phrase: phrase) },
                 now: { Double(clock_gettime_nsec_np(CLOCK_MONOTONIC)) / 1_000_000_000 },

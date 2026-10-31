@@ -1,0 +1,18 @@
+Speaker-embedding model (Contents/Resources/SpeakerEmbedding.mlmodelc)
+
+Converted to Core ML (FP16) from the WeSpeaker ResNet34-TSTP-emb256 VoxCeleb model.
+  Code:     WeSpeaker, https://github.com/wenet-e2e/wespeaker, Apache License 2.0 (text below).
+  Weights:  https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34, trained on VoxCeleb2.
+            Per the WeSpeaker pretrained-model notice, the weights follow the license of the VoxCeleb
+            dataset: Creative Commons Attribution 4.0 International (https://creativecommons.org/licenses/by/4.0/).
+  Attribution: VoxCeleb2 - J. S. Chung, A. Nagrani, A. Zisserman, "VoxCeleb2: Deep Speaker Recognition",
+            Interspeech 2018. VoxCeleb1 - A. Nagrani, J. S. Chung, A. Zisserman, "VoxCeleb: a large-scale
+            speaker identification dataset", Interspeech 2017. WeSpeaker - H. Wang et al., "Wespeaker: A Research
+            and Production oriented Speaker Embedding Learning Toolkit", ICASSP 2023.
+  Changes:  network converted to Core ML with a fixed 300-frame input and FP16 precision
+            (tools/speaker-model/convert.py); no retraining.
+
+The model is used on this Mac only, for one optional experimental check; nothing is uploaded.
+
+Apache License 2.0 (WeSpeaker):
+

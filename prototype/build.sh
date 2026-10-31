@@ -77,6 +77,7 @@ FRAMEWORKS=(
   -framework LocalAuthentication
   -framework LocalAuthenticationEmbeddedUI
   -framework GameController
+  -framework CoreML
 )
 
 # 自动收集源文件：只扫 prototype/ 与它的模块子目录，顺序稳定（按路径排序）。
@@ -171,6 +172,20 @@ plutil -lint PrivacyInfo.xcprivacy WindowShade.entitlements >/dev/null || exit 1
 echo "==> 本地化检查与编译"
 python3 ../tests/check-localizable.py --repo .. || exit 1
 xcrun xcstringstool compile Resources/Localizable.xcstrings -o "$WORK/Localization"
+# 说话人模型（D11 声纹，决定 76/78/80）：权重不进仓库，放在 WindowShade-models（tools/speaker-model/README.md 说怎么来）。
+# 目录里有 SpeakerEmbedding.mlpackage 就编成 .mlmodelc 随包带（三种模式都编，编不过就失败）；没有就跳过——
+# 包里没有模型时验证器永远报用不了（失败即关），麦克风不开，行为跟没有这个功能一样。
+SPEAKER_MODEL_DIR="${WINDOWSHADE_SPEAKER_MODEL_DIR:-$(cd .. && pwd)/../WindowShade-models/speaker}"
+SPEAKER_MODEL_COMPILED=""
+if [ -d "$SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage" ]; then
+  echo "==> 说话人模型：编译 $SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage"
+  mkdir -p "$WORK/SpeakerModel"
+  xcrun coremlcompiler compile "$SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage" "$WORK/SpeakerModel" >/dev/null || exit 1
+  [ -d "$WORK/SpeakerModel/SpeakerEmbedding.mlmodelc" ] || { echo "ERROR: 没有生成 SpeakerEmbedding.mlmodelc" >&2; exit 1; }
+  SPEAKER_MODEL_COMPILED="$WORK/SpeakerModel/SpeakerEmbedding.mlmodelc"
+else
+  echo "==> 说话人模型：没找到 $SPEAKER_MODEL_DIR，跳过（声音比对保持不可用）"
+fi
 # 捷径动作（规格 N1）的标题单独一张表：系统在别的进程里按包根的 .lproj 读它（见 App/WindowShadeIntents.swift）。
 xcrun xcstringstool compile Resources/AppIntents.xcstrings -o "$WORK/AppIntentsStrings"
 # 看护：Watchdog/ 下的源码（入口和它自己的菜单栏图标）加上和 App 共用的更新代码（日志、判断、换回、文案），
@@ -344,7 +359,13 @@ cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
   printf '\n\n== mediaremote-adapter (Contents/Frameworks/MediaRemoteAdapter.framework) ==\n\n'; cat Vendor/mediaremote-adapter/LICENSE
   printf '\n\n== PLCrashReporter 1.12.0 (statically linked into the main executable) ==\n\n'; cat Vendor/PLCrashReporter/LICENSE
   printf '\n\n== Lock-space recipe (Glance) ==\n\n'; cat ../docs/third-party-lock-overlay.txt
+  if [ -n "$SPEAKER_MODEL_COMPILED" ]; then
+    printf '\n\n== WeSpeaker speaker model (Contents/Resources/SpeakerEmbedding.mlmodelc) ==\n\n'
+    cat Vendor/WeSpeaker/ATTRIBUTION.txt Vendor/WeSpeaker/LICENSE
+  fi
 } > "$APP/Contents/Resources/THIRD-PARTY-LICENSES.txt"
+rm -rf "$APP/Contents/Resources/SpeakerEmbedding.mlmodelc"
+if [ -n "$SPEAKER_MODEL_COMPILED" ]; then cp -R "$SPEAKER_MODEL_COMPILED" "$APP/Contents/Resources/SpeakerEmbedding.mlmodelc"; fi
 rm -rf "$APP/Contents/Resources/ThirdParty"
 # 以前发布包里带一份 Swift 并发运行库（从 WindowShade.app 模板拷来的 libswift_Concurrency.dylib）。
 # 主程序链接的一直是系统的 /usr/lib/swift/libswift_Concurrency.dylib（1.0.16 也是），那一份从没被用到；

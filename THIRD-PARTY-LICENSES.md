@@ -10,3 +10,4 @@ About panel opens from its “Third-Party Licenses” link.
 | mediaremote-adapter | `Contents/Frameworks/MediaRemoteAdapter.framework` | [prototype/Vendor/mediaremote-adapter/LICENSE](prototype/Vendor/mediaremote-adapter/LICENSE) |
 | PLCrashReporter 1.12.0 | statically linked into the main executable (local crash reports only) | [prototype/Vendor/PLCrashReporter/LICENSE](prototype/Vendor/PLCrashReporter/LICENSE) |
 | Lock-space recipe (Glance) | compiled into WindowShade | [docs/third-party-lock-overlay.txt](docs/third-party-lock-overlay.txt) |
+| WeSpeaker ResNet34 speaker model (VoxCeleb) | `Contents/Resources/SpeakerEmbedding.mlmodelc`, only when the model files were present at build time (not in git); optional voice match for face unlock (experimental) | [prototype/Vendor/WeSpeaker/ATTRIBUTION.txt](prototype/Vendor/WeSpeaker/ATTRIBUTION.txt) (code Apache-2.0; weights CC BY 4.0) |
