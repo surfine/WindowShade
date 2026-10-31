@@ -4338,6 +4338,13 @@
     },
     {
       "path": "prototype/App/TrackpadGestures.swift",
+      "line": 53,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/TrackpadGestures.swift",
       "line": 196,
       "symbol": "bezelPath",
       "source": "/// 两指手势还没结束、甩出去的窗口还在滑：这时主线程上别做慢事（见 ScreenBezel.swift 第一次读 bezelPath）。",

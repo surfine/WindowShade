@@ -47,6 +47,20 @@ final class TrackpadGestureController {
     /// 刚执行完的这段时间里，同一扇窗朝同一个方向再划一下不接：连划几下（Magic Mouse 上
     /// 很常见）不会在尺寸梯子上连走两格（本想还原，结果又收起了）。换个手势照常接。
     static let commitCooldown: TimeInterval = 0.6
+    /// 标题栏上认出了手势、却没有任何动作：如果有同样在标题栏上认手势的工具（DockDoor）在跑，说一次是谁。
+    /// 不让路、不关自己（见 Core/WindowToolConflict.swift）；同一个工具永远只说一次。
+    private func tellAboutTitleBarTool() {
+        let defaults = UserDefaults.standard
+        let told = Set(defaults.stringArray(forKey: WindowToolConflict.titleBarDefaultsKey) ?? [])
+        let running = NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)
+        guard let tool = WindowToolConflict.titleBarGestureToTell(runningBundleIDs: running, gestureHadNoResponse: true,
+                                                                  alreadyTold: told) else { return }
+        defaults.set(Array(told.union([tool.bundleID])).sorted(), forKey: WindowToolConflict.titleBarDefaultsKey)
+        owner.notch.announce(WSL10n.text("gesture.notice.titleBarTool", zh: "%@ 也在用标题栏手势", tool.name),
+                             detail: WSL10n.text("gesture.notice.titleBarToolHint", zh: "两边可能互相抢；在它的设置里关掉标题栏手势即可"), tone: .info)
+        wlog("window-tool: title-bar gesture no response, told once about \(tool.bundleID)")
+    }
+
     /// 窗口跟手的比例：走满“松手即执行”的门槛时窗口卷到 0.55，松手接着卷完；
     /// 继续往前推到约 1.8 倍门槛，窗口就在手指下完全卷起。
     static let followRatio: Double = 0.55
@@ -1018,6 +1032,7 @@ final class TrackpadGestureController {
         let direction = session.recognizer.direction
         guard session.verified, !session.suppressed,
               let action = session.recognizer.end(at: time) else {
+            if session.verified, !session.suppressed { tellAboutTitleBarTool() }
             session.recognizer.cancel()
             stopFollowing(session)
             endGlancePull(session)

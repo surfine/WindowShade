@@ -60,7 +60,8 @@ final class GlanceProbe {
       || CommandLine.arguments.contains("--dock-scenarios")
     let pipRun = CommandLine.arguments.contains("--pip")
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
-    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit", "--hitch"]
+    let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit", "--hitch",
+                      "--dock-autohide-frames", "--reduce-transparency", "--overlay-input", "--display-hotplug"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
@@ -326,6 +327,27 @@ final class GlanceProbe {
     if CommandLine.arguments.contains("--browser-more") {
       adoptFixture(pid: process.processIdentifier)
       try await exerciseBrowserMore(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    // 2026-10-31 决定 #50 的四项（App/CheckProbes1031.swift）。
+    if CommandLine.arguments.contains("--dock-autohide-frames") {
+      try await exerciseDockAutohideFrames()
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--reduce-transparency") {
+      try await exerciseReduceTransparency(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--overlay-input") {
+      try await exerciseOverlayInputFlow()
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--display-hotplug") {
+      try await exerciseDisplayHotplug(element: element)
       finish(nil)
       return
     }

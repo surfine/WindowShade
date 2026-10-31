@@ -43,4 +43,25 @@ enum WindowToolConflict {
         let reminded = Set(alreadyReminded.map { $0.lowercased() })
         return known.first { running.contains($0.bundleID.lowercased()) && !reminded.contains($0.bundleID.lowercased()) }
     }
+
+    // MARK: 同样在标题栏上认手势的工具（不让路，只在我们的手势没反应时说一次是谁）
+
+    /// 已经说过的（bundle id 数组）。和上面的快捷键提醒各记各的。
+    static let titleBarDefaultsKey = "WindowToolConflict.titleBarTold"
+
+    /// 标题栏上也有手势的工具。和 Swish 不同，这里我们不让路、不关自己：手势照常响应，只是没反应时用户该知道还有谁。
+    /// DockDoor 1.41（2026-10-15）起在标题栏、Dock 图标、菜单栏上认手势。
+    /// bundle id 来自 DockDoor 公开仓库的发布版（com.ethanbills.DockDoor）；本机没装，没在真机上核对过。
+    static let titleBarGestureTools: [Tool] = [
+        Tool(bundleID: "com.ethanbills.DockDoor", name: "DockDoor"),
+    ]
+
+    /// 该说哪一个：只在“我们的标题栏手势没反应”时，正在跑的同类工具里第一个没说过的。
+    static func titleBarGestureToTell(runningBundleIDs: [String], gestureHadNoResponse: Bool,
+                                      alreadyTold: Set<String>) -> Tool? {
+        guard gestureHadNoResponse else { return nil }
+        let running = Set(runningBundleIDs.map { $0.lowercased() })
+        let told = Set(alreadyTold.map { $0.lowercased() })
+        return titleBarGestureTools.first { running.contains($0.bundleID.lowercased()) && !told.contains($0.bundleID.lowercased()) }
+    }
 }

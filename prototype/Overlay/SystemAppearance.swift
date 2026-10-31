@@ -46,9 +46,12 @@ struct SystemAppearanceCapabilities: Equatable {
     var reduceMotion: Bool
     var supportsGlass: Bool
 
+    /// 探针用（--reduce-transparency）：非 nil 时代替系统的“减少透明度”读数，只在本进程里生效；产品里永远是 nil。
+    nonisolated(unsafe) static var probeReduceTransparency: Bool?
+
     static var current: SystemAppearanceCapabilities {
         SystemAppearanceCapabilities(
-            reduceTransparency: NSWorkspace.shared
+            reduceTransparency: probeReduceTransparency ?? NSWorkspace.shared
                 .accessibilityDisplayShouldReduceTransparency,
             increaseContrast: NSWorkspace.shared
                 .accessibilityDisplayShouldIncreaseContrast,

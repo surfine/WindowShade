@@ -40,6 +40,20 @@ struct WindowToolConflictTests {
       expect(ids.contains(required), "table has \(required)")
     }
 
+    let dockDoor = "com.ethanbills.DockDoor"
+    expect(WindowToolConflict.titleBarGestureToTell(runningBundleIDs: [dockDoor], gestureHadNoResponse: false, alreadyTold: [])  == nil,
+           "title-bar tool running but our gesture worked: say nothing")
+    expect(WindowToolConflict.titleBarGestureToTell(runningBundleIDs: [finder], gestureHadNoResponse: true, alreadyTold: []) == nil,
+           "no response but no same-kind tool running: nothing to name")
+    expect(WindowToolConflict.titleBarGestureToTell(runningBundleIDs: [finder, dockDoor], gestureHadNoResponse: true, alreadyTold: [])?.name == "DockDoor",
+           "no response while DockDoor runs: name it")
+    expect(WindowToolConflict.titleBarGestureToTell(runningBundleIDs: [dockDoor], gestureHadNoResponse: true, alreadyTold: [dockDoor]) == nil,
+           "already told about DockDoor: once only")
+    expect(WindowToolConflict.titleBarGestureToTell(runningBundleIDs: ["COM.ETHANBILLS.DOCKDOOR"], gestureHadNoResponse: true, alreadyTold: [])?.name == "DockDoor",
+           "title-bar tool bundle ids compare without case")
+    expect(WindowToolConflict.titleBarGestureTools.allSatisfy { !WindowToolConflict.known.map(\.bundleID).contains($0.bundleID) },
+           "title-bar list is separate from the shortcut-clash list")
+
     if failures == 0 { print("PASS: window tool conflict — remind once per tool, only when a shortcut is taken") }
     else { print("FAILED \(failures)"); exit(1) }
   }

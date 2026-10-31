@@ -17389,6 +17389,52 @@
         }
       }
     },
+    "gesture.notice.titleBarTool": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ also uses title-bar gestures"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也在用标题栏手势"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 也在用標題列手勢"
+          }
+        }
+      }
+    },
+    "gesture.notice.titleBarToolHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "They may clash. Turn off its title-bar gestures in its settings."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "两边可能互相抢；在它的设置里关掉标题栏手势即可"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "兩邊可能互相搶；在它的設定裡關掉標題列手勢即可"
+          }
+        }
+      }
+    },
     "gesture.notice.stepThenArrange": {
       "extractionState": "manual",
       "localizations": {
