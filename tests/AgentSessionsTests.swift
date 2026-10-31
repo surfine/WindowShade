@@ -81,6 +81,24 @@ struct AgentSessionsTests {
         t.section("A1-11", "风险类型明确或 shell 未知 → 高风险/未知不降成普通")
         t.expect(AgentSessions.risk(of:.readWorkspace) == .normal && AgentSessions.risk(of:.runDeclaredTests) == .normal,"明确声明的普通动作")
         t.expect(AgentSessions.risk(of:.shell) == .unknown && AgentSessions.risk(of:.delete) == .high && AgentSessions.risk(of:.network) == .high,"不靠 shell 前缀")
+        t.section("A1-12", "内存上限：每个会话只记最近的工具，满了挤掉最旧的；关了的会话一小时后清掉")
+        var tools=AgentSessions();_=tools.receive(env(c,1,0,.opened(.observed)))
+        let extra=AgentSessions.maximumToolsPerSession+36
+        for k in 0..<extra {_=tools.receive(env(c,UInt64(k+2),1+Double(k)/1000,.toolStarted(id:"t\(k)",summary:"x")))}
+        let kept=tools.sessions[c.session]?.tools ?? []
+        t.expect(kept.count==AgentSessions.maximumToolsPerSession && kept.contains("t\(extra-1)") && !kept.contains("t0"),"留最近的，最旧的让位，新的不被拒")
+        t.expect(tools.sessions[c.session]?.status == .running,"满了以后状态照常更新")
+        var closing=AgentSessions()
+        for (k,(name,event)) in [("done",AgentSessions.Event.turnFinished(summary:"ok")),("run",.prompt(summary:"go")),("gone",.processExited)].enumerated() {
+            let ctx=fixtureContext(session:name),at=Double(k)/100
+            _=closing.receive(env(ctx,1,at,.opened(.observed)));_=closing.receive(env(ctx,2,at+0.005,event))
+        }
+        _=closing.tick(at:sec(Double(AgentSessions.closedRetention/WS2.Duration.second)-1))
+        t.expect(closing.sessions.count==3,"不到一小时：都还在")
+        _=closing.tick(at:sec(Double(AgentSessions.closedRetention/WS2.Duration.second)+1))
+        t.expect(closing.sessions.keys.map(\.id)==["run"],"满一小时：做完的、断开的清掉；没关的不动")
+        var onlyDone=AgentSessions();_=onlyDone.receive(env(c,1,0,.opened(.observed)));_=onlyDone.receive(env(c,2,1,.turnFinished(summary:"ok")))
+        t.expect(onlyDone.nextWake == sec(1).adding(AgentSessions.closedRetention),"关了的会话排一次清理唤醒")
 
         t.finish()
     }

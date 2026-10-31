@@ -33,7 +33,23 @@ import Foundation
         testWaitingDirectoriesAndTarget()
         testWindowMatch()
         testCompactFaces()
+        testWaitingInTerminal()
         print("PASS session activity (\(assertions) assertions)")
+    }
+
+    // 交回终端以后：仍是等你（琥珀点还在），副句换成“Claude 在终端里等你”，不再开第二次口。
+    static func testWaitingInTerminal() {
+        var model = CodingSessionActivities()
+        _ = model.apply(change(.waiting, summary: "Bash"), now: 1)
+        expect(model.liveSpec?.subtitle == "Claude Code想执行 Bash", "卡还在时：想执行")
+        var back = change(.waiting)
+        back.inTerminal = true
+        let out = model.apply(back, now: 120)
+        expect(out.bloom == nil, "交回终端不再开口")
+        expect(model.liveSpec?.phase == .waiting && model.liveSpec?.trailing == NotchSessionEar.waitingText, "右耳仍是琥珀点加“等你”")
+        expect(model.liveSpec?.subtitle == "Claude 在终端里等你" && NotchSessionEar.waitingInTerminal == "Claude 在终端里等你", "读屏念：Claude 在终端里等你")
+        _ = model.apply(change(.running), now: 130)
+        expect(model.liveSpec?.phase == .running, "终端里有结果：琥珀点收起")
     }
 
     // 1) 权重按稿重排。

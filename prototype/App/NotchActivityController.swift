@@ -145,8 +145,6 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     var onSessionBloom: ((CodingSessionActivities.Bloom) -> Void)?
     /// “过去”：去那个会话所在的终端窗口；找不到时由接手的人打开会话页。参数是会话所在的目录。
     /// 参数：会话编号、会话所在目录。
-    /// 点会话的耳朵：有收成琥珀点的审批卡就把它请回来（返回 true），不再去终端。
-    var onSessionRestoreCard: ((String) -> Bool)?
     var onSessionGo: ((String, String) -> Void)?
     /// 那一排里点会话格：走进指挥页（拍板 10-29 第 2、4 条）。参数同上；返回 false（指挥页开不了）就照旧“过去”。
     var onSessionEnter: ((String, String) -> Bool)?
@@ -567,7 +565,6 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             case .download, .copy, .remote, .calendar, .timer, .shelf: return
             case .session:
                 if let target = sessions.target(forActivity: selected.id, at: ProcessInfo.processInfo.systemUptime) {
-                    if onSessionRestoreCard?(target.sessionID) == true { return }
                     onSessionGo?(target.sessionID, target.cwd)
                 }
             case .airPods: NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Sound-Settings.extension")!)

@@ -93,6 +93,29 @@
         }
       }
     },
+    "agent.approval.showCommand": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show full command"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示整条命令"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示整條命令"
+          }
+        }
+      }
+    },
     "agent.approval.cwd": {
       "extractionState": "manual",
       "localizations": {
@@ -273,6 +296,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "連線斷了，這一次可能沒有送到"
+          }
+        }
+      }
+    },
+    "agent.outcome.handledInTerminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Already handled in the terminal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这一条已经在终端里处理"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這一條已經在終端裡處理"
           }
         }
       }
@@ -8645,6 +8691,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "這個版本里沒有"
+          }
+        }
+      }
+    },
+    "conductor.settings.hookConfig.moved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't find WindowShade. Copy the configuration again"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到 WindowShade，重新拷一次配置"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "找不到 WindowShade，重新複製一次設定"
           }
         }
       }
@@ -24699,6 +24768,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "等你"
+          }
+        }
+      }
+    },
+    "notch.session.waitingInTerminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude is waiting in the terminal"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 在终端里等你"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude 在終端裡等你"
           }
         }
       }
@@ -69900,7 +69992,7 @@
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "已連接，Claude Code 會報到劉海。解除安裝 WindowShade 前先在這裡斷開"
+            "value": "已連接，Claude Code 會報到瀏海。解除安裝 WindowShade 前先在這裡斷開"
           }
         }
       }

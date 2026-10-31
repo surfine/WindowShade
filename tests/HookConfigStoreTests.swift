@@ -78,6 +78,24 @@ struct HookConfigStoreTests {
         expect(try! String(contentsOf: store3.settingsURL, encoding: .utf8) == before, "拒改时文件原样")
         expect(!store3.currentStatus().writable, "状态如实标不可写")
 
+        // 5. App 搬走或删掉：文件里留着的辅助程序路径不存在了，状态要如实说。
+        let home4 = makeHome(); defer { try? FileManager.default.removeItem(at: home4) }
+        let oldHelper = "/Volumes/Old Mac/WindowShade.app/Contents/Helpers/WindowShadeHook"
+        let writer = WS2HookConfigStore(home: home4, helper: oldHelper)
+        expect(writer.connect() == nil, "旧位置连接")
+        let moved = WS2HookConfigStore(home: home4, helper: "/Applications/WindowShade.app/Contents/Helpers/WindowShadeHook",
+                                       isExecutable: { _ in false })
+        expect(moved.currentStatus().helperMissing && !moved.currentStatus().connected, "配置指向的 App 不在了：helperMissing，当前这份也没连上")
+        let present = WS2HookConfigStore(home: home4, helper: oldHelper, isExecutable: { _ in true })
+        expect(!present.currentStatus().helperMissing && present.currentStatus().connected, "路径还在：不报找不到")
+        expect(!store1.currentStatus().helperMissing, "没连过的 HOME 不报找不到")
+        let others = makeHome(); defer { try? FileManager.default.removeItem(at: others) }
+        try! FileManager.default.createDirectory(at: others.appendingPathComponent(".claude"), withIntermediateDirectories: true)
+        write(#"{"hooks":{"PreToolUse":[{"hooks":[{"type":"command","command":"/usr/local/bin/other-hook"}]}]}}"#,
+              to: others.appendingPathComponent(".claude/settings.json"))
+        expect(!WS2HookConfigStore(home: others, helper: oldHelper, isExecutable: { _ in false }).currentStatus().helperMissing,
+               "别人的 hook 路径不算")
+
         print("\(failures == 0 ? "PASS" : "FAIL") HookConfigStore: \(failures) failures")
         if failures > 0 { exit(1) }
     }

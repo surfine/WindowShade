@@ -92,6 +92,13 @@ struct ApprovalCardTests {
         t.expect(!full.arrive(.integer(99)) && full.queue.count == 8, "连同正在显示的最多 8 件，与协调器一致")
         t.expect(full.queue.map { $0 } == (0..<8).map { WS2.RequestID.integer(Int64($0)) }, "顺序就是到达顺序")
 
+        t.section("M01-10", "第 44–46 条：交回终端的琥珀点、晚到的点按、整条命令先看后验")
+        t.expect(AgentApprovalCard.text(.handledInTerminal, agent: "Claude Code") == "这一条已经在终端里处理", "晚到的点按：回执")
+        t.expect(AgentApprovalCard.touchIDReady(risk: .unknown, command: "rm -rf build", revealed: false) == false, "有整条命令没看过：Touch ID 键不能用")
+        t.expect(AgentApprovalCard.touchIDReady(risk: .unknown, command: "rm -rf build", revealed: true), "露出过：能用")
+        t.expect(AgentApprovalCard.touchIDReady(risk: .high, command: "", revealed: false), "没有命令可露的请求照旧")
+        t.expect(AgentApprovalCard.touchIDReady(risk: .normal, command: "ls", revealed: false), "普通点一下的不受影响")
+
         t.finish()
     }
 }

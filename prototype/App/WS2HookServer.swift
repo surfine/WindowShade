@@ -1,7 +1,8 @@
 // 编程会话：Claude Code 的 hook（tools/ws2-hook，装在 Contents/Helpers/WindowShadeHook）连本机 socket 报事件，
 // 这里收下、映射成 AgentSessions 里的 observed 会话。默认不替 Claude Code 决定；只有人在刘海里按过
 // “允许这一次”（高风险还要 Touch ID），才把这一条连接回成 allow。
-// 只收本机同一用户的连接（WS2UnixSocket 在 accept 时查对端 UID）；不联网；不存、不读工具参数，只留工具名。
+// 只收本机同一用户的连接（WS2UnixSocket 在 accept 时查对端 UID）；不联网；只在“要权限”那一条里读 Bash 的 command（给卡上看整条命令用），
+// 只放内存、这一次结束就丢；别的工具参数一概不读。
 // 默认关；开关在指挥模式设置里。关掉就停止监听并删掉 socket 文件。
 import Foundation
 import CryptoKit
@@ -27,6 +28,8 @@ struct WS2HookEvent: Equatable, Sendable {
     let tool: String?
     /// hook 子进程所在的终端（A1）。没报、或报得不合格的整个事件都拒，所以有值就是合格的。
     var terminal: TerminalIdentity? = nil
+    /// 要权限的那一条里 Bash 的整条命令（原样，保留换行和制表符）；别的事件、别的工具都是 nil。
+    var command: String? = nil
 
     var projectName: String { Self.projectName(projectPath) }
 
@@ -46,7 +49,7 @@ struct WS2HookEvent: Equatable, Sendable {
             !value.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) }
     }
 
-    /// 畸形、超长、多余字段、未知事件一律拒（返回 nil）。tool_input 只许出现，不读内容。
+    /// 畸形、超长、多余字段、未知事件一律拒（返回 nil）。tool_input 只在要权限的事件里读 command。
     static func parse(_ line: Data) -> WS2HookEvent? {
         guard !line.isEmpty, line.count <= WS2UnixSocket.maximumFrame,
               let object = try? JSONSerialization.jsonObject(with: line),
@@ -72,7 +75,14 @@ struct WS2HookEvent: Equatable, Sendable {
             guard let value = TerminalIdentity.parse(wire: raw) else { return nil }
             terminal = value
         }
-        return WS2HookEvent(kind: kind, sessionID: session, projectPath: path, tool: tool, terminal: terminal)
+        var command: String?
+        if kind == .permissionRequest, let input = body["tool_input"] as? [String: Any], let raw = input["command"] as? String {
+            let kept = String(String.UnicodeScalarView(raw.unicodeScalars.filter {
+                $0 == "\n" || $0 == "\t" || !CharacterSet.controlCharacters.contains($0)
+            }))
+            command = kept.isEmpty ? nil : kept
+        }
+        return WS2HookEvent(kind: kind, sessionID: session, projectPath: path, tool: tool, terminal: terminal, command: command)
     }
 
     /// 一行应答（不含换行）。none 是“{}”：hook 什么也不决定，Claude Code 照常自己问。
@@ -91,7 +101,10 @@ struct WS2HookSessions: Sendable {
         let sessionID: String
         let project: String
         let status: AgentSessions.Status
+        /// 请求已交回终端、助手还在那边等人：状态仍算“等你”，只是卡不再有。
+        var inTerminal = false
     }
+    private struct Shown: Equatable { let status: AgentSessions.Status; let inTerminal: Bool }
     private struct Meta: Sendable {
         let projectID: String
         let project: String
@@ -106,13 +119,19 @@ struct WS2HookSessions: Sendable {
     private var waiting: [String: WS2.ApprovalKey] = [:]
     /// 会话 → 它所在的终端（最近一次报的）。只在内存里；会话被挤掉时一起忘。
     private var terminals: [String: TerminalIdentity] = [:]
+    /// 请求交回终端（回了“{}”）、助手还在终端里等人的会话；它们下一条事件到来前一直算“等你”。
+    private var inTerminal: Set<String> = []
     private var sequence: UInt64 = 0
     private var epochs: UInt64 = 0
 
     var sessions: [AgentSessions.Session] { store.visibleSessions }
     var nextWake: WS2.Instant? { store.nextWake }
     func status(of sessionID: String) -> AgentSessions.Status? {
-        store.sessions[WS2.SessionKey(provider: .claudeCode, id: sessionID)]?.status
+        store.sessions[WS2.SessionKey(provider: .claudeCode, id: sessionID)].map { shown(sessionID, $0.status).status }
+    }
+    private func shown(_ id: String, _ raw: AgentSessions.Status) -> Shown {
+        inTerminal.contains(id) && [.running, .idle, .stale].contains(raw) ? Shown(status: .waiting, inTerminal: true)
+                                                                            : Shown(status: raw, inTerminal: false)
     }
     /// 会话所在的完整目录（hook 报过 cwd 才有，否则空）。“过去”找终端窗口用。
     func directory(of sessionID: String) -> String {
@@ -150,24 +169,40 @@ struct WS2HookSessions: Sendable {
         return changes(from: before)
     }
 
+    /// 请求没人在刘海里答，回了“{}”交回终端：账上的占位结掉，但助手还在终端里等，状态继续算“等你”。
+    mutating func handedBack(sessionID: String, at now: WS2.Instant) -> [Change] {
+        guard waiting[sessionID] != nil else { return [] }
+        let before = statuses()
+        _ = handled(sessionID: sessionID, at: now)
+        inTerminal.insert(sessionID)
+        return changes(from: before)
+    }
+
     /// 过期的“等你”回到原状态，十分钟没消息的标成“状态待确认”。
     mutating func tick(at now: WS2.Instant) -> [Change] {
         let before = statuses()
         _ = store.tick(at: now)
+        for (id, key) in waiting where store.request(for: key) == nil { inTerminal.insert(id) }
         waiting = waiting.filter { store.request(for: $0.value) != nil }
+        // 沉默太久的收场会话被账上清掉了：它们的项目、终端、“在终端里”记号也一起忘。
+        let present = Set(store.sessions.keys.map(\.id))
+        meta = meta.filter { present.contains($0.key) }
+        terminals = terminals.filter { present.contains($0.key) }
+        inTerminal = inTerminal.filter { present.contains($0) }
         return changes(from: before)
     }
 
-    private func statuses() -> [String: AgentSessions.Status] {
-        var result: [String: AgentSessions.Status] = [:]
-        for (key, session) in store.sessions { result[key.id] = session.status }
+    private func statuses() -> [String: Shown] {
+        var result: [String: Shown] = [:]
+        for (key, session) in store.sessions { result[key.id] = shown(key.id, session.status) }
         return result
     }
 
-    private func changes(from before: [String: AgentSessions.Status]) -> [Change] {
+    private func changes(from before: [String: Shown]) -> [Change] {
         store.sessions.compactMap { key, session in
-            guard before[key.id] != session.status else { return nil }
-            return Change(sessionID: key.id, project: meta[key.id]?.project ?? "", status: session.status)
+            let now = shown(key.id, session.status)
+            guard before[key.id] != now else { return nil }
+            return Change(sessionID: key.id, project: meta[key.id]?.project ?? "", status: now.status, inTerminal: now.inTerminal)
         }.sorted { $0.sessionID < $1.sessionID }
     }
 
@@ -175,6 +210,8 @@ struct WS2HookSessions: Sendable {
         guard sequence < UInt64.max - 16, epochs < UInt64.max else { return }
         let key = WS2.SessionKey(provider: .claudeCode, id: event.sessionID)
         if let terminal = event.terminal { terminals[event.sessionID] = terminal }
+        // 这个会话又有事件来了：终端里那一条已经有结果。
+        inTerminal.remove(event.sessionID)
         let known = meta[event.sessionID]
         let projectID = event.projectPath.isEmpty ? (known?.projectID ?? "claude-code") : event.projectPath
         let current: Meta
@@ -205,7 +242,7 @@ struct WS2HookSessions: Sendable {
         case .preToolUse: send(context, .toolStarted(id: tool, summary: summary), at: now)
         case .postToolUse: send(context, .toolFinished(id: tool), at: now)
         case .stop: send(context, .turnFinished(summary: summary), at: now)
-        case .permissionRequest: ask(context, tool: event.tool, at: now)
+        case .permissionRequest: ask(context, tool: event.tool, command: event.command, at: now)
         }
     }
 
@@ -219,11 +256,13 @@ struct WS2HookSessions: Sendable {
     }
 
     /// 等你：只做一张占位的审批，好让状态变成 waiting。摘要只用来区分这一次，不是授权目标。
-    private mutating func ask(_ context: WS2.Context, tool: String?, at now: WS2.Instant) {
+    private mutating func ask(_ context: WS2.Context, tool: String?, command: String?, at now: WS2.Instant) {
         sequence += 1
         let id = sequence
         var bytes = Data(context.session.id.utf8)
         bytes.append(0); bytes.append(contentsOf: (tool ?? "").utf8)
+        // 命令也算进这一次的摘要：Touch ID 绑的是用户看到的那一条。
+        bytes.append(0); bytes.append(contentsOf: (command ?? "").utf8)
         bytes.append(0); bytes.append(contentsOf: String(id).utf8)
         guard let digest = WS2.Digest(Data(SHA256.hash(data: bytes))) else { return }
         let key = WS2.ApprovalKey(session: context.session, epoch: context.epoch, requestID: .integer(Int64(clamping: id)))
@@ -269,6 +308,7 @@ struct WS2HookSessions: Sendable {
             keptTerminals[id] = terminals[id]
         }
         meta = keptMeta; waiting = keptWaiting; terminals = keptTerminals
+        inTerminal = inTerminal.filter { keptMeta[$0] != nil }
     }
 }
 
@@ -287,6 +327,8 @@ struct WS2HookSessions: Sendable {
         let project: String
         let tool: String
         let digest: Data
+        /// Bash 的整条命令；没有就是空。
+        var command: String = ""
     }
     private(set) var model = WS2HookSessions()
     private(set) var state: State = .off
@@ -340,6 +382,11 @@ struct WS2HookSessions: Sendable {
         setState(ok ? .listening : .failed)
     }
 
+    /// 这一张卡对应的请求还挂着、没被交回也没在终端里答掉。
+    func isPending(_ ask: PermissionAsk) -> Bool {
+        state == .listening && model.waitingDigest(of: ask.sessionID) == ask.digest
+    }
+
     func isWaiting(sessionID: String) -> Bool {
         state == .listening && model.waitingKey(of: sessionID) != nil
     }
@@ -361,7 +408,7 @@ struct WS2HookSessions: Sendable {
     /// 不替 Claude Code 决定：回“{}”，让它在自己的终端里问。卡被收走、Touch ID 用不了时走这条。
     func deferToHost(sessionID: String) {
         guard state == .listening else { return }
-        let changes = model.handled(sessionID: sessionID, at: clock.now())
+        let changes = model.handedBack(sessionID: sessionID, at: clock.now())
         scheduleWake()
         if !changes.isEmpty { onChange?(changes) }
         listener?.deferToHost(sessionID: sessionID)
@@ -384,7 +431,7 @@ struct WS2HookSessions: Sendable {
                 return
             }
             onPermissionAsk(PermissionAsk(sessionID: event.sessionID, project: model.project(of: event.sessionID),
-                                          tool: event.tool ?? "", digest: digest))
+                                          tool: event.tool ?? "", digest: digest, command: event.command ?? ""))
         }
     }
 

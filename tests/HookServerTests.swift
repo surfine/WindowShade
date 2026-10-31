@@ -148,16 +148,82 @@ struct HookServerTests {
         _ = m.receive(parsed("PermissionRequest", tool: "Edit"), at: sec(12))
         t.expect(m.nextWake == sec(12).adding(AgentSessions.maximumApprovalLifetime), "期限就是下一次唤醒")
         changes = m.tick(at: sec(12).adding(AgentSessions.maximumApprovalLifetime))
-        t.expect(m.status(of: "s-1") == .running && changes.map(\.status) == [.running], "两分钟没回应：不再显示等你")
+        t.expect(m.status(of: "s-1") == .waiting && changes.map(\.status) == [.waiting] && changes.first?.inTerminal == true,
+                 "两分钟没回应：请求交回终端，琥珀点还在（Claude 在终端里等你）")
+        t.expect(m.store.approvalCount == 0, "占位审批结掉")
         _ = m.tick(at: sec(2000))
+        t.expect(m.status(of: "s-1") == .waiting, "在终端里等人不算没消息：十分钟后还是等你")
+        changes = m.receive(parsed("UserPromptSubmit"), at: sec(2001))
+        t.expect(m.status(of: "s-1") == .running && changes.map(\.status) == [.running] && changes.first?.inTerminal == false,
+                 "终端里答了：琥珀点收起，回到在跑")
+        _ = m.tick(at: sec(4000))
         t.expect(m.status(of: "s-1") == .stale, "十分钟没消息：状态待确认")
         let epoch = m.sessions.first?.context.epoch ?? 0
-        _ = m.receive(parsed("UserPromptSubmit", cwd: "/Users/me/Code/Other"), at: sec(2001))
+        _ = m.receive(parsed("UserPromptSubmit", cwd: "/Users/me/Code/Other"), at: sec(4001))
         t.expect(m.sessions.first.map { $0.context.epoch > epoch && $0.summary == "Other" && $0.status == .running } == true,
                  "同一会话换了目录：新代次，重新开始")
         var other = WS2HookSessions()
         _ = other.receive(parsed("Stop", session: "a"), at: sec(1)); _ = other.receive(parsed("Stop", session: "b"), at: sec(1))
         t.expect(other.sessions.count == 2, "不同会话分开记")
+
+        t.section("H-06b", "交回终端（卡被收走、Touch ID 没过）：状态仍是等你；刘海里定了的不算")
+        var back = WS2HookSessions()
+        _ = back.receive(parsed("UserPromptSubmit", session: "b"), at: sec(1))
+        _ = back.receive(parsed("PermissionRequest", session: "b", tool: "Bash"), at: sec(2))
+        changes = back.handedBack(sessionID: "b", at: sec(3))
+        t.expect(back.status(of: "b") == .waiting && changes.count == 1 && changes[0].inTerminal && changes[0].status == .waiting,
+                 "交回终端：仍是等你，且标明在终端里")
+        t.expect(back.handedBack(sessionID: "b", at: sec(4)).isEmpty, "已经交回的不再重复报")
+        t.expect(back.waitingDigest(of: "b") == nil, "卡对应的请求不再挂着（晚到的点按没有东西可送）")
+        changes = back.receive(parsed("PermissionRequest", session: "b", tool: "Bash"), at: sec(5))
+        t.expect(back.status(of: "b") == .waiting && back.waitingDigest(of: "b") != nil && changes.first?.inTerminal != true,
+                 "下一次要权限：又是一张新卡")
+        var answered = WS2HookSessions()
+        _ = answered.receive(parsed("UserPromptSubmit", session: "a"), at: sec(0.5))
+        _ = answered.receive(parsed("PermissionRequest", session: "a", tool: "Bash"), at: sec(1))
+        changes = answered.handled(sessionID: "a", at: sec(2))
+        t.expect(answered.status(of: "a") == .running && changes.first?.inTerminal == false, "刘海里答了：回到在跑，不留琥珀点")
+
+        t.section("H-06c", "整条命令只在要权限那一条里读，随这一次的摘要走")
+        let bash = WS2HookEvent.parse(line(["version": 1, "provider": "claude", "event": "PermissionRequest", "sessionID": "c",
+                                           "tool_name": "Bash", "tool_input": ["command": "git status\n\techo \u{7}ok"]]))
+        t.expect(bash?.command == "git status\n\techo ok", "命令原样保留换行和制表符，去掉别的控制字符")
+        let pre = WS2HookEvent.parse(line(["version": 1, "provider": "claude", "event": "PreToolUse", "sessionID": "c",
+                                          "tool_name": "Bash", "tool_input": ["command": "ls"]]))
+        t.expect(pre?.command == nil, "别的事件不读命令")
+        let read = WS2HookEvent.parse(line(["version": 1, "provider": "claude", "event": "PermissionRequest", "sessionID": "c",
+                                           "tool_name": "Read", "tool_input": ["file_path": "/etc/hosts"]]))
+        t.expect(read?.command == nil, "没有 command 的工具是 nil")
+        var digestA = WS2HookSessions(), digestB = WS2HookSessions()
+        func ask(_ model: inout WS2HookSessions, _ command: String) -> Data? {
+            _ = model.receive(WS2HookEvent(kind: .permissionRequest, sessionID: "x", projectPath: "/Users/me/p", tool: "Bash", command: command), at: sec(1))
+            return model.waitingDigest(of: "x")
+        }
+        t.expect(ask(&digestA, "ls") != ask(&digestB, "rm -rf ~"), "Touch ID 绑的摘要含命令：换了命令就是另一条")
+
+        t.section("H-06d", "子代理和主会话共用 session_id：一个会话，不另起一张卡")
+        var sub = WS2HookSessions()
+        _ = sub.receive(parsed("UserPromptSubmit", session: "parent"), at: sec(1))
+        _ = sub.receive(parsed("PreToolUse", session: "parent", tool: "Task"), at: sec(2))
+        _ = sub.receive(parsed("PreToolUse", session: "parent", tool: "Bash"), at: sec(3))   // 子代理的工具，session_id 同主会话
+        _ = sub.receive(parsed("PermissionRequest", session: "parent", tool: "Bash"), at: sec(4))
+        let firstDigest = sub.waitingDigest(of: "parent")
+        _ = sub.receive(parsed("PermissionRequest", session: "parent", tool: "Bash"), at: sec(5))   // 主会话和子代理各问一次
+        t.expect(sub.sessions.count == 1 && sub.store.sessions.count == 1, "耳朵上仍是一个会话")
+        t.expect(sub.store.approvalCount == 1 && sub.waitingDigest(of: "parent") != nil && sub.waitingDigest(of: "parent") != firstDigest,
+                 "同一会话至多一张卡：新的顶掉旧的，账上只挂一件")
+
+        t.section("H-06e", "关了的会话一小时后清掉，没关的不动")
+        var aged = WS2HookSessions()
+        _ = aged.receive(parsed("Stop", session: "old"), at: sec(1))
+        _ = aged.receive(parsed("UserPromptSubmit", session: "live"), at: sec(1))
+        _ = aged.receive(parsed("PermissionRequest", session: "wait", tool: "Bash"), at: sec(1))
+        t.expect(aged.nextWake != nil, "有关了的会话：排一次清理唤醒")
+        _ = aged.tick(at: sec(3000))
+        t.expect(aged.status(of: "old") == .completed, "不到一小时：还在")
+        _ = aged.tick(at: sec(1).adding(AgentSessions.closedRetention))
+        t.expect(aged.status(of: "old") == nil && aged.project(of: "old").isEmpty && aged.terminal(of: "old") == nil, "满一小时：会话、项目、终端绑定一起忘")
+        t.expect(aged.status(of: "live") != nil && aged.status(of: "wait") != nil, "没关的会话不动")
 
         t.section("H-07", "会话满了只留最近的，在跑和等你的不丢")
         var full = WS2HookSessions()
@@ -225,7 +291,8 @@ struct HookServerTests {
         let noCardLine = line(event("PermissionRequest", session: "no-card", tool: "Bash"))
         DispatchQueue.global().async { noCard.set(send(noCardLine, to: path)) }
         t.expect(spin { noCard.value == Data("{}".utf8) }, "没有卡可挂：立刻回“{}”")
-        t.expect(spin { server.model.status(of: "no-card") == .idle }, "没有卡：也不留在等你")
+        t.expect(spin { server.model.waitingKey(of: "no-card") == nil }, "没有卡：账上不挂着请求")
+        t.expect(seen.last { $0.sessionID == "no-card" }?.inTerminal == true, "没有卡：Claude 在终端里等你，右耳留着琥珀点")
         server.onPermissionAsk = { _ in }
         t.expect(server.model.nextWake != nil, "有期限时才排唤醒")
         let held = ReplyBox()
@@ -320,7 +387,8 @@ struct HookServerTests {
         t.expect(spin { shortHold.isWaiting(sessionID: "slow") }, "挂上了")
         t.expect(spin(until: { expired.value != nil }, seconds: 5), "到点收到应答")
         t.expect(expired.value == Data("{}".utf8), "到点回“{}”，不是 allow 也不是 deny")
-        t.expect(spin { shortHold.model.status(of: "slow") != .waiting }, "账上不再等 slow")
+        t.expect(spin { shortHold.model.waitingKey(of: "slow") == nil }, "账上不再挂着 slow 的请求")
+        t.expect(shortHold.model.status(of: "slow") == .waiting, "挂期到点交回终端：琥珀点还在，直到终端里有结果")
         let shortClosed = DispatchSemaphore(value: 0)
         shortHold.setEnabled(false) { shortClosed.signal() }
         _ = shortClosed.wait(timeout: .now() + 3)
