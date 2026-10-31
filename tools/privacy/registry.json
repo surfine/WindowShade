@@ -694,9 +694,9 @@
       "label": "脸部特征与比对结果",
       "sensitivity": "private",
       "group": "你同意后才读的",
-      "reads": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）；录脸时多一步：依次看屏幕中间和四个角，拟出一组注视校准系数；认你时还看眼睛睁没睁开、瞳孔在眼睛里的位置和头的朝向，只为判断你在不在看屏幕",
+      "reads": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）；录脸时多一步：依次看屏幕中间和四个角，拟出一组注视校准系数；认你时还看眼睛睁没睁开、瞳孔在眼睛里的位置和头的朝向，只为判断你在不在看屏幕；标定时（只在用户明确运行 --face-calibrate-record、并点开始之后）：同样的脸部特征数字，录约 60 秒，加上当时已登记的模板",
       "purpose": "锁屏后认出是不是你，只留一条证据，不会解锁",
-      "destination": "模板和注视校准系数只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+      "destination": "模板和注视校准系数只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存；标定用的本人样本只有特征数字，写到 WindowShade-models/calibration/genuine.json（权限 0600，不进仓库、不联网）；标定结果（门槛、目标误认率、日期、方法）同样放这台 Mac 的钥匙串里，不含任何特征",
       "activation": "默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数；存了注视校准时，认出后最多再看 1.5 秒，确认你在看屏幕",
       "toggle": "实验开关和删除登记；不会标成 Face ID",
       "status": "planned",
@@ -711,11 +711,11 @@
         "label": "Face features and the comparison result",
         "subtitle": "Recognizes you after unlocking",
         "purpose": "Recognizes you after unlocking, keeps one hint, and never unlocks",
-        "destination": "Templates and gaze calibration numbers live in this Mac's keychain, not synced and not carried into backups; pictures and crops aren't kept",
+        "destination": "Templates and gaze calibration numbers live in this Mac's keychain, not synced and not carried into backups; pictures and crops aren't kept; the calibration samples are feature numbers only, written to WindowShade-models/calibration/genuine.json (permissions 0600, kept out of the repository, never sent anywhere); the calibration result (threshold, target false-accept rate, date, method) also lives in this Mac's keychain and holds no features",
         "toggle": "The experiment switch and removing the record; never labelled Face ID",
         "activation": "Off by default; once the experiment is on it looks up to 6 seconds when the screen lights up while locked, at up to 10 frames a second; with the head-turn challenge it watches up to 12 more seconds after recognizing; at most 3 times per lock, and an unclear picture doesn't count; with gaze calibration saved, it looks up to 1.5 more seconds after recognizing to confirm you’re looking at the screen",
         "combined": "Face features and camera pictures together can tell whether it's you.",
-        "reads": "Experiment: image features cropped from the face (computed by Apple's Vision), the enrolled template, how open the eyes were at enrolment, the enrolment number and the comparison result; with the head-turn challenge, also which way the face turns and whether the eyes are open; enrolment adds one step where you look at the middle and the four corners of the screen to fit a set of gaze calibration numbers; while recognizing you it also checks whether your eyes are open, where each pupil sits in the eye and which way your head faces, only to tell whether you’re looking at the screen"
+        "reads": "Experiment: image features cropped from the face (computed by Apple's Vision), the enrolled template, how open the eyes were at enrolment, the enrolment number and the comparison result; with the head-turn challenge, also which way the face turns and whether the eyes are open; enrolment adds one step where you look at the middle and the four corners of the screen to fit a set of gaze calibration numbers; while recognizing you it also checks whether your eyes are open, where each pupil sits in the eye and which way your head faces, only to tell whether you’re looking at the screen; during calibration (only when you run --face-calibrate-record and press Start): the same face feature numbers for about 60 seconds, plus the templates enrolled at the time"
       }
     },
     {
@@ -7963,6 +7963,90 @@
       "symbol": "SecItemDelete",
       "source": "let status = SecItemDelete(baseQuery() as CFDictionary)",
       "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "AVCaptureSession",
+      "source": "private var session: AVCaptureSession?",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "AVCaptureDevice",
+      "source": "guard let device = AVCaptureDevice(uniqueID: deviceID),",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "AVCaptureDevice",
+      "source": "let input = try? AVCaptureDeviceInput(device: device) else { return false }",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "AVCaptureSession",
+      "source": "let session = AVCaptureSession()",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "VNDetectFaceLandmarksRequest",
+      "source": "let request = VNDetectFaceLandmarksRequest()",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "AVCaptureDevice",
+      "source": "switch AVCaptureDevice.authorizationStatus(for: .video) {",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceCalibrationRecorder.swift",
+      "line": 0,
+      "symbol": "AVCaptureDevice",
+      "source": "AVCaptureDevice.requestAccess(for: .video) { granted in",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceThresholdCalibrationStore.swift",
+      "line": 0,
+      "symbol": "LAContext",
+      "source": "let context = LAContext(); context.interactionNotAllowed = true",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceThresholdCalibrationStore.swift",
+      "line": 0,
+      "symbol": "SecItemCopyMatching",
+      "source": "let status = SecItemCopyMatching(q as CFDictionary, &result)",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceThresholdCalibrationStore.swift",
+      "line": 0,
+      "symbol": "SecItemUpdate",
+      "source": "var status = SecItemUpdate(base as CFDictionary, [kSecValueData as String: bytes] as CFDictionary)",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceThresholdCalibrationStore.swift",
+      "line": 0,
+      "symbol": "SecItemAdd",
+      "source": "status = SecItemAdd(q as CFDictionary, nil)",
+      "signal": "face-identity"
+    },
+    {
+      "path": "prototype/App/FaceThresholdCalibrationStore.swift",
+      "line": 0,
+      "symbol": "SecItemDelete",
+      "source": "let status = SecItemDelete(query(modelVersion: modelVersion) as CFDictionary)",
+      "signal": "face-identity"
     }
   ],
   "groups": [

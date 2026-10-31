@@ -19,6 +19,13 @@ if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix(
         setenv("WINDOWSHADE_LOG_PATH",log,1)
     }
 }
+// 刷脸门槛标定结果导入（不开界面、不开相机）：把 tools/face-calibration 写出的 JSON 存进钥匙串。
+if let index = CommandLine.arguments.firstIndex(of: "--face-calibration-import") {
+    guard CommandLine.arguments.indices.contains(index + 1) else {
+        print("usage: --face-calibration-import FILE"); exit(64)
+    }
+    exit(FaceThresholdCalibrationImport.run(path: CommandLine.arguments[index + 1]))
+}
 let app = NSApplication.shared
 if CommandLine.arguments.contains("--window-browser-dock-probe") {
     app.setActivationPolicy(.accessory)
@@ -316,6 +323,14 @@ if CommandLine.arguments.contains("--face-enrollment-probe") {
     app.setActivationPolicy(.accessory)
     app.delegate = delegate
     DispatchQueue.main.async { MainActor.assumeIsolated { FaceEnrollmentProbe.run(owner: delegate) } }
+    withExtendedLifetime(delegate) { app.run() }
+    exit(0)
+}
+// 一次性录本人样本给门槛标定用（只存特征数字）；点“开始”才开相机。
+if CommandLine.arguments.contains("--face-calibrate-record") {
+    app.setActivationPolicy(.accessory)
+    app.delegate = delegate
+    DispatchQueue.main.async { MainActor.assumeIsolated { FaceCalibrationRecorder.run(owner: delegate) } }
     withExtendedLifetime(delegate) { app.run() }
     exit(0)
 }

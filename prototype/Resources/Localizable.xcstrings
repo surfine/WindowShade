@@ -34806,19 +34806,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Templates and gaze calibration numbers live in this Mac's keychain, not synced and not carried into backups; pictures and crops aren't kept"
+            "value": "Templates and gaze calibration numbers live in this Mac's keychain, not synced and not carried into backups; pictures and crops aren't kept; the calibration samples are feature numbers only, written to WindowShade-models/calibration/genuine.json (permissions 0600, kept out of the repository, never sent anywhere); the calibration result (threshold, target false-accept rate, date, method) also lives in this Mac's keychain and holds no features"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "模板和注视校准系数只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存"
+            "value": "模板和注视校准系数只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存；标定用的本人样本只有特征数字，写到 WindowShade-models/calibration/genuine.json（权限 0600，不进仓库、不联网）；标定结果（门槛、目标误认率、日期、方法）同样放这台 Mac 的钥匙串里，不含任何特征"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "模板和注視校準係數只存在這台 Mac 的鑰匙串裡，不同步、不隨備份遷走；畫面和裁切圖不存"
+            "value": "模板和注視校準係數只存在這台 Mac 的鑰匙串裡，不同步、不隨備份遷走；畫面和裁切圖不存；標定用的本人樣本只有特徵數字，寫到 WindowShade-models/calibration/genuine.json（權限 0600，不進倉庫、不連網）；標定結果（門檻、目標誤認率、日期、方法）同樣放在這台 Mac 的鑰匙圈裡，不含任何特徵"
           }
         }
       }
@@ -34875,19 +34875,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Experiment: face-crop image features (computed by Apple’s Vision), enrolled templates, eye openness at enrolment, enrolment numbers, comparison results; with the turn-challenge on, also head direction and eye openness while turning; when you are recognised, one extra line notes whether your companion devices are present (not recorded when leave-to-lock is off); enrolment adds one step where you look at the middle and the four corners of the screen to fit a set of gaze calibration numbers; while recognizing you it also checks whether your eyes are open, where each pupil sits in the eye and which way your head faces, only to tell whether you’re looking at the screen"
+            "value": "Experiment: face-crop image features (computed by Apple’s Vision), enrolled templates, eye openness at enrolment, enrolment numbers, comparison results; with the turn-challenge on, also head direction and eye openness while turning; when you are recognised, one extra line notes whether your companion devices are present (not recorded when leave-to-lock is off); enrolment adds one step where you look at the middle and the four corners of the screen to fit a set of gaze calibration numbers; while recognizing you it also checks whether your eyes are open, where each pupil sits in the eye and which way your head faces, only to tell whether you’re looking at the screen; during calibration (only when you run --face-calibrate-record and press Start): the same face feature numbers for about 60 seconds, plus the templates enrolled at the time"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）；录脸时多一步：依次看屏幕中间和四个角，拟出一组注视校准系数；认你时还看眼睛睁没睁开、瞳孔在眼睛里的位置和头的朝向，只为判断你在不在看屏幕"
+            "value": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）；录脸时多一步：依次看屏幕中间和四个角，拟出一组注视校准系数；认你时还看眼睛睁没睁开、瞳孔在眼睛里的位置和头的朝向，只为判断你在不在看屏幕；标定时（只在用户明确运行 --face-calibrate-record、并点开始之后）：同样的脸部特征数字，录约 60 秒，加上当时已登记的模板"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "實驗：臉部裁出來的圖像特徵（Apple 的 Vision 算出）、登記過的模板、錄入時眼睛睜開的程度、錄入序號、比對結果；打開轉頭挑戰後，還有轉頭時臉朝哪邊、眼睛睜沒睜開；認出時另記一行隨身裝置在不在（離開就鎖沒開就不記）；錄臉時多一步：依次看螢幕中間和四個角，擬出一組注視校準係數；認你時還看眼睛睜沒睜開、瞳孔在眼睛裡的位置和頭的朝向，只為判斷你在不在看螢幕"
+            "value": "實驗：臉部裁出來的圖像特徵（Apple 的 Vision 算出）、登記過的模板、錄入時眼睛睜開的程度、錄入序號、比對結果；打開轉頭挑戰後，還有轉頭時臉朝哪邊、眼睛睜沒睜開；認出時另記一行隨身裝置在不在（離開就鎖沒開就不記）；錄臉時多一步：依次看螢幕中間和四個角，擬出一組注視校準係數；認你時還看眼睛睜沒睜開、瞳孔在眼睛裡的位置和頭的朝向，只為判斷你在不在看螢幕；標定時（只在使用者明確執行 --face-calibrate-record、並按下開始之後）：同樣的臉部特徵數字，錄約 60 秒，加上當時已登記的範本"
           }
         }
       }
@@ -71465,6 +71465,328 @@
           "stringUnit": {
             "state": "translated",
             "value": "視窗收成一條捲簾條，裡面的東西都還在。按兩下標題列改成收起視窗（原來是縮放）。"
+          }
+        }
+      }
+    },
+    "face.calibrate.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record your face (calibration)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录你的脸（标定）"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記錄你的臉（校準）"
+          }
+        }
+      }
+    },
+    "face.calibrate.start": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始"
+          }
+        }
+      }
+    },
+    "face.calibrate.consent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uses the camera for about %@ seconds. Records only face feature numbers, never pictures."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会用相机约 %@ 秒，只记录脸部特征数字，不存画面。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "會用相機約 %@ 秒，只記錄臉部特徵數字，不存畫面。"
+          }
+        }
+      }
+    },
+    "face.calibrate.countdown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting in %@ seconds. Look at the camera."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 秒后开始，请看向镜头"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ 秒後開始，請看向鏡頭"
+          }
+        }
+      }
+    },
+    "face.calibrate.progress": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ s left · %@ frames recorded"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还剩 %@ 秒 · 已记录 %@ 帧"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還剩 %@ 秒 · 已記錄 %@ 幀"
+          }
+        }
+      }
+    },
+    "face.calibrate.saved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done and saved. You can stop now."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成，已保存。可以收工了。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成，已儲存。可以收工了。"
+          }
+        }
+      }
+    },
+    "face.calibrate.notSaved": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing was saved. Try again if you need to."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有保存。需要的话请再来一次。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有儲存。需要的話請再來一次。"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.front": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Face the camera with a natural expression"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正对镜头，自然表情"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正對鏡頭，自然表情"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.left": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slowly turn your head a little to the left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "头慢慢向左转一点"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頭慢慢向左轉一點"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.right": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slowly turn your head a little to the right"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "头慢慢向右转一点"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "頭慢慢向右轉一點"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.up": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilt your head up a little"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍微抬头"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍微抬頭"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.down": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilt your head down a little"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍微低头"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "稍微低頭"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.far": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lean in a little, then sit back"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靠近一点，再退远一点"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "靠近一點，再退遠一點"
+          }
+        }
+      }
+    },
+    "face.calibrate.step.light": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change the light: switch a lamp on or off, or turn toward the window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "换个光线：开关台灯，或转向窗户"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "換個光線：開關檯燈，或轉向窗戶"
           }
         }
       }
