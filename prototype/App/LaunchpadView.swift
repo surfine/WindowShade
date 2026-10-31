@@ -807,7 +807,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             setPressed(cell(for: target), true)
             // 按住不放：进入编辑（图标抖起来），按着的这个直接拿起来。
             if !searching {
-                holdTimer = Timer.scheduledTimer(withTimeInterval: Motion.Hold.longPress, repeats: false) { [weak self] _ in
+                holdTimer = Timer.scheduledTimer(withTimeInterval: MotionHold.longPressSeconds, repeats: false) { [weak self] _ in
                     MainActor.assumeIsolated { self?.holdFired() }
                 }
             }
@@ -817,7 +817,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             if folder == nil, !listActive {
                 // iOS 官方路径：长按空白背景进编辑模式（图标长按已改为弹菜单，这条要补回来）。
                 if !searching {
-                    holdTimer = Timer.scheduledTimer(withTimeInterval: Motion.Hold.longPress, repeats: false) { [weak self] _ in
+                    holdTimer = Timer.scheduledTimer(withTimeInterval: MotionHold.longPressSeconds, repeats: false) { [weak self] _ in
                         MainActor.assumeIsolated { self?.holdFiredOnEmpty() }
                     }
                 }
