@@ -16,21 +16,30 @@ final class ClaudeConductor {
     private(set) var transcript = ""
     private(set) var sessionID: String?
     private(set) var model: String?
+    /// 上一轮因为没登录失败了；下一轮成功就清掉。页面据此在 Claude 开关上标「没登录」。
+    private(set) var needsLogin = false
 
     var onChange: (@MainActor () -> Void)?
 
     private var session: WS2OwnedClaudeSession?
     private var sawDelta = false
+    private var noteLoginThisTurn = false
+    private let notLoggedInLine: String
     private let workingDirectory: () -> URL
     private let mayUse: () -> Bool
     private let discover: () -> URL?
 
     init(workingDirectory: @escaping () -> URL, mayUse: @escaping () -> Bool,
-         discover: @escaping () -> URL? = ClaudeConductor.defaultDiscovery) {
+         discover: @escaping () -> URL? = ClaudeConductor.defaultDiscovery,
+         notLoggedInLine: String = "Claude 没登录。在终端里运行 claude 登录后再试") {
+        self.notLoggedInLine = notLoggedInLine
         self.workingDirectory = workingDirectory
         self.mayUse = mayUse
         self.discover = discover
     }
+
+    /// 这台 Mac 上找得到 claude 吗（会话已经起了也算）。
+    var isInstalled: Bool { session != nil || discover() != nil }
 
     var epoch: UUID? { session?.connectionID }
 
@@ -69,8 +78,9 @@ final class ClaudeConductor {
             onChange?()
             return false
         }
-        transcript += (transcript.isEmpty ? "" : "\n") + "你：" + trimmed + "\n"
+        append((transcript.isEmpty ? "" : "\n") + "你：" + trimmed + "\n")
         sawDelta = false
+        noteLoginThisTurn = false
         status = .running
         onChange?()
         return true
@@ -80,7 +90,7 @@ final class ClaudeConductor {
         guard let session else { return }
         session.interrupt()
         status = .ended
-        transcript += "\n（已停止这一轮）\n"
+        append("\n（已停止这一轮）\n")
         onChange?()
     }
 
@@ -98,32 +108,53 @@ final class ClaudeConductor {
             if let model { self.model = model }
         case .textDelta(let text):
             if !sawDelta {
-                transcript += "\n"
+                append("\n")
                 sawDelta = true
             }
-            transcript += text
+            append(text)
         case .assistant(let text, let tools):
-            if let text, !sawDelta { transcript += "\n" + text }
+            if ClaudeConductorRules.isLoginFailureText(text) {
+                noteLogin()
+            } else if let text, !sawDelta {
+                append("\n" + text)
+            }
             for tool in tools {
-                transcript += "\n（只读模式未执行：\(tool.name)）"
+                append("\n（只读模式未执行：\(tool.name)）")
             }
         case .permissionDenied(let tool):
-            transcript += "\n（只读模式拒绝了 \(tool)）"
+            append("\n（只读模式拒绝了 \(tool)）")
         case .rateLimited(let delay):
-            transcript += "\n（限流，稍后重试\(delay.map { "约 \($0) 毫秒" } ?? "")）"
+            append("\n（限流，稍后重试\(delay.map { "约 \($0) 毫秒" } ?? "")）")
         case .result(let result):
             if let id = result.sessionID { sessionID = id }
-            if result.isError, let text = result.text {
-                transcript += "\n（失败：\(text)）"
+            if ClaudeConductorRules.isLoginFailure(result) {
+                noteLogin()
+            } else if result.isError, let text = result.text {
+                append("\n（失败：\(text)）")
+            } else if !result.isError {
+                needsLogin = false
             }
             if !result.permissionDenials.isEmpty {
-                transcript += "\n（只读模式拒绝了：\(result.permissionDenials.joined(separator: "、"))）"
+                append("\n（只读模式拒绝了：\(result.permissionDenials.joined(separator: "、"))）")
             }
             status = .ready
         case .unknown:
             return
         }
         onChange?()
+    }
+
+    private func append(_ text: String) {
+        transcript += text
+        if text.contains("\n") { transcript = ClaudeConductorRules.trimmed(transcript) }
+    }
+
+    /// 没登录：每一轮只写一行，不把 CLI 的英文原话贴进转写。
+    private func noteLogin() {
+        needsLogin = true
+        guard !noteLoginThisTurn else { return }
+        noteLoginThisTurn = true
+        append("\n" + notLoggedInLine)
     }
 
     /// 常见安装位置；不扫描整个磁盘，也不猜 shell 配置。

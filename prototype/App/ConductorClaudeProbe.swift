@@ -18,6 +18,8 @@ enum ConductorClaudeProbe {
     private static let prompt = real ? "What is 17 plus 25? Reply with only the number." : "hello"
     private static let expectedReply = real ? "42" : "reply: hello"
     private static let pollAttempts = real ? 900 : 60
+    /// WINDOWSHADE_PROBE_AUTH_EXPIRED=1：配合 tests/fixtures/fake-claude-auth-expired.py，验「没登录」那一行和开关上的标记。
+    private static let authExpired = ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_AUTH_EXPIRED"] == "1"
 
     private static func log(_ line: String) {
         let data = Data((line + "\n").utf8)
@@ -60,7 +62,7 @@ enum ConductorClaudeProbe {
             return
         }
         guard page.probeClaudeStatus == .ready else {
-            log("FAIL conductor-claude-page: Claude unavailable (status=\(page.probeClaudeStatus); check WINDOWSHADE_CLAUDE_EXECUTABLE)")
+            log("FAIL conductor-claude-page: Claude unavailable (status=\(page.probeClaudeStatus); check WINDOWSHADE_CLAUDE_EXECUTABLE) transcript: \(page.probeClaudeTranscript)")
             finish(ok: false)
             return
         }
@@ -77,6 +79,21 @@ enum ConductorClaudeProbe {
 
     private static func poll(_ page: WS2ConductorPageView, attempts: Int, owner: AppDelegate) {
         let transcript = page.probeClaudeTranscript
+        if authExpired {
+            if page.probeClaudeNeedsLogin, page.probeClaudeStatus == .ready {
+                var failures = 0
+                func expect(_ ok: Bool, _ text: String) {
+                    if !ok { failures += 1 }
+                    log("\(ok ? "ok  " : "FAIL") \(text)")
+                }
+                expect(transcript.contains("claude"), "transcript has the not-logged-in line")
+                expect(!transcript.contains("OAuth"), "the CLI's English error is not pasted into the transcript")
+                expect(page.probeBackendLabelMentionsLogin, "the Claude switch is marked not logged in")
+                log(failures == 0 ? "PASS conductor-claude-page-auth" : "FAIL conductor-claude-page-auth: \(failures)")
+                finish(ok: failures == 0)
+                return
+            }
+        }
         if transcript.contains(expectedReply), page.probeClaudeStatus == .ready {
             var failures = 0
             func expect(_ ok: Bool, _ text: String) {
