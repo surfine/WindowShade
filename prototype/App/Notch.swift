@@ -75,6 +75,10 @@ final class NotchController {
     private var leaseObservers: [NSObjectProtocol] = []
     private let menuRoom = MenuBarRoom()
     private var syncTimer: Timer?
+    /// 实时活动跟着正在用的那块屏（第 41–43 条）；见 NotchController 里“活动跟着正在用的屏”一节。
+    private var activeTracker = ActiveDisplayTracker()
+    private var activeDisplayTimer: Timer?
+    private lazy var systemIslandModel = SystemIslandPolicy.currentModelIdentifier()
     /// 系统里最小化的窗口、隐藏的 App（见 NotchShelf.swift）。
     let shelf = NotchShelf()
     /// 格子上的画面（最小化、隐藏、别的桌面、侧拉的窗口），展开时在后台按需截。
@@ -283,9 +287,11 @@ final class NotchController {
             let minimal = Self.minimalPresentationEnabled
             for (display, panel) in self.panels {
                 // 持续活动只登记在这里，不会顶掉上面的层；超过三条由协调器自己去重截断。
-                self.leases.publishOngoing(ids, on: WS2.DisplayID(value: display))
+                // 只给正在用的那块屏（别的屏上是空的）。
+                let mine = self.ownsActivities(display)
+                self.leases.publishOngoing(mine ? ids : [], on: WS2.DisplayID(value: display))
                 panel.setMinimalPresentation(minimal)
-                panel.setActivities(values, selected: selected)
+                panel.setActivities(mine ? values : [], selected: mine ? selected : nil)
             }
             // 合成一排开着：右段的格子（会话换了状态、曲名变了）原地换，不重新展开。
             if Self.mergedRowEnabled { self.refreshOngoingRows() }
@@ -464,13 +470,15 @@ final class NotchController {
         let minimalPresentation = Self.minimalPresentationEnabled
         let capsuleBelow = Self.capsuleBelowMenuBar
         var alive = Set<CGDirectDisplayID>()
+        refreshActiveDisplay()
         for screen in NSScreen.screens where Self.isEnabled {
             guard let id = Self.displayID(screen) else { continue }
             alive.insert(id)
             let slot = Self.slotRect(on: screen)
             let panel = panels[id] ?? NotchPanel(notch: slot.rect, virtual: slot.virtual)
             panels[id] = panel
-            panel.yieldsToSystem = spaceGate.yielding.contains(id)
+            panel.yieldsToSystem = shouldYield(id)
+            panel.cameraInUse = { CameraInUseProbe.shared.isInUse() }
             panel.leases = leases
             panel.displayID = WS2.DisplayID(value: id)
             panel.notch = slot.rect
@@ -481,7 +489,8 @@ final class NotchController {
             }
             panel.setMinimalPresentation(minimalPresentation)
             panel.setCapsuleBelowMenuBar(capsuleBelow)
-            panel.setActivities(activities.store.visible, selected: activities.store.selectedID)
+            let mine = ownsActivities(id)
+            panel.setActivities(mine ? activities.store.visible : [], selected: mine ? activities.store.selectedID : nil)
             panel.setMusicArtwork(activities.nowPlayingArtwork)
             panel.onActivitySelect = { [weak self] id in self?.activities.select(id) }
             panel.onMinimumTap = { [weak self] id in self?.activities.openActivity(id: id) }
@@ -591,6 +600,7 @@ final class NotchController {
         // 刘海底角和肩按每块屏的形状画（DisplayShape：bezelPath → 机型表）；还没算好的屏先照现版本画，算好了再换上。
         // 只算有真刘海的屏（隐形刘海不画曲线）：没有刘海的 Mac 一次也不读。
         applyShapes()
+        scheduleActiveDisplayTimer()
         if !panels.isEmpty { DisplayShapes.shared.prepare { [weak self] in self?.applyShapes() } }
         // 先把两边的空位量好：第一次收进来时紧凑样式直接长成对的样子。
         for (display, panel) in panels { _ = room(for: panel, display: display) }
@@ -2213,7 +2223,9 @@ final class NotchController {
 
     /// 按让开的集合更新每块屏：让开的藏起来，退出后立刻按当前状态画回来，不补播进场。
     private func applySpaceYield() {
-        for (display, panel) in panels { panel.yieldsToSystem = spaceGate.yielding.contains(display) }
+        for (display, panel) in panels { panel.yieldsToSystem = shouldYield(display) }
+        refreshActiveDisplay()
+        pushActivities()
         refresh()
         syncAudioLevels()
     }
@@ -2226,8 +2238,69 @@ final class NotchController {
         for (display, panel) in panels where !panel.yieldsToSystem {
             panel.setMinimalPresentation(minimal)
             panel.setCapsuleBelowMenuBar(capsuleBelow)
-            panel.setCompact(compact, room: compact == nil ? nil : room(for: panel, display: display))
+            let shown = ownsActivities(display) ? compact : nil
+            panel.setCompact(shown, room: shown == nil ? nil : room(for: panel, display: display))
         }
+    }
+
+    // MARK: 活动跟着正在用的屏（第 41–43 条）
+
+    /// 这块屏的面板要让开：原生全屏桌面、调度中心，或者这台 Mac 的内建屏有系统自己的灵动岛（机型名单现在是空的）。
+    private func shouldYield(_ display: CGDirectDisplayID) -> Bool {
+        spaceGate.yielding.contains(display) || yieldsToSystemIsland(display)
+    }
+
+    private func yieldsToSystemIsland(_ display: CGDirectDisplayID) -> Bool {
+        SystemIslandPolicy.yields(isBuiltin: CGDisplayIsBuiltin(display) != 0, modelIdentifier: systemIslandModel)
+    }
+
+    /// 这块屏现在承载活动：只有正在用的那块（指针或焦点窗口最近换到的）；只有一块屏时恒为真。
+    private func ownsActivities(_ display: CGDirectDisplayID) -> Bool {
+        activeTracker.active.map { $0 == display } ?? true
+    }
+
+    /// 重新算正在用的屏。变了返回 true；合盖、拔线后原来的屏没了，也在这里挪到还在的屏上。
+    @discardableResult
+    private func refreshActiveDisplay() -> Bool {
+        let screens = NSScreen.screens.compactMap { screen in Self.displayID(screen).map { (screen, $0) } }
+        let displays = screens.map(\.1).filter { !yieldsToSystemIsland($0) }.sorted()
+        let builtin = displays.first { CGDisplayIsBuiltin($0) != 0 }
+        let pointer = screens.first { $0.0.frame.contains(NSEvent.mouseLocation) }?.1
+        let key = NSScreen.main.flatMap(Self.displayID)
+        let before = activeTracker.active
+        activeTracker.update(displays: displays, builtin: builtin, pointer: pointer, key: key)
+        return activeTracker.active != before
+    }
+
+    /// 把活动和紧凑按现在的主人重新分给每块屏。
+    private func pushActivities() {
+        let values = activities.store.visible, selected = activities.store.selectedID
+        let ids = values.filter { !$0.kind.isShelf }.map(\.id)
+        for (display, panel) in panels {
+            let mine = ownsActivities(display)
+            leases.publishOngoing(mine ? ids : [], on: WS2.DisplayID(value: display))
+            panel.setActivities(mine ? values : [], selected: mine ? selected : nil)
+        }
+    }
+
+    /// 只有多块屏时才需要跟：每半秒看一眼指针和焦点在哪块屏上（读一个坐标，不碰别的）。
+    private func scheduleActiveDisplayTimer() {
+        guard panels.count > 1 else {
+            activeDisplayTimer?.invalidate()
+            activeDisplayTimer = nil
+            return
+        }
+        guard activeDisplayTimer == nil else { return }
+        let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.refreshActiveDisplay() else { return }
+                self.pushActivities()
+                self.refresh()
+            }
+        }
+        timer.tolerance = 0.25
+        RunLoop.main.add(timer, forMode: .common)
+        activeDisplayTimer = timer
     }
 
     /// 这块屏上刘海两边的菜单栏空不空（量过就用上次的，旧了在后台重新量）。
@@ -3537,6 +3610,9 @@ final class NotchPanel: NSPanel {
     }
 
     /// 这块屏是原生全屏桌面或调度中心开着：紧凑、提醒、展开、最小一律不画。第 1 层（授权放行、离开就锁倒数）照常出现。
+    /// 摄像头正被任何 App 用着（视频通话）：自己长大的提醒只留一个点（第 40 条）。由 NotchController 接上；默认没有。
+    var cameraInUse: () -> Bool = { false }
+
     var yieldsToSystem = false {
         didSet {
             guard yieldsToSystem != oldValue else { return }
@@ -3637,6 +3713,13 @@ final class NotchPanel: NSPanel {
     func alert(_ info: Alert, duration: TimeInterval = Motion.Hold.alert, admitted: Bool = false) {
         // 你正在按音量亮度键（交互层）：这一句变成一个点并消耗掉，不回来补说。
         if meter != nil, !isAuthenticating {
+            if !admitted, let leases, let displayID { _ = leases.remind(on: displayID) }
+            showsSecondaryDot = true
+            apply(animated: false)
+            return
+        }
+        // 视频通话中（摄像头在用）：不自己长大，这一句变成一个点；你点、长按照常打开。授权的提示不受影响。
+        if !isAuthenticating, !CameraQuietPolicy.allowsAutoGrowth(cameraInUse: cameraInUse(), userInitiated: false) {
             if !admitted, let leases, let displayID { _ = leases.remind(on: displayID) }
             showsSecondaryDot = true
             apply(animated: false)
@@ -3792,6 +3875,7 @@ final class NotchPanel: NSPanel {
     @discardableResult
     func presentPowerFlash(_ flash: PowerFlash) -> Bool {
         guard !isBusyForPowerFlash else { return false }
+        guard CameraQuietPolicy.allowsAutoGrowth(cameraInUse: cameraInUse(), userInitiated: false) else { return false }
         if let leases, let displayID, !leases.remind(on: displayID) { return false }
         powerFlashState = flash
         updateVisibility()

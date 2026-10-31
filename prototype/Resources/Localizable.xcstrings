@@ -32178,6 +32178,190 @@
         }
       }
     },
+    "privacy.camera-in-use.activation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read once when the notch is about to show an alert, and not again within a second; no timers"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海要弹提醒的那一刻读一次，一秒内不重复读；不会定时去读"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "瀏海要彈提醒的那一刻讀一次，一秒內不重複讀；不會定時去讀"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.combined": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether the camera is on shows you're probably on a video call."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "摄像头是否开着，能看出你大概正在视频通话。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "攝影機是否開著，能看出你大概正在視訊通話。"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.destination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In memory only; not recorded, not sent"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在内存里用，不记录，不发送"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在記憶體裡用，不記錄，不傳送"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether the camera is in use"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "摄像头是不是正被用着"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "攝影機是不是正被用著"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.purpose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "During a video call the notch doesn't show alerts or open by itself; it keeps a small dot, and a click opens it as usual"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "视频通话时，刘海不自己弹提醒、不自己展开，只留一个小点；你点一下照常打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視訊通話時，瀏海不自己彈提醒、不自己展開，只留一個小點；你點一下照常打開"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.reads": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether any app is using the camera; only yes or no, never which app, and no picture"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有没有 App 正在用摄像头；只读“有”或“没有”，不知道是哪个 App，也不取画面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有沒有 App 正在用攝影機；只讀「有」或「沒有」，不知道是哪個 App，也不取畫面"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The notch doesn't pop up by itself during video calls"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "视频通话时刘海不自己弹出来"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "視訊通話時瀏海不自己彈出來"
+          }
+        }
+      }
+    },
+    "privacy.camera-in-use.toggle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No switch of its own; it only keeps the notch quieter"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有单独的开关，它只会让刘海更安静"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有單獨的開關，它只會讓瀏海更安靜"
+          }
+        }
+      }
+    },
     "privacy.carplay-receiver.activation": {
       "extractionState": "manual",
       "localizations": {
