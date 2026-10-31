@@ -25,6 +25,26 @@ enum WS2HookConfiguration {
         }
         return false
     }
+    /// 文件里我们写过的 hook 命令指向的辅助程序路径（`'<路径>' --provider claude`，文件名是 WindowShadeHook）。
+    /// App 搬走或删掉以后，这些路径就指向不存在的东西。读不懂的结构一律当没有，不抛错。
+    static func configuredHelpers(original: Data) -> [String] {
+        let tail = "' --provider claude"
+        guard original.count <= 1_048_576,
+              let root = try? JSONSerialization.jsonObject(with: original) as? [String:Any],
+              let hooks = root["hooks"] as? [String:Any] else { return [] }
+        var found: [String] = []
+        for groups in hooks.values {
+            for group in (groups as? [[String:Any]]) ?? [] {
+                for entry in (group["hooks"] as? [[String:Any]]) ?? [] {
+                    guard (entry["type"] as? String) == "command", let command = entry["command"] as? String,
+                          command.hasPrefix("'/"), command.hasSuffix(tail) else { continue }
+                    let path = String(command.dropFirst().dropLast(tail.count)).replacingOccurrences(of: "'\\''", with: "'")
+                    if (path as NSString).lastPathComponent == "WindowShadeHook", !found.contains(path) { found.append(path) }
+                }
+            }
+        }
+        return found
+    }
     static func preview(original: Data, executable: String, connected: Bool, provider: String = "claude") throws -> Preview {
         guard provider == "claude" else { throw Failure.unsupportedProvider }
         guard original.count <= 1_048_576,

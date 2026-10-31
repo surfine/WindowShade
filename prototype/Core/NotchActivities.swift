@@ -965,6 +965,8 @@ struct CodingSessionActivities {
         var summary: String = ""
         /// 这次改了几个文件。拿不到就是 nil，不编数字。
         var changedFiles: Int? = nil
+        /// 等你：请求已经交回终端，助手在那边等人（卡没有了，右耳的琥珀点还在）。
+        var inTerminal = false
     }
 
     struct Live: Equatable, Sendable {
@@ -974,6 +976,7 @@ struct CodingSessionActivities {
         var assistant: String
         var waiting: Bool
         var summary: String
+        var inTerminal = false
         var since: Double
         /// 最近一次听到它的消息（hook 事件）。在跑却 120 秒没消息就算过期。
         var heardAt: Double = 0
@@ -1069,6 +1072,7 @@ struct CodingSessionActivities {
             let previous = sessions[change.id]
             sessions[change.id] = Live(id: change.id, project: change.project, cwd: change.cwd, assistant: change.assistant,
                                        waiting: waiting, summary: Self.plainSummary(change.summary),
+                                       inTerminal: waiting && change.inTerminal,
                                        since: previous?.since ?? now, heardAt: now)
             guard waiting else { bloomed.remove(change.id); return Output(bloom: nil, completed: false) }
             guard !bloomed.contains(change.id) else { return Output(bloom: nil, completed: false) }
@@ -1127,7 +1131,8 @@ struct CodingSessionActivities {
         if all.count == 1 {
             let waitingNow = first.waiting
             return withUsage(Spec(title: first.label,
-                                  subtitle: waitingNow ? Self.waitingDetail(assistant: first.assistant, summary: first.summary)
+                                  subtitle: waitingNow ? (first.inTerminal ? NotchSessionEar.waitingInTerminal
+                                                                                           : Self.waitingDetail(assistant: first.assistant, summary: first.summary))
                                                        : WSL10n.text("notch.session.running", zh: "%@在跑", first.assistant),
                                   symbol: Self.symbol,
                                   trailing: waitingNow ? WSL10n.text("notch.session.waitingTag", zh: "等你") : "",
@@ -1199,6 +1204,8 @@ enum NotchSessionEar {
     static let spinnerPeriod: Double = 1.0
     /// 琥珀色“等你”用 systemOrange（视图层取色）。
     static var waitingText: String { WSL10n.text("notch.session.waitingTag", zh: "等你") }
+    /// 请求交回终端以后，右耳的琥珀点念这一句（也是展开行的副句）。
+    static var waitingInTerminal: String { WSL10n.text("notch.session.waitingInTerminal", zh: "Claude 在终端里等你") }
 
     // MARK: 紧凑右耳的四态（稿《刘海里的编程会话》②）
 

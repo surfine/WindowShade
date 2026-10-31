@@ -11,6 +11,8 @@ import Cocoa
         /// 我们认识这份文件、能安全改（没有陌生的 hook 结构）。
         var writable: Bool
         var path: String
+        /// 文件里有我们写过的 hook，可它指向的 WindowShade 辅助程序已经不在了（App 搬走或删掉）：钩子在静默失效。
+        var helperMissing = false
     }
 
     let settingsURL: URL
@@ -32,18 +34,22 @@ import Cocoa
     }
 
     private let helperPath: String
+    private let isExecutable: (String) -> Bool
 
     init(home: URL = FileManager.default.homeDirectoryForCurrentUser,
-         helper: String = WS2ConductorSettings.hookHelperPath) {
+         helper: String = WS2ConductorSettings.hookHelperPath,
+         isExecutable: @escaping (String) -> Bool = { FileManager.default.isExecutableFile(atPath: $0) }) {
         settingsURL = home.appendingPathComponent(".claude/settings.json")
         helperPath = helper
+        self.isExecutable = isExecutable
     }
 
     func currentStatus() -> Status {
         let original = (try? Data(contentsOf: settingsURL)) ?? Data("{}".utf8)
         do {
             let connected = try WS2HookConfiguration.contains(original: original, executable: helperPath)
-            return Status(connected: connected, writable: true, path: settingsURL.path)
+            let missing = WS2HookConfiguration.configuredHelpers(original: original).contains { !isExecutable($0) }
+            return Status(connected: connected, writable: true, path: settingsURL.path, helperMissing: missing)
         } catch {
             return Status(connected: false, writable: false, path: settingsURL.path)
         }

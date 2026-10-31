@@ -21,14 +21,8 @@ import Cocoa
     private var closed = false
     /// 换卡时故意收走旧卡：这次收走不算“人交回终端”。
     private var replacing = false
-    /// 2 分钟没人管（拍板 10-29 第 36 条）：卡缩回琥珀点，请求仍挂着、不回答、不改期限；点耳朵把卡请回来。
-    private var idle: SessionCardStyle.IdleRule?
-    private var idleTask: Task<Void, Never>?
-    private var parkingForIdle = false
-    private(set) var isParked = false
-    /// 第 36 条按「期限不改」落地：卡的租约照旧 120 秒，到期交回终端，交回时卡缩回琥珀点（租约到期播缩回）。
-    /// 不另起「停放」计时：停放后不交回终端，外面的 Claude Code 会一直等这里回覆。
-    private static func uptime() -> Double { ProcessInfo.processInfo.systemUptime }
+    /// 拍板 10-29 第 36 条按「期限不改」落地：卡的租约照旧 120 秒，到期交回终端，交回时卡缩回右耳的琥珀点。
+    /// 琥珀点之后读作「Claude 在终端里等你」，点它去那扇终端（拍板 10-31 第 44 条），不再长出卡。
 
     init(server: WS2HookServer, island: NotchLeaseHub, authentication: NotchAuthenticationController,
          service: AuthorizationService = .shared) {
@@ -52,15 +46,15 @@ import Cocoa
         dismissCard()
         replacing = false
         current = ask
-        isParked = false
         present()
     }
 
-    /// 这一次“等你”在别处有结果了（终端里处理掉了、过期）：卡收走，不再留着。
-    func statusChanged(sessionID: String, status: AgentSessions.Status) {
-        guard let ask = current, ask.sessionID == sessionID, status != .waiting else { return }
+    /// 这一次“等你”在别处有结果了（终端里处理掉了、过期交回）：卡收走，卡上晚到的点按只写回执、不送出。
+    /// `inTerminal`：仍算“等你”，但请求已交回终端（租约到期）。
+    func statusChanged(sessionID: String, status: AgentSessions.Status, inTerminal: Bool = false) {
+        guard let ask = current, ask.sessionID == sessionID, status != .waiting || inTerminal else { return }
         current = nil
-        isParked = false
+        presented?.handledElsewhere = true
         dismissCard()
     }
 
@@ -72,64 +66,24 @@ import Cocoa
         receiptTask?.cancel(); receiptTask = nil
         authInFlight = false
         current = nil
-        isParked = false
-        cancelIdle()
         replacing = true
         dismissCard()
         replacing = false
     }
 
-    /// 点耳朵或点：把收成琥珀点的卡请回来。请不回来（刘海正被占着）就仍挂着，返回 false，点按照旧去终端。
-    func restoreParked(sessionID: String) -> Bool {
-        guard !closed, isParked, let ask = current, ask.sessionID == sessionID, presented == nil, !authInFlight else { return false }
-        if var rule = idle, rule.restore(now: Self.uptime()) { idle = rule }
-        let shown = present(restoring: true)
-        if shown { isParked = false }
-        return shown
-    }
-
-    private func cancelIdle() {
-        idleTask?.cancel(); idleTask = nil
-        idle?.cancel()
-    }
-
-    private func armIdle() {
-        idleTask?.cancel()
-        let start = Self.uptime()
-        if idle == nil || idle?.cancelled == true || idle?.parked == false { idle = SessionCardStyle.IdleRule(shownAt: start) }
-        let wait = SessionCardStyle.IdleRule.idleSeconds
-        idleTask = Task { [weak self] in
-            do { try await Task.sleep(for: .seconds(wait), clock: .suspending) } catch { return }
-            self?.idleFired()
-        }
-    }
-
-    private func idleFired() {
-        idleTask = nil
-        guard !closed, !authInFlight, receiptTask == nil, current != nil, let view = presented, var rule = idle,
-              rule.fire(now: Self.uptime()) == .retreatToDot else { return }
-        idle = rule
-        isParked = true
-        parkingForIdle = true
-        presented = nil
-        island.dismiss(ifShowing: view)
-    }
-
     @discardableResult
-    private func present(restoring: Bool = false) -> Bool {
-        parkingForIdle = false
+    private func present() -> Bool {
         guard !closed, let ask = current, presented == nil, receiptTask == nil else { return false }
         let tool = ask.tool.isEmpty ? "tool" : ask.tool
         let risk = Self.risk(tool: tool)
         let touchIDAvailable = authentication.canAuthorize
         let view = WS2HookApprovalView(tool: tool, project: ask.project, risk: risk,
-                                       touchIDAvailable: touchIDAvailable)
+                                       touchIDAvailable: touchIDAvailable, command: ask.command)
         view.allow = { [weak self] in self?.allow() }
         view.deny = { [weak self] in self?.deny() }
         view.useTerminal = { [weak self] in self?.deferToHost() }
         guard island.show(view, ownerID: "agentReview", layer: .authorization,
                           onDismiss: { [weak self] _ in self?.dismissed() }) else {
-            if restoring { return false }
             // 刘海正被别的东西占着：不抢，交回终端。
             current = nil
             server.deferToHost(sessionID: ask.sessionID)
@@ -137,7 +91,7 @@ import Cocoa
         }
         presented = view
         NSAccessibility.post(element: view, notification: .announcementRequested, userInfo: [
-            .announcement: AgentApprovalCard.announcement(agent: Self.agentName, summary: tool),
+            .announcement: AgentApprovalCard.announcement(agent: Self.agentName, summary: view.summary),
             .priority: NSAccessibilityPriorityLevel.high.rawValue])
         return true
     }
@@ -146,6 +100,9 @@ import Cocoa
     private func allow() {
         guard !closed, let ask = current, let view = presented, !authInFlight,
               view.inputIsCurrent() else { return }
+        guard server.isPending(ask) else { answeredElsewhere(view); return }
+        // 整条命令还没露出来过，Touch ID 不能按（卡上的键自己也挡，这里再挡一次）。
+        guard view.touchIDGateOpen else { return }
         guard authentication.canAuthorize else { deferToHost(); return }
         let target = AuthTarget(purpose: .approveAgentAction, kind: "agent.hook.once.v1", fields: [
             .init(name: "session", value: Array(ask.sessionID.utf8)),
@@ -154,7 +111,6 @@ import Cocoa
         ])
         attempt &+= 1; let mine = attempt
         authInFlight = true
-        cancelIdle()
         guard island.handOffToAuthorization(ifShowing: view) else {
             authInFlight = false
             deferToHost()
@@ -170,8 +126,13 @@ import Cocoa
                 self.server.deferToHost(sessionID: ask.sessionID)
                 return
             }
-            guard self.server.isWaiting(sessionID: ask.sessionID),
-                  self.service.consume(grant, purpose: .approveAgentAction, currentTarget: target) == nil else {
+            // Touch ID 验的这几秒里请求已经交回终端或在终端里答了：什么也不送，写「已经在终端里处理」。
+            guard self.server.isPending(ask) else {
+                self.current = nil
+                self.authentication.showReceipt(AgentApprovalCard.text(.handledInTerminal, agent: Self.agentName), succeeded: false)
+                return
+            }
+            guard self.service.consume(grant, purpose: .approveAgentAction, currentTarget: target) == nil else {
                 self.current = nil
                 self.server.deferToHost(sessionID: ask.sessionID)
                 self.authentication.showReceipt(AgentApprovalCard.text(.notConfirmed, agent: Self.agentName), succeeded: false)
@@ -196,8 +157,8 @@ import Cocoa
     private func deny() {
         guard !closed, let ask = current, let view = presented, !authInFlight,
               view.inputIsCurrent() else { return }
+        guard server.isPending(ask) else { answeredElsewhere(view); return }
         current = nil
-        cancelIdle()
         guard server.decide(sessionID: ask.sessionID, allow: false) else {
             presented = nil
             island.dismiss(ifShowing: view)
@@ -217,8 +178,6 @@ import Cocoa
     private func deferToHost() {
         guard let ask = current else { return }
         current = nil
-        isParked = false
-        cancelIdle()
         let view = presented
         presented = nil
         server.deferToHost(sessionID: ask.sessionID)
@@ -227,20 +186,28 @@ import Cocoa
 
     /// 卡被岛收走（Esc、换页、锁屏）：等同交回终端。
     private func dismissed() {
-        // 2 分钟没人管的收卡：请求仍挂着，不回答。
-        if parkingForIdle { parkingForIdle = false; return }
         guard !closed, !replacing, let ask = current else { return }
         current = nil
-        isParked = false
-        cancelIdle()
         server.deferToHost(sessionID: ask.sessionID)
     }
 
     /// Touch ID 的画面离开了：没有别的排队项，什么都不用接。
     private func authorizationGone() {}
 
+    /// 卡上点了，可这一条已经交回终端或在终端里答了：什么也不送，卡上写回执，停一下再收走（第 45 条）。
+    private func answeredElsewhere(_ view: WS2HookApprovalView) {
+        current = nil
+        view.handledElsewhere = true
+        view.showReceipt(AgentApprovalCard.text(.handledInTerminal, agent: Self.agentName))
+        receiptTask = Task { [weak self, weak view] in
+            do { try await Task.sleep(for: .nanoseconds(Self.receiptHold), clock: .suspending) } catch { return }
+            guard let self else { return }
+            self.receiptTask = nil
+            if let view, self.presented === view { self.presented = nil; self.island.dismiss(ifShowing: view) }
+        }
+    }
+
     private func dismissCard() {
-        cancelIdle()
         guard let view = presented else { return }
         presented = nil
         island.dismiss(ifShowing: view)
@@ -261,6 +228,16 @@ import Cocoa
     var allow: (() -> Void)?
     var deny: (() -> Void)?
     var useTerminal: (() -> Void)?
+    /// 这一条已经交回终端或在终端里答了：卡上晚到的点按只写回执，不送出。
+    var handledElsewhere = false
+    /// 卡面上的摘要（Bash 是命令的第一行，别的是工具名）。
+    let summary: String
+    private let command: String
+    private let risk: WS2.Risk
+    private(set) var commandRevealed = false
+    private var receiptShown = false
+    private let commandScroll = NSScrollView()
+    private let commandText = NSTextView()
     /// 琥珀点在卡里的位置（卡的坐标）；不传就用右耳那颗点的中心。
     var bloomOrigin: CGPoint?
     /// 被岛收走时缩回琥珀点；交给 Touch ID 的那一下关掉。
@@ -277,11 +254,17 @@ import Cocoa
     private let primary: NSButton
     private let primaryIsTerminal: Bool
 
-    init(tool: String, project: String, risk: WS2.Risk, touchIDAvailable: Bool) {
+    /// Touch ID 键能不能用：要 Touch ID 又有整条命令可看的请求，命令露出过才行。
+    var touchIDGateOpen: Bool { AgentApprovalCard.touchIDReady(risk: risk, command: command, revealed: commandRevealed) }
+
+    init(tool: String, project: String, risk: WS2.Risk, touchIDAvailable: Bool, command: String = "") {
+        self.command = command; self.risk = risk
+        let shortened = AgentApprovalCard.summary(of: command)
+        summary = shortened.isEmpty ? tool : shortened
         let needsTouchID = AgentApprovalCard.needsTouchID(risk)
         let terminal = needsTouchID && !touchIDAvailable
         primaryIsTerminal = terminal
-        headline = NSTextField(labelWithString: AgentApprovalCard.headline(summary: tool))
+        headline = NSTextField(labelWithString: AgentApprovalCard.headline(summary: shortened.isEmpty ? tool : shortened))
         byline = NSTextField(labelWithString: AgentApprovalCard.byline(agent: WS2HookApprovalHost.agentName,
                                                                        project: project))
         riskLine = AgentApprovalCard.riskNote(risk).map { WS2SessionCardChrome.RiskLine(note: $0) }
@@ -301,24 +284,64 @@ import Cocoa
         WS2SessionCardChrome.stylePill(no, primary: false)
         WS2SessionCardChrome.stylePill(primary, primary: true,
                                        symbol: needsTouchID && !terminal ? "touchid" : nil)
+        // 按住卡片看整条命令：等宽、可选中；露出后留在卡上，卡内原处滚动（卡高不变）。
+        commandText.isEditable = false; commandText.isSelectable = true; commandText.isRichText = false
+        commandText.drawsBackground = false; commandText.textColor = .white.withAlphaComponent(0.85)
+        commandText.font = .monospacedSystemFont(ofSize: 11, weight: .regular)
+        commandText.string = command
+        commandText.textContainer?.widthTracksTextView = true
+        commandText.isHorizontallyResizable = false; commandText.isVerticallyResizable = true
+        commandText.minSize = .zero
+        commandText.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        commandText.autoresizingMask = [.width]
+        commandScroll.hasVerticalScroller = true; commandScroll.drawsBackground = false; commandScroll.borderType = .noBorder
+        commandScroll.documentView = commandText; commandScroll.isHidden = true
         addSubview(content)
-        var parts: [NSView] = [ear, dot, waiting, headline, byline, no, primary]
+        var parts: [NSView] = [ear, dot, waiting, headline, byline, commandScroll, no, primary]
         if let riskLine { parts.append(riskLine) }
         for view in parts { content.addSubview(view) }
         no.target = self; no.action = #selector(refuse)
         primary.target = self; primary.action = #selector(act)
         setAccessibilityRole(.group)
-        setAccessibilityLabel(AgentApprovalCard.announcement(agent: WS2HookApprovalHost.agentName, summary: tool))
+        setAccessibilityLabel(AgentApprovalCard.announcement(agent: WS2HookApprovalHost.agentName, summary: summary))
+        if !command.isEmpty {
+            let hold = NSPressGestureRecognizer(target: self, action: #selector(held(_:)))
+            hold.minimumPressDuration = 0.45; hold.allowableMovement = 8
+            addGestureRecognizer(hold)
+            // 读屏和键盘用户没有“按住”：给一个同样露出整条命令的动作。
+            setAccessibilityCustomActions([NSAccessibilityCustomAction(name: AgentApprovalCard.showCommandAction) { [weak self] in
+                MainActor.assumeIsolated { self?.revealCommand() }
+                return true
+            }])
+        }
     }
     required init?(coder: NSCoder) { nil }
+
+    /// 露出整条命令（按住卡片、读屏动作、或第一次按 Touch ID 键）。已露出的不重复。
+    func revealCommand() {
+        guard !command.isEmpty, !commandRevealed, !receiptShown, !handledElsewhere else { return }
+        commandRevealed = true
+        needsLayout = true
+        NSAccessibility.post(element: self, notification: .announcementRequested,
+                             userInfo: [.announcement: command, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+    }
+    @objc private func held(_ gesture: NSPressGestureRecognizer) {
+        guard gesture.state == .began, !commandRevealed else { return }
+        revealCommand()
+    }
 
     override func layout() {
         super.layout()
         content.frame = bounds
-        let frames = SessionCardStyle.layout(in: bounds.size, showsRisk: riskLine != nil, showsDetails: false)
+        let showsCommand = commandRevealed && !receiptShown
+        let frames = SessionCardStyle.layout(in: bounds.size, showsRisk: riskLine != nil, showsDetails: showsCommand)
         ear.frame = frames.ear; dot.frame = frames.dot; waiting.frame = frames.waiting
         headline.frame = frames.headline; byline.frame = frames.byline
         if let risk = frames.risk { riskLine?.frame = risk }
+        riskLine?.isHidden = showsCommand || receiptShown
+        byline.isHidden = showsCommand
+        commandScroll.isHidden = !showsCommand
+        if let details = frames.details { commandScroll.frame = details }
         WS2SessionCardChrome.layoutPills([primary, no], rightEdge: bounds.width - SessionCardStyle.inset)
         if window != nil {
             bloom.playOnce(on: content, origin: SessionCardStyle.bloomOrigin(layout: frames, override: bloomOrigin))
@@ -332,6 +355,7 @@ import Cocoa
     func showReceipt(_ text: String) {
         byline.stringValue = text; byline.textColor = .white
         no.isHidden = true; primary.isHidden = true; riskLine?.isHidden = true
+        receiptShown = true; commandScroll.isHidden = true; byline.isHidden = false
         allow = nil; deny = nil; useTerminal = nil
         needsLayout = true
         NSAccessibility.post(element: self, notification: .announcementRequested,
@@ -346,10 +370,21 @@ import Cocoa
     var probePrimaryTitle: String { primary.title }
     var probeHeadline: String { headline.stringValue }
 
-    @objc private func refuse() { guard inputIsCurrent() else { return }; deny?() }
-    @objc private func act() {
+    @objc private func refuse() {
+        if handledElsewhere { showLateReceipt(); return }
         guard inputIsCurrent() else { return }
-        if primaryIsTerminal { useTerminal?() } else { allow?() }
+        deny?()
+    }
+    @objc private func act() {
+        if handledElsewhere { showLateReceipt(); return }
+        guard inputIsCurrent() else { return }
+        if primaryIsTerminal { useTerminal?() }
+        else if !touchIDGateOpen { revealCommand() }   // 先看整条命令，再按一次才验 Touch ID
+        else { allow?() }
+    }
+    private func showLateReceipt() {
+        guard !receiptShown else { return }
+        showReceipt(AgentApprovalCard.text(.handledInTerminal, agent: WS2HookApprovalHost.agentName))
     }
     override func cancelOperation(_ sender: Any?) { onCancel?() }
 }

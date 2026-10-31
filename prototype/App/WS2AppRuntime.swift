@@ -219,8 +219,9 @@ import Cocoa
             owner.notch.activities.ws2PublishSession(CodingSessionActivities.Change(
                 id: change.sessionID, project: change.project, cwd: model.directory(of: change.sessionID),
                 assistant: Self.codingAssistantName, status: status,
-                summary: status == .waiting ? model.waitingSummary(of: change.sessionID) : ""))
-            hookApproval?.statusChanged(sessionID: change.sessionID, status: change.status)
+                summary: status == .waiting ? model.waitingSummary(of: change.sessionID) : "",
+                inTerminal: change.inTerminal))
+            hookApproval?.statusChanged(sessionID: change.sessionID, status: change.status, inTerminal: change.inTerminal)
             // 提示音（拍板 2026-10-29 第 1 条）：等你、完成各响一声，跳变才响。
             if sessionSoundStates[change.sessionID] != change.status {
                 if change.status == .waiting { owner.playReminderSound("Ping") }
@@ -244,7 +245,6 @@ import Cocoa
                                          priority: 4,
                                          onClick: { [weak self] in self?.goToCodingSession(cwd: cwd, sessionID: bloom.sessionID) })
         }
-        activities.onSessionRestoreCard = { [weak self] id in self?.hookApproval?.restoreParked(sessionID: id) ?? false }
         activities.onSessionGo = { [weak self] id, cwd in self?.goToCodingSession(cwd: cwd, sessionID: id) }
         activities.onSessionEnter = { [weak self] id, cwd in self?.openConductor(goingTo: (id, cwd)) ?? false }
         activities.onSessionMenuChange = { [weak self] in self?.owner?.rebuildMenu() }
@@ -263,7 +263,7 @@ import Cocoa
     }
     private func unwireCodingSessions() {
         guard let activities = owner?.notch.activities else { return }
-        activities.onSessionBloom = nil; activities.onSessionRestoreCard = nil; activities.onSessionGo = nil; activities.onSessionEnter = nil; activities.onSessionMenuChange = nil
+        activities.onSessionBloom = nil; activities.onSessionGo = nil; activities.onSessionEnter = nil; activities.onSessionMenuChange = nil
         owned?.onUsage = nil
         activities.ws2ResetSessions()
     }

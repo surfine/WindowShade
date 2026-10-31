@@ -66,8 +66,10 @@ extension AppDelegate {
         controls.orientation = .horizontal
         controls.alignment = .centerY
         controls.spacing = 8
-        // 状态与卸载提醒放进副句：连接着的那句自带卸载提醒。三种副句都是走目录的整句。
-        let subtitle: SettingsText = status.connected
+        // 状态与卸载提醒放进副句：连接着的那句自带卸载提醒。四种副句都是走目录的整句。
+        let subtitle: SettingsText = status.helperMissing
+            ? WSL10n.setting("conductor.settings.hookConfig.moved", zh: "找不到 WindowShade，重新拷一次配置")
+            : status.connected
             ? WSL10n.setting("conductor.settings.hookConfig.connectedSub", zh: "已连接，Claude Code 会报到刘海。卸载 WindowShade 前先在这里断开")
             : (helperReady ? WSL10n.setting("conductor.settings.hookNotConnected", zh: "未连接")
                            : WSL10n.setting("conductor.settings.hookConfig.missing", zh: "这个版本里没有"))

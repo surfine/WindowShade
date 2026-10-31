@@ -11,6 +11,8 @@ struct AgentSessions: Sendable {
         var summary: String
         var turnID: String?
         var tools: Set<String>
+        /// 工具登记的先后，满了时挤掉最旧的（`tools` 本身没有顺序）。
+        var toolOrder: [String] = []
         var lastUpdate: WS2.Instant
         var gate = WS2.EventGate()
     }
@@ -44,7 +46,11 @@ struct AgentSessions: Sendable {
     static let maximumSessions = 64
     static let maximumApprovals = 128
     static let maximumApprovalsPerSession = 8
+    /// 每个会话只记最近这么多个还没结束的工具；满了挤掉最旧的，不再拒收新的（长会话不能越记越多，也不能冻住状态）。
     static let maximumToolsPerSession = 64
+    /// 做完、失败、断开的会话，沉默超过这么久就从账上清掉（再来事件会重新登记）。状态待确认的不算：助手可能还在终端里等人。
+    static let closedRetention: UInt64 = 3600 * WS2.Duration.second
+    static func isClosed(_ status: Status) -> Bool { [.completed, .failed, .disconnected].contains(status) }
     static let inactivity: UInt64 = 600 * WS2.Duration.second
     static let maximumApprovalLifetime: UInt64 = 120 * WS2.Duration.second
     private(set) var sessions: [WS2.SessionKey: Session] = [:]
@@ -92,11 +98,13 @@ struct AgentSessions: Sendable {
             session.summary = suspended ? "" : summary; session.status = .running
         case .toolStarted(let id, let summary):
             guard validID(id), valid(summary) else { return effects + [.fault(.malformedInput)] }
-            guard session.tools.count < Self.maximumToolsPerSession || session.tools.contains(id) else { return effects + [.fault(.capacityExceeded)] }
             guard session.tools.insert(id).inserted else { return effects }
+            session.toolOrder.append(id)
+            while session.toolOrder.count > Self.maximumToolsPerSession { session.tools.remove(session.toolOrder.removeFirst()) }
             session.summary = suspended ? "" : summary; session.status = .running
         case .toolFinished(let id):
             guard session.tools.remove(id) != nil else { return effects }
+            session.toolOrder.removeAll { $0 == id }
             session.status = .running
         case .turnStarted(let id):
             guard validID(id), session.control == .owned, session.turnID == nil || session.turnID == id else {
@@ -107,16 +115,16 @@ struct AgentSessions: Sendable {
             guard valid(summary) else { return effects + [.fault(.malformedInput)] }
             if let active = session.turnID, envelope.turnID != active { return effects + [.fault(.staleContext)] }
             session.status = .completed; session.summary = suspended ? "" : summary
-            session.turnID = nil; session.tools.removeAll(keepingCapacity: true)
+            session.turnID = nil; session.tools.removeAll(keepingCapacity: true); session.toolOrder.removeAll(keepingCapacity: true)
             effects += clearApprovals(for: key)
         case .failed(let summary):
             guard valid(summary) else { return effects + [.fault(.malformedInput)] }
             session.status = .failed; session.summary = suspended ? "" : summary
-            session.turnID = nil; session.tools.removeAll(keepingCapacity: true)
+            session.turnID = nil; session.tools.removeAll(keepingCapacity: true); session.toolOrder.removeAll(keepingCapacity: true)
             effects += clearApprovals(for: key)
         case .processExited:
             session.status = .disconnected; session.summary = ""; session.turnID = nil
-            session.tools.removeAll(keepingCapacity: true); effects += clearApprovals(for: key)
+            session.tools.removeAll(keepingCapacity: true); session.toolOrder.removeAll(keepingCapacity: true); effects += clearApprovals(for: key)
         case .approval(let request):
             guard request.isValid, request.context == context, request.createdAt <= now,
                   request.shownAfterSequence <= envelope.sequence else { return effects + [.fault(.malformedInput)] }
@@ -190,6 +198,11 @@ struct AgentSessions: Sendable {
         guard time.accept(now) else { return [.fault(.timeReversed)] }
         var effects = expire(at: now)
         for key in orderedKeys() {
+            guard let session = sessions[key], Self.isClosed(session.status),
+                  now.elapsed(since: session.lastUpdate) >= Self.closedRetention else { continue }
+            sessions.removeValue(forKey: key)
+        }
+        for key in orderedKeys() {
             guard let session = sessions[key], [.idle, .running].contains(session.status),
                   now.elapsed(since: session.lastUpdate) >= Self.inactivity else { continue }
             sessions[key]?.status = .stale // 无消息不是断线。
@@ -203,7 +216,7 @@ struct AgentSessions: Sendable {
         var effects: [Effect] = []
         for key in orderedKeys() {
             effects += clearApprovals(for: key)
-            sessions[key]?.summary = ""; sessions[key]?.tools.removeAll(keepingCapacity: true)
+            sessions[key]?.summary = ""; sessions[key]?.tools.removeAll(keepingCapacity: true); sessions[key]?.toolOrder.removeAll(keepingCapacity: true)
         }
         return effects
     }
@@ -218,7 +231,8 @@ struct AgentSessions: Sendable {
     var nextWake: WS2.Instant? {
         let approvals = pending.values.map(\.request.deadline)
         let stale = sessions.values.filter { [.idle, .running].contains($0.status) }.map { $0.lastUpdate.adding(Self.inactivity) }
-        return (approvals + stale).min()
+        let closed = sessions.values.filter { Self.isClosed($0.status) }.map { $0.lastUpdate.adding(Self.closedRetention) }
+        return (approvals + stale + closed).min()
     }
     private mutating func expire(at now: WS2.Instant) -> [Effect] {
         var effects: [Effect] = []
@@ -266,7 +280,7 @@ struct AgentSessions: Sendable {
 enum AgentApprovalCard {
     enum Button: Equatable, Sendable { case look, deny, allowOnce, allowWithTouchID, handleInTerminal }
     /// 回执。“已允许这一次”只在这次请求的应答真的送出之后才有（见 AgentApprovalDesk）。
-    enum Receipt: Equatable, Sendable { case allowedOnce, denied, notConfirmed, touchIDUnavailable, notDelivered }
+    enum Receipt: Equatable, Sendable { case allowedOnce, denied, notConfirmed, touchIDUnavailable, notDelivered, handledInTerminal }
 
     /// 普通的点一下就算；高风险和说不清的（shell 命令默认说不清，不猜）都要 Touch ID。
     static func needsTouchID(_ risk: WS2.Risk) -> Bool { risk != .normal }
@@ -312,7 +326,14 @@ enum AgentApprovalCard {
         case .notConfirmed: return WSL10n.text("auth.denied.agentWaiting", zh: "没有确认，%@仍在等你", agent)
         case .touchIDUnavailable: return WSL10n.text("auth.unavailable", zh: "Touch ID 暂时不可用")
         case .notDelivered: return WSL10n.text("agent.outcome.notDelivered", zh: "连接断了，这一次可能没有送到")
+        case .handledInTerminal: return WSL10n.text("agent.outcome.handledInTerminal", zh: "这一条已经在终端里处理")
         }
+    }
+    /// 读屏用：长按卡片露出整条命令。
+    static var showCommandAction: String { WSL10n.text("agent.approval.showCommand", zh: "显示整条命令") }
+    /// 要 Touch ID 又有整条命令可看的请求，命令露出过之后 Touch ID 键才能用；没有命令可露的（没有这一层）照旧。
+    static func touchIDReady(risk: WS2.Risk, command: String, revealed: Bool) -> Bool {
+        !needsTouchID(risk) || command.isEmpty || revealed
     }
 }
 

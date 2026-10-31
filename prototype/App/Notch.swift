@@ -2767,6 +2767,8 @@ final class NotchPanel: NSPanel {
         var sessionPhase: NotchSessionPhase? = nil
         /// 编程会话右耳的样子（转圈加项目名、琥珀点加“等你”、个数加状态点）。nil = 不是会话，或额度那两种。
         var sessionFace: NotchSessionEar.Face? = nil
+        /// 请求交回终端、助手在那边等人时，右耳琥珀点的读屏句；其它时候是 nil。
+        var sessionSpoken: String? = nil
         /// 音量、亮度、键盘灯的两耳（《音量与亮度》稿）：左耳符号、右耳白条，不写百分比。有值时左右耳都按它画。
         var level: LevelEar? = nil
         /// 正在播放的紧凑两耳（NP-2）：左耳封面、右耳 5 个静止取色点。nil = 今天的样子（歌名 + 符号 + 右耳的字）。
@@ -2785,7 +2787,7 @@ final class NotchPanel: NSPanel {
                 && leading == other.leading && leadingSymbol == other.leadingSymbol && trailing == other.trailing
                 && progress == other.progress && quantity == other.quantity && progressTone == other.progressTone
                 && progressStyle == other.progressStyle && dotTone == other.dotTone && sessionPhase == other.sessionPhase
-                && sessionFace == other.sessionFace
+                && sessionFace == other.sessionFace && sessionSpoken == other.sessionSpoken
                 && level == other.level && music == other.music && flash == other.flash && calendar == other.calendar
                 && shelfSpoken == other.shelfSpoken
                 && stale == other.stale
@@ -4717,6 +4719,8 @@ final class NotchPanel: NSPanel {
                            progressTone: tone, progressStyle: focus ? .ring : .bar, dotTone: NotchInfoDot.tone(for: item),
                            // 过期的不转圈、不猜：右耳只剩“—”。
                            sessionPhase: item.isStale ? nil : item.sessionPhase, sessionFace: sessionFace,
+                           sessionSpoken: item.kind == .session && item.sessionPhase == .waiting && item.subtitle == NotchSessionEar.waitingInTerminal
+                               ? NotchSessionEar.waitingInTerminal : nil,
                            music: music, calendar: item.calendar, stale: item.isStale)
         }
         return compact
@@ -6848,7 +6852,7 @@ final class NotchCompactView: NSView {
                 let joinText = WSL10n.text("notch.join", zh: "，")
                 switch compact.sessionPhase {
                 case .waiting?:
-                    setAccessibilityLabel(leading + joinText + WSL10n.text("notch.row.waiting", zh: "在等你"))
+                    setAccessibilityLabel(compact.sessionSpoken ?? leading + joinText + WSL10n.text("notch.row.waiting", zh: "在等你"))
                 case .running?:
                     setAccessibilityLabel(leading + joinText + WSL10n.text("notch.row.running", zh: "在跑"))
                 case .quota?:
