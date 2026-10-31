@@ -28,11 +28,19 @@ extension AppDelegate {
                               target: self, action: #selector(prefRemoveAutofillPassword(_:)))
         remove.bezelStyle = .rounded
         remove.tag = 3
+        let voice = NSButton(title: WSL10n.text("face.voice.enrol", zh: "录入声音…"),
+                             target: self, action: #selector(prefEnrolVoice(_:)))
+        voice.bezelStyle = .rounded
+        voice.tag = 4
+        let removeVoice = NSButton(title: WSL10n.text("face.voice.delete", zh: "删除声音"),
+                                   target: self, action: #selector(prefRemoveVoice(_:)))
+        removeVoice.bezelStyle = .rounded
+        removeVoice.tag = 5
         let status = NSTextField(labelWithString: "")
         status.font = .systemFont(ofSize: 12)
         status.textColor = .secondaryLabelColor
         status.identifier = Self.faceAutofillStatusID
-        let controls = NSStackView(views: [save, arm, remove, status])
+        let controls = NSStackView(views: [save, arm, remove, voice, removeVoice, status])
         controls.orientation = .horizontal
         controls.alignment = .centerY
         controls.spacing = 8
@@ -68,6 +76,11 @@ extension AppDelegate {
             case 1: button.isEnabled = faceOn && controller != nil
             case 2: button.isEnabled = faceOn && stored && !armed
             case 3: button.isEnabled = faceOn && stored
+            case 4:
+                button.isEnabled = faceOn && SpeakerVoiceKit.isModelBundled && (SpeakerVoiceKit.shared.isEnrolling || SpeakerVoiceKit.shared.verifier.embedder != nil)
+                button.title = SpeakerVoiceKit.shared.isEnrolling
+                    ? WSL10n.text("face.voice.cancel", zh: "取消录入") : WSL10n.text("face.voice.enrol", zh: "录入声音…")
+            case 5: button.isEnabled = faceOn && SpeakerVoiceKit.shared.isEnrolled && !SpeakerVoiceKit.shared.isEnrolling
             default: break
             }
         }
@@ -75,6 +88,8 @@ extension AppDelegate {
             .first(where: { $0.identifier == Self.faceAutofillStatusID }) else { return }
         if !faceOn || controller == nil {
             field.stringValue = ""
+        } else if SpeakerVoiceKit.shared.isEnrolling {
+            return  // 登记声音时状态行由登记流程写
         } else if !stored {
             field.stringValue = WSL10n.text("face.autofill.status.none", zh: "还没存")
         } else if armed {
@@ -152,5 +167,44 @@ extension AppDelegate {
             guard let self, let sender, let stack = self.faceAutofillStack(from: sender) else { return }
             self.updateFaceAutofillControls(stack)
         }
+    }
+
+    // MARK: - 声音登记（声纹辅助用）
+
+    @objc func prefEnrolVoice(_ sender: NSButton) {
+        let kit = SpeakerVoiceKit.shared
+        if kit.isEnrolling {
+            kit.cancelEnrolment()
+            if let stack = faceAutofillStack(from: sender) { updateFaceAutofillControls(stack) }
+            return
+        }
+        kit.startEnrolment { [weak self, weak sender] update in
+            guard let self, let sender else { return }
+            switch update {
+            case .prompt(let step, let phrase):
+                self.setFaceAutofillStatus(WSL10n.text("face.voice.status.step", zh: "第 %d/3 句，请念：%@", step, phrase), near: sender)
+            case .retry(_, _, let phrase):
+                self.setFaceAutofillStatus(WSL10n.text("face.voice.status.retry", zh: "没对上，再念一次：%@", phrase), near: sender)
+            case .finished:
+                self.setFaceAutofillStatus(WSL10n.text("face.voice.status.enrolled", zh: "声音已录入"), near: sender)
+            case .failed(let failure):
+                let text: String
+                switch failure {
+                case .noModel: text = WSL10n.text("face.voice.status.noModel", zh: "这个版本没带声音比对模型")
+                case .permission: text = WSL10n.text("face.voice.status.denied", zh: "需要麦克风和语音识别权限")
+                case .storeUnavailable: text = WSL10n.text("face.autofill.status.unavailable", zh: "这台 Mac 现在存不了")
+                case .cancelled: text = WSL10n.text("face.voice.status.failed", zh: "没录成，再试一次")
+                }
+                self.setFaceAutofillStatus(text, near: sender)
+            }
+            if let stack = self.faceAutofillStack(from: sender) { self.updateFaceAutofillControls(stack) }
+        }
+        if let stack = faceAutofillStack(from: sender) { updateFaceAutofillControls(stack) }
+    }
+
+    @objc func prefRemoveVoice(_ sender: NSButton) {
+        SpeakerVoiceKit.shared.deleteEnrolment()
+        if let stack = faceAutofillStack(from: sender) { updateFaceAutofillControls(stack) }
+        setFaceAutofillStatus(WSL10n.text("face.voice.status.none", zh: "声音还没录"), near: sender)
     }
 }

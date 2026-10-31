@@ -758,10 +758,10 @@
       "appears_with": "face-unlock-experiment",
       "label": "声音比对",
       "rule": "VOICE",
-      "reads": "实验：念随机短语时的声音和识别出的字",
+      "reads": "实验：登记时念三句、锁屏念随机短语时的声音，和识别出的字",
       "purpose": "脸的分数差一点时补一道；它自己不放行",
-      "destination": "只在内存里比对，念完就丢；不存录音、不上传",
-      "activation": "目前不读：这台 Mac 上还没有能用的声音比对，所以不开麦克风",
+      "destination": "声音只在内存里比对，念完就丢；不存录音、不上传。登记只存一串声音特征数字（不是录音）在这台 Mac 的钥匙串里，可以随时删",
+      "activation": "只有你打开刷脸解锁（实验）、装的版本带了声音比对模型、你也登记过声音之后，脸差一点时才开麦克风；没有这三样就不开",
       "toggle": "刷脸解锁（实验）的开关",
       "combined": "声音和念出的字合起来，能认出是不是你在说话。",
       "subtitle": "脸差一点时念一句补上",
@@ -769,11 +769,11 @@
         "label": "Voice match",
         "subtitle": "Say a phrase when your face is a near match",
         "purpose": "Backs up a near face match; it never unlocks on its own",
-        "destination": "Compared in memory and dropped right after; no recording kept, nothing uploaded",
+        "destination": "Compared in memory and dropped right after; no recording kept, nothing uploaded. Setup keeps only a short list of voice numbers (not a recording) in this Mac’s keychain; you can delete it any time",
         "toggle": "The face unlock (experimental) switch",
-        "activation": "Not read at present: this Mac has no voice match yet, so the microphone stays off",
+        "activation": "The microphone opens only when face unlock (experimental) is on, this version includes the voice match model, and you’ve set up your voice, and. Without all of these it stays off",
         "combined": "Your voice and the words you say together can tell whether it's you speaking.",
-        "reads": "Experiment: your voice and the recognized words while you say a random phrase"
+        "reads": "Experiment: your voice and the recognized words while you set up (three phrases) and while you say a random phrase at the lock screen"
       }
     },
     {
@@ -7963,6 +7963,97 @@
       "symbol": "SecItemDelete",
       "source": "let status = SecItemDelete(baseQuery() as CFDictionary)",
       "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "AVAudioEngine",
+      "source": "private var engine: AVAudioEngine?",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "SFSpeechRecognizer",
+      "source": "static func recognizer() -> SFSpeechRecognizer? {",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "SFSpeechRecognizer",
+      "source": "SFSpeechRecognizer(locale: Locale(identifier: WSL10n.language == .en ? \"en-US\" : \"zh-CN\"))",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "SFSpeechRecognizer",
+      "source": "let speech = SFSpeechRecognizer.authorizationStatus()",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "AVCaptureDevice",
+      "source": "let mic = AVCaptureDevice.authorizationStatus(for: .audio)",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "SFSpeechRecognizer",
+      "source": "SFSpeechRecognizer.requestAuthorization { status in",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "AVCaptureDevice",
+      "source": "AVCaptureDevice.requestAccess(for: .audio) { granted in",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/SpeechVoiceprintCapture.swift",
+      "line": 0,
+      "symbol": "AVAudioEngine",
+      "source": "let engine = AVAudioEngine()",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/VoiceprintKeychainStore.swift",
+      "line": 0,
+      "symbol": "LAContext",
+      "source": "let context = LAContext(); context.interactionNotAllowed = true",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/VoiceprintKeychainStore.swift",
+      "line": 0,
+      "symbol": "SecItemCopyMatching",
+      "source": "guard SecItemCopyMatching(q as CFDictionary, &result) == errSecSuccess,",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/VoiceprintKeychainStore.swift",
+      "line": 0,
+      "symbol": "SecItemUpdate",
+      "source": "var status = SecItemUpdate(base as CFDictionary, [kSecValueData as String: bytes] as CFDictionary)",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/VoiceprintKeychainStore.swift",
+      "line": 0,
+      "symbol": "SecItemAdd",
+      "source": "status = SecItemAdd(q as CFDictionary, nil)",
+      "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/VoiceprintKeychainStore.swift",
+      "line": 0,
+      "symbol": "SecItemDelete",
+      "source": "let status = SecItemDelete(query() as CFDictionary)",
+      "signal": "voiceprint"
     }
   ],
   "groups": [
