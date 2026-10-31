@@ -139,6 +139,8 @@ struct FaceRecognitionIndicator: Equatable, Sendable {
         case masked
         /// 这次锁屏 3 次用完。
         case lockedOut
+        /// 第 6 步：脸的分数差一点，请念一句随机短语（声纹补一道，只加不减）。
+        case voiceprint
     }
     enum Dot: Equatable, Sendable {
         case hollow, filled
@@ -146,15 +148,17 @@ struct FaceRecognitionIndicator: Equatable, Sendable {
         case missing
     }
     enum LeftEar: Equatable, Sendable { case spinner, check, none }
-    enum Sentence: Equatable, Sendable { case secondFactorMissing, notRecognised, masked, lockedOut }
+    enum Sentence: Equatable, Sendable { case secondFactorMissing, notRecognised, masked, lockedOut, voiceprint }
 
     var state: State
     /// 手机或手表此刻在不在（扫描中只决定第二枚点是实心还是空心）。
     var secondFactorPresent: Bool
+    /// 念哪一句（只在 `.voiceprint` 时有）。每轮新抽，不进日志。
+    var phrase: String? = nil
 
     var leftEar: LeftEar {
         switch state {
-        case .scanning: return .spinner
+        case .scanning, .voiceprint: return .spinner
         case .recognised, .faceOnly: return .check
         case .notRecognised, .masked, .lockedOut: return .none
         }
@@ -162,7 +166,7 @@ struct FaceRecognitionIndicator: Equatable, Sendable {
 
     var faceDot: Dot {
         switch state {
-        case .scanning, .lockedOut: return .hollow
+        case .scanning, .lockedOut, .voiceprint: return .hollow
         case .faceOnly, .recognised: return .filled
         case .notRecognised, .masked: return .missing
         }
@@ -172,7 +176,7 @@ struct FaceRecognitionIndicator: Equatable, Sendable {
         switch state {
         case .recognised: return .filled
         case .faceOnly: return .missing
-        case .scanning, .notRecognised, .masked, .lockedOut: return secondFactorPresent ? .filled : .hollow
+        case .scanning, .notRecognised, .masked, .lockedOut, .voiceprint: return secondFactorPresent ? .filled : .hollow
         }
     }
 
@@ -184,6 +188,7 @@ struct FaceRecognitionIndicator: Equatable, Sendable {
         case .notRecognised: return .notRecognised
         case .masked: return .masked
         case .lockedOut: return .lockedOut
+        case .voiceprint: return .voiceprint
         }
     }
 

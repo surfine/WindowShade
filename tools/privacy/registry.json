@@ -723,28 +723,86 @@
       "label": "解锁凭据",
       "sensitivity": "private",
       "group": "你同意后才读的",
-      "reads": "只读你明确建立的、受系统保护的凭据",
-      "purpose": "用在锁屏之后回到桌面这一步",
+      "reads": "只读你自己存进来的登录密码；按 Touch ID 才取得出来",
+      "purpose": "认出你、手机或手表也对上时，在锁屏上替你输入",
       "destination": "只放在钥匙串这类系统保护的地方；不进运行记录、不进助手的上下文",
-      "activation": "目前不读；有可用的存放方式之后，另行启用",
-      "toggle": "删除登记；没有可用的存放方式就不显示支持",
+      "activation": "默认关闭，跟着刷脸解锁（实验）；你按 Touch ID 打开之后才读进内存，解锁后或 4 小时后清掉",
+      "toggle": "代填登录密码那一行的删除；关掉刷脸解锁也会清掉内存里那一份",
       "status": "planned",
       "rule": "SECRET",
-      "verification": "not-implemented",
+      "verification": "experimental: source + pure tests; default off; Touch ID (biometryCurrentSet) + device-only keychain item; second factor, gaze and speaker verifier have no live source yet, so the gate never types on hardware; not run on hardware",
       "retention": "see destination; no new polling or telemetry",
       "log_policy": "no raw private values",
-      "combined": "解锁凭据若落到别人手里，合上锁屏状态就能进入这台 Mac。",
-      "subtitle": "锁屏后回到桌面",
+      "combined": "登录密码若落到别人手里，合上锁屏状态就能进入这台 Mac。",
+      "subtitle": "锁屏时替你输入登录密码",
       "appears_with": "face-unlock-experiment",
       "en": {
         "label": "Unlock credentials",
-        "subtitle": "Returns to the desktop after unlocking",
-        "purpose": "Used for returning to the desktop after unlocking",
+        "subtitle": "Types your login password on the lock screen",
+        "purpose": "Types it on the lock screen when it recognizes you and your phone or watch checks out",
         "destination": "Kept where the system protects it, such as the keychain; never in logs or the assistant's context",
-        "toggle": "Removes the record; without somewhere to keep it, support isn't offered",
-        "activation": "Not read at present; it will be enabled separately once there's somewhere to keep it",
-        "combined": "Unlock credentials in someone else's hands, with the lock state, would open this Mac.",
-        "reads": "Reads only the credentials you explicitly created and the system protects"
+        "toggle": "Delete in the login password row; turning off face unlock also clears the copy in memory",
+        "activation": "Off by default and follows face unlock (experimental); read into memory only after you turn it on with Touch ID, and cleared after you unlock or after 4 hours",
+        "combined": "Your login password in someone else's hands, with the lock state, would open this Mac.",
+        "reads": "Only the login password you saved yourself; it comes out only with Touch ID"
+      }
+    },
+    {
+      "id": "voiceprint",
+      "sensitivity": "private",
+      "group": "你同意后才读的",
+      "status": "planned",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values",
+      "appears_with": "face-unlock-experiment",
+      "label": "声音比对",
+      "rule": "VOICE",
+      "reads": "实验：念随机短语时的声音和识别出的字",
+      "purpose": "脸的分数差一点时补一道；它自己不放行",
+      "destination": "只在内存里比对，念完就丢；不存录音、不上传",
+      "activation": "目前不读：这台 Mac 上还没有能用的声音比对，所以不开麦克风",
+      "toggle": "刷脸解锁（实验）的开关",
+      "combined": "声音和念出的字合起来，能认出是不是你在说话。",
+      "subtitle": "脸差一点时念一句补上",
+      "en": {
+        "label": "Voice match",
+        "subtitle": "Say a phrase when your face is a near match",
+        "purpose": "Backs up a near face match; it never unlocks on its own",
+        "destination": "Compared in memory and dropped right after; no recording kept, nothing uploaded",
+        "toggle": "The face unlock (experimental) switch",
+        "activation": "Not read at present: this Mac has no voice match yet, so the microphone stays off",
+        "combined": "Your voice and the words you say together can tell whether it's you speaking.",
+        "reads": "Experiment: your voice and the recognized words while you say a random phrase"
+      }
+    },
+    {
+      "id": "watch-assist",
+      "sensitivity": "sensitive",
+      "group": "你同意后才读的",
+      "status": "planned",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values",
+      "appears_with": "face-unlock-experiment",
+      "label": "手表戴没戴着",
+      "rule": "PRESENCE",
+      "reads": "附近手表广播里的「戴着、已解锁」",
+      "purpose": "脸的分数差一点时，让你可以念一句补上；它自己不算数",
+      "destination": "只在内存里，不留轨迹",
+      "activation": "目前不读：看不出广播是不是你那块手表",
+      "toggle": "刷脸解锁（实验）的开关",
+      "combined": "手表的广播合上锁屏状态，能看出你什么时候在 Mac 旁边。",
+      "subtitle": "脸差一点时帮一把",
+      "en": {
+        "label": "Whether your watch is on",
+        "subtitle": "Helps when your face is a near match",
+        "purpose": "Lets you say a phrase when your face is a near match; on its own it never counts",
+        "destination": "In memory; no path is kept",
+        "toggle": "The face unlock (experimental) switch",
+        "activation": "Not read at present: there's no way to tell whether a broadcast comes from your watch",
+        "combined": "Your watch's broadcast, with the lock state, shows when you're near the Mac.",
+        "reads": "The 'worn and unlocked' state in nearby watch broadcasts"
       }
     },
     {
@@ -7835,6 +7893,76 @@
       "symbol": "UserDefaults",
       "source": "static func set(_ on: Bool, in defaults: UserDefaults) {",
       "signal": "settings"
+    },
+    {
+      "path": "prototype/App/FaceAutofillSettings.swift",
+      "line": 14,
+      "symbol": "UserDefaults",
+      "source": "pageAlreadyShown: UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey),",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/FaceAutofillSettings.swift",
+      "line": 62,
+      "symbol": "UserDefaults",
+      "source": "let faceOn = UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 64,
+      "symbol": "LAContext",
+      "source": "return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 69,
+      "symbol": "LAContext",
+      "source": "let context = LAContext(); context.interactionNotAllowed = true",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 74,
+      "symbol": "SecItemCopyMatching",
+      "source": "let status = SecItemCopyMatching(query as CFDictionary, nil)",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 82,
+      "symbol": "SecAccessControlCreateWithFlags",
+      "source": "guard let access = SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 90,
+      "symbol": "SecItemAdd",
+      "source": "let status = SecItemAdd(query as CFDictionary, nil)",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 96,
+      "symbol": "LAContext",
+      "source": "let context = LAContext()",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 103,
+      "symbol": "SecItemCopyMatching",
+      "source": "let status = SecItemCopyMatching(query as CFDictionary, &result)",
+      "signal": "unlock-secret"
+    },
+    {
+      "path": "prototype/App/UnlockPasswordKeychainStore.swift",
+      "line": 117,
+      "symbol": "SecItemDelete",
+      "source": "let status = SecItemDelete(baseQuery() as CFDictionary)",
+      "signal": "unlock-secret"
     }
   ],
   "groups": [

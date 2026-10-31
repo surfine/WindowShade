@@ -55,6 +55,7 @@ import Cocoa
         defaults.set(false, forKey: enabledKey)
         shared?.stop()
         shared = nil
+        FaceAutofillController.stop()
         return true
     }
 
@@ -93,6 +94,11 @@ import Cocoa
         case lockedOut
     }
     var onScanPhase: (@MainActor (ScanPhase) -> Void)?
+    /// 第 6 步（代填）：每一轮认出或认错满 2 秒时交一份分数和活体标签。nil 时不算分数，扫描和第 5 步完全一样；
+    /// 开关开着时它挂着，但没存密码、没打开那一段时代填那一侧什么都不做。
+    var onAutofillReport: (@MainActor (FaceAutofill.ScanReport) -> Void)?
+    /// 这一次（这一轮相机）里最好的分数；只在 onAutofillReport 挂着时算。
+    private var bestScore: Float?
 
     /// 录脸卡被收走：这一轮作废，相机也关掉。
     static func cancelEnrollment() { shared?.cancelEnrollment() }
@@ -126,6 +132,11 @@ import Cocoa
         }
         experiment.onScanPhase = { [weak owner = NSApp.delegate as? AppDelegate] phase in
             owner?.faceRecognition.show(phase)
+        }
+        // 代填（D11 第 6 步）跟这个开关一起起：没存密码、没用 Touch ID 打开这一段时它什么都不做。
+        if let owner = NSApp.delegate as? AppDelegate {
+            let autofill = FaceAutofillController.start(owner: owner)
+            experiment.onAutofillReport = { [weak autofill] report in autofill?.scanFinished(report) }
         }
         shared = experiment
         let fellBack = requested.map { $0 != backend.name } ?? false
@@ -307,6 +318,7 @@ import Cocoa
             attemptLockGeneration = lockGeneration
             screening.reset()
             ownerEvidence = nil; lastChallengeFrame = nil; parallax = []
+            bestScore = nil
         }
         switch guardian.wake(at: CACurrentMediaTime(), lock: lockState(), lockGeneration: lockGeneration) {
         case .notLocked: stopCamera(); return
@@ -368,6 +380,10 @@ import Cocoa
         let scan = FaceScanFrame(cameraID: frame.cameraID, generation: frame.generation, sequence: frame.sequence,
                                  capturedAt: frame.observedAt,
                                  modelVersion: identity?.modelVersion ?? modelVersion, faces: faces)
+        if onAutofillReport != nil, let embedding = identity?.embedding,
+           let score = guardian.ownerScore(embedding, modelVersion: scan.modelVersion) {
+            bestScore = max(bestScore ?? score, score)
+        }
         switch guardian.receive(scan, lock: lockState(), lockGeneration: lockGeneration) {
         case .owner(let evidence):
             if defaults.bool(forKey: Self.challengeKey), scanDeadline != nil {
@@ -376,11 +392,13 @@ import Cocoa
                 log("face evidence: owner match scan=\(evidence.scanID)")
                 recordEvidence(evidence, cues: [])
                 onScanPhase?(.recognized)
+                reportForAutofill(recognised: true, liveness: .unknown, modelVersion: scan.modelVersion)
                 stopCamera(ending: Self.recognizedEnd)
             }
         case .failed:
             log("face evidence: no owner match scan=\(scanID.map { String($0) } ?? "?")")
             onScanPhase?(.unrecognized)
+            reportForAutofill(recognised: false, liveness: .unknown, modelVersion: scan.modelVersion)
             stopCamera(ending: .mismatch)
         case .discarded(.notLocked), .discarded(.noScan), .discarded(.finished):
             stopCamera()
@@ -439,6 +457,7 @@ import Cocoa
             if FaceParallax.isConfirmed(window: parallax) { cues.insert(.depthParallax) }
             if let ownerEvidence { recordEvidence(ownerEvidence, cues: cues, through: lastChallengeFrame) }
             onScanPhase?(.recognized)
+            reportForAutofill(recognised: true, liveness: .passed, modelVersion: ownerEvidence?.modelVersion ?? modelVersion)
             stopCamera(ending: Self.recognizedEnd)
         case .failed(let reason):
             stopCamera(ending: Self.attemptEvent(for: reason))
@@ -446,6 +465,16 @@ import Cocoa
     }
 
     // MARK: - 证据与次数
+
+    /// 交给代填那一侧：只有分数、门槛、标定没有、活体标签和这次锁屏用掉的次数；不带特征、画面、帧号。
+    private func reportForAutofill(recognised: Bool, liveness: FaceAutofill.Check, modelVersion version: String) {
+        guard let onAutofillReport else { return }
+        let tuning = guardian.tuning
+        onAutofillReport(FaceAutofill.ScanReport(
+            recognised: recognised, similarity: bestScore, threshold: tuning.similarityThreshold(for: version),
+            thresholdCalibrated: tuning.modelProfiles[version]?.calibrated ?? false,
+            liveness: liveness, faceAttemptsUsed: attempts.used))
+    }
 
     /// 认出了：这一次结束，不计次数。FaceIdentityEvent 没有“认出”这一项，用不计次、不出提示的 interrupted 收尾。
     private static let recognizedEnd = FaceIdentityEvent.interrupted

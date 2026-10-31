@@ -222,6 +222,16 @@ struct FaceScanGuard {
         return toMean >= threshold && toLatest >= threshold
     }
 
+    /// 代填闸门用的分数：对平均模板和最近一次录入两者取小（和 isOwner 同一套参照）。只读，不改扫描状态；
+    /// 分数 ≥ 门槛 与 isOwner 为真是一回事。没有参照或算不出就是 nil。
+    func ownerScore(_ embedding: [Float], modelVersion: String) -> Float? {
+        guard let reference = references[ReferenceKey(modelVersion: modelVersion, dimension: embedding.count)],
+              let toMean = Self.cosine(embedding, reference.mean), let toLatest = Self.cosine(embedding, reference.latest),
+              toMean.isFinite, toLatest.isFinite
+        else { return nil }
+        return min(toMean, toLatest)
+    }
+
     static func cosine(_ a: [Float], _ b: [Float]) -> Float? {
         guard a.count == b.count, !a.isEmpty else { return nil }
         var dot: Float = 0, na: Float = 0, nb: Float = 0

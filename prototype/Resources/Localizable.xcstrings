@@ -42465,19 +42465,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Not read at present; it will be enabled separately once there's somewhere to keep it"
+            "value": "Off by default and follows face unlock (experimental); read into memory only after you turn it on with Touch ID, and cleared after you unlock or after 4 hours"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "目前不读；有可用的存放方式之后，另行启用"
+            "value": "默认关闭，跟着刷脸解锁（实验）；你按 Touch ID 打开之后才读进内存，解锁后或 4 小时后清掉"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "目前不讀；有可用的存放方式之後，另行啟用"
+            "value": "預設關閉，跟著刷臉解鎖（實驗）；你按 Touch ID 打開之後才讀進記憶體，解鎖後或 4 小時後清掉"
           }
         }
       }
@@ -42488,19 +42488,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Unlock credentials in someone else's hands, with the lock state, would open this Mac."
+            "value": "Your login password in someone else's hands, with the lock state, would open this Mac."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "解锁凭据若落到别人手里，合上锁屏状态就能进入这台 Mac。"
+            "value": "登录密码若落到别人手里，合上锁屏状态就能进入这台 Mac。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "解鎖憑據若落到別人手裡，合上鎖定畫面狀態就能進入這台 Mac。"
+            "value": "登入密碼若落到別人手裡，合上鎖定畫面狀態就能進入這台 Mac。"
           }
         }
       }
@@ -42557,19 +42557,387 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Used for returning to the desktop after unlocking"
+            "value": "Types it on the lock screen when it recognizes you and your phone or watch checks out"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "用在锁屏之后回到桌面这一步"
+            "value": "认出你、手机或手表也对上时，在锁屏上替你输入"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "用在鎖定畫面之後回到桌面這一步"
+            "value": "認出你、手機或手錶也對上時，在鎖定畫面上替你輸入"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice match"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "声音比对"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聲音比對"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.reads": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experiment: your voice and the recognized words while you say a random phrase"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实验：念随机短语时的声音和识别出的字"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "實驗：念隨機短語時的聲音和辨識出的字"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.purpose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backs up a near face match; it never unlocks on its own"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "脸的分数差一点时补一道；它自己不放行"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉的分數差一點時補一道；它自己不放行"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.destination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compared in memory and dropped right after; no recording kept, nothing uploaded"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在内存里比对，念完就丢；不存录音、不上传"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在記憶體裡比對，念完就丟；不存錄音、不上傳"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.activation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not read at present: this Mac has no voice match yet, so the microphone stays off"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前不读：这台 Mac 上还没有能用的声音比对，所以不开麦克风"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前不讀：這台 Mac 上還沒有能用的聲音比對，所以不開麥克風"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.toggle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The face unlock (experimental) switch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷脸解锁（实验）的开关"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷臉解鎖（實驗）的開關"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.combined": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your voice and the words you say together can tell whether it's you speaking."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "声音和念出的字合起来，能认出是不是你在说话。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "聲音和念出的字合起來，能認出是不是你在說話。"
+          }
+        }
+      }
+    },
+    "privacy.voiceprint.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say a phrase when your face is a near match"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "脸差一点时念一句补上"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉差一點時念一句補上"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether your watch is on"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表戴没戴着"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手錶戴沒戴著"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.reads": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The 'worn and unlocked' state in nearby watch broadcasts"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "附近手表广播里的「戴着、已解锁」"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "附近手錶廣播裡的「戴著、已解鎖」"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.purpose": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lets you say a phrase when your face is a near match; on its own it never counts"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "脸的分数差一点时，让你可以念一句补上；它自己不算数"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉的分數差一點時，讓你可以念一句補上；它自己不算數"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.destination": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In memory; no path is kept"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在内存里，不留轨迹"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在記憶體裡，不留軌跡"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.activation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not read at present: there's no way to tell whether a broadcast comes from your watch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前不读：看不出广播是不是你那块手表"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "目前不讀：看不出廣播是不是你那支手錶"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.toggle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The face unlock (experimental) switch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷脸解锁（实验）的开关"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刷臉解鎖（實驗）的開關"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.combined": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your watch's broadcast, with the lock state, shows when you're near the Mac."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手表的广播合上锁屏状态，能看出你什么时候在 Mac 旁边。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手錶的廣播合上鎖定畫面狀態，能看出你什麼時候在 Mac 旁邊。"
+          }
+        }
+      }
+    },
+    "privacy.watch-assist.subtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Helps when your face is a near match"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "脸差一点时帮一把"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "臉差一點時幫一把"
           }
         }
       }
@@ -42580,19 +42948,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reads only the credentials you explicitly created and the system protects"
+            "value": "Only the login password you saved yourself; it comes out only with Touch ID"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "只读你明确建立的、受系统保护的凭据"
+            "value": "只读你自己存进来的登录密码；按 Touch ID 才取得出来"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "唯讀你明確建立的、受系統保護的憑據"
+            "value": "只讀你自己存進來的登入密碼；按 Touch ID 才取得出來"
           }
         }
       }
@@ -42603,19 +42971,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Returns to the desktop after unlocking"
+            "value": "Types your login password on the lock screen"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "锁屏后回到桌面"
+            "value": "锁屏时替你输入登录密码"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "鎖定畫面後回到桌面"
+            "value": "鎖定畫面時替你輸入登入密碼"
           }
         }
       }
@@ -42626,19 +42994,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Removes the record; without somewhere to keep it, support isn't offered"
+            "value": "Delete in the login password row; turning off face unlock also clears the copy in memory"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "删除登记；没有可用的存放方式就不显示支持"
+            "value": "代填登录密码那一行的删除；关掉刷脸解锁也会清掉内存里那一份"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "刪除登記；沒有可用的存放方式就不顯示支援"
+            "value": "代填登入密碼那一行的刪除；關掉刷臉解鎖也會清掉記憶體裡那一份"
           }
         }
       }
@@ -70108,6 +70476,489 @@
           "stringUnit": {
             "state": "translated",
             "value": "這次鎖定畫面請用 Touch ID 或密碼"
+          }
+        }
+      }
+    },
+    "face.scan.voiceprint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Say: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请念：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請念：%@"
+          }
+        }
+      }
+    },
+    "face.autofill.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fill in your login password"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "代填登录密码"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "代填登入密碼"
+          }
+        }
+      }
+    },
+    "face.autofill.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save password…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存密码…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存密碼…"
+          }
+        }
+      }
+    },
+    "face.autofill.arm": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on with Touch ID"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用 Touch ID 打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用 Touch ID 打開"
+          }
+        }
+      }
+    },
+    "face.autofill.touchIDReason": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "turn on filling in your login password"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开代填登录密码"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開代填登入密碼"
+          }
+        }
+      }
+    },
+    "face.autofill.risk.untested": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experimental: not yet tested against photos, videos or another person"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实验：还没测过能不能挡住照片、录像和别人"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "實驗：還沒測過能不能擋住照片、錄影和別人"
+          }
+        }
+      }
+    },
+    "face.autofill.risk.weak": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experimental: testing found attacks it doesn't stop, so don't use it yet"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实验：实测有挡不住的情况，先别用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "實驗：實測有擋不住的情況，先別用"
+          }
+        }
+      }
+    },
+    "face.autofill.risk.tested": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experimental: tested to stop photos, phone screens, videos, another person and another phone"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实验：照片、手机屏幕、录像、别人、别的手机都实测挡住了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "實驗：照片、手機螢幕、錄影、別人、別的手機都實測擋住了"
+          }
+        }
+      }
+    },
+    "face.autofill.status.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not saved"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没存"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還沒存"
+          }
+        }
+      }
+    },
+    "face.autofill.status.armed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On until you unlock"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打开，解锁后清掉"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打開，解鎖後清掉"
+          }
+        }
+      }
+    },
+    "face.autofill.status.stored": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved, not on yet"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已存，还没打开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已存，還沒打開"
+          }
+        }
+      }
+    },
+    "face.autofill.status.noTouchID": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch ID isn't available on this Mac"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 没有可用的 Touch ID"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這台 Mac 沒有可用的 Touch ID"
+          }
+        }
+      }
+    },
+    "face.autofill.status.checking": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在核对…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在核對…"
+          }
+        }
+      }
+    },
+    "face.autofill.status.wrong": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrong password, not saved"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "密码不对，没有存"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "密碼不對，沒有存"
+          }
+        }
+      }
+    },
+    "face.autofill.status.unavailable": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac can't save it right now"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 现在存不了"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這台 Mac 現在存不了"
+          }
+        }
+      }
+    },
+    "face.autofill.status.armFailed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not on. If your fingerprints changed, save it again"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没打开，指纹改过就要重新存"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒打開，指紋改過就要重新存"
+          }
+        }
+      }
+    },
+    "face.autofill.alert.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save your login password"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存登录密码"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存登入密碼"
+          }
+        }
+      }
+    },
+    "face.autofill.alert.body": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When the lock screen recognizes you and your phone or watch checks out, it's typed in for you. It's kept in this Mac's keychain and only comes out with Touch ID."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "锁屏时认出你、手机或手表也对上，就替你输入。密码存在这台 Mac 的钥匙串里，按 Touch ID 才取得出来。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鎖定畫面時認出你、手機或手錶也對上，就替你輸入。密碼存在這台 Mac 的鑰匙圈裡，按 Touch ID 才取得出來。"
+          }
+        }
+      }
+    },
+    "face.autofill.alert.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac's login password"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台 Mac 的登录密码"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這台 Mac 的登入密碼"
+          }
+        }
+      }
+    },
+    "face.autofill.alert.save": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存"
+          }
+        }
+      }
+    },
+    "face.autofill.alert.cancel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
           }
         }
       }

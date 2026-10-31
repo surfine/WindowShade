@@ -39,7 +39,7 @@ enum WS2PrivacyCopy {
     static var showInFinder: String { WSL10n.text("settings.privacy.showInFinder", zh: "在访达中显示") }
     static var destinationGroupTitle: String { WSL10n.text("settings.privacy.destinationGroup", zh: "去了哪里") }
 
-    /// 刷脸解锁实验打开后才出现的几行（bluetooth-presence、face-identity、unlock-secret）。
+    /// 刷脸解锁实验打开后才出现的几行（bluetooth-presence、face-identity、face-quality、unlock-secret、voiceprint、watch-assist）。
     static let faceUnlockFeature = "face-unlock-experiment"
 
     static func readAtText(_ date: Date, timeZone: TimeZone = .current) -> String {

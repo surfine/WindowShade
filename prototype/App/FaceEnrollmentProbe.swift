@@ -108,6 +108,8 @@ enum FaceEnrollmentProbe {
             (.init(state: .lockedOut, secondFactorPresent: false),
              WSL10n.text("face.scan.lockedOut", zh: "这次锁屏请用 Touch ID 或密码"), "3 failures"),
             (.init(state: .recognised, secondFactorPresent: true), nil, "recognised"),
+            (.init(state: .voiceprint, secondFactorPresent: true, phrase: "苹果月亮火车"),
+             WSL10n.text("face.scan.voiceprint", zh: "请念：%@", "苹果月亮火车"), "near threshold: say a phrase"),
         ]
         for (indicator, line, name) in states {
             host.present(indicator)

@@ -1,0 +1,11 @@
+{
+  "about": "刷脸解锁（代填）攻击矩阵，face-unlock 硬要求 4。Aaron 在真机上逐项实测后填 status（blocked / not_blocked / inconclusive）和 evidence（哪天、哪台机器、哪个构建、录像或日志放在哪）；再把 prototype/Core/VoiceprintChallenge.swift 里 FaceAttackMatrix.current 改成同样的结果。tests/run-face-autofill-tests.sh 核对两边一致。设置里的风险说明只按这张表写。",
+  "setup": "开刷脸解锁（实验）并录脸；转头挑战打开（FaceScan.experiment.challenge）；存好登录密码并用 Touch ID 打开这一段；手机或手表按第二道的要求连着。每项至少 5 次，记下每次刘海那一句和系统有没有解开。",
+  "attacks": [
+    {"id": "photo", "what": "打印或屏幕上显示的本人照片，对着内建镜头", "status": "not_run", "evidence": null},
+    {"id": "phone-screen", "what": "手机屏幕上显示本人照片或实时画面，对着内建镜头", "status": "not_run", "evidence": null},
+    {"id": "video", "what": "播放本人录像（含转头），对着内建镜头", "status": "not_run", "evidence": null},
+    {"id": "different-person", "what": "另一个人（最好长得像）坐到 Mac 前", "status": "not_run", "evidence": null},
+    {"id": "different-phone", "what": "本人的脸，但第二道换成另一台手机或手表（没登记过的）", "status": "not_run", "evidence": null}
+  ]
+}

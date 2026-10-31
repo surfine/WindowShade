@@ -109,6 +109,14 @@ import Cocoa
 
     func stop() { dismiss(animated: false) }
 
+    /// 第 6 步（代填闸门）换一句：只在指示已经在锁屏上时换，不为它另开一次。
+    func presentIfShowing(_ state: FaceRecognitionIndicator.State, phrase: String? = nil) {
+        guard view != nil else { return }
+        var next = FaceRecognitionIndicator(state: state, secondFactorPresent: sources.secondFactorPresent())
+        next.phrase = phrase
+        present(next)
+    }
+
     /// 直接放某一种样子（相位接线和探针都走这里；口罩目前没有检测来源，只有探针会放它）。
     func present(_ next: FaceRecognitionIndicator) {
         guard ensureSurface() else { return }
@@ -135,6 +143,9 @@ import Cocoa
             }
         case .notRecognised, .masked, .lockedOut:
             hold(Self.outcomeHold)
+        case .voiceprint:
+            // 念短语这一轮自己有期限；到点没结论就收。
+            hold(VoiceprintChallenge.defaultWindow + 1)
         }
     }
 
@@ -431,7 +442,7 @@ import Cocoa
 
         showingExposure = false
         if let line = indicator.sentence {
-            sentence.stringValue = Self.text(line)
+            sentence.stringValue = Self.text(line, phrase: indicator.phrase)
             showChin(true)
             fade([row], to: 0)
             fade([sentence], to: 1)
@@ -559,7 +570,7 @@ import Cocoa
         switch current.state {
         case .scanning: parts.append(WSL10n.text("face.scan.title", zh: "正在认你"))
         case .recognised: parts.append(WSL10n.text("face.scan.recognized", zh: "认出了，交给系统"))
-        default: if let line = current.sentence { parts.append(Self.text(line)) }
+        default: if let line = current.sentence { parts.append(Self.text(line, phrase: current.phrase)) }
         }
         if showingExposure {
             if let playback = lastExposure.playback {
@@ -577,7 +588,7 @@ import Cocoa
         setAccessibilityLabel(parts.joined(separator: WSL10n.text("notch.join", zh: "，")))
     }
 
-    static func text(_ sentence: FaceRecognitionIndicator.Sentence) -> String {
+    static func text(_ sentence: FaceRecognitionIndicator.Sentence, phrase: String? = nil) -> String {
         switch sentence {
         case .secondFactorMissing:
             return WSL10n.text("face.scan.secondMissing", zh: "差手机或手表，用 Touch ID 或密码")
@@ -587,6 +598,8 @@ import Cocoa
             return WSL10n.text("face.scan.masked", zh: "戴着口罩，用 Touch ID 或密码")
         case .lockedOut:
             return WSL10n.text("face.scan.lockedOut", zh: "这次锁屏请用 Touch ID 或密码")
+        case .voiceprint:
+            return WSL10n.text("face.scan.voiceprint", zh: "请念：%@", phrase ?? "")
         }
     }
 

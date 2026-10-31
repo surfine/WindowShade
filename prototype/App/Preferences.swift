@@ -398,7 +398,9 @@ extension AppDelegate {
 
     /// 高级 → 实验：还在试的开关，默认都关着。每项还是原来那一个键（位置换了，键名、默认值、已存的值都不变）。
     func makeExperimentalSettingsCard() -> NSView {
-        makeUnifiedSettingsCard([
+        // 代填登录密码（D11）跟刷脸解锁同一个开关：开关关着、预览旗标也没开时这一行不出现。
+        let autofillRows: [NSView] = showsFaceAutofillRow ? [makeFaceAutofillRow()] : []
+        return makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.experiments.livePreview.name", zh: "普通窗口实时预览"),
                 subtitle: WSL10n.setting("settings.experiments.livePreview.sub", zh: "窗口浏览里选中的窗口播放实时画面"),
@@ -423,6 +425,7 @@ extension AppDelegate {
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:)),
                                  explainer: ExplainerRow.Advanced.originGuess),
             makeFaceExperimentRow(),
+        ] + autofillRows + [
             makePresenceLockRow(),
             makePresenceDeviceRow(),
             BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },
