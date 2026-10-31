@@ -12,7 +12,7 @@ swiftc prototype/Core/Contracts.swift -swift-version 6 -strict-concurrency=compl
 .build/face-scan-screening-tests/screening
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   -module-cache-path .build/face-scan-screening-tests/module-cache \
-  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift \
+  prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/GazeAttention.swift prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift \
   prototype/Core/FaceCaptureQuality.swift prototype/Core/FaceLivenessCues.swift tests/FaceRegionPixelsTests.swift \
   -framework AVFoundation -framework Vision -framework CoreVideo \
   -o .build/face-scan-screening-tests/pixels

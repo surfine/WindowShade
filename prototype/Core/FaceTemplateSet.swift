@@ -12,6 +12,8 @@ enum FaceTemplateSet {
         let format: Int
         let modelVersion: String
         let templates: [Entry]
+        /// 可选：注视校准的系数（决定 75）。旧数据没有这一项，读回是 nil，不用升格式版本。
+        let gaze: GazeCalibration?
     }
     private struct Entry: Codable {
         /// 小端 Float32 字节（JSON 里是 base64），比数字数组省约三倍空间。
@@ -35,14 +37,23 @@ enum FaceTemplateSet {
         }
     }
 
-    /// 只编码这个版本、维度一致、数值有限的模板；一条都没有就返回 nil。
-    static func encode(_ templates: [FaceTemplate], modelVersion: String) -> Data? {
+    /// 只编码这个版本、维度一致、数值有限的模板；一条都没有就返回 nil。校准无效就不写校准（模板照写）。
+    static func encode(_ templates: [FaceTemplate], modelVersion: String, gaze: GazeCalibration? = nil) -> Data? {
         let valid = sanitized(templates, modelVersion: modelVersion)
         guard !valid.isEmpty else { return nil }
         let payload = Payload(format: formatVersion, modelVersion: modelVersion,
                               templates: valid.map { Entry(embedding: bytes($0.embedding), enrolledAt: $0.enrolledAt,
-                                                          eyeOpenness: $0.eyeOpenness) })
+                                                          eyeOpenness: $0.eyeOpenness) },
+                              gaze: gaze.flatMap { $0.isValid ? $0 : nil })
         return try? JSONEncoder().encode(payload)
+    }
+
+    /// 读回注视校准：模板那一组读得回来、校准本身有效才算；否则 nil（没校准，注视就是不知道）。
+    static func decodeGaze(_ data: Data, modelVersion: String) -> GazeCalibration? {
+        guard !decode(data, modelVersion: modelVersion).isEmpty,
+              let payload = try? JSONDecoder().decode(Payload.self, from: data),
+              let gaze = payload.gaze, gaze.isValid else { return nil }
+        return gaze
     }
 
     /// 读回：格式、版本、维度、数值任一不对，整组作废（返回空），不猜。

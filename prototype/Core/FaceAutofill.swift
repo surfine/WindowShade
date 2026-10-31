@@ -68,6 +68,17 @@ enum FaceAutofill {
         var liveness: Check
         /// 这次锁屏刷脸已经计掉的次数。
         var faceAttemptsUsed: Int
+        /// 注视（决定 75，见 GazeAttention）：认出那一刻你在不在看屏幕。没校准、没看清就是 .unknown。
+        var gaze: Check = .unknown
+    }
+
+    /// 注视状态 → 闸门那一项：只有「在看屏幕」算通过；看别处、闭着眼算没过；不知道就是不知道。
+    static func gazeCheck(_ state: GazeAttention.State) -> Check {
+        switch state {
+        case .onScreen: .passed
+        case .offScreen, .eyesClosed: .failed
+        case .unknown: .unknown
+        }
     }
 
     struct Inputs: Equatable, Sendable {

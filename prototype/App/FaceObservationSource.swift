@@ -114,6 +114,35 @@ struct FaceIdentitySample: Sendable, Equatable {
     /// 否决线索（§3.4）：屏幕/手机边框候选，Vision 的归一化框（原点左下，与脸框同一坐标系）。
     /// 每 3 帧才跑一次（FaceIdentityAnalysis.rectangleInterval），没跑的帧是 nil，跑了没找到是空数组。
     var rectangles: [CGRect]? = nil
+    /// 注视（决定 75）：这张脸的眼睛开度与瞳孔偏移（只有数字，见 Core/GazeAttention.swift）；没有特征点就是 nil。
+    var gaze: GazeSample? = nil
+}
+
+/// Vision 的人脸结果 → 注视几何（纯计算，不碰像素）：眼睛轮廓与瞳孔换成画面像素坐标（y 向上），带上头的朝向。
+enum FaceGazeGeometry {
+    static func landmarks(for face: VNFaceObservation, imageSize: CGSize) -> GazeLandmarks? {
+        guard let landmarks = face.landmarks, imageSize.width > 0, imageSize.height > 0 else { return nil }
+        let box = face.boundingBox
+        func image(_ points: [CGPoint]?) -> [GazePoint] {
+            (points ?? []).map {
+                GazePoint(x: Double((box.minX + $0.x * box.width) * imageSize.width),
+                          y: Double((box.minY + $0.y * box.height) * imageSize.height))
+            }
+        }
+        func pupil(_ region: VNFaceLandmarkRegion2D?) -> GazePoint? {
+            guard let points = region?.normalizedPoints, !points.isEmpty else { return nil }
+            let mapped = image(points)
+            let x = mapped.map(\.x).reduce(0, +) / Double(mapped.count)
+            let y = mapped.map(\.y).reduce(0, +) / Double(mapped.count)
+            let point = GazePoint(x: x, y: y)
+            return point.isFinite ? point : nil
+        }
+        return GazeLandmarks(leftEye: image(landmarks.leftEye?.normalizedPoints),
+                             rightEye: image(landmarks.rightEye?.normalizedPoints),
+                             leftPupil: pupil(landmarks.leftPupil), rightPupil: pupil(landmarks.rightPupil),
+                             yaw: FaceAlignment.finite(face.yaw), pitch: FaceAlignment.finite(face.pitch),
+                             roll: FaceAlignment.finite(face.roll))
+    }
 }
 
 /// 刷脸实验的画质采样：脸部裁切里抽样的像素（交错 RGB，每像素 3 字节）→ 平均亮度（0...1）与近白、近灰占比。
@@ -797,6 +826,9 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         var sample = FaceIdentitySample(modelVersion: embedder.modelVersion, faceIndex: index, embedding: embedding)
         if observations.indices.contains(index) {
             sample.captureQuality = captureQuality(of: observations[index], buffer: buffer, handler: handler)
+            // 注视：同一个 landmarks 结果上的几何运算，不多跑 Vision 请求。
+            let size = CGSize(width: CVPixelBufferGetWidth(buffer), height: CVPixelBufferGetHeight(buffer))
+            sample.gaze = FaceGazeGeometry.landmarks(for: observations[index], imageSize: size).flatMap(GazeFeatures.sample)
         }
         if let sampler = identitySampler, let rgb = FaceRegionPixels.rgbSamples(buffer, box: face.boundingBox),
            let stats = sampler(rgb), stats.brightness.isFinite, stats.glareRatio.isFinite {

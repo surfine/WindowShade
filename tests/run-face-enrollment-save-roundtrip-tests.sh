@@ -7,7 +7,7 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   -module-cache-path "$(pwd)/.build/module-cache" \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/SessionLockState.swift \
   prototype/Core/AuthorizationModels.swift prototype/Core/IdentityEvidence.swift prototype/Core/AuthorizationLedger.swift \
-  prototype/Core/FaceCaptureQuality.swift prototype/Core/FaceScanGuard.swift prototype/Core/FaceTemplateSet.swift \
+  prototype/Core/FaceCaptureQuality.swift prototype/Core/FaceScanGuard.swift prototype/Core/FaceTemplateSet.swift prototype/Core/GazeAttention.swift \
   prototype/Core/FaceEnrollmentFlow.swift \
   prototype/App/FaceTemplateKeychainStore.swift \
   tests/FaceEnrollmentSaveRoundTripTests.swift \

@@ -26,8 +26,9 @@ extension WS2RemoteHost: CompanionLockVerifying {}
 /// - 存了、打开了：每一轮扫描交来 `ScanReport`，按 `FaceAutofill.decide` 判；全过才交给 `LockScreenPasswordTyping` 打字。
 ///   任何一项不成就交回系统，刘海按第 5 步那几句说缺哪样（`FaceAutofill.indicatorState`）。
 ///
-/// 今天真机上**不会**代填：注视、声纹比对都还没有真来源，下面的 live 来源一律报「核对不了」，闸门因此失败即关。
-/// 第二道（决定 74）已有来源：遥控模式开着、配对过 iPhone 时，锁屏亮起的那一小段里 iPhone 答上挑战才算。见 `Environment.live`。
+/// 今天真机上**不会**代填：声纹比对还没有真来源，下面的 live 来源一律报「核对不了」，闸门因此失败即关。
+/// 第二道（决定 74）已有来源：遥控模式开着、配对过 iPhone 时，锁屏亮起的那一小段里 iPhone 答上挑战才算。
+/// 注视（决定 75）已有来源：录脸时要先做屏幕校准。见 `Environment.live` 每一项的说明。
 @MainActor final class FaceAutofillController {
     struct Environment {
         var lockState: @MainActor () -> SessionLockState
@@ -63,8 +64,8 @@ extension WS2RemoteHost: CompanionLockVerifying {}
                 companion: { [unowned owner] in owner.inputController.remoteHostForSettings },
                 // 手表「戴着已解锁」的广播：第三方读不到归属（tools/continuity-probe/REPORT.md），不接。
                 watch: { .unknown },
-                // 注视：还没有瞳孔与屏幕的校准，头朝前不等于在看屏幕（lock-unlock-plan「注视」）。不知道就是不知道。
-                gaze: { _ in .unknown },
+                // 注视（决定 75）：刷脸扫描按录脸时的瞳孔与屏幕校准判（GazeAttention）。没校准、没看清就是 .unknown。
+                gaze: { $0.gaze },
                 lockUI: { LockScreenPasswordField.state(lock: $0) },
                 typer: CGEventPasswordTyper(),
                 verifier: UnavailableSpeakerVerifier(),

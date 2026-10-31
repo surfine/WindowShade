@@ -33,6 +33,10 @@ import Cocoa
     static let challengeKey = "FaceScan.experiment.challenge"
     static let challengeLease: Double = 12
     static let enrollLease: Double = 20
+    /// 录脸里注视校准那一步（五个位置，每处最多 6 秒）另给的相机时间。
+    static let calibrationLease: Double = 32
+    /// 认出你时注视还没定下来（还不够连续帧）：再看最多这么久等它定。只在存了注视校准、代填那一侧挂着时才等。
+    static let gazeSettleSeconds: Double = 1.5
     static let scanLease: Double = 6
 
     private static var shared: FaceScanExperiment?
@@ -156,6 +160,12 @@ import Cocoa
     /// 太暗时的屏幕边光（画质辅助）。
     private let fillLight = FaceFillLightController()
     private var templates: [FaceTemplate] = []
+    /// 跟模板同一条存着的注视校准（决定 75）；没有就是 nil，注视永远是「不知道」。
+    private var gazeCalibration: GazeCalibration?
+    /// 这一次认你的注视判定；每次开相机重建。
+    private var gaze = GazeAttention(calibration: nil)
+    /// 认出了、等注视定下来再交给代填的那一份（活体标签、模型版本、最晚到什么时候）。
+    private var pendingGazeReport: (liveness: FaceAutofill.Check, modelVersion: String, deadline: Double)?
     private var guardian = FaceScanGuard(templates: [])
     private var lockGeneration: UInt64 = 0
     private var scanID: UInt64?
@@ -267,18 +277,20 @@ import Cocoa
         if enrollRequested { defaults.removeObject(forKey: Self.enrollKey) }
         let store = store, version = modelVersion
         Task { [weak self] in
-            let loaded = await Task.detached(priority: .utility) { () -> Result<[FaceTemplate], Error> in
+            let loaded = await Task.detached(priority: .utility) {
+                () -> Result<(templates: [FaceTemplate], gaze: GazeCalibration?), Error> in
                 Result {
                     if deleteRequested { try store.delete(modelVersion: version) }
-                    return try store.load(modelVersion: version)
+                    return try store.loadRecord(modelVersion: version)
                 }
             }.value
             guard let self else { return }
             switch loaded {
-            case .success(let templates):
+            case .success(let record):
                 if deleteRequested { self.log("face experiment: templates deleted") }
-                self.install(templates)
-                self.log("face experiment: \(templates.count) templates loaded")
+                self.install(record.templates, gaze: record.gaze)
+                self.log("face experiment: \(record.templates.count) templates loaded"
+                         + (record.gaze == nil ? ", gaze not calibrated" : ", gaze calibrated"))
             case .failure:
                 self.log("face experiment: keychain unavailable")
             }
@@ -286,9 +298,10 @@ import Cocoa
         }
     }
 
-    private func install(_ templates: [FaceTemplate]) {
+    private func install(_ templates: [FaceTemplate], gaze: GazeCalibration?) {
         let changed = self.templates.count != templates.count
         self.templates = templates
+        gazeCalibration = templates.isEmpty ? nil : gaze
         guardian = FaceScanGuard(templates: templates)
         scanID = nil
         if changed { onTemplatesChanged?() }
@@ -319,6 +332,7 @@ import Cocoa
             screening.reset()
             ownerEvidence = nil; lastChallengeFrame = nil; parallax = []
             bestScore = nil
+            gaze = GazeAttention(calibration: gazeCalibration)
         }
         switch guardian.wake(at: CACurrentMediaTime(), lock: lockState(), lockGeneration: lockGeneration) {
         case .notLocked: stopCamera(); return
@@ -339,7 +353,38 @@ import Cocoa
 
     /// 锁屏时的帧：挑战开始后交给挑战，之前交给比对。
     private func lockedFrame(_ frame: FaceObservation) {
+        // 注视每一帧都看（比对、挑战、等注视定下来都算），只用这张脸的眼睛几何；看不到就是缺一帧。
+        gaze.receive(frame.identity?.gaze)
+        if pendingGazeReport != nil { gazeSettleFrame(frame); return }
         if challenge != nil { challengeFrame(frame) } else { scanFrame(frame) }
+    }
+
+    /// 认出之后等注视定下来：在看屏幕就当场交；到点了就按当时的状态交（不知道就是不知道）。
+    private func gazeSettleFrame(_ frame: FaceObservation) {
+        guard let pending = pendingGazeReport else { return }
+        guard lockState().isReallyLocked else { stopCamera(); return }
+        guard gaze.state == .onScreen || frame.observedAt >= pending.deadline else { return }
+        stopCamera(ending: Self.recognizedEnd)
+    }
+
+    /// 认出你（挑战通过或没开挑战）：交给代填那一侧。注视已经定了、没校准、代填没挂着就当场交并关相机；
+    /// 否则相机再开一小会儿，等注视定下来（gazeSettleFrame），关相机时交。
+    private func finishRecognised(liveness: FaceAutofill.Check, modelVersion version: String) {
+        guard onAutofillReport != nil, gaze.isCalibrated, gaze.state != .onScreen else {
+            reportForAutofill(recognised: true, liveness: liveness, modelVersion: version)
+            stopCamera(ending: Self.recognizedEnd)
+            return
+        }
+        pendingGazeReport = (liveness, version, CACurrentMediaTime() + Self.gazeSettleSeconds)
+    }
+
+    /// 关相机时把等着的那一份交出去（不管是注视定了、到点了还是相机被收走）。
+    private func flushPendingGazeReport() {
+        guard let pending = pendingGazeReport else { return }
+        pendingGazeReport = nil
+        // 锁已经解开（或换了一代）就不交：代填那一侧本来也只会说「没锁」。
+        guard lockState().isReallyLocked else { return }
+        reportForAutofill(recognised: true, liveness: pending.liveness, modelVersion: pending.modelVersion)
     }
 
     /// 帧 → 筛选要用的量：取守卫也会取的那张脸（有特征就是特征那张，否则最大那张）。
@@ -392,8 +437,7 @@ import Cocoa
                 log("face evidence: owner match scan=\(evidence.scanID)")
                 recordEvidence(evidence, cues: [])
                 onScanPhase?(.recognized)
-                reportForAutofill(recognised: true, liveness: .unknown, modelVersion: scan.modelVersion)
-                stopCamera(ending: Self.recognizedEnd)
+                finishRecognised(liveness: .unknown, modelVersion: scan.modelVersion)
             }
         case .failed:
             log("face evidence: no owner match scan=\(scanID.map { String($0) } ?? "?")")
@@ -457,8 +501,7 @@ import Cocoa
             if FaceParallax.isConfirmed(window: parallax) { cues.insert(.depthParallax) }
             if let ownerEvidence { recordEvidence(ownerEvidence, cues: cues, through: lastChallengeFrame) }
             onScanPhase?(.recognized)
-            reportForAutofill(recognised: true, liveness: .passed, modelVersion: ownerEvidence?.modelVersion ?? modelVersion)
-            stopCamera(ending: Self.recognizedEnd)
+            finishRecognised(liveness: .passed, modelVersion: ownerEvidence?.modelVersion ?? modelVersion)
         case .failed(let reason):
             stopCamera(ending: Self.attemptEvent(for: reason))
         }
@@ -470,10 +513,12 @@ import Cocoa
     private func reportForAutofill(recognised: Bool, liveness: FaceAutofill.Check, modelVersion version: String) {
         guard let onAutofillReport else { return }
         let tuning = guardian.tuning
+        let gazeCheck = FaceAutofill.gazeCheck(gaze.state)
+        if recognised { log("face gaze: \(gaze.isCalibrated ? gaze.state.rawValue : "uncalibrated")") }
         onAutofillReport(FaceAutofill.ScanReport(
             recognised: recognised, similarity: bestScore, threshold: tuning.similarityThreshold(for: version),
             thresholdCalibrated: tuning.modelProfiles[version]?.calibrated ?? false,
-            liveness: liveness, faceAttemptsUsed: attempts.used))
+            liveness: liveness, faceAttemptsUsed: attempts.used, gaze: gazeCheck))
     }
 
     /// 认出了：这一次结束，不计次数。FaceIdentityEvent 没有“认出”这一项，用不计次、不出提示的 interrupted 收尾。
@@ -524,7 +569,10 @@ import Cocoa
         }
         // 没有 Touch ID（或刘海）就没法确认要存的这一组：不录，不开相机。
         guard canConfirmWithTouchID() else { log("face enrollment: skipped, Touch ID unavailable"); return }
-        let flow = FaceEnrollmentFlow(modelVersion: modelVersion, existing: templates)
+        var tuning = FaceEnrollmentTuning()
+        tuning.calibrateGaze = true
+        let flow = FaceEnrollmentFlow(modelVersion: modelVersion, existing: templates, tuning: tuning,
+                                      existingGaze: gazeCalibration)
         guard !flow.isFinished else { log("face enrollment: skipped, no threshold for this model"); return }
         stopCamera()
         enrollmentToken &+= 1
@@ -539,7 +587,9 @@ import Cocoa
                 self.log("face enrollment: camera not allowed"); self.endEnrollment(.cameraLost); self.stopCamera(); return
             }
             self.cameraTask = nil
-            self.openCamera(camera.id, lease: Self.enrollLease) { [weak self] frame in self?.enrollFrame(frame) }
+            self.openCamera(camera.id, lease: Self.enrollLease + Self.calibrationLease) { [weak self] frame in
+                self?.enrollFrame(frame)
+            }
         }
     }
 
@@ -556,6 +606,11 @@ import Cocoa
         }
         switch flow.phase {
         case .confirming:
+            switch flow.gazeOutcome {
+            case .fitted?: log("face enrollment: gaze calibrated")
+            case .failed(let failure)?: log("face enrollment: gaze not calibrated (\(Self.label(failure)))")
+            case nil: break
+            }
             stopCamera()
             askTouchID()
         case .ended(let reason):
@@ -581,7 +636,18 @@ import Cocoa
             centerOffset: box.map { Double(hypot($0.midX - 0.5, $0.midY - 0.5)) }, motion: nil)
         return FaceEnrollmentFrame(cameraID: frame.cameraID, generation: frame.generation, sequence: frame.sequence,
                                    capturedAt: frame.observedAt, quality: sample,
-                                   modelVersion: identity?.modelVersion, embedding: identity?.embedding)
+                                   modelVersion: identity?.modelVersion, embedding: identity?.embedding,
+                                   gaze: identity?.gaze)
+    }
+
+    /// 校准没成的原因（日志标签，不带数值）。
+    static func label(_ failure: GazeCalibrationFlow.Failure) -> String {
+        switch failure {
+        case .timedOut: "timed out"
+        case .fit(.notEnoughSamples): "not enough frames"
+        case .fit(.singular): "degenerate"
+        case .fit(.residualTooLarge): "does not follow the targets"
+        }
     }
 
     /// 收满 5 帧：在刘海里用 Touch ID 确认「保存你的脸」，目标是要存的这一组的摘要。
@@ -611,8 +677,9 @@ import Cocoa
             guard let self else { return }
             if saved {
                 // 钥匙串里已是整组新模板；内存跟上（这一轮哪怕刚被锁屏作废，钥匙串里也不是半份）。
-                self.install(confirmed.templates)
+                self.install(confirmed.templates, gaze: confirmed.gaze)
                 self.log("face enrollment: saved \(confirmed.added) templates, \(confirmed.templates.count) total"
+                         + (confirmed.gaze == nil ? ", no gaze calibration" : ", with gaze calibration")
                          + " (confirmed with Touch ID, threshold uncalibrated)")
             } else {
                 self.log("face enrollment: keychain unavailable, nothing saved")
@@ -682,6 +749,7 @@ import Cocoa
     private func stopCamera(ending event: FaceIdentityEvent = .interrupted) {
         if case .cameraUnavailable = event { onScanPhase?(.cameraUnavailable) }
         epoch &+= 1
+        flushPendingGazeReport()
         if var flow = challenge {
             // 挑战没做完相机就没了（租约到、锁态变、休眠）：记一笔中断。
             challenge = nil
@@ -704,6 +772,6 @@ private extension FaceTemplateKeychainStore {
     /// 录脸写入的唯一入口：只收 Touch ID 确认过、授权已当场消费的那一组（只有 FaceEnrollmentFlow.confirm 造得出来）。
     /// 整组一次写入，替换这个版本原来那一条，没有半份。tests/run-face-enrollment-flow-tests.sh 静态检查 App 只走这里。
     func save(_ confirmed: FaceEnrollmentSave) throws {
-        try save(confirmed.templates, modelVersion: confirmed.modelVersion)
+        try save(confirmed.templates, modelVersion: confirmed.modelVersion, gaze: confirmed.gaze)
     }
 }

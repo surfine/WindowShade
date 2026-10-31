@@ -5,7 +5,7 @@ import Security
 /// 刷脸实验的模板存放处：钥匙串里每个模型版本一条。
 ///
 /// 只在这台 Mac 上：kSecAttrAccessibleWhenUnlockedThisDeviceOnly + 不同步，不进 iCloud 钥匙串，
-/// 也不随备份迁到别的机器。存的是特征数字和录入时刻（编码见 Core/FaceTemplateSet.swift），不存图像。
+/// 也不随备份迁到别的机器。存的是特征数字、录入时刻和注视校准的系数（编码见 Core/FaceTemplateSet.swift），不存图像。
 /// 读写都不弹窗（interactionNotAllowed）；钥匙串不可用时报错，不退回偏好设置或文件。
 final class FaceTemplateKeychainStore: Sendable {
     struct Failure: Error, Equatable {
@@ -39,19 +39,25 @@ final class FaceTemplateKeychainStore: Sendable {
 
     /// 没存过返回空；存过但读不懂也返回空（整组作废，不猜）。
     func load(modelVersion: String) throws -> [FaceTemplate] {
+        try loadRecord(modelVersion: modelVersion).templates
+    }
+
+    /// 模板和同一条里的注视校准（决定 75）。没校准、校准读不懂都是 nil。
+    func loadRecord(modelVersion: String) throws -> (templates: [FaceTemplate], gaze: GazeCalibration?) {
         var q = query(modelVersion: modelVersion)
         q[kSecReturnData as String] = true; q[kSecMatchLimit as String] = kSecMatchLimitOne
         var result: CFTypeRef?
         let status = SecItemCopyMatching(q as CFDictionary, &result)
-        if status == errSecItemNotFound { return [] }
+        if status == errSecItemNotFound { return ([], nil) }
         guard status == errSecSuccess else { throw Failure(status: status) }
         guard let bytes = result as? Data, bytes.count <= Self.maximumBytes else { throw Failure(status: errSecDecode) }
-        return FaceTemplateSet.decode(bytes, modelVersion: modelVersion)
+        return (FaceTemplateSet.decode(bytes, modelVersion: modelVersion),
+                FaceTemplateSet.decodeGaze(bytes, modelVersion: modelVersion))
     }
 
-    /// 整组替换这个版本的模板；传空就删掉这一条。
-    func save(_ templates: [FaceTemplate], modelVersion: String) throws {
-        guard let bytes = FaceTemplateSet.encode(templates, modelVersion: modelVersion) else {
+    /// 整组替换这个版本的模板（连同注视校准，同一条一次写入）；传空就删掉这一条。
+    func save(_ templates: [FaceTemplate], modelVersion: String, gaze: GazeCalibration? = nil) throws {
+        guard let bytes = FaceTemplateSet.encode(templates, modelVersion: modelVersion, gaze: gaze) else {
             try delete(modelVersion: modelVersion); return
         }
         guard bytes.count <= Self.maximumBytes else { throw Failure(status: errSecParam) }

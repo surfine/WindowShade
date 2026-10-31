@@ -34760,19 +34760,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Off by default; once the experiment is on it looks up to 6 seconds when the screen lights up while locked, at up to 10 frames a second; with the head-turn challenge it watches up to 12 more seconds after recognizing; at most 3 times per lock, and an unclear picture doesn't count"
+            "value": "Off by default; once the experiment is on it looks up to 6 seconds when the screen lights up while locked, at up to 10 frames a second; with the head-turn challenge it watches up to 12 more seconds after recognizing; at most 3 times per lock, and an unclear picture doesn't count; with gaze calibration saved, it looks up to 1.5 more seconds after recognizing to confirm you’re looking at the screen"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数"
+            "value": "默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数；存了注视校准时，认出后最多再看 1.5 秒，确认你在看屏幕"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "預設關閉；開啟實驗後，鎖定畫面時螢幕亮起最多看 6 秒，每秒最多 10 幀；開啟轉頭挑戰，認出後再看最多 12 秒；每次鎖定畫面最多 3 次，畫面看不清不算次數"
+            "value": "預設關閉；開啟實驗後，鎖定畫面時螢幕亮起最多看 6 秒，每秒最多 10 幀；開啟轉頭挑戰，認出後再看最多 12 秒；每次鎖定畫面最多 3 次，畫面看不清不算次數；存了注視校準時，認出後最多再看 1.5 秒，確認你在看螢幕"
           }
         }
       }
@@ -34806,19 +34806,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Templates live in this Mac's keychain, not synced and not carried into backups; pictures and crops aren't kept"
+            "value": "Templates and gaze calibration numbers live in this Mac's keychain, not synced and not carried into backups; pictures and crops aren't kept"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存"
+            "value": "模板和注视校准系数只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "模板只存在這台 Mac 的鑰匙串裡，不同步、不隨備份遷走；畫面和裁切圖不存"
+            "value": "模板和注視校準係數只存在這台 Mac 的鑰匙串裡，不同步、不隨備份遷走；畫面和裁切圖不存"
           }
         }
       }
@@ -34875,19 +34875,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Experiment: face-crop image features (computed by Apple’s Vision), enrolled templates, eye openness at enrolment, enrolment numbers, comparison results; with the turn-challenge on, also head direction and eye openness while turning; when you are recognised, one extra line notes whether your companion devices are present (not recorded when leave-to-lock is off)"
+            "value": "Experiment: face-crop image features (computed by Apple’s Vision), enrolled templates, eye openness at enrolment, enrolment numbers, comparison results; with the turn-challenge on, also head direction and eye openness while turning; when you are recognised, one extra line notes whether your companion devices are present (not recorded when leave-to-lock is off); enrolment adds one step where you look at the middle and the four corners of the screen to fit a set of gaze calibration numbers; while recognizing you it also checks whether your eyes are open, where each pupil sits in the eye and which way your head faces, only to tell whether you’re looking at the screen"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）"
+            "value": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开；认出时另记一行随身设备在不在（离开就锁没开就不记）；录脸时多一步：依次看屏幕中间和四个角，拟出一组注视校准系数；认你时还看眼睛睁没睁开、瞳孔在眼睛里的位置和头的朝向，只为判断你在不在看屏幕"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "實驗：臉部裁出來的圖像特徵（Apple 的 Vision 算出）、登記過的模板、錄入時眼睛睜開的程度、錄入序號、比對結果；打開轉頭挑戰後，還有轉頭時臉朝哪邊、眼睛睜沒睜開；認出時另記一行隨身裝置在不在（離開就鎖沒開就不記）"
+            "value": "實驗：臉部裁出來的圖像特徵（Apple 的 Vision 算出）、登記過的模板、錄入時眼睛睜開的程度、錄入序號、比對結果；打開轉頭挑戰後，還有轉頭時臉朝哪邊、眼睛睜沒睜開；認出時另記一行隨身裝置在不在（離開就鎖沒開就不記）；錄臉時多一步：依次看螢幕中間和四個角，擬出一組注視校準係數；認你時還看眼睛睜沒睜開、瞳孔在眼睛裡的位置和頭的朝向，只為判斷你在不在看螢幕"
           }
         }
       }
@@ -70269,6 +70269,121 @@
           "stringUnit": {
             "state": "translated",
             "value": "錄入你的臉"
+          }
+        }
+      }
+    },
+    "face.gaze.centre": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at the middle of the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看屏幕中间"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看螢幕中間"
+          }
+        }
+      }
+    },
+    "face.gaze.topLeft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at the top-left corner of the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看屏幕左上角"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看螢幕左上角"
+          }
+        }
+      }
+    },
+    "face.gaze.topRight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at the top-right corner of the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看屏幕右上角"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看螢幕右上角"
+          }
+        }
+      }
+    },
+    "face.gaze.bottomRight": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at the bottom-right corner of the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看屏幕右下角"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看螢幕右下角"
+          }
+        }
+      }
+    },
+    "face.gaze.bottomLeft": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look at the bottom-left corner of the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看屏幕左下角"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看螢幕左下角"
           }
         }
       }
