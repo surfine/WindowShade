@@ -50,13 +50,13 @@ ul.plain{margin:0;padding-left:1.2em;max-width:72ch} ul.plain li{margin:4px 0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">七 对标 · 第 33 张 · 经得起考验</span><span class="ws-st">稿 · 10-31 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">← 对标 Atoll、Alcove 与 niri</a><a href="https://claude.ai/artifact/9AqXZMBeDGpTztDGJQyhjY">1.0.18 宣传片分镜 →</a></nav>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">七 对标 · 第 33 张 · 经得起考验</span><span class="ws-st">Aaron 已定 · 10-31</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">← 对标 Atoll、Alcove 与 niri</a><a href="https://claude.ai/artifact/9AqXZMBeDGpTztDGJQyhjY">1.0.18 宣传片分镜 →</a></nav>
 <div class="wrap">
 
 <header>
   <h1>经得起考验</h1>
   <p class="lede">2026-10-31 又做了一次竞品调研：Apple 自己、九家刘海 App、十几家窗口工具、五家编程会话 App，只看 10-15 以后的新事和上次漏掉的事。这张稿把别家栽过的地方一条条拿来考我们：今天的设计和代码挡不挡得住，挡不住就改稿。</p>
-  <p class="lede">「改稿」一栏都是提议，已写进各张稿的「经得起考验」一节，等 Aaron 定；没定之前各稿正文照旧。来源与读取日期在 docs/competitive-2026-10-31.md。</p>
+  <p class="lede">Aaron 10-31 已逐条拍板（AARON-DECISIONS 第 38 至 53 条），结果在下面「Aaron 10-31 已定」一节；和总表里的提议不同的地方以那一节为准。来源与读取日期在 docs/competitive-2026-10-31.md。</p>
   <div class="counts" aria-label="结论统计">
     <span><b class="ok">9</b>经得起</span>
     <span><b class="fix">13</b>改稿</span>
@@ -115,6 +115,31 @@ ul.plain{margin:0;padding-left:1.2em;max-width:72ch} ul.plain li{margin:4px 0}
       <tr><td>「降低透明度」下预览变实心</td><td>Rectangle #1897、2.0.4</td><td>设计系统有「降低透明度」的规则，没逐表面验</td><td class="v fix">改稿</td><td>加验收：开着它看一遍预览和岛</td></tr>
       <tr><td>触控 Mac 上双击标题栏</td><td>Apple：轻点两下窗口铺满</td><td>第 18 条：触控机上交给系统</td><td class="v ok">经得起</td><td>—</td></tr>
       <tr><td>第一次打开的教学</td><td>AltTab 11.9.0</td><td>《首次打开 1.0.17 小样》已拍板</td><td class="v no">不取</td><td>已有，不另学</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="decided">
+  <div class="sec-head"><h2>Aaron 10-31 已定</h2>
+    <p>16 条，编号接 AARON-DECISIONS-2026-10-29。和提议不同的只有第 41 至 43 条：活动跟着当前显示器走，没有刘海的屏画一颗胶囊。</p></div>
+  <div class="tbl"><table style="min-width:760px">
+    <thead><tr><th>#</th><th>事</th><th>定了什么</th></tr></thead>
+    <tbody>
+      <tr><td>38</td><td>让位怎么判断</td><td>按机型：只有带触控屏的 PROLED MacBook Pro 让位；旧刘海机照常画我们的岛</td></tr>
+      <tr><td>39</td><td>iPhone 实时活动</td><td>系统已显示的同一件事，耳朵不重复（没有 API，等真机）</td></tr>
+      <tr><td>40</td><td>视频通话时</td><td>只亮点或紧凑，不自己展开；点了照样开</td></tr>
+      <tr><td>41</td><td>合盖、拔掉内建屏</td><td>活动跟着当前显示器</td></tr>
+      <tr><td>42</td><td>外接屏画什么</td><td>菜单栏正中一颗胶囊</td></tr>
+      <tr><td>43</td><td>新 MacBook Pro 接外接屏</td><td>外接屏上画我们的胶囊，内建屏让位，系统已显示的不重复</td></tr>
+      <tr><td>44</td><td>交回终端后的琥珀点</td><td>点它去那扇终端；读屏念「Claude 在终端里等你」</td></tr>
+      <tr><td>45</td><td>晚到的点按</td><td>不送出，回执「这一条已经在终端里处理」</td></tr>
+      <tr><td>46</td><td>整条命令</td><td>按住看整条；高风险先露出整条才能按 Touch ID</td></tr>
+      <tr><td>47</td><td>Claude 没登录、没安装</td><td>转写里一行 + 切换钮旁标注，不弹窗</td></tr>
+      <tr><td>48</td><td>额度 80% 提醒</td><td>不取</td></tr>
+      <tr><td>49</td><td>DockDoor 的标题栏手势</td><td>加进同类工具检测，手势没反应时说一次是谁，不自己让</td></tr>
+      <tr><td>50</td><td>「缺」的 7 条</td><td>现在做，Sonnet 子代理实现，主模型验收</td></tr>
+      <tr><td>51</td><td>第 37 条那一次真 Claude</td><td>不算用掉，Aaron 重新登录后再跑</td></tr>
+      <tr><td>52</td><td>窗口验收</td><td>四条都加：Dock 自动隐藏、降低透明度、点浮层后输入仍通、显示器热插拔</td></tr>
+      <tr><td>53</td><td>App 搬走后钩子失效</td><td>设置里写「找不到 WindowShade，重新拷一次配置」</td></tr>
     </tbody></table></div>
 </section>
 
