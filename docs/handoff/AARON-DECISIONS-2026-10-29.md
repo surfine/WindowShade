@@ -119,3 +119,4 @@
 | 78 | 下载许可 | **同意下载**：`voxceleb_resnet34.onnx`（26.5 MB）、`avg_model.pt`（45.1 MB，huggingface.co/Wespeaker）、FFHQ 128px 缩图（约 1.95 GB，NVlabs 官方脚本），放仓库外独立目录，不进 git；另同意装 torch / coremltools / onnx 到仓库外的独立虚拟环境、抓 WeSpeaker 源码，自己转 Core ML |
 | 79 | 人脸误认率目标 | **参考 HomeView 认脸 + Siri 个人请求声纹，能力范围内做到最好，量力而行、不延误工期**。执行口径：单靠脸照 Pixel 8 的 Android Class 3（FAR ≤ 1/50,000）；叠第二道整体朝 Face ID 1/1,000,000 靠；标定一次就定门槛，外推写明 |
 | 80 | 声纹的用法 | 照 Siri 个人请求：先认出说的是随机短句（本机 SpeechAnalyzer），再比对声音；只在脸分数临界时加分，不单独放行 |
+| 81 | FFHQ 缩图在 Google Drive 上要登录才能下载（官方脚本 70,000 个链接全部转到登录页） | **Aaron 自己登录下载**：从 NVlabs 官方 Drive 文件夹（https://github.com/NVlabs/ffhq-dataset 页上的 thumbnails128x128 链接）下载约 1.95 GB，解压到 `/Users/aaron/Documents/WindowShade-models/ffhq/thumbnails128x128/`；之后主模型跑 `tools/face-calibration/run.sh embed` 与 `calibrate`。在那之前代填保持关 |
