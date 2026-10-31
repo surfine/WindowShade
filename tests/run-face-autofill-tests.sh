@@ -12,7 +12,7 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/IslandMetrics.swift \
   prototype/Core/ReleaseDefaults.swift prototype/Core/SessionLockState.swift prototype/Core/LockScreenExposure.swift \
   prototype/Core/FaceCaptureQuality.swift prototype/Core/FaceIdentityAttempts.swift \
-  prototype/Core/FaceAutofill.swift prototype/Core/VoiceprintChallenge.swift \
+  prototype/Core/CompanionLockVerify.swift prototype/Core/FaceAutofill.swift prototype/Core/VoiceprintChallenge.swift \
   tests/support/WS2TestSupport.swift tests/FaceAutofillTests.swift -o "$OUT/autofill"
 "$OUT/autofill"
 

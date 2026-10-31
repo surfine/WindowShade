@@ -5,7 +5,8 @@ import Foundation
 /// 只有下面**全部**成立才代填（face-unlock 硬要求 2、5、7）：
 /// 1. 确知锁着（`SessionLockState.locked`；不知道锁没锁不算）。
 /// 2. 脸的分数过门槛，且门槛用本人与他人样本标定过；活体（转头挑战）和注视都**通过**——不知道不算通过。
-/// 3. 第二道 = 能确认是你自己那台手机或手表的加密连线（决定 71）。广播、信号强、名字对得上都不算。
+/// 3. 第二道 = 能确认是你自己那台手机或手表的加密连线（决定 71），锁着时要刚刚重新证明过（决定 74，见 CompanionLockVerify）。
+///    广播、信号强、名字对得上都不算。
 /// 4. 这次锁屏用掉的次数（认错、挑战失败、否决线索、代填过一次没解开）少于 3。
 /// 5. 系统锁屏此刻能收密码（密码框在、屏幕亮着）。
 /// 6. 有一段用 Touch ID 打开的密码会话（硬要求 7）。
@@ -181,6 +182,19 @@ enum FaceAutofill {
 
     /// 代填后系统多久没确认解开，就当这一次没成（计 1 次，密码会话当场清掉，不再重试）。
     static let unlockConfirmationTimeout: Double = 4
+
+    /// 其余全过、只差第二道，而 iPhone 核对窗口开着时，最多等这么久让手机答上挑战（决定 74）；等不到就交回。
+    static let linkWaitSeconds: Double = 3
+
+    /// 第二道从哪来（决定 74）。`companion` 是 nil：没有遥控器那条加密连线可用（遥控模式关着、没配对、或代填那一段没打开），
+    /// 只剩「离开就锁」的蓝牙在不在——它只证明连着、证明不了是谁，最多 presentUnverified。
+    static func link(companion: CompanionLockVerify.Status?, nearby: Bool) -> Link {
+        switch companion {
+        case .verified?: return .verified(.phone)
+        case .presentUnverified?: return .presentUnverified
+        case .absent?, nil: return nearby ? .presentUnverified : .absent
+        }
+    }
 }
 
 /// 登录密码在内存里的那一份。只在这一个对象里，清掉时先用 memset_s 覆写再释放。

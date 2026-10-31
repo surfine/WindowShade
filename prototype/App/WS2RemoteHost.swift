@@ -5,6 +5,8 @@
 // - 只认严格的 Pair-Setup 加新鲜的 Pair-Verify；配对后的第一条连接被拒、iPhone 自己重连时什么都不说。
 // - 配对码只进刘海卡片，不进日志；SRP 通过后先在刘海里用 Touch ID 确认，拿到授权账消费成功的回执才写钥匙串。
 // - 同一时间只有一台 iPhone 能遥控；锁屏、睡眠、切换用户时丢掉遥控输入，解锁后不自动发送、不回到原来那一层。
+// - 决定 74：刷脸代填那一段打开时（`setLockVerify(true)`），锁屏后已验签的连线不断，转成「只核对」：一条命令都不收，
+//   只在亮屏打开的核对窗口里答挑战（新连线走完 Pair-Verify，或留下的连线回一条带挑战事务号的加密应答）。关着时锁屏照旧全断。
 // - 遥控器送来的按键和触控先交给 RemoteMode / ConductorSession；它们给出的 Effect 记类别日志，再交给 WS2RemoteEffects（M09）
 //   按层执行（展开那一排、焦点、放回、启动台、收工、音量、提示音、10 秒收回）。环境里没给端口时只记日志。
 import Foundation
@@ -122,6 +124,13 @@ enum WS2RemoteCopy {
     var pairedPeers: [WS2PeerRepository.Peer] { repository?.enabledPeers ?? [] }
     /// 宿主自己的定时器个数。设计上恒为 0：期限都挂在各条连接的传输上。
     let timerCount = 0
+    /// 决定 74：锁屏时留着 iPhone 那条连线、只用来核对。只有刷脸代填那一段打开时才是 true；false 时锁屏行为和以前逐条一样。
+    private(set) var lockVerifyEnabled = false
+    private var lockVerifier = CompanionLockVerifier()
+    /// 锁着时答上一次挑战就回调（代填那一侧拿来结束「等手机」）。
+    private var onLockProof: (() -> Void)?
+    /// 挑战用的随机数。单测换成固定序列。
+    var makeLockNonce: () -> UInt32 = { UInt32.random(in: 1...UInt32.max) }
     var onChange: (() -> Void)?
     weak var presenter: (any WS2RemoteHostPresenter)?
 
@@ -219,7 +228,10 @@ enum WS2RemoteCopy {
         handle(remote.setEnabled(false), source: "remote-off")
         layerEffects?.disconnected()
         // 锁屏观察随遥控模式一起拆掉；留着旧的锁屏原因会让下次打开一直算锁着。
-        if isLocked { lockReasons.removeAll(); handle(conductor.setLocked(false, at: now), source: "remote-off") }
+        if isLocked {
+            lockReasons.removeAll(); lockVerifier.setLocked(false)
+            handle(conductor.setLocked(false, at: now), source: "remote-off")
+        }
         presenter?.setRemoteActivity(false)
         record("stopped")
     }
@@ -238,20 +250,176 @@ enum WS2RemoteCopy {
         let was = isLocked
         if locked { lockReasons.insert(reason) } else { lockReasons.remove(reason) }
         guard was != isLocked else { return }
+        lockVerifier.setLocked(isLocked)
         if isLocked {
             handle(conductor.setLocked(true, at: now), source: "lock")
             handle(remote.setEnabled(false), source: "lock")
             cancelPairing()
-            closeAll(silently: true)
+            if lockVerifyEnabled { holdForLockVerify() } else { closeAll(silently: true) }
             layerEffects?.disconnected()
             record("locked")
         } else {
+            // 只核对的连线不转回遥控：iPhone 要用新鲜的 Pair-Verify 重连。
+            closeLockVerifyConnections()
             // 不自动发送，也不回到之前那一层：遥控器要重新连上、从第 0 层开始。
             handle(conductor.setLocked(false, at: now), source: "unlock")
             handle(remote.setLayer(.collapsed), source: "unlock")
             record("unlocked")
         }
         onChange?()
+    }
+
+    // MARK: 锁屏时只核对（决定 74）
+
+    /// 代填那一侧打开或关掉「锁屏时用 iPhone 核对」。关掉时留下的只核对连线全断、这一代挑战作废。
+    func setLockVerify(_ on: Bool, onProof: (() -> Void)?) {
+        onLockProof = on ? onProof : nil
+        guard on != lockVerifyEnabled else { return }
+        lockVerifyEnabled = on
+        lockVerifier.reset()
+        if !on { closeLockVerifyConnections() }
+        record("lock-verify \(on ? "on" : "off")")
+    }
+
+    /// 亮屏、开盖、唤醒时调：打开（或续上）核对窗口，并向锁屏后留下的连线各发一个挑战。
+    /// 窗口外不发挑战、不收新连线——这就是省电的那一半。
+    @discardableResult func openLockVerifyWindow() -> Bool {
+        guard enabled, isLocked, lockVerifyEnabled, lockVerifier.openWindow(now: now.seconds) else { return false }
+        var sent = 0
+        for connection in Array(connections.values) where connection.lockedOnly && connection.session != nil {
+            // 还在等应答的挑战不换（同一次亮屏会被调好几次：唤醒、亮屏、扫描结束）。
+            if let old = connection.lockChallenge {
+                let age = now.seconds - old.issuedAt
+                if age >= 0, age <= CompanionLockVerify.freshness { continue }
+                lockVerifier.withdraw(nonce: old.nonce)
+            }
+            connection.lockChallenge = nil
+            guard let session = connection.session,
+                  let challenge = lockVerifier.issue(nonce: makeLockNonce(), now: now.seconds) else { continue }
+            connection.lockChallenge = challenge
+            do {
+                let request = try WS2OPACK.encode(.dictionary([
+                    "_i": .string(CompanionLockVerify.echoMethod), "_t": .uint(2),
+                    "_x": .uint(UInt64(challenge.nonce)), "_c": .dictionary([:])]))
+                guard connection.link.send([try session.seal(request)]) else { throw Failure.state }
+                // 应答要在时限内回来；回不来就断，iPhone 下次连进来走新鲜的握手。
+                connection.link.setDeadline(after: CompanionLockVerify.freshness)
+                sent += 1
+            } catch {
+                close(connection, cause: .ownerStop, silently: true)
+            }
+        }
+        record("lock-verify window open challenges=\(sent)")
+        return true
+    }
+
+    /// 闸门要的那一项：答上过、没过时限、连线还活着才是 verified。
+    var lockVerifyStatus: CompanionLockVerify.Status {
+        let alive = connections.values.contains { $0.lockedOnly && $0.session != nil }
+        return lockVerifier.status(now: now.seconds, linkAlive: alive)
+    }
+
+    /// 锁上那一刻：已验签的连线留下、转成只核对；还没验签的、配对中的全断。遥控输入已在调用方作废。
+    private func holdForLockVerify() {
+        var kept = 0
+        for connection in Array(connections.values) {
+            if connection.session != nil, connection.phase == .verified || connection.phase == .session {
+                connection.lockedOnly = true
+                connection.buttons.removeAll(); connection.touch.reset(); connection.touching = false
+                // 空闲的连线最多留一段（传输层允许的最长一段），之后靠 iPhone 重连。
+                connection.link.setDeadline(after: Limits.session)
+                kept += 1
+            } else {
+                close(connection, cause: .ownerStop, silently: true)
+            }
+        }
+        if operatorConnection != nil {
+            operatorConnection = nil
+            presenter?.setRemoteActivity(false)
+        }
+        record("lock-verify held=\(kept)")
+    }
+
+    private func closeLockVerifyConnections() {
+        for connection in Array(connections.values) where connection.lockedOnly {
+            close(connection, cause: .ownerStop, silently: true)
+        }
+    }
+
+    /// 锁着时收到的帧：只认 Pair-Verify（不配对、不回退）和对挑战的应答。
+    private func lockedReceive(_ frame: WS2CompanionFrame, _ connection: Connection) throws {
+        switch connection.phase {
+        case .initial:
+            guard frame.type == 5 else { refuse(CompanionLockVerify.Refusal.pairing.rawValue, connection); throw Failure.state }
+            try beginVerify(connection)
+            guard let challenge = lockVerifier.issue(nonce: makeLockNonce(), now: now.seconds) else {
+                refuse(CompanionLockVerifier.Rejection.windowClosed.rawValue, connection); connection.silent = true; throw Failure.state
+            }
+            connection.lockChallenge = challenge
+            try verifyStep(frame, connection)
+        case .pairVerify:
+            guard frame.type == 6 else { refuse(CompanionLockVerify.Refusal.pairing.rawValue, connection); throw Failure.state }
+            try verifyStep(frame, connection)
+        case .verified, .session:
+            try lockedSessionFrame(frame, connection)
+        case .pairSetup, .awaitingConfirmation, .enrolled:
+            throw Failure.state
+        }
+    }
+
+    /// 锁着时 M3 验过：答上这次握手的挑战。不登记操作者、不说话、不写钥匙串。
+    private func lockVerified(_ connection: Connection) {
+        guard let peer = connection.peer, let challenge = connection.lockChallenge else {
+            close(connection, cause: .protocolReject, silently: true); return
+        }
+        connection.lockChallenge = nil
+        // 刚配完、还没正常验签过一次的那台不算（它的第一次验签要在没锁时走完）。
+        if repository?.snapshot?.peers.first(where: { $0.identifier == peer.identifier })?.awaitingVerification != false {
+            lockVerifier.withdraw(nonce: challenge.nonce)
+            record("lock-verify refused unconfirmed-peer")
+            close(connection, cause: .notCurrent, silently: true); return
+        }
+        connection.lockedOnly = true
+        lockAnswered(challenge, connection, via: "handshake")
+    }
+
+    private func lockedSessionFrame(_ frame: WS2CompanionFrame, _ connection: Connection) throws {
+        guard frame.type == 8, let session = connection.session else { throw Failure.state }
+        let plain = try session.open(frame)
+        guard case .dictionary(let fields) = try WS2OPACK.decode(plain) else { throw Failure.malformed }
+        var kind: UInt64?, transaction: UInt64?, method: String?
+        if case .uint(let value) = fields["_t"] { kind = value }
+        if case .uint(let value) = fields["_x"] { transaction = value }
+        if case .string(let value) = fields["_i"] ?? fields["model"] { method = value }
+        switch CompanionLockVerify.classify(kind: kind, method: method, transaction: transaction) {
+        case .verifyAnswer(let nonce):
+            guard let challenge = connection.lockChallenge, challenge.nonce == nonce else {
+                refuse(CompanionLockVerify.Refusal.reply.rawValue, connection); return
+            }
+            connection.lockChallenge = nil
+            lockAnswered(challenge, connection, via: "echo")
+        case .refuse(let reason):
+            // 不执行、不应答、不续期限、不动界面。
+            refuse(reason.rawValue, connection)
+        }
+    }
+
+    private func refuse(_ reason: String, _ connection: Connection) {
+        guard connection.refusalsLogged.insert(reason).inserted else { return }
+        record("lock-verify refused \(reason)")
+    }
+
+    private func lockAnswered(_ challenge: CompanionLockVerifier.Challenge, _ connection: Connection, via: String) {
+        switch lockVerifier.answer(nonce: challenge.nonce, epoch: challenge.epoch, now: now.seconds) {
+        case .success:
+            // 证明只管 freshness 秒；连线再留一段给下一次亮屏用，空闲到点自己断。
+            connection.link.setDeadline(after: Limits.session)
+            record("lock-verify proven via=\(via)")
+            onLockProof?()
+        case .failure(let rejection):
+            record("lock-verify refused \(rejection.rawValue)")
+            close(connection, cause: .protocolReject, silently: true)
+        }
     }
 
     // MARK: 设置里的“移除”
@@ -287,16 +455,24 @@ enum WS2RemoteCopy {
         var buttons: [WS2.Button: (id: UInt64, beganAt: WS2.Instant)] = [:]
         var touch = CompanionHID.Touch()
         var touching = false
+        /// 锁着时只核对（决定 74）：不收任何命令。
+        var lockedOnly = false
+        var lockChallenge: CompanionLockVerifier.Challenge?
+        /// 每类拒绝每条连线只记一行（触摸一秒几十条，不能刷屏）。
+        var refusalsLogged: Set<String> = []
         init(link: any WS2RemoteLink, acceptedAt: Double) { self.link = link; self.acceptedAt = acceptedAt }
     }
 
     private func accept(_ link: any WS2RemoteLink) {
         let unauthenticated = connections.values.filter { $0.session == nil }.count
-        guard enabled, !isLocked, repository?.blocked == false, connections.count < WS2ConnectionBudget.totalLimit,
+        // 锁着时只在核对窗口里收（决定 74），而且只收来做 Pair-Verify 的。
+        let lockAdmits = lockVerifyEnabled && lockVerifier.isWindowOpen(now: now.seconds)
+        guard enabled, !isLocked || lockAdmits, repository?.blocked == false, connections.count < WS2ConnectionBudget.totalLimit,
               unauthenticated < WS2ConnectionBudget.unauthenticatedLimit else {
             link.close(.ownerStop); record("connection-refused"); return
         }
         let connection = Connection(link: link, acceptedAt: now.seconds)
+        connection.lockedOnly = isLocked
         connections[connection.id] = connection
         let id = connection.id
         link.onFrame = { [weak self] frame in self?.receive(frame, on: id) }
@@ -309,7 +485,11 @@ enum WS2RemoteCopy {
     private func receive(_ frame: WS2CompanionFrame, on id: UUID) {
         guard let connection = connections[id] else { return }
         do {
-            guard enabled, !isLocked else { throw Failure.state }
+            guard enabled else { throw Failure.state }
+            if isLocked {
+                guard lockVerifyEnabled, connection.lockedOnly else { throw Failure.state }
+                try lockedReceive(frame, connection); return
+            }
             switch connection.phase {
             case .initial:
                 if frame.type == 5 { try beginVerify(connection); try verifyStep(frame, connection) }
@@ -368,7 +548,7 @@ enum WS2RemoteCopy {
             connection.session = result.session; connection.peer = result.session.peer
             connection.verifier = nil; connection.phase = .verified
             connection.link.setDeadline(after: 3)
-            verified(connection)
+            if isLocked { lockVerified(connection) } else { verified(connection) }
         }
     }
 
@@ -774,6 +954,7 @@ enum WS2RemoteCopy {
 
     private func finish(_ connection: Connection, cause: WS2TransportCloseCause, keepOperatorState: Bool) {
         connections.removeValue(forKey: connection.id)
+        if let challenge = connection.lockChallenge { lockVerifier.withdraw(nonce: challenge.nonce); connection.lockChallenge = nil }
         connection.link.onFrame = nil; connection.link.onClosed = nil
         connection.verifier?.close(); connection.verifier = nil
         connection.session?.close(); connection.session = nil

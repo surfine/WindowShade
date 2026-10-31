@@ -248,6 +248,18 @@ struct FaceAutofillTests {
         t.expect(G.band(face(0.86)) == .watchAssistBand, "within 0.05 -> watch band")
         t.expect(G.band(face(0.84)) == .fail, "further -> fail")
         t.expect(G.band(face(.infinity)) == .fail, "infinite score fails")
+        t.section("FA-13", "decision 74: only a fresh iPhone challenge-response is a second factor")
+        t.expect(G.link(companion: .verified, nearby: false) == .verified(.phone), "fresh proof over a live link")
+        t.expect(G.link(companion: .presentUnverified, nearby: true) == .presentUnverified, "kept link without a fresh proof")
+        t.expect(G.link(companion: .absent, nearby: true) == .presentUnverified, "Bluetooth nearby never verifies")
+        t.expect(G.link(companion: nil, nearby: true) == .presentUnverified, "no companion host: Bluetooth only")
+        t.expect(G.link(companion: nil, nearby: false) == .absent, "nothing at all")
+        var stale = passing(); stale.link = G.link(companion: .presentUnverified, nearby: true)
+        t.expect(G.decide(stale) == .handBack(.secondFactor), "stale proof hands back for the second factor")
+        var fresh = passing(); fresh.link = G.link(companion: .verified, nearby: false)
+        t.expect(G.decide(fresh) == .autofill(viaVoiceprint: false), "fresh proof plus everything else autofills")
+        t.expect(G.linkWaitSeconds > 0 && G.linkWaitSeconds < CompanionLockVerify.freshness, "link wait shorter than the freshness window")
+
         t.finish()
     }
 }

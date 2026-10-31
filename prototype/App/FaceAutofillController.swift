@@ -8,6 +8,17 @@ import Cocoa
     func cancel()
 }
 
+/// 决定 74：锁屏时用 iPhone 那条 Pair-Verify 加密连线当第二道（遥控器那一条，WS2RemoteHost）。
+/// 代填那一段打开时才让宿主锁屏后留着连线、只核对；亮屏、开盖、唤醒时打开核对窗口。
+@MainActor protocol CompanionLockVerifying: AnyObject {
+    var lockVerifyEnabled: Bool { get }
+    func setLockVerify(_ on: Bool, onProof: (() -> Void)?)
+    @discardableResult func openLockVerifyWindow() -> Bool
+    var lockVerifyStatus: CompanionLockVerify.Status { get }
+}
+
+extension WS2RemoteHost: CompanionLockVerifying {}
+
 /// 第 6 步（D11）：认出你之后，在系统锁屏的密码框里代填登录密码。跟「刷脸解锁（实验）」同一个开关，默认关。
 ///
 /// - 开关关着：这个对象根本不建（`FaceScanExperiment.startIfEnabled` 里才建），行为和第 5 步逐字节一样。
@@ -15,13 +26,15 @@ import Cocoa
 /// - 存了、打开了：每一轮扫描交来 `ScanReport`，按 `FaceAutofill.decide` 判；全过才交给 `LockScreenPasswordTyping` 打字。
 ///   任何一项不成就交回系统，刘海按第 5 步那几句说缺哪样（`FaceAutofill.indicatorState`）。
 ///
-/// 今天真机上**不会**代填：第二道（能核对是你那台手机或手表的加密连线）、注视、声纹比对都还没有真来源，
-/// 下面的 live 来源一律报「核对不了」，闸门因此失败即关。见 `Environment.live` 每一项的说明。
+/// 今天真机上**不会**代填：注视、声纹比对都还没有真来源，下面的 live 来源一律报「核对不了」，闸门因此失败即关。
+/// 第二道（决定 74）已有来源：遥控模式开着、配对过 iPhone 时，锁屏亮起的那一小段里 iPhone 答上挑战才算。见 `Environment.live`。
 @MainActor final class FaceAutofillController {
     struct Environment {
         var lockState: @MainActor () -> SessionLockState
-        /// 第二道：加密连线（决定 71）。
+        /// 第二道：加密连线（决定 71、74）。
         var link: @MainActor () -> FaceAutofill.Link
+        /// 遥控器那条连线的宿主（遥控模式没开过就是 nil）。
+        var companion: @MainActor () -> (any CompanionLockVerifying)?
         var watch: @MainActor () -> FaceAutofill.WatchAssist
         var gaze: @MainActor (FaceAutofill.ScanReport) -> FaceAutofill.Check
         var lockUI: @MainActor (SessionLockState) -> FaceAutofill.LockUI
@@ -38,13 +51,16 @@ import Cocoa
         @MainActor static func live(owner: AppDelegate) -> Environment {
             Environment(
                 lockState: { AuthorizationService.shared.lockState() },
-                // 还没有能核对「是你那台」的加密连线：iPhone 遥控器那条 Pair-Verify 连线锁屏时按设计就断了；
-                // 「离开就锁」的蓝牙连接只证明连着，证明不了是谁（WS2DeviceEvidence 已写明）。所以最多报 presentUnverified。
+                // 决定 74：iPhone 遥控器那条 Pair-Verify 连线锁屏后留着只核对，刚答上挑战才算 verified。
+                // 没有这条（遥控模式关着、核对没打开）时退回「离开就锁」的蓝牙：只证明连着，证明不了是谁，最多 presentUnverified。
                 link: { [unowned owner] in
                     let presence = owner.ws2Runtime.presenceSnapshot
                     let near = presence.enabled && (presence.phone == .present || presence.watch == .present)
-                    return near ? .presentUnverified : .absent
+                    let host = owner.inputController.remoteHostForSettings
+                    let companion = host.flatMap { $0.lockVerifyEnabled ? $0.lockVerifyStatus : nil }
+                    return FaceAutofill.link(companion: companion, nearby: near)
                 },
+                companion: { [unowned owner] in owner.inputController.remoteHostForSettings },
                 // 手表「戴着已解锁」的广播：第三方读不到归属（tools/continuity-probe/REPORT.md），不接。
                 watch: { .unknown },
                 // 注视：还没有瞳孔与屏幕的校准，头朝前不等于在看屏幕（lock-unlock-plan「注视」）。不知道就是不知道。
@@ -86,6 +102,8 @@ import Cocoa
     private var inFlight = false
     private var confirmation: Task<Void, Never>?
     private var voiceprint: VoiceprintChallenge?
+    /// 只差第二道、iPhone 核对窗口开着时，等手机答挑战的那一轮（决定 74）。
+    private var linkWait: (report: FaceAutofill.ScanReport, voiceprint: FaceAutofill.Voiceprint, epoch: UInt64, task: Task<Void, Never>)?
     /// 设置行要刷新时调。
     var onChange: (@MainActor () -> Void)?
     // 只在主线程写；deinit 里移除时已没有别的引用。
@@ -105,7 +123,12 @@ import Cocoa
         let workspace = NSWorkspace.shared.notificationCenter
         observers.append((workspace, workspace.addObserver(forName: NSWorkspace.didWakeNotification, object: nil,
                                                            queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.expireIfIdle() }
+            MainActor.assumeIsolated { self?.expireIfIdle(); self?.openCompanionWindow() }
+        }))
+        // 亮屏、开盖：刷脸马上要开始，这时才打开 iPhone 核对窗口（省电：平时不核对）。
+        observers.append((workspace, workspace.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil,
+                                                           queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.openCompanionWindow() }
         }))
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
             observers.append((workspace, workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
@@ -129,6 +152,7 @@ import Cocoa
             guard let self else { return }
             self.hasStoredPassword = exists
             if !exists, self.session.isArmed { self.session.end(.removed) }
+            self.syncCompanion()
             self.onChange?()
         }
     }
@@ -151,6 +175,7 @@ import Cocoa
             if result == .saved {
                 self.session.end(.removed)   // 换了密码：旧的那一段作废
                 self.hasStoredPassword = true
+                self.syncCompanion()
             }
             self.onChange?()
             done(result)
@@ -179,6 +204,7 @@ import Cocoa
                 }
                 self.session.arm(secret, now: self.environment.now())
                 self.scheduleIdleWipe()
+                self.syncCompanion()
                 self.environment.log("face autofill: session armed")
                 self.onChange?()
                 done(self.session.isArmed ? .armed : .unavailable)
@@ -200,6 +226,7 @@ import Cocoa
             _ = await Task.detached(priority: .userInitiated) { try? store.delete() }.value
             guard let self else { return }
             self.hasStoredPassword = false
+            self.syncCompanion()
             self.environment.log("face autofill: password removed")
             self.onChange?()
             done()
@@ -211,6 +238,9 @@ import Cocoa
     /// 刷脸实验每一轮结束交来（认出、或认错满 2 秒）。
     func scanFinished(_ report: FaceAutofill.ScanReport) {
         guard hasStoredPassword, session.isArmed, !inFlight else { return }
+        // 正在等手机答挑战：换成更新的这一轮，继续等原来那段时间。
+        if let wait = linkWait { linkWait = (report, .notAsked, wait.epoch, wait.task); return }
+        openCompanionWindow()
         evaluate(report, voiceprint: .notAsked)
     }
 
@@ -227,8 +257,10 @@ import Cocoa
             sessionArmed: session.secretIfLive(now: environment.now()) != nil)
     }
 
-    private func evaluate(_ report: FaceAutofill.ScanReport, voiceprint: FaceAutofill.Voiceprint) {
+    private func evaluate(_ report: FaceAutofill.ScanReport, voiceprint: FaceAutofill.Voiceprint,
+                          mayWaitForLink: Bool = true) {
         let decision = FaceAutofill.decide(inputs(report, voiceprint: voiceprint))
+        if decision == .handBack(.secondFactor), mayWaitForLink, waitForLink(report, voiceprint: voiceprint) { return }
         switch decision {
         case .autofill(let viaVoiceprint):
             environment.log("face autofill: gate passed" + (viaVoiceprint ? " (voiceprint)" : ""))
@@ -264,6 +296,51 @@ import Cocoa
             if case .failed(let failure) = outcome { self.environment.log("face autofill: voiceprint failed (\(failure.rawValue))") }
             self.evaluate(report, voiceprint: round.gateValue)
         }
+    }
+
+    // MARK: - iPhone 核对（决定 74）
+
+    /// 代填那一段打开着（存了密码、Touch ID 打开过）才让宿主锁屏后留连线；其余时候和以前一样锁屏全断。
+    private func syncCompanion() {
+        let on = hasStoredPassword && session.isArmed
+        environment.companion()?.setLockVerify(on, onProof: on ? { [weak self] in self?.companionProven() } : nil)
+    }
+
+    private func openCompanionWindow() {
+        guard hasStoredPassword, session.isArmed, environment.lockState().isReallyLocked else { return }
+        syncCompanion()   // 遥控模式可能是在打开那一段之后才开的
+        environment.companion()?.openLockVerifyWindow()
+    }
+
+    /// 其余全过、只差第二道：核对窗口开着就等手机最多 `linkWaitSeconds` 秒，答上了马上再判一次。
+    private func waitForLink(_ report: FaceAutofill.ScanReport, voiceprint: FaceAutofill.Voiceprint) -> Bool {
+        guard linkWait == nil, let companion = environment.companion(), companion.lockVerifyEnabled,
+              companion.openLockVerifyWindow() else { return false }
+        let epoch = lockEpoch
+        let task = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(FaceAutofill.linkWaitSeconds))
+            guard !Task.isCancelled else { return }
+            self?.finishLinkWait(proven: false)
+        }
+        linkWait = (report, voiceprint, epoch, task)
+        environment.log("face autofill: waiting for the iPhone check")
+        return true
+    }
+
+    private func companionProven() { finishLinkWait(proven: true) }
+
+    private func finishLinkWait(proven: Bool) {
+        guard let wait = linkWait else { return }
+        linkWait = nil
+        wait.task.cancel()
+        guard wait.epoch == lockEpoch, !inFlight else { return }
+        environment.log("face autofill: iPhone check " + (proven ? "answered" : "timed out"))
+        evaluate(wait.report, voiceprint: wait.voiceprint, mayWaitForLink: false)
+    }
+
+    private func cancelLinkWait() {
+        linkWait?.task.cancel()
+        linkWait = nil
     }
 
     private func cancelVoiceprint() {
@@ -311,6 +388,7 @@ import Cocoa
                   self.environment.lockState() != .unlocked else { return }
             self.autofillTries += 1
             self.session.end(.autofillNotConfirmed)
+            self.syncCompanion()
             self.idleTimer?.invalidate(); self.idleTimer = nil
             self.environment.log("face autofill: not confirmed by the system, session cleared")
             self.onChange?()
@@ -323,16 +401,20 @@ import Cocoa
         typedThisLock = false
         confirmation?.cancel(); confirmation = nil
         cancelVoiceprint()
+        cancelLinkWait()
+        syncCompanion()
     }
 
     /// 解开了（不论是不是我们打的）：密码会话清掉（硬要求 7：解锁后重新上锁）。
     private func unlocked() {
         confirmation?.cancel(); confirmation = nil
         cancelVoiceprint()
+        cancelLinkWait()
         lockEpoch &+= 1
         typedThisLock = false
         guard session.isArmed else { return }
         session.end(.unlocked)
+        syncCompanion()
         idleTimer?.invalidate(); idleTimer = nil
         environment.log("face autofill: session cleared on unlock")
         onChange?()
@@ -351,6 +433,7 @@ import Cocoa
     private func expireIfIdle(force: Bool = false) {
         guard session.isArmed else { return }
         if force { session.end(.idle) } else if !session.expireIfIdle(now: environment.now()) { return }
+        syncCompanion()
         idleTimer?.invalidate(); idleTimer = nil
         environment.log("face autofill: session cleared (idle)")
         onChange?()
@@ -359,7 +442,9 @@ import Cocoa
     private func shutdown(_ reason: UnlockPasswordSession.EndReason) {
         confirmation?.cancel(); confirmation = nil
         cancelVoiceprint()
+        cancelLinkWait()
         session.end(reason)
+        environment.companion()?.setLockVerify(false, onProof: nil)
         idleTimer?.invalidate(); idleTimer = nil
         for (center, observer) in observers { center.removeObserver(observer) }
         observers.removeAll()

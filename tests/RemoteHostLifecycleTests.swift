@@ -383,6 +383,109 @@ final class TestClock: WS2Clock, @unchecked Sendable {
             check(back.closedCause != nil && rig.host.operatorIdentifier == nil, "revoked phone cannot verify again")
         }
 
+        scene("L10 决定 74：锁屏核对开着时留下连线、拒绝一切命令；亮屏发挑战，答上才算，过时限就不算")
+        do {
+            let rig = Rig(); let a = Phone("phone-verify")
+            try rig.preEnroll([a]); rig.on(conductor: true)
+            var proofs = 0
+            rig.host.setLockVerify(true, onProof: { proofs += 1 })
+            rig.host.makeLockNonce = { 0x1234_5678 }
+            let link = rig.connect(); try a.verify(on: link)
+            check(rig.host.operatorIdentifier == a.identifier, "operator before lock")
+            let spoken = rig.presenter.announcements.count
+            rig.host.setLock("screen", locked: true)
+            check(link.closedCause == nil && rig.host.connectionCount == 1, "verified link kept while locked")
+            check(rig.host.operatorIdentifier == nil && !rig.host.remote.enabled && rig.presenter.activity.last == false, "no operator, no remote input")
+            check(rig.host.lockVerifyStatus == .presentUnverified, "kept link alone is not verified")
+            let before = rig.log.lines.count
+            try a.button(1, 1, on: link); try a.button(1, 2, on: link)
+            link.push(8, try a.seal(["_i": .string("_mcc"), "_t": .uint(2), "_x": .uint(5), "_c": .dictionary(["_mcc": .uint(6), "_vol": .real(1)])]))
+            link.push(8, try a.seal(["_i": .string("_sessionStart"), "_t": .uint(2), "_x": .uint(6), "_c": .dictionary([:])]))
+            let after = Array(rig.log.lines[before...])
+            check(!after.contains { $0.contains("effect") }, "no command reaches RemoteMode or effects while locked")
+            check(after.contains("remote-host lock-verify refused input") && after.contains("remote-host lock-verify refused media")
+                  && after.contains("remote-host lock-verify refused session"), "each refusal logged by category")
+            check(after.filter { $0.contains("refused input") }.count == 1, "one line per category, not per message")
+            check(try link.frames().filter { $0.type == 8 }.isEmpty, "no replies to refused requests")
+            check(rig.presenter.announcements.count == spoken, "nothing said while locked")
+            check(rig.host.lockVerifyStatus != .verified && proofs == 0, "commands are not proofs")
+
+            check(rig.host.openLockVerifyWindow(), "wake opens the window")
+            rig.host.makeLockNonce = { 0x0BAD }
+            check(rig.host.openLockVerifyWindow(), "a second trigger in the same wake")
+            check(try link.frames().filter { $0.type == 8 }.count == 1, "pending challenge is not replaced")
+            guard let request = try link.frames().last(where: { $0.type == 8 }) else { throw Phone.Failure.bad }
+            guard case .dictionary(let fields) = try a.open(request) else { throw Phone.Failure.bad }
+            check(fields["_x"] == .uint(0x1234_5678) && fields["_t"] == .uint(2) && fields["_i"] == .string(CompanionLockVerify.echoMethod),
+                  "challenge request carries the nonce as its transaction")
+            let wrong = try a.seal(["_t": .uint(3), "_x": .uint(0x1111), "_c": .dictionary([:])])
+            link.push(8, wrong)
+            check(rig.host.lockVerifyStatus != .verified, "reply with another transaction does not verify")
+            rig.clock.seconds += 1
+            let reply = try a.seal(["_t": .uint(3), "_x": .uint(0x1234_5678), "_c": .dictionary([:])])
+            link.push(8, reply)
+            check(rig.host.lockVerifyStatus == .verified && proofs == 1, "echo answered: verified")
+            rig.clock.seconds += CompanionLockVerify.freshness + 0.5
+            check(rig.host.lockVerifyStatus == .presentUnverified, "proof older than freshness no longer counts")
+            link.push(8, reply)
+            check(link.closedCause != nil && rig.host.lockVerifyStatus != .verified && proofs == 1, "replayed reply breaks the session, never verifies")
+            rig.host.setLock("screen", locked: false)
+            check(rig.host.lockVerifyStatus != .verified, "unlock clears it")
+        }
+
+        scene("L11 决定 74：锁着时只在核对窗口里收新连线，只走 Pair-Verify；解锁全断、不自动转回遥控")
+        do {
+            let rig = Rig(); let a = Phone("phone-wake")
+            try rig.preEnroll([a]); rig.on()
+            let first = rig.connect(); try a.verify(on: first); first.peerClosed()   // 没锁时验签过一次
+            var proofs = 0
+            rig.host.setLockVerify(true, onProof: { proofs += 1 })
+            rig.host.setLock("screen", locked: true)
+            let early = rig.connect()
+            check(early.closedCause == .ownerStop, "locked, window closed: refused like before")
+            check(rig.host.openLockVerifyWindow(), "wake")
+            let setup = rig.connect(); setup.push(3, m1)
+            check(setup.closedCause != nil, "Pair-Setup refused while locked")
+            let link = rig.connect(); try a.verify(on: link)
+            check(link.closedCause == nil && rig.host.lockVerifyStatus == .verified && proofs == 1, "fresh Pair-Verify inside the window verifies")
+            check(rig.host.operatorIdentifier == nil && !rig.host.remote.enabled, "still no operator")
+            rig.clock.seconds += CompanionLockVerify.window + 1
+            check(rig.host.lockVerifyStatus == .presentUnverified, "stale after the window")
+            let late = rig.connect()
+            check(late.closedCause == .ownerStop, "window over: refused again")
+            let spoken = rig.presenter.announcements.count
+            rig.host.setLock("screen", locked: false)
+            check(link.closedCause != nil && rig.host.connectionCount == 0 && rig.host.operatorIdentifier == nil, "unlock drops verify-only links")
+            check(rig.presenter.announcements.count == spoken, "silently")
+        }
+
+        scene("L12 决定 74：核对关着时锁屏照旧全断；刚配完没验签过的那台不算；关掉核对就断")
+        do {
+            let rig = Rig(); let a = Phone("phone-off")
+            try rig.preEnroll([a]); rig.on()
+            let link = rig.connect(); try a.verify(on: link)
+            rig.host.setLock("screen", locked: true)
+            check(link.closedCause != nil && !rig.host.openLockVerifyWindow() && rig.host.lockVerifyStatus == .absent, "off: unchanged behaviour")
+            rig.host.setLock("screen", locked: false)
+
+            let fresh = Rig(); let b = Phone("phone-new")
+            try fresh.preEnroll([b]); fresh.on()
+            fresh.host.setLockVerify(true, onProof: nil)
+            fresh.host.setLock("screen", locked: true); fresh.host.openLockVerifyWindow()
+            let lb = fresh.connect(); try b.verify(on: lb)
+            check(lb.closedCause != nil && fresh.host.lockVerifyStatus != .verified, "never verified while unlocked: not a proof")
+            check(fresh.log.lines.contains("remote-host lock-verify refused unconfirmed-peer"), "logged by category")
+
+            let kept = Rig(); let c = Phone("phone-kept")
+            try kept.preEnroll([c]); kept.on()
+            kept.host.setLockVerify(true, onProof: nil)
+            let lc = kept.connect(); try c.verify(on: lc)
+            kept.host.setLock("screen", locked: true)
+            check(lc.closedCause == nil, "kept")
+            kept.host.setLockVerify(false, onProof: nil)
+            check(lc.closedCause != nil && kept.host.lockVerifyStatus == .absent, "turning verify off drops it")
+        }
+
         print("RESULT assertions=\(assertions) failures=\(failures.count)")
         if !failures.isEmpty { for failure in failures { print("FAILURE \(failure)") }; exit(1) }
     }

@@ -77,11 +77,20 @@ extension AppDelegate {
             field.stringValue = ""
         } else if !stored {
             field.stringValue = WSL10n.text("face.autofill.status.none", zh: "还没存")
+        } else if armed, !Self.faceAutofillHasPhone() {
+            // 决定 74：锁屏时的第二道只认配对过的 iPhone（遥控器那条加密连线）。没有它，闸门永远交回系统。
+            field.stringValue = WSL10n.text("face.autofill.status.needsPhone", zh: "已打开，还要在遥控模式里配对你的 iPhone")
         } else if armed {
             field.stringValue = WSL10n.text("face.autofill.status.armed", zh: "已打开，解锁后清掉")
         } else {
             field.stringValue = WSL10n.text("face.autofill.status.stored", zh: "已存，还没打开")
         }
+    }
+
+    /// 遥控模式开着、至少配对过一台 iPhone（决定 74 的第二道来源）。
+    private static func faceAutofillHasPhone() -> Bool {
+        guard let host = (NSApp.delegate as? AppDelegate)?.inputController.remoteHostForSettings else { return false }
+        return host.enabled && !host.pairedPeers.isEmpty
     }
 
     private func faceAutofillStack(from sender: NSView) -> NSStackView? { sender.superview as? NSStackView }

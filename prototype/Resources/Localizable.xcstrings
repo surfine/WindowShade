@@ -40809,19 +40809,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Announces and accepts connections only after Remote mode is on; off by default"
+            "value": "Announces and accepts connections only after Remote mode is on; off by default. With face unlock filling in your password, a connected iPhone stays connected after the screen locks, and it can reconnect for 15 seconds when the screen lights up, only to check that it's yours; keys and touches aren't taken"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "遥控模式打开之后才宣告、接受连接；默认关"
+            "value": "遥控模式打开之后才宣告、接受连接；默认关。刷脸代填打开时，锁屏后已连着的 iPhone 不断开，屏幕亮起的 15 秒里也接受它重新连上，只用来核对是不是你那台，不收按键和触摸"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "遙控模式開啟之後才宣告、接受連線；預設關"
+            "value": "遙控模式開啟之後才宣告、接受連線；預設關。刷臉代填開啟時，鎖定螢幕後已連著的 iPhone 不中斷，螢幕亮起的 15 秒裡也接受它重新連上，只用來核對是不是你那台，不收按鍵和觸控"
           }
         }
       }
@@ -70660,6 +70660,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "實驗：照片、手機螢幕、錄影、別人、別的手機都實測擋住了"
+          }
+        }
+      }
+    },
+    "face.autofill.status.needsPhone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On; also pair your iPhone in Remote mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打开，还要在遥控模式里配对你的 iPhone"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已打開，還要在遙控模式裡配對你的 iPhone"
           }
         }
       }

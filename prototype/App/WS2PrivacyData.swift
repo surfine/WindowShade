@@ -827,7 +827,7 @@ enum WS2PrivacyData {
             reads: WSL10n.text("privacy.remote-lan.reads", zh: "同一个局域网里 iPhone 上的遥控器发来的连接状态和按键、触摸指令；不读别的设备"),
             purpose: WSL10n.text("privacy.remote-lan.purpose", zh: "让 iPhone 当遥控器用"),
             destination: WSL10n.text("privacy.remote-lan.destination", zh: "只在这个局域网里；不上传"),
-            activation: WSL10n.text("privacy.remote-lan.activation", zh: "遥控模式打开之后才宣告、接受连接；默认关"),
+            activation: WSL10n.text("privacy.remote-lan.activation", zh: "遥控模式打开之后才宣告、接受连接；默认关。刷脸代填打开时，锁屏后已连着的 iPhone 不断开，屏幕亮起的 15 秒里也接受它重新连上，只用来核对是不是你那台，不收按键和触摸"),
             toggle: WSL10n.text("privacy.remote-lan.toggle", zh: "遥控模式；关掉就停止宣告、断开并停止监听"),
             status: "current",
             combined: WSL10n.text("privacy.remote-lan.combined", zh: "遥控连接合起来，能看出你什么时候在用 iPhone 遥控这台 Mac、在同一个网络里。"),
