@@ -171,6 +171,10 @@ struct MotionSpring: Equatable {
     static let pull = MotionSpring(response: 0.36, dampingRatio: 0.86, bounce: 0.14)
     /// 只给小元素的确认：提示浮窗的终点图标。
     static let pop = MotionSpring(response: 0.3, dampingRatio: 0.75, bounce: 0.25)
+    /// 收起（卷起）与收起的代理：Aaron 2026-10-31 定为比 `settle` 快，约 0.25 秒落定；临界阻尼，不过冲。
+    /// 换成弹簧（WWDC23 10158，mass 1）：stiffness = (2π/0.25)² ≈ 631.7，damping = 4π·1/0.25 ≈ 50.3。
+    /// 设计系统 §4.6 待补这一行（`fold` | 0.25 / 1.0（0）| 否 | 收起窗口、收起的描边代理）。
+    static let fold = MotionSpring(response: 0.25, dampingRatio: 1, bounce: 0)
     /// 减少动态效果时的岛。
     static let reducedNotch = MotionSpring(response: 0.25, dampingRatio: 1, bounce: 0)
     /// 减少动态效果时的窗口滑行。
@@ -178,6 +182,11 @@ struct MotionSpring: Equatable {
 
     /// 临界阻尼角频率：约在 `response` 秒内落到目标 2% 内（与 `FoldSpring` 同口径）。
     var angularFrequency: Double { 5.83 / response }
+
+    /// WWDC23 10158 的换算（mass 1）：stiffness = (2π/response)²。
+    var stiffness: Double { pow(2 * Double.pi / response, 2) }
+    /// WWDC23 10158 的换算（mass 1）：damping = 4πζ/response。
+    var damping: Double { 4 * Double.pi * dampingRatio / response }
 }
 
 /// 一维阻尼弹簧，参数用 Apple 的两个说法：dampingRatio（1 = 不过冲，越小越弹）与 response（秒，越小越快）。

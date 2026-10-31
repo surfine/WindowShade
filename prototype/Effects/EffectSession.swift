@@ -203,7 +203,7 @@ final class EffectDisplayClock: NSObject {
 
 struct DuoSettings {
   var desktopEnabled = false
-  var windowsEnabled = false
+  var windowsEnabled = FoldAnimationDefault.enabledWhenUnset
   var preset: DuoPreset = .shade
   // 「随设备倾斜」(duo.v2.motion) 和「触发角度」(duo.v2.trigger) 2026-10-01 起不用了：
   // 合盖改成相对静止角度触发、合上和展开都跟手（docs/lid-effect.md）。旧值留在偏好里，不读也不写。
@@ -211,7 +211,8 @@ struct DuoSettings {
   static func load(_ defaults: UserDefaults = .standard) -> DuoSettings {
     DuoSettings(
       desktopEnabled: defaults.bool(forKey: prefix + "desktop"),
-      windowsEnabled: defaults.bool(forKey: prefix + "windows"),
+      // 第 19 条：收起动画默认开。只改默认——没存过（新装、从没碰过）→ 开；明确关过（存着 false）→ 仍关。
+      windowsEnabled: FoldAnimationDefault.resolve(stored: defaults.object(forKey: prefix + "windows")),
       preset: DuoPreset(rawValue: defaults.string(forKey: prefix + "preset") ?? "") ?? .shade)
   }
   func save(_ defaults: UserDefaults = .standard) {

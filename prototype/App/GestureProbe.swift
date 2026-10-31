@@ -138,7 +138,12 @@ extension GlanceProbe {
     // 2. 标题栏右滑：浮窗挂在标题栏下面，走满变成“松手即执行”，松手占右半屏。
     var hudFrame: NSRect?
     var armedSeen = false
+    // 第 13 步：手势进行中由代理跟手，真窗口一动不动；代理朝右半屏长过去。
+    var realStayed = true
+    var proxySeen: (look: ProxyLook?, frame: CGRect?)?
+    let proxies = gestures.proxyArranger
     try await swipe(at: bar, finger: CGVector(dx: 5, dy: 0), steps: 14) { step in
+      if let now = self.bounds(self.id), !self.closeTo(now, original) { realStayed = false }
       if step == 6 {
         try await Task.sleep(for: .milliseconds(220), clock: .suspending)
         hudFrame = hud.frame
@@ -147,11 +152,18 @@ extension GlanceProbe {
       if step == 13 {
         try await Task.sleep(for: .milliseconds(220), clock: .suspending)
         armedSeen = hud.displaysArmed && hud.shownAction == .rightHalf
+        proxySeen = (proxies.look(self.id), proxies.presentedFrame(self.id))
+        if let now = self.bounds(self.id), !self.closeTo(now, original) { realStayed = false }
         self.shoot(hud.frame, "hud-armed")
       }
     }
     let right = CGRect(x: visibleAX.midX, y: visibleAX.minY, width: visibleAX.width / 2, height: visibleAX.height)
+    let proxyGrew = proxySeen?.frame.map { $0.minX > original.minX + 8 } == true
+    print("\(realStayed && proxyGrew && proxies.isTracking(id) == false ? "PASS" : "FAIL") gesture: while swiping right the window stays put and a proxy (\(proxySeen?.look.map { "\($0)" } ?? "none")) grows toward the right half (proxy=\(proxySeen?.frame.map { "\($0)" } ?? "-") window=\(original))")
     try await wait("right half", timeout: 2) { self.bounds(self.id).map { self.near($0, right) } == true }
+    try await wait("proxy gone", timeout: 2) { !proxies.owns(self.id) }
+    let writes = proxies.lastWriteCount(id)
+    print("\(writes == 1 ? "PASS" : "FAIL") gesture: the right-half commit wrote the real window frame exactly once (writes=\(writes.map(String.init) ?? "nil"))")
     guard let hudFrame, armedSeen else { throw EffectError.unavailable("hud not shown/armed") }
     let barBottom = cocoaMousePoint(fromAXPoint: CGPoint(x: bar.x, y: original.minY + 28)).y
     print(String(format: "PASS gesture: right swipe → right half; HUD %.0fx%.0f, top %.0fpt below the title bar, armed before release",
@@ -2216,10 +2228,13 @@ extension GlanceProbe {
       CGRect(origin: axPosition(fromCocoaFrame: $0.visibleFrame), size: $0.visibleFrame.size)
     } ?? visibleAX
     let flickLeft = CGRect(x: flickArea.minX, y: flickArea.minY, width: flickArea.width / 2, height: flickArea.height)
-    // 滑，而不是跳：落定之前应该看得到窗口在半路上。
+    // 第 13 步：代理飞，真窗口停在松手处直到落定那一次写——半路上不该看到真窗口。
+    let flown = gestures.proxyArranger.owns(id)
     let midway = try await watchForMidway(from: dragged.minX, to: flickLeft.minX)
     try await wait("flick left", timeout: 3) { self.bounds(self.id).map { self.near($0, flickLeft) } == true }
-    print("\(midway != nil ? "PASS" : "FAIL") gesture: a fast flick to the left glides the window onto the left half (seen at x=\(Int(midway ?? -1)) between \(Int(dragged.minX)) and \(Int(flickLeft.minX)))")
+    try await wait("flick proxy gone", timeout: 3) { !gestures.proxyArranger.owns(self.id) }
+    let flickWrites = gestures.proxyArranger.lastWriteCount(id)
+    print("\(flown && midway == nil && flickWrites == 1 ? "PASS" : "FAIL") gesture: a fast flick to the left sends a proxy gliding onto the left half; the real window waits and is written once (proxy=\(flown) seenMidway=\(midway.map { "\(Int($0))" } ?? "no") writes=\(flickWrites.map(String.init) ?? "nil"))")
 
     // 11d. 三指拖移：手指一离开触控板就判，不等系统晚 0.2–0.7 秒才补发的“松开”。
     try await Task.sleep(for: .milliseconds(700), clock: .suspending)
@@ -2236,11 +2251,13 @@ extension GlanceProbe {
                                              capturePictures: true) {
       print("INFO gesture: touch flick not taken — \(rejected)")
     }
-    let proxied = gestures.isProxyGliding(id)
+    let proxied = gestures.proxyArranger.owns(id)
+    let touchLook = gestures.proxyArranger.look(id)
     let flickRight = CGRect(x: flickArea.midX, y: flickArea.minY, width: flickArea.width / 2, height: flickArea.height)
     try await wait("touch flick right", timeout: 3) { self.bounds(self.id).map { self.near($0, flickRight) } == true }
-    try await wait("proxy cleared", timeout: 3) { !gestures.isProxyGliding(self.id) }
-    print("\(proxied ? "PASS" : "FAIL") gesture: three fingers leaving the trackpad mid-throw send the left half over to the right half, a stand-in gliding while the drag is still open")
+    try await wait("proxy cleared", timeout: 3) { !gestures.proxyArranger.owns(self.id) }
+    let touchWrites = gestures.proxyArranger.lastWriteCount(id)
+    print("\(proxied && touchWrites == 1 ? "PASS" : "FAIL") gesture: three fingers leaving the trackpad mid-throw send the left half over to the right half, a stand-in (\(touchLook.map { "\($0)" } ?? "none")) gliding while the drag is still open; one frame write (writes=\(touchWrites.map(String.init) ?? "nil"))")
 
     // 11e. 先减速再放下：那是摆，不是甩，窗口留在放下的地方。
     try await Task.sleep(for: .milliseconds(700), clock: .suspending)

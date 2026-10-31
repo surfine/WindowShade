@@ -457,6 +457,11 @@ struct GestureTuning: Equatable {
     var magnificationHysteresis: CGFloat = 0.03
     var minimumCommitMagnification: CGFloat = 0.08
     /// 投射落点用的减速率（0.99 偏利落）。
+    /// 两个减速率各有其位，不合并（Aaron 2026-10-31 D：按 Apple 定、各自写明理由）：
+    /// - 0.99（这里、刘海下拉）：判断“这一下是不是要执行”，故意停得快——轻轻一碰不该被投射成走满；
+    ///   UIScrollView.DecelerationRate.fast 就是 0.99，Apple 给“分页、离散目标”用的那一档。
+    /// - 0.998（画中画落角、侧拉、分屏缝，FluidMotion.projection 默认值）：把东西扔向几个落点之一，
+    ///   要像普通滚动一样带着惯性走远（WWDC18 803 投射落点用的 .normal）。
     var decelerationRate: CGFloat = 0.99
     /// 只用松手前这段时间里的采样估速度：更早的停顿不算甩，松手前一刻往回拉要算作往回。
     var velocityWindow: TimeInterval = 0.05

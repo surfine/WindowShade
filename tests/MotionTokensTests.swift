@@ -32,6 +32,8 @@ struct MotionTokensTests {
     expect("flyOut", Motion.Spring.flyOut, response: 0.38, dampingRatio: 0.9, bounce: 0.1)
     expect("pull", Motion.Spring.pull, response: 0.36, dampingRatio: 0.86, bounce: 0.14)
     expect("pop", Motion.Spring.pop, response: 0.3, dampingRatio: 0.75, bounce: 0.25)
+    // 第 14 步（Aaron 2026-10-31）：收起比 settle 快，约 0.25 s 落定、不过冲。
+    expect("fold", Motion.Spring.fold, response: 0.25, dampingRatio: 1, bounce: 0)
     expect("reducedNotch", Motion.Spring.reducedNotch, response: 0.25, dampingRatio: 1, bounce: 0)
     expect("reducedWindow", Motion.Spring.reducedWindow, response: 0.3, dampingRatio: 1, bounce: 0)
 

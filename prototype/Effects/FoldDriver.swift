@@ -66,7 +66,7 @@ struct FoldSpring {
 }
 
 /// Repeating a desired state is idempotent; reversing starts at the visible position.
-/// 进度用 `settle`（合上）/ `calm`（打开）解析弹簧，可打断、不从零重播。
+/// 进度用 `fold`（合上）/ `calm`（打开）解析弹簧，可打断、不从零重播。
 struct FoldTransition {
   private(set) var value: Double
   private(set) var target: Double
@@ -83,9 +83,9 @@ struct FoldTransition {
     guard target != next else { return }
     advance(at: time)
     target = next
-    // 合上用 `settle`，打开用 `calm`（设计系统 §4.6；位移写令牌名）。
+    // 合上用 `fold`（约 0.25 s，Aaron 2026-10-31 定为比 `settle` 快），打开用 `calm`（设计系统 §4.6；位移写令牌名）。
     // 频率换掉，位置和速度留在当前可见处，反转可打断。
-    spring.frequency = FoldSpring.frequency(for: folded ? .settle : .calm)
+    spring.frequency = FoldSpring.frequency(for: folded ? .fold : .calm)
     lastTime = time
   }
   mutating func advance(at time: Double) {
