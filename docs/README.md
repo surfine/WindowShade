@@ -98,6 +98,7 @@
 
 - [product-reshape.md](product-reshape.md) — 重塑清单（理由与出处）；执行看 [product-reshape-spec.md](product-reshape-spec.md)。
 - [competitive-deep-dive.md](competitive-deep-dive.md) — 机制层与函数级证据。
+- [competitive-2026-10-31.md](competitive-2026-10-31.md) — 10-31 再调研：Mac 灵动岛公布了什么、各家 10 月的新版与栽过的地方；对照画面在设计稿《经得起考验》。
 - [changelog-knowhow.md](changelog-knowhow.md) — 626 个 release 归成 13 个失效家族。
 - [dominance.md](dominance.md) — 功能碾压的定义与逐格矩阵。
 - [production-maturity.md](production-maturity.md) — 出货面与自愈的动作清单。

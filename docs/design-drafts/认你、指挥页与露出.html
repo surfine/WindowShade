@@ -266,6 +266,20 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 </section>
 
 <!-- ④ 对照账 -->
+<section id="test1031">
+  <div class="sec-head"><h2>经得起考验：10-31 对标后要改的</h2>
+    <p>2026-10-31 又做了一次竞品调研，挑出会让这张稿出错的情况。「改成」一栏是提议，等 Aaron 定；没定之前正文照旧。来源和读取日期在 docs/competitive-2026-10-31.md，总表在《经得起考验》。</p></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>情况</th><th>谁栽过、谁说的</th><th>这张稿原来</th><th>改成</th></tr></thead>
+    <tbody>
+      <tr><td>Claude 没登录</td><td>我们自己 10-31 真跑撞到：命令行回「登录过期」，页面回到就绪，看不出原因</td><td>没写</td><td>转写里写一行「Claude 没登录。在终端里运行 claude 登录后再试」，切换钮旁标「没登录」；不弹窗</td></tr>
+      <tr><td>这台 Mac 没装 Claude Code</td><td>—</td><td>没写</td><td>切换钮变灰，写「这台 Mac 上没有找到 Claude Code」，点它到设置里那一行</td></tr>
+      <tr><td>退出后不留下进程</td><td>Boring Notch #1728：杀掉 App 后辅助进程还在跑</td><td>没写</td><td>退出 WindowShade 时一并结束它开的 Claude、Codex 进程；探针查退出后没有残留</td></tr>
+      <tr><td>转写不无限长</td><td>Vibe Notch #112</td><td>页面只显示最近几行</td><td>内存里也只留最近的几百行（数目待定）</td></tr>
+      <tr><td>额度快用完的提醒</td><td>Vibe Island 1.0.55：默认 80% 提醒</td><td>乙 9 只说「额度已刷新」</td><td>不取。安静的刘海不为额度另开口；会话卡上照旧显示用量</td></tr>
+    </tbody></table></div>
+</section>
+
 <section id="ledger">
   <div class="sec-head"><span class="n">④</span><h2>对照账</h2><p>记进 design-grammar，等 Aaron 拍板，不私下改规格。</p></div>
   <div class="tbl"><table>

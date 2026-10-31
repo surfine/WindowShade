@@ -306,6 +306,23 @@ footer p{margin:.3em 0}
     </tbody></table></div>
 </section>
 
+<section id="test1031">
+  <div class="sec-head"><h2>经得起考验：10-31 对标后要改的</h2>
+    <p>2026-10-31 又做了一次竞品调研，挑出会让这张稿出错的情况。「改成」一栏是提议，等 Aaron 定；没定之前正文照旧。来源和读取日期在 docs/competitive-2026-10-31.md，总表在《经得起考验》。</p></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>情况</th><th>谁栽过、谁说的</th><th>这张稿原来</th><th>改成</th></tr></thead>
+    <tbody>
+      <tr><td>按机型判断要不要让位</td><td>Apple 只把灵动岛和 PROLED XDR 的 MacBook Pro 14/16 绑在一起，没说旧机型会有（新闻稿 10-28）</td><td>写了「有系统岛的机型让位」，没写怎么判断</td><td>按机型判断：有触控屏的 PROLED MacBook Pro 才让位。旧刘海机装了 macOS 27 照常画我们的岛</td></tr>
+      <tr><td>iPhone 的实时活动会自己出现在 Mac 上</td><td>WWDC26 223：iPhone 的实时活动会出现在 macOS 菜单栏</td><td>没提</td><td>系统已经显示同一件事（同一首歌、同一个计时器）时，耳朵里不再重复显示。11 月 6 日后在旧刘海机上看它落在哪</td></tr>
+      <tr><td>视频通话时不自己展开</td><td>NotchDodo：摄像头在用时不打开</td><td>只有提醒挡道的规则</td><td>摄像头在用时只亮点或紧凑，不长成提醒、不展开那一排；你点了照样开</td></tr>
+      <tr><td>换显示器后不留在别的屏上</td><td>Atoll #877：双屏时计时器控件留在内建屏菜单栏；NotchNook：外接屏设置重启后丢</td><td>只画在有刘海的屏上</td><td>写明：岛只在有刘海的那块屏。合盖或拔掉内建屏时，活动收进菜单栏图标，不跑到外接屏</td></tr>
+      <tr><td>展开后不随指针挪动</td><td>Atoll #898：展开后悬停会位移</td><td>已经拿掉悬停展开</td><td>加一条验收：展开以后指针进出，外框一点不动</td></tr>
+      <tr><td>耳朵别吃掉菜单栏</td><td>NotchNook 用户：激活时太宽</td><td>每耳 52.33，比今天的 34 宽</td><td>两边空位不够 52.33 时按量到的宽度收窄（今天的规则保留）；真机量过再定上限</td></tr>
+      <tr><td>系统自己的五种小提醒</td><td>macOS 27 里找到的药丸形素材：AirPods 连上、专注模式、降噪、低电量、切换音频（MacRumors、9to5Mac，泄露，未证实）</td><td>设备电量、专注、音量各有各的画法</td><td>真机上逐个对照，对应的提醒照系统的形状和停留时间画；没对上之前不改</td></tr>
+      <tr><td>真机要多量三件</td><td>这三件 Apple 都没公布</td><td>量尺寸、圆角、动效</td><td>再加：岛和菜单栏的关系、全屏时还在不在、接外接屏时外接屏上有没有</td></tr>
+    </tbody></table></div>
+</section>
+
 <section id="ledger">
   <div class="sec-head"><h2>对照账：稿和代码对不上的地方</h2>
     <p>代码是真相。下面每一行，是这张稿要求的、和现在代码不同的地方。路径都相对于 WindowShade 仓库的 <code>prototype/</code>，分支是 <code>zcode/integration-yi</code>。规格不私下改：先记进 design-grammar 的对照账，等 Aaron 拍板。</p></div>

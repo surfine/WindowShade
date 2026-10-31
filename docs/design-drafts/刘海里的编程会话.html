@@ -263,6 +263,22 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 </section>
 
 <!-- ⑥ 对照账 -->
+<section id="test1031">
+  <div class="sec-head"><h2>经得起考验：10-31 对标后要改的</h2>
+    <p>2026-10-31 又做了一次竞品调研，挑出会让这张稿出错的情况。「改成」一栏是提议，等 Aaron 定；没定之前正文照旧。来源和读取日期在 docs/competitive-2026-10-31.md，总表在《经得起考验》。</p></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>情况</th><th>谁栽过、谁说的</th><th>这张稿原来</th><th>改成</th></tr></thead>
+    <tbody>
+      <tr><td>App 没开或卡住时，Claude Code 不能被挂住</td><td>Open Island #638；Claude Code 用户报告：钩子连不上时全部拒绝</td><td>代码已经是：连不上立刻回「没有决定」，Claude Code 自己问</td><td>经得起。加验收：App 没开、App 卡住，各跑一次</td></tr>
+      <tr><td>交回终端以后，琥珀点说什么</td><td>Vibe Island 1.0.55：终端要接手时，卡上写清去哪里</td><td>卡缩回，只留琥珀点</td><td>读屏念「Claude 在终端里等你」；点琥珀点直接去那扇终端，不再长出卡</td></tr>
+      <tr><td>晚到的点按</td><td>Open Island 1.1.3：过期的批准点按不改状态</td><td>没写</td><td>请求已经交回终端或在终端里答了，卡上的点按不送出，回执写「这一条已经在终端里处理」</td></tr>
+      <tr><td>看得到整条命令</td><td>Vibe Island：卡上写做什么、为什么和整条命令</td><td>只写「想执行 X」</td><td>摘要不变；按住卡能看整条命令（等宽、可选中）。高风险要先露出整条命令，Touch ID 才能按</td></tr>
+      <tr><td>子代理不另起一张卡</td><td>Open Island #672、#744</td><td>Claude Code 的子代理和主会话共用会话编号，今天就合在一起</td><td>经得起。加验收：开一个子代理，耳朵上仍是一个会话</td></tr>
+      <tr><td>搬走或删掉 App 后看得出来</td><td>Open Island #693：辅助程序路径没了，事件静默丢失</td><td>钩子配置只给用户拷贝，不写 ~/.claude</td><td>设置里「已连上」要能变成「找不到 WindowShade，重新拷一次配置」——要查今天做没做到</td></tr>
+      <tr><td>不偷偷长内存</td><td>Vibe Notch #112：一夜涨到约 64 GB，macOS 卡死</td><td>没写</td><td>每个会话只留最近的事件，关掉的会话一小时后清掉；加一条跑一夜的探针</td></tr>
+    </tbody></table></div>
+</section>
+
 <section id="ledger">
   <div class="sec-head"><span class="n">⑥</span><h2>对照账：稿、规格、代码对不上的地方</h2>
     <p>照规矩不私下改规格。下面每条记进 design-grammar 对照账，等 Aaron 拍板。</p></div>

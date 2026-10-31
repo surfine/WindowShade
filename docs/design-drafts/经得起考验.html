@@ -1,0 +1,142 @@
+<meta charset="utf-8">
+<title>经得起考验</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* 一张总表：别家在哪里栽过、我们今天怎样、结论、落在哪张稿。字级四档：32、20、15、13。 */
+:root{
+  --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --rule:rgba(0,0,0,.1);
+  --accent:#0058cc; --ok:#1f8f3f; --fix:#b45309; --miss:#c2410c;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --ok:#32d15a; --fix:#ffb340; --miss:#ff7b45; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --ok:#32d15a; --fix:#ffb340; --miss:#ff7b45; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body)}
+.wrap{max-width:1160px;margin:0 auto;padding:32px 16px 72px}
+h1{font-size:32px;line-height:1.25;margin:0 0 12px;font-weight:700}
+h2{font-size:20px;line-height:1.35;margin:0 0 8px;font-weight:700}
+.lede{max-width:72ch;color:var(--ink2);margin:0 0 8px}
+section{padding-top:44px}
+.sec-head p{max-width:72ch;color:var(--ink2);margin:0 0 16px}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);max-width:100%}
+.tbl+.tbl{margin-top:20px}
+table{border-collapse:collapse;width:100%;min-width:960px;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-top:1px solid var(--rule)}
+thead th{border-top:0;color:var(--ink2);font-weight:500}
+tbody tr.grp td{background:transparent;font-weight:700;font-size:15px;padding-top:18px}
+td.v{white-space:nowrap;font-weight:500}
+.ok{color:var(--ok)} .fix{color:var(--fix)} .miss{color:var(--miss)} .no{color:var(--ink2)}
+a{color:var(--accent)}
+.counts{display:flex;flex-wrap:wrap;gap:8px 28px;margin:16px 0 0;font-size:15px}
+.counts b{font-size:20px;font-variant-numeric:tabular-nums;margin-right:4px}
+ul.plain{margin:0;padding-left:1.2em;max-width:72ch} ul.plain li{margin:4px 0}
+</style>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">七 对标 · 第 33 张 · 经得起考验</span><span class="ws-st">稿 · 10-31 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">← 对标 Atoll、Alcove 与 niri</a><a href="https://claude.ai/artifact/9AqXZMBeDGpTztDGJQyhjY">1.0.18 宣传片分镜 →</a></nav>
+<div class="wrap">
+
+<header>
+  <h1>经得起考验</h1>
+  <p class="lede">2026-10-31 又做了一次竞品调研：Apple 自己、九家刘海 App、十几家窗口工具、五家编程会话 App，只看 10-15 以后的新事和上次漏掉的事。这张稿把别家栽过的地方一条条拿来考我们：今天的设计和代码挡不挡得住，挡不住就改稿。</p>
+  <p class="lede">「改稿」一栏都是提议，已写进各张稿的「经得起考验」一节，等 Aaron 定；没定之前各稿正文照旧。来源与读取日期在 docs/competitive-2026-10-31.md。</p>
+  <div class="counts" aria-label="结论统计">
+    <span><b class="ok">9</b>经得起</span>
+    <span><b class="fix">13</b>改稿</span>
+    <span><b class="miss">7</b>缺，要补</span>
+    <span><b class="no">2</b>不取</span>
+  </div>
+</header>
+
+<section id="facts">
+  <div class="sec-head"><h2>先说 Apple 公布了什么</h2>
+    <p>答案是很少。Apple 说灵动岛来到 PROLED XDR 的 MacBook Pro，是 Spotlight、实时活动和 Siri 的新家，能接电话、控制音乐、接 AirDrop；触控屏上轻点两下窗口铺满、甩一下排进位置。iPhone 的实时活动会自动出现在 macOS 菜单栏（WWDC26 223）。Mac 上的尺寸、圆角、多个活动怎么并排、全屏和外接屏、第三方能不能放内容、旧刘海机型有没有，全都没公布。</p>
+    <p>所以《照系统的岛》的尺寸继续标「暂定，iOS 尺寸」，等 11 月 6 日真机。也没有一家刘海 App 或窗口工具公开回应这次发布，没有现成答案可抄。</p></div>
+</section>
+
+<section id="board">
+  <div class="sec-head"><h2>总表</h2>
+    <p>一行一个考验。「谁栽过」是别家公开的问题或做法；「我们今天」对的是本机 main 1e76fdd7 的代码和现行设计稿。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th style="width:18%">考验</th><th style="width:26%">谁栽过、谁说的</th><th style="width:26%">我们今天</th><th>结论</th><th style="width:20%">落在哪</th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">刘海与系统的岛</td></tr>
+      <tr><td>按机型判断让不让位</td><td>Apple 只把灵动岛和新 MacBook Pro 绑在一起</td><td>第 18 条定了让位，没写怎么判断</td><td class="v fix">改稿</td><td>《照系统的岛》：有触控屏的 PROLED 机型才让位</td></tr>
+      <tr><td>iPhone 的实时活动出现在 Mac 上</td><td>WWDC26 223</td><td>没提，可能重复显示同一首歌、同一个计时器</td><td class="v fix">改稿</td><td>《照系统的岛》：系统已显示的，耳朵不重复</td></tr>
+      <tr><td>视频通话时不自己展开</td><td>NotchDodo：摄像头在用时不打开</td><td>刘海不看摄像头状态</td><td class="v miss">缺</td><td>《照系统的岛》：只亮点或紧凑</td></tr>
+      <tr><td>双屏时控件跑到别的屏</td><td>Atoll #877；NotchNook 外接屏设置重启后丢</td><td>只画在有刘海的屏，没写合盖、拔屏时怎样</td><td class="v fix">改稿</td><td>《照系统的岛》：活动收进菜单栏图标</td></tr>
+      <tr><td>展开后随指针位移</td><td>Atoll #898</td><td>悬停展开已拿掉</td><td class="v ok">经得起</td><td>加验收：指针进出，外框不动</td></tr>
+      <tr><td>耳朵太宽吃掉菜单栏</td><td>NotchNook 用户：激活时太宽</td><td>按量到的空位收窄，最窄 26 退回下巴</td><td class="v ok">经得起</td><td>上限等真机定</td></tr>
+      <tr><td>系统自己的五种小提醒</td><td>macOS 27 里的药丸形素材（泄露）</td><td>设备、专注、音量各画各的</td><td class="v fix">改稿</td><td>《照系统的岛》：真机对照后照系统画</td></tr>
+      <tr><td>耗电</td><td>Atoll #853：是其它 App 加起来的 35 倍</td><td>有能效文档，没有常驻耗电的验收</td><td class="v miss">缺</td><td>性能与能效：静置一小时，和关掉 WindowShade 比</td></tr>
+      <tr><td>辅助进程比 App 活得久</td><td>Boring Notch #1728</td><td>正在播放的推送流由我们起</td><td class="v miss">缺</td><td>加探针：退出后没有残留进程</td></tr>
+      <tr><td>通知镜像和通知中心撞车</td><td>Boring Notch #1577</td><td>不镜像通知；离开期间只列我们自己的事</td><td class="v ok">经得起</td><td>—</td></tr>
+
+      <tr class="grp"><td colspan="5">编程会话与审批</td></tr>
+      <tr><td>App 没开时 Claude Code 被挂住</td><td>Open Island #638；Claude Code 用户报告：钩子连不上时全部拒绝</td><td>连不上立刻回「没有决定」，Claude Code 自己问；最多等 119 秒</td><td class="v ok">经得起</td><td>加验收：App 没开、App 卡住</td></tr>
+      <tr><td>交回终端后琥珀点说什么</td><td>Vibe Island 1.0.55</td><td>卡缩回，只留琥珀点</td><td class="v fix">改稿</td><td>《刘海里的编程会话》：点它去那扇终端</td></tr>
+      <tr><td>晚到的点按</td><td>Open Island 1.1.3</td><td>没写</td><td class="v fix">改稿</td><td>《刘海里的编程会话》：不送出，回执说已在终端处理</td></tr>
+      <tr><td>看得到整条命令</td><td>Vibe Island：做什么、为什么、整条命令</td><td>只有摘要</td><td class="v fix">改稿</td><td>《刘海里的编程会话》：按住看整条</td></tr>
+      <tr><td>子代理另起一张卡</td><td>Open Island #672、#744</td><td>子代理和主会话共用会话编号</td><td class="v ok">经得起</td><td>加验收</td></tr>
+      <tr><td>钩子只动自己写的</td><td>Vibe Island 1.0.55</td><td>配置只给用户拷贝，不写 ~/.claude</td><td class="v ok">经得起</td><td>—</td></tr>
+      <tr><td>App 搬走后事件静默丢失</td><td>Open Island #693</td><td>没查过设置能不能看出来</td><td class="v fix">改稿</td><td>《刘海里的编程会话》：显示「找不到 WindowShade」</td></tr>
+      <tr><td>内存一夜涨爆</td><td>Vibe Notch #112：约 64 GB</td><td>没有上限</td><td class="v miss">缺</td><td>《刘海里的编程会话》：只留最近的事件；跑一夜的探针</td></tr>
+      <tr><td>全局快捷键默认开、抢 shell 的键</td><td>Vibe Island 评测</td><td>键盘不能放行审批；指挥页不占全局键</td><td class="v ok">经得起</td><td>—</td></tr>
+      <tr><td>额度 80% 提醒</td><td>Vibe Island 1.0.55</td><td>只说「额度已刷新」</td><td class="v no">不取</td><td>安静的刘海不为额度另开口</td></tr>
+
+      <tr class="grp"><td colspan="5">指挥页</td></tr>
+      <tr><td>Claude 没登录</td><td>我们自己 10-31 真跑撞到：登录过期，页面看不出原因</td><td>回到就绪，什么都没说</td><td class="v miss">缺</td><td>《认你、指挥页与露出》：转写里写一行怎么办</td></tr>
+      <tr><td>没装 Claude Code</td><td>—</td><td>没写</td><td class="v fix">改稿</td><td>《认你、指挥页与露出》</td></tr>
+      <tr><td>转写无限长</td><td>Vibe Notch #112</td><td>只显示最近几行，内存没上限</td><td class="v fix">改稿</td><td>《认你、指挥页与露出》</td></tr>
+      <tr><td>退出后留下 Claude 进程</td><td>Boring Notch #1728（同类）</td><td>没查</td><td class="v fix">改稿</td><td>《认你、指挥页与露出》：一并结束，探针查</td></tr>
+
+      <tr class="grp"><td colspan="5">窗口</td></tr>
+      <tr><td>别家也做标题栏手势</td><td>DockDoor 1.41.0（10-15）：标题栏、Dock、菜单栏手势</td><td>同类工具检测名单（R8）没有 DockDoor 的手势</td><td class="v miss">缺</td><td>R8 名单加 DockDoor；检测到时说一次是谁</td></tr>
+      <tr><td>点了我们的浮层，全系统输入卡死</td><td>DockDoor #1655</td><td>R1 事件通道周期体检已做</td><td class="v ok">经得起</td><td>加验收：浮层上点击后事件通道仍通</td></tr>
+      <tr><td>系统小版本更新后触发键失效</td><td>Loop #1192（macOS 27.2）</td><td>每批跑真机探针，没有「系统更新后」这一档</td><td class="v miss">缺</td><td>每次 macOS 小版本更新后重跑核心探针</td></tr>
+      <tr><td>Dock 自动隐藏时尺寸算错</td><td>Rectangle #1922</td><td>没有这条验收</td><td class="v fix">改稿</td><td>加验收：Dock 自动隐藏时铺满、半屏</td></tr>
+      <tr><td>「降低透明度」下预览变实心</td><td>Rectangle #1897、2.0.4</td><td>设计系统有「降低透明度」的规则，没逐表面验</td><td class="v fix">改稿</td><td>加验收：开着它看一遍预览和岛</td></tr>
+      <tr><td>触控 Mac 上双击标题栏</td><td>Apple：轻点两下窗口铺满</td><td>第 18 条：触控机上交给系统</td><td class="v ok">经得起</td><td>—</td></tr>
+      <tr><td>第一次打开的教学</td><td>AltTab 11.9.0</td><td>《首次打开 1.0.17 小样》已拍板</td><td class="v no">不取</td><td>已有，不另学</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="drafts">
+  <div class="sec-head"><h2>改了哪几张稿</h2>
+    <p>每张稿在对照账前面多了一节「经得起考验：10-31 对标后要改的」，表里一行一条提议，正文没动。</p></div>
+  <ul class="plain">
+    <li><a href="https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR">照系统的岛</a>：8 条。按机型让位、iPhone 实时活动不重复、视频通话时不展开、双屏、展开后外框不动、耳宽、系统五种小提醒、真机多量三件。</li>
+    <li><a href="https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm">刘海里的编程会话</a>：7 条。App 没开时不挂住、交回终端后的琥珀点、晚到的点按、整条命令、子代理、App 搬走、内存上限。</li>
+    <li><a href="https://claude.ai/artifact/XoqB5LVY9M3dRbsfKPiPjj">认你、指挥页与露出</a>：5 条。没登录、没安装、退出不留进程、转写上限、不取额度提醒。</li>
+  </ul>
+  <p style="color:var(--ink2);max-width:72ch;margin-top:12px">窗口那一组改的是验收，不是画面，所以没动窗口那几张定稿；要做的记进重塑规格 R8 与验收清单。上一轮的对标总账见《<a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">对标 Atoll、Alcove 与 niri</a>》。</p>
+</section>
+
+<section id="limits">
+  <div class="sec-head"><h2>这次没查到的</h2></div>
+  <ul class="plain">
+    <li>NotchNook、Alcove、MediaMate 的更新日志打不开，十月有没有新版本不确定。</li>
+    <li>没找到 Reddit 帖子和 App Store 评论，用户问题全部来自 GitHub。</li>
+    <li>别家的手势阈值、撤销模型、读屏表现，要装了才能量；这一轮没有装任何竞品。</li>
+    <li>Claude Code 和 Codex 官方 App 自己的审批与通知行为，没找到一手说明。</li>
+  </ul>
+</section>
+
+</div>

@@ -38,6 +38,7 @@
 | [番茄钟](番茄钟.html)（[线上](https://claude.ai/artifact/5fQkwURyoGwZRrFBp2XnWf)） | 专注时聊天收起来，休息时桌面收起来 | 概念片第 7 章、opus 的 `away` |
 | [宽形状画肩](%E5%AE%BD%E5%BD%A2%E7%8A%B6%E7%94%BB%E8%82%A9.html)（[线上](https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph)） | 落点、提醒、教学、展开四种宽样子画不画肩；左边肩先收到 0 再长，右边肩一直在；内容绕刘海排与留额头并排。**小样，等 Aaron 用放大镜看，过了再另起实现包** | 对应 [design-system.md](../design-system.md) §5.1 S3 与 §6-3、§6-4 的可选项 |
 | [对标 Atoll、Alcove 与 niri](%E5%AF%B9%E6%A0%87%20Atoll%E3%80%81Alcove%20%E4%B8%8E%20niri.html)（[线上](https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC)） | 2026-10-09 对标总账：落后、持平、领先，这轮追四块加卷轴，不取什么，待定事项 | 不是镜头；排期依据 |
+| [经得起考验](%E7%BB%8F%E5%BE%97%E8%B5%B7%E8%80%83%E9%AA%8C.html)（[线上](https://claude.ai/artifact/VqdmW6GiU22FVvndnE4x37)） | 2026-10-31 竞品调研对照：别家栽过的 31 个地方，我们今天挡不挡得住（9 经得起、13 改稿、7 缺、2 不取），改了《照系统的岛》《刘海里的编程会话》《认你、指挥页与露出》各一节「经得起考验」。**稿，等 Aaron 定** | 不是镜头；来源在 [competitive-2026-10-31.md](../competitive-2026-10-31.md) |
 | [正在播放](%E6%AD%A3%E5%9C%A8%E6%92%AD%E6%94%BE.html)（[线上](https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp)） | 两耳封面与真实波形、换歌一瞥、点开成大卡、拖进度、输出设备、取色 | 对 Alcove / Atoll 的播放器 |
 | [音量与亮度](%E9%9F%B3%E9%87%8F%E4%B8%8E%E4%BA%AE%E5%BA%A6.html)（[线上](https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e)） | 两耳电平、到头回弹、何时拦键藏系统提示、何时交还系统 | 对系统 HUD 与 Alcove |
 | [文件架](%E6%96%87%E4%BB%B6%E6%9E%B6.html)（[线上](https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j)） | 文件拖到刘海：暂存、隔空投送、用 App 打开；文件架只记书签 | 对 Atoll 货架、Alcove 将来的托盘 |
