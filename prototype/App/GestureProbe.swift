@@ -1892,7 +1892,8 @@ extension GlanceProbe {
     func shapeNow() -> (sides: Bool, chin: Bool) {
       let frame = notch.panelFrame ?? .zero
       let grown = frame.width - rect.width
-      return (grown >= 2 * NotchPanel.narrowestSide - 1.5 && grown <= 2 * NotchPanel.sideWidth + 1.5 && abs(frame.height - rect.height) <= 1.5,
+      // 紧凑两耳的高照系统的岛（IslandMetrics.compactHeight 36.67），比刘海高时面板跟着高。
+      return (grown >= 2 * NotchPanel.narrowestSide - 1.5 && grown <= 2 * NotchPanel.sideWidth + 1.5 && abs(frame.height - max(rect.height, IslandMetrics.compactHeight)) <= 1.5,
               abs(frame.width - rect.width) <= 1.5 && frame.height > rect.height + 4)
     }
     var steady = 0
