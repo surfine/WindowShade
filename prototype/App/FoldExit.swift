@@ -114,6 +114,8 @@ extension AppDelegate {
         let thumbnail = shaded[id]?.appearanceMode == .thumbnail
             && !duoController.windowEffects.hasActiveTransition(for: id)
         if !thumbnail, duoController.windowEffects.interceptRestore(id: id) { return true }
+        // 描边代理还在卷（没有屏幕录制时的收起动画）：从此刻掉头回去。
+        WindowFoldCue.reverse(id: id)
         return unshadeReturningElement(id) != nil
     }
     func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false, preserveRecovery: Bool = false) {

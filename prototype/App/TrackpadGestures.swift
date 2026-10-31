@@ -192,6 +192,8 @@ final class TrackpadGestureController {
     private var glides: [CGWindowID: WindowGlide] = [:]
     /// 正在用替身滑的窗口。
     private var proxies: [CGWindowID: WindowProxyGlide] = [:]
+    /// 第 13 步：左右半屏（标题栏两指左右滑）与甩一下由代理先动、真窗口落定时只写一次（WindowProxyArranger.swift）。
+    let proxyArranger = WindowProxyArranger()
     /// 每个 App 最近移动一次窗口要多久（秒）：慢的下次直接用替身滑。
     private var moveCost: [pid_t: TimeInterval] = [:]
     /// 触控板上此刻接触着几根手指（只读监听的触摸流）。
@@ -227,7 +229,7 @@ final class TrackpadGestureController {
     /// 两指手势还没结束、甩出去的窗口还在滑：这时主线程上别做慢事（见 ScreenBezel.swift 第一次读 bezelPath）。
     /// 拖标题栏看按没按着鼠标就够了，不看 flickDrag：漏了“松开”时它会一直留到下次按下。
     var isTracking: Bool {
-        session != nil || unconfirmed != nil || !glides.isEmpty || !proxies.isEmpty
+        session != nil || unconfirmed != nil || !glides.isEmpty || !proxies.isEmpty || proxyArranger.isActive
     }
 
     init(owner: AppDelegate) {
@@ -325,6 +327,7 @@ final class TrackpadGestureController {
         guard let current = session else { return }
         if current.stripHorizontal == true { strips.endScroll(at: clock()) }
         wlog("gesture: cancel reason=\(reason)")
+        proxyArranger.abandon(current.windowID)
         stopFollowing(current)
         session?.recognizer.cancel()
         session = nil
@@ -568,6 +571,16 @@ final class TrackpadGestureController {
                                              other.localizedName ?? "Swish"),
                                  detail: WSL10n.text("gesture.notice.otherAppHint", zh: "退出它，这里的手势就回来"), tone: .info)
             }
+            return
+        }
+        // 两指落在一个还在飞的代理的标题栏上：接住它，这一下只认左右半屏和捏合撤销（真窗口还在原处，没写过）。
+        if let caught = proxyArranger.catchProxy(at: location) {
+            let session = Session(zone: .titleBar, windowID: caught.id, pid: caught.pid, location: location,
+                                  map: GestureMap(left: .leftHalf, right: .rightHalf, pinch: .undoPlacement),
+                                  tuning: tuning, consumes: false, verified: true,
+                                  anchor: cocoaMousePoint(fromAXPoint: location), element: caught.element)
+            dropUnconfirmed(reason: "restart")
+            self.session = session
             return
         }
         guard let hit = targetWindow(at: location, windowNumber: windowNumber),
@@ -950,7 +963,7 @@ final class TrackpadGestureController {
 
     /// 还在收起/展开动画里的窗口：什么手势都不接（接了也做不成，浮窗只会白闪一下）。
     func isSettling(_ id: CGWindowID) -> Bool {
-        if glides[id] != nil || proxies[id] != nil { return true }
+        if glides[id] != nil || proxies[id] != nil || proxyArranger.isBusy(id) { return true }
         if owner.duoController.windowEffects.hasActiveTransition(for: id) { return true }
         let state = owner.currentOperationState(id)
         return state == .capturing || state == .restoring
@@ -994,6 +1007,7 @@ final class TrackpadGestureController {
         }
         render(session, animated: animated)
         updateFollow(session)
+        updateProxy(session)
         if feedback.contains(.armed) {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
@@ -1034,6 +1048,7 @@ final class TrackpadGestureController {
               let action = session.recognizer.end(at: time) else {
             if session.verified, !session.suppressed { tellAboutTitleBarTool() }
             session.recognizer.cancel()
+            proxyArranger.abandon(session.windowID)
             stopFollowing(session)
             endGlancePull(session)
             hud.cancel()
@@ -1048,6 +1063,8 @@ final class TrackpadGestureController {
             stopFollowing(session)
             hud.cancel()
         }
+        // 代理还在跟手（这一下最后执行的不是它接的左右半屏）：退回去，真窗口不写。
+        proxyArranger.abandon(session.windowID)
     }
 
     /// 窗口本体跟手：认出“收起”或“展开”后，窗口跟着手指卷起、放下（滚轮一格一格走也一样）；
@@ -1131,6 +1148,44 @@ final class TrackpadGestureController {
         owner.duoController.windowEffects.cancelTracking(id: session.windowID)
     }
 
+    /// 第 13 步：标题栏两指左右滑的左右半屏由代理跟手、目标处画落点；真窗口不动。别的动作、滚轮照旧只有浮窗。
+    private func updateProxy(_ session: Session) {
+        let frame = session.recognizer.frame
+        guard session.zone == .titleBar, !session.isWheel, let win = session.element,
+              frame.available, let action = frame.action, action == .leftHalf || action == .rightHalf else {
+            proxyArranger.abandon(session.windowID)
+            return
+        }
+        let id = session.windowID, screen = session.screen
+        proxyArranger.track(id: id, pid: session.pid, element: win, goalKey: action.rawValue,
+                            current: { [weak self] in self?.freshWindowInfo(id).flatMap { cgWindowBounds($0) } },
+                            target: { [weak self] base in
+                                guard let self, let plan = self.placementTarget(action, current: base, screen: screen) else { return nil }
+                                return (Self.fitting(plan.target, window: win, size: base.size, area: plan.area), plan.area)
+                            },
+                            progress: frame.progress)
+    }
+
+    /// 松手执行左右半屏：代理在跟手就交给它落定、真窗口只写一次；没有代理（减少动态效果下也有代理，只是不滑）返回 nil 走老路。
+    private func commitProxy(_ action: GestureAction, in session: Session) -> Bool? {
+        let id = session.windowID
+        guard action == .leftHalf || action == .rightHalf, proxyArranger.isTracking(id),
+              let win = session.element, let before = proxyArranger.original(id),
+              let plan = placementTarget(action, current: before, screen: session.screen) else { return nil }
+        let target = Self.fitting(plan.target, window: win, size: before.size, area: plan.area)
+        owner.cancelRestorePin(for: id)
+        if target.size != plan.target.size {
+            hud.note(WSL10n.text("gesture.note.fixedSizeCentered", zh: "这个窗口不能改大小，放在了正中"))
+        }
+        return proxyArranger.commit(id) { [weak self] observed in
+            guard let self else { return }
+            wlog("gesture: placed id=\(id) \(plan.layout.rawValue) by proxy target=(\(Int(target.minX)),\(Int(target.minY)) \(Int(target.width))x\(Int(target.height))) observed=(\(Int(observed.minX)),\(Int(observed.minY)) \(Int(observed.width))x\(Int(observed.height)))")
+            self.noteReplaced(id)
+            self.undoRecords[id] = PlacementUndo(before: before, after: observed, element: win,
+                                                 layout: plan.layout, area: plan.area)
+        }
+    }
+
     private func cooledDirection(for id: CGWindowID) -> GestureDirection? {
         guard let last = lastCommit, last.id == id, clock() - last.at < Self.commitCooldown else { return nil }
         return last.direction
@@ -1169,9 +1224,14 @@ final class TrackpadGestureController {
              .topLeftThird, .topCenterThird, .topRightThird, .bottomLeftThird, .bottomCenterThird, .bottomRightThird,
              .topLeftNinth, .topCenterNinth, .topRightNinth, .middleLeftNinth, .middleCenterNinth, .middleRightNinth,
              .bottomLeftNinth, .bottomCenterNinth, .bottomRightNinth:
+            if let committed = commitProxy(action, in: session) { return committed }
             guard let win = session.element else { return false }
             return place(win, id: id, action: action, screen: session.screen)
         case .undoPlacement:
+            // 接住的代理上捏合：从此刻的位置和速度掉头回到真窗口原处（那里本来就是它，不用写）。
+            if proxyArranger.owns(id), let home = proxyArranger.original(id) {
+                return proxyArranger.redirect(id, to: home)
+            }
             guard let win = session.element else { return false }
             return undoPlacement(win, id: id)
         case .center, .larger, .smaller, .fullHeight:
@@ -1263,6 +1323,8 @@ final class TrackpadGestureController {
                 proxy.cancel()
                 wlog("gesture: proxy glide id=\(id) caught mid-flight")
             }
+            // 真窗口（还在原处、没写过）又被按住：代理撤掉，那一次写不再发生，窗口交给这一次拖动。
+            if proxyArranger.owns(id) { proxyArranger.drop(id) }
             guard id != 0, let info = freshWindowInfo(id), (info[kCGWindowLayer as String] as? Int) == 0,
                   let bounds = cgWindowBounds(info),
                   let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != getpid() else { return }
@@ -1663,7 +1725,7 @@ final class TrackpadGestureController {
             announceFlick(action, id: id, at: target, screen: plan.screen,
                           note: target.size != plan.target.size
                               ? WSL10n.text("gesture.note.fixedSizeCentered", zh: "这个窗口不能改大小，放在了正中") : nil)
-            moveWindow(win, drag: drag, source: source, from: landed, to: target, velocity: velocity) { [weak self] observed in
+            flyProxy(win, drag: drag, from: landed, to: target, velocity: velocity) { [weak self] observed in
                 guard let self else { return }
                 // 撤销回到按住标题栏之前的样子，不是松手的地方。
                 self.noteReplaced(id)
@@ -1677,7 +1739,7 @@ final class TrackpadGestureController {
             owner.cancelRestorePin(for: id)
             announceFlick(action, id: id, at: record.before, screen: screenForAXWindow(pos: record.before.origin,
                                                                                            size: record.before.size))
-            moveWindow(win, drag: drag, source: source, from: landed, to: record.before, velocity: velocity) { _ in }
+            flyProxy(win, drag: drag, from: landed, to: record.before, velocity: velocity) { _ in }
             if let partner = unlinkPartner(id) { undoPartner(partner) }
             return true
         case .shade where owner.notch.aims(from: drag.samples.last?.point ?? drag.down,
@@ -1711,6 +1773,16 @@ final class TrackpadGestureController {
     /// 手一离开就判、但系统还没发“松开”：那个 App 可能还在拖动里，不理移动请求（实测第一次移动等 0.4–1 秒）。
     static func dragStillOpen(_ source: FlickLiftSource) -> Bool {
         source == .pointerStopped || source == .touchLift
+    }
+
+    /// 第 13 步：甩一下由代理飞过去，真窗口停在松手处，落定时只写一次外框（WindowProxyArranger.fly）。
+    /// 有屏幕录制时代理是拖动中截好的窗口（原处盖背景），没有时是描边。刘海小岛那几格仍走 moveWindow。
+    private func flyProxy(_ win: AXUIElement, drag: FlickDrag, from: CGRect, to: CGRect, velocity: CGVector,
+                          done: @escaping (CGRect) -> Void) {
+        glides.removeValue(forKey: drag.id)?.cancel()
+        proxies.removeValue(forKey: drag.id)?.cancel()
+        proxyArranger.fly(id: drag.id, pid: drag.pid, element: win, from: from, to: to, velocity: velocity,
+                          pictures: drag.pictures, landed: done)
     }
 
     /// 窗口从 from 到 to。真窗口此刻挪得动，就让它自己滑（画面是活的）；挪不动（三指拖移还没结束、
@@ -1939,6 +2011,7 @@ final class TrackpadGestureController {
     private func place(_ win: AXUIElement, id: CGWindowID, action: GestureAction,
                        screen: NSScreen?) -> Bool {
         glides.removeValue(forKey: id)?.cancelAndWait()
+        proxyArranger.drop(id)
         guard let pos = axPosition(win), let size = axSize(win) else { return false }
         let current = CGRect(origin: pos, size: size)
         guard let plan = placementTarget(action, current: current, screen: screen) else { return false }

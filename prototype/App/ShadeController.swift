@@ -288,6 +288,13 @@ extension AppDelegate {
             quietNotice(WSL10n.text("notice.shade.cannotRead", zh: "无法读取窗口"), kind: .problem, log: "shade: no pos/size")
             return
         }
+        // 第 14 步：卷帘动画没接（没有屏幕录制、减少动态效果、暂停效果）而“收起窗口时的动画”开着：
+        // 放描边代理（WindowFoldCue）。批量收起、专注收起（带 options）、App 卡住时不放。
+        if !bypassDuo, !thumbnailFold, !stalled, options == nil, duoController.settings.windowsEnabled,
+           !duoController.pausedByUser, !duoController.windowEffects.suppressedForBulkOperation,
+           !duoController.windowEffects.hasActiveTransition(for: id) {
+            WindowFoldCue.play(id: id, frame: CGRect(origin: pos, size: size))
+        }
         var pid: pid_t = 0
         let readStartedAt = CFAbsoluteTimeGetCurrent()
         AXUIElementGetPid(win, &pid)

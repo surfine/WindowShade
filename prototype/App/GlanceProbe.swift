@@ -696,6 +696,9 @@ final class GlanceProbe {
   /// 同一个进程里连续收起、展开 5 次（第 1 次是冷启动），量用户第一眼看到变化
   /// （带动画：盖板出现；不带动画：真窗口开始藏起来）和卷帘条出现各要多久。
   private func foldTiming(element: AXUIElement) async throws {
+    // 第 14 步（第 19 条）：新装没存过“收起窗口时的动画”时是开；明确关过的仍是关（读偏好的那一行在单测里用独立的偏好域核对）。
+    let unset = FoldAnimationDefault.resolve(stored: nil), explicitOff = FoldAnimationDefault.resolve(stored: false)
+    print("\(unset && !explicitOff ? "PASS" : "FAIL") fold: the roll-up animation is on by default and stays off for anyone who turned it off")
     // 计时探针不需要真出声；连播会撞上「Already playing」与设备唤醒竞态。
     let previousVolume = shadeSounds.volume
     shadeSounds.volume = 0
@@ -712,6 +715,14 @@ final class GlanceProbe {
           && self.owner.duoController.windowEffects.activeCount == 0
       }
       let shown = (CACurrentMediaTime() - started) * 1000
+      if round == 0 {
+        // 第 14 步：动画开着而卷帘动画没接（没有屏幕录制、减少动态效果）时，描边代理要放出来。
+        let effectRan = owner.duoController.windowEffects.completedTransitions > 0
+        if owner.duoController.settings.windowsEnabled, !effectRan {
+          let cue = WindowFoldCue.lastPlayedAt >= started
+          print("\(cue ? "PASS" : "FAIL") fold: without the cover effect the outline proxy rolls up (\(WindowFoldCue.lastPresentation.map { "\($0)" } ?? "none"))")
+        }
+      }
       print(String(format: "ROUND %d: first change %.0fms, strip %.0fms", round, changed, shown))
       fflush(stdout)
       if round > 0 { firstChange.append(changed); stripShown.append(shown) }
