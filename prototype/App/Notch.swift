@@ -2238,8 +2238,8 @@ final class NotchController {
         for (display, panel) in panels where !panel.yieldsToSystem {
             panel.setMinimalPresentation(minimal)
             panel.setCapsuleBelowMenuBar(capsuleBelow)
-            let shown = ownsActivities(display) ? compact : nil
-            panel.setCompact(shown, room: shown == nil ? nil : room(for: panel, display: display))
+            // 收进刘海的窗口不是实时活动（第 41 条只管活动）：照旧每块屏都显示。
+            panel.setCompact(compact, room: compact == nil ? nil : room(for: panel, display: display))
         }
     }
 

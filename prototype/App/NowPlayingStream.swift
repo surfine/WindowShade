@@ -67,6 +67,7 @@ final class NowPlayingStream {
         failures = 0
         exitStamps = []
         adapterPresent = true
+        if let adapter = Self.locateAdapter() { Self.reapOrphans(script: adapter.script) }
         markUnhealthy()
         if terminateObserver == nil {
             terminateObserver = NotificationCenter.default.addObserver(
@@ -88,6 +89,25 @@ final class NowPlayingStream {
         terminateChild()
         latest = nil
         setHealthy(false)
+    }
+
+    /// 上一次 App 被强行结束（闪退、被杀）时，适配器会变成孤儿一直跑（父进程成了 launchd）。
+    /// 开流之前收掉：只找父进程是 1、跑的又是这个 App 包里这份脚本的，别的进程一个不碰。
+    nonisolated static func reapOrphans(script: URL) {
+        DispatchQueue.global(qos: .utility).async {
+            let find = Process()
+            find.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+            find.arguments = ["-P", "1", "-f", script.path]
+            let out = Pipe()
+            find.standardOutput = out
+            find.standardError = FileHandle.nullDevice
+            guard (try? find.run()) != nil else { return }
+            let data = out.fileHandleForReading.readDataToEndOfFile()
+            find.waitUntilExit()
+            for line in String(decoding: data, as: UTF8.self).split(separator: "\n") {
+                if let pid = pid_t(line.trimmingCharacters(in: .whitespaces)), pid > 1 { kill(pid, SIGTERM) }
+            }
+        }
     }
 
     private func launch() {
