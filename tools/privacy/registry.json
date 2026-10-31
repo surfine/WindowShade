@@ -2218,6 +2218,13 @@
       "signal": "settings"
     },
     {
+      "path": "prototype/App/FaceThresholdCalibrationStore.swift",
+      "line": 0,
+      "symbol": "LAContext",
+      "source": "let context = LAContext()",
+      "signal": "face-identity"
+    },
+    {
       "path": "prototype/App/DeviceAuthorizationKey.swift",
       "line": 8,
       "symbol": "LAContext",

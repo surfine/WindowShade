@@ -10,7 +10,7 @@ swiftc -O -swift-version 6 -strict-concurrency=complete -warnings-as-errors -par
   prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/IslandMetrics.swift \
   prototype/Core/ReleaseDefaults.swift prototype/Core/SessionLockState.swift prototype/Core/LockScreenExposure.swift \
   prototype/Core/FaceCaptureQuality.swift prototype/Core/FaceIdentityAttempts.swift \
-  prototype/Core/FaceAutofill.swift prototype/Core/VoiceprintChallenge.swift \
+  prototype/Core/CompanionLockVerify.swift prototype/Core/GazeAttention.swift prototype/Core/FaceAutofill.swift prototype/Core/VoiceprintChallenge.swift \
   prototype/Core/SpeakerFbank.swift prototype/Core/SpeakerVerification.swift \
   tests/support/WS2TestSupport.swift tests/SpeakerVerificationTests.swift -o "$OUT/speaker"
 MODELS="${WS_MODELS_DIR:-/Users/aaron/Documents/WindowShade-models/speaker}"

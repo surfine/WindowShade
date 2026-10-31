@@ -30,7 +30,7 @@ final class VoiceprintKeychainStore: SpeakerTemplateStoring {
         return SpeakerTemplate.decode(data)
     }
 
-    func save(_ template: SpeakerTemplate) -> Bool {
+    func write(_ template: SpeakerTemplate) -> Bool {
         let bytes = template.encoded()
         let base = query()
         var status = SecItemUpdate(base as CFDictionary, [kSecValueData as String: bytes] as CFDictionary)

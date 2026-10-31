@@ -32,7 +32,7 @@ final class ScriptedEmbedder: SpeakerEmbedder, @unchecked Sendable {
 final class MemoryStore: SpeakerTemplateStoring, @unchecked Sendable {
     private let box = Mutex<SpeakerTemplate?>(nil)
     func load() -> SpeakerTemplate? { box.withLock { $0 } }
-    func save(_ template: SpeakerTemplate) -> Bool { box.withLock { $0 = template }; return true }
+    func write(_ template: SpeakerTemplate) -> Bool { box.withLock { $0 = template }; return true }
     func delete() -> Bool { box.withLock { $0 = nil }; return true }
 }
 
@@ -124,7 +124,7 @@ struct SpeakerVerificationTests {
         let none = CoreMLSpeakerVerifier(embedder: ScriptedEmbedder([], fallback: unit(10)), store: store)
         t.expect(!none.isAvailable, "no template -> unavailable (no microphone)")
         t.expect(none.verify(sample: speech, purpose: .unlockAssist) == .unavailable, "no template -> .unavailable")
-        _ = store.save(SpeakerTemplate(utterances: 3, embedding: unit(10))!)
+        _ = store.write(SpeakerTemplate(utterances: 3, embedding: unit(10))!)
         none.refresh()
         t.expect(none.isAvailable, "template -> available after refresh")
         t.expect(none.verify(sample: speech, purpose: .unlockAssist) == .sameSpeaker, "identical embedding -> same")

@@ -134,7 +134,7 @@ final class LazySpeakerVerifier: SpeakerVerifier, @unchecked Sendable {
                 self.phrase = ""
                 self.nextPhrase(retry: nil)
             case .complete(let template):
-                if self.kit.store.save(template) {
+                if self.kit.store.write(template) {
                     self.kit.verifier.refresh()
                     self.finish(.finished)
                 } else {

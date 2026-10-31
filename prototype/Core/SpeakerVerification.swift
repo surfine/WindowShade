@@ -183,7 +183,7 @@ struct SpeakerTemplate: Equatable, Sendable {
 /// 登记特征的存放处。真实现在钥匙串（App/VoiceprintKeychainStore.swift）；存不了就报错，不退回文件。
 protocol SpeakerTemplateStoring: Sendable {
     func load() -> SpeakerTemplate?
-    func save(_ template: SpeakerTemplate) -> Bool
+    func write(_ template: SpeakerTemplate) -> Bool
     func delete() -> Bool
 }
 
