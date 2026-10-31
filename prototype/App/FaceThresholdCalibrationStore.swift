@@ -57,7 +57,7 @@ final class FaceThresholdCalibrationStore: Sendable {
 }
 
 /// `--face-calibration-import FILE`：把标定工具写出的 JSON 存进钥匙串（不开界面、不开相机）。
-/// 退出码：0 存好；2 文件读不了或内容不合法；3 这台 Mac 现在存不了（未签名构建常见）。
+/// 退出码：0 存好；2 文件读不了或内容不合法；3 这台 Mac 现在存不了（未签名构建常见）；4 本人没确认。
 enum FaceThresholdCalibrationImport {
     static func run(path: String, store: FaceThresholdCalibrationStore = FaceThresholdCalibrationStore()) -> Int32 {
         guard let data = FileManager.default.contents(atPath: path) else {
@@ -67,10 +67,30 @@ enum FaceThresholdCalibrationImport {
               FaceScanModelProfile.table[calibration.modelVersion] != nil else {
             print("face-calibration-import: not a valid calibration for a known model version"); return 2
         }
+        // 换门槛就是改认人的松紧：存之前要本人确认（Touch ID 或登录密码），否则有本机权限的人能悄悄换一个偏松的标定。
+        guard confirmOwner(reason: WSL10n.text("face.calibration.importReason", zh: "更换刷脸解锁的门槛")) else {
+            print("face-calibration-import: not confirmed by the owner; nothing saved"); return 4
+        }
         do { try store.replace(with: calibration) } catch {
             print("face-calibration-import: keychain unavailable on this Mac/build (\(error))"); return 3
         }
         print("face-calibration-import: saved model=\(calibration.modelVersion) threshold=\(calibration.threshold) targetFAR=\(calibration.targetFAR) at=\(calibration.calibratedAt)")
         return 0
+    }
+
+    /// 同步问一次本人（命令行入口，界面还没起来）；回调在别的队列，用信号量等结果。
+    private static func confirmOwner(reason: String) -> Bool {
+        let context = LAContext()
+        var error: NSError?
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else { return false }
+        final class Answer: @unchecked Sendable { var ok = false }
+        let answer = Answer()
+        let done = DispatchSemaphore(value: 0)
+        context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { ok, _ in
+            answer.ok = ok
+            done.signal()
+        }
+        done.wait()
+        return answer.ok
     }
 }

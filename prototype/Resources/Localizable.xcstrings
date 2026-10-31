@@ -13824,6 +13824,29 @@
         }
       }
     },
+    "face.calibration.importReason": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "change the face unlock threshold"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更换刷脸解锁的门槛"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更換刷臉解鎖的門檻"
+          }
+        }
+      }
+    },
     "face.cancelable": {
       "extractionState": "manual",
       "localizations": {
