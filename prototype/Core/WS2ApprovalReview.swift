@@ -87,6 +87,9 @@ struct WS2ApprovalReviewGate: Sendable {
         guard let shownAt else { throw WS2ApprovalReview.Failure.notShown }
         guard unlocked, current == review, now >= shownAt, now < review.deadline else { throw WS2ApprovalReview.Failure.stale }
         guard beganAt >= shownAt, beganAt <= now, sequence > sequenceFloor else { throw WS2ApprovalReview.Failure.oldInput }
+        // 卡刚出现的头 0.5 秒里开始的按下不算（防正在点别处的手）。
+        guard ApprovalFreshness.counts(pressBeganNanoseconds: beganAt.nanoseconds, shownNanoseconds: shownAt.nanoseconds)
+        else { throw WS2ApprovalReview.Failure.oldInput }
         guard !confirmationStarted else { throw WS2ApprovalReview.Failure.duplicate }
         confirmationStarted = true
     }

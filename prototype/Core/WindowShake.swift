@@ -1,4 +1,4 @@
-// 晃一晃（Windows 的 Aero Shake）：拖着标题栏左右（或上下）来回晃，别的窗口收走；再晃一下放回来。
+// 晃一晃（Windows 的 Aero Shake）：拖着标题栏左右来回晃（只认横向；上下挪不算），别的窗口收走；再晃一下放回来。
 // 这里只认“是不是在晃”：最近 0.8 秒里沿同一个方向来回至少三次折返，每一段都走了 28 点以上，
 // 而且来回的幅度加起来比整体挪了多远大得多（真在挪窗口时不会这样）。
 
@@ -14,7 +14,7 @@ enum WindowShake {
         guard let last = samples.last else { return false }
         let recent = samples.filter { last.time - $0.time <= window }
         guard recent.count >= 6 else { return false }
-        return turns(recent.map(\.point.x)) >= reversals || turns(recent.map(\.point.y)) >= reversals
+        return turns(recent.map(\.point.x)) >= reversals
     }
 
     /// 一条轴上的折返次数：只算走满一段（≥ minimumLeg）之后的掉头。

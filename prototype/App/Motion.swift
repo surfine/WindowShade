@@ -39,6 +39,12 @@ enum Motion {
         static let notchDwell: TimeInterval = MotionHold.notchDwellSeconds
         /// 音量、亮度、键盘灯两耳：最后一下按键之后多久收（《音量与亮度》稿“多久出、多久收”）。
         static let level: TimeInterval = MotionHold.levelSeconds
+        /// 长按多久算长按：刘海和标题栏窗口菜单共用。0.5 秒。
+        static let longPress: TimeInterval = MotionHold.longPressSeconds
+        /// 拖着窗口或文件在落点区里停多久才亮起落点（快速划过不亮）。0.15 秒。
+        static let dropDwell: TimeInterval = MotionHold.dropDwellSeconds
+        /// 手势提交后同一扇窗的冷却（反方向不受限）。0.6 秒。
+        static let commitCooldown: TimeInterval = MotionHold.commitCooldownSeconds
     }
 
     /// 刘海内容的淡入淡出时序（总稿“令牌”节）：形状先动，第一层（符号与主句）在形状走到

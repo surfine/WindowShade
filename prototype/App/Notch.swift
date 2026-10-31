@@ -517,6 +517,7 @@ final class NotchController {
                     }
                 }
             }
+            panel.pushIsTuck = { [weak self] in !(self?.owner.launchpad.isShowing ?? false) }
             panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
             panel.onTileAccessory = { [weak self] id in self?.tileAccessory(id) }
             panel.nowPlayingCardOpener = { [weak self, weak panel] in
@@ -540,7 +541,9 @@ final class NotchController {
                 switch destination {
                 case .back:
                     let center = panel.map { NSPoint(x: $0.notch.midX, y: $0.notch.midY) }
-                    self.tuckAll(on: center.flatMap { point in NSScreen.screens.first { $0.frame.contains(point) } })
+                    // 往上推（够远、松手够快才走到这里，见 NotchPushUp）：收完在刘海里留一张“已收起 N 扇 · 撤销”。
+                    self.tuckAll(on: center.flatMap { point in NSScreen.screens.first { $0.frame.contains(point) } },
+                                 undoReceipt: true)
                 case .today: self.switchApp(back: true, panel: panel)
                 case .library: self.switchApp(back: false, panel: panel)
                 default: break
@@ -688,14 +691,29 @@ final class NotchController {
         guard let panel = current else { return }
         panel.dragMinimumSize = dragMinimumSize
         let near = panel.dropZone.insetBy(dx: -140, dy: -160)
-        if panel.dropZone.contains(point) {
+        // 进了落点区要停满 MotionHold.dropDwellSeconds 才亮起；快速划过只垂着小岛（.offered），不亮。
+        let now = CACurrentMediaTime()
+        let inside = panel.dropZone.contains(point)
+        let armed = windowArmGate.update(inside: inside, now: now)
+        windowArmRecheck?.cancel(); windowArmRecheck = nil
+        if inside, !armed, let wait = windowArmGate.remaining(now: now) {
+            // 指针停住不动就没有新的拖动事件：到点自己再看一次。
+            let work = DispatchWorkItem { [weak self] in
+                MainActor.assumeIsolated { self?.dragMoved(to: point, downAt: downAt) }
+            }
+            windowArmRecheck = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + wait + 0.005, execute: work)
+        }
+        if armed {
             panel.setDropState(.armed, choice: panel.choice(at: point))
-        } else if near.contains(point) {
+        } else if inside || near.contains(point) {
             panel.setDropState(.offered)
         } else {
             panel.setDropState(.none)
         }
     }
+    private var windowArmGate = DropDwellGate()
+    private var windowArmRecheck: DispatchWorkItem?
 
     // MARK: - FS-03 文件拖近刘海
 
@@ -822,12 +840,14 @@ final class NotchController {
     /// 拖动没落在小岛上（或者这一下被别的判定接走了）：收起落点提示。
     func cancelDrag() {
         dragMinimumSize = nil
+        windowArmGate.reset(); windowArmRecheck?.cancel(); windowArmRecheck = nil
         panels.values.forEach { $0.setDropState(.none) }
     }
 
     /// 拖动结束：指针停在落点小岛的哪一格上，就去哪（收进刘海、半屏、铺满、魔法平铺）；不在岛上返回 nil。
     /// 收下时那一格变成对勾，停一下再收回（像面容 ID 通过时的那一下），别的屏上的落点直接收起。
     func dragEnded(at point: CGPoint) -> NotchPanel.DropChoice? {
+        windowArmGate.reset(); windowArmRecheck?.cancel(); windowArmRecheck = nil
         let target = panel(containing: point)
         var choice = target.flatMap { $0.dropState == .armed && $0.dropZone.contains(point) ? $0.choice(at: point) : nil }
         // 松手在灰掉的格子上等于取消。
@@ -1895,7 +1915,7 @@ final class NotchController {
     /// 这块屏上的窗口全部收进刘海（Wins 的“隐藏全部窗口”；我们收进刘海，原处的位置记着）。
     /// 已经收进来一批、还没拿出来时，再做一次就是整批拿出来。返回收进去几扇（拿出来返回 0）。
     @discardableResult
-    func tuckAll(on screen: NSScreen? = nil) -> Int {
+    func tuckAll(on screen: NSScreen? = nil, undoReceipt: Bool = false) -> Int {
         guard Self.isEnabled, isAvailable else { return 0 }
         if !lastBatch.filter(isTucked).isEmpty {
             releaseLatest(reason: "all again")
@@ -1914,6 +1934,14 @@ final class NotchController {
             announce(WSL10n.text("notch.tuck.noWindows", zh: "这块屏上没有能收的窗口"), tone: .problem)
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                if undoReceipt {
+                    // 撤销 = 整批拿出来（和往下拉同一条路：releaseLatest 按最近一批放回，整批算一步）。
+                    self?.announce(WSL10n.text("notch.batch.receipt", zh: "已收起 %@ 扇", String(windows.count)),
+                                   tone: .done, duration: MotionHold.sentenceMaxHold,
+                                   actionLabel: WSL10n.text("menu.undo", zh: "撤销"),
+                                   onClick: { [weak self] in self?.releaseLatest(reason: "undo receipt") })
+                    return
+                }
                 self?.announce(WSL10n.text("notch.batch.tucked", zh: "收进了 %@ 扇", String(windows.count)),
                                detail: WSL10n.text("notch.batch.hint", zh: "两指往下拉刘海，整批拿回来"), tone: .done)
             }
@@ -3110,7 +3138,7 @@ final class NotchPanel: NSPanel {
     func setInteraction(_ view: (NSView & NotchInteractiveContent)?, animated: Bool = true, retreating: Bool = false) {
         canvas.resetInteractions()
         pressWork?.cancel(); pressWork = nil
-        hoverTimer?.invalidate(); pulled = 0
+        hoverTimer?.invalidate(); pulled = 0; pushed = 0
         alertTimer?.invalidate(); alertInfo = nil
         if dropState != .none { noteDropInteraction(false) }
         dropState = .none; stripLanding = false
@@ -3208,6 +3236,16 @@ final class NotchPanel: NSPanel {
     var menuBarOverflowShown = false
     /// 两指往下拉了多少（点）。
     private var pulled: CGFloat = 0
+    /// 两指往上推了多少（点，向上为正）。推过 NotchPushUp.commitTravel 岛上出现“松手全部收进刘海”。
+    private var pushed: CGFloat = 0
+    /// 往上推是“全部收进刘海”吗（主屏幕开着时上推仍是返回，沿用老规则）。
+    var pushIsTuck: (() -> Bool)?
+    /// 岛这一刻因为拉或推多长出来的高度（点）；都没有为 0。
+    private var trayExtra: CGFloat {
+        if pulled > 0 { return Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18) }
+        if pushed > 0 { return Self.rubberBand(pushed, limit: NotchPushUp.followLimit) }
+        return 0
+    }
     private(set) var dropState: DropState = .none
     private(set) var dropChoice: DropChoice = .tuck
     /// SS-04：概览里拖着一扇窗靠近刘海，刘海长成 340 × 84 的落点（写“松手收进刘海”）。用 dropState = .offered 占位，
@@ -3315,6 +3353,8 @@ final class NotchPanel: NSPanel {
             if self.isExpanded { self.collapse() } else { self.onLongPress?() }
         }
         canvas.onPull = { [weak self] distance, touching, velocity in self?.pull(distance, touching: touching, velocity: velocity) }
+        canvas.onPush = { [weak self] distance, touching in self?.push(distance, touching: touching) }
+        canvas.pushIsTuck = { [weak self] in self?.pushIsTuck?() ?? false }
         canvas.onNavigation = { [weak self] destination in
             if destination == .back { self?.collapse() }
             self?.onNavigation?(destination)
@@ -4088,6 +4128,7 @@ final class NotchPanel: NSPanel {
     func beginFileDrop(kind: FileDragKind, env: FileDropEnvironment) {
         guard !isAuthenticating else { return }
         fileDrop = FileDropIslandModel(kind: kind, env: env, hit: .outside, notchWidth: notch.width)
+        fileArmGate.reset()
         canvas.islandDragActive = true
         canvas.registerForDraggedTypes(Self.islandDragTypes)
     }
@@ -4107,9 +4148,24 @@ final class NotchPanel: NSPanel {
         let shown = dropState != .none
             ? FileDropGeometry.shouldKeep(pointer: pointer, island: island)
             : FileDropGeometry.shouldShow(pointer: pointer, screenTop: notch.maxY, notchMidX: notch.midX)
-        let hit = shown ? FileDropGeometry.hit(pointer, island: island) : FileDropHit.outside
+        let rawHit = shown ? FileDropGeometry.hit(pointer, island: island) : FileDropHit.outside
+        // 进了岛要停满 MotionHold.dropDwellSeconds 才亮起（快速划过不亮）；亮起前岛只是垂着（.offered）。
+        let now = CACurrentMediaTime()
+        let wantsArm = shown && rawHit != .outside
+        let armed = fileArmGate.update(inside: wantsArm, now: now)
+        fileArmRecheck?.cancel(); fileArmRecheck = nil
+        if wantsArm, !armed, let wait = fileArmGate.remaining(now: now) {
+            let work = DispatchWorkItem { [weak self] in
+                MainActor.assumeIsolated { self?.updateFileDrop(pointer: pointer) }
+            }
+            fileArmRecheck = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + wait + 0.005, execute: work)
+        }
+        let hit = armed ? rawHit : FileDropHit.outside
         setFileDropState(shown ? (hit == .outside ? .offered : .armed) : .none, hit: hit, model: model)
     }
+    private var fileArmGate = DropDwellGate()
+    private var fileArmRecheck: DispatchWorkItem?
 
     private func setFileDropState(_ state: DropState, hit: FileDropHit, model: FileDropIslandModel) {
         guard state != dropState || hit != model.hit else { return }
@@ -4153,6 +4209,7 @@ final class NotchPanel: NSPanel {
     /// 拖动结束（松手了、取消了、别处接走了）：收起小岛，刘海这一块不再接拖放。
     func endFileDrop() {
         cancelFileDwell()
+        fileArmGate.reset(); fileArmRecheck?.cancel(); fileArmRecheck = nil
         let wasShown = fileDrop != nil && dropState != .none
         let had = fileDrop != nil
         fileDrop = nil
@@ -4271,6 +4328,27 @@ final class NotchPanel: NSPanel {
     }
 
     /// 两指往下拉（见 NotchCanvasView.scrollWheel）：手指在上面时岛一比一跟着长，松手时按速度推算落点。
+    /// 两指往上推：岛跟着手指一点点长出来（橡皮筋），推过线出现提示，松手或拉回线下就收回去。
+    /// 收不收由画布在松手时按 NotchPushUp 定；这里只管画。
+    private func push(_ distance: CGFloat, touching: Bool) {
+        guard !isAuthenticating, pushIsTuck?() == true else {
+            if pushed != 0 { pushed = 0; apply(animated: true) }
+            return
+        }
+        if touching {
+            guard distance != pushed else { return }
+            pushed = distance
+            hoverTimer?.invalidate()
+            apply(animated: false)
+            return
+        }
+        guard pushed != 0 else { return }
+        pushed = 0
+        let pullSpring = Motion.reduced ? Motion.Spring.reducedNotch : Motion.Spring.pull
+        apply(animated: true, spring: NotchCanvasView.Spring(response: pullSpring.response, bounce: pullSpring.bounce,
+                                                            initialVelocity: 0))
+    }
+
     private func pull(_ distance: CGFloat, touching: Bool, velocity: CGFloat) {
         guard !isAuthenticating else { return }
         let pullable = canPull?() ?? false
@@ -4349,7 +4427,7 @@ final class NotchPanel: NSPanel {
     /// 最小呈现（M13）：选中那件是紧凑，其余退成岛右侧的最小形。只在岛静止在紧凑样式（刘海两侧或无刘海胶囊）、
     /// 右边量到的空位放得下时才画；放不下、被更高的层占着、展开、提醒、认证、落点、音量亮度条时一颗都不画。
     private func minimumShapes(anchoredTo island: NSRect) -> [NotchMinimumShape] {
-        guard !isAuthenticating, !isExpanded, dropState == .none, alertInfo == nil, meter == nil, pulled == 0 else { return [] }
+        guard !isAuthenticating, !isExpanded, dropState == .none, alertInfo == nil, meter == nil, pulled == 0, pushed == 0 else { return [] }
         guard compactShape == (isVirtual ? CompactShape.pill : CompactShape.sides) else { return [] }
         let layout = NotchMinimalPresentation.layout(items: activityItems, selected: activitySelection, enabled: true)
         let placement: NotchMinimalPresentation.Placement = isVirtual ? .capsule : .notched
@@ -4371,8 +4449,8 @@ final class NotchPanel: NSPanel {
             ears.shoulders = NotchLevelEars.drawsShoulders() && !isVirtual ? (1, 1) : (0, 0)
             return ears
         }
-        if resting, pulled > 0 {
-            let extra = Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18)
+        if resting, pulled > 0 || pushed > 0 {
+            let extra = trayExtra
             rect.origin.y -= extra
             rect.size.height += extra
             if !isVirtual, rect.width < notch.width + 40 { rect = rect.insetBy(dx: -min(20, extra / 3), dy: 0) }
@@ -4620,7 +4698,7 @@ final class NotchPanel: NSPanel {
         // 两耳只亮一小会儿：点击穿透，菜单栏照常能点（稿“形状”一节）。
         ignoresMouseEvents = meter != nil
         // 平时（什么都没有）岛就是刘海本身：不画，免得圆角和刘海的圆角对不齐、从边上露出黑点。
-        let bare = !isVirtual && rect == notch && pulled == 0
+        let bare = !isVirtual && rect == notch && pulled == 0 && pushed == 0
         let resting = !isExpanded && dropState == .none && alertInfo == nil
         let shape = compactShape
         let visual = displayCompact()
@@ -4629,7 +4707,7 @@ final class NotchPanel: NSPanel {
             && dropState == .none && alertInfo == nil && meter == nil
         let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars
         let chinShown = resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
-        let extra = resting && pulled > 0 ? Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18) : 0
+        let extra = resting ? trayExtra : 0
         // 音量亮度两耳不管紧凑退成了什么：左右各 76，一定是两侧的版式。
         let earShape: CompactShape = shelfEars || meter != nil ? .sides : shape
         var content = NotchCanvasView.Content(
@@ -4643,7 +4721,7 @@ final class NotchPanel: NSPanel {
                 : nil,
             alert: (!isExpanded && dropState == .none) ? alertInfo : nil,
             hint: hintText(), notchHeight: notch.height,
-            pullIcon: extra > 0 ? compact?.icon : nil, pullExtra: extra, pullProgress: min(1, extra / 50),
+            pullIcon: extra > 0 && pushed == 0 ? compact?.icon : nil, pullExtra: extra, pullProgress: min(1, extra / 50),
             drop: dropState, dropChoice: dropChoice,
             dropDisabled: dropState == .none || fileDrop != nil ? [] : Set(DropChoice.allCases.filter { isDisabled($0) }.map(\.rawValue)),
             fileDrop: dropState == .none ? nil : fileDrop,
@@ -4688,7 +4766,7 @@ final class NotchPanel: NSPanel {
         canvas.morph(to: local, style: style, content: content, spring: animated ? (custom ?? spring()) : nil,
                      shoulders: shoulders, shoulderSnap: snap, shoulderFade: roomOnly) { [weak self] in
             // 停下来了：面板缩回岛的大小，旁边透明的地方不挡东西。
-            guard let self, generation == self.settleGeneration, self.pulled == 0 || !animated else { return }
+            guard let self, generation == self.settleGeneration, (self.pulled == 0 && self.pushed == 0) || !animated else { return }
             let settled = NSIntegralRectWithOptions(target.hit, .alignAllEdgesOutward)
             if self.frame != settled {
                 let delta = CGVector(dx: self.frame.minX - settled.minX, dy: self.frame.minY - settled.minY)
@@ -4848,6 +4926,9 @@ final class NotchPanel: NSPanel {
         case .offered: return WSL10n.text("notch.drop.offer", zh: "拖到这里，排好或收进刘海")
         case .confirmed: return dropChoice == .tuck ? WSL10n.text("notch.drop.confirmed", zh: "正在收起") : dropChoice.title
         case .none:
+            if pushed >= NotchPushUp.commitTravel, pushIsTuck?() == true {
+                return WSL10n.text("notch.push.hint", zh: "松手全部收进刘海")
+            }
             if pulled > 0, compact == nil { return WSL10n.text("silent.launcher.open", zh: "启动台") }
             return isExpanded && tiles.isEmpty && (cardItems.isEmpty || mergedRow)
                 ? WSL10n.text("notch.launchpad.hint", zh: "点一下回主屏幕 · 左右滑换 App") : nil
@@ -4942,6 +5023,11 @@ final class NotchCanvasView: NSView {
     /// 两指在刘海上往下拉：拉了多少（点，往下为正）、手指是不是还在上面、此刻速度（点/秒）。
     var onPull: ((CGFloat, Bool, CGFloat) -> Void)?
     var onNavigation: ((LaunchpadController.Destination) -> Void)?
+    /// 两指（或鼠标）在刘海上往上推：推了多少（点，向上为正）、手指是不是还在上面。
+    var onPush: ((CGFloat, Bool) -> Void)?
+    /// 往上推是不是“全部收进刘海”：是就按 NotchPushUp 的门槛（90 点 + 松手速度）；不是（主屏幕开着）沿用老的 60 点返回。
+    var pushIsTuck: (() -> Bool)?
+    private var pushSamples: [(TimeInterval, CGFloat)] = []
     var onActivitySelect: ((String) -> Void)?
     var onActivityAction: ((NotchActivityAction) -> Void)?
     var canSwipeActivities: (() -> Bool)?
@@ -5763,7 +5849,7 @@ final class NotchCanvasView: NSView {
         holdTimer?.invalidate(); holdUsed = false
         pressedAt = mouseScreenPoint(event); mouseDragAxis = nil; mouseDragSamples = []
         if event.clickCount == 1 {
-            holdTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            holdTimer = Timer.scheduledTimer(withTimeInterval: Motion.Hold.longPress, repeats: false) { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self, self.pressedAt != nil else { return }
                     self.holdUsed = true; self.holdTimer = nil
@@ -5795,6 +5881,8 @@ final class NotchCanvasView: NSView {
             if axis {
                 if canSwipeActivities?() == true && currentActivitySwipe(distance.x, touching: false, velocity: velocity.x) { return }
                 if abs(distance.x) > 60 { onNavigation?(distance.x > 0 ? .today : .library) }
+            } else if distance.y < 0, pushIsTuck?() == true {
+                finishPush(travelUp: -distance.y, samples: mouseDragSamples.map { ($0.0, -$0.1.y) })
             } else if distance.y < -60 { onPull?(0, false, 0); onNavigation?(.back) }
             else { onPull?(max(0, distance.y), false, velocity.y) }
             return
@@ -5823,18 +5911,31 @@ final class NotchCanvasView: NSView {
         guard let axis = mouseDragAxis else { return }
         mouseDragSamples.append((event.timestamp, distance)); mouseDragSamples = Array(mouseDragSamples.suffix(6))
         if axis { if canSwipeActivities?() == true { _ = currentActivitySwipe(distance.x, touching: true, velocity: 0) } }
-        else { onPull?(max(0, distance.y), true, 0) }
+        else { onPull?(max(0, distance.y), true, 0); onPush?(max(0, -distance.y), true) }
+    }
+
+    /// 往上推松手：推过 90 点、而且按松手时的速度推算还能走到 120 点才收，不然岛弹回去（NotchPushUp）。
+    private func finishPush(travelUp: CGFloat, samples: [(TimeInterval, CGFloat)]) {
+        var velocity: CGFloat = 0
+        if let first = samples.first, let last = samples.last, last.0 - first.0 > 0.005 {
+            velocity = (last.1 - first.1) / CGFloat(last.0 - first.0)
+        }
+        onPush?(0, false)
+        onPull?(0, false, 0)
+        if NotchPushUp.commits(travel: travelUp, velocity: velocity) { onNavigation?(.back) }
     }
     func cancelHold() { holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil; mouseDragAxis = nil }
     func resetInteractions() {
         cancelHold(); fileDwell?.invalidate(); fileDwell = nil
         _ = currentActivitySwipe(0, touching: false, velocity: 0, cancelled: true)
-        pull = nil; horizontal = nil; travel = .zero; horizontalSamples = []
+        pull = nil; horizontal = nil; travel = .zero; horizontalSamples = []; pushSamples = []
+        onPush?(0, false)
     }
     override func cancelOperation(_ sender: Any?) {
         if let authenticationView { authenticationView.onCancel?(); return }
         cancelHold()
         _ = currentActivitySwipe(0, touching: false, velocity: 0, cancelled: true)
+        onPush?(0, false)
         onPull?(0, false, 0)
     }
     override func rightMouseDown(with event: NSEvent) { if authenticationView == nil { onAuxiliaryClick?(event) } }
@@ -5913,7 +6014,7 @@ final class NotchCanvasView: NSView {
         switch event.phase {
         case .began, .mayBegin:
             travel = .zero; horizontal = nil; horizontalSamples = [(event.timestamp, 0)]
-            pull = (0, [(event.timestamp, 0)])
+            pull = (0, [(event.timestamp, 0)]); pushSamples = [(event.timestamp, 0)]
         case .changed:
             guard var current = pull else { return }
             travel.x += fingerRight; travel.y += fingerDown
@@ -5927,6 +6028,8 @@ final class NotchCanvasView: NSView {
             current.distance = max(0, travel.y)
             current.samples.append((event.timestamp, current.distance))
             current.samples = Array(current.samples.suffix(6)); pull = current
+            pushSamples.append((event.timestamp, -travel.y)); pushSamples = Array(pushSamples.suffix(6))
+            onPush?(max(0, -travel.y), true)
             onPull?(current.distance, true, 0)
         case .ended, .cancelled:
             guard let current = pull else { return }
@@ -5934,6 +6037,7 @@ final class NotchCanvasView: NSView {
             // 取消必须回弹，不能拿累计位移当作一次成功的松手。
             if event.phase == .cancelled {
                 _ = currentActivitySwipe(0, touching: false, velocity: 0, cancelled: true)
+                onPush?(0, false)
                 onPull?(0, false, 0); return
             }
             if horizontal == true {
@@ -5944,6 +6048,8 @@ final class NotchCanvasView: NSView {
                 }
                 if canSwipeActivities?() == true && currentActivitySwipe(travel.x, touching: false, velocity: velocity) { return }
                 if abs(travel.x) > 60 { onNavigation?(travel.x > 0 ? .today : .library) }
+            } else if travel.y < 0, pushIsTuck?() == true {
+                finishPush(travelUp: -travel.y, samples: pushSamples)
             } else if travel.y < -60 {
                 onPull?(0, false, 0); onNavigation?(.back)
             } else {

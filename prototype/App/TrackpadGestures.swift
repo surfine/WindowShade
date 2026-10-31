@@ -44,9 +44,10 @@ final class TrackpadGestureController {
     /// 鼠标滚轮：一格算 24 点，三格走满；停 0.3 秒算一次滚动结束（滚轮没有“松手”）。
     static let wheelStep: CGFloat = 24
     static let wheelQuiet: TimeInterval = 0.3
-    /// 刚执行完的这段时间里，同一扇窗朝同一个方向再划一下不接：连划几下（Magic Mouse 上
-    /// 很常见）不会在尺寸梯子上连走两格（本想还原，结果又收起了）。换个手势照常接。
-    static let commitCooldown: TimeInterval = 0.6
+    /// 刚执行完的这段时间里，同一扇窗朝任何方向再划一下都不接，只有刚好反方向（放回去）立刻接：
+    /// 连划几下（Magic Mouse 上很常见）不会在尺寸梯子上连走两格（本想还原，结果又收起了）。
+    /// 换个手势（不是方向滑动）照常接。规则在 Core/GuardRules.swift 的 GestureCooldown。
+    static let commitCooldown: TimeInterval = Motion.Hold.commitCooldown
     /// 标题栏上认出了手势、却没有任何动作：如果有同样在标题栏上认手势的工具（DockDoor）在跑，说一次是谁。
     /// 不让路、不关自己（见 Core/WindowToolConflict.swift）；同一个工具永远只说一次。
     private func tellAboutTitleBarTool() {
@@ -88,7 +89,7 @@ final class TrackpadGestureController {
         let consumes: Bool
         /// 来自鼠标滚轮：一格一格走，停下就算结束。
         var isWheel = false
-        /// 刚在这扇窗上朝这个方向执行过：这次同方向的滑动不接（冷却）。
+        /// 刚在这扇窗上朝这个方向执行过：这次除了反方向以外的滑动都不接（冷却）。
         var cooledDirection: GestureDirection?
         var suppressed = false
         /// 窗口本体正在跟手（收起时是窗口的盖板，展开时是卷帘条下的画面）。
@@ -986,8 +987,9 @@ final class TrackpadGestureController {
 
     private func feed(_ session: Session, _ feedback: [GestureFeedback], animated: Bool = false) {
         guard session.verified, !session.suppressed else { return }
-        if let cooled = session.cooledDirection, session.recognizer.direction == cooled {
-            // 同一扇窗、同一个方向、刚执行完：这一下当作连划的余波，不显示也不执行。
+        if let cooled = session.cooledDirection, let direction = session.recognizer.direction,
+           GestureCooldown.blocks(last: cooled, next: direction) {
+            // 同一扇窗、刚执行完（反方向“放回去”除外）：这一下当作连划的余波，不显示也不执行。
             session.suppressed = true
             hud.cancel()
             return
@@ -1276,7 +1278,7 @@ final class TrackpadGestureController {
             drag.touchDevice = touchesNow > 0 ? touchRoster.active : nil
             flickDrag = drag
             if event.clickCount == 1 {
-                titleHold = Timer.scheduledTimer(withTimeInterval: 0.55, repeats: false) { [weak self] _ in
+                titleHold = Timer.scheduledTimer(withTimeInterval: Motion.Hold.longPress, repeats: false) { [weak self] _ in
                     MainActor.assumeIsolated { self?.showTitleHold(drag, location: axPoint) }
                 }
             }

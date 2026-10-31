@@ -11,7 +11,7 @@ mkdir -p "$OUT"
   "$ROOT/prototype/Core/WS2StrictJSON.swift" \
   "$ROOT/prototype/Core/FocusTimer.swift" \
   "$ROOT/prototype/Core/WS2CompanionFrame.swift" \
-  "$ROOT/prototype/Core/WS2ApprovalReview.swift" \
+  "$ROOT/prototype/Core/WS2ApprovalReview.swift" "$ROOT/prototype/Core/ApprovalFreshness.swift" \
   "$ROOT/prototype/Core/WS2DeviceInputGate.swift" \
   "$ROOT/prototype/Core/WS2FocusWindowOwnership.swift" \
   "$ROOT/tests/Part4CoreTests.swift" -o "$OUT/part4-core-tests"

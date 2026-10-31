@@ -1863,6 +1863,8 @@ extension GlanceProbe {
     let islandFrame = notch.panelFrame
     let offered = islandFrame.map { $0.minY < rect.minY - 20 } == true
     notch.dragMoved(to: CGPoint(x: zone.midX, y: zone.midY))
+    // 落点要在区域里停满 0.15 秒才亮起（MotionHold.dropDwellSeconds）：等一下再松手。
+    try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let taken = notch.dragEnded(at: CGPoint(x: zone.midX, y: zone.midY)) == .tuck
     print("\(offered && taken ? "PASS" : "FAIL") notch: dragging a title bar near the notch drops a landing island under it, and letting go on it tucks (island=\(islandFrame.map { "\($0)" } ?? "-") notch=\(rect) taken=\(taken))")
 

@@ -343,6 +343,14 @@ enum MotionHold {
     static let tileDwellSeconds: TimeInterval = 0.20
     /// 指针停在刘海上多久才展开（从菜单栏划过去不算）。0.12 秒。
     static let notchDwellSeconds: TimeInterval = 0.12
+    /// 长按多久算长按：刘海长按和标题栏长按菜单共用这一个。0.5 秒。
+    static let longPressSeconds: TimeInterval = 0.5
+    /// 拖着窗口或文件在刘海那块区域里停多久才亮起落点（快速划过不亮）。0.15 秒。
+    static let dropDwellSeconds: TimeInterval = 0.15
+    /// 手势提交之后，同一扇窗多久内不接下一次提交（反向那一步“放回去”不受限）。0.6 秒。
+    static let commitCooldownSeconds: TimeInterval = 0.6
+    /// 审批卡出现后这么久内开始的按下不算（防正在点别处的手）。0.5 秒。
+    static let freshPressSeconds: TimeInterval = 0.5
     /// 电量那一下（插电、低电量）：紧凑大小里停留。2.6 秒。
     static let powerFlashSeconds: Double = 2.6
     /// 日程大卡至少停留多久。2.6 秒。

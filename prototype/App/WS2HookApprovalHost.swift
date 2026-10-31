@@ -220,6 +220,19 @@ import Cocoa
 
 /// 刘海里的 hook 审批卡。尺寸和摆法照稿《刘海里的编程会话》§3：408 宽、压进岛的上限；
 /// 只写四件事（哪个助手、哪个项目、要做什么、风险），内容从右耳的琥珀点长出来。放行逻辑不在这里。
+/// 记下这一下按下是什么时候开始的（动作在松手时才触发）：卡刚出现的头 0.5 秒里开始的按下不算（ApprovalFreshness）。
+@MainActor private final class WS2FreshPressButton: NSButton {
+    /// 按下开始的时刻（ProcessInfo.systemUptime 时钟，和 NSEvent.timestamp 同一个）；不在按的时候为 nil。
+    private(set) var pressBegan: TimeInterval?
+    override func mouseDown(with event: NSEvent) {
+        pressBegan = event.timestamp
+        defer { pressBegan = nil }
+        super.mouseDown(with: event)
+    }
+    /// 动作被触发那一刻，这一下是几时开始的：鼠标按下用记下的时刻；读屏或键盘触发的就是此刻。
+    func currentPressBegan() -> TimeInterval { pressBegan ?? ProcessInfo.processInfo.systemUptime }
+}
+
 @MainActor final class WS2HookApprovalView: NSView, WS2LeaseContent {
     static let size = NSSize(width: SessionCardStyle.cardSize.width, height: SessionCardStyle.cardSize.height)
     var onCancel: (() -> Void)?
@@ -250,9 +263,11 @@ import Cocoa
     private let dot = WS2SessionCardChrome.makeAmberDot()
     private let ear = WS2SessionCardChrome.makeEar()
     private let riskLine: WS2SessionCardChrome.RiskLine?
-    private let no: NSButton
-    private let primary: NSButton
+    private let no: WS2FreshPressButton
+    private let primary: WS2FreshPressButton
     private let primaryIsTerminal: Bool
+    /// 卡第一次出现在窗口里的时刻（systemUptime 时钟）；之前和头 0.5 秒里开始的按下不算。
+    private var shownAt: TimeInterval?
 
     /// Touch ID 键能不能用：要 Touch ID 又有整条命令可看的请求，命令露出过才行。
     var touchIDGateOpen: Bool { AgentApprovalCard.touchIDReady(risk: risk, command: command, revealed: commandRevealed) }
@@ -268,8 +283,8 @@ import Cocoa
         byline = NSTextField(labelWithString: AgentApprovalCard.byline(agent: WS2HookApprovalHost.agentName,
                                                                        project: project))
         riskLine = AgentApprovalCard.riskNote(risk).map { WS2SessionCardChrome.RiskLine(note: $0) }
-        no = NSButton(title: AgentApprovalCard.title(.deny), target: nil, action: nil)
-        primary = NSButton(title: AgentApprovalCard.title(
+        no = WS2FreshPressButton(title: AgentApprovalCard.title(.deny), target: nil, action: nil)
+        primary = WS2FreshPressButton(title: AgentApprovalCard.title(
             terminal ? .handleInTerminal : (needsTouchID ? .allowWithTouchID : .allowOnce)),
             target: nil, action: nil)
         super.init(frame: .zero)
@@ -306,7 +321,7 @@ import Cocoa
         setAccessibilityLabel(AgentApprovalCard.announcement(agent: WS2HookApprovalHost.agentName, summary: summary))
         if !command.isEmpty {
             let hold = NSPressGestureRecognizer(target: self, action: #selector(held(_:)))
-            hold.minimumPressDuration = 0.45; hold.allowableMovement = 8
+            hold.minimumPressDuration = Motion.Hold.longPress; hold.allowableMovement = 8
             addGestureRecognizer(hold)
             // 读屏和键盘用户没有“按住”：给一个同样露出整条命令的动作。
             setAccessibilityCustomActions([NSAccessibilityCustomAction(name: AgentApprovalCard.showCommandAction) { [weak self] in
@@ -349,7 +364,16 @@ import Cocoa
     }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window != nil { needsLayout = true }
+        if window != nil {
+            needsLayout = true
+            if shownAt == nil { shownAt = ProcessInfo.processInfo.systemUptime }
+        }
+    }
+
+    /// 这一下按下算不算数：卡还没出现、或出现不到 0.5 秒就开始的按下不算。
+    private func pressCounts(_ button: WS2FreshPressButton) -> Bool {
+        guard let shownAt else { return false }
+        return ApprovalFreshness.counts(pressBegan: button.currentPressBegan(), cardShown: shownAt)
     }
 
     func showReceipt(_ text: String) {
@@ -372,12 +396,12 @@ import Cocoa
 
     @objc private func refuse() {
         if handledElsewhere { showLateReceipt(); return }
-        guard inputIsCurrent() else { return }
+        guard inputIsCurrent(), pressCounts(no) else { return }
         deny?()
     }
     @objc private func act() {
         if handledElsewhere { showLateReceipt(); return }
-        guard inputIsCurrent() else { return }
+        guard inputIsCurrent(), pressCounts(primary) else { return }
         if primaryIsTerminal { useTerminal?() }
         else if !touchIDGateOpen { revealCommand() }   // 先看整条命令，再按一次才验 Touch ID
         else { allow?() }

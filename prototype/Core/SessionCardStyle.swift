@@ -20,8 +20,8 @@ enum SessionCardStyle {
     static let buttonBottom: CGFloat = 12
     static let buttonGap: CGFloat = 8
     static let dotDiameter: CGFloat = IslandMetrics.sessionDotDiameter
-    /// 卡出现后这么久内的点按不算（防正在点别处的手）；Codex 那条路已有同样的新鲜度判断，这里只记数。
-    static let freshPressSeconds: Double = 0.5
+    /// 卡出现后这么久内开始的按下不算（防正在点别处的手）；数值在 MotionHold，Claude hook 卡和 Codex 卡共用。
+    static let freshPressSeconds: Double = MotionHold.freshPressSeconds
 
     /// 卡面上从上到下的行（原点在左下，AppKit 坐标）。
     struct Layout: Equatable {
