@@ -248,6 +248,14 @@ struct FaceAutofillTests {
         t.expect(G.band(face(0.86)) == .watchAssistBand, "within 0.05 -> watch band")
         t.expect(G.band(face(0.84)) == .fail, "further -> fail")
         t.expect(G.band(face(.infinity)) == .fail, "infinite score fails")
+
+        // 注视（决定 75）：只有「在看屏幕」算过；扫描报告不带注视时默认不知道。
+        t.expect(G.gazeCheck(.onScreen) == .passed, "gaze on screen passes")
+        t.expect(G.gazeCheck(.offScreen) == .failed && G.gazeCheck(.eyesClosed) == .failed, "looking away or eyes closed fails")
+        t.expect(G.gazeCheck(.unknown) == .unknown, "uncalibrated or unseen gaze stays unknown")
+        let report = G.ScanReport(recognised: true, similarity: 0.95, threshold: 0.92, thresholdCalibrated: true,
+                                  liveness: .passed, faceAttemptsUsed: 0)
+        t.expect(report.gaze == .unknown, "a scan report without gaze defaults to unknown")
         t.finish()
     }
 }

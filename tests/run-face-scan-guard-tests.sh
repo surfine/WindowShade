@@ -4,5 +4,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/face-scan-guard-tests
 swiftc -swift-version 6 -parse-as-library prototype/Core/SessionLockState.swift prototype/Core/FaceScanGuard.swift \
-  prototype/Core/FaceTemplateSet.swift tests/FaceScanGuardTests.swift -o .build/face-scan-guard-tests/guard
+  prototype/Core/FaceTemplateSet.swift prototype/Core/GazeAttention.swift tests/FaceScanGuardTests.swift -o .build/face-scan-guard-tests/guard
 .build/face-scan-guard-tests/guard

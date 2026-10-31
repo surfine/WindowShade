@@ -4,6 +4,8 @@ import Foundation
 //
 // framing ──画质门（录脸档：恰好一张脸、正脸、不太近）连续 0.5 s 通过──▶ collecting
 // collecting ──正脸 5 帧，相隔 ≥0.25 s，每帧与第一帧一致──▶ confirming（Touch ID，目标 = 要存的这一组模板的摘要）
+// （开着注视校准时）collecting ──收满──▶ calibrating ──看完五个位置（拟合成或不成）──▶ confirming
+//   校准拟不成不算录脸失败：沿用这个版本原来的校准（没有就是没有），注视在锁屏时就是「不知道」。
 // collecting ──和第一帧不一致 / 冒出第二张脸──▶ framing（整轮重来，已收的帧全丢）
 // confirming ──授权当场消费成功──▶ saving（交出要写的那一组）──▶ saved
 // confirming ──没确认 / 授权对不上这一组──▶ ended(.notConfirmed)（什么都不写）
@@ -29,6 +31,8 @@ struct FaceEnrollmentFrame: Equatable, Sendable {
     /// 这一帧特征的模型版本；没算出特征就是 nil。
     let modelVersion: String?
     let embedding: [Float]?
+    /// 注视样本（决定 75）；校准那一步才用。没算就是 nil。
+    var gaze: GazeSample? = nil
 }
 
 /// 授权消费成功后才有的“要写的这一组”。只有 FaceEnrollmentFlow.confirm 造得出来。
@@ -38,6 +42,8 @@ struct FaceEnrollmentSave: Equatable, Sendable {
     let templates: [FaceTemplate]
     /// 这一轮新录了几条。
     let added: Int
+    /// 跟模板写在同一条里的注视校准（新拟的，或沿用原来的）；没有就是 nil。只在本文件里设。
+    fileprivate(set) var gaze: GazeCalibration? = nil
 
     fileprivate init(modelVersion: String, templates: [FaceTemplate], added: Int) {
         self.modelVersion = modelVersion
@@ -52,6 +58,9 @@ struct FaceEnrollmentTuning: Equatable, Sendable {
     var minimumSpacing = 0.25
     /// 正脸门：录脸档（恰好一张脸、|yaw| ≤0.14、眼睛开度 0.14–0.6、脸宽 0.18–0.6、连续 0.5 s）。
     var quality = FaceQualityTuning.enrollment
+    /// 收满正脸之后多一步注视校准（决定 75）。默认关：只有刷脸实验打开它。
+    var calibrateGaze = false
+    var gazeCalibration = GazeCalibrationFlow.Tuning()
 }
 
 struct FaceEnrollmentFlow {
@@ -59,6 +68,8 @@ struct FaceEnrollmentFlow {
         /// 取景：只给画质提示，不计失败。hint 是过了回滞的那一条。
         case framing(hint: FaceQualityHint?)
         case collecting(collected: Int)
+        /// 注视校准：看屏幕上的某个位置。
+        case calibrating(GazeCalibrationFlow.Step)
         /// 等 Touch ID；相机该关了。
         case confirming
         /// 授权已消费，正在写。
@@ -101,6 +112,7 @@ struct FaceEnrollmentFlow {
         let target: AuthTarget
         let templates: [FaceTemplate]
         let added: Int
+        let gaze: GazeCalibration?
     }
 
     let modelVersion: String
@@ -116,12 +128,21 @@ struct FaceEnrollmentFlow {
     private var collected: [FaceTemplate] = []
     private var lastCollectedAt: Double?
     private var pending: Pending?
+    /// 这个版本原来存着的注视校准；这一轮校准拟不成时沿用它。
+    private let existingGaze: GazeCalibration?
+    private var calibration: GazeCalibrationFlow?
+    /// 收满正脸后、校准做完前，等着交给 Touch ID 的那一组模板。
+    private var merged: (templates: [FaceTemplate], added: Int, reference: [Float])?
+    /// 这一轮校准的结果（日志用）：拟成了、没拟成（原因）、没做。
+    private(set) var gazeOutcome: GazeCalibrationFlow.Outcome?
 
     /// `existing`：这个版本已经存着的模板（新录的接在后面）。`consistencyThreshold` 为 nil 时按模型阈值表取。
+    /// `existingGaze`：这个版本原来存着的注视校准。
     init(modelVersion: String, existing: [FaceTemplate], tuning: FaceEnrollmentTuning = FaceEnrollmentTuning(),
-         consistencyThreshold: Float? = nil) {
+         consistencyThreshold: Float? = nil, existingGaze: GazeCalibration? = nil) {
         self.modelVersion = modelVersion
         self.tuning = tuning
+        self.existingGaze = existingGaze.flatMap { $0.isValid ? $0 : nil }
         self.existing = existing.filter { $0.modelVersion == modelVersion }
         let threshold = consistencyThreshold ?? FaceScanTuning().modelProfiles[modelVersion]?.similarityThreshold
         self.consistencyThreshold = threshold.flatMap { $0.isFinite && $0 > 0 && $0 <= 1 ? $0 : nil }
@@ -132,7 +153,7 @@ struct FaceEnrollmentFlow {
     /// 还在用相机（取景或收帧）。
     var wantsCamera: Bool {
         switch phase {
-        case .framing, .collecting: true
+        case .framing, .collecting, .calibrating: true
         default: false
         }
     }
@@ -166,9 +187,42 @@ struct FaceEnrollmentFlow {
             collect(frame)
         case .collecting:
             collect(frame)
+        case .calibrating:
+            calibrate(frame)
         default:
             return
         }
+    }
+
+    /// 校准那一步的一帧：只收一张脸、眼睛睁着、有注视特征的帧；算出特征的帧要和这一轮第一帧像同一个人，
+    /// 不像就不收（不重来，也不算失败）。超时或拟合不成就不存新校准，照常去 Touch ID。
+    private mutating func calibrate(_ frame: FaceEnrollmentFrame) {
+        guard var flow = calibration, let merged else { return }
+        var sample = frame.gaze
+        if let embedding = frame.embedding, !embedding.isEmpty {
+            let same = frame.modelVersion == modelVersion && consistencyThreshold.map { threshold in
+                (FaceScanGuard.cosine(embedding, merged.reference) ?? -1) >= threshold
+            } == true
+            if !same { sample = nil }
+        }
+        flow.receive(sample, faceCount: frame.quality.faceCount, at: frame.capturedAt)
+        calibration = flow
+        if let step = flow.step(at: frame.capturedAt) { phase = .calibrating(step); return }
+        gazeOutcome = flow.outcome
+        var fitted: GazeCalibration?
+        if case .fitted(let calibration)? = flow.outcome { fitted = calibration }
+        calibration = nil
+        self.merged = nil
+        awaitConfirmation(templates: merged.templates, added: merged.added, gaze: fitted ?? existingGaze)
+    }
+
+    /// 要存的这一组定了：算出 Touch ID 的目标，等确认。
+    private mutating func awaitConfirmation(templates: [FaceTemplate], added: Int, gaze: GazeCalibration?) {
+        guard let target = AuthTarget.faceEnrollment(templates, gaze: gaze, modelVersion: modelVersion) else {
+            restart(.inconsistent); return
+        }
+        pending = Pending(target: target, templates: templates, added: added, gaze: gaze)
+        phase = .confirming
     }
 
     private mutating func collect(_ frame: FaceEnrollmentFrame) {
@@ -188,12 +242,20 @@ struct FaceEnrollmentFlow {
         lastCollectedAt = frame.capturedAt
         guard collected.count >= max(1, tuning.frameCount) else { phase = .collecting(collected: collected.count); return }
         let merged = FaceTemplateSet.appending(collected, to: existing, modelVersion: modelVersion)
-        guard let target = AuthTarget.faceTemplates(merged, modelVersion: modelVersion) else {
+        guard AuthTarget.faceTemplates(merged, modelVersion: modelVersion) != nil else {
             restart(.inconsistent); return
         }
-        pending = Pending(target: target, templates: merged, added: collected.count)
+        let added = collected.count, reference = collected[0].embedding
         collected = []; lastCollectedAt = nil
-        phase = .confirming
+        guard tuning.calibrateGaze else {
+            awaitConfirmation(templates: merged, added: added, gaze: existingGaze)
+            return
+        }
+        let flow = GazeCalibrationFlow(startedAt: frame.capturedAt, tuning: tuning.gazeCalibration)
+        self.merged = (merged, added, reference)
+        calibration = flow
+        guard let step = flow.step(at: frame.capturedAt) else { return }
+        phase = .calibrating(step)
     }
 
     /// 整轮重来：已收的帧全丢，回到取景，画质门从头计时。
@@ -201,6 +263,7 @@ struct FaceEnrollmentFlow {
         restarts += 1
         lastRestart = reason
         collected = []; lastCollectedAt = nil
+        calibration = nil; merged = nil
         gate.reset()
         phase = .framing(hint: reason.hint)
     }
@@ -213,11 +276,13 @@ struct FaceEnrollmentFlow {
         guard phase == .confirming, let pending else { return nil }
         guard let grant else { end(.notConfirmed); return nil }
         // 按真要写的这一组重算目标，不用当时请求里的那个：两者不一致，账本就拒。
-        guard let target = AuthTarget.faceTemplates(pending.templates, modelVersion: modelVersion),
+        guard let target = AuthTarget.faceEnrollment(pending.templates, gaze: pending.gaze, modelVersion: modelVersion),
               consume(grant, .enrollDevice, target) == nil else { end(.notConfirmed); return nil }
         self.pending = nil
         phase = .saving
-        return FaceEnrollmentSave(modelVersion: modelVersion, templates: pending.templates, added: pending.added)
+        var save = FaceEnrollmentSave(modelVersion: modelVersion, templates: pending.templates, added: pending.added)
+        save.gaze = pending.gaze
+        return save
     }
 
     /// 钥匙串写完（整组一次写入，没有半份）。
@@ -230,6 +295,7 @@ struct FaceEnrollmentFlow {
     mutating func end(_ reason: EndReason) {
         guard !isFinished else { return }
         collected = []; lastCollectedAt = nil; pending = nil
+        calibration = nil; merged = nil
         stream = nil; lastSequence = nil
         gate.reset()
         phase = .ended(reason)
@@ -272,5 +338,14 @@ extension AuthTarget {
     static func faceTemplates(_ templates: [FaceTemplate], modelVersion: String) -> AuthTarget? {
         guard !templates.isEmpty, templates.allSatisfy({ $0.modelVersion == modelVersion }) else { return nil }
         return faceTemplate(modelVersion: modelVersion, digest: FaceTemplateSet.digest(templates, modelVersion: modelVersion))
+    }
+
+    /// 录脸要存的那一整条：模板，加上（有的话）注视校准。没有校准时和 faceTemplates 逐字节相同；
+    /// 有校准时摘要盖住模板的规范字节和校准的规范字节（GazeCalibration.canonicalBytes），换掉任何一个系数授权就用不上。
+    static func faceEnrollment(_ templates: [FaceTemplate], gaze: GazeCalibration?, modelVersion: String) -> AuthTarget? {
+        guard let gaze else { return faceTemplates(templates, modelVersion: modelVersion) }
+        guard gaze.isValid, !templates.isEmpty, templates.allSatisfy({ $0.modelVersion == modelVersion }) else { return nil }
+        let bytes = FaceTemplateSet.canonicalBytes(templates, modelVersion: modelVersion) + gaze.canonicalBytes
+        return faceTemplate(modelVersion: modelVersion, digest: AuthDigest(sha256: bytes))
     }
 }

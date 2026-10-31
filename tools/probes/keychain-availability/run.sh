@@ -8,7 +8,7 @@ cd "$(dirname "$0")/../../.."
 WORK=".build/keychain-availability-probe"
 rm -rf "$WORK"
 mkdir -p "$WORK"
-SRC=(tools/probes/keychain-availability/main.swift prototype/App/FaceTemplateKeychainStore.swift prototype/Core/FaceTemplateSet.swift prototype/Core/FaceScanGuard.swift prototype/Core/SessionLockState.swift)
+SRC=(tools/probes/keychain-availability/main.swift prototype/App/FaceTemplateKeychainStore.swift prototype/Core/FaceTemplateSet.swift prototype/Core/GazeAttention.swift prototype/Core/FaceScanGuard.swift prototype/Core/SessionLockState.swift)
 ONLY="${1:-all}"
 
 find_developer_identity() {

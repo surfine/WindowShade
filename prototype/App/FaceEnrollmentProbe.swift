@@ -2,7 +2,7 @@ import AppKit
 import Darwin
 
 /// Page-level acceptance for the face enrollment card: put a synthetic framing / collecting /
-/// ended phase in front of the real island and check the card is sized, live, and goes away.
+/// gaze calibration / ended phase in front of the real island and check the card is sized, live, and goes away.
 /// No camera, no Touch ID, no model request.
 @MainActor
 enum FaceEnrollmentProbe {
@@ -176,6 +176,46 @@ enum FaceEnrollmentProbe {
         let view = host.probeView
         expect(view?.probeProgress == "2 / \(FaceEnrollmentTuning().frameCount)", "collecting shows the frame count")
         expect(view?.probeDetail == WSL10n.text("face.quality.holdStill", zh: "稳住别动"), "collecting asks to hold still")
+        expect(view?.probeCalibrationTarget == nil, "collecting has no gaze target")
+        view?.reduceMotionOverride = false
+        host.enrollmentPhase(.calibrating(.init(target: .centre, index: 0, count: 5, collecting: false)))
+        after(0.2) { checkCalibrating(host, prior: failures) }
+    }
+
+    /// 注视校准那一步（决定 75）：小屏幕上的点在要看的位置，下面一句说看哪里，进度是第几个位置；
+    /// 等的时候点空心、收帧时实心；减少动态效果时点直接跳、不呼吸；回到取景时小屏幕收起。
+    private static func checkCalibrating(_ host: FaceEnrollmentHost, prior: Int) {
+        var failures = prior
+        func expect(_ ok: Bool, _ text: String) {
+            if !ok { failures += 1 }
+            log("\(ok ? "ok  " : "FAIL") \(text)")
+        }
+        guard let view = host.probeView else {
+            log("FAIL face-enrollment-page: card gone at calibration"); finish(ok: false); return
+        }
+        expect(view.bounds.size == FaceEnrollmentView.size, "calibration keeps the 380x140 card")
+        expect(view.probeCalibrationTarget == .centre, "calibration: centre target shown")
+        expect(view.probeDetail == FaceEnrollmentView.instruction(.centre), "calibration: says look at the middle")
+        expect(view.probeProgress == "1 / 5", "calibration: progress 1 / 5")
+        expect(!view.probeDotFilled, "calibration: dot hollow while you move your eyes")
+        host.enrollmentPhase(.calibrating(.init(target: .centre, index: 0, count: 5, collecting: true)))
+        expect(view.probeDotFilled && view.probeDotAnimates, "calibration: dot filled and breathing while collecting")
+        let centre = view.probeDotCentre
+        host.enrollmentPhase(.calibrating(.init(target: .topLeft, index: 1, count: 5, collecting: false)))
+        expect(view.probeDetail == FaceEnrollmentView.instruction(.topLeft), "calibration: says look at the top-left corner")
+        expect(view.probeProgress == "2 / 5", "calibration: progress 2 / 5")
+        if let centre, let corner = view.probeDotCentre {
+            expect(corner.x < centre.x && corner.y > centre.y, "calibration: top-left dot sits up and to the left")
+        } else {
+            expect(false, "calibration: dot positions readable")
+        }
+        view.reduceMotionOverride = true
+        host.enrollmentPhase(.calibrating(.init(target: .bottomRight, index: 3, count: 5, collecting: true)))
+        expect(view.probeCalibrationTarget == .bottomRight && view.probeDotFilled, "reduced motion: target still shown")
+        expect(!view.probeDotAnimates, "reduced motion: dot jumps, no breathing")
+        view.reduceMotionOverride = nil
+        host.enrollmentPhase(.framing(hint: nil))
+        expect(view.probeCalibrationTarget == nil, "back to framing hides the small screen")
         host.enrollmentPhase(.ended(.cancelled))
         after(0.4) { checkDismissed(host, prior: failures) }
     }
