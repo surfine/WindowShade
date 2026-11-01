@@ -3,6 +3,7 @@
 .swift-module-cache/
 .claude/
 .jspace/
+.zcode/
 
 # Local media / generated analysis assets
 *.mp4
