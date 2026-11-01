@@ -163,3 +163,5 @@ If WindowShade earns a place on your Mac, a ⭐ on GitHub helps other people fin
 ## Credits and license
 
 [MIT](LICENSE) for this project's code. Historical names and software belong to their respective authors. The window stories credit [Infinite Mac](https://infinitemac.org/), Marcin Wichary's [Frame of preference](https://aresluna.org/frame-of-preference/), and [AI System 6](https://github.com/surfine/AI-System-6) for its era-rendering reference. Bundled font and reference-asset licenses are retained in [`site/public/fonts/`](site/public/fonts/).
+
+Contributors: [@Maimai-l](https://github.com/Maimai-l) — repository audit and macOS window-behavior fixes (PR #1).

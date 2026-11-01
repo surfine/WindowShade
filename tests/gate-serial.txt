@@ -1,0 +1,12 @@
+# 共用 .build/native/ 的脚本：并行跑会互相覆盖 WS2Child.o，必须串行。
+# 这些脚本还会全量编译 App，单项可能 1–3 分钟，机器忙时更久。
+run-claude-conductor-tests.sh
+run-claude-session-tests.sh
+run-conductor-owned-flow-tests.sh
+run-duplex-process-tests.sh
+run-file-shelf-card-view-tests.sh
+run-owned-codex-controller.sh
+run-owned-codex-phase1.sh
+run-part5-process-tests.sh
+run-part6-exit-probe.sh
+run-part6-process-tests.sh

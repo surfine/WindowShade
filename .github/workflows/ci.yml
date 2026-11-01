@@ -1,11 +1,12 @@
-# Gate (spec R33): every push and pull request runs the same check as local development.
-# No secrets, no signing, no release. Sparkle.framework is tracked under prototype/Vendor,
-# so checkout alone brings the dependency; the guard step fails loudly if it ever goes missing.
+# 手动保留的编译检查。托管 runner 目前不可用（账户原因），因此不再在 push / pull_request 上自动运行，
+# 避免每次推送都出现与代码无关的红。日常门禁用本地脚本：
+#   scripts/local-gate.sh check   # 写证据到 .build/gate/
+# 这份 workflow 只在有可用 runner 时手动跑一次，作为“干净环境 + 另一台机器”的交叉验证。
+# 不签名、不发布；Sparkle.framework 在 prototype/Vendor 里，checkout 就能编。
 name: ci
 
 on:
-  push:
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

@@ -163,3 +163,5 @@ open WindowShade.app
 ## 致谢与许可
 
 本项目代码采用 [MIT](LICENSE)。历史软件和名称属于各自作者。窗口往事感谢 [Infinite Mac](https://infinitemac.org/)、Marcin Wichary 的 [《偏好之形》](https://aresluna.org/frame-of-preference/)，以及提供时代外观实现参考的 [AI System 6](https://github.com/surfine/AI-System-6)。随站点分发的字体和参考资源许可保留在 [`site/public/fonts/`](site/public/fonts/)。
+
+贡献者：[@Maimai-l](https://github.com/Maimai-l)——仓库审计与 macOS 窗口行为修复（PR #1）。

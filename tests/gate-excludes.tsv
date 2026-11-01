@@ -1,0 +1,29 @@
+# 不进入 `scripts/local-gate.sh unit` 的脚本。
+# 格式：脚本名<TAB>原因。原因要写“为什么不能无人值守跑”，不是“暂时跳过”。
+# 新增排除项前先问：它会不会弹窗、改用户窗口、需要授权、需要签名构建、或预期非零？
+# AppKit 离屏套件由 `local-gate.sh appkit` 统一跑，不在 unit 里重复。
+
+run-appkit-tests.sh	AppKit 聚合入口，由 appkit profile 跑
+run-settings-tests.sh	run-appkit-tests.sh 的包装，避免重复编译
+run-glance-probe.sh	真机探针：需要辅助功能授权与屏幕录制，会开临时窗口
+run-native-tabs-probe.sh	真机探针：会闪两扇窗口并读辅助功能
+run-window-frame-probe.sh	真机探针：会闪两扇窗口并读辅助功能
+run-silent-cover-probe.sh	需要 --stage 签名构建；热插拔项需要人工插屏
+run-silent-milestone.sh	需要 --stage 签名构建
+run-sls-offscreen-check.sh	需要 --stage 签名构建，读 WindowServer 状态
+run-idle-energy-check.sh	需要 --stage 签名构建，测静置能耗
+run-leftover-process-check.sh	日用 App 正在跑时拒绝执行，且依赖本机进程状态
+run-update-integration.sh	读真实 ~/Library/Application Support 数据
+run-perf-check.sh	会停掉 /Applications 里正在运行的实例
+run-perf-qualification-tests.sh	需要签名构建与稳定机器状态
+run-conductor-claude-page-probe.sh	GUI 页面探针，会打开真实应用页面
+run-face-enrollment-page-probe.sh	GUI 页面探针，会打开真实应用页面
+run-face-fill-light-probe.sh	GUI 页面探针，会打开真实应用页面
+run-face-scan-page-probe.sh	GUI 页面探针，会打开真实应用页面
+run-hook-approval-page-probe.sh	GUI 页面探针，会打开真实应用页面
+run-session-peek-probe.sh	GUI 页面探针，会打开真实应用页面
+run-part6-readiness.sh	预期 exit 2（BLOCKED），不是失败；结果见 docs/known-failures.md
+run-after-macos-update.sh	只打印建议重跑的探针清单，不做断言
+run-silent-integration-tests.sh	必须带 --case r00..r04，人工选择场景
+run-duo-tests.sh	Metal 编译与 GPU 路径，归 L2 手动/发布前
+run-fold-renderer-tests.sh	需要 Duo.metallib 与真实 Metal 设备，归 L2 手动/发布前

@@ -5,7 +5,8 @@
 ## 环境要求
 
 - macOS 15 或更新版本（构建目标是 macOS 15，见下面的支持政策）
-- Xcode Command Line Tools
+- 完整 Xcode（`xcodebuild`、`appintentsmetadataprocessor`、`xcstringstool`、Metal 工具链；只有 Command Line Tools 编不了）
+- `ripgrep`（`rg`，AppKit 套件用它发现源文件）
 - 用于签名的 Apple Development 证书（构建脚本强制要求，拒绝 ad-hoc 签名）
 
 ## 支持的系统版本
@@ -174,11 +175,15 @@ cd prototype
 ./build.sh --check
 ```
 
-`--check` 复用 `build.sh` 同一份自动收集的源文件清单，只做 swiftc 类型检查，
-不签名、不修改 app bundle。README 与本文档不再需要第二套独立的 swiftc 文件清单。
-找得到 `Vendor/Sparkle.framework` 时带 `-F` 一起检查 Sparkle 接口层，找不到时 `App/UpdaterSparkle.swift`
-靠 `#if canImport(Sparkle)` 跳过；另有一次小的类型检查只编看护。更新的纯逻辑测试：`tests/run-update-tests.sh`
+`--check` 复用 `build.sh` 同一份自动收集的源文件清单，按发布构建的参数做**优化编译并链接**
+（`-O -whole-module-optimization`、Swift 6 严格并发、warnings-as-errors），再跑本地化、隐私登记、
+隐私页同步与文案 lint；不签名、不修改 app bundle。README 与本文档不再需要第二套独立的 swiftc 文件清单。
+找得到 `Vendor/Sparkle.framework` 时带 `-F` 一起链接 Sparkle，找不到时直接失败（不会静默跳过）；
+另有一次小的编译只编看护。更新的纯逻辑测试：`tests/run-update-tests.sh`
 （不链接 Sparkle，不动已装的 App）。
+
+日常门禁：`scripts/local-gate.sh check`，结果写进 `.build/gate/<时间>-<提交>-check/`。
+分层与每层什么时候跑见 [testing.md](testing.md)。
 
 日常 `./build.sh` 出来的开发版不写 `SUFeedURL`，更新器不启动，不会被线上版本换掉；只有 `--stage` 写。
 签名从里往外逐个签（Sparkle 的 Autoupdate、Updater.app、框架、看护，最后主程序），全部同一个身份，不用 `--deep`。
@@ -191,7 +196,7 @@ cd prototype
   `bash tests/run-glance-probe.sh [--single | --carry [--other-space]]`（独立临时 App，解锁状态下运行）。说明见 [docs/glance.md](glance.md)。
 - 标题栏手势：识别状态机 `bash tests/run-gesture-tests.sh`；真机探针 `bash tests/run-glance-probe.sh --gesture`
   （同一个临时 App，合成事件直接交给控制器，不动指针）。说明见 [docs/gestures.md](gestures.md)。
-- AppKit 回归合跑：`bash tests/run-appkit-tests.sh all`，一次编译后在四个独立进程运行设置、经典卷帘条、收起动画和看一眼生命周期测试，避免重复编译整套生产源码。各单项入口保留。
+- AppKit 回归合跑：`bash tests/run-appkit-tests.sh all`，一次编译后按 13 个套件分别起进程（设置、经典卷帘条、收起动画、看一眼生命周期、带到每张桌面、刘海、菜单栏遮挡、语言切换等），避免重复编译整套生产源码。各单项入口保留。也可以用 `scripts/local-gate.sh appkit`。
 - 设置页恢复与滚动保持：`bash tests/run-settings-tests.sh`，编译生产 AppKit 视图的独立入口；使用隔离偏好设置，不显示或操作用户窗口。
 - 经典卷帘条辅助操作与点击边界：`bash tests/run-appkit-tests.sh ClassicStripTests`；直接调用生产视图的事件处理，不注入系统事件，浅深色组件图输出到 `.build/appkit-tests/strip-shots/`。设置测试也复用这个构建入口，保留原命令作为包装。
 - 看一眼与携带窗口生命周期：`bash tests/run-appkit-tests.sh GlanceLifecycleTests`；覆盖临时显示后的用户接管、关闭重入与旧回调隔离，以及返回前取消最小化的成功／失败顺序。使用注入的 AX 操作，不改用户窗口。
@@ -374,7 +379,7 @@ cd prototype
    DMG 的图标排版存在 `assets/dmg/DS_Store`；没有它就只是没排版。换背景图（`assets/dmg/background*.png`）或图标位置后，
    在能开 Finder 的 Mac 上跑一次 `bash scripts/make-dmg.sh --capture-template` 重新取模板并提交。
 
-4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 还没写，先按下面手动做：
+4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 已脚本化（支持 `--previous`、`--dmg`、`--cert-change`）；离线时显式传 `--previous <上一版 zip>`，或直接用 `scripts/local-gate.sh release --previous <zip>`。下面保留手工核对步骤，脚本失败时按它逐项查：
    1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
    2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
    3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。

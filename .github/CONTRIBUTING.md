@@ -25,7 +25,7 @@ cd prototype
 ./build.sh --check
 ```
 
-`--check` compiles with Swift 6 strict concurrency and warnings as errors, and runs the localization, privacy-registry and copy checks. CI runs the same command on every push. The full build, signing and release flow is in [DEVELOPMENT.md](../docs/DEVELOPMENT.md) (in Chinese).
+`--check` compiles with Swift 6 strict concurrency and warnings as errors, and runs the localization, privacy-registry and copy checks. Run `scripts/local-gate.sh check` before pushing; it writes the toolchain, commit and per-check results to `.build/gate/`. The full build, signing and release flow is in [DEVELOPMENT.md](../docs/DEVELOPMENT.md) (in Chinese).
 
 ## Pull requests
 
