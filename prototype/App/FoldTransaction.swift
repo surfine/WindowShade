@@ -1250,11 +1250,6 @@ extension AppDelegate {
     /// 按住卷帘条切了桌面：把藏起来的原窗口移到新桌面，卷帘条跟着过去。
     /// 私有函数不可用、或拿不到桌面编号时什么都不做，保持窗口留在原桌面。
     func moveHeldStripWindowIfNeeded() {
-        let defaults = UserDefaults.standard
-        let enabled = defaults.object(forKey: shadeCarryWindowAcrossSpacesDefaultsKey) == nil
-            ? true
-            : defaults.bool(forKey: shadeCarryWindowAcrossSpacesDefaultsKey)
-        guard enabled else { return }
         guard let id = heldStripWindowID, let state = shaded[id] else { return }
         guard let display = state.sourceDisplayID,
               let sid = PrivateSLSWindowMover.shared.currentSpace(displayID: display),

@@ -39,8 +39,6 @@ let adobeFloatingDocumentChromeHeight: CGFloat = 44
 let afterEffectsWorkspaceChromeHeight: CGFloat = 56
 let premiereWorkspaceChromeHeight: CGFloat = 40
 let shadeAppearanceModeDefaultsKey = "ShadeAppearanceMode"
-/// 按住卷帘条切桌面时，把原窗口一起带过去。默认开；没有界面开关，先留一个可关的偏好键。
-let shadeCarryWindowAcrossSpacesDefaultsKey = "ShadeCarryWindowAcrossSpaces"
 let shadeFloatingOnTopDefaultsKey = "ShadeFloatingOnTop"
 let shadeTranslucentDefaultsKey = "ShadeTranslucent"
 let shadeTitlebarDoubleClickDefaultsKey = "ShadeTitlebarDoubleClickEnabled"
