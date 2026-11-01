@@ -81,12 +81,20 @@ import Cocoa
     expect(window.subtitle == "Roll up", "en shade subtitle after switch")
     var enShade = Set<String>()
     collect(content, into: &enShade)
-    for text in ["Glance", "Tuck into the notch", "Double-click a title bar to roll up",
-                 "What a rolled-up window looks like"] {
+    for text in ["Glance", "What a rolled-up window looks like"] {
       expect(enShade.contains(text), "en shade shows \(text)")
     }
     expect(!enShade.contains("看一眼") && !enShade.contains("收进刘海"),
            "en shade rebuilt, zh row text gone")
+
+    // 这两行在 1.0.18 起的设置重排里搬到了「手势」页，英文页也要跟着重建。
+    settings.select(section: .gesture)
+    await drainLayout()
+    var enGestures = Set<String>()
+    collect(content, into: &enGestures)
+    for text in ["Tuck into the notch", "Double-click a title bar to roll up"] {
+      expect(enGestures.contains(text), "en gestures shows \(text)")
+    }
 
     // 切回 zh：标题与页面回到原样；高级页的可见文案集合与第一次一致（整页复原）。
     InterfaceLanguagePreference.set(.zh, in: suite)
