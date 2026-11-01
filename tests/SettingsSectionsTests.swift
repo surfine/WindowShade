@@ -6,9 +6,12 @@ import Foundation
 struct SettingsSectionsTests {
   static func main() {
     typealias S = WindowShadeSettingsSection
+    // 功能页按总闸过滤；这组断言只看侧栏几何，先把 8 个模块都打开。
+    for module in FeatureModule.allCases { FeatureCatalog.setEnabled(module, true) }
+    defer { for module in FeatureModule.allCases { UserDefaults.standard.removeObject(forKey: FeatureCatalog.definition(module).masterKey) } }
     let off = WS2Preview.visibleSections(previewOn: false, live: .none)
-    precondition(off == [.effects, .shade, .notch, .gesture, .browser, .shortcuts, .permissions, .advanced],
-                 "旗标关：8 页，效果、卷帘、刘海、手势、窗口浏览、快捷键、隐私、高级；实际 \(off)")
+    precondition(off == [.effects, .shade, .notch, .gesture, .browser, .shortcuts, .permissions, .advanced, .features],
+                 "旗标关：9 页，高级后面是功能；实际 \(off)")
     let on = WS2Preview.visibleSections(previewOn: true, live: .none)
     precondition(on == off + [.pointer, .remote, .conductor], "旗标开：WindowShade 2 三页接在后面；实际 \(on)")
 
@@ -68,7 +71,7 @@ struct SettingsSectionsTests {
       precondition(S.section(atRow: row, in: off) == section)
       precondition(S.row(of: section, in: off) == row)
     }
-    precondition(S.row(of: .conductor, in: withConductor) == 8, "藏了中间两页之后，指挥模式在第 9 行")
+    precondition(S.row(of: .conductor, in: withConductor) == 9, "藏了中间两页之后，指挥模式在第 9 行")
     precondition(S.row(of: .remote, in: withConductor) == nil, "藏着的页没有行")
     precondition(S.section(atRow: off.count, in: off) == nil && S.section(atRow: -1, in: off) == nil)
     precondition(S.row(of: .browser, in: off) == 4, "窗口浏览前面多了刘海和手势两页")
@@ -92,6 +95,6 @@ struct SettingsSectionsTests {
     precondition(S.restored(lastViewed: .remote, visible: off) == .shade)
     precondition(S.restored(lastViewed: .remote, visible: off + [.remote]) == .remote)
     precondition(S.restored(lastViewed: .notch, visible: off) == .notch)
-    print("PASS settings-sections: 旗标关 8 页、开着的开关保住它那一页、行号查可见列表、1.0.16 存档编号还原")
+    print("PASS settings-sections: 旗标关 9 页、开着的开关保住它那一页、行号查可见列表、1.0.16 存档编号还原")
   }
 }

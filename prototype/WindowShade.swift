@@ -360,11 +360,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 引导据此分新装 A1 和升级 U1 / N1，不靠更新日志，手动下载装上来的也认得出。
         let hadInstallRecord = UserDefaults.standard.object(forKey: InstallHistory.defaultsKey) != nil
         launchIsUpgrade = InstallHistory.settled(in: .standard) != .fresh || hadInstallRecord
+        InstallFeatureDefaults.seedIfNeeded(freshInstall: InstallHistory.settled(in: .standard) == .fresh)
         // 量耗电等场合另开一份：刘海不播报、不教，也不把"教过"写进设置。
         if CommandLine.arguments.contains("--no-teach") { NotchController.probeSilence = true }
         // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
         installStandardMainMenu()
-        duoController.start(owner: self)
+        if FeatureCatalog.isEnabled(.effects) { duoController.start(owner: self) }
         let sessionFormatter = DateFormatter()
         sessionFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         sessionFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -395,15 +396,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         startWakeRecovery()
         SystemLog.lifecycle.notice("launch version=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?", privacy: .public) build=\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?", privacy: .public) accessibility=\(AXIsProcessTrusted(), privacy: .public)")
         logIfSlow("launch gestures", threshold: 0.1) {
+            guard FeatureCatalog.isEnabled(.inputEnhancements) else { return }
             MainActor.assumeIsolated { gestures.refreshMonitors() }
         }
         MainActor.assumeIsolated { installStripKeyForwarding() }
         // 刷脸实验：默认关（FaceScan.experiment.enabled），关着时什么都不建。只产证据，不解锁。
-        MainActor.assumeIsolated { FaceScanExperiment.startIfEnabled() }
+        MainActor.assumeIsolated { if FeatureCatalog.isEnabled(.securityExtras) { FaceScanExperiment.startIfEnabled() } }
         MainActor.assumeIsolated {
             // 那一排里焦点落在会话格还是窗口格：告诉遥控器（M09）。遥控模式没开时没有宿主，什么都不会发生。
             notch.onShelfFocusKind = { [weak self] kind in self?.inputController.remoteHostForSettings?.layerEffects?.focusChanged(kind) }
-            SlideOverRecovery.recoverAbandoned(); notch.install()
+            SlideOverRecovery.recoverAbandoned()
+            if FeatureCatalog.isEnabled(.notch) { notch.install() }
         }
         // 番茄钟的唯一宿主：在这里点一次，让观察者和唯一 FocusTimerHost 建起来。
         MainActor.assumeIsolated { _ = ws2Runtime }
@@ -411,6 +414,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         MainActor.assumeIsolated { HabitCenter.shared.start(owner: self) }
         // 预热推迟到启动后 4 秒，不和启动抢资源；第一次打开前通常早已完成，没完成时 show() 自己会解码。
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            guard FeatureCatalog.isEnabled(.launchpad) else { return }
             MainActor.assumeIsolated { self?.launchpad.warmUp() }
         }
         MainActor.assumeIsolated {
@@ -421,13 +425,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                 detail: WSL10n.text("gesture.coach.dockHideHint", zh: "再点一下 Dock 图标就回来"), tone: .done)
                 }
             }
-            dockClick.start(); switcher.applySetting(); dockLock.apply(); splitView.start()
-            missionControlKeys.applySetting()
+            if FeatureCatalog.isEnabled(.inputEnhancements) {
+                dockClick.start()
+                switcher.applySetting(); dockLock.apply(); splitView.start(); missionControlKeys.applySetting()
+            }
         }
-        logIfSlow("launch input", threshold: 0.1) { inputController.apply() }
+        if FeatureCatalog.isEnabled(.inputEnhancements) {
+            logIfSlow("launch input", threshold: 0.1) { inputController.apply() }
+        }
         ArrangeGap.points = CGFloat(UserDefaults.standard.double(forKey: ArrangeGap.defaultsKey))
         logIfSlow("launch pinTracking", threshold: 0.1) { setupPinnedPreviewFocusTracking() }
         logIfSlow("launch windowBrowser", threshold: 0.1) {
+            guard FeatureCatalog.isEnabled(.windowBrowser) else { return }
             let browser = WindowBrowserController(owner: self)
             windowBrowserController = browser
             browser.start()
@@ -494,9 +503,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.notch.away.noteLowBattery(deviceID: id, name: name, part: part, percent: percent)
             }
             notch.away.deviceIsCurrent = { [weak self] id, part in self?.deviceBattery.isStillLow(deviceID: id, part: part) ?? false }
-            deviceBattery.start()
+            if FeatureCatalog.isEnabled(.notch) { deviceBattery.start() }
             // 相机列表在后台枚举（菜单"检测面部动作"读缓存，主线程不再卡几百毫秒）。
-            MainActor.assumeIsolated { FaceObservationSource.startWatchingCameras() }
+            if FeatureCatalog.isEnabled(.securityExtras) {
+                MainActor.assumeIsolated { FaceObservationSource.startWatchingCameras() }
+            }
         }
     }
 

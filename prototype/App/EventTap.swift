@@ -54,6 +54,7 @@ extension AppDelegate {
         }
         // 窗口浏览的快捷键由窗口浏览自己注册。
         for shortcut in GlobalShortcut.allCases where shortcut != .windowBrowser {
+            if let module = shortcut.module, !FeatureCatalog.isEnabled(module) { continue }
             guard let hotKey = GlobalShortcutSettings.hotKey(for: shortcut) else { continue }
             register(hotKey, id: shortcut.hotKeyID,
                      name: WindowBrowserSettings.displayName(for: hotKey))
@@ -106,6 +107,7 @@ extension AppDelegate {
     @discardableResult
     func registerWindowBrowserHotKey() -> Bool {
         unregisterWindowBrowserHotKey()
+        guard FeatureCatalog.isEnabled(.windowBrowser) else { return true }
         guard let config = WindowBrowserSettings.hotKey else { return true }
         guard !WindowBrowserSettings.isReserved(config) else {
             // 旧版本可能存下现在被拒绝的组合（例如纯 ⌘ 系列）：清掉，避免每次启动
@@ -143,6 +145,8 @@ extension AppDelegate {
         }
     }
     func handleHotKey(id: UInt32) {
+        if let module = GlobalShortcut.allCases.first(where: { $0.hotKeyID == id })?.module,
+           !FeatureCatalog.isEnabled(module) { return }
         // R17：用户在用快捷键，之后留意安全输入有没有被别的 App 打开。
         MainActor.assumeIsolated { SecureInputWatch.shared.shortcutUsed() }
         if id == GlobalShortcut.countdownTimer.hotKeyID {

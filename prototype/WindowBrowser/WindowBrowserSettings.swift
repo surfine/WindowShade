@@ -5,6 +5,7 @@ import Carbon.HIToolbox
 import Foundation
 
 enum WindowBrowserSettings {
+    static let enabledKey = "WindowBrowser.enabled"
     static let dockEnabledKey = "WindowBrowserDockEnabled"
     static let keyboardPanelEnabledKey = "WindowBrowserKeyboardPanelEnabled"
     static let livePreviewEnabledKey = "WindowBrowserLivePreviewEnabled"
@@ -63,6 +64,12 @@ enum WindowBrowserSettings {
         case .list: return .list
         case .automatic: return windowCount > autoListThreshold ? .list : .grid
         }
+    }
+
+    /// 整个窗口浏览模块的总闸。关着时控制器、Dock 观察者、快捷键都不启动。
+    static var enabled: Bool {
+        get { FeatureCatalog.isEnabled(.windowBrowser) }
+        set { FeatureCatalog.setEnabled(.windowBrowser, newValue) }
     }
 
     /// Dock 悬停查看窗口。没设过跟默认值总账走（1.0.18 起默认开，见 ReleaseDefaults）；显式开过关过的照旧。

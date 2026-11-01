@@ -28,6 +28,12 @@ final class LaunchpadController {
 
     init(owner: AppDelegate) {
         self.owner = owner
+        start()
+    }
+
+    /// 功能关着时连“切 App 就收起”的观察者都不装；打开功能时调用这里补上。
+    func start() {
+        guard FeatureCatalog.isEnabled(.launchpad), activation == nil else { return }
         // 切到别的 App（⌘Tab、点程序坞）就收起，像按了主屏幕之后又去开别的 App。
         activation = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] note in
@@ -38,6 +44,14 @@ final class LaunchpadController {
                 self.hide(reason: "app switched", launched: true)
             }
         }
+    }
+
+    func stop() {
+        if let activation {
+            NSWorkspace.shared.notificationCenter.removeObserver(activation)
+            self.activation = nil
+        }
+        if isShowing { hide(reason: "feature off", launched: true) }
     }
 
     var isShowing: Bool { panel != nil }
@@ -80,6 +94,7 @@ final class LaunchpadController {
 
     /// 启动时在后台先扫一遍、画好第一页（文件夹里的小图标也画），壁纸也先解码：第一次打开也是立刻出来。
     func warmUp() {
+        guard FeatureCatalog.isEnabled(.launchpad) else { return }
         // 低电量或机器发热时不抢资源：预热推迟到第一次打开（show 自己会扫描和解码）。
         if PowerPolicyRules.deferLaunchpadWarmUp(tier: PowerPolicy.shared.tier) {
             wlog("launchpad: warm-up deferred tier=\(PowerPolicy.shared.tier.rawValue)")
@@ -169,6 +184,7 @@ final class LaunchpadController {
     }
 
     func toggle() {
+        guard FeatureCatalog.isEnabled(.launchpad) else { return }
         if isShowing { hide(reason: "toggle") } else { show() }
     }
 

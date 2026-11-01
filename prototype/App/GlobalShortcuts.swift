@@ -65,6 +65,17 @@ enum GlobalShortcut: String, CaseIterable {
 
     typealias HotKey = WindowBrowserSettings.HotKey
 
+    /// 这个动作属于哪个可选模块；核心动作返回 nil。
+    var module: FeatureModule? {
+        switch self {
+        case .tuckAll, .tuckCurrent, .notchShelf, .focusTimer, .countdownTimer: return .notch
+        case .launchpad: return .launchpad
+        case .pictureInPicture: return .pictureInPicture
+        case .windowBrowser: return .windowBrowser
+        default: return nil
+        }
+    }
+
     /// Carbon 热键编号：事件处理按它分派，与 1.0 起的编号一致。
     var hotKeyID: UInt32 {
         switch self {

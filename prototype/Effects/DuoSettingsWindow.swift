@@ -176,6 +176,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     guard let controller else { return }
     pages[.effects] = makeEffectsPage(controller: controller)
     pages[.advanced] = makeAdvancedPage(controller: controller)
+    pages[.features] = controller.owner?.makeFeaturesSettingsPage()
     pages[.shade] = controller.owner?.makeShadeSettingsPage()
     pages[.notch] = controller.owner?.makeNotchSettingsPage()
     pages[.gesture] = controller.owner?.makeGestureSettingsPage()
@@ -608,6 +609,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       previewChanged()
     } else if let owner = controller?.owner {
       pages[.shade] = owner.makeShadeSettingsPage()
+      pages[.features] = owner.makeFeaturesSettingsPage()
       pages[.notch] = owner.makeNotchSettingsPage()
       pages[.gesture] = owner.makeGestureSettingsPage()
       pages[.browser] = owner.makeWindowBrowserSettingsPage()

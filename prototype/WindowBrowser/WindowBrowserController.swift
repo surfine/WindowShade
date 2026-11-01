@@ -259,6 +259,7 @@ final class WindowBrowserController: NSObject {
 
     func start() {
         dispatchPrecondition(condition: .onQueue(.main))
+        guard WindowBrowserSettings.enabled else { return }
         guard !running else { return }
         running = true
         lastAccessibility = hasAccessibilityPermission()

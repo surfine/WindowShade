@@ -459,6 +459,7 @@ final class NotchController {
 
     /// 启动、换屏时调用：每块屏挂一个，屏没了就拆掉。
     func install() {
+        guard Self.isEnabled else { return }
         activities.configure()
         activities.countdown.attach(leases: leases)
         activities.nowPlayingCard.attach(leases: leases)

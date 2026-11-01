@@ -8187,6 +8187,27 @@
       "symbol": "SLSBridgedMoveWindowsToManagedSpaceOperation",
       "source": "let cls = NSClassFromString(\"SLSBridgedMoveWindowsToManagedSpaceOperation\"),",
       "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Core/FeatureCatalog.swift",
+      "line": 128,
+      "symbol": "UserDefaults",
+      "source": "static func isEnabled(_ module: FeatureModule, in defaults: UserDefaults = .standard) -> Bool {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/FeatureCatalog.swift",
+      "line": 134,
+      "symbol": "UserDefaults",
+      "source": "static func setEnabled(_ module: FeatureModule, _ enabled: Bool, in defaults: UserDefaults = .standard) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/InstallFeatureDefaults.swift",
+      "line": 13,
+      "symbol": "UserDefaults",
+      "source": "static func seedIfNeeded(freshInstall: Bool, in defaults: UserDefaults = .standard) {",
+      "signal": "settings"
     }
   ],
   "groups": [

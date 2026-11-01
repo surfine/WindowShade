@@ -122,9 +122,11 @@ extension AppDelegate {
     let firstFixed = statusMenu.items.count
     let fold = foldToggleState()
     action(fold.menuTitle, fold.symbol, #selector(toggleAction), .toggleShade, id: "ws.menu.fold")
-    action(WSL10n.text("settings.shade.tuckNotch.name", zh: "收进刘海"), "rectangle.topthird.inset.filled",
-           #selector(tuckCurrentAction), .tuckCurrent,
-           enabled: ax && NotchController.isEnabled, id: "ws.menu.tuck")
+    if FeatureCatalog.isEnabled(.notch) {
+      action(WSL10n.text("settings.shade.tuckNotch.name", zh: "收进刘海"), "rectangle.topthird.inset.filled",
+             #selector(tuckCurrentAction), .tuckCurrent,
+             enabled: ax && NotchController.isEnabled, id: "ws.menu.tuck")
+    }
     let pin = pinnedPreviewController.currentTargetPinState()
     action(pin.menuTitle, pin.symbol,
            #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen, id: "ws.menu.pin")
@@ -149,7 +151,9 @@ extension AppDelegate {
     if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
       action(WSL10n.text("menu.exitSlideOver", zh: "退出侧拉"), "sidebar.right", #selector(exitSlideOverAction), menu: arrangement)
     }
-    action(WSL10n.text("menu.pictureInPicture", zh: "画中画"), "pip", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)
+    if FeatureCatalog.isEnabled(.pictureInPicture) {
+      action(WSL10n.text("menu.pictureInPicture", zh: "画中画"), "pip", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)
+    }
     action(WSL10n.text("menu.magicTile", zh: "魔法平铺"), "wand.and.stars", #selector(magicTileAction), .magicTile, enabled: ax, menu: arrangement)
     // 卷轴概览：和主菜单“窗口”里那一项同一个去处，卷轴没开时灰着（由 StripOverviewMenuTarget 验证）。
     MainActor.assumeIsolated {
@@ -169,10 +173,16 @@ extension AppDelegate {
              enabled: menuState.canArrangeShades, menu: arrangement)
     }
     arrangement.addItem(.separator())
-    action(WSL10n.text("menu.tuckAll", zh: "全部收进刘海"), "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled, menu: arrangement)
-    action(WSL10n.text("menu.chooseWindow", zh: "选择窗口…"), "rectangle.on.rectangle", #selector(openWindowBrowserPanel), .windowBrowser,
-           enabled: WindowBrowserSettings.keyboardPanelEnabled, menu: arrangement)
-    action(WSL10n.text("silent.launcher.open", zh: "启动台"), "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad, id: "ws.menu.launchpad")
+    if FeatureCatalog.isEnabled(.notch) {
+      action(WSL10n.text("menu.tuckAll", zh: "全部收进刘海"), "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled, menu: arrangement)
+    }
+    if FeatureCatalog.isEnabled(.windowBrowser) {
+      action(WSL10n.text("menu.chooseWindow", zh: "选择窗口…"), "rectangle.on.rectangle", #selector(openWindowBrowserPanel), .windowBrowser,
+             enabled: WindowBrowserSettings.keyboardPanelEnabled, menu: arrangement)
+    }
+    if FeatureCatalog.isEnabled(.launchpad) {
+      action(WSL10n.text("silent.launcher.open", zh: "启动台"), "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad, id: "ws.menu.launchpad")
+    }
 
     // 已收起的窗口▸：没有收起的窗口时灰着，顶层仍是同样 9 项。
     let foldedItem = NSMenuItem(title: WSL10n.text("settings.shortcuts.group.folded", zh: "已收起的窗口"), action: nil, keyEquivalent: "")

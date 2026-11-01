@@ -12,6 +12,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
   case shortcuts = 3
   case permissions = 4
   case advanced = 5
+  case features = 11
   case pointer = 6
   case remote = 7
   case conductor = 8
@@ -62,6 +63,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .shortcuts: return WSL10n.text("settings.section.shortcuts", zh: "快捷键")
     case .permissions: return WSL10n.text("settings.section.permissions", zh: "隐私")
     case .advanced: return WSL10n.text("settings.section.advanced", zh: "高级")
+    case .features: return WSL10n.text("settings.section.features", zh: "功能")
     case .pointer: return WSL10n.text("settings.section.pointer", zh: "鼠标与触控板")
     case .remote: return WSL10n.text("settings.section.remote", zh: "遥控器")
     case .conductor: return WSL10n.text("settings.section.conductor", zh: "指挥模式")
@@ -78,6 +80,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .shortcuts: return "command"
     case .permissions: return "lock.shield"
     case .advanced: return "slider.horizontal.3"
+    case .features: return "checklist"
     case .pointer: return "computermouse"
     case .remote: return "appletvremote.gen4"
     case .conductor: return "switch.2"
@@ -194,6 +197,16 @@ enum WS2Preview {
   static func visibleSections(previewOn: Bool, live: Live,
                               moved: Set<WS2Exposure.Surface> = WS2Exposure.moved()) -> [WindowShadeSettingsSection] {
     WindowShadeSettingsSection.allCases.filter { section in
+      let module: FeatureModule?
+      switch section {
+      case .notch: module = .notch
+      case .browser: module = .windowBrowser
+      case .gesture, .pointer: module = .inputEnhancements
+      case .remote, .conductor: module = .companion
+      case .effects: module = .effects
+      case .shade, .shortcuts, .permissions, .advanced, .features: module = nil
+      }
+      if let module, !FeatureCatalog.isEnabled(module) { return false }
       guard section.isWS2, !previewOn else { return true }
       if WS2Exposure.sectionIsMoved(section, moved: moved) { return true }
       switch section {

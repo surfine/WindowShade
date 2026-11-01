@@ -291,12 +291,14 @@ struct SettingsNavigationTests {
     // 搬走的行在新位置各出现一次。
     do {
       UserDefaults.standard.set(false, forKey: WS2Preview.defaultsKey)
+      // 这组断言看的是各页内容；先把 8 个功能总闸打开，免得功能关闭把页藏掉。
+      for module in FeatureModule.allCases { FeatureCatalog.setEnabled(module, true) }
       precondition(WS2Preview.live == .none, "这个测试假设 WindowShade 2 的开关都没开")
       settings.refreshLocalizedCopy()
       await drainLayout()
       guard let sidebar = descendants(root).compactMap({ $0 as? NSTableView }).first
       else { preconditionFailure("找不到设置侧栏") }
-      precondition(sidebar.numberOfRows == 8, "旗标关：侧栏 8 页，实际 \(sidebar.numberOfRows)")
+      precondition(sidebar.numberOfRows == 9, "旗标关：侧栏 9 页，实际 \(sidebar.numberOfRows)")
       func texts(_ section: WindowShadeSettingsSection) async -> [String] {
         settings.select(section: section)
         await drainLayout()

@@ -132,7 +132,7 @@ enum WSL10n {
 }
 
 /// 见 `WSL10n.setting(_:zh:)`：zh 是稳定身份，shown 是当前语言的显示文本。
-struct SettingsText: Equatable {
+struct SettingsText: Equatable, @unchecked Sendable {
     let key: String
     let zh: String
     var formatArgs: [CVarArg] = []

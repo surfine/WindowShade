@@ -222,6 +222,60 @@ extension AppDelegate {
         return header
     }
 
+    func makeFeaturesSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: WSL10n.text("settings.features.title", zh: "功能"),
+            subtitle: WSL10n.setting("settings.features.sub", zh: "核心功能始终开启。下面的功能可以整块开关，关掉后对应的菜单、快捷键和后台工作一起停。"),
+            symbolName: "checklist"))
+        let rows = FeatureCatalog.all.enumerated().map { index, feature in
+            makeUnifiedToggleRow(name: feature.title, subtitle: feature.subtitle,
+                                 isOn: FeatureCatalog.isEnabled(feature.module),
+                                 tag: index, action: #selector(prefToggleFeature(_:)))
+        }
+        let card = makeUnifiedSettingsCard(rows)
+        stack.addArrangedSubview(card)
+        card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return root
+    }
+
+    @objc func prefToggleFeature(_ sender: NSSwitch) {
+        guard FeatureCatalog.all.indices.contains(sender.tag) else { return }
+        let module = FeatureCatalog.all[sender.tag].module
+        let on = sender.state == .on
+        FeatureCatalog.setEnabled(module, on)
+        applyFeature(module, on: on)
+        rebuildMenu()
+        DispatchQueue.main.async { [weak self] in self?.refreshPreferencesWindowIfOpen() }
+    }
+
+    /// 设置页和首启共用：写总闸之后，把模块真的启动或停掉。
+    func applyFeature(_ module: FeatureModule, on: Bool) {
+        switch module {
+        case .notch:
+            notch.setEnabled(on)
+        case .windowBrowser:
+            if on {
+                if windowBrowserController == nil {
+                    let browser = WindowBrowserController(owner: self)
+                    windowBrowserController = browser
+                }
+                windowBrowserController?.start()
+                _ = registerWindowBrowserHotKey()
+            } else {
+                windowBrowserController?.stop()
+                unregisterWindowBrowserHotKey()
+            }
+        case .launchpad:
+            if on { launchpad.start() } else { launchpad.stop() }
+        case .effects:
+            if on { duoController.start(owner: self) } else { duoController.stop() }
+        case .pictureInPicture, .inputEnhancements, .securityExtras, .companion:
+            // 这些模块的运行入口还在逐个接总闸；总闸已经写下去，下次启动一定按它走。
+            wlog("feature: \(module.rawValue) enabled=\(on) applied=next-launch")
+        }
+    }
+
     func makeShadeSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot(explainer: .shade)
         stack.addArrangedSubview(makeSettingsHeader(
@@ -895,15 +949,18 @@ extension AppDelegate {
 
     /// 迁移过的行（第27批）：名与说明是 key+zh 的文案对，显示走当前语言。
     private func makeUnifiedToggleRow(name: SettingsText, subtitle: SettingsText?, isOn: Bool,
-                                      enabled: Bool = true, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
+                                      enabled: Bool = true, tag: Int = 0,
+                                      action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         makeUnifiedToggleRow(labels: makeUnifiedLabels(name: name, subtitle: subtitle),
                              accessibleName: name.shown, minHeight: subtitle == nil ? 40 : 48,
-                             isOn: isOn, enabled: enabled, action: action, explainer: explainer)
+                             isOn: isOn, enabled: enabled, tag: tag, action: action, explainer: explainer)
     }
 
     private func makeUnifiedToggleRow(labels: NSStackView, accessibleName: String, minHeight: CGFloat,
-                                      isOn: Bool, enabled: Bool, action: Selector, explainer: ExplainerRow? = nil) -> NSView {
+                                      isOn: Bool, enabled: Bool, tag: Int = 0,
+                                      action: Selector, explainer: ExplainerRow? = nil) -> NSView {
         let toggle = NSSwitch()
+        toggle.tag = tag
         toggle.state = isOn ? .on : .off
         toggle.isEnabled = enabled
         toggle.target = self
