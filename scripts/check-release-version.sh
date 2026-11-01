@@ -23,7 +23,7 @@ print(max(vs) if vs else '')
 PY
 )
 if [ -n "$shipped" ] && [ "$build" -le "$shipped" ]; then
-  echo "FAIL release-version: CFBundleVersion=$build，appcast 里已发过 ${shipped}。先在 prototype/Info.plist 升 CFBundleVersion。" >&2
+  echo "FAIL release-version: CFBundleVersion=${build}，appcast 里已发过 ${shipped}。先在 prototype/Info.plist 升 CFBundleVersion。" >&2
   exit 1
 fi
-echo "PASS release-version: CFBundleVersion=$build（appcast 最高 ${shipped:-无}）"
+echo "PASS release-version: CFBundleVersion=${build}（appcast 最高 ${shipped:-无}）"

@@ -51,7 +51,7 @@ apps=$(find "$work/new" -maxdepth 1 -name '*.app' | wc -l | tr -d ' ')
 APP="$work/new/WindowShade.app"
 if [ "$apps" = "1" ] && [ -d "$APP" ] && codesign --verify --deep --strict "$APP" 2>/dev/null; then
   pass "2 zip 里只有一个 WindowShade.app，codesign --deep --strict 通过"
-else fail "2 zip 内容或签名不对（.app 个数 $apps）"; fi
+else fail "2 zip 内容或签名不对（.app 个数 ${apps}）"; fi
 BUILD=$(plist "$APP" CFBundleVersion); VERSION=$(plist "$APP" CFBundleShortVersionString)
 TEAM=$(codesign -dv "$APP" 2>&1 | sed -n 's/^TeamIdentifier=//p')
 AUTH=$(codesign -dv --verbose=2 "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -1)
@@ -59,7 +59,7 @@ AUTH=$(codesign -dv --verbose=2 "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -
 # 3. DR 连续（换证书那一版改核 Developer ID 与 Team）
 if [ -n "$CERT_TEAM" ]; then
   [[ "$AUTH" == "Developer ID Application:"* && "$TEAM" == "$CERT_TEAM" ]] \
-    && pass "3 换证书的一版：$AUTH，Team $TEAM" || fail "3 换证书的一版要 Developer ID、Team $CERT_TEAM，实际 $AUTH / $TEAM"
+    && pass "3 换证书的一版：${AUTH}，Team $TEAM" || fail "3 换证书的一版要 Developer ID、Team ${CERT_TEAM}，实际 $AUTH / $TEAM"
 else
   codesign --verify -R="$PREV_DR" "$APP" 2>/dev/null && pass "3 新版满足上一版的 DR" \
     || fail "3 新版不满足上一版的 DR（换证书要加 --cert-change <Team>，见 docs/update.md）"
@@ -67,7 +67,7 @@ fi
 
 # 4. --self-check 返回 0 且带这次的 build 号
 if out=$(perl -e 'alarm 5; exec @ARGV' "$APP/Contents/MacOS/WindowShade" --self-check 2>&1) && [[ "$out" == *"build=$BUILD"* ]]; then
-  pass "4 --self-check：$out"; else fail "4 --self-check 没返回 0 或没有 build=$BUILD：${out:-无输出}"; fi
+  pass "4 --self-check：$out"; else fail "4 --self-check 没返回 0 或没有 build=${BUILD}：${out:-无输出}"; fi
 
 # 5. build 号比上一版大，也比清单里已发过的大
 PREV_BUILD=$(plist "$PREV_APP" CFBundleVersion)
@@ -94,12 +94,12 @@ else
   IFS='|' read -r c_min c_hw c_len c_info <<< "$item"
   norm() { python3 -c 'import sys; p=[int(x) for x in sys.argv[1].split(".")]; p+= [0]*(3-len(p)); print(".".join(map(str,p[:3])))' "$1"; }
   [ "$(norm "$(plist "$APP" LSMinimumSystemVersion)")" = "$(norm "$c_min")" ] \
-    && pass "6 LSMinimumSystemVersion 与清单 minimumSystemVersion 一致（$c_min）" \
+    && pass "6 LSMinimumSystemVersion 与清单 minimumSystemVersion 一致（${c_min}）" \
     || fail "6 LSMinimumSystemVersion $(plist "$APP" LSMinimumSystemVersion) ≠ 清单 $c_min"
   archs=$(lipo -archs "$APP/Contents/MacOS/WindowShade")
   [ "$archs" = "$c_hw" ] && pass "7 架构 $archs 与清单 hardwareRequirements 一致" || fail "7 架构 $archs ≠ 清单 $c_hw"
   size=$(stat -f %z "$ZIP")
-  [ "$size" = "$c_len" ] && pass "7b 清单里的包大小 $c_len 就是这个 zip" || fail "7b 清单里的包大小 $c_len ≠ zip $size（换包后要重签清单）"
+  [ "$size" = "$c_len" ] && pass "7b 清单里的包大小 $c_len 就是这个 zip" || fail "7b 清单里的包大小 $c_len ≠ zip ${size}（换包后要重签清单）"
   if [ -n "$CERT_TEAM" ]; then
     [ "$c_info" = "informational" ] && pass "7c 换证书的一版在清单里是 informationalUpdate" \
       || fail "7c 换证书的一版要在清单里标 sparkle:informationalUpdate（docs/update.md）"
@@ -112,7 +112,7 @@ otool -L "$APP/Contents/MacOS/WindowShade" | grep -q '@rpath/Sparkle.framework' 
   || fail "8 Sparkle 没链接，或 SUFeedURL / SUPublicEDKey 变了"
 GUARD="$APP/Contents/Helpers/WindowShadeUpdateGuard.app"
 [ -d "$GUARD" ] && [ "$(codesign -dv "$GUARD" 2>&1 | sed -n 's/^TeamIdentifier=//p')" = "$TEAM" ] \
-  && pass "8b 看护在、签名同 Team（$TEAM）" || fail "8b 看护不在或 Team 不同"
+  && pass "8b 看护在、签名同 Team（${TEAM}）" || fail "8b 看护不在或 Team 不同"
 
 # 9. 上一版读得懂这一版写的状态
 state="$work/state"; mkdir -p "$state"
@@ -129,7 +129,7 @@ if [[ "$AUTH" == "Developer ID Application:"* ]]; then
     pass "10 已公证、已钉票据，Gatekeeper 认作 Notarized Developer ID"
   else fail "10 Developer ID 的包没有公证或没钉票据（scripts/notarize.sh）"; fi
 else
-  fail "10 不是 Developer ID 签的（$AUTH）：2026-10-16 起发布包要 build.sh --release ＋ scripts/notarize.sh"
+  fail "10 不是 Developer ID 签的（${AUTH}）：2026-10-16 起发布包要 build.sh --release ＋ scripts/notarize.sh"
 fi
 
 # 12. 首次安装的 DMG（给了 --dmg 才查）：签名公证、内容、build 号与 zip 一致
@@ -149,7 +149,7 @@ if [ -n "$DMG" ]; then
       && codesign --verify --deep --strict "$DMG_APP" 2>/dev/null && [ "$(plist "$DMG_APP" CFBundleVersion)" = "$BUILD" ]; then
       pass "12 DMG：已公证；只有一个 WindowShade.app 和指向 /Applications 的链接；codesign --deep --strict 通过；build $BUILD 与 zip 相同"
     else
-      fail "12 DMG 内容不对（.app $dmg_apps 个，链接 $dmg_links 个，build $(plist "$DMG_APP" CFBundleVersion)，zip 是 $BUILD）"
+      fail "12 DMG 内容不对（.app $dmg_apps 个，链接 $dmg_links 个，build $(plist "$DMG_APP" CFBundleVersion)，zip 是 ${BUILD}）"
     fi
     hdiutil detach -quiet "$mnt" >/dev/null 2>&1 || hdiutil detach -force -quiet "$mnt" >/dev/null 2>&1 || true
   fi
@@ -158,8 +158,8 @@ fi
 # 11. 卡顿账（只报不挡：INFO，不计入 PASS／FAIL）。scripts/perf-report.sh 按 build 号记账，取这个候选 build 最近的一行。
 ledger=docs/perf-ledger.md
 perf_row=$([ -f "$ledger" ] && grep -F "(build $BUILD)" "$ledger" | tail -1 || true)
-if [ -n "$perf_row" ]; then echo "INFO 11 卡顿账（build $BUILD，只报不挡）：${perf_row#| }"
+if [ -n "$perf_row" ]; then echo "INFO 11 卡顿账（build ${BUILD}，只报不挡）：${perf_row#| }"
 else echo "INFO 11 卡顿账里还没有 build $BUILD 的行（scripts/perf-report.sh --host 或 --vm，只报不挡）"; fi
 
-echo "== 发布关：$VERSION（build $BUILD）$([ $fails = 0 ] && echo '全部通过' || echo "$fails 项不过")"
+echo "== 发布关：${VERSION}（build ${BUILD}）$([ $fails = 0 ] && echo '全部通过' || echo "$fails 项不过")"
 [ "$fails" = 0 ]
