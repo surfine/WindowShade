@@ -15,21 +15,17 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.19</string>
+	<string>1.0.20</string>
 	<key>CFBundleVersion</key>
-	<string>19</string>
+	<string>20</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
 	<key>LSUIElement</key>
 	<true/>
-	<key>NSAudioCaptureUsageDescription</key>
-	<string>让刘海右边的小点随正在放的歌起伏。声音不会留下。</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>按住说话，把你说的话变成草稿。设置里登记声音后，锁屏时也用它核对是你在说话。声音不会留下。</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>在这台 Mac 上把你说的话转成文字（草稿，或锁屏时核对你念的短语），不上传。</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>在刘海和启动台中显示并控制你正在播放的音乐。</string>
+	<key>NSAudioCaptureUsageDescription</key>
+	<string>让刘海右边的小点随正在放的歌起伏。声音不会留下。</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_companion-link._tcp</string>
@@ -46,8 +42,12 @@
 	<string>© 2026 Aaron (surfine). MIT License.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>让 iPhone 上的遥控器找到这台 Mac。</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>按住说话，把你说的话变成草稿。设置里登记声音后，锁屏时也用它核对是你在说话。声音不会留下。</string>
 	<key>NSMotionUsageDescription</key>
 	<string>用 AirPods 的点头和摇头来确认或取消。</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>在这台 Mac 上把你说的话转成文字（草稿，或锁屏时核对你念的短语），不上传。</string>
 	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
 	<key>SUAutomaticallyUpdate</key>

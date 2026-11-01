@@ -4,6 +4,7 @@ One line per release. Full notes, downloads and checksums are on [GitHub Release
 
 | Version | Date | Highlights |
 | --- | --- | --- |
+| [1.0.20](docs/releases/v1.0.20.md) | 2026-11-02 | A Features page with eight real switches, seeded from what you already use; window fixes for macOS 26 double-click, fold flash and corner parking. / 功能页与 8 个真开关，升级保持原样；修好 macOS 26 双击缩放、收起闪屏与角落停车。 |
 | [1.0.19](docs/releases/v1.0.19.md) | 2026-11-01 | The notch follows the system's Dynamic Island; push up to tuck everything and undo the batch; proxy-first half-screen and throw gestures; Arrange → Undo. / 刘海照系统灵动岛重做，上推全收可撤销，窗口先动代理。 |
 | [1.0.18](docs/releases/v1.0.18.md) | 2026-10-18 | Demo band on every Settings page, searchable sidebar, redesigned welcome, and the notch family on by default. / 设置每页带演示、侧栏可搜索、欢迎重做，刘海一族默认开。 |
 | [1.0.17](docs/releases/v1.0.17.md) | 2026-10-17 | Steadier, and notarized by Apple: Developer ID signing, on-device crash reports, macOS 15 or later. / 更稳，也终于通过了 Apple 公证。 |
