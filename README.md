@@ -11,7 +11,7 @@ A free, open-source window utility for Mac.
 
 <!-- status:start -->
 
-**Current release: 1.0.19** · build 19 · 2026-11-01 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.19)
+**Current release: 1.0.20** · build 20 · 2026-11-02 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.20)
 
 <!-- status:end -->
 
@@ -48,7 +48,7 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releases/latest), open it, drag `WindowShade.app` onto Applications, then open it and follow the permission prompts. (The ZIP is the same app and is what in-app updates use.) It lives in the menu bar and stays out of your Dock.
 
 - **Needs macOS 15 or later and Apple Silicon.** There’s no Intel build.
-- **1.0.19 download (decimal MB):** 22.18 MB ZIP, or a 23.22 MB DMG for a first install.
+- **1.0.20 download (decimal MB):** 22.19 MB ZIP, or a 23.25 MB DMG for a first install.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
@@ -88,7 +88,7 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 ## Shortcuts
 
-Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.19 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
+Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.20 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
 
 | Shortcut (upgraded setups) | What it does |
 | --- | --- |
@@ -122,7 +122,7 @@ WindowShade changes one system setting: the Dock’s minimize effect. When it ne
 
 ## In development
 
-The current download is **1.0.19**. Everything described above is in it; this version rebuilds the notch around the system's Dynamic Island, adds push-up to tuck every window with a batch undo, moves half-screen and throw gestures onto a proxy, adds Arrange → Undo, and turns the fold animation on by default. [Release notes](docs/releases/v1.0.19.md)
+The current download is **1.0.20**. Everything described above is in it; this version adds Settings → Features with eight switches, keeps your current setup on upgrade, and fixes macOS 26 double-click zoom, a desktop flash after folding, the notch dimensions and corner parking. [Release notes](docs/releases/v1.0.20.md)
 
 What comes next is **WindowShade 2**: your Mac’s windows taking direction, and answering to the devices at hand. The notch's new look and gestures ship in 1.0.19; the conductor, remote and coding sessions remain behind a preview switch — not shown in Settings and not running:
 
