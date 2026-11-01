@@ -254,6 +254,7 @@ extension AppDelegate {
         switch module {
         case .notch:
             notch.setEnabled(on)
+            if on { HabitCenter.shared.start(owner: self) } else { HabitCenter.shared.stop() }
         case .windowBrowser:
             if on {
                 if windowBrowserController == nil {
@@ -269,7 +270,7 @@ extension AppDelegate {
         case .launchpad:
             if on { launchpad.start() } else { launchpad.stop() }
         case .effects:
-            if on { duoController.start(owner: self) } else { duoController.stop() }
+            if on { duoController.start(owner: self) } else { duoController.stopModule() }
         case .pictureInPicture:
             if !on { pip.exitAll() }
         case .inputEnhancements:

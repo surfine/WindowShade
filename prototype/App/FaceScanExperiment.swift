@@ -63,6 +63,13 @@ import Cocoa
         return true
     }
 
+    /// 功能总闸关掉时用：停掉当前实验，但不改用户自己的开关；下次打开总闸还能按原设置起来。
+    static func suspendForFeatureOff() {
+        shared?.stop()
+        shared = nil
+        FaceAutofillController.stop()
+    }
+
     /// 设置里的“保存你的脸”：只记下请求；没锁屏时 refresh 会接上，锁着就等解锁。
     static func requestEnrollment() {
         guard let shared else { return }

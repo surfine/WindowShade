@@ -25,18 +25,14 @@ final class WS2InputController {
 
     func apply() {
         dispatchPrecondition(condition: .onQueue(.main))
-        guard FeatureCatalog.isEnabled(.inputEnhancements) else {
-            scrollTap.setWatchingForeground(false)
-            scrollTap.apply(installing: false, mask: 0)
-            middleListening = false
-            middleTap.apply(installing: false)
-            return
-        }
+        let inputOn = FeatureCatalog.isEnabled(.inputEnhancements)
         let store = UserDefaults.standard
         let prefs = WS2InputPreferences.load(from: store)
-        preferences = prefs
+        preferences = inputOn ? prefs : .off
+        // 输入模块关掉时滚动/中键/手柄都按“全关”处理；遥控属于另一个模块，照常读。
+        let scrollPrefs = inputOn ? prefs : .off
         // 触控板方向不在这里触发钩子：分类器不允许改写触控板事件。
-        let wantsScroll = prefs.smooth != nil || prefs.mouseInvert
+        let wantsScroll = scrollPrefs.smooth != nil || scrollPrefs.mouseInvert
         let yielded = wantsScroll ? ScrollYield.name(among: NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)) : nil
         let decision = ScrollInstallPolicy.decide(ScrollInstallPolicy.Input(
             wantsScrollChange: wantsScroll,
@@ -48,17 +44,17 @@ final class WS2InputController {
         var mask: CGEventMask = 0
         if decision == .install {
             mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue)
-            if prefs.sideButtons {
+            if scrollPrefs.sideButtons {
                 mask |= CGEventMask(1 << CGEventType.otherMouseDown.rawValue)
                 mask |= CGEventMask(1 << CGEventType.otherMouseUp.rawValue)
             }
         }
-        scrollTap.update(ScrollSession.Request(smooth: prefs.smooth, invertMouse: prefs.mouseInvert, fine: prefs.fine,
-                                                sideButtons: prefs.sideButtons, foregroundExcluded: false),
-                         excluded: Set(prefs.exceptions))
+        scrollTap.update(ScrollSession.Request(smooth: scrollPrefs.smooth, invertMouse: scrollPrefs.mouseInvert, fine: scrollPrefs.fine,
+                                                sideButtons: scrollPrefs.sideButtons, foregroundExcluded: false),
+                         excluded: Set(scrollPrefs.exceptions))
         scrollTap.apply(installing: InputFeatureGate.scrollMayInstall(decisionInstalls: decision == .install, paused: hooksPaused), mask: hooksPaused ? 0 : mask)
         scrollTap.setWatchingForeground(decision == .install && !hooksPaused)
-        let middleOn = InputFeatureGate.middleDragMayInstall(switchOn: prefs.middleFold, paused: hooksPaused)
+        let middleOn = InputFeatureGate.middleDragMayInstall(switchOn: scrollPrefs.middleFold, paused: hooksPaused)
             && !middleTap.systemStopped
         middleListening = middleOn
         middleTap.apply(installing: middleOn)

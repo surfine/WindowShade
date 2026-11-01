@@ -54,7 +54,7 @@ import Cocoa
         let before = notifying
         notifying = false
         defer { notifying = before }
-        if Self.enabledKeys.isEmpty { stop() } else { start() }
+        if !FeatureCatalog.isEnabled(.inputEnhancements) || Self.enabledKeys.isEmpty { stop() } else { start() }
     }
     private var notifying = true
     private func notify() { if notifying { onChange?() } }

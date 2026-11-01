@@ -519,7 +519,12 @@ final class DuoController: NSObject {
     }
     spring.reset()
   }
-  func stop() {
+  func stop() { stop(closeSettings: true) }
+
+  /// 功能总闸关掉时用：停掉效果和监听，但别把用户正开着的设置窗口一起关掉。
+  func stopModule() { stop(closeSettings: false) }
+
+  private func stop(closeSettings: Bool) {
     if displayCallbackRegistered {
       CGDisplayRemoveReconfigurationCallback(Self.displayReconfigured, Unmanaged.passUnretained(self).toOpaque())
       displayCallbackRegistered = false
@@ -535,8 +540,10 @@ final class DuoController: NSObject {
     distributedObservers.removeAll()
     inputMonitors.forEach(NSEvent.removeMonitor)
     inputMonitors.removeAll()
-    settingsWindow?.close()
-    settingsWindow = nil
+    if closeSettings {
+      settingsWindow?.close()
+      settingsWindow = nil
+    }
   }
 }
 

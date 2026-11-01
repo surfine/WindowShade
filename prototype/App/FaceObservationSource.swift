@@ -939,6 +939,7 @@ private final class CameraList: Sendable {
     }
 
     func start() {
+        guard FeatureCatalog.isEnabled(.securityExtras) else { return }
         let first = state.withLock { state -> Bool in
             let first = !state.started
             state.started = true

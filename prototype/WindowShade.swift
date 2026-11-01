@@ -409,7 +409,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 番茄钟的唯一宿主：在这里点一次，让观察者和唯一 FocusTimerHost 建起来。
         MainActor.assumeIsolated { _ = ws2Runtime }
         // 卡住时刘海开口：跟着来处、刘海和教学的开关装上或拆掉只听的钩子（见 App/HabitContext.swift）。
-        MainActor.assumeIsolated { HabitCenter.shared.start(owner: self) }
+        MainActor.assumeIsolated { if FeatureCatalog.isEnabled(.notch) { HabitCenter.shared.start(owner: self) } }
         // 预热推迟到启动后 4 秒，不和启动抢资源；第一次打开前通常早已完成，没完成时 show() 自己会解码。
         DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
             guard FeatureCatalog.isEnabled(.launchpad) else { return }

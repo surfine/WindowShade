@@ -612,7 +612,7 @@ import Cocoa
             presenceLock = nil
             presenceBridge?.stop()
             presenceBridge = nil
-            _ = FaceScanExperiment.setEnabled(false)
+            FaceScanExperiment.suspendForFeatureOff()
             FaceObservationSource.stopWatchingCameras()
         }
     }
