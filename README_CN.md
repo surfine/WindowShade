@@ -9,6 +9,12 @@
 指针停在卷帘条上，不用展开就能看一眼。<br>
 免费开源的 Mac 窗口小工具。
 
+<!-- status:start -->
+
+**当前版本：1.0.19** · build 19 · 2026-11-01 · [发布说明](https://github.com/surfine/WindowShade/releases/tag/v1.0.19)
+
+<!-- status:end -->
+
 [![版本](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
 [![macOS](https://img.shields.io/badge/macOS-15%2B-303b49?style=flat-square)](#下载)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下载)
@@ -42,7 +48,7 @@
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新的 DMG，打开后把 `WindowShade.app` 拖到“应用程序”，再打开它，按提示给权限。（ZIP 是同一个 App，应用内更新用的就是它。）它住在菜单栏里，不占 Dock 位置。
 
 - **要 macOS 15 以上、Apple Silicon。** 没有 Intel 版。
-- **1.0.19 下载包：** ZIP 22.18 MB；第一次安装也可以下 DMG（23.22 MB）。解压后的应用文件合计 36.41 MB（十进制；文件系统实际占用可能不同）。
+- **1.0.19 下载包（十进制）：** ZIP 22.18 MB；第一次安装也可以下 DMG（23.22 MB）。
 - **已通过 Apple 公证。** 第一次打开时系统会自己检查，不用再手动放行。
 - **从 1.0.16 及以前升级：** 这一版要手动下载一次，装好后在“系统设置 → 隐私与安全性”里重新打开辅助功能（开过屏幕录制的，也重新打开）。之后就能在菜单里更新。
 - **用 Homebrew：** `brew install --cask surfine/tap/windowshade`。
@@ -139,7 +145,7 @@ cd WindowShade/prototype
 open WindowShade.app
 ```
 
-通过 `WINDOWSHADE_CODESIGN_IDENTITY` 或未跟踪的 `prototype/local-codesign.env` 配置签名。签名、隔离构建与发布步骤见 [DEVELOPMENT.md](DEVELOPMENT.md)；界面和官网文案按 [文案规则](docs/copy-guide.md) 写。
+通过 `WINDOWSHADE_CODESIGN_IDENTITY` 或未跟踪的 `prototype/local-codesign.env` 配置签名。签名、隔离构建与发布步骤见 [DEVELOPMENT.md](docs/DEVELOPMENT.md)；界面和官网文案按 [文案规则](docs/copy-guide.md) 写。
 
 | 仓库入口 | 内容 |
 | --- | --- |
@@ -148,9 +154,9 @@ open WindowShade.app
 | [`site/`](site/) | 部署在 Cloudflare Pages 的中英文官网与窗口往事 |
 | [`docs/performance.md`](docs/performance.md) | 实测结果，以及尝试过但没有奏效的办法 |
 | [`docs/releases/`](docs/releases/) | 历次发布说明 |
-| [`WindowShade.md`](WindowShade.md) | 最初的设计理由与研究笔记 |
+| [`WindowShade.md`](docs/WindowShade.md) | 最初的设计理由与研究笔记 |
 
-修改窗口行为时，请写明窗口类型、修改前后的表现，以及做过的检查。完整规则见 [CONTRIBUTING.md](CONTRIBUTING.md)；用法问题和想法请到 [Discussions](https://github.com/surfine/WindowShade/discussions)。
+修改窗口行为时，请写明窗口类型、修改前后的表现，以及做过的检查。完整规则见 [CONTRIBUTING.md](.github/CONTRIBUTING.md)；用法问题和想法请到 [Discussions](https://github.com/surfine/WindowShade/discussions)。
 
 觉得好用的话，在 GitHub 点个 ⭐，能让更多人找到它。
 

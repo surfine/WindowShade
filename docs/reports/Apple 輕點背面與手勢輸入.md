@@ -1,6 +1,6 @@
 # 低打擾手勢靠上下文閘門取勝
 
-研究日期 2026-11-01。依據為 `research_notes/Apple 輕點背面與手勢輸入/` 下四份筆記，加上本輪對 WindowShade 原始碼的唯讀核對。
+研究日期 2026-11-01。依據為 `../research_notes/Apple 輕點背面與手勢輸入/` 下四份筆記，加上本輪對 WindowShade 原始碼的唯讀核對。
 
 Apple 這一族低打擾、免觸控的輸入，幾乎都沒有為手勢加新硬體，用的是既有感測器（IMU、光學心率、相機、壓力感測）加分類器。真正讓它們好用、少誤觸的是**上下文閘門**：Watch 的 Double Tap 只在螢幕亮起時偵測，AirPods 點頭搖頭只在 Siri 播報時有效，Vision Pro 的系統手勢要先看手掌才出現。演算法更嚴格是次要的。推出路線上，多數先以輔助使用功能出貨，完整、可重映射；之後再縮成一兩個語義固定、預設開啟的主流手勢。Apple Watch 從 2021 年的 AssistiveTouch 到 2023 年的 Double Tap 是最清楚的例子。Back Tap 是例外：它從 iOS 14 起一直留在輔助使用設定裡，也沒有開放 API。開發者 API 的分界也有規律：手勢語義綁在 App 內容上的才開放（Pencil 擠壓、Camera Control、Watch 的 primaryAction、Look to Scroll）；系統層語義（關通知、回應 Siri、叫控制中心、Back Tap）只留給系統。這讓 Mac 上的第三方 App 無處可掛，只能自己接感測器，自己負責回饋與防誤觸。對 WindowShade 的結論是：最划算的兩個觸發已經在手上。一個是游標推入刘海，另一個是卷簾條上的 Force Touch 深按，後者在 `prototype/App/TrackpadGestures.swift` 已實作為「看一眼」。下一步依序是：可自訂的修飾鍵雙擊；選擇性的全域多指手勢；最後才是實驗性的「敲機身兩下」。麥克風、相機表情與 Touch ID 不值得做。有兩件事要先知道。第一，Back Tap 的偵測機制 Apple 從未公開，常被引用的「機器學習敲擊偵測」專利屬於 Amazon。第二，Mac 的 Pointer Control 臉部表情從 macOS Catalina 就有了，不是新功能。
 

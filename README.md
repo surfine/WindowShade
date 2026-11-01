@@ -9,6 +9,12 @@ Double-click a title bar and the window rolls up into a thin bar, right where it
 Double-click again and it’s back. Rest the pointer on the bar to glance at it without unrolling.<br>
 A free, open-source window utility for Mac.
 
+<!-- status:start -->
+
+**Current release: 1.0.19** · build 19 · 2026-11-01 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.19)
+
+<!-- status:end -->
+
 [![Release](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
 [![macOS](https://img.shields.io/badge/macOS-15%2B-303b49?style=flat-square)](#download)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#download)
@@ -42,7 +48,7 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releases/latest), open it, drag `WindowShade.app` onto Applications, then open it and follow the permission prompts. (The ZIP is the same app and is what in-app updates use.) It lives in the menu bar and stays out of your Dock.
 
 - **Needs macOS 15 or later and Apple Silicon.** There’s no Intel build.
-- **1.0.19 download:** 22.18 MB ZIP, or a 23.22 MB DMG for a first install; the extracted app contains 36.41 MB of files (decimal MB; filesystem allocation may differ).
+- **1.0.19 download (decimal MB):** 22.18 MB ZIP, or a 23.22 MB DMG for a first install.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
@@ -139,7 +145,7 @@ cd WindowShade/prototype
 open WindowShade.app
 ```
 
-Set `WINDOWSHADE_CODESIGN_IDENTITY` or use an untracked `prototype/local-codesign.env`. See [DEVELOPMENT.md](DEVELOPMENT.md) for signing, isolated builds, and release instructions; interface and website copy follows the [copy guide](docs/copy-guide.md).
+Set `WINDOWSHADE_CODESIGN_IDENTITY` or use an untracked `prototype/local-codesign.env`. See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for signing, isolated builds, and release instructions; interface and website copy follows the [copy guide](docs/copy-guide.md).
 
 | In the repository | Purpose |
 | --- | --- |
@@ -148,9 +154,9 @@ Set `WINDOWSHADE_CODESIGN_IDENTITY` or use an untracked `prototype/local-codesig
 | [`site/`](site/) | Bilingual website and window stories, hosted on Cloudflare Pages |
 | [`docs/performance.md`](docs/performance.md) | Measurements and approaches that did or did not work |
 | [`docs/releases/`](docs/releases/) | Preserved release notes |
-| [`WindowShade.md`](WindowShade.md) | Original design rationale and research notes |
+| [`WindowShade.md`](docs/WindowShade.md) | Original design rationale and research notes |
 
-For changes to window behavior, include the affected window type, what happened before and after, and the checks you ran. The full rules are in [CONTRIBUTING.md](CONTRIBUTING.md); questions and ideas go to [Discussions](https://github.com/surfine/WindowShade/discussions).
+For changes to window behavior, include the affected window type, what happened before and after, and the checks you ran. The full rules are in [CONTRIBUTING.md](.github/CONTRIBUTING.md); questions and ideas go to [Discussions](https://github.com/surfine/WindowShade/discussions).
 
 If WindowShade earns a place on your Mac, a ⭐ on GitHub helps other people find it.
 

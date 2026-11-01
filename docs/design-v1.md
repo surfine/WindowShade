@@ -365,7 +365,7 @@ Liquid Glass 指南，Apple 最后更新 2025-12-16），只按写明的规则�
 
 ## 开发验收入口
 
-使用仓库构建脚本和已有开发签名构建，再运行（签名配置见 [开发指南](../DEVELOPMENT.md)）：
+使用仓库构建脚本和已有开发签名构建，再运行（签名配置见 [开发指南](DEVELOPMENT.md)）：
 
 ```sh
 ./prototype/build.sh --stage

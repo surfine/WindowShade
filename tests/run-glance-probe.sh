@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 if [ -n "${PROBE_SHOTS:-}" ]; then mkdir -p "$PROBE_SHOTS"; fi
 FIX=.build/glance-tests/GlanceFixture.app
 mkdir -p "$FIX/Contents/MacOS"
-# 按支持的最低系统编（DEVELOPMENT.md「支持的系统版本」），否则默认按本机系统编，拿进 macOS 15 虚拟机就起不来。
+# 按支持的最低系统编（docs/DEVELOPMENT.md「支持的系统版本」），否则默认按本机系统编，拿进 macOS 15 虚拟机就起不来。
 swiftc -target arm64-apple-macos15.0 tests/fixtures/GlanceFixture.swift -o "$FIX/Contents/MacOS/GlanceFixture"
 cat > "$FIX/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

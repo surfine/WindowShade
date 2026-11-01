@@ -61,13 +61,13 @@ Infinite Mac 官方 `/embed` 接口按需加载 System 7.5、Mac OS 8.0、Mac OS
 
 `public/fonts/ChicagoFLF.woff2`、三枚 Classic 控件 SVG 来自 AI System 6 的 System.css 参考资源（Sakun Acharige，MIT，随附 `system-css-LICENSE.txt`）；`Asap-Variable.woff2` 是该项目已有的 Charcoal 回退（Omnibus-Type，SIL OFL，随附 `Asap-OFL.txt`）。复刻与替代字体不标为 Apple 原始字体；Charcoal/Lucida Grande 优先读取本地已安装版本。标题栏组合与控制面板在布局、字体载入后对齐整像素，防止细条纹混成灰色。
 
-## 1.0.15 发布载荷
+## 历史记录：1.0.15 发布载荷
 
 构建目录共 36 个文件，合计 855,408 字节（未压缩文件内容，不是网络传输量）。中文首页 32,100 字节、英文首页 33,002 字节、共用 CSS 45,485 字节、共用脚本 26,088 字节。旧系统模拟器仍按读者点击后才加载，不计入本地发布载荷。
 
 
-## 2026-10-10 候选准备
+## 历史记录：2026-10-10 候选准备
 
-当前生成入口为 `scripts/content.mjs` 和 `scripts/build.mjs`，运行 `npm run build && npm run check`。旧约定中的 `site/index.html`、`build-zh-page.mjs` 和 `site:check` 已不在当前工程。中英文页面由同一入口生成。下载事实仍指向已发布 1.0.15，刘海场景明确标成默认关闭的 1.0.16 候选功能。
+当前生成入口为 `scripts/content.mjs` 和 `scripts/build.mjs`，运行 `npm run build && npm run check`。旧约定中的 `site/index.html`、`build-zh-page.mjs` 和 `site:check` 已不在当前工程。中英文页面由同一入口生成。当时下载事实指向已发布 1.0.15，刘海场景明确标成默认关闭的 1.0.16 候选功能。
 
-本次本地网站构建共 42 个文件，文件内容合计 991,681 字节；不代表网络压缩量，也不是 App 包大小。上方 1.0.15 载荷是历史记录。本轮 App 签名候选 ZIP 为 9,705,138 字节，26 个普通文件共 24,107,430 字节；完整清单见 `../docs/releases/v1.0.16-acceptance-20261010.md`。真机验收未完成，网站下载仍指向正式 1.0.15。
+本次本地网站构建共 42 个文件，文件内容合计 991,681 字节；不代表网络压缩量，也不是 App 包大小。上方 1.0.15 载荷是历史记录。本轮 App 签名候选 ZIP 为 9,705,138 字节，26 个普通文件共 24,107,430 字节；完整清单见 `../docs/releases/v1.0.16-acceptance-20261010.md`。真机验收未完成，当时网站下载仍指向正式 1.0.15。当前发布事实以 `public/appcast.xml` 与 `scripts/content.mjs` 为准；`deployment.json` 是 2026-09-25 的时点记录，不是当前线上清单。

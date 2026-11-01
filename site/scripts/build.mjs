@@ -128,7 +128,7 @@ ${launchpadSection(c.lang)}
 
 <section class="shortcuts wrap section"><h2>${c.shortcutTitle}</h2><ul class="shortcut-list">${c.shortcuts.map(([key, label]) => `<li><span class="keys">${keys(key)}</span><span>${label}</span></li>`).join('')}</ul>${(c.shortcutNotes || []).map(text => `<p class="shortcut-note">${text}</p>`).join('')}</section>
 
-<section class="trust wrap section" id="privacy"><div class="trust-copy"><h2>${c.trustTitle}</h2><p class="lead">${c.trustBody}</p><a class="text-link" href="${repo}/blob/main/WindowShade.md">${c.researchLink}${arrow('out')}</a></div><div class="questions" id="questions"><h3>${c.faqTitle}</h3><div class="faq-list">${c.faqs.map(([q, a]) => `<details><summary>${q}<span class="plus" aria-hidden="true"></span></summary><p>${a}</p></details>`).join('')}</div></div></section>
+<section class="trust wrap section" id="privacy"><div class="trust-copy"><h2>${c.trustTitle}</h2><p class="lead">${c.trustBody}</p><a class="text-link" href="${repo}/blob/main/docs/WindowShade.md">${c.researchLink}${arrow('out')}</a></div><div class="questions" id="questions"><h3>${c.faqTitle}</h3><div class="faq-list">${c.faqs.map(([q, a]) => `<details><summary>${q}<span class="plus" aria-hidden="true"></span></summary><p>${a}</p></details>`).join('')}</div></div></section>
 
 <section class="closing wrap section"><img src="/media/icon-256.png" width="88" height="88" alt="" loading="lazy"><h2>${c.endTitle}</h2>${download(c, ' large')}<p>${c.endBody}</p></section>
 </main>${siteFooter(c.lang)}

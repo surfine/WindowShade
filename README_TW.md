@@ -9,6 +9,12 @@
 指標停在捲簾條上，不用展開就能看一眼。<br>
 免費開源的 Mac 視窗小工具。
 
+<!-- status:start -->
+
+**目前版本：1.0.19** · build 19 · 2026-11-01 · [釋出說明](https://github.com/surfine/WindowShade/releases/tag/v1.0.19)
+
+<!-- status:end -->
+
 [![版本](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
 [![macOS](https://img.shields.io/badge/macOS-15%2B-303b49?style=flat-square)](#下載)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下載)
@@ -42,7 +48,7 @@
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下載最新的 DMG，開啟後把 `WindowShade.app` 拖進“應用程式”，再開啟它，按提示給權限。（ZIP 是同一個 App，應用程式內更新用的就是它。）它住在選單列裡，不佔 Dock 位置。
 
 - **要 macOS 15 以上、Apple Silicon。** 沒有 Intel 版。
-- **1.0.19 下載包：** ZIP 22.18 MB；第一次安裝也可以下 DMG（23.22 MB）。解壓後的應用檔案合計 36.41 MB（十進位；檔案系統實際佔用可能不同）。
+- **1.0.19 下載包（十進位）：** ZIP 22.18 MB；第一次安裝也可以下 DMG（23.22 MB）。
 - **已通過 Apple 公證。** 第一次開啟時系統會自己檢查，不用再手動放行。
 - **從 1.0.16 及以前升級：** 這一版要手動下載一次，裝好後在“系統設定 → 隱私權與安全性”裡重新開啟輔助使用（開過螢幕錄製的，也重新開啟）。之後就能在選單裡更新。
 - **用 Homebrew：** `brew install --cask surfine/tap/windowshade`。
@@ -97,9 +103,22 @@
 
 ## 你的視窗，只留在你的 Mac 上
 
-WindowShade 要兩項權限，一項必需、一項可選。**輔助使用**（必需）：找到、移動、回復視窗。**螢幕錄製**（可選）：開了，看一眼、視窗瀏覽和置頂預覽裡能看到視窗的即時畫面；不開也能用，預覽會改成圖示和標題。“螢幕錄製”只是系統給這個權限起的名字，畫面只在你的電腦上處理，不會傳到別處。應用萬一意外退出，視窗也會自動恢復原樣。
+WindowShade 要兩項權限，一項必需、一項可選。**輔助使用**（必需；macOS 27 起在系統設定裡叫「裝置控制與資料存取」）：找到、移動、回復視窗。**螢幕錄製**（可選）：開了，看一眼、視窗瀏覽和置頂預覽裡能看到視窗的即時畫面；不開也能用，預覽會改成圖示和標題。“螢幕錄製”只是系統給這個權限起的名字，畫面只在你的電腦上處理，不會傳到別處。應用萬一意外退出，視窗也會自動恢復原樣。WindowShade 不收集使用資料，也不做任何統計或上報；檢查更新時會連網。它讀到的每一樣都列在設定裡的「隱私權」一欄和[官網隱私權頁](https://windowshade.aaronlau.me/privacy/)。
 
 普通視窗都能收起。便箋用系統自己的收起方式；Adobe 這類自己畫標題列的應用會單獨處理。全螢幕、分割畫面、台前排程和多顯示器還有少數情況沒覆蓋，建議先在你常用的應用裡試一次。碰到問題歡迎[回饋](https://github.com/surfine/WindowShade/issues)，寫上 macOS 版本、應用名和操作步驟。
+
+### 怎麼徹底刪掉
+
+WindowShade 只改過一項系統設定：程式塢的「最小化效果」。用到時改成「縮放」，改之前記下原值；正常退出時還原，意外退出後下次啟動先還原。刪掉之前先在選單裡退出 WindowShade，這一項就已經回到原樣。其餘要刪的：
+
+1. 把 `WindowShade.app` 拖到垃圾桶；如果開過「登入時自動啟動」，到「系統設定 → 一般 → 登入項目」裡把它移除。
+2. 刪掉它在你帳戶裡建立的檔案：
+   - `~/Library/Application Support/WindowShade/`（恢復記錄、檔案架、裝置密鑰）
+   - `~/Library/Logs/WindowShade/`（執行記錄）
+   - `~/Library/Caches/com.windowshade.prototype/`、`~/Library/HTTPStorages/com.windowshade.prototype/`
+   - `~/Library/Preferences/com.windowshade.prototype.plist`、`~/Library/Preferences/com.windowshade.prototype.update-guard.plist`
+3. 如果用過刷臉解鎖或 iPhone 遙控器，在「鑰匙串存取」裡搜 `WindowShade`，刪掉 `WindowShade.FaceScan.templates` 和 `WindowShade.Remote.peers` 兩類項目。
+4. 想連授權一起清掉：「系統設定 → 隱私權與安全性」的「輔助使用」（macOS 27 起叫「裝置控制與資料存取」）和「螢幕錄製」裡把 WindowShade 移除。
 
 ## 開發中
 
@@ -126,7 +145,7 @@ cd WindowShade/prototype
 open WindowShade.app
 ```
 
-通過 `WINDOWSHADE_CODESIGN_IDENTITY` 或未跟蹤的 `prototype/local-codesign.env` 設定簽名。簽名、隔離構建與釋出步驟見 [DEVELOPMENT.md](DEVELOPMENT.md)；介面和官網文案按 [文案規則](docs/copy-guide.md) 寫。
+通過 `WINDOWSHADE_CODESIGN_IDENTITY` 或未跟蹤的 `prototype/local-codesign.env` 設定簽名。簽名、隔離構建與釋出步驟見 [DEVELOPMENT.md](docs/DEVELOPMENT.md)；介面和官網文案按 [文案規則](docs/copy-guide.md) 寫。
 
 | 倉庫入口 | 內容 |
 | --- | --- |
@@ -135,9 +154,9 @@ open WindowShade.app
 | [`site/`](site/) | 部署在 Cloudflare Pages 的中英文官網與視窗往事 |
 | [`docs/performance.md`](docs/performance.md) | 實測結果，以及嘗試過但沒有奏效的辦法 |
 | [`docs/releases/`](docs/releases/) | 歷次釋出說明 |
-| [`WindowShade.md`](WindowShade.md) | 最初的設計理由與研究筆記 |
+| [`WindowShade.md`](docs/WindowShade.md) | 最初的設計理由與研究筆記 |
 
-修改視窗行為時，請寫明視窗類型、修改前後的表現，以及做過的檢查。完整規則見 [CONTRIBUTING.md](CONTRIBUTING.md)；用法問題和想法請到 [Discussions](https://github.com/surfine/WindowShade/discussions)。
+修改視窗行為時，請寫明視窗類型、修改前後的表現，以及做過的檢查。完整規則見 [CONTRIBUTING.md](.github/CONTRIBUTING.md)；用法問題和想法請到 [Discussions](https://github.com/surfine/WindowShade/discussions)。
 
 覺得好用的話，在 GitHub 按個 ⭐，能讓更多人找到它。
 

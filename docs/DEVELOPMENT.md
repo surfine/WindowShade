@@ -1,6 +1,6 @@
 # WindowShade 开发指南
 
-面向开发者的构建、签名、模块结构、调试与发布流程。用户向内容见 [README](README_CN.md)。
+面向开发者的构建、签名、模块结构、调试与发布流程。用户向内容见 [README](../README_CN.md)。
 
 ## 环境要求
 
@@ -14,7 +14,7 @@
 现在是 macOS 15、26、27；下一个 macOS 的测试版尽力而为、不承诺。每年 9 月新版 macOS 正式推出时往前滚一版
 （2027 年 9 月起最低是 26）。
 
-- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](docs/releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
+- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
 - **从 1.0.17 起最低 macOS 15**：`build.sh` 的构建目标与 `prototype/Info.plist` 的 `LSMinimumSystemVersion` 已经改好；
   发 1.0.17 时那一项 appcast 的 `minimumSystemVersion` 写 `15.0.0`（旧项保持 `14.0.0`，留在 14 的人停在 1.0.16），
   README（三份）、官网与宣传片里的「macOS 14 及以上」在 1.0.17 发布时一起改，**不要提前改**（会把 1.0.16 说错）。
@@ -41,15 +41,15 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 ### 第一个 Developer ID 版（1.0.17）
 
 1.0.16 及以前是开发证书签的（Team `FVGLY6W6S4`），Developer ID 的 Team 是 `DQ45KFVHJ8`，DR 一定不同，所以 1.0.17 是
-[docs/update.md](docs/update.md) 里的「换证书的一版」：appcast 那一项标 `sparkle:informationalUpdate` 配 `belowVersion=17`
+[docs/update.md](update.md) 里的「换证书的一版」：appcast 那一项标 `sparkle:informationalUpdate` 配 `belowVersion=17`
 （1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
 用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
 同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
-**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
+**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](releases/v1.0.17-release-gate.md)。
 
 ### 默认值翻开与 DMG（1.0.18）
 
-1.0.18 起一批功能默认开（[v1.0.18-defaults.md](docs/releases/v1.0.18-defaults.md)：`ReleaseDefaults.Entry` 多了 `ownerDecided`，「验过的、或 Aaron 拍板的，才默认开」）；
+1.0.18 起一批功能默认开（[v1.0.18-defaults.md](releases/v1.0.18-defaults.md)：`ReleaseDefaults.Entry` 多了 `ownerDecided`，「验过的、或 Aaron 拍板的，才默认开」）；
 首次下载改用 DMG（`scripts/make-dmg.sh`，Release 页挂 DMG；Sparkle 更新照旧用 zip）。
 **2026-10-18 已发布**（版本号 1.0.18／18，Developer ID 签名＋公证；zip 与 DMG 在 GitHub Release v1.0.18，appcast 已加 1.0.18 条目并重签；README 三份与官网下载版数字已改）。
 
@@ -185,12 +185,12 @@ cd prototype
 
 ## 调试
 
-- 设置与纸面组件的隔离验收入口：见 [设计规范 v1 落地与验证](docs/design-v1.md)。
+- 设置与纸面组件的隔离验收入口：见 [设计规范 v1 落地与验证](design-v1.md)。
 - 纸面组件事件与命中区域回归：`bash tests/run-paper-tests.sh`，使用离屏 AppKit 视图，不操作用户窗口。
 - 看一眼：状态机 `bash tests/run-glance-tests.sh`；真机探针先 `./build.sh --stage`，再
-  `bash tests/run-glance-probe.sh [--single | --carry [--other-space]]`（独立临时 App，解锁状态下运行）。说明见 [docs/glance.md](docs/glance.md)。
+  `bash tests/run-glance-probe.sh [--single | --carry [--other-space]]`（独立临时 App，解锁状态下运行）。说明见 [docs/glance.md](glance.md)。
 - 标题栏手势：识别状态机 `bash tests/run-gesture-tests.sh`；真机探针 `bash tests/run-glance-probe.sh --gesture`
-  （同一个临时 App，合成事件直接交给控制器，不动指针）。说明见 [docs/gestures.md](docs/gestures.md)。
+  （同一个临时 App，合成事件直接交给控制器，不动指针）。说明见 [docs/gestures.md](gestures.md)。
 - AppKit 回归合跑：`bash tests/run-appkit-tests.sh all`，一次编译后在四个独立进程运行设置、经典卷帘条、收起动画和看一眼生命周期测试，避免重复编译整套生产源码。各单项入口保留。
 - 设置页恢复与滚动保持：`bash tests/run-settings-tests.sh`，编译生产 AppKit 视图的独立入口；使用隔离偏好设置，不显示或操作用户窗口。
 - 经典卷帘条辅助操作与点击边界：`bash tests/run-appkit-tests.sh ClassicStripTests`；直接调用生产视图的事件处理，不注入系统事件，浅深色组件图输出到 `.build/appkit-tests/strip-shots/`。设置测试也复用这个构建入口，保留原命令作为包装。
@@ -213,7 +213,7 @@ cd prototype
 ### 系统集成与质感批次
 
 - 这批改动的评审索引（改动位置、行为、证据、验证命令、未验证项）见
-  [系统集成与质感批次](docs/system-integration-polish.md)。
+  [系统集成与质感批次](system-integration-polish.md)。
 - 两个可复现检查脚本：`scripts/check-settings-appearance.sh`（设置页浅深色自适应）、
   `scripts/check-standard-menu.sh`（关于面板与代理应用主菜单下的 ⌘V）。
 - 其余入口：`--settings-shots`（设置页真实截图）、`--window-browser-shots`（窗口浏览
@@ -296,7 +296,7 @@ cd prototype
   分段控件（用来验证“点了就换布局”，输出里的 `renderedStyle/renderedRows/renderedCards`
   是真实渲染结果）。
 - 只读真机探针（不移动用户指针、不捕获用户窗口；详见
-  [窗口浏览进度](docs/window-browser-progress.md) 的命令清单）：
+  [窗口浏览进度](window-browser-progress.md) 的命令清单）：
   `--window-browser-dock-probe`、`--window-browser-hover-probe`、
   `--window-browser-catalog-probe`、`--window-browser-capture-probe`
   （只捕获本应用自己的探针窗口）、`--window-browser-thumbnail-probe`、
@@ -312,12 +312,12 @@ cd prototype
   用于验证真实悬停通知；只悬停、不点击、不激活，运行前请确认当前没有正在进行中的
   拖拽或需要保持指针位置的操作。
 
-用户向说明（入口、权限、兼容限制）见 [docs/window-browser.md](docs/window-browser.md)。
+用户向说明（入口、权限、兼容限制）见 [docs/window-browser.md](window-browser.md)。
 
 需要外部/更高智能模型复检时，用 复检交接与提示词：里面是
 可直接粘贴的评审提示词、按任务书逐条列出的需求与状态、已知缺口、冲突消解记录和复检命令。
 
-动手优化这一带之前先读 [docs/performance.md](docs/performance.md)：那里记了
+动手优化这一带之前先读 [docs/performance.md](performance.md)：那里记了
 实测的调用成本量级、已走通的手法、以及已经证伪的方向（比如用 SkyLight
 绕开目标 App 在 SIP 开启时不可行），可以省掉重新走一遍的时间。
 
@@ -443,4 +443,4 @@ cd prototype
 
 ### Computer Use 原生界面验收
 
-[操作手册](docs/computer-use-qa.md) 是隔离 VM、单步输入、截图/AX 取证和视觉复核的唯一入口；[工具说明](tools/computer-use-qa/README.md) 提供 CLI 与离线检查。涉及界面行为的改动应选择对应场景，报告实际构建身份、失败、未测项与清理结果。已有单元测试及 glance 探针继续使用，不以 Computer Use 替代它们；历史二进制的通过不构成当前源码通过。
+[操作手册](computer-use-qa.md) 是隔离 VM、单步输入、截图/AX 取证和视觉复核的唯一入口；[工具说明](../tools/computer-use-qa/README.md) 提供 CLI 与离线检查。涉及界面行为的改动应选择对应场景，报告实际构建身份、失败、未测项与清理结果。已有单元测试及 glance 探针继续使用，不以 Computer Use 替代它们；历史二进制的通过不构成当前源码通过。

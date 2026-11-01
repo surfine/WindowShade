@@ -89,7 +89,7 @@ near-threshold face score and never unlocks anything by itself (`FaceAutofill.de
   Creative Commons Attribution 4.0 International. Attribution text: `prototype/Vendor/WeSpeaker/ATTRIBUTION.txt`
   (VoxCeleb2: Chung, Nagrani, Zisserman, Interspeech 2018; VoxCeleb1: Nagrani, Chung, Zisserman, Interspeech 2017;
   WeSpeaker: Wang et al., ICASSP 2023). `build.sh` appends both files to `Contents/Resources/THIRD-PARTY-LICENSES.txt`
-  only when the model is bundled; the repo-level table is `THIRD-PARTY-LICENSES.md`.
+  only when the model is bundled; the repo-level table is `docs/THIRD-PARTY-LICENSES.md`.
 - CC BY 4.0 on weights trained from a dataset is the upstream project's own reading; this is not legal advice.
 
 ## Privacy

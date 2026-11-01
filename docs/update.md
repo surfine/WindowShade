@@ -507,7 +507,7 @@ Sparkle 调用 `showReadyToInstallAndRelaunch:`（或续装时进入上一节）
 | `site/scripts/chrome.mjs`、`site/scripts/content.mjs` | 直链下载、三步安装、“已有旧版”那句、问答“会联网吗？” |
 | `README.md`、`README_CN.md` | 三步安装和“已有旧版”那句；“隐私与安全性”改成“隐私与安全” |
 | `docs/copy-guide.md` | 固定词汇，见“文案” |
-| `DEVELOPMENT.md` | 发布流程、密钥、续期、升级 Sparkle；模块结构里加 `Update/`、`UpdateGuard/` |
+| `docs/DEVELOPMENT.md` | 发布流程、密钥、续期、升级 Sparkle；模块结构里加 `Update/`、`UpdateGuard/` |
 | `tests/UpdateTests.swift`、`tests/run-update-tests.sh`、`tests/run-update-integration.sh`（新） | 见“验收” |
 
 Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二进制；靠固定版本和 SHA-256 保证每次拿到同一份。
@@ -547,7 +547,7 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
 7. **`--stage` 额外检查**：写入 `SUFeedURL`；`otool -L` 确认链接了 Sparkle；`codesign -dv` 确认几处嵌套代码的 TeamIdentifier 相同；
    `Info.plist` 里的 `SUPublicEDKey` 要等于仓库里记下的那个。
 
-## 发布流程（写进 DEVELOPMENT.md）
+## 发布流程（写进 docs/DEVELOPMENT.md）
 
 1. **每个公开的包都升 `CFBundleVersion`。** 删掉“同一版本重新发布”一节：不再移动已发布的 tag，不再 `--clobber`。换包就升一个小版本。
 2. `./build.sh --stage`，跑回归检查。
@@ -807,7 +807,7 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
   看护是 `prototype/Watchdog/`（`main.swift` 和它自己的一份菜单栏图标 `GuardIcon.swift`）。看护编 `Watchdog/*.swift` 加
   `Core/Update*.swift`、`App/UpdaterSystem.swift`、`App/UpdaterCopy.swift`，不编 App 里别的文件。测试是 `tests/UpdateTests.swift`。
 - **Sparkle 放进了仓库**：`prototype/Vendor/Sparkle.framework`（2.10.0，核对过 SHA-256，已删 XPCServices，约 2.6 MB），没有 `scripts/fetch-sparkle.sh`。
-  嵌入时除了 XPCServices，还删 `Headers`、`PrivateHeaders`、`Modules`；本地化留 `Base`、`en`、`zh_CN` 三份。升级流程写在 DEVELOPMENT.md。
+  嵌入时除了 XPCServices，还删 `Headers`、`PrivateHeaders`、`Modules`；本地化留 `Base`、`en`、`zh_CN` 三份。升级流程写在 docs/DEVELOPMENT.md。
 - **看护等旧版**：第一段（旧版还开着）用 DispatchSource 的进程源（即 kqueue `NOTE_EXIT`）等旧 pid，用 `Update/` 目录的文件源等日志变化，
   不轮询；后面几段各有上限（最多约三分钟），仍每 0.5 秒看一次安装任务和日志。
 - **否决后看护不自己走**：旧版还开着时，日志变成 `cancelled` 或 `refused`，看护不退出；App 确认 Sparkle 的安装任务没了才 `SMJobRemove` 它，
@@ -835,7 +835,7 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
 - **`--stage`**：多了两项。`main.swift`、`WindowShade.swift` 里没接齐更新器入口时打警告（不停下，别的验证也用 `--stage`），这样的包不能发布；
   接齐了就试跑 `--self-check`，5 秒内返回 0 且输出 `build=N`，否则停下。
 - **还没写的**：`scripts/release-gate.sh`、`scripts/make-appcast.sh`、`tests/run-update-integration.sh`、`site/public/appcast.xml`。
-  发布关和清单先按 DEVELOPMENT.md 手动做。
+  发布关和清单先按 docs/DEVELOPMENT.md 手动做。
 - **接线由协调者做**（这些文件不归更新器这一批改）：`main.swift` 的 `UpdateLaunch.handleEarlyArguments()` 和 `UpdateLaunch.recordLaunch()`，
   `WindowShade.swift` 的 `start()`、`applicationShouldTerminate()`、`applicationWillTerminate()`，菜单、设置、欢迎窗口。
   前两处是发布阻断项。

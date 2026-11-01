@@ -34,7 +34,7 @@
 | `Support/` | 诊断日志、Sendable 担保、本机 socket、进程通道、配对加密、CarPlay 接收端 | `SendableSystemHandles.swift` 里每条担保都要写清为什么安全 |
 | `Watchdog/` | 更新看护 `WindowShadeUpdateGuard.app` | 只能依赖 Foundation/AppKit 和几份共用的更新文件（见 `build.sh` 的 `GUARD_SOURCES`） |
 | `Native/` | 原创的 C 进程监督（`WS2Child.c`） | 同一实例只用一个串行执行器；没有全局 SIGCHLD |
-| `Vendor/` | Sparkle 2.10.0 与 mediaremote-adapter（第三方，不改） | 许可随包，见仓库根 `THIRD-PARTY-LICENSES.md` |
+| `Vendor/` | Sparkle 2.10.0 与 mediaremote-adapter（第三方，不改） | 许可随包，见 `docs/THIRD-PARTY-LICENSES.md` |
 | `Resources/` | `Localizable.xcstrings`（zh-Hans／en／zh-Hant） | 新的用户可见句子三栏都要有；`build.sh --check` 会查 |
 
 ## 不在 prototype/ 里但常要动的

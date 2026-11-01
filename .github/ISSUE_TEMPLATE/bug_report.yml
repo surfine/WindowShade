@@ -11,7 +11,7 @@ body:
     attributes:
       label: WindowShade version / 版本
       description: Settings → Advanced → About.
-      placeholder: "1.0.17"
+      placeholder: "1.0.19"
     validations:
       required: true
   - type: input

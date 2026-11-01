@@ -31,7 +31,10 @@ Feature notes, design rules and release notes. Most of these are written in Chin
 - [computer-use-qa.md](computer-use-qa.md)、[computer-use-qa-validation.md](computer-use-qa-validation.md) — 原生界面验收手册 / UI acceptance.
 - [performance.md](performance.md) — 实测与手法 / performance.
 - [window-browser-progress.md](window-browser-progress.md)、[system-integration-polish.md](system-integration-polish.md) — 功能进度与质感批次 / progress notes.
-- Build, signing and release: [DEVELOPMENT.md](../DEVELOPMENT.md).
+- Build, signing and release: [DEVELOPMENT.md](DEVELOPMENT.md).
+- Third-party licenses: [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
+- Original design notes: [WindowShade.md](WindowShade.md).
+- Research notes and reports: [research_notes/](research_notes/), [reports/](reports/).
 
 ## Releases / 发布
 

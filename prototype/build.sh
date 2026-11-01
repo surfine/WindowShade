@@ -6,7 +6,7 @@
 #   ./build.sh --check    隔离优化编译与链接验证，不签名、不修改 app bundle
 #   ./build.sh --stage    隔离构建到 .build/duo-validation/，写入更新清单地址 SUFeedURL；用开发证书签，给探针与发布关验证
 #   ./build.sh --release  和 --stage 同样的发布前检查，但构建到 .build/release/、用 Developer ID 证书签并带 Apple 时间戳；
-#                         发布包从这里打，再用 scripts/notarize.sh 公证（见 DEVELOPMENT.md 的发布流程）
+#                         发布包从这里打，再用 scripts/notarize.sh 公证（见 docs/DEVELOPMENT.md 的发布流程）
 #   ./build.sh --local-parallel  本地全模块优化，使用四个后端线程；发布仍用 --stage
 #
 # 应用内更新（docs/update.md）：主程序链接 prototype/Vendor/Sparkle.framework（2.10.0，已删 XPCServices），
@@ -270,7 +270,7 @@ if ! security find-identity -p codesigning 2>/dev/null | grep -qF "$IDENTITY"; t
 fi
 
 if [ ! -f "$SPARKLE_FRAMEWORK/Versions/B/Sparkle" ]; then
-  echo "ERROR: 缺少 prototype/Vendor/Sparkle.framework（Sparkle 2.10.0，升级流程见 DEVELOPMENT.md）。" >&2
+  echo "ERROR: 缺少 prototype/Vendor/Sparkle.framework（Sparkle 2.10.0，升级流程见 docs/DEVELOPMENT.md）。" >&2
   exit 1
 fi
 
@@ -352,7 +352,7 @@ done
 cp ../docs/third-party-lock-overlay.txt "$APP/Contents/Resources/LockOverlay-LICENSE.txt"
 cp PrivacyInfo.xcprivacy "$APP/Contents/Resources/PrivacyInfo.xcprivacy"
 # 第三方许可（规格 R38）：随包的三份许可合成一份，「关于」面板里的「第三方许可」打开它。
-# 来源就是仓库里那三份文件，不另抄一份；清单见仓库根 THIRD-PARTY-LICENSES.md。
+# 来源就是仓库里那三份文件，不另抄一份；清单见 docs/THIRD-PARTY-LICENSES.md。
 {
   printf 'WindowShade bundles the following third-party software.\n\n'
   printf '== Sparkle 2.10.0 (Contents/Frameworks/Sparkle.framework) ==\n\n'; cat Vendor/Sparkle-LICENSE
@@ -516,7 +516,7 @@ if [ "$stage_only" = "1" ]; then
   fi
   # 更新器的入口要由 main.swift / WindowShade.swift 接上（见 App/UpdaterLaunch.swift、App/Updater.swift 头部注释）。
   # 少接 --self-check：安装前的试跑会拉起一整个 WindowShade；少接 recordLaunch 或 start()：新版写不了 healthy，每次更新都被换回。
-  # 没接齐时只警告、不跑二进制（别的验证也用 --stage）；这样的包不能发布，DEVELOPMENT.md 的发布流程把它列为阻断项。
+  # 没接齐时只警告、不跑二进制（别的验证也用 --stage）；这样的包不能发布，docs/DEVELOPMENT.md 的发布流程把它列为阻断项。
   UPDATER_WIRED=1
   for wiring in "main.swift:UpdateLaunch.handleEarlyArguments" "main.swift:UpdateLaunch.recordLaunch" \
     "WindowShade.swift:UpdaterController.shared.start()" "WindowShade.swift:UpdaterController.shared.applicationWillTerminate()" \

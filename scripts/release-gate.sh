@@ -1,5 +1,5 @@
 #!/bin/bash
-# 发布关（DEVELOPMENT.md「发布流程」第 4 步）：检查要发出去的那个 zip，不是构建目录。有一项不过就非零退出。
+# 发布关（docs/DEVELOPMENT.md「发布流程」第 4 步）：检查要发出去的那个 zip，不是构建目录。有一项不过就非零退出。
 # 用法：
 #   scripts/release-gate.sh <新版 zip> [--previous <上一版 zip 或 .app>] [--appcast <清单>] [--cert-change <Team ID>] [--dmg <首次安装 dmg>]
 #   --previous 不给时用 gh 下载最新 release 的 zip（要联网、要 gh 已登录）。
@@ -118,7 +118,7 @@ GUARD="$APP/Contents/Helpers/WindowShadeUpdateGuard.app"
 state="$work/state"; mkdir -p "$state"
 if [ "$PREV_BUILD" -lt 16 ] 2>/dev/null; then
   # 16 以前没有更新器、也不认 --read-state：拿它跑会整个 App 起来。文档规定这一步从第二个带更新器的版本起做。
-  echo "SKIP 9 上一版 build $PREV_BUILD 不带更新器，没有 --read-state（DEVELOPMENT.md：第一个带更新器的版本跳过）"
+  echo "SKIP 9 上一版 build $PREV_BUILD 不带更新器，没有 --read-state（docs/DEVELOPMENT.md：第一个带更新器的版本跳过）"
 elif "$APP/Contents/MacOS/WindowShade" --self-check --write-sample-state "$state" >/dev/null 2>&1 \
   && perl -e 'alarm 5; exec @ARGV' "$PREV_APP/Contents/MacOS/WindowShade" --self-check --read-state "$state" >/dev/null 2>&1; then
   pass "9 上一版读得懂这一版写的状态"; else fail "9 上一版读不懂这一版写的状态（或上一版不支持 --read-state）"; fi
