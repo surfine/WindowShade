@@ -202,3 +202,12 @@
 5. 遥控模式配对 iPhone，存密码并用 Touch ID 打开；锁屏、唤醒，看 `lock-verify proven via=echo/handshake`。**关键未知**：系统自带的 iPhone 遥控在 Mac 锁着时会不会答挑战或重连；不会的话第二道永远不过（失败即关）。
 6. 门槛都定了以后，跑攻击矩阵五种（照片、手机屏幕、录像、换人、换手机），每种 5 次以上。
 7. 蓝牙广播实测三次（#72）。
+
+## 11-01 晚：1.0.19 已发布
+
+- 版本 1.0.19 (19)；tag `v1.0.19` 指向构建源提交 `1df23b96`；本地 `main` = `d785e956`。Release 已上传 zip 22,178,724 B（sha256 `f0725672…`）与 DMG 23,219,228 B。
+- 自动门禁：`build.sh --check` 0；235 支单测 0 失败（2 SKIP：wire-schema、silent-integration 要带 `--case`）；AppKit 13 支修正两条旧断言后全过；真机 7 组探针（notch、notch-shape、gesture、fold、shelf、wins、browser）全 PASS；公证与 DMG 均 Accepted；`release-gate.sh` 12/12；线上清单签名 OK；回下载 zip 的 sha256 一致。
+- 发布前修的两条测试：`NotchLeaseHostTests` 的合成一排宽度改为固定 408；`InterfaceLanguageSwitchTests` 的「收进刘海」「双击标题栏」两行改到手势页断言。
+- 修了 bash 3.2 的 `$var，` 解析（9 个脚本）；否则 `notarize.sh` 拿到 submission id 后先崩，看不到真正的 PASS/FAIL。
+- 本版默认生效：岛换新、悬停不再展开、上推全收＋撤销、0.15 s 落点、代理跟手、收起动画默认开、提示音默认开、整理撤销、标题栏双击后台判定；编程会话/指挥/遥控/刷脸/代填仍默认关。包从 9.35 MB 变大到 22.18 MB，是带上了本机声纹模型。
+- 未跑：两台 VM、updater 端到端点击、三语截图、性能账；按精简发布决定跳过。线上 appcast 门禁已覆盖更新链路的签名与长度。
