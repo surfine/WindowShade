@@ -50,6 +50,7 @@
 
 - 收起/展开与恢复：`bash tests/run-glance-probe.sh --fold-timing`、`--restore-guard`
 - 标题栏手势：`bash tests/run-glance-probe.sh --gesture`
+- 按住卷帘条切到另一张桌面：窗口应跟过去；私有符号不可用时窗口留在原桌面，日志出现 `method=fallback`
 - 原生标签页与外框：`bash tests/run-native-tabs-probe.sh`、`bash tests/run-window-frame-probe.sh`
 
 这些探针会开临时窗口、读辅助功能；失败要保留日志，不要靠删断言变绿。

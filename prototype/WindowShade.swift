@@ -39,6 +39,8 @@ let adobeFloatingDocumentChromeHeight: CGFloat = 44
 let afterEffectsWorkspaceChromeHeight: CGFloat = 56
 let premiereWorkspaceChromeHeight: CGFloat = 40
 let shadeAppearanceModeDefaultsKey = "ShadeAppearanceMode"
+/// 按住卷帘条切桌面时，把原窗口一起带过去。默认开；没有界面开关，先留一个可关的偏好键。
+let shadeCarryWindowAcrossSpacesDefaultsKey = "ShadeCarryWindowAcrossSpaces"
 let shadeFloatingOnTopDefaultsKey = "ShadeFloatingOnTop"
 let shadeTranslucentDefaultsKey = "ShadeTranslucent"
 let shadeTitlebarDoubleClickDefaultsKey = "ShadeTitlebarDoubleClickEnabled"
@@ -276,6 +278,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let mode = ShadeAppearanceMode(rawValue: raw) ?? .nativeScreenshot
         return mode == .proxyTitleBar ? .proxyTitleBar : .nativeScreenshot
     }()
+    /// 正被按住的卷帘条（切桌面时把原窗口带过去用）。
+    var heldStripWindowID: CGWindowID?
     var titlebarDoubleClickEnabled: Bool = {
         if UserDefaults.standard.object(forKey: shadeTitlebarDoubleClickDefaultsKey) == nil { return true }
         return UserDefaults.standard.bool(forKey: shadeTitlebarDoubleClickDefaultsKey)

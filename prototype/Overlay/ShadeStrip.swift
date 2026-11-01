@@ -562,6 +562,8 @@ final class TitleStripView: NSImageView {
     var onDoubleClick: (() -> Void)?
     var onPreviewPeek: (() -> Void)?
     var onMoveEnded: ((NSRect) -> Void)?
+    /// 按住 / 松开：按住期间切桌面，把原窗口一起带过去。
+    var onHoldChanged: ((Bool) -> Void)?
     private var dragOffset = CGPoint.zero
     private var didDrag = false
 
@@ -598,6 +600,7 @@ final class TitleStripView: NSImageView {
 
     override func mouseDown(with event: NSEvent) {
         guard let window = window else { return }
+        onHoldChanged?(true)
         onPreviewPeek?()
         let m = NSEvent.mouseLocation
         dragOffset = CGPoint(x: m.x - window.frame.origin.x, y: m.y - window.frame.origin.y)
@@ -610,12 +613,18 @@ final class TitleStripView: NSImageView {
         didDrag = true
     }
     override func mouseUp(with event: NSEvent) {
+        onHoldChanged?(false)
         if didDrag {
             didDrag = false
             if let window { onMoveEnded?(window.frame) }
             return
         }
         if event.clickCount == 2 { onDoubleClick?() }
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        if newWindow == nil { onHoldChanged?(false) }
+        super.viewWillMove(toWindow: newWindow)
     }
 }
 

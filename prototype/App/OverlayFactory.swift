@@ -71,6 +71,9 @@ extension AppDelegate {
             iv.onMoveEnded = { [weak self] frame in
                 self?.noteUserMovedOverlay(id: id, frame: frame)
             }
+            iv.onHoldChanged = { [weak self] held in
+                self?.setStripHold(id: id, held: held)
+            }
             overlay.contentView = iv
             overlay.configureTrafficLightButtons(trafficLights)
             overlay.alignStandardTrafficButtons(to: buttons)

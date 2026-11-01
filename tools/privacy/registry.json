@@ -8145,6 +8145,48 @@
       "symbol": "SecItemDelete",
       "source": "let status = SecItemDelete(query() as CFDictionary)",
       "signal": "voiceprint"
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "line": 1253,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Private/BridgedSpaceMove.swift",
+      "line": 3,
+      "symbol": "SLSMoveWindowsToManagedSpace",
+      "source": "// SLSMoveWindowsToManagedSpace 从 macOS 14.5 起移不了别的应用的窗口；兼容编号的办法",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/BridgedSpaceMove.swift",
+      "line": 5,
+      "symbol": "SLSPerformAsynchronousBridgedWindowManagementOperation",
+      "source": "// SLSPerformAsynchronousBridgedWindowManagementOperation，把一个",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/BridgedSpaceMove.swift",
+      "line": 6,
+      "symbol": "SLSBridgedMoveWindowsToManagedSpaceOperation",
+      "source": "// SLSBridgedMoveWindowsToManagedSpaceOperation 交给它，SIP 开着也能移",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/BridgedSpaceMove.swift",
+      "line": 30,
+      "symbol": "SLSBridgedMoveWindowsToManagedSpaceOperation",
+      "source": "guard let cls = NSClassFromString(\"SLSBridgedMoveWindowsToManagedSpaceOperation\"),",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/BridgedSpaceMove.swift",
+      "line": 51,
+      "symbol": "SLSBridgedMoveWindowsToManagedSpaceOperation",
+      "source": "let cls = NSClassFromString(\"SLSBridgedMoveWindowsToManagedSpaceOperation\"),",
+      "signal": "spaces-private"
     }
   ],
   "groups": [

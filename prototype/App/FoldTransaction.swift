@@ -1238,10 +1238,57 @@ extension AppDelegate {
         }
     }
 
+    /// 卷帘条被按住 / 松开。按住期间切桌面，把原窗口一起带过去。
+    func setStripHold(id: CGWindowID, held: Bool) {
+        if held {
+            heldStripWindowID = id
+        } else if heldStripWindowID == id {
+            heldStripWindowID = nil
+        }
+    }
+
+    /// 按住卷帘条切了桌面：把藏起来的原窗口移到新桌面，卷帘条跟着过去。
+    /// 私有函数不可用、或拿不到桌面编号时什么都不做，保持窗口留在原桌面。
+    func moveHeldStripWindowIfNeeded() {
+        let defaults = UserDefaults.standard
+        let enabled = defaults.object(forKey: shadeCarryWindowAcrossSpacesDefaultsKey) == nil
+            ? true
+            : defaults.bool(forKey: shadeCarryWindowAcrossSpacesDefaultsKey)
+        guard enabled else { return }
+        guard let id = heldStripWindowID, let state = shaded[id] else { return }
+        guard let display = state.sourceDisplayID,
+              let sid = PrivateSLSWindowMover.shared.currentSpace(displayID: display),
+              sid != state.sourceSpaceID else { return }
+        let previousSid = state.sourceSpaceID
+        guard BridgedSpaceMove.move(windows: [UInt32(id)], toSpace: sid) else {
+            wlog("space: held window move unavailable id=\(id) to=\(sid) method=fallback")
+            return
+        }
+        if let overlayID = state.overlayID {
+            _ = PrivateSLSWindowMover.shared.moveWindow(id: overlayID, toSpace: sid)
+        }
+        // 私有函数是异步的：返回只代表请求交出去了。稍后核对窗口真的到了新桌面，
+        // 没到就把卷帘条挪回原桌面，状态保持原样。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            guard let self, var current = self.shaded[id] else { return }
+            if PrivateSLSWindowMover.shared.windowSpace(id: id) == sid {
+                current.sourceSpaceID = sid
+                self.shaded[id] = current
+                wlog("space: held window moved id=\(id) to=\(sid) method=bridged-operation")
+                return
+            }
+            wlog("space: held window move unconfirmed id=\(id) target=\(sid) previous=\(previousSid.map { String($0) } ?? "-") method=fallback")
+            if let overlayID = current.overlayID, let previousSid {
+                _ = PrivateSLSWindowMover.shared.moveWindow(id: overlayID, toSpace: previousSid)
+            }
+        }
+    }
+
     @objc func activeSpaceChanged(_ note: Notification) {
         foldPresentationID = UUID()
         MainThreadActivity.push("system: 切换桌面")
         defer { MainThreadActivity.pop() }
+        moveHeldStripWindowIfNeeded()
         restorePendingSourceSpacesIfNeeded(reason: "active-space-changed")
         windowBrowserController?.spaceDidChange()
         // 轻操作即时执行；开启置顶预览的动画抑制窗口期。

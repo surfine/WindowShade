@@ -121,8 +121,9 @@ struct ShadeState {
     let sourceWindowID: CGWindowID
     let originalPosition: CGPoint
     var originalSize: CGSize
-    let sourceDisplayID: CGDirectDisplayID?
-    let sourceSpaceID: UInt64?
+    var sourceDisplayID: CGDirectDisplayID?
+    /// 原窗口所在桌面。按住卷帘条切桌面时，窗口跟过去后这里要跟着改。
+    var sourceSpaceID: UInt64?
     let overlay: NSWindow?
     let overlayID: CGWindowID?
     var hide: HideMethod         // 真窗口的隐藏方式：不隐藏 / 挪屏外 / 整体隐藏 / 最小化（延迟验证补救时可改写）
