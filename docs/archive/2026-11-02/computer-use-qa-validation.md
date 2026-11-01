@@ -1,3 +1,7 @@
+# Computer Use QA 验收记录（归档）
+
+> 归档日期：2026-11-02 · 状态：历史记录，现行做法见 docs/testing.md 与 docs/performance.md。
+
 # Computer Use 工具实施与验收
 
 2026-10-09：方法、CLI、八场景合同和项目入口已落地于独立分支 `codex/computer-use-qa`。没有改动产品源码、签名或发布；原工作区并行改动保持独立。

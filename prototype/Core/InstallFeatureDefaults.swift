@@ -9,6 +9,8 @@ import Foundation
 
 enum InstallFeatureDefaults {
     static let seededKey = "FeatureDefaults.Seeded"
+    /// 新装第一次引导结束后，是否已经给过“挑功能”的机会。
+    static let pickerShownKey = "FeaturePickerShown"
 
     static func seedIfNeeded(freshInstall: Bool, in defaults: UserDefaults = .standard) {
         guard !defaults.bool(forKey: seededKey) else { return }

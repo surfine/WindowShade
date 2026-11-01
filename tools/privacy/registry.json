@@ -8208,6 +8208,20 @@
       "symbol": "UserDefaults",
       "source": "static func seedIfNeeded(freshInstall: Bool, in defaults: UserDefaults = .standard) {",
       "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 775,
+      "symbol": "UserDefaults",
+      "source": "!UserDefaults.standard.bool(forKey: InstallFeatureDefaults.pickerShownKey) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 776,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(true, forKey: InstallFeatureDefaults.pickerShownKey)",
+      "signal": "settings"
     }
   ],
   "groups": [

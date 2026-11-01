@@ -7,7 +7,7 @@
 “之前的要求”指 9 月 25 日那句：“我希望给 Magic Mouse 和 Magic Trackpad 用户一点惊喜，手势可以更完备一些，当然你要避免误触。”
 
 - 设计稿（可交互）：[手边的每一样](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)；遥控器上遥控与指挥怎么合成一件事：iPhone 上的遥控器（2026-10-08 定稿）
-- 给 DeepSeek 的提示词：handoff/deepseek-input.md
+- 早期给模型的提示词已随交接材料归档，不再维护。
 - 相关：[gestures.md](gestures.md)（已有的标题栏手势）、conductor-v2.md（指挥模式）、[device-battery.md](device-battery.md)、[privacy-page.md](privacy-page.md)
 
 ## 一句话

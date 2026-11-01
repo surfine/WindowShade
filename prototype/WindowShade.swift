@@ -770,6 +770,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         onboardingRefreshTimer = nil
         onboardingWindow?.orderOut(nil)
         onboardingDidEnd()
+        // 新装看完引导后给一次“挑功能”：打开设置的功能页；之后不再自动弹。
+        if InstallHistory.settled(in: .standard) == .fresh,
+           !UserDefaults.standard.bool(forKey: InstallFeatureDefaults.pickerShownKey) {
+            UserDefaults.standard.set(true, forKey: InstallFeatureDefaults.pickerShownKey)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                self?.showSettingsWindow(section: .features)
+            }
+        }
     }
 
 

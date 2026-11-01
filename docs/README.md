@@ -31,7 +31,8 @@ Feature notes, design rules and release notes. Most of these are written in Chin
 - [known-failures.md](known-failures.md) — 已知失败与已知限制 / known failures and limitations.
 - [copy-guide.md](copy-guide.md) — 文案规则与固定词汇表 / copy rules and vocabulary.
 - [design-system.md](design-system.md)、[design-grammar.md](design-grammar.md)、[design-v1.md](design-v1.md) — 设计令牌与文法 / design tokens and rules.
-- [computer-use-qa.md](computer-use-qa.md)、[computer-use-qa-validation.md](computer-use-qa-validation.md) — 原生界面验收手册 / UI acceptance.
+- [computer-use-qa.md](computer-use-qa.md) — 原生界面验收手册 / UI acceptance.
+- 归档：[archive/](archive/) — 一次性调查与旧版验收记录 / one-off investigations and old acceptance records.
 - [performance.md](performance.md) — 实测与手法 / performance.
 - [window-browser-progress.md](window-browser-progress.md)、[system-integration-polish.md](system-integration-polish.md) — 功能进度与质感批次 / progress notes.
 - Build, signing and release: [DEVELOPMENT.md](DEVELOPMENT.md).
