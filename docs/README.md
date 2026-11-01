@@ -35,6 +35,7 @@ Feature notes, design rules and release notes. Most of these are written in Chin
 - Third-party licenses: [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
 - Original design notes: [WindowShade.md](WindowShade.md).
 - Research notes and reports: [research_notes/](research_notes/), [reports/](reports/).
+- Branch cleanup and abandoned ideas: [abandoned-work-ideas.md](abandoned-work-ideas.md).
 
 ## Releases / 发布
 
