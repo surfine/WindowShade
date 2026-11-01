@@ -7,7 +7,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 BIN="${1:-.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade}"
-[ -x "$BIN" ] || { echo "NOT RUN: 没有 $BIN（先 cd prototype && ./build.sh --stage）"; exit 78; }
+[ -x "$BIN" ] || { echo "NOT RUN: 没有 ${BIN}（先 cd prototype && ./build.sh --stage）"; exit 78; }
 if pgrep -x WindowShade >/dev/null; then echo "NOT RUN: 已经有 WindowShade 在跑，先退出它"; exit 78; fi
 cpu_seconds() { ps -o time= -p "$1" | awk -F'[:.]' '{ if (NF==3) print $1*60+$2+$3/100; else print $1*3600+$2*60+$3+$4/100 }'; }
 results=()

@@ -106,14 +106,14 @@ sig=$($sign sign "$priv" "$tmp/serve/appcast.xml"); len=$(wc -c < "$tmp/serve/ap
 printf '<!-- sparkle-signatures:\nedSignature: %s\nlength: %s\n-->\n' "$sig" "$len" >> "$tmp/serve/appcast.xml"
 $sign verify "$pub" "$tmp/serve/appcast.xml" >/dev/null || { echo "本地清单自验签失败" >&2; exit 1; }
 plutil -lint "$tmp/serve/appcast.xml" >/dev/null 2>&1 || xmllint --noout "$tmp/serve/appcast.xml" || { echo "本地清单不是合法 XML" >&2; exit 1; }
-say "INFO 本地清单已生成并自验签（测试公钥 $pub，$len 字节）：$feed_url"
+say "INFO 本地清单已生成并自验签（测试公钥 ${pub}，$len 字节）：$feed_url"
 
 if [ "$dry" = 1 ]; then
   say "---- 计划 ----"
   say "1. ssh $host 先问 kern.hv_vmm_present，再读默认网关；宿主在 $gw:$port 起 python3 http.server（目录：临时目录，只含 appcast.xml）"
   say "2. 1.0.16：${app1016:-gh release download v1.0.16 --repo $repo -p '*.zip'} -> ditto -> 来宾 ~/Applications/wsqa-p3-1016"
   say "3. 1.0.17：$app1017 -> ditto -> 来宾 ~/Applications/wsqa-p3-1017"
-  say "4. 来宾：prep（存偏好）-> run p3-1016（feed-via=$via，测试公钥）-> run p3-1017 -> cleanup（还原偏好、删 App）"
+  say "4. 来宾：prep（存偏好）-> run p3-1016（feed-via=${via}，测试公钥）-> run p3-1017 -> cleanup（还原偏好、删 App）"
   say "5. 证据拷回 $out"
   say "---- 生成的清单（节选：新增条目与签名块）----"
   sed -n '/<item>/,/<\/item>/p' "$tmp/serve/appcast.xml" | sed -n '1,/<\/item>/p'
@@ -136,7 +136,7 @@ if [ -z "$app1016" ]; then
   app1016=$(ls "$tmp"/dl/*.zip | head -1)
 fi
 [ -e "$app1016" ] || { echo "找不到 1.0.16：$app1016" >&2; exit 1; }
-[ -e "$app1017" ] || { echo "找不到 1.0.17 构建：$app1017（用 --app-1017 指定；duo-validation 里的构建可能不在这份 worktree 里）" >&2; exit 1; }
+[ -e "$app1017" ] || { echo "找不到 1.0.17 构建：${app1017}（用 --app-1017 指定；duo-validation 里的构建可能不在这份 worktree 里）" >&2; exit 1; }
 zip_of "$app1016" "$tmp/p3-1016.zip"; zip_of "$app1017" "$tmp/p3-1017.zip"
 
 # --- 4. 起服务 ---
@@ -145,7 +145,7 @@ http_pid=$!
 for _ in 1 2 3 4 5 6 7 8 9 10; do curl -fs "$feed_url" -o /dev/null && break; sleep 0.5; done
 curl -fs "$feed_url" -o /dev/null || { echo "本地服务没起来：$feed_url" >&2; exit 1; }
 : > "$tmp/http.log"   # 自己的探测请求不算
-g "curl -fs -m 5 '$feed_url' -o /dev/null" || { echo "来宾连不到 $feed_url（宿主防火墙或网桥地址不对）" >&2; exit 1; }
+g "curl -fs -m 5 '$feed_url' -o /dev/null" || { echo "来宾连不到 ${feed_url}（宿主防火墙或网桥地址不对）" >&2; exit 1; }
 : > "$tmp/http.log"
 
 # --- 5. 传进来宾并跑 ---
@@ -189,7 +189,7 @@ cp "$tmp/serve/appcast.xml" "$out/local-appcast.xml"
 field() { sed -n "s/.*RESULT.* $2=\([^ ]*\).*/\1/p" "$1" | tail -1; }
 fetched() { grep -q 'GET /appcast.xml' "$1"; }
 zip_hit() { grep -q 'GET /WindowShade-v1.0.17.zip' "$1"; }
-echo; echo "== Phase 3 判读（证据：$out；定时检查路径，不点菜单）=="
+echo; echo "== Phase 3 判读（证据：${out}；定时检查路径，不点菜单）=="
 UI_NOTE="定时检查按设计不弹窗，这一项要人点一次「检查更新…」看（菜单项按住 Option 才显示）"
 # 1.0.16
 f="$tmp/p3-1016.guest.txt"; h="$tmp/http-1016.log"
@@ -200,14 +200,14 @@ elif [ "$(field "$f" installish_log_lines)" != 0 ] || [ "$(field "$f" crash)" = 
 elif [ "$(field "$f" found)" = none ]; then record "FAIL phase3/1.0.16 取了清单但 App 日志没有发现 1.0.17（error=$(field "$f" error)；多半是签名没过或条目不对）"
 else
   record "PASS phase3/1.0.16 取了清单、发现 1.0.17（$(field "$f" found)），没请求 zip、没有下载／安装日志、没崩溃（只证明「没尝试一键安装」）"
-  record "INCONCLUSIVE phase3/1.0.16 「这一版要手动下载」提示与「打开下载页」按钮没看到。$UI_NOTE。窗口：$(field "$f" onscreen_titles)"
+  record "INCONCLUSIVE phase3/1.0.16 「这一版要手动下载」提示与「打开下载页」按钮没看到。${UI_NOTE}。窗口：$(field "$f" onscreen_titles)"
 fi
 # 1.0.17
 f="$tmp/p3-1017.guest.txt"; h="$tmp/http-1017.log"
 if ! grep -q RESULT "$f" 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 来宾没产出结果（见 $out/）"
 else
   build=$(field "$f" build)
-  if ! [ "${build:-0}" -ge 17 ] 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 传进去的不是 1.0.17 构建（version=$(field "$f" version) build=$build；用 --app-1017 指向新构建）"
+  if ! [ "${build:-0}" -ge 17 ] 2>/dev/null; then record "INCONCLUSIVE phase3/1.0.17 传进去的不是 1.0.17 构建（version=$(field "$f" version) build=${build}；用 --app-1017 指向新构建）"
   elif ! fetched "$h"; then record "INCONCLUSIVE phase3/1.0.17 本地清单没被取到（updater_started=$(field "$f" updater_started) error=$(field "$f" error)）"
   elif [ "$(field "$f" crash)" = yes ] || [ "$(field "$f" alive)" = no ]; then record "FAIL phase3/1.0.17 崩溃或退出（crash=$(field "$f" crash) alive=$(field "$f" alive)）"
   elif zip_hit "$h" || [ "$(field "$f" found)" != none ] || [ "$(field "$f" installish_log_lines)" != 0 ]; then record "FAIL phase3/1.0.17 在 1.0.17 上发现了「新版本」或尝试下载（found=$(field "$f" found)）"

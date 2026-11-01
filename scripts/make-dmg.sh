@@ -24,7 +24,7 @@ done
 APP="${APP:-.build/release/WindowShade.app}"
 PROFILE="${WINDOWSHADE_NOTARY_PROFILE:-windowshade-notary}"
 VOLNAME="WindowShade"
-[ -d "$APP" ] || { echo "ERROR: 找不到 $APP；先跑 cd prototype && ./build.sh --release 和 scripts/notarize.sh" >&2; exit 1; }
+[ -d "$APP" ] || { echo "ERROR: 找不到 ${APP}；先跑 cd prototype && ./build.sh --release 和 scripts/notarize.sh" >&2; exit 1; }
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "$APP/Contents/Info.plist")
 OUT="${OUT:-prototype/dist/WindowShade-v${VERSION}.dmg}"
 
@@ -86,7 +86,7 @@ OSA
   sync; sleep 2
   cp "$work/mnt/.DS_Store" "$TEMPLATE"
   hdiutil detach -quiet "$work/mnt"
-  echo "PASS 已写入 $TEMPLATE；检查后提交，再不带 --capture-template 重跑一次。"
+  echo "PASS 已写入 ${TEMPLATE}；检查后提交，再不带 --capture-template 重跑一次。"
   exit 0
 fi
 
@@ -97,7 +97,7 @@ codesign --verify --strict "$OUT"
 echo "==> 送公证：$(basename "$OUT")，$(du -h "$OUT" | cut -f1)"
 xcrun notarytool submit "$OUT" --keychain-profile "$PROFILE" --wait --output-format json > "$work/result.json"
 id=$(plutil -extract id raw -o - "$work/result.json"); status=$(plutil -extract status raw -o - "$work/result.json")
-echo "==> 公证结果：$status（submission $id）"
+echo "==> 公证结果：${status}（submission ${id}）"
 if [ "$status" != "Accepted" ]; then xcrun notarytool log "$id" --keychain-profile "$PROFILE" >&2 || true; exit 1; fi
 xcrun stapler staple "$OUT"
 xcrun stapler validate "$OUT"

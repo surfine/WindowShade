@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 APP="${1:-.build/release/WindowShade.app}"
 PROFILE="${WINDOWSHADE_NOTARY_PROFILE:-windowshade-notary}"
-[ -d "$APP" ] || { echo "ERROR: 找不到 $APP；先跑 cd prototype && ./build.sh --release" >&2; exit 1; }
+[ -d "$APP" ] || { echo "ERROR: 找不到 ${APP}；先跑 cd prototype && ./build.sh --release" >&2; exit 1; }
 
 authority=$(codesign -dv --verbose=2 "$APP" 2>&1 | sed -n 's/^Authority=//p' | head -1)
 case "$authority" in
@@ -23,7 +23,7 @@ echo "==> 送公证（等 Apple 回复，通常几分钟）：$(basename "$APP")
 xcrun notarytool submit "$work/submit.zip" --keychain-profile "$PROFILE" --wait --output-format json > "$work/result.json"
 id=$(plutil -extract id raw -o - "$work/result.json")
 status=$(plutil -extract status raw -o - "$work/result.json")
-echo "==> 公证结果：${status}（submission $id）"
+echo "==> 公证结果：${status}（submission ${id}）"
 if [ "$status" != "Accepted" ]; then
   xcrun notarytool log "$id" --keychain-profile "$PROFILE" >&2 || true
   exit 1

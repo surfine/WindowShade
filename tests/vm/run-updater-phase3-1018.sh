@@ -72,7 +72,7 @@ sig=$($sign sign "$priv" "$tmp/serve/appcast.xml"); len=$(wc -c < "$tmp/serve/ap
 printf '<!-- sparkle-signatures:\nedSignature: %s\nlength: %s\n-->\n' "$sig" "$len" >> "$tmp/serve/appcast.xml"
 $sign verify "$pub" "$tmp/serve/appcast.xml" >/dev/null || { echo "本地清单自验签失败" >&2; exit 1; }
 xmllint --noout "$tmp/serve/appcast.xml" 2>/dev/null || python3 -c "import xml.etree.ElementTree,sys; xml.etree.ElementTree.parse('$tmp/serve/appcast.xml')" || { echo "本地清单不是合法 XML" >&2; exit 1; }
-echo "INFO 本地清单已生成（1.0.18 条目指向 $zip_url，length=$zip_len）"
+echo "INFO 本地清单已生成（1.0.18 条目指向 ${zip_url}，length=${zip_len}）"
 
 mkdir -p "$out"
 # 1.0.17 的包
@@ -121,6 +121,6 @@ elif [ "$feed_hit" -ge 1 ] && [ "$found18" -ge 1 ]; then
   echo "INCONCLUSIVE updater-1018：认出了 1.0.18 但没看到取 zip（Sparkle 可能延后下载）"
   exit 0
 else
-  echo "INCONCLUSIVE updater-1018：清单没被取到或没认出版本（feed_hit=$feed_hit found18=$found18）；绝不记 PASS"
+  echo "INCONCLUSIVE updater-1018：清单没被取到或没认出版本（feed_hit=$feed_hit found18=${found18}）；绝不记 PASS"
   exit 0
 fi

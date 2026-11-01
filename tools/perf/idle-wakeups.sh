@@ -58,7 +58,7 @@ if [ -z "$BUILD" ]; then
   fi
 fi
 
-echo "等待 ${DELAY} 秒让空闲稳定（pid $PID，$LABEL）……"
+echo "等待 ${DELAY} 秒让空闲稳定（pid ${PID}，${LABEL}）……"
 sleep "$DELAY"
 
 echo "采样 ${SAMPLES} 秒……"
