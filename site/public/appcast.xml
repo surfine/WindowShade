@@ -7,6 +7,20 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <description>WindowShade 更新清单</description>
     <language>zh-Hans</language>
     <item>
+      <title>1.0.19</title>
+      <pubDate>Sun, 01 Nov 2026 15:40:00 +0000</pubDate>
+      <sparkle:version>19</sparkle:version>
+      <sparkle:shortVersionString>1.0.19</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.19</link>
+      <description><![CDATA[刘海照系统灵动岛重做：停上去不再展开，长按或两指张开展开；上推一下把整屏窗口收进刘海，还能整批撤销；左右半屏和甩一下先由一层代理跟手；整理菜单多一步撤销；收起动画默认开。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.19/WindowShade-v1.0.19.zip" length="22178724" type="application/octet-stream" sparkle:edSignature="s6VLn1QvaHT5uQCFxzRf/vZnqbJ7wc+FBaDW8Ga2P2IsxNMcT0V8J45hEJv0vV9PoKAvrx1hRqEsl5+pTr6PAA=="></enclosure>
+    </item>
+    <item>
       <title>1.0.18</title>
       <pubDate>Sun, 18 Oct 2026 06:00:00 +0000</pubDate>
       <sparkle:version>18</sparkle:version>
@@ -34,19 +48,9 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
       <description><![CDATA[这一版换了签名证书并通过 Apple 公证，从 1.0.16 升级要手动下载一次、重新打开两项授权；另外让收起更稳，设置里多了导出诊断信息、导出／导入设置，也多了 7 个捷径动作。需要 macOS 15 或更新版本。]]></description>
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.17/WindowShade-v1.0.17.zip" length="10647571" type="application/octet-stream" sparkle:edSignature="clpfgz4O+hHJoZkEAzTAZOA5MIXl371V5ET0pfeMbussS7AKmXIdq3v6TX831SOGEKooziKLL1l6wNxmD9LRAQ=="></enclosure>
     </item>
-    <item>
-      <title>1.0.16</title>
-      <pubDate>Wed, 14 Oct 2026 16:30:00 +0000</pubDate>
-      <sparkle:version>16</sparkle:version>
-      <sparkle:shortVersionString>1.0.16</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>14.0.0</sparkle:minimumSystemVersion>
-      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <description><![CDATA[看不见的窗口，都在刘海里。这一版补齐全部用户可见界面的英文，并把设置面板再打磨一遍：每一行都有图标、行距放宽、说明改得更明白。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.16/WindowShade-v1.0.16.zip" length="9831144" type="application/octet-stream" sparkle:edSignature="gxw9YqozJjFHEpxvhwj8SAgPlVPPELaVKaAErmqi5wmFudcyF/8NzT0MuB6TVZUqCfjSc7WPiZ3KiwGkFpAnDA=="></enclosure>
-    </item>
   </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: X8RBxYhs+TIp3Er959qJZXWny28YBBkcOq+4Q3NKcJVOjaTO7wR/DphIUq3Sz0XJWgpno1CmqEflVfQ5mbYcAg==
-length: 3852
+edSignature: vJzNOgkaSdU7o6tM+5rYyzgMFbWj+6V/Ps80V+dvKzz3mM6mZf3WmXtw5+UMilOJuEVny57HMt/tOVz3t3iPCQ==
+length: 4161
 -->
