@@ -29,7 +29,7 @@ final class DockLock {
     private(set) var screenFrames: [CGRect] = []
 
     func apply() {
-        guard Self.isEnabled else {
+        guard Self.isEnabled, FeatureCatalog.isEnabled(.inputEnhancements) else {
             monitor.map(GlobalInputFilter.shared.removeMonitor)
             monitor = nil
             stopWatchingLayout()

@@ -92,6 +92,7 @@ final class SplitViewController {
     }
 
     func start() {
+        guard FeatureCatalog.isEnabled(.inputEnhancements) else { return }
         guard observers.isEmpty else { return }
         let center = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didActivateApplicationNotification,
@@ -128,6 +129,19 @@ final class SplitViewController {
             MainActor.assumeIsolated { self?.unsuspend(.locked) }
         })
         schedule()
+    }
+
+    /// 模块关闭：停掉定时器、拆掉没装完的观察者。
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+        let center = NSWorkspace.shared.notificationCenter
+        for observer in observers { center.removeObserver(observer) }
+        observers.removeAll()
+        for observer in distributedObservers { DistributedNotificationCenter.default().removeObserver(observer) }
+        distributedObservers.removeAll()
+        scanGeneration += 1
+        scanInFlight = false
     }
 
     /// 锁屏、屏幕睡眠、会话切走：停掉定时器，作废在途的结果。

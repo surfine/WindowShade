@@ -89,7 +89,7 @@ final class MissionControlKeys {
     }
 
     func applySetting() {
-        if Self.isEnabled { install() } else { uninstall() }
+        if FeatureCatalog.isEnabled(.inputEnhancements), Self.isEnabled { install() } else { uninstall() }
     }
 
     private func install() {

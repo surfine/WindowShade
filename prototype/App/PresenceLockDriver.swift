@@ -299,7 +299,7 @@ final class PresenceMediaControl: @unchecked Sendable {
 
     /// 读开关，按需开始或停下。
     func refresh() {
-        let wanted = Self.isEnabled
+        let wanted = FeatureCatalog.isEnabled(.securityExtras) && Self.isEnabled
         guard wanted != running else { return }
         if wanted { start() } else { stop() }
     }

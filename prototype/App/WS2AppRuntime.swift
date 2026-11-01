@@ -75,10 +75,13 @@ import Cocoa
         island = owner.notch.leases
         silent.attach(runtime: self, owner: owner)
         // 双源并存：HomePlay 桥（pair-verify 级身份信号，F1-B）先报用谁；IOBluetooth 轮询兜底。
-        presenceLock = PresenceLockDriver(notch: owner.notch, source: WS2BluetoothPresenceSource())
-        presenceBridge = WS2HomePlayPresenceSource()
-        presenceBridge?.start { [weak self] events in
-            MainActor.assumeIsolated { self?.presenceLock?.feedExternal(events) }
+        // “认你与锁屏”关着时不建对象、不连 127.0.0.1。
+        if FeatureCatalog.isEnabled(.securityExtras) {
+            presenceLock = PresenceLockDriver(notch: owner.notch, source: WS2BluetoothPresenceSource())
+            presenceBridge = WS2HomePlayPresenceSource()
+            presenceBridge?.start { [weak self] events in
+                MainActor.assumeIsolated { self?.presenceLock?.feedExternal(events) }
+            }
         }
         focusPort = WS2FocusWindowPort(owner: owner)
         focusEffects = WS2FocusEffectExecutor(port: focusPort)
@@ -170,7 +173,8 @@ import Cocoa
     }
     /// 开关打开才监听；关掉就停听、删掉 socket 文件、忘掉会话。
     private func syncHookServer() {
-        let on = WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: .standard)
+        let on = FeatureCatalog.isEnabled(.companion)
+            && WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: .standard)
         guard on != (hookServer != nil) else { return }
         // 快速关了又开：旧监听器还占着 socket，新的会撞上“被占用”落到 failed。等旧的收完再开。
         if on, hookStopping { return }
@@ -589,6 +593,47 @@ import Cocoa
         let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
+    /// 设置 → 功能里开关“认你与锁屏”：摄像头枚举、在场桥、离开就锁一起启停。
+    func applySecurityEnabled(_ on: Bool) {
+        if on {
+            if presenceLock == nil {
+                presenceLock = PresenceLockDriver(notch: owner?.notch, source: WS2BluetoothPresenceSource())
+                presenceBridge = WS2HomePlayPresenceSource()
+                presenceBridge?.start { [weak self] events in
+                    MainActor.assumeIsolated { self?.presenceLock?.feedExternal(events) }
+                }
+            } else {
+                presenceLock?.refresh()
+            }
+            FaceObservationSource.startWatchingCameras()
+            FaceScanExperiment.startIfEnabled()
+        } else {
+            presenceLock?.shutdown()
+            presenceLock = nil
+            presenceBridge?.stop()
+            presenceBridge = nil
+            _ = FaceScanExperiment.setEnabled(false)
+            FaceObservationSource.stopWatchingCameras()
+        }
+    }
+
+    /// 设置 → 功能里开关“遥控与指挥”：hook socket、编程会话、指挥页一起停。
+    func applyCompanionEnabled(_ on: Bool) {
+        if !on {
+            hookApproval?.invalidate()
+            hookApproval = nil
+            hookServer?.onPermissionAsk = nil
+            hookServer?.setEnabled(false)
+            hookServer = nil
+            unwireCodingSessions()
+            conductorPage?.shutdownBackends()
+            conductorPage = nil
+            owned?.stop(reason: "feature-disabled", clearPrivate: false)
+        }
+        syncHookServer()
+        owner?.rebuildMenu()
+    }
+
     func stop() {
         conductorPage?.shutdownBackends()
         deviceHost?.stop(); deviceHost=nil; modelPicker=nil; conductorPage=nil; conductorSample=nil; conductorKeptDraft=nil

@@ -242,7 +242,7 @@ final class TrackpadGestureController {
     /// 按设置装上或拆掉事件监听。启动、改设置、辅助功能授权后调用。
     func refreshMonitors() {
         installForcePeek()
-        let wanted = Self.isEnabled
+        let wanted = Self.isEnabled && FeatureCatalog.isEnabled(.inputEnhancements)
         if wanted, localMonitor == nil {
             localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.scrollWheel]) {
                 [weak self] event in

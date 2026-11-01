@@ -25,6 +25,13 @@ final class WS2InputController {
 
     func apply() {
         dispatchPrecondition(condition: .onQueue(.main))
+        guard FeatureCatalog.isEnabled(.inputEnhancements) else {
+            scrollTap.setWatchingForeground(false)
+            scrollTap.apply(installing: false, mask: 0)
+            middleListening = false
+            middleTap.apply(installing: false)
+            return
+        }
         let store = UserDefaults.standard
         let prefs = WS2InputPreferences.load(from: store)
         preferences = prefs
@@ -96,7 +103,8 @@ final class WS2InputController {
         }
         guard let host = remoteHost else { return false }
         if on, remoteLock == nil { remoteLock = WS2RemoteLockObserver(host: host) }
-        host.setEnabled(remote: on, conductor: conductor)
+        let companionOn = FeatureCatalog.isEnabled(.companion)
+        host.setEnabled(remote: on && companionOn, conductor: conductor && companionOn)
         if !on { remoteLock?.invalidate(); remoteLock = nil }
         return host.isListening
     }

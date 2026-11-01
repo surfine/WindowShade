@@ -481,6 +481,7 @@ extension FaceCaptureWorker {
     static var authorizationStatus: AVAuthorizationStatus { AVCaptureDevice.authorizationStatus(for: .video) }
     static func devices() -> [FaceCameraDescriptor] { CameraList.shared.current() }
     static func startWatchingCameras() { CameraList.shared.start() }
+    static func stopWatchingCameras() { CameraList.shared.stop() }
     func requestAuthorization() async -> Bool { await AVCaptureDevice.requestAccess(for: .video) }
     /// Explicit leases last at most one day; callers renew by opening a fresh session.
     func subscribe(deviceID: String, purpose: FaceObservationPurpose, validFor: Double = 60,
@@ -930,6 +931,7 @@ private final class CameraList: Sendable {
     }
     private let state = Mutex(State())
     private let queue = DispatchQueue(label: "WindowShade.camera-list", qos: .utility)
+    nonisolated(unsafe) private var observers: [NSObjectProtocol] = []
 
     func current() -> [FaceCameraDescriptor] {
         start()
@@ -945,7 +947,17 @@ private final class CameraList: Sendable {
         guard first else { return }
         refresh()
         for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {
-            NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in self?.refresh() }
+            observers.append(NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in self?.refresh() })
+        }
+    }
+
+    /// 模块关闭：拆掉摄像头连接/断开通知，下次需要时再重新枚举。
+    func stop() {
+        for observer in observers { NotificationCenter.default.removeObserver(observer) }
+        observers.removeAll()
+        state.withLock { state in
+            state.started = false
+            state.cameras = []
         }
     }
 

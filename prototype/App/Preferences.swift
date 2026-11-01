@@ -226,7 +226,7 @@ extension AppDelegate {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
             title: WSL10n.text("settings.features.title", zh: "功能"),
-            subtitle: WSL10n.setting("settings.features.sub", zh: "核心功能始终开启。下面的功能可以整块开关；有的关掉后要下次启动才完全停。"),
+            subtitle: WSL10n.setting("settings.features.sub", zh: "核心功能始终开启。下面的功能可以整块开关，关掉后对应的菜单、快捷键和后台工作一起停。"),
             symbolName: "checklist"))
         let rows = FeatureCatalog.all.enumerated().map { index, feature in
             makeUnifiedToggleRow(name: feature.title, subtitle: feature.subtitle,
@@ -270,9 +270,22 @@ extension AppDelegate {
             if on { launchpad.start() } else { launchpad.stop() }
         case .effects:
             if on { duoController.start(owner: self) } else { duoController.stop() }
-        case .pictureInPicture, .inputEnhancements, .securityExtras, .companion:
-            // 这些模块的运行入口还在逐个接总闸；总闸已经写下去，下次启动一定按它走。
-            wlog("feature: \(module.rawValue) enabled=\(on) applied=next-launch")
+        case .pictureInPicture:
+            if !on { pip.exitAll() }
+        case .inputEnhancements:
+            if on { dockClick.start() } else { dockClick.stop() }
+            gestures.refreshMonitors()
+            inputController.apply()
+            switcher.applySetting()
+            dockLock.apply()
+            missionControlKeys.applySetting()
+            if on { splitView.start() } else { splitView.stop() }
+        case .securityExtras:
+            ws2Runtime.applySecurityEnabled(on)
+        case .companion:
+            ws2Runtime.applyCompanionEnabled(on)
+            inputController.apply()
+            if !on { notch.carPlaySurface.exit() }
         }
     }
 

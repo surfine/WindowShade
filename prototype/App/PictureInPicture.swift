@@ -52,8 +52,17 @@ final class PictureInPictureController {
 
     // MARK: - 进出
 
+    /// 模块总闸：关着时不接新的画中画，菜单和快捷键也不出现。
+    static var isEnabled: Bool { FeatureCatalog.isEnabled(.pictureInPicture) }
+
+    /// 关闭模块时把已经在画中画里的窗口全部放回原处。
+    func exitAll() {
+        for id in order { exit(id, activate: false) }
+    }
+
     /// 快捷键、菜单：最前面那扇窗进画中画；它已经在画中画里就回到原处。
     func toggleCurrentWindow() {
+        guard Self.isEnabled else { return }
         DispatchQueue.global(qos: .userInitiated).async {
             let win = focusedWindow()
             let id = win.flatMap { windowID(of: $0) }

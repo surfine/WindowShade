@@ -32,6 +32,7 @@ final class DockClickHide {
     private var pressed: (pid: pid_t, point: NSPoint, at: TimeInterval)?
 
     func start() {
+        guard FeatureCatalog.isEnabled(.inputEnhancements) else { return }
         guard downMonitor == nil else { return }
         downMonitor = NSEvent.addGlobalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
             MainActor.assumeIsolated { self?.down(event) }

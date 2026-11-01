@@ -191,7 +191,8 @@ final class WindowSwitcher {
     }
 
     func applySetting() {
-        keys.apply(AXIsProcessTrusted() ? WindowSwitcherKeys.trigger : .off)
+        let enabled = FeatureCatalog.isEnabled(.inputEnhancements)
+        keys.apply(enabled && AXIsProcessTrusted() ? WindowSwitcherKeys.trigger : .off)
     }
 
     // MARK: 事件

@@ -72096,19 +72096,19 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Core features stay on. Turn any block below off to stop its menus, shortcuts and background work; some finish stopping on next launch."
+            "value": "Core features stay on. Turn any block below off to stop its menus, shortcuts and background work together."
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "核心功能始终开启。下面的功能可以整块开关；有的关掉后要下次启动才完全停。"
+            "value": "核心功能始终开启。下面的功能可以整块开关，关掉后对应的菜单、快捷键和后台工作一起停。"
           }
         },
         "zh-Hant": {
           "stringUnit": {
             "state": "translated",
-            "value": "核心功能始終開啟。下面的功能可以整塊開關；有的關掉後要下次啟動才完全停。"
+            "value": "核心功能始終開啟。下面的功能可以整塊開關，關掉後對應的選單、快速鍵和背景工作一起停。"
           }
         }
       }
