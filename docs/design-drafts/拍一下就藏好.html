@@ -1,0 +1,456 @@
+<meta charset="utf-8">
+<title>拍一下就藏好</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+</style>
+<style>
+/* 版式：系列纸面。主角是一张能玩的桌面：一台 MacBook 放在桌上，下面一条加速度计的波形。
+   先给能玩的，再讲三个真实时刻、定下来的规则、本机实测、验证、附录。
+   画面里只用系统语义色：强调色 = controlAccentColor 近似，琥珀 = systemOrange，绿 = systemGreen，红 = systemRed。 */
+:root{
+  --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --ink3:#6e6f76; --rule:rgba(0,0,0,.1);
+  --accent:#0058cc; --amber:#c76a00; --green:#1f8a3b; --red:#c4312a;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.66); --menutext:#1b1b1d; --win:#ffffff; --winbar:#ececec; --wintext:#3a3a3c;
+  --desk-a:#d9cfc2; --desk-b:#cbbfb0; --alu:#c9cbd0; --alu2:#aeb1b7; --bezel:#0d0d0f; --trace:#2b2d33; --traceline:#0058cc;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.66); --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7;
+  --desk-a:#2b2622; --desk-b:#221e1b; --alu:#4a4c52; --alu2:#3a3c41; --bezel:#050506; --trace:#0c0d10; --traceline:#5a9cff; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.66); --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7;
+  --desk-a:#2b2622; --desk-b:#221e1b; --alu:#4a4c52; --alu2:#3a3c41; --bezel:#050506; --trace:#0c0d10; --traceline:#5a9cff; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+header{padding:36px 0 6px}
+.eyebrow{font:500 12px/1.4 var(--f-mono);letter-spacing:.06em;color:var(--ink3)}
+h1{font-size:clamp(30px,5vw,46px);line-height:1.15;margin:10px 0 14px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:24px;line-height:1.3;margin:0;text-wrap:balance}
+h3{font-size:16px;margin:0 0 6px}
+.lede{max-width:70ch;color:var(--ink2);margin:0}
+section{padding:52px 0 0}
+.sec-head{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:baseline;margin-bottom:18px}
+.sec-head .n{font:500 13px var(--f-mono);color:var(--ink3)}
+.sec-head p{grid-column:2;margin:0;color:var(--ink2);max-width:72ch}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+.thesis{margin-top:14px;padding:12px 14px;border-left:3px solid var(--accent);color:var(--ink2);max-width:76ch}
+.thesis b{color:var(--ink)}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;min-width:0}
+.card p{margin:0 0 8px;color:var(--ink2);font-size:14px}
+.card p:last-child{margin-bottom:0}
+.st{font:600 11px/1 var(--f-mono);padding:4px 6px;border-radius:5px;white-space:nowrap}
+.st.ok{background:color-mix(in srgb,var(--green) 16%,transparent);color:var(--green)}
+.st.part{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+.st.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.trio{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.trio span{font:600 14px/1 var(--f-body);padding:9px 13px;border-radius:999px;background:var(--sheet);border:1px solid var(--rule)}
+.trio span i{font-style:normal;color:var(--ink3);font-weight:500;margin-left:6px}
+
+/* ① 乔布斯 */
+.quote{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:20px 22px}
+.quote q{display:block;font-size:clamp(22px,3.4vw,30px);line-height:1.3;font-weight:700;letter-spacing:-.01em;quotes:"“" "”"}
+.quote .who{font:500 12.5px/1.5 var(--f-mono);color:var(--ink3);margin-top:6px}
+.quote p{color:var(--ink2);font-size:14.5px;max-width:72ch;margin:8px 0 0}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width:820px){.grid3{grid-template-columns:1fr}}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.reply{margin-top:16px;font-size:clamp(18px,2.6vw,22px);line-height:1.45;font-weight:700;max-width:42ch;text-wrap:balance}
+.reply span{color:var(--accent)}
+
+/* ② 舞台 */
+.two{display:grid;grid-template-columns:1.32fr .68fr;gap:20px;align-items:start}
+.two>*{min-width:0}
+@media (max-width:900px){.two{grid-template-columns:1fr}}
+.view{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--rule);background:linear-gradient(180deg,var(--desk-a),var(--desk-b));user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.canvas{position:absolute;left:0;top:0;width:720px;height:540px;transform-origin:0 0;font-family:var(--f-sys)}
+.desk{position:absolute;inset:0;cursor:pointer}
+.desk:after{content:"桌面：点一下＝敲一下，按住越久越用力";position:absolute;left:18px;bottom:101px;font:500 11px/1 var(--f-mono);color:color-mix(in srgb,var(--ink) 45%,transparent)}
+.mac{position:absolute;left:70px;top:16px;width:580px;height:410px;transition:transform .12s}
+.mac.shake{animation:jolt .28s}
+.mac.slam{animation:slam .36s}
+@keyframes jolt{0%,100%{transform:none}30%{transform:translate(1.5px,-1px)}60%{transform:translate(-1px,.5px)}}
+@keyframes slam{0%,100%{transform:none}20%{transform:translate(0,4px) rotate(.4deg)}45%{transform:translate(-2px,-2px)}70%{transform:translate(1px,1px)}}
+.lid{position:absolute;left:0;top:0;width:580px;height:384px;border-radius:16px 16px 5px 5px;background:var(--bezel);box-shadow:0 0 0 2px var(--alu2),0 18px 36px rgba(0,0,0,.2)}
+.screen{position:absolute;left:12px;top:12px;width:556px;height:362px;border-radius:9px 9px 2px 2px;overflow:hidden;background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
+.base{position:absolute;left:-10px;top:384px;width:600px;height:24px;border-radius:2px 2px 14px 14px;background:linear-gradient(180deg,var(--alu),var(--alu2))}
+.base i{position:absolute;left:220px;top:0;width:160px;height:4px;border-radius:0 0 4px 4px;background:color-mix(in srgb,var(--bezel) 50%,transparent)}
+.menubar{position:absolute;left:0;right:0;top:0;height:16px;background:var(--menubar);display:flex;align-items:center;justify-content:space-between;padding:0 9px;font-size:8.5px;color:var(--menutext);z-index:6}
+.menubar .mic{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--amber);margin-right:6px;vertical-align:-1px;transition:background .2s}
+.menubar .mic.off{background:transparent;box-shadow:inset 0 0 0 1px var(--menutext);opacity:.5}
+.win{position:absolute;background:var(--win);border-radius:7px;box-shadow:0 8px 22px rgba(0,0,0,.2);overflow:hidden;z-index:2;transform-origin:50% 0;
+  transition:transform var(--ws-flyout-t) var(--ws-flyout),opacity .3s}
+.win.front{z-index:4;box-shadow:0 12px 30px rgba(0,0,0,.28)}
+.win .bar{height:15px;background:var(--winbar);display:flex;align-items:center;gap:4px;padding:0 6px;font:600 8px/15px var(--f-sys);color:var(--wintext);white-space:nowrap;overflow:hidden}
+.win .bar i{width:5.5px;height:5.5px;border-radius:50%;display:block;flex:none}
+.win .bar span{margin-left:4px;overflow:hidden;text-overflow:ellipsis}
+.win .body{position:absolute;left:0;right:0;top:15px;bottom:0;padding:7px 8px;font:8.5px/1.45 var(--f-sys);color:var(--wintext)}
+.win .body p{margin:0 0 3px;opacity:.8}
+.win .blk{height:5px;border-radius:3px;background:color-mix(in srgb,var(--wintext) 14%,transparent);margin:0 0 4px}
+.win .tabs{display:flex;gap:3px;margin:-2px 0 6px}
+.win .tab{flex:1;min-width:0;font:500 7.5px/14px var(--f-sys);padding:0 5px;border-radius:4px;background:color-mix(in srgb,var(--wintext) 8%,transparent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .tab.sound:after{content:" 🔊";font-size:7px}
+.win .tab.paused:after{content:" ⏸";font-size:7px}
+.bubble{display:inline-block;padding:3px 6px;border-radius:8px;background:color-mix(in srgb,var(--green) 22%,transparent);margin:0 0 4px}
+
+/* 岛：照《照系统的岛》的形态，按 1.6 倍画 */
+.island{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:20;background:#000;color:#f5f5f7;overflow:hidden;
+  width:60px;height:16px;border-radius:0 0 8px 8px;
+  transition:width var(--ws-bloom-t) var(--ws-bloom),height var(--ws-bloom-t) var(--ws-bloom),border-radius var(--ws-bloom-t) var(--ws-bloom)}
+.island.ears{width:150px}
+.island.open{width:258px;height:104px;border-radius:0 0 20px 20px}
+.island.open.tall{height:128px}
+.island .ear{position:absolute;top:2px;height:12px;display:flex;align-items:center;gap:3px;opacity:0;transition:opacity .2s}
+.island.ears .ear{opacity:1}
+.island .ear.l{left:8px}.island .ear.r{right:8px}
+.appdot{width:11px;height:11px;border-radius:3px;display:inline-block;flex:none}
+.wave{display:flex;gap:1.5px;align-items:center;height:10px}
+.wave b{width:2px;border-radius:1px;background:var(--amber);height:4px;animation:wv .9s ease-in-out infinite}
+.wave b:nth-child(2){animation-delay:.15s}.wave b:nth-child(3){animation-delay:.3s}.wave b:nth-child(4){animation-delay:.45s}
+@keyframes wv{0%,100%{height:3px}50%{height:10px}}
+.island .pane{position:absolute;left:14px;right:14px;top:22px;bottom:10px;opacity:0;transition:opacity .18s .08s;font:500 9.5px/1.4 var(--f-sys)}
+.island.open .pane.on{opacity:1}
+.pane .ttl{font:600 8.5px var(--f-mono);letter-spacing:.06em;opacity:.55;margin-bottom:5px}
+.pane .row{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:7px;margin:0 -6px}
+.pane .row.sel{background:rgba(255,255,255,.14)}
+.pane .row .meta{min-width:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pane .row .meta small{opacity:.6;margin-left:4px}
+.pane .row .act{font:600 8px var(--f-mono);opacity:.75}
+.pane .big{font:600 13px/1.3 var(--f-sys)}
+.pane .sub{opacity:.65;font-size:9px}
+.pane .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.pane .grid div{background:rgba(255,255,255,.08);border-radius:7px;padding:5px 6px;font-size:8.5px;line-height:1.3}
+.pane .grid b{display:block;font-size:11px}
+.pane .face{display:flex;align-items:center;gap:10px}
+.pane .face i{width:28px;height:28px;border-radius:50%;border:2px solid var(--green);display:block;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(.88);opacity:.6}}
+.toast{position:absolute;left:0;right:0;top:3px;text-align:center;font:600 9px/10px var(--f-sys);opacity:0;transition:opacity .15s}
+.island.toastOn .toast{opacity:1}
+.island.toastOn .ear{opacity:0}
+
+.ripple{position:absolute;border-radius:50%;border:2px solid color-mix(in srgb,var(--ink) 55%,transparent);pointer-events:none;z-index:30;animation:rip .6s ease-out forwards}
+@keyframes rip{from{transform:translate(-50%,-50%) scale(.3);opacity:.9}to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.charge{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;pointer-events:none;z-index:31;background:conic-gradient(var(--red) var(--p,0%),transparent 0);opacity:.35;mask:radial-gradient(circle,transparent 18px,#000 19px);-webkit-mask:radial-gradient(circle,transparent 18px,#000 19px)}
+.seis{position:absolute;left:18px;right:18px;bottom:14px;height:86px;border-radius:10px;background:var(--trace);overflow:hidden}
+.seis canvas{width:100%;height:100%;display:block}
+.seis .lab{position:absolute;left:10px;top:6px;font:500 9.5px var(--f-mono);color:#c9ccd3;opacity:.8}
+.seis .tag{position:absolute;right:10px;font:500 9px var(--f-mono);opacity:.75}
+
+.ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.ctrl .lab{font:500 11px var(--f-mono);color:var(--ink3);margin-right:2px;min-width:3.4em}
+button.b{font:500 13px/1 var(--f-body);padding:8px 11px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink3)}
+button.b.main{border-color:color-mix(in srgb,var(--accent) 50%,var(--rule))}
+button.b[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.side{display:grid;gap:12px}
+.now{font-size:14px;color:var(--ink2)}
+.now b{display:block;color:var(--ink);font-size:16px;margin-bottom:2px}
+.log{font:12px/1.6 var(--f-mono);color:var(--ink2);margin:8px 0 0;padding:0;list-style:none;max-height:9.6em;overflow:auto}
+.log li{border-top:1px dashed var(--rule);padding-top:2px;margin-top:2px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:13.5px;margin:0}
+.kv dt{color:var(--ink3);font:500 11.5px var(--f-mono);padding-top:3px;white-space:nowrap}
+.kv dd{margin:0}
+
+/* 时刻 */
+.moment .when{font:500 11.5px var(--f-mono);color:var(--ink3);letter-spacing:.04em}
+.moment h3{font-size:18px;margin:4px 0 8px}
+.moment .flow{display:grid;gap:6px;margin:0 0 10px;padding:0;list-style:none;font-size:14px}
+.moment .flow li{display:grid;grid-template-columns:4.6em 1fr;gap:8px}
+.moment .flow li span{font:600 11.5px var(--f-mono);color:var(--accent);padding-top:2px}
+.moment .other{font-size:13px;color:var(--ink3);border-top:1px dashed var(--rule);padding-top:8px;margin:0}
+.moment .ev{font-size:12.5px;color:var(--ink3);margin:6px 0 0}
+
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet)}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+th{font:500 11.5px/1.4 var(--f-mono);color:var(--ink3);letter-spacing:.03em;background:color-mix(in srgb,var(--ink) 3%,transparent)}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+ol.asks{margin:0;padding-left:1.4em}ol.asks li{margin:6px 0}
+details.appx{margin-top:12px}
+details.appx summary{cursor:pointer;font-weight:600}
+.foot{margin-top:36px;color:var(--ink3);font-size:13px;max-width:80ch}
+@media (prefers-reduced-motion:reduce){.mac.shake,.mac.slam{animation:none}.ripple{animation-duration:.01s}.wave b{animation:none;height:6px}.pane .face i{animation:none}}
+</style>
+<style>
+.desk:after{content:"桌面：按住再松开，超过红线就是拍"}
+.apps{display:flex;flex-wrap:wrap;gap:6px}
+.apps label{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 9px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);cursor:pointer}
+.apps input{accent-color:var(--accent)}
+.clock{font:600 28px/1 var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.clock small{font:500 12px var(--f-body);color:var(--ink3);margin-left:6px;letter-spacing:0}
+.win.gone{transition:none!important;opacity:0!important;visibility:hidden}
+.win.back{transition:transform var(--ws-expand-t) var(--ws-expand),opacity .25s}
+.win .vid{height:46%;border-radius:5px;background:linear-gradient(135deg,#2b3a55,#4a2b4f);display:flex;align-items:center;justify-content:center;color:#fff;font:600 9px var(--f-sys);margin-bottom:5px}
+.island.blip{width:96px;transition:width .12s}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:4px;vertical-align:1px}
+.cmp td:first-child{white-space:nowrap}
+.cmp tr.us td{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.drop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.drop{grid-template-columns:1fr}}
+.drop .card h3 s{color:var(--ink3);font-weight:500}
+</style>
+
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">十一 构想 · 第 38 张 · 拍一下就藏好</span><span class="ws-st">构想稿 · 11-01 五轮已定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/3WRxSztGw12xB4HgpEPm6t">← 窗口的去与回</a></nav>
+<div class="wrap">
+<header>
+  <div class="eyebrow">WINDOWSHADE · 构想稿（第三版）· 2026-11-01 · Aaron 五轮问答已定 · 只构想，不改代码</div>
+  <h1>拍一下就藏好</h1>
+  <p class="lede">有人走过来，手忙脚乱的时候不会记得哪个快捷键。拍一下桌子或机身：除了你指定的工作 App，所有窗口当场消失，正在放的声音和麦克风一起关掉，新消息先压住。人走了再拍一下，一切照原样回来。一个动作，不用学，像膝跳反应。</p>
+  <p class="thesis"><b>只做这一件事。</b>加速度计只服务这一个反射；推一下看一眼、敲一下停、九宫格都拿掉。「谁在背景出声」改成点刘海的耳朵，不靠敲。</p>
+</header>
+
+<section id="why">
+  <div class="sec-head"><span class="n">①</span><h2>为什么是反射，不是快捷键</h2>
+    <p>查了大家怎么用 iPhone 的轻点背面，和做了二十多年的老板键软件。</p></div>
+  <div class="grid3">
+    <div class="card"><h3>轻点背面赢在「当下就要」</h3><p>媒体和指南里最常见的用法是手电筒、相机、截图、控制中心：黑暗里要灯、瞬间要拍，平常要好几步。它不是每个人都用：PhoneArena 读者投票 762 人里有 55.91% 说没用或不稳，放在口袋里还会误触截图。所以只留给「慌的时候」这一种用途。</p></div>
+    <div class="card"><h3>老板键早就定好了该做什么</h3><p>这类软件的标准做法：一键藏起窗口，同时把声音静音，再按一次照原样还原。正在放的视频是最大的破绽，所以声音一定要一起关。它们的弱点是要你记住一个组合键。</p></div>
+    <div class="card"><h3>慌的时候记不住组合键</h3><p>这是 Aaron 的原话，也是要换成反射的原因：拍是全身的大动作，不用瞄准、不用想。手本来就搁在桌上，拍的就是那张水平的桌子，正合乔布斯说的「触控面要水平」。</p></div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="sec-head"><span class="n">②</span><h2>试一下</h2>
+    <p>按住桌面再松开，按得越久越用力，超过红线才算拍；点一下的力道不够，不会误触。也可以直接按「用力拍」。右边是「从拍下到画面干净」的目标时间。波形和门槛是示意，要实测。</p></div>
+  <div class="two">
+    <div>
+      <div class="view" id="view">
+        <div class="canvas" id="cv">
+          <div class="desk" id="desk" role="button" tabindex="0" aria-label="桌面：按住再松开，超过红线就是拍一下"></div>
+          <div class="mac" id="mac">
+            <div class="lid">
+              <div class="screen" id="screen">
+                <div class="menubar"><span id="appname">哔哩哔哩 — Safari</span><span><i class="mic" id="mic" title="麦克风"></i><span id="spk">🔊</span>　周日 22:14</span></div>
+                <div class="island" id="island" aria-live="polite"><div class="toast" id="toast"></div><div class="ear l" id="earL"></div><div class="ear r" id="earR"></div><div class="pane" id="paneFace"></div></div>
+              </div>
+            </div>
+            <div class="base"><i></i></div>
+          </div>
+          <div class="seis"><canvas id="seis" width="1368" height="172"></canvas><span class="lab">机身里的加速度计 · 示意</span>
+            <span class="tag" style="top:26px;color:#ff7a70">拍（红线）</span><span class="tag" style="top:56px;color:#a4a5ad">打字、放水杯</span></div>
+        </div>
+      </div>
+      <div class="ctrl"><span class="lab">动作</span>
+        <button class="b main" id="bSlap">用力拍</button>
+        <button class="b" id="bType" aria-pressed="false">用力打字</button>
+        <button class="b" id="bCup">放下水杯</button>
+      </div>
+      <div class="ctrl"><span class="lab">生活</span>
+        <button class="b" id="bMsg">来一条微信</button>
+        <button class="b" id="bAway" aria-pressed="false">中间离开过座位</button>
+        <button class="b" id="bReset">重来</button>
+        <button class="b" id="bRM" aria-pressed="false">减少动态效果</button>
+      </div>
+      <div class="ctrl"><span class="lab">工作 App</span>
+        <div class="apps" id="apps"></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="card"><div class="clock" id="clock">—<small>从拍下到画面干净</small></div>
+        <div class="now" id="now" style="margin-top:10px"><b>你在 B 站看视频，微信开着</b>Xcode 在后面。有人走过来了：拍一下。</div>
+        <ul class="log" id="log" aria-live="polite"></ul></div>
+      <div class="card"><h3>拍一下做的四件事</h3>
+        <dl class="kv">
+          <dt>窗口</dt><dd>除了工作 App，全部当场消失，不飞、不闪。没有工作 App 开着就只剩桌面。</dd>
+          <dt>声音</dt><dd>正在放的立刻静音；麦克风关掉。放回时照原样恢复。</dd>
+          <dt>消息</dt><dd>新消息不弹横幅，刘海只记一笔。</dd>
+          <dt>放回</dt><dd>再拍一下或点刘海，窗口从刘海长回原处；中间离开过座位，先认你。</dd>
+        </dl></div>
+    </div>
+  </div>
+</section>
+
+<section id="speed">
+  <div class="sec-head"><span class="n">③</span><h2>效率账：看到人到画面干净</h2>
+    <p>按键层级模型（KLM）的常用数估算：按一个键约 0.2 秒、移动指针约 1.1 秒、想起要按什么约 1.35 秒。不是实测；拍一下的侦测时间是设计目标。</p></div>
+  <div class="tbl"><table class="cmp">
+    <thead><tr><th>做法</th><th>约多久</th><th>声音</th><th>慌的时候</th></tr></thead>
+    <tbody>
+      <tr class="us"><td><b>拍一下</b></td><td class="num">0.3 秒</td><td>一起静音</td><td>不用想，手本来就在桌边；超过红线就触发，不等分辨位置</td></tr>
+      <tr><td>记熟的组合键</td><td class="num">0.8–2.2 秒</td><td>看软件</td><td>要先想起来，四个键按歪就没反应</td></tr>
+      <tr><td>每个 App 按 ⌘H</td><td class="num">每个 0.4 秒起</td><td>照响</td><td>几个 App 就要按几次，还要先切过去</td></tr>
+      <tr><td>触发角显示桌面</td><td class="num">约 1.1 秒</td><td>照响</td><td>窗口只是推到边上，影片声音还在</td></tr>
+      <tr><td>⌘Tab 切到工作 App</td><td class="num">0.6–1.5 秒</td><td>照响</td><td>其他窗口还露着</td></tr>
+    </tbody>
+  </table></div>
+  <p class="thesis">省下的是最慌的那一秒，不是平常的效率。所以它只做这一件事，而且这件事要每一次都灵。</p>
+</section>
+
+<section id="rules">
+  <div class="sec-head"><span class="n">④</span><h2>定下来的规则</h2>
+    <p>2026-11-01，第五轮推翻了前几轮的三处，表里标出来了。</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>事项</th><th>定了什么</th><th>依据</th></tr></thead>
+    <tbody>
+      <tr><td>范围</td><td>只做拍一下这一个反射 <span class="st part">第五轮改</span></td><td>慌的时候只记得住一个动作</td></tr>
+      <tr><td>留什么</td><td>只留你指定的工作 App；第一次拍完问一次，预选 Xcode、Cursor、终端 <span class="st part">第五轮改</span></td><td>被抓包时，最前面那扇常常正是要藏的</td></tr>
+      <tr><td>声音</td><td>喇叭和麦克风都关，放回时照原样 <span class="st part">第五轮改</span></td><td>老板键的标准做法；正在放的视频是最大的破绽</td></tr>
+      <tr><td>动画</td><td>藏是瞬间，放回才有动画</td><td>多 0.5 秒的飞行既慢又引人注意</td></tr>
+      <tr><td>敲哪里</td><td>桌面和机身都算</td><td>手本来就在桌上；放在腿上时拍机身</td></tr>
+      <tr><td>默认</td><td>默认开</td><td>只开加速度计，每秒 100 次约占一颗核心 0.5%（实测）</td></tr>
+      <tr><td>灵敏度</td><td>宁可多触发：误触只是藏起来，再拍一下就回来；漏掉才是事故</td><td>代价不对称</td></tr>
+      <tr><td>放回</td><td>再拍或点刘海；中间离开过座位先认你</td><td>接「离开就锁」和「认你」</td></tr>
+      <tr><td>消息</td><td>藏着时先压住，放回时告诉你来了几条</td><td>同《离开期间》</td></tr>
+      <tr><td>替身</td><td>菜单栏里一项「全部藏起」，可设快捷键</td><td>HIG：每个手势都要有另一条路</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="feasible">
+  <div class="sec-head"><span class="n">⑤</span><h2>做得到吗</h2>
+    <p>M5 MacBook Air，macOS 27.0.1，普通用户权限，本机实测；其余标「要量」。</p></div>
+  <div class="grid2">
+    <div class="tbl"><table style="min-width:0">
+      <thead><tr><th>只开加速度计</th><th>CPU（一颗核心）</th></tr></thead>
+      <tbody><tr><td class="num">每秒 50 次</td><td class="num">0.25%</td></tr><tr><td class="num">每秒 100 次</td><td class="num">0.52%</td></tr><tr><td class="num">每秒 201 次</td><td class="num">0.85%</td></tr></tbody>
+    </table></div>
+    <div class="card">
+      <p><span class="st ok">实测</span> 读传感器不用管理员权限；常驻低于 1%。</p>
+      <p><span class="st ok">实测</span> 单独静音某个进程的接口（macOS 14.2 起）在这台上可用；整机静音本来就有。</p>
+      <p><span class="st part">要量</span> 拍和用力打字、放水杯、合盖、挪电脑分不分得开。门槛超过打字太多，就不需要「刚打过字不算」，慌的时候正在打字也拍得动。</p>
+      <p><span class="st part">要量</span> 从拍下到窗口消失多久。目标 0.1 秒内：一过红线就动手，不等分辨位置。</p>
+      <p><span class="st part">要量</span> 一次藏起十几个 App 的窗口能不能瞬间完成，还是要分批。</p>
+    </div>
+  </div>
+  <div class="tbl" style="margin-top:12px"><table>
+    <thead><tr><th>阶段</th><th>做什么</th><th>放弃条件</th></tr></thead>
+    <tbody>
+      <tr><td>0 录数据</td><td>书桌和腿上各录：拍 30 下、用力打字 2 分钟、放水杯、合盖、挪电脑</td><td>—</td></tr>
+      <tr><td>1 离线分</td><td>拍和其他震动分不分得开；漏掉几次、误触几次</td><td>分不开：改成「连拍两下」</td></tr>
+      <tr><td>2 小样</td><td>拍一下藏起加放回，Aaron 用一周</td><td>一周里慌的时候没想起来拍：停</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="dropped">
+  <div class="sec-head"><span class="n">⑥</span><h2>拿掉的</h2><p>都写过、玩过，留着说明为什么不做。</p></div>
+  <div class="drop">
+    <div class="card"><h3><s>推一下看一眼</s></h3><p>误触零代价，但看一眼不缺这个入口；不进第一版。</p></div>
+    <div class="card"><h3><s>敲一下列出谁在出声</s></h3><p>要两步，慌的时候做不到。改成：背景一出声，刘海耳朵显示是谁，点耳朵列出来再暂停。不靠加速度计。</p></div>
+    <div class="card"><h3><s>敲哪里，去哪里</s></h3><p>九宫格：比拖标题栏快约 1 秒，比记熟的快捷键慢，还要先校准。九格文法留给触控板、键盘和触控 MacBook Pro。</p></div>
+  </div>
+  <p class="foot">还没定：进不进队列（照 §0.2 换掉哪一条）；菜单与设置里叫什么（暂用「拍一下藏起」）；「离开过座位」用手机距离、合过盖，还是两样都算。新表面要过 design-grammar 的准入：藏起时刘海的样子、认你。岛按《照系统的岛》的形态画，放大 1.6 倍。</p>
+</section>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const view=$('#view'),cv=$('#cv'),desk=$('#desk'),mac=$('#mac'),screen=$('#screen'),island=$('#island'),toast=$('#toast'),earL=$('#earL'),earR=$('#earR'),paneFace=$('#paneFace'),mic=$('#mic'),spk=$('#spk'),nowEl=$('#now'),logEl=$('#log'),clock=$('#clock');
+let reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const W={
+  xcode:{t:'Xcode — WindowShade',app:'Xcode',c:'#1c7cf4',f:[16,30,300,220],body:'<div class="blk" style="width:60%"></div><p>func hideForSlap() {</p><p>&nbsp;&nbsp;keep(workApps)</p><p>}</p><div class="blk" style="width:80%"></div>'},
+  term:{t:'终端',app:'终端',c:'#3a3a3c',f:[40,210,220,130],body:'<p>$ swift test</p><p>Test Suite passed</p>'},
+  wechat:{t:'微信',app:'微信',c:'#1aad19',f:[330,40,200,160],body:'<div class="bubble">在干嘛</div><br><div class="bubble">晚上开黑吗</div>'},
+  safari:{t:'哔哩哔哩 — Safari',app:'Safari',c:'#0a84ff',f:[150,90,320,220],body:'<div class="vid">▶ 正在播放 · 03:12</div><div class="blk" style="width:90%"></div><div class="blk" style="width:66%"></div>'}
+};
+const order=['term','xcode','wechat','safari'];
+const work=new Set(['Xcode','终端']);
+const appsEl=$('#apps');
+['Xcode','终端','Safari','微信'].forEach(a=>{const l=document.createElement('label');l.innerHTML=`<input type="checkbox" id="app-${a}" ${work.has(a)?'checked':''}> ${a}`;l.querySelector('input').onchange=e=>{e.target.checked?work.add(a):work.delete(a);log(`工作 App：${[...work].join('、')||'无'}`);};appsEl.appendChild(l);});
+order.forEach((k,i)=>{const w=W[k];const el=document.createElement('div');el.className='win';el.style.cssText=`left:${w.f[0]}px;top:${w.f[1]}px;width:${w.f[2]}px;height:${w.f[3]}px;z-index:${2+i}`;
+  el.innerHTML=`<div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span>${w.t}</span></div><div class="body">${w.body}</div>`;screen.appendChild(el);w.el=el;});
+const S={hidden:false,away:false,held:0,micWas:true,soundWas:true,typing:false};
+function fit(){const s=Math.min(1,view.clientWidth/720);cv.style.transform=`scale(${s})`;view.style.height=(540*s)+'px';}
+new ResizeObserver(fit).observe(view);fit();
+function say(t,d){nowEl.innerHTML=`<b>${t}</b>${d||''}`;}
+function log(t){const li=document.createElement('li');li.textContent=t;logEl.prepend(li);while(logEl.children.length>10)logEl.lastChild.remove();}
+let unlocked=false;document.addEventListener('pointerdown',()=>unlocked=true,{once:true});
+function chime(){if(!unlocked)return;try{const a=new (window.AudioContext||window.webkitAudioContext)();const o=a.createOscillator(),g=a.createGain();o.frequency.value=660;g.gain.setValueAtTime(.0001,a.currentTime);g.gain.exponentialRampToValueAtTime(.04,a.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,a.currentTime+.15);o.connect(g).connect(a.destination);o.start();o.stop(a.currentTime+.17);setTimeout(()=>a.close(),300);}catch(e){}}
+function ears(){island.classList.remove('open','tall');paneFace.classList.remove('on');
+  if(S.hidden){earL.innerHTML=`<span style="font:600 8px var(--f-sys)">藏着 ${hiddenN()}</span>`;earR.innerHTML=S.held?`<span style="font:600 8px var(--f-sys)">+${S.held}</span>`:'<span style="font-size:8px;opacity:.7">🔇</span>';island.classList.add('ears');}
+  else island.classList.remove('ears');}
+function hiddenN(){return order.filter(k=>W[k].gone).length;}
+function flash(t,ms){toast.textContent=t;island.classList.add('ears','toastOn');clearTimeout(flash.t);flash.t=setTimeout(()=>{island.classList.remove('toastOn');ears();},ms||1300);}
+function slap(){
+  pulse(1);mac.classList.remove('slam');void mac.offsetWidth;mac.classList.add('slam');
+  if(paneFace.classList.contains('on'))return;
+  if(!S.hidden)hide();else restore('再拍一下');
+}
+function hide(){
+  const t0=performance.now();let n=0;
+  order.forEach(k=>{const w=W[k];if(work.has(w.app))return;w.gone=true;n++;w.el.classList.remove('back');w.el.classList.add('gone');});
+  S.micWas=!mic.classList.contains('off');S.soundWas=true;mic.classList.add('off');spk.textContent='🔇';S.hidden=true;S.held=0;
+  const front=order.slice().reverse().find(k=>!W[k].gone);$('#appname').textContent=front?W[front].t:'访达';
+  const ms=performance.now()-t0;
+  clock.innerHTML=`≤ 0.1 秒<small>目标：从拍下到画面干净（要实测）</small>`;
+  flash(`藏起 ${n} 个窗口 · 已静音`);chime();
+  log(`拍一下：藏起 ${n} 个窗口，影片静音，麦克风关掉${front?`；留着 ${W[front].app}`:'；没有工作 App，只剩桌面'}`);
+  say('画面干净了',front?`只剩 ${[...work].filter(a=>order.some(k=>W[k].app===a)).join('、')}。新消息先压住。人走了再拍一下。`:'没有工作 App 开着，只剩桌面。');
+}
+function restore(via){
+  if(S.away){paneFace.innerHTML='<div class="ttl">先认你再放回</div><div class="face"><i></i><div><div class="big">看一下屏幕</div><div class="sub">中间离开过座位 · 也可以用 Touch ID</div></div></div>';island.classList.add('ears','open');paneFace.classList.add('on');
+    log(`${via}：中间离开过座位，先认你`);say('先认你','你离开过座位，放回之前先确认是你。');setTimeout(()=>{S.away=false;$('#bAway').setAttribute('aria-pressed','false');log('认出是你');doRestore();},reduced?300:1500);return;}
+  doRestore(via);
+}
+function doRestore(){
+  order.forEach(k=>{const w=W[k];if(!w.gone)return;w.gone=false;const el=w.el;
+    if(reduced){el.classList.remove('gone');return;}
+    el.style.transition='none';el.classList.remove('gone');const sc=1;const cx=w.f[0]+w.f[2]/2;el.style.transform=`translate(${278-cx}px,${-w.f[1]}px) scale(.05)`;el.style.opacity='0';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.transition='';el.classList.add('back');el.style.transform='';el.style.opacity='';}));});
+  if(S.micWas)mic.classList.remove('off');spk.textContent='🔊';S.hidden=false;const h=S.held;S.held=0;$('#appname').textContent=W.safari.t;
+  island.classList.remove('open');paneFace.classList.remove('on');flash(h?`藏着时来了 ${h} 条`:'全部回到原处',1600);
+  clock.innerHTML='—<small>从拍下到画面干净</small>';
+  log(h?`放回：窗口从刘海长回原处，声音和麦克风照原样；来了 ${h} 条`:'放回：窗口从刘海长回原处，声音和麦克风照原样');
+  say('放回来了',h?`藏着时来了 ${h} 条，在刘海那一排里。`:'回来的路是去时的反方向。');
+}
+island.addEventListener('click',e=>{e.stopPropagation();if(S.hidden&&!paneFace.classList.contains('on'))restore('点刘海');});
+$('#bSlap').onclick=slap;
+$('#bType').onclick=e=>{S.typing=!S.typing;e.currentTarget.setAttribute('aria-pressed',S.typing);log(S.typing?'用力打字：波形抖，但碰不到红线，不触发':'停止打字');};
+$('#bCup').onclick=()=>{pulse(.38);log('放下水杯：有一下，但没过红线，不触发');say('没触发','放水杯、合盖、挪电脑的力道都在红线以下（门槛要实测）。');};
+$('#bMsg').onclick=()=>{if(S.hidden){S.held++;ears();log('微信来了一条：藏着，不弹横幅，刘海记一笔');}else{flash('微信 · 晚上开黑吗');log('微信来了一条：正常提醒');}};
+$('#bAway').onclick=e=>{S.away=!S.away;e.currentTarget.setAttribute('aria-pressed',S.away);log(S.away?'你离开过座位（手机走远或合过盖）':'取消离座');};
+$('#bRM').onclick=e=>{reduced=!reduced;e.currentTarget.setAttribute('aria-pressed',reduced);};
+if(reduced)$('#bRM').setAttribute('aria-pressed','true');
+$('#bReset').onclick=()=>{order.forEach(k=>{const w=W[k];w.gone=false;w.el.classList.remove('gone','back');w.el.style.transform='';w.el.style.opacity='';});Object.assign(S,{hidden:false,away:false,held:0});mic.classList.remove('off');spk.textContent='🔊';$('#appname').textContent=W.safari.t;$('#bAway').setAttribute('aria-pressed','false');island.className='island';paneFace.classList.remove('on');clock.innerHTML='—<small>从拍下到画面干净</small>';logEl.innerHTML='';say('你在 B 站看视频，微信开着','Xcode 在后面。有人走过来了：拍一下。');};
+// 桌面：按住越久越用力
+let press=null,ch=null;
+desk.addEventListener('pointerdown',e=>{const b=cv.getBoundingClientRect(),s=b.width/720;press={t:performance.now(),x:(e.clientX-b.left)/s,y:(e.clientY-b.top)/s};ch=document.createElement('div');ch.className='charge';ch.style.left=press.x+'px';ch.style.top=press.y+'px';cv.appendChild(ch);
+  const tick=()=>{if(!press)return;ch.style.setProperty('--p',Math.min(100,(performance.now()-press.t)/4.5)+'%');requestAnimationFrame(tick);};tick();});
+desk.addEventListener('pointerup',()=>{if(!press)return;const dt=performance.now()-press.t;ch&&ch.remove();const p=press;press=null;const r=document.createElement('div');r.className='ripple';r.style.left=p.x+'px';r.style.top=p.y+'px';r.style.width=r.style.height=(dt>450?150:60)+'px';cv.appendChild(r);setTimeout(()=>r.remove(),650);
+  if(dt>450)slap();else{pulse(Math.min(.55,.15+dt/1200));log('力道不够，没过红线：不触发');say('没过红线','轻敲不算。按住久一点再松开，就是用力拍。');}});
+desk.addEventListener('pointerleave',()=>{if(press){ch&&ch.remove();press=null;}});
+desk.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();slap();}});
+// 波形（示意）
+const cvs=$('#seis'),g=cvs.getContext('2d');const N=342;const buf=new Float32Array(N);let imp=[];
+function pulse(a){imp.push({a,age:0});}
+function col(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()||'#5a9cff';}
+let last=0;(function frame(t){if(t-last>28){last=t;let v=(Math.random()-.5)*.02;if(S.typing&&Math.random()<.45)v+=(Math.random()-.5)*.3;
+  imp.forEach(p=>{v+=p.a*Math.exp(-p.age/2.2)*Math.sin(p.age*1.7);p.age++;});imp=imp.filter(p=>p.age<24);buf.copyWithin(0,1);buf[N-1]=v;
+  const w=cvs.width,h=cvs.height,mid=h*.6;g.clearRect(0,0,w,h);
+  g.strokeStyle='#ff7a70';g.globalAlpha=.55;g.setLineDash([6,6]);g.beginPath();g.moveTo(0,mid-.7*mid*1.25);g.lineTo(w,mid-.7*mid*1.25);g.stroke();
+  g.strokeStyle='#a4a5ad';g.globalAlpha=.35;g.beginPath();g.moveTo(0,mid-.32*mid*1.25);g.lineTo(w,mid-.32*mid*1.25);g.stroke();
+  g.setLineDash([]);g.globalAlpha=1;g.strokeStyle=col('--traceline');g.lineWidth=2.5;g.beginPath();for(let i=0;i<N;i++){const x=i/(N-1)*w,y=mid-buf[i]*mid*1.25;i?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();}
+  requestAnimationFrame(frame);})(0);
+ears();
+})();
+</script>
