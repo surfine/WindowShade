@@ -329,7 +329,7 @@ extension AppDelegate {
   func setAppearanceMode(_ mode: ShadeAppearanceMode) {
     switch mode {
     case .proxyTitleBar, .thumbnail: appearanceMode = mode
-    case .nativeScreenshot, .interactiveNative, .classicSemantic: appearanceMode = .nativeScreenshot
+    case .nativeScreenshot: appearanceMode = .nativeScreenshot
     }
     UserDefaults.standard.set(appearanceMode.rawValue, forKey: shadeAppearanceModeDefaultsKey)
     rebuildMenu()

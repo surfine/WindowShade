@@ -1003,7 +1003,7 @@ final class GlanceController {
         if let state = owner.shaded[id] {
             // 缩略图上没有红绿灯：停在哪都算想看。
             if state.appearanceMode == .thumbnail { return (0, 0) }
-            return (78, state.appearanceMode == .classicSemantic ? 64 : 0)
+            return (78, 0)
         }
         return (0, CarryStripView.closeZoneWidth)
     }

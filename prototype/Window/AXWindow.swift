@@ -362,9 +362,12 @@ func focusAXWindow(_ win: AXUIElement, pid: pid_t) {
 }
 
 // 三个交通灯在折叠条（view 坐标，左下原点，高 barH）里的命中区
-func windowIsVisible(pos: CGPoint, size: CGSize) -> Bool {
+// 默认只要求有 1 点相交，保持原有调用点（救援、探针）的语义；
+// 收起验证传 `minimumVisible: minimumVisibleExtent`，角落停放留下的 1 像素不算“看得见”。
+func windowIsVisible(pos: CGPoint, size: CGSize, minimumVisible: CGFloat = 1) -> Bool {
     let winRect = cocoaFrame(fromAXPosition: pos, size: size)
-    return NSScreen.screens.contains { $0.frame.intersects(winRect) }
+    return rectIsVisible(winRect, onScreens: NSScreen.screens.map(\.frame),
+                         minimumVisible: minimumVisible)
 }
 
 func cgWindowIsVisible(id: CGWindowID, fallbackSize: CGSize) -> Bool? {

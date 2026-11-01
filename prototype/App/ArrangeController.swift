@@ -103,8 +103,6 @@ extension AppDelegate {
         switch state.appearanceMode {
         case .proxyTitleBar, .nativeScreenshot, .thumbnail:
             return max(10, clamped)
-        case .interactiveNative, .classicSemantic:
-            return max(9, clamped * 0.9)
         }
     }
 

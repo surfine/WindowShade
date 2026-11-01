@@ -1010,7 +1010,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @discardableResult
     func setupEventTap() -> Bool {
         guard eventTap == nil, AXIsProcessTrusted() else { return eventTap != nil }
-        let mask = CGEventMask(1 << CGEventType.leftMouseDown.rawValue)
+        // 双击的第二下按下与松开都要拦：macOS 26 在松开时执行“双击缩放”，
+        // 只拦按下会让窗口先放大，卷帘条截到放大后的窗口。
+        let mask = CGEventMask((1 << CGEventType.leftMouseDown.rawValue) |
+                               (1 << CGEventType.leftMouseUp.rawValue))
         guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,
                                           options: .defaultTap, eventsOfInterest: mask,
                                           callback: eventTapCallback, userInfo: nil) else { return false }

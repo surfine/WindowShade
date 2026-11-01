@@ -47,6 +47,10 @@ func pointMayLieInTitlebarBandUsingFreshCache(_ point: CGPoint) -> Bool? {
 /// 要不要吞掉（标题栏双击收起、三击铺满本来就要问那个 App）。
 nonisolated(unsafe) var mouseDownTapPort: CFMachPort?
 
+/// 吞掉第二下按下之后，配对的松开也吞（macOS 26 的双击缩放在松开时触发）。
+/// 只在 tap 线程上读写；漏掉的松开由短有效期兜住。
+nonisolated(unsafe) private var mouseUpSwallow = MouseUpSwallow()
+
 /// 双击、三击时判定的截止时间，整次点击只给一次：先在后台判定标题栏双击（不等主线程），
 /// 拿不准再问主线程，两段共用这一个截止时间。问主线程那段到点还没定案就作废并放行，
 /// 且迟到的任务不会再折叠（见 TapDecision 的原子状态迁移）。
@@ -114,17 +118,26 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
                       event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
     // 系统在高负载时会把 tap 关掉，需要重新启用
     if type == .tapDisabledByTimeout {
+        mouseUpSwallow.reset()
         if let tap = mouseDownTapPort { CGEvent.tapEnable(tap: tap, enable: true) }
         return Unmanaged.passUnretained(event)
     }
     // 输入洪泛导致的禁用：立即重启用会和系统反复打架，退避后再恢复。
     if type == .tapDisabledByUserInput {
+        mouseUpSwallow.reset()
         DispatchQueue.main.async { MainActor.assumeIsolated { appDelegate?.scheduleEventTapReenable(delay: 1.5) } }
         return Unmanaged.passUnretained(event)
     }
+    // 第二下按下被吞后，配对的松开也吞，系统不会在松开时放大窗口。
+    if type == .leftMouseUp {
+        return mouseUpSwallow.consume() ? nil : Unmanaged.passUnretained(event)
+    }
     guard type == .leftMouseDown else { return Unmanaged.passUnretained(event) }
     let clickState = event.getIntegerValueField(.mouseEventClickState)
-    guard clickState >= 2 else { return Unmanaged.passUnretained(event) }   // 单击：不问主线程
+    guard clickState >= 2 else {
+        mouseUpSwallow.reset()   // 新的一次单击：之前漏掉的松开状态不再有效
+        return Unmanaged.passUnretained(event)
+    }
     let location = event.location
     let deadline = DispatchTime.now() + tapDecisionTimeout
     // #39 防线一：修饰键按住的多击完整交还系统（选词、⌥拖拽、系统缩放/最小化）。
@@ -172,6 +185,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
         })
         switch route {
         case .swallow:
+            mouseUpSwallow.arm()
             return nil   // 吞掉，阻止系统「双击缩放」；收起已排到主线程
         case .pass:
             return Unmanaged.passUnretained(event)
@@ -182,6 +196,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
         case .swallowLate:
             // 目标 App 回辅助功能慢：已吞下，结论出来后再做（不交给系统缩放）。
             wlog("titlebar-tap: off-main decision late; swallowed, acting when it lands at=(\(Int(location.x)),\(Int(location.y)))")
+            mouseUpSwallow.arm()
             return nil
         case .askMain:
             break
@@ -209,6 +224,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     // 单一截止时间。到点仍未定案：主线程还没开始时作废并放行；已经开始时吞下事件，
     // 避免系统双击和迟到的折叠同时发生。两条路都不会无界等待。
     if decision.waitForResult(timeout: deadline) {
+        if decision.swallow { mouseUpSwallow.arm() }
         return decision.swallow ? nil : Unmanaged.passUnretained(event)
     }
     if decision.abandon() {
@@ -219,7 +235,9 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     }
     // 作废失败说明主线程已占用：再看一眼是不是刚好完成，否则按已提交吞下。
     if decision.waitForResult(timeout: .now()) {
+        if decision.swallow { mouseUpSwallow.arm() }
         return decision.swallow ? nil : Unmanaged.passUnretained(event)
     }
+    mouseUpSwallow.arm()
     return nil
 }

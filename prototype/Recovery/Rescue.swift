@@ -89,6 +89,7 @@ extension AppDelegate {
                    journalString(entry, "stage") != ShadeLifecycleStage.restoring.rawValue,
                    journalString(entry, "hide") != HideMethod.minimized.rawValue,
                    journalString(entry, "hide") != HideMethod.hidden.rawValue,
+                   journalString(entry, "hide") != HideMethod.cornerParked.rawValue,
                    journalString(entry, "hide") != HideMethod.privateAlpha.rawValue {
                     // preparing intent 且窗口仍可见：事务没走到隐藏这一步（进程在
                     // 写 intent 后、隐藏前被杀），窗口完好，无需救援，安全清理。

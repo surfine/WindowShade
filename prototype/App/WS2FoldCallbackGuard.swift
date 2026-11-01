@@ -61,6 +61,13 @@ extension AppDelegate {
                   pos.x.isFinite, pos.y.isFinite, size.width.isFinite, size.height.isFinite,
                   size.width > 0, size.height > 0 else { return .unknown }
             return windowIsVisible(pos: pos, size: size) ? .visible : .hidden
+        case .cornerParked:
+            // 角落停放故意留 1 像素，1×1 的相交不算看得见。
+            guard let pos = axPosition(win), let size = axSize(win),
+                  pos.x.isFinite, pos.y.isFinite, size.width.isFinite, size.height.isFinite,
+                  size.width > 0, size.height > 0 else { return .unknown }
+            return windowIsVisible(pos: pos, size: size,
+                                   minimumVisible: minimumVisibleExtent) ? .visible : .hidden
         case .privateOffscreen:
             // 停车走私有 SkyLight，AX 属性不跟着更新：判据要和停车确认同一个传感器，
             // 否则会把自己的手笔当成用户唤回（见 FoldTransaction.privateOffscreenObservation）。

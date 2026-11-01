@@ -40,6 +40,9 @@ extension AppDelegate {
             return false
         case .none:
             return false
+        case .cornerParked:
+            // 角落停放只留 1 像素：不是用户把窗口叫回来了。
+            return false
         case .offscreen:
             return Date() >= state.ignoreAppRevealUntil
         case .privateOffscreen:
@@ -97,7 +100,7 @@ extension AppDelegate {
         }
 
         switch state.hide {
-        case .hidden, .minimized, .offscreen, .privateOffscreen, .privateAlpha, .ownWindowOrderedOut, .quickLookClosed:
+        case .hidden, .minimized, .offscreen, .privateOffscreen, .privateAlpha, .cornerParked, .ownWindowOrderedOut, .quickLookClosed:
             if shouldLogReconcileInvalidCount(count) {
                 wlog("reconcile: source geometry unavailable id=\(id) app=\(state.appName) hide=\(state.hide.rawValue) count=\(count)")
             }

@@ -3,7 +3,7 @@
 import Cocoa
 
 enum ClassicAction { case close, zoom, expand }
-enum HideMethod: String { case none, offscreen, privateOffscreen, privateAlpha, hidden, minimized, ownWindowOrderedOut, quickLookClosed }   // 真窗口的隐藏方式
+enum HideMethod: String { case none, offscreen, privateOffscreen, privateAlpha, cornerParked, hidden, minimized, ownWindowOrderedOut, quickLookClosed }   // 真窗口的隐藏方式
 enum ShadeLifecycleStage: String {
     case preparing   // 折叠事务已写入 durable recovery intent，但真实窗口尚未完成隐藏
     case folded
@@ -12,9 +12,7 @@ enum ShadeLifecycleStage: String {
     case forwarded
 }
 enum ShadeAppearanceMode: String {
-    case interactiveNative
     case nativeScreenshot
-    case classicSemantic
     case proxyTitleBar
     /// 收起后窗口在原处缩成一张缩略图（设置里“收起后的样子”的第三项，见 App/Thumbnail.swift）。
     case thumbnail

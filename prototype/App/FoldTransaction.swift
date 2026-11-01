@@ -310,7 +310,7 @@ extension AppDelegate {
         case .privateAlpha:
             let alpha = privateAlphaOriginalValues.removeValue(forKey: id) ?? 1
             _ = PrivateSLSWindowMover.shared.setAlpha(id: id, alpha: alpha)
-        case .none, .offscreen, .privateOffscreen, .ownWindowOrderedOut, .quickLookClosed:
+        case .none, .offscreen, .privateOffscreen, .cornerParked, .ownWindowOrderedOut, .quickLookClosed:
             break
         }
         _ = applyRestoredGeometry(state, to: state.originalPosition, label: "rollback", reason: "restore")
@@ -823,9 +823,28 @@ extension AppDelegate {
            let hide = privateSLSAlphaHide(id: id, pid: pid, reason: "fallback") {
             return hide
         }
+        // 最小化是最后手段：它会带出 Dock 缩进动画。先把窗口停到屏幕下角外，只留 1 像素；
+        // 系统把窗口钳回可见区时再退回最小化。
+        if let spot = cornerParkingTarget(for: pos, size: size) {
+            setAXPosition(win, spot)
+            if let p2 = axPosition(win),
+               !windowIsVisible(pos: p2, size: size, minimumVisible: minimumVisibleExtent) {
+                wlog("    fallback → corner parked（pid=\(pid), pos=(\(Int(p2.x)),\(Int(p2.y)))）")
+                return .cornerParked
+            }
+            setAXPosition(win, pos)
+        }
         setAXMinimized(win, true)
         wlog("    fallback → minimized（pid=\(pid), allowAppHide=\(allowAppHide), currentWindows=\(currentWindowCount), windows=\(totalWindowCount)）")
         return .minimized
+    }
+
+    /// 角落停放的 AX 目标点。屏幕按辅助功能坐标换算，和窗口位置同一套坐标。
+    func cornerParkingTarget(for pos: CGPoint, size: CGSize) -> CGPoint? {
+        let screens = NSScreen.screens.map { screen -> CGRect in
+            CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
+        }
+        return cornerParkingSpot(windowFrame: CGRect(origin: pos, size: size), screens: screens)
     }
 
     func safeRestorePosition(for state: ShadeState, desired pos: CGPoint) -> CGPoint {
@@ -920,6 +939,7 @@ extension AppDelegate {
         switch state.hide {
         case .none:      break
         case .offscreen: break
+        case .cornerParked: break
         case .privateOffscreen:
             if PrivateSLSWindowMover.shared.moveWindow(id: state.sourceWindowID, to: pos) {
                 wlog("restore: private SLS move back id=\(state.sourceWindowID) target=(\(Int(pos.x)),\(Int(pos.y)))")

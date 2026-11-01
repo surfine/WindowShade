@@ -129,7 +129,7 @@ extension AppDelegate {
         switch hide {
         case .hidden, .minimized:
             return true
-        case .none, .offscreen, .privateOffscreen, .privateAlpha, .ownWindowOrderedOut, .quickLookClosed:
+        case .none, .offscreen, .privateOffscreen, .privateAlpha, .cornerParked, .ownWindowOrderedOut, .quickLookClosed:
             return false
         }
     }
@@ -209,12 +209,19 @@ extension AppDelegate {
         overlay.orderFrontRegardless()
     }
 
-    func revealPreparedOverlay(_ overlay: NSWindow) {
+    /// 窗口已经藏好之后才调用：卷帘条直接出现，不再从全透明淡入。
+    /// 原窗口已经移走时淡入会先露出桌面 0.12–0.34 秒，看起来像闪一下；
+    /// 只有确实需要过渡的调用方才传 `fade: true`。
+    func revealPreparedOverlay(_ overlay: NSWindow, fade: Bool = false) {
         // 缩略图第一次亮出来：截图从窗口原处缩进去，落定前缩略图自己不露面。
         playThumbnailEntranceIfNeeded(overlay)
         let alpha = overlayAlpha(for: overlay)
+        guard fade else {
+            overlay.alphaValue = alpha
+            return
+        }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = Motion.fadeDuration
+            context.duration = 0.12
             overlay.animator().alphaValue = alpha
         }
     }
