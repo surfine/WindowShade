@@ -18,6 +18,7 @@
 # Build outputs and packaged app bundles
 prototype/windowshade
 prototype/windowshade-b
+prototype/windowshade-1.*
 prototype/*.app/
 prototype/*.zip
 prototype/dist/
