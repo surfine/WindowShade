@@ -4,6 +4,8 @@ One line per release. Full notes, downloads and checksums are on [GitHub Release
 
 | Version | Date | Highlights |
 | --- | --- | --- |
+| [1.0.19](docs/releases/v1.0.19.md) | 2026-11-01 | The notch follows the system's Dynamic Island; push up to tuck everything and undo the batch; proxy-first half-screen and throw gestures; Arrange → Undo. / 刘海照系统灵动岛重做，上推全收可撤销，窗口先动代理。 |
+| [1.0.18](docs/releases/v1.0.18.md) | 2026-10-18 | Demo band on every Settings page, searchable sidebar, redesigned welcome, and the notch family on by default. / 设置每页带演示、侧栏可搜索、欢迎重做，刘海一族默认开。 |
 | [1.0.17](docs/releases/v1.0.17.md) | 2026-10-17 | Steadier, and notarized by Apple: Developer ID signing, on-device crash reports, macOS 15 or later. / 更稳，也终于通过了 Apple 公证。 |
 | [1.0.16](docs/releases/v1.0.16.md) | 2026-10-12 | Every window you can't see lives in the notch: rolled up, slid over, minimized, hidden, or on another desktop. / 看不见的窗口，都在刘海里。 |
 | [1.0.15](docs/releases/v1.0.15.md) | 2026-09-24 | Glance at a rolled-up window without unrolling it; title-bar swipes, throws and `⌃⌘` arrows for layouts. / 不用去了再回来。 |

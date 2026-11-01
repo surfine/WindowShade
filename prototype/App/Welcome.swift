@@ -414,7 +414,9 @@ final class WelcomeView: NSView {
         hideAll()
         stackTop?.constant = again ? 10 : 14
         eyebrow.isHidden = !again
-        eyebrow.stringValue = "WindowShade 1.0.18"
+        if let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String {
+            eyebrow.stringValue = "WindowShade \(version)"
+        }
         titleLabel.isHidden = false
         titleLabel.stringValue = again ? UpdateCopy.permissionsAgainTitle : WelcomeFlow.permissionTitle
         lede.isHidden = false
