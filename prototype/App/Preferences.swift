@@ -226,7 +226,7 @@ extension AppDelegate {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
             title: WSL10n.text("settings.features.title", zh: "功能"),
-            subtitle: WSL10n.setting("settings.features.sub", zh: "核心功能始终开启。下面的功能可以整块开关，关掉后对应的菜单、快捷键和后台工作一起停。"),
+            subtitle: WSL10n.setting("settings.features.sub", zh: "核心功能始终开启。下面的功能可以整块开关；有的关掉后要下次启动才完全停。"),
             symbolName: "checklist"))
         let rows = FeatureCatalog.all.enumerated().map { index, feature in
             makeUnifiedToggleRow(name: feature.title, subtitle: feature.subtitle,
