@@ -349,9 +349,15 @@ final class NotchController {
         return NSRect(x: left.maxX, y: screen.frame.maxY - height, width: right.minX - left.maxX, height: height)
     }
 
-    /// 这块屏上的“刘海”：真刘海，或者顶部正中和菜单栏一样高的一段（隐形刘海）。
+    /// 这块屏上的“刘海”：真刘海；没有刘海的屏也用这台 Mac 内建屏的真实尺寸，居中放在顶部。
     static func slotRect(on screen: NSScreen) -> (rect: NSRect, virtual: Bool) {
         if let notch = notchRect(on: screen) { return (notch, false) }
+        // 外接屏上沿用内建屏的刘海宽高，别再用 190 × 菜单栏的估算值。
+        if let builtIn = notchScreen(), let real = notchRect(on: builtIn) {
+            return (NSRect(x: screen.frame.midX - real.width / 2,
+                           y: screen.frame.maxY - real.height,
+                           width: real.width, height: real.height), true)
+        }
         let menuBar = max(24, screen.frame.maxY - screen.visibleFrame.maxY)
         return (NSRect(x: screen.frame.midX - 95, y: screen.frame.maxY - menuBar, width: 190, height: menuBar), true)
     }
@@ -4650,9 +4656,9 @@ final class NotchPanel: NSPanel {
         return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
     }
 
-    /// 紧凑两耳的外框：刘海往左右各长 `side`，高 36.67（从屏幕顶边量起，比刘海多出的一截在刘海底下；暂定，iOS 尺寸）。
+    /// 紧凑两耳的外框：刘海往左右各长 `side`，高与刘海一致（这台 Mac 的真实尺寸）。
     private func compactEarsRect(side: CGFloat) -> NSRect {
-        let height = max(notch.height, IslandMetrics.compactHeight)
+        let height = notch.height
         return NSRect(x: notch.minX - side, y: notch.maxY - height, width: notch.width + 2 * side, height: height)
     }
 
