@@ -10,6 +10,7 @@ mkdir -p "$(dirname "$OUT")"
 cat > /tmp/standard-menu-check.swift <<'SWIFT'
 import Cocoa
 
+@MainActor
 func pasteResult(withMenu: Bool) -> String {
     let app = NSApplication.shared
     app.setActivationPolicy(.accessory)
@@ -43,6 +44,7 @@ func pasteResult(withMenu: Bool) -> String {
 }
 
 @main
+@MainActor
 enum StandardMenuCheck {
     // 每个进程只验证一种情况：同一进程里第二个窗口不会成为 key window，
     // paste: 会落到前一个窗口的 field editor 上。
@@ -63,8 +65,8 @@ enum StandardMenuCheck {
 }
 SWIFT
 
-swiftc -target "$(uname -m)-apple-macosx14.0" \
-  "$ROOT/prototype/App/StandardMenu.swift" /tmp/standard-menu-check.swift \
+swiftc -target "$(uname -m)-apple-macosx15.0" \
+  "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" "$ROOT/prototype/App/StandardMenu.swift" /tmp/standard-menu-check.swift \
   -framework Cocoa -o /tmp/standard-menu-check
 {
   echo "== 关于面板 =="

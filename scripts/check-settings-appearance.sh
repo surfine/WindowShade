@@ -16,7 +16,7 @@ if [ ! -x "$BIN" ]; then
   exit 1
 fi
 
-"$BIN" --settings-shots "$SHOTS" >/dev/null
+"$BIN" --settings-shots "$SHOTS" -AppleLanguages '(zh-Hans)' >/dev/null
 
 cat > /tmp/settings-appearance-check.swift <<'SWIFT'
 import Cocoa
