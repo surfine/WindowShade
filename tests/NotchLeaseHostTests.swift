@@ -240,7 +240,7 @@ import Cocoa
         merged.expand(with: [window(1), window(2), sessionTile, playTile], merged: true)
         let mergedShape = merged.shapeForProbe!.island
         expect(merged.mergedRow && abs(mergedShape.height - plainShape.height) < 0.5, "合成一排：高度和只有窗口时一样，没有叠放")
-        expect(abs(mergedShape.width - (4 * 132 + 29)) < 0.5, "宽度 = 4 格 + 竖线多占的 9 + 两边边距")
+        expect(abs(mergedShape.width - IslandMetrics.expandedWidth) < 0.5, "照系统的岛：那一排固定 408 宽，格子多了左右滚")
         expect(merged.ongoingSignatures.count == 2, "右段两格")
         let noOngoing = NotchPanel(notch: NSRect(x: -7000, y: 900, width: 180, height: 32), virtual: true)
         noOngoing.setActivities([busy], selected: busy.id)
