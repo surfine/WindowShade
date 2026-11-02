@@ -363,6 +363,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if CommandLine.arguments.contains("--no-teach") { NotchController.probeSilence = true }
         // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
         installStandardMainMenu()
+        duoController.owner = self
         if FeatureCatalog.isEnabled(.effects) { duoController.start(owner: self) }
         let sessionFormatter = DateFormatter()
         sessionFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"

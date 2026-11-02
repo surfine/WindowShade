@@ -337,15 +337,17 @@ final class NotchController {
     // MARK: - 几何
 
     /// 带刘海的那块屏（MacBook 内建屏）；合上盖子只接外接屏时没有。
+    /// 全屏时 safeAreaInsets.top 可能变成 0，但两侧的辅助区还在，所以不拿它当唯一依据。
     static func notchScreen() -> NSScreen? {
-        NSScreen.screens.first { $0.safeAreaInsets.top > 0 && $0.auxiliaryTopLeftArea != nil }
+        NSScreen.screens.first { $0.auxiliaryTopLeftArea != nil && $0.auxiliaryTopRightArea != nil }
     }
 
     /// 刘海的外框（Cocoa 坐标）。
     static func notchRect(on screen: NSScreen) -> NSRect? {
         guard let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea,
               right.minX > left.maxX else { return nil }
-        let height = screen.safeAreaInsets.top
+        // 全屏菜单栏收起时 safeAreaInsets.top 可能是 0；两侧辅助区的高仍然是真实开孔高。
+        let height = max(screen.safeAreaInsets.top, left.height)
         return NSRect(x: left.maxX, y: screen.frame.maxY - height, width: right.minX - left.maxX, height: height)
     }
 
@@ -1102,8 +1104,7 @@ final class NotchController {
 
     // MARK: - 刘海面板
 
-    /// 指针进出刘海面板。照系统的岛，指针停上来不再展开那一排（改成长按、空格，见 onLongPress）；
-    /// 已经展开着时，指针回来刷新一下格子，指针离开仍然收起（怎么收起还没定，先不改，见稿「还没定的」第 3 行）。
+    /// 指针进出刘海面板。停够时间且里面有东西时展开那一排；离开收起。
     private func hoverChanged(_ inside: Bool, panel: NotchPanel) {
         guard !panel.isAuthenticating else { return }
         // 正拖着左段的一格出来放回卷轴：指针出了岛也不收，松手时再收（SS-04）。
@@ -1122,7 +1123,13 @@ final class NotchController {
                 requestThumbnails()
                 return
             }
-            // 第一次停到刘海上、里面什么都没有：教一下刘海能做什么。悬停展开拿掉以后，这就是“停上来”还剩的用处。
+            // 悬停展开（2026-11-03 恢复）：里面收着窗口或实时活动时，指针停够时间就把那一排展开。
+            if !tucked.isEmpty || !changed.isEmpty || !activities.store.visible.isEmpty {
+                panel.expand(with: tiles())
+                requestThumbnails()
+                return
+            }
+            // 第一次停到刘海上、里面什么都没有：教一下刘海能做什么。
             if tucked.isEmpty, activities.store.visible.isEmpty, !panel.isVirtual { teach(.notchHome, on: panel) }
         } else {
             endPeek()
