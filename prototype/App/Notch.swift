@@ -467,7 +467,10 @@ final class NotchController {
 
     /// 启动、换屏时调用：每块屏挂一个，屏没了就拆掉。
     func install() {
-        guard Self.isEnabled else { return }
+        guard Self.isEnabled else {
+            teardownPanels()
+            return
+        }
         activities.configure()
         activities.countdown.attach(leases: leases)
         activities.nowPlayingCard.attach(leases: leases)
@@ -621,6 +624,18 @@ final class NotchController {
         syncAudioLevels()
         // 启动时不自我介绍、也不推荐“用 Rectangle 的快捷键”（docs/direction.md：没人问就不开口）。
         // 刘海能做什么，等他自己把指针停到刘海上时再说（hoverChanged）；Rectangle 那一套在设置 → 快捷键 → 更多排法。
+    }
+
+    /// 关掉刘海：把每块屏上的面板和登记都拆掉，别只停新增。
+    private func teardownPanels() {
+        authentication.reconcile(panels: [])
+        for (id, panel) in panels {
+            leases.removeDisplay(WS2.DisplayID(value: id))
+            menuRoom.forget(id)
+            panel.orderOut(nil)
+        }
+        panels.removeAll()
+        scheduleActiveDisplayTimer()
     }
 
     /// 每块真刘海的面板用这块屏的硬件曲线；隐形刘海用机型顶角做胶囊圆角（S4，不画肩）。

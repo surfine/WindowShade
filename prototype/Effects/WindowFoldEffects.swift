@@ -41,13 +41,15 @@ final class WindowFoldEffects {
   func hasActiveTransition(for id: CGWindowID) -> Bool { jobs[id] != nil }
   private(set) var completedTransitions = 0
   private var enabled: Bool {
-    controller?.settings.windowsEnabled == true && controller?.allowsAnimation == true
+    FeatureCatalog.isEnabled(.effects)
+      && controller?.settings.windowsEnabled == true && controller?.allowsAnimation == true
       && controller?.desktopActive == false
   }
   /// 手势跟手不是一段播放的动画，而是手指的直接反馈：不看“收起窗口时的动画”开关，
   /// 但尊重减少动态效果、暂停效果和桌面开合。
   var trackingAllowed: Bool {
-    !suppressedForBulkOperation && controller?.allowsAnimation == true
+    FeatureCatalog.isEnabled(.effects)
+      && !suppressedForBulkOperation && controller?.allowsAnimation == true
       && controller?.desktopActive == false
   }
   private func allowed(_ job: Job) -> Bool { job.tracking ? trackingAllowed : enabled }

@@ -127,6 +127,7 @@ final class LaunchpadController {
 
     /// 所有入口都路由到同一块面板，切换前撤回尚未提交的拖动。
     func navigate(to destination: Destination) {
+        guard FeatureCatalog.isEnabled(.launchpad) else { return }
         if destination == .back {
             if let panel { panel.view.goBack() }
             else if let spotlight = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Spotlight").first,
@@ -239,6 +240,7 @@ final class LaunchpadController {
 
     /// 静音入口传入目标显示器。已经打开就保持打开，不收起。
     func show(on screen: NSScreen, from notch: NSRect? = nil) {
+        guard FeatureCatalog.isEnabled(.launchpad) else { return }
         guard !isShowing else { return }
         lastShowRefusalForProbe = nil
         navigationGeneration &+= 1

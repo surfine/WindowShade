@@ -8222,6 +8222,13 @@
       "symbol": "UserDefaults",
       "source": "UserDefaults.standard.set(true, forKey: InstallFeatureDefaults.pickerShownKey)",
       "signal": "settings"
+    },
+    {
+      "path": "prototype/App/CarPlaySurface.swift",
+      "line": 20,
+      "symbol": "UserDefaults",
+      "source": "get { FeatureCatalog.isEnabled(.companion) && UserDefaults.standard.bool(forKey: enabledKey) }",
+      "signal": "settings"
     }
   ],
   "groups": [

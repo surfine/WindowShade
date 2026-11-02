@@ -17,7 +17,7 @@ final class CarPlaySurfaceController {
     nonisolated static let handshakeDelay: TimeInterval = 0.4
 
     nonisolated static var isEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: enabledKey) }
+        get { FeatureCatalog.isEnabled(.companion) && UserDefaults.standard.bool(forKey: enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
 

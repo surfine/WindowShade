@@ -119,6 +119,7 @@ import Cocoa
     }
 
     static func startIfEnabled() {
+        guard FeatureCatalog.isEnabled(.securityExtras) else { return }
         let defaults = UserDefaults.standard
         guard shared == nil, defaults.bool(forKey: enabledKey) else { return }
         guard VisionFaceEmbedder.modelVersion == FaceScanModelProfile.visionFeaturePrintVersion else {

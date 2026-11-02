@@ -48,7 +48,7 @@
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新的 DMG，打开后把 `WindowShade.app` 拖到“应用程序”，再打开它，按提示给权限。（ZIP 是同一个 App，应用内更新用的就是它。）它住在菜单栏里，不占 Dock 位置。
 
 - **要 macOS 15 以上、Apple Silicon。** 没有 Intel 版。
-- **1.0.20 下载包（十进制）：** ZIP 22.19 MB；第一次安装也可以下 DMG（23.25 MB）。
+- **1.0.20 下载包（十进制）：** ZIP 22.19 MB；第一次安装也可以下 DMG（23.24 MB）。
 - **已通过 Apple 公证。** 第一次打开时系统会自己检查，不用再手动放行。
 - **从 1.0.16 及以前升级：** 这一版要手动下载一次，装好后在“系统设置 → 隐私与安全性”里重新打开辅助功能（开过屏幕录制的，也重新打开）。之后就能在菜单里更新。
 - **用 Homebrew：** `brew install --cask surfine/tap/windowshade`。
