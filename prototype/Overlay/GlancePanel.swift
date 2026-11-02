@@ -113,7 +113,7 @@ final class GlanceContentView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { false }
+    nonisolated override var isFlipped: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     /// 只有卡片本身接单击；缝、投影边距上点了不算打开。

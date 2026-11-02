@@ -249,5 +249,5 @@ final class WS2ConductorHintLabel: NSTextField {
 
 /// 滚动区的文档视图：从上往下排。
 final class WS2ConductorFlippedView: NSView {
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 }

@@ -73,7 +73,7 @@ final class NowPlayingRouteRow: NSView {
     }
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     func setChecked(_ value: Bool) {
         checked = value
@@ -120,7 +120,7 @@ final class NowPlayingRouteRow: NSView {
 
 /// 子视图坐标朝下的容器（列表的文档视图）。
 private final class NowPlayingFlippedView: NSView {
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 }
 
 // MARK: - 大卡
@@ -232,7 +232,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         NSSize(width: NowPlayingCardLayout.width,
                height: NowPlayingCardLayout.interactionHeight(listDeviceCount: listOpen ? routes.count : nil, virtualNotch: geometry.virtual))
     }
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
 
     // 画面
@@ -1069,7 +1069,7 @@ final class NowPlayingVolumeRowView: NSView {
     }
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     func render(value: Double, muted: Bool, symbol: String) {
         self.value = value

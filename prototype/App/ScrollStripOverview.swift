@@ -385,7 +385,7 @@ final class StripOverviewView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
@@ -613,7 +613,7 @@ private final class EdgeScrollLinkProxy: NSObject {
 }
 
 private final class FlippedContentView: NSView {
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 }
 
 /// 一扇窗缩小后的画面。截图到之前先放 App 图标和名字。不翻转（左下原点），画面图层和看一眼的卡片一样摆正。

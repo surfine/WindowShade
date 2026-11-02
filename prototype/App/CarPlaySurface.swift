@@ -532,7 +532,7 @@ final class CarPlaySurfaceView: NSView {
     var videoBounds: NSRect { bounds }
 
     override var acceptsFirstResponder: Bool { true }
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53 { onExit?(); return } // Esc 永远是回桌面

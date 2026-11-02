@@ -250,7 +250,7 @@ final class ShadeThumbnailView: NSView {
         }
     }
 
-    override var isFlipped: Bool { false }
+    nonisolated override var isFlipped: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     // Tab 聚焦即看一眼（和指针停上去一样），Return / 空格展开。

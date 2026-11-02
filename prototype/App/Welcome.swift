@@ -39,7 +39,7 @@ final class WelcomeHeightProxy: NSObject {
 
 /// 页的内容放在这一块里：翻页时整块淡入、上浮，旧的那一块用截图淡出。
 final class WelcomeContent: NSView {
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 }
 
 @MainActor
@@ -121,7 +121,7 @@ final class WelcomeView: NSView {
     static let size = NSSize(width: WelcomeFlow.Layout.width, height: WelcomeFlow.Layout.practiceHeight)
     private static let contentWidth = WelcomeFlow.Layout.width - WelcomeFlow.Layout.padding * 2
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -1052,7 +1052,7 @@ final class WelcomeHero: NSView {
     /// 右块在整条里的横向起点。
     private static var resultTileX: CGFloat { (SettingsExplainerView.tileSize.width + SettingsExplainerView.gap) * scale }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     init() {
         let size = CGSize(width: SettingsExplainerView.bandSize.width * SettingsExplainerView.welcomeScale,
@@ -1197,7 +1197,7 @@ final class WelcomePracticeTarget: NSView {
     var onDoubleClick: (() -> Void)?
     var rolled = false
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var mouseDownCanMoveWindow: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
@@ -1258,7 +1258,7 @@ final class WelcomePermissionCard: NSView {
     var buttons: [NSView] { rows.map(\.button) }
     private let separator = NSBox()
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     init() {
         super.init(frame: .zero)

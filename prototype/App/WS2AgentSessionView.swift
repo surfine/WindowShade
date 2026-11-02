@@ -173,5 +173,5 @@ import ObjectiveC
 }
 
 @MainActor private final class WS2AgentSessionDocumentView: NSView {
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 }

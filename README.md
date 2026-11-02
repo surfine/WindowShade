@@ -48,7 +48,7 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releases/latest), open it, drag `WindowShade.app` onto Applications, then open it and follow the permission prompts. (The ZIP is the same app and is what in-app updates use.) It lives in the menu bar and stays out of your Dock.
 
 - **Needs macOS 15 or later and Apple Silicon.** There’s no Intel build.
-- **1.0.20 download (decimal MB):** 22.19 MB ZIP, or a 23.24 MB DMG for a first install.
+- **1.0.20 download (decimal MB):** 22.19 MB ZIP, or a 23.25 MB DMG for a first install.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - **With Homebrew:** `brew install --cask surfine/tap/windowshade`.

@@ -117,7 +117,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     nonisolated(unsafe) private var accessibilityObserver: NSObjectProtocol?
     private var laidOutSize: CGSize = .zero
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
     var scale: CGFloat { window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2 }
     var reduced: Bool { Motion.reduced }

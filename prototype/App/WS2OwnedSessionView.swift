@@ -262,7 +262,7 @@ import Cocoa
     }
 }
 
-@MainActor private final class WS2OwnedDocumentView:NSView { override var isFlipped:Bool { true } }
+@MainActor private final class WS2OwnedDocumentView:NSView { nonisolated override var isFlipped:Bool { true } }
 
 @MainActor private final class WS2OwnedDraftScrollView:NSScrollView {
     override func draw(_ dirtyRect:NSRect) {

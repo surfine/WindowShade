@@ -23,7 +23,7 @@ final class WindowBrowserTrafficLightButton: NSButton {
 
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
@@ -121,7 +121,7 @@ final class WindowBrowserTrafficLights: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var intrinsicContentSize: NSSize { NSSize(width: Self.groupWidth, height: Self.height) }
 
     func configure(items: [WindowBrowserActionItem]) {

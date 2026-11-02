@@ -124,7 +124,7 @@ final class WindowBrowserMaterialView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     /// 重新按当前环境选择材质。已打开的面板在浅深色、对比度或减少透明度变化时调用；
     /// 材质种类不变时只刷新颜色与圆角，不重建视图树。

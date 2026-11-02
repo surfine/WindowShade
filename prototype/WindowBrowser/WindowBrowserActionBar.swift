@@ -102,7 +102,7 @@ final class WindowBrowserActionBar: NSView {
         layer?.borderWidth = WindowBrowserSurfaceStyle.hairlineWidth(for: self)
     }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     /// 紧凑操作条末尾固定的“更多操作”入口：不随动作数量变化，始终可在
     /// 悬停/选中状态的一条里发现（右键菜单仍然是同一份菜单）。

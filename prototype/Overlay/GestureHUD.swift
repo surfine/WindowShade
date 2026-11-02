@@ -340,7 +340,7 @@ final class GestureHUDView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
-    override var isFlipped: Bool { false }
+    nonisolated override var isFlipped: Bool { false }
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()

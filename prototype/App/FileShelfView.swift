@@ -14,7 +14,7 @@ import QuickLookUI
 import QuickLookThumbnailing
 import UniformTypeIdentifiers
 
-private final class FlippedView: NSView { override var isFlipped: Bool { true } }
+private final class FlippedView: NSView { nonisolated override var isFlipped: Bool { true } }
 
 // MARK: - 图标与缩略图
 
@@ -472,7 +472,7 @@ final class FileShelfPill: NSView {
         return NSSize(width: ceil(text.width + icon) + 18, height: 22)
     }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     override func draw(_ dirtyRect: NSRect) {
         NSColor.white.withAlphaComponent(pressed ? 0.28 : hovering ? 0.2 : 0.12).setFill()
@@ -521,7 +521,7 @@ final class FileShelfRemoveButton: NSView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     override func draw(_ dirtyRect: NSRect) {
         NSColor.black.setStroke()
@@ -646,7 +646,7 @@ final class FileShelfTileView: NSView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     func update(row: FileShelfRow, art: NSImage, name: String) {
         guard self.row != row || self.shownName != name else { self.art = art; needsDisplay = true; return }
@@ -890,7 +890,7 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
 
     private func buildHeader() {

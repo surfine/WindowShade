@@ -151,7 +151,7 @@ final class LaunchpadUninstallOverlay: NSView {
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
 
     override var acceptsFirstResponder: Bool {
         get { true }

@@ -35,7 +35,7 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
     }
     var interactionMinimumHeight: CGFloat { mode == .alert ? 52 : 68 }
     var interactionCornerRadius: CGFloat { mode == .running ? 28 : 24 }
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
 
     private static let orange = NSColor(srgbRed: CountdownTimerStyle.orangeRGB.0, green: CountdownTimerStyle.orangeRGB.1,

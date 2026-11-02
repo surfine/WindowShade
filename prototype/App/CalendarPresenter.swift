@@ -89,7 +89,7 @@ final class CalendarCard: NSView, WS2LeaseContent {
 
     var interactionCornerRadius: CGFloat { 28 }
     var interactionSize: NSSize { Self.cardSize }
-    override var isFlipped: Bool { true }
+    nonisolated override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
 
     private static let green = NSColor(srgbRed: 0x30 / 255, green: 0xD1 / 255, blue: 0x58 / 255, alpha: 1)

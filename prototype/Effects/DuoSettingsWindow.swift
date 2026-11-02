@@ -11,7 +11,7 @@ private final class SettingsPageHost: NSView {
   var appearanceDidChange: (() -> Void)?
   /// ⌘F：窗口把快捷键沿视图树往下问，这一页总在树里（侧栏收起时也在）。
   var findShortcut: (() -> Void)?
-  override var isFlipped: Bool { true }
+  nonisolated override var isFlipped: Bool { true }
   override func performKeyEquivalent(with event: NSEvent) -> Bool {
     if let findShortcut, event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
        event.charactersIgnoringModifiers?.lowercased() == "f" {
