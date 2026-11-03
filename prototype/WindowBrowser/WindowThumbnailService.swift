@@ -1,15 +1,9 @@
-// 新窗口浏览功能的缩略图服务：有界缓存、在途请求登记、订阅取消与并发预算。
-// 与折叠路径的 WindowSnapshotCache 完全分开：这里只保存新面板自己的静态图，
-// 不把低分辨率缩略图交给原貌卷帘的完整标题栏捕获，也不延长折叠截图的寿命。
-//
-// 记账模型把四件事分开：
-// - 逻辑请求键 `WindowThumbnailKey`（窗口身份 + 档位 + 失效代数）；
-// - 实际运行的物理任务 `Job`（不可复用的 JobID，queued/running/finished）；
-// - 消费者订阅 `WindowThumbnailSubscription`（完成、失败、取消后都进入终态）；
-// - 已完成图像缓存 `entries`。
-//
-// 只有 `drainQueueLocked()` 能把任务从 queued 变成 running；已经真正开始的物理
-// 任务即使被界面取消也继续占用并发额度，直到后端的真实完成回调用 JobID 结算。
+// 新窗口浏览的缩略图服务：有界缓存、在途请求登记、订阅取消与并发预算；与折叠路径的 WindowSnapshotCache 完全分开
+// （只存新面板自己的静态图，不把低清缩略图交给原貌卷帘的完整捕获、不延长折叠截图寿命）。
+// 记账四件分离：逻辑请求键 WindowThumbnailKey（身份+档位+失效代数）、物理任务 Job（不可复用 JobID，
+// queued/running/finished）、订阅 WindowThumbnailSubscription（完成/失败/取消都进终态）、已完成缓存 entries。
+// 只有 drainQueueLocked() 能把任务 queued→running；真正开始过的物理任务即使被界面取消也继续占并发额度，
+// 直到后端真实完成回调按 JobID 结算。
 
 import Cocoa
 

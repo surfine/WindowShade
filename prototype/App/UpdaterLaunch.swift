@@ -1,18 +1,11 @@
 // 应用内更新：main.swift 里、NSApplication 之前要做的两件事。
-//
-// 1. `--self-check`：长期约定，每一版都得支持。不建窗口、不碰授权、不联网、不写真实状态；
-//    只让系统加载全部链接的框架（包括 Sparkle 和 libswift_Concurrency），载入 Duo.metallib，读一遍资源，
-//    打印带 build 号的一行就退出。安装前的关和发布关都靠它试跑新版。
-//    发布关第 4.9 步另用两个参数（也是长期约定，从第一个带更新器的版本起）：
-//      --self-check --write-sample-state <目录>  这一版把停车日志、偏好、更新日志的样例写进 <目录>
-//      --self-check --read-state <目录>          上一版读 <目录> 里的样例，读得懂返回 0
-//    两者都只碰给定的目录；读偏好只读不写。
-// 2. 读更新日志：我是新版就记一条启动（必要时直接交给旧版的看护换回），我是旧版就收尾。
-//
-// 接线（main.swift 最前面，在 `let app = NSApplication.shared` 之前）。**发布阻断项**：少了这两行，
-// 安装前的试跑会拉起一整个 WindowShade，每次都超时不装；新版也写不了 healthy，每次更新都会被换回。
-//     if let code = UpdateLaunch.handleEarlyArguments() { exit(code) }
-//     UpdateLaunch.recordLaunch()
+// 1. `--self-check`（长期约定，每版都得支持）：不建窗口、不碰授权、不联网、不写真实状态，只让系统加载全部链接
+//    框架（含 Sparkle、libswift_Concurrency）、载入 Duo.metallib、读一遍资源，打印带 build 号的一行退出。
+//    发布关第 4.9 步另两个长期约定参数：--self-check --write-sample-state <目录>（写停车日志/偏好/更新日志样例）、
+//    --read-state <目录>（上一版读得懂返回 0）；两者只碰给定目录，读偏好只读不写。
+// 2. 读更新日志：新版记一条启动（必要时交给旧版看护换回），旧版收尾。
+// **发布阻断项**：main.swift 里少了 handleEarlyArguments()/recordLaunch() 两行，安装前的试跑会拉起一整个
+// WindowShade、每次都超时不装；新版也写不了 healthy，每次更新都会被换回。
 
 import Foundation
 import Metal
@@ -366,7 +359,6 @@ final class InProcessRestore: @unchecked Sendable {  // 状态只在主线程上
     private(set) var isSuspended = false
     private var pendingLaunch: (@MainActor () -> Void)?
 
-    init() {}
 
     /// 调用方必须在主线程上（main.swift 里、NSApplication 起来之前，或测试的主线程）。
     @discardableResult

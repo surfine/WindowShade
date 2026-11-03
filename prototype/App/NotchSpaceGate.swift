@@ -161,7 +161,7 @@ final class NotchSpaceGate {
     private typealias CopySpaces = @convention(c) (Int32) -> Unmanaged<CFArray>?
 
     private static let skyLight: (main: MainConnection, spaces: CopySpaces)? = {
-        guard let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY),
+        guard let handle = dlopen(SkyLightFramework.path, RTLD_LAZY),
               let mainSymbol = dlsym(handle, "SLSMainConnectionID"),
               let spacesSymbol = dlsym(handle, "SLSCopyManagedDisplaySpaces") else { return nil }
         return (unsafeBitCast(mainSymbol, to: MainConnection.self), unsafeBitCast(spacesSymbol, to: CopySpaces.self))

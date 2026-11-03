@@ -1,12 +1,9 @@
-// 妙控键盘 / 鼠标 / 触控板的电量来源（里程碑 B2，见 docs/device-battery.md）。
-//
-// 读法是公开的 IOKit 注册表：系统为每个带电池的 Apple HID 外设挂一个 AppleDeviceManagementHIDEventService，
-// 上面有 BatteryPercent、DeviceAddress（蓝牙）或 SerialNumber、ProductID、Transport。独立实现，没有拿 AirBattery 的代码。
-// - 连上 / 断开靠 IOKit 匹配通知（首次匹配、终止），不扫描、不轮询设备列表；启动时已经连着的只建档、不播报。
-// - 连着的设备每 2 分钟读一次电量（读的是系统驱动维护的那份数，不发起任何连接，没有副作用）。
-// - 每次 IOIteratorNext 拿到的对象都在本轮释放；保留的服务对象在断开或停止时释放。
-// - 没有可靠的充电字段：充电状态一律 unknown（BatteryStatusFlags 的含义没有公开定义，不猜）。
-// - 名字按型号表给（App/DeviceBatteryCopy.swift）；注册表里的 Product 常是空串，不靠它。
+// 妙控键盘/鼠标/触控板的电量来源（里程碑 B2，docs/device-battery.md）。读公开 IOKit 注册表：每个带电池的 Apple HID
+// 外设挂一个 AppleDeviceManagementHIDEventService，有 BatteryPercent、DeviceAddress（蓝牙）或 SerialNumber、
+// ProductID、Transport；独立实现没拿 AirBattery 的代码。连/断靠 IOKit 匹配通知（首次匹配、终止），不扫描不轮询，
+// 启动时已连着的只建档不播报；连着的每 2 分钟读一次（读系统驱动维护的那份，不发起连接无副作用）；IOIteratorNext
+// 的对象本轮释放、保留的服务在断开或停止时释放；没有可靠充电字段——一律 unknown（BatteryStatusFlags 含义未公开，
+// 不猜）；名字按型号表（App/DeviceBatteryCopy.swift），注册表的 Product 常是空串不靠它。
 
 import Foundation
 import IOKit

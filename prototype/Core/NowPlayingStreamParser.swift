@@ -1,13 +1,8 @@
-// 正在播放的推送流：把 mediaremote-adapter `stream` 模式吐出的 JSON 行解析成一份现状。
-// 纯逻辑，只依赖 Foundation，不碰 AppKit、不读时钟（时间由调用方传入）。
-//
-// 输入格式（上游 README，固定提交见 prototype/Vendor/mediaremote-adapter/UPSTREAM.md）：
-//   {"type":"data","diff":false,"payload":{...}}
-// payload 为空字典表示没有播放器在报告；diff 为 true 时只含变了的键，值为 null 表示该键消失。
-// 我们启动时带 --no-diff --no-artwork --micros，但 diff 和秒单位也照样认，免得上游换默认值就失明。
-//
-// 只留下画卡片要用的几个键（白名单）。封面数据、专辑、队列等一律不进内存里的状态——
-// 即使上游哪天忽略了 --no-artwork，这里也不会把几百 KB 的图留下来。
+// 正在播放的推送流：把 mediaremote-adapter `stream` 模式吐出的 JSON 行解析成现状。纯逻辑只依赖 Foundation，
+// 不读时钟（时间由调用方传入）。格式见上游 README（固定提交在 Vendor/mediaremote-adapter/UPSTREAM.md）：
+// {"type":"data","diff":false,"payload":{...}}；payload 空字典 = 没有播放器，diff 只含变了的键、null 表示键消失。
+// 我们带 --no-diff --no-artwork --micros 启动，但 diff 与秒单位也认（免得上游换默认值就失明）。只留画卡片要用的
+// 白名单键——封面、专辑、队列一律不进内存状态（即使上游哪天忽略 --no-artwork，也不留几百 KB 的图）。
 
 import Foundation
 
@@ -132,7 +127,6 @@ struct NowPlayingLineBuffer {
     /// 当前这一行已经超长，丢到下一个换行为止。
     private var discarding = false
 
-    init() {}
 
     mutating func append(_ chunk: Data) -> [String] {
         var lines: [String] = []

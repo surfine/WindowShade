@@ -1,16 +1,5 @@
 // WindowShade 主文件：全局常量与 AppDelegate 骨架（启动、观察者、生命周期）。
-//
-// 功能按目录拆分，文件级基础设施也各有归属：
-//   App/        折叠入口、事务、出口、事件 tap、菜单、偏好、悬停预览、权限
-//   Capture/    截图缓存、图像分析、SCShareableContent 缓存
-//   Compatibility/  各 app 窗口策略与按应用的判断
-//   Core/       折叠状态机与折叠相关的值类型
-//   Overlay/    覆盖层窗口与视图
-//   Private/    SkyLight 私有 API 隔离层
-//   Recovery/   恢复日志与离屏救援
-//   Support/    日志、主线程活动标记与卡顿哨兵
-//   Window/     AX 辅助、窗口列表、外框画像、坐标换算
-//
+// 功能按目录拆分，各目录职责与文件归属见 docs/code-map.md；新写的判断逻辑放 Core/ 并配 tests/run-*.sh，App/ 只留接线层。
 // 编译与运行见 prototype/build.sh（自动收集源文件，签名身份走环境变量）。
 
 import Cocoa
@@ -1102,8 +1091,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 间隔取 5 秒：够快能自愈，够慢不打扰。
     private func startEnvironmentWatch() {
         guard environmentWatch == nil else { return }
-        environmentWatch = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.runEnvironmentCheck() }
+        environmentWatch = MainTimer.repeating(interval: 5) { [weak self] in
+            self?.runEnvironmentCheck()
         }
         lastAccessibilityTrusted = AXIsProcessTrusted()
     }

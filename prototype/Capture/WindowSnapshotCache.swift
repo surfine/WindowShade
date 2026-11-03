@@ -1,15 +1,7 @@
-// 折叠截图的短 TTL 缓存：同一窗口在 500ms 内反复折叠/展开时复用上次截图，
-// 避免重复 ScreenCaptureKit capture。
-//
-// 缓存 key = 窗口 ID + capture variant + 请求像素档位：
-// 预览路径（maxPixelSize 720×480）与原貌卷帘（完整 Retina）分辨率差很多，
-// 不能互相复用——否则小图会在 TTL 内被完整截图请求错误复用，或完整 Retina
-// 大图被小预览路径复用、白占内存。
-//
-// 内存上限按 bytesPerRow × height 估算总成本，避免快速折叠多个大窗口时
-// 产生瞬时内存尖峰。TTL 保持 500ms 短寿命。
-//
-// 只服务折叠路径（captureWindowWithTimeout），不缓存悬停预览的懒截图，
+// 折叠截图的短 TTL 缓存：同一窗口 500ms 内反复折叠/展开时复用上次截图，避免重复 ScreenCaptureKit capture。
+// key = 窗口 ID + capture variant + 请求像素档位：预览（720×480）与原貌卷帘（完整 Retina）分辨率差很多不能互相复用
+// （小图会被完整请求错误复用，或 Retina 大图被小预览白占内存）。内存上限按 bytesPerRow × height 估总成本，
+// 防快速折叠多个大窗口的瞬时尖峰。只服务折叠路径（captureWindowWithTimeout），不缓存悬停预览的懒截图——
 // 避免把隐藏窗口的错误快照复用进卷帘条。
 
 import Cocoa

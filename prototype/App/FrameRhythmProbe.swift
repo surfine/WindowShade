@@ -1,11 +1,9 @@
 // MO-07 帧节奏探针（docs/plans/identity-and-motion-2026-10-09.md §5.4）。开发版启动参数触发：
-//   WindowShade --frame-rhythm-probe [--runs N] [--out path.json]
-// 平时不加载、不起显示链接：只有 `FrameRhythmProbe.isRequested` 为真时由入口调用 `run`。
-// 计算在 `Core/FrameRhythmAnalysis.swift`；这里只负责在屏幕刷新时钟上采样呈现层。
-//
-// 场景（各 N 次，默认 10）：展开、收起、对勾、倒数换字、展开途中每 50 ms 反向打断。
-// 采样对象是探针自己的无边框小窗口里的图层，用的是真实令牌（Motion.spring）和 Motion.Fade / DigitSwap 的时长，
-// 量的是"令牌 + 显示链接 + Core Animation"这一层；接进真实刘海面板的那一步见 docs/plans 里 MO-02 的说明。
+// WindowShade --frame-rhythm-probe [--runs N] [--out path.json]。平时不加载不起显示链接，只有 isRequested 为真
+// 时入口调 run。计算在 Core/FrameRhythmAnalysis.swift，这里只在屏幕刷新时钟上采样呈现层。场景（各 N 次默认 10）：
+// 展开、收起、对勾、倒数换字、展开途中每 50ms 反向打断；采样对象是探针自己的无边框小窗图层，用真实令牌
+//（Motion.spring）与 Motion.Fade / DigitSwap 时长，量的是“令牌 + 显示链接 + Core Animation”这层；接进真实
+// 刘海面板那步见 docs/plans 的 MO-02。
 
 import Cocoa
 import QuartzCore

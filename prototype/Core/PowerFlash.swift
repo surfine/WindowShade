@@ -1,11 +1,8 @@
-// 这台 Mac 的“电量那一下”（设计稿「日历、电量与计时器」电量一节，工作包 PWR-2）。纯逻辑，不碰 AppKit：
-// 来源把读数喂进来，这里决定要不要在紧凑大小里闪一下、闪什么颜色和符号。
-// - 插上：从“没插电”变成“插着电”闪一下（左耳闪电，右耳百分比）；30 秒内再插不再闪。
-// - 拔掉：不出声。
-// - 充满：系统报 IsCharged 才算；同一次插电只闪一次；“优化充电停在 80%”不是充满。
-// - 低电量模式：打开闪一下（黄色），关掉不出声；和低电量同时发生时只出低电量那一句。
-// - 撞上别的提醒（busy）就不出，也不记入防抖；不补播。
-// - 第一条读数只当基线，不闪；读不到的状态不当成“没插电”。
+// 这台 Mac 的“电量那一下”（「日历、电量与计时器」电量节，PWR-2）纯逻辑不碰 AppKit：来源喂读数，这里决定要不要
+// 在紧凑大小里闪一下、闪什么颜色符号。插上：没插电→插着电闪一下（左耳闪电、右耳百分比），30 秒内再插不再闪；
+// 拔掉不出声；充满：系统报 IsCharged 才算、同一次插电只闪一次（“优化充电停在 80%”不算）；低电量模式打开闪一下黄色、
+// 关掉不出声，与低电量同时只出低电量那句；撞上别的提醒（busy）就不出也不记防抖、不补播；第一条读数只当基线不闪，
+// 读不到的状态不当“没插电”。
 
 import Foundation
 
@@ -45,7 +42,6 @@ struct PowerFlashPolicy: Sendable {
   private var fullFlashedThisPlug = false
   private var lastPlugFlashAt: Double?
 
-  init() {}
 
   static func tone(percent: Int, lowPowerMode: Bool) -> PowerFlashTone {
     if lowPowerMode { return .yellow }

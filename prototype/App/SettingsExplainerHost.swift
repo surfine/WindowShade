@@ -1,15 +1,10 @@
-// 讲解带接到设置页的行上（1.0.18 工作单 9）：悬停、键盘焦点、点选住、分段控件逐段悬停、开关状态，
-// 都换成 `ExplainerDirector` 的事件，再把结果交给 `SettingsExplainerView` 去摆。
-//
-// 用法（页的人只碰这两处，见 Core/ExplainerScript.swift 文件头）：
-//   let (root, stack) = makeSettingsPageRoot(explainer: .gestures)   // 顶上插 640 × 200 的讲解带，下面留 14 pt
-//   makeUnifiedToggleRow(…, explainer: ExplainerRow.Gestures.titleBar) // 行构造器给 explainer:
-// 行构造器只给行“挂个牌”（`SettingsExplainerHost.tag`）；讲解带进了窗口才在整页上找挂了牌的行接线，
-// 所以行建在哪张卡片里、包几层都不影响。没有挂牌的行不接，指上去回到页默认。
-//
-// 指针一进行就换（不等停留，换讲解在 120 ms 以内）；指针扫过几行时每进一行改一次目标，不排队。
-// 点一下行（不是控件）选住，指针移开也接着演；再点放开。开关、分段控件的 target / action 原样保留，
-// 这里只在它们之后多收一份通知。整页重建（开关一拨、语言切换）在同一拍里拆旧装新：状态机接着用，不重演页默认。
+// 讲解带接到设置页的行上（1.0.18 工作单 9）：悬停、键盘焦点、点选住、分段逐段悬停、开关状态都换成 ExplainerDirector
+// 的事件，结果交给 SettingsExplainerView 摆。用法（页的人只碰这两处，见 Core/ExplainerScript.swift 文件头）：
+//   makeSettingsPageRoot(explainer: .gestures)（顶上插 640×200 讲解带、下留 14pt）；行构造器给 explainer: 挂牌
+// （SettingsExplainerHost.tag）——讲解带进窗口才在整页找挂牌的行接线，行建在哪张卡片、包几层都不影响；没挂牌的行
+// 不接、指上去回页默认。指针一进行就换目标（不等停留，换讲解 120ms 内；扫过几行每进一行改一次不排队）；点行选住、
+// 移开接着演、再点放开；开关与分段的 target/action 原样保留，只在它们之后多收一份通知。整页重建（开关一拨、语言切换）
+// 同一拍拆旧装新：状态机接着用，不重演页默认。
 
 import Cocoa
 import IOKit

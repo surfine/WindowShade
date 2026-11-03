@@ -239,7 +239,7 @@ final class EffectSoakProbe {
       presentedCount: renderer["presentedCount"] ?? nil,
       stalePresentedFrames: renderer["stalePresentedFrames"] ?? nil,
       mainThreadStalls: counters.map { Double($0.count) },
-      longestStallMs: counters.map { $0.longestMs },
+      longestStallMs: counters.map(\.longestMs),
       unreleasedObjects: Double(unreleased))
   }
   /// 跑这一次的机器与环境。资格数字离开这些元数据就没法比较，所以存在同一份输出里。

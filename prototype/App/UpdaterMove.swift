@@ -1,18 +1,10 @@
-// 应用内更新：“移到‘应用程序’”。欢迎窗口第一次打开时需要就多这一步；更新小窗里位置不对时也走这里。
-//
-// 不接 LetsMove 库，只借它的流程：复制正在运行的这一份（被系统挪走时 Bundle.main.bundleURL 也读得到）到目标卷的临时目录，
-// 清掉隔离标记，验签名和 DR 与自己相同，再改名放进去；目标处有旧版就原子交换，换下来的移到废纸篓；
-// 从新位置打开（带 --after-move），当前进程退出。“下载”里的原件不动。
-// 两条保护（欢迎窗口和更新小窗都走 moveToApplications，所以都有）：
-//   “应用程序”里已有的那一份不比自己旧，就改成打开它，绝不拿旧的换掉新的；
-//   目标处已有的包签名要求（DR）和自己不同，不替换（那不是我们签的同一个 WindowShade），按“没能移过去”处理。
-//
-// 接线（Welcome.swift，欢迎窗口三步之前、同一个舞台）：
-//     if let step = UpdaterMove.shared.welcomeStep() { …按 step 的文字画这一步… }
-//     主按钮：UpdaterMove.shared.performPrimary { result in if case .failed = result { …显示 UpdateCopy.moveFailed 和“在访达中显示”… } }
-//     “跳过”：UpdaterMove.shared.declineForWelcome()
-//     新进程带 --after-move 时（UpdaterMove.shared.launchedAfterMove）欢迎窗口从第 1 步接着走。
-//     授权页导语下：if UpdaterMove.shared.isStandardAccount { UpdateCopy.standardAccount }
+// 应用内更新：“移到‘应用程序’”。不接 LetsMove 库，只借流程：复制正在运行的这份到目标卷临时目录，清隔离标记，
+// 验签名与 DR 与自己相同，再改名放进去；目标处有旧版就原子交换、换下来的进废纸篓；从新位置打开（--after-move）后退出。
+// 两条保护（欢迎窗口与更新小窗都走 moveToApplications）：“应用程序”里已有的那份不比自己旧就改成打开它，绝不拿旧换新；
+// 目标处包的 DR 与自己不同不替换（不是同一个签名的 WindowShade），按“没能移过去”处理。
+// 接线（Welcome.swift 三步之前）：welcomeStep() 画这一步；主按钮 performPrimary（失败显示 UpdateCopy.moveFailed
+// 和“在访达中显示”）；跳过 declineForWelcome()；--after-move 时（launchedAfterMove）从第 1 步接着走；
+// 标准账户在授权页导语下补 UpdateCopy.standardAccount。
 
 import Cocoa
 

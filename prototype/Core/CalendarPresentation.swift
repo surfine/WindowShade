@@ -275,7 +275,6 @@ struct CalendarReminderEngine: Sendable {
     private(set) var joined: Set<String> = []
     private var resumedAt: Date?
 
-    init() {}
 
     /// 点了“加入”：这件活动随即结束，不再出现。
     mutating func markJoined(_ id: String) {

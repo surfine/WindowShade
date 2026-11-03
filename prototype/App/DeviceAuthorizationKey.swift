@@ -1,13 +1,10 @@
-// 本机授权密钥：Secure Enclave 里一把只有当前这组 Touch ID 指纹认证后才能用的 P-256 签名密钥
-// （认证里程碑 A，见 docs/touch-id-island.md）。
-//
-// 为什么用 CryptoKit 的 dataRepresentation 而不是钥匙串里的永久 SecKey：WindowShade 用开发证书签名、不带
-// entitlements，写 data-protection 钥匙串会得到 -34018（tools/secure-enclave-probe 2026-10-01 实测）。
-// dataRepresentation 是 Secure Enclave 包裹过的句柄，私钥本身从不离开 Secure Enclave；文件丢了只是要重建。
-//
-// 签名必须用刘海里那块原生 Touch ID 控件刚刚认证过的同一个 LAContext，并且不允许它再弹任何界面：
-// 用户只看到一次 Touch ID，认证没过签名就一定失败——“能用 Touch ID”不等于“认证通过”。
-// 指纹增删后密钥自动失效（biometryCurrentSet）：确认是指纹真的变了才删掉它，如实告诉用户，下次确认时重建。
+// 本机授权密钥：Secure Enclave 里一把只有当前这组 Touch ID 指纹认证后才能用的 P-256 签名密钥（认证里程碑 A，
+// docs/touch-id-island.md）。用 CryptoKit 的 dataRepresentation 而非钥匙串永久 SecKey 的原因：WindowShade 用开发
+// 证书签名、不带 entitlements，写 data-protection 钥匙串会得到 -34018（tools/secure-enclave-probe 2026-10-01
+// 实测）；dataRepresentation 是 SE 包裹的句柄，私钥从不离开 SE，文件丢了只是要重建。签名必须用刘海里那块原生
+// Touch ID 控件刚认证过的同一个 LAContext 且不许再弹任何界面——用户只看到一次 Touch ID，认证没过签名必失败
+// （“能用 Touch ID”≠“认证通过”）；指纹增删后密钥自动失效（biometryCurrentSet）：确认是指纹真变了才删、如实
+// 告诉用户，下次确认时重建。
 
 import CryptoKit
 import Foundation

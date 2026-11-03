@@ -39,7 +39,6 @@ final class VisionFaceEmbedder: FaceEmbedder, @unchecked Sendable {
 
     private let context = CIContext(options: [.cacheIntermediates: false])
 
-    init() {}
 
     /// 这台机器的 Vision 是否支持钉死的修订。不支持就不给特征，不悄悄换修订。
     static var isSupported: Bool {

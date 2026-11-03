@@ -389,7 +389,7 @@ extension FaceCaptureWorker {
             throw error
         }
     }
-    private var requestedFPS: Double { consumers.values.map { $0.purpose.requestedFPS }.max() ?? FaceCameraTuning.targetSourceFPS }
+    private var requestedFPS: Double { consumers.values.map(\.purpose.requestedFPS).max() ?? FaceCameraTuning.targetSourceFPS }
     private var wantsIdentity: Bool { consumers.values.contains { $0.purpose == .identity } }
     /// 刷脸实验的特征后端；只有存在 `.identity` 订阅者时才交给相机工作队列。
     var identityEmbedder: (any FaceEmbedder)? {

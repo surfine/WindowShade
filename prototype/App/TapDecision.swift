@@ -1,12 +1,7 @@
-// 双击/三击时「要不要吞掉这个事件」的原子状态机（PERF-03）。
-//
-// 全局输入回调跑在自己的线程上，主线程可能正忙着（菜单跟踪、目标 App 的同步 AX）。
-// 一次判定只允许一个截止时间：到点还没定案就作废并放行，且迟到的任务不得再折叠。
-// 状态迁移只有一条主线：
-//     pending ──begin()──▶ admitted ──finish()──▶ finished
-//        └────abandon()────▶ abandoned
-// `begin()` 与 `abandon()` 互斥：谁先拿到锁谁赢，另一个失败。abandon 成功即保证
-// `begin()` 必然失败，所以「已放行」与「迟到折叠」不可能同时发生。
+// 双击/三击「要不要吞掉这个事件」的原子状态机（PERF-03）。全局输入回调在自己线程上，主线程可能正忙（菜单跟踪、
+// 目标 App 的同步 AX）：一次判定只允许一个截止时间，到点没定案就作废放行、迟到任务不得再折叠。主线：
+// pending ──begin()→ admitted ──finish()→ finished；└─abandon()→ abandoned。begin() 与 abandon() 互斥
+// （谁先拿锁谁赢），abandon 成功即保证 begin() 必败——“已放行”与“迟到折叠”不可能同时发生。
 
 import Foundation
 import Synchronization

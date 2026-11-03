@@ -156,7 +156,6 @@ struct WS2DisplayHeadTracker: Sendable {
     /// 键是稳定的显示器编号。
     private var baselines: [UInt32: Baseline] = [:]
 
-    init() {}
 
     /// 向右为正（与 WS2HeadSample.yaw 一致）。
     mutating func update(display: UInt32, source: WS2HeadSource, yaw: Double) -> WS2HeadTurn {

@@ -1,15 +1,10 @@
-// 画中画（iPadOS 的 Picture in Picture，但对任意窗口）：窗口缩成一张实时画面浮在屏幕角落，原窗口让开。
-// 手感照 iPad：拖着一比一跟手，松手按速度甩到最近的角；推出屏幕左右边就藏起来，边上留一小片带箭头的玻璃，
-// 往里拉或点一下回来；捏合、⌘ 加滚轮在三档大小之间换。多出来的：
-// - 任意窗口都行（会议、聊天、终端、构建日志、表格、文档），不只是视频和它认得的文件；
-// - 只看窗口里的一块：框出播放器、发言人、终端最后几行，只截这一块；
-// - 滚轮直接滚原窗口；上一页、下一页也发给原窗口（按一屏滚），不切前台；播放 / 暂停走系统媒体键；
-// - 可以同时开几个，同一个角落排成一列；跟着到每张桌面、盖在全屏 App 上；
-// - 藏起来时停掉截取，指针在上面时每秒 30 帧，平时 15 帧。
-// 双击或点“回到原处”，画面放大回原来的位置，真窗口回来（位置和大小都回来）并交到前面。原窗口让开时推到屏幕边外
-// 只留两点（那一边挨着别的屏幕就换一边，两边都挨着就不进）；进之前先写恢复记录（和侧拉同一个），本应用异常退出后
-// 下次启动会把它放回来。显示器拔掉了，那块屏上的画中画就回到原处，窗口挪进还在的屏幕。
-// 算法（大小、吸附、藏起来、只看一块的换算、让开的位置）见 Core/PiPLayout.swift。
+// 画中画（iPadOS 的 PiP，但对任意窗口）：窗口缩成实时画面浮在角落、原窗口让开；细节与算法见 docs/pip.md 与
+// Core/PiPLayout.swift。手感照 iPad：拖着一比一跟手、松手按速度甩到最近的角；推出左右边藏起、边上留带箭头的小玻璃，
+// 往里拉或点一下回来；捏合、⌘ 滚轮换三档大小。多出来的：任意窗口（不限视频）；可只框窗口里的一块（播放器/发言人/
+// 终端最后几行）；滚轮直滚原窗、上一页/下一页发给原窗（按一屏滚）不切前台、播放暂停走系统媒体键；可同时几个同角排一列；
+// 跟到每张桌面、盖全屏 App；藏起停截取，指针在上面 30 帧/秒、平时 15。双击或“回到原处”放大回原位、真窗回来交到前面；
+// 让开时推到屏边外只留两点（挨着别的屏换一边、两边都挨着不进），进之前写恢复记录（与侧拉同一套），异常退出后下次启动
+// 放回来；显示器拔掉则回原处、窗口挪进还在的屏。
 
 import Cocoa
 import ScreenCaptureKit
@@ -33,7 +28,7 @@ final class PictureInPictureController {
 
     // MARK: - 探针用
 
-    func panelFrameForProbe(_ id: CGWindowID) -> NSRect? { sessions[id].map { $0.panel.frame } }
+    func panelFrameForProbe(_ id: CGWindowID) -> NSRect? { sessions[id].map(\.panel.frame) }
     func isStashedForProbe(_ id: CGWindowID) -> Bool { sessions[id]?.stashed != nil }
     func framesForProbe(_ id: CGWindowID) -> UInt64 { sessions[id]?.capture.pixelFrameCount ?? 0 }
     func cornerForProbe(_ id: CGWindowID) -> PiPCorner? { sessions[id]?.corner }

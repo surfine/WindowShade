@@ -164,7 +164,7 @@ enum WindowBrowserActionPresentation {
     }
 
     /// Mac 上做同一件事按哪一下：菜单里右侧显示，悬停提示里跟在名字后面。
-    /// 替他做成的同时让他看到 Mac 的按法（从 Windows 来的人习惯从任务栏再开一个窗口；见 docs/direction.md）。
+    /// 替他做成的同时让他看到 Mac 的按法（从 Windows 来的人习惯从任务栏再开一个窗口；见 docs/lost-notes.md（原 direction.md））。
     static func macShortcut(for action: WindowBrowserAction) -> (key: String, label: String)? {
         switch action {
         case .newWindow: return ("n", "⌘N")

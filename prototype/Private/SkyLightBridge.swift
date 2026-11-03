@@ -1,11 +1,5 @@
-// SkyLight 私有 API 隔离层。
-//
-// 把 _AXUIElementGetWindow 与 SLS 符号封装移出主实现，统一经由
-// PrivateSLSWindowMover 访问；所有调用方只依赖这一个入口，
-// 私有符号不可用时由内部 fallback 返回失败，调用方自行降级
-// （AX 移动 → hide/minimize）。
-//
-// 编译单元：prototype/Private/SkyLightBridge.swift
+// SkyLight 私有 API 隔离层：_AXUIElementGetWindow 与 SLS 符号封装移出主实现，统一经 PrivateSLSWindowMover 访问；
+// 私有符号不可用时内部 fallback 返回失败，调用方自行降级（AX 移动 → hide/minimize）。
 
 import Cocoa
 import ApplicationServices
@@ -42,7 +36,7 @@ final class PrivateSLSWindowMover: Sendable {
 
     private init() {
         let paths = [
-            "/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight",
+            SkyLightFramework.path,
             "/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices"
         ]
         var loadedHandle: UnsafeMutableRawPointer?

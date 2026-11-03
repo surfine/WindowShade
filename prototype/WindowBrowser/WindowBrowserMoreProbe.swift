@@ -41,7 +41,7 @@ extension GlanceProbe {
       try await Task.sleep(for: .milliseconds(50), clock: .suspending)
     }
     let everything = browser.probeListedKeys
-    let appsListed = Set(everything.map { $0.application.pid }).count
+    let appsListed = Set(everything.map(\.application.pid)).count
     let regularApps = NSWorkspace.shared.runningApplications.filter { $0.activationPolicy == .regular }.count
     let tally = "the panel lists \(everything.count) windows from \(appsListed) of \(regularApps) apps with a Dock icon"
     guard listed().count >= 2 else {

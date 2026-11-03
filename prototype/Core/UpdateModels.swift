@@ -1,15 +1,10 @@
-// 应用内更新：更新日志、拒绝过的版本、备份记录（App、看护、新旧两版共用）。
-//
-// 文件都在 ~/Library/Application Support/WindowShade/ 下：
-//   Update/journal.json   这一次更新走到哪一步（phase）、新旧版本、备份、启动记录
-//   Update/refused.json   换回过或试跑没过的 build；“拒绝过的版本”只认这一份
-//   Update/guard.pid      看护正在跑时写下的 pid
-//   Update/WindowShadeUpdateGuard.app  从旧版拷出来的看护
-//   Previous/backup.json  备份的版本、build、DR、SHA-256，全部从备份里的 App 读出
-//   Previous/WindowShade-<版本>-<build>.zip(.partial)
-// 每次写都先写临时文件、F_FULLFSYNC 落盘再原子改名，改名后再同步所在目录：掉电后“先写 restoring 再交换”的顺序仍成立。
-// 读改写用 flock 串起来，App 和看护同时写也不丢记录。
-// 格式只加字段不改字段：换回后的旧版必须读得懂。
+// 应用内更新：更新日志、拒绝过的版本、备份记录（App、看护、新旧两版共用）。文件都在
+// ~/Library/Application Support/WindowShade/ 下：Update/journal.json（phase、新旧版本、备份、启动记录）、
+// Update/refused.json（“拒绝过的版本”只认这一份）、Update/guard.pid（看护跑着时的 pid）、
+// Update/WindowShadeUpdateGuard.app（从旧版拷出的看护）、Previous/backup.json（版本、build、DR、SHA-256，
+// 全从备份里的 App 读出）、Previous/WindowShade-<版本>-<build>.zip(.partial)。
+// 每次写都先写临时文件、F_FULLFSYNC 落盘再原子改名，改名后同步所在目录——掉电后“先写 restoring 再交换”的顺序仍成立；
+// 读改写用 flock 串起，App 和看护同时写也不丢记录。格式只加字段不改字段：换回后的旧版必须读得懂。
 
 import Foundation
 

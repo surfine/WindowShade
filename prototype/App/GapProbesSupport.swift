@@ -62,7 +62,7 @@ extension GlanceProbe {
   /// 私有接口读不到时返回空。
   func gapDesktops(on display: CGDirectDisplayID) -> [UInt64] {
     guard let current = PrivateSLSWindowMover.shared.currentSpace(displayID: display),
-          let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY),
+          let handle = dlopen(SkyLightFramework.path, RTLD_LAZY),
           let mainSym = dlsym(handle, "SLSMainConnectionID"),
           let spacesSym = dlsym(handle, "SLSCopyManagedDisplaySpaces") else { return [] }
     typealias Main = @convention(c) () -> Int32

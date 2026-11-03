@@ -1,12 +1,9 @@
-// 窗口快照：CGSHWCaptureWindowList。
-//
-// CGWindowListCreateImage（FastCapture）对最小化的窗口、被隐藏的 App 的窗口直接返回 nil；这个私有函数
-// 由窗口服务器自己给出窗口此刻的画面，最小化、App 被隐藏、窗口在别的桌面上时都拿得到
-// （AltTab、DockDoor 用的同一个；本机 macOS 27 实测跨进程 31–135ms，不点亮录屏指示）。
-// 拿到的是 App 最后画的那一帧：最小化、隐藏的 App 多半已经不再画，所以调用方一律标“不是实时画面”。
-// 按符号动态取，SDK 里不直接引用；设了 WINDOWSHADE_DISABLE_WINDOW_SNAPSHOT 就当不可用（探针测兜底用）。
-// 拿不到、没有屏幕录制权限、窗口已经没了、或者画面整张全透明（保护窗口、动画中间帧）时返回 nil。
-// 只碰 CoreGraphics，可在任意线程调用。
+// 窗口快照：CGSHWCaptureWindowList（按符号动态取，SDK 不直接引用；设 WINDOWSHADE_DISABLE_WINDOW_SNAPSHOT
+// 即当不可用，探针测兜底用）。CGWindowListCreateImage（FastCapture）对最小化的窗、被隐藏 App 的窗直接 nil；
+// 这个私有函数由窗口服务器给窗口此刻的画面，最小化、App 隐藏、别的桌面都拿得到（AltTab、DockDoor 同款；
+// 本机 macOS 27 实测跨进程 31–135ms，不点亮录屏指示）。拿到的是 App 最后画的那一帧——最小化/隐藏的 App 多半
+// 已不再画，调用方一律标“不是实时画面”。拿不到、无屏幕录制权限、窗口没了、或整张全透明（保护窗、动画中间帧）
+// 返回 nil。只碰 CoreGraphics，任意线程可调。
 
 import CoreGraphics
 import Foundation

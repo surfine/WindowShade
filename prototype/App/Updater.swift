@@ -1,15 +1,8 @@
-// 应用内更新：状态、菜单那一项、设置读写、“能不能一键更新”、更新前后的把关流程。不依赖 Sparkle。
-//
-// Sparkle 负责查新版、清单、EdDSA、下载、解包、等 App 退出、交换、重开（App/UpdaterSparkle.swift 只做转发）；
-// 这里补它不管的三件事：授权（安装前比 DR）、坏包（备份、交出看护、试跑、否决到底）、引导（位置不对先移）。
-// 设计见 docs/update.md。
-//
-// 接线（由协调者加到各自文件里）：
-//   启动    applicationDidFinishLaunching 末尾：UpdaterController.shared.start()
-//   退出    applicationShouldTerminate：return UpdaterController.shared.applicationShouldTerminate()
-//           applicationWillTerminate 开头：UpdaterController.shared.applicationWillTerminate()
-//   菜单    状态栏菜单与应用菜单“关于 WindowShade”下面：menu.addItem(UpdaterController.shared.makeMenuItem())
-//   设置    “隐私”页“启动”下面：UpdaterController.shared.makeSettingsRows() 放进一张设置卡片
+// 应用内更新：状态、菜单项、设置读写、“能不能一键更新”与前后把关。Sparkle 负责查新版/清单/EdDSA/下载/解包/等退出/
+// 交换/重开（App/UpdaterSparkle.swift 只转发）；这里补它不管的三件：授权（安装前比 DR）、坏包（备份、交看护、试跑、
+// 否决到底）、引导（位置不对先移）。设计见 docs/update.md。接线（协调者加到各自文件）：
+//   启动 applicationDidFinishLaunching 末尾 start()；applicationShouldTerminate 返回其同名方法、
+//   applicationWillTerminate 开头调它；菜单“关于”下面 makeMenuItem()；设置“隐私”页“启动”下 makeSettingsRows() 一张卡。
 
 import Cocoa
 

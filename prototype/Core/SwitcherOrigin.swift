@@ -1,5 +1,5 @@
 // 他从哪来：欢迎窗口第二步问“你之前常用哪个？”（Windows / iPad / 一直用 Mac，跳过就是没答），设置里随时能改。
-// 卡住时刘海先认哪一套旧习惯，按这个定（规则表见 docs/stuck-habits.md）：答 Windows 开 Windows 那一半，答 iPad 开 iPad 那一半，
+// 卡住时刘海先认哪一套旧习惯，按这个定（规则表见 docs/lost-notes.md（原 stuck-habits.md））：答 Windows 开 Windows 那一半，答 iPad 开 iPad 那一半，
 // 答“一直用 Mac”两边都不开，没答的只开几条不会误报的。
 // 只存在 UserDefaults 里一个字符串；没答就是没有这个键（老用户升级后也是没答）。纯逻辑，不碰界面，可单测。
 

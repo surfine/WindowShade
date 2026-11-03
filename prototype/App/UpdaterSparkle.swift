@@ -1,13 +1,10 @@
-// 应用内更新：Sparkle 2.10.0 的接口层。整个文件包在 #if canImport(Sparkle) 里：
-// `./build.sh --check`、测试脚本不带 -F 时这一层不参与编译，其余更新代码都不依赖 Sparkle。
-//
-// 界面自己实现 SPUUserDriver：Sparkle 里能在安装前否决的只有两处，都在 user driver 上——
-// 第 1 阶段做完后的 showReadyToInstallAndRelaunch:，和续装时 stage 为 .installing 的 showUpdateFound。
-// 两处都只回 .install 或 .skip，绝不回 .dismiss（.dismiss 会让安装器留着，App 一退出就装）。
-// 这里只转发给 UpdaterController，判断都在那边。
-//
-// 有意不用的钩子：updaterShouldRelaunchApplication、shouldPostponeRelaunchForUpdate（拦不住，退出时照样装）、
-// willInstallUpdateOnQuit（只用于静默自动更新，Info.plist 里关掉了）。
+// 应用内更新：Sparkle 2.10.0 接口层，整个文件包在 #if canImport(Sparkle) 里——--check 与测试不带 -F 时不参与
+// 编译，其余更新代码不依赖 Sparkle。界面自己实现 SPUUserDriver：Sparkle 能在安装前否决的只有两处、都在 user
+// driver 上——第 1 阶段后的 showReadyToInstallAndRelaunch: 与续装 stage 为 .installing 的 showUpdateFound，
+// 两处都只回 .install 或 .skip、绝不回 .dismiss（dismiss 会让安装器留着，App 一退出就装）；这里只转发给
+// UpdaterController，判断都在那边。有意不用的钩子：updaterShouldRelaunchApplication、
+// shouldPostponeRelaunchForUpdate（拦不住，退出时照样装）、willInstallUpdateOnQuit（只用于静默自动更新，
+// Info.plist 已关）。
 
 #if canImport(Sparkle)
 import Cocoa

@@ -678,7 +678,7 @@ extension AppDelegate {
                 unshade(id)
             } else {
                 let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
-                // 收起了就是顺利：刘海不开口（docs/direction.md，顺利的时候一声不吐）。
+                // 收起了就是顺利：刘海不开口（docs/lost-notes.md（原 direction.md），顺利的时候一声不吐）。
                 // 想要的其实是铺满的人，由卡住时的提示接（HabitContext 的双击标题栏那一条）。
                 shade(win, id, options: options, trustElement: true)
                 MainActor.assumeIsolated { gestures.noteStep(.shade, id: id) }

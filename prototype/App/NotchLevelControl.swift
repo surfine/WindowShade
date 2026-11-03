@@ -1,15 +1,10 @@
-// 音量、亮度、键盘灯：拦下来的键由这里照系统的步长写回（《音量与亮度》稿工作包 LV2）。
-//
-// - 拦不拦由 Core/NotchLevelSuppression 的判定表定；这里只把“拦”落成两件事：按下和对应的松开都吞，
-//   写值派到主线程稍后做（监听回调里只解析、查缓存，不碰 Core Audio）。
-// - 写完读回核对；不对就把这一下带记号补发给系统（按下 + 松开一对），这一类键本次开机不再拦。
-// - 能不能调先探好放进缓存（音量按设备记），回调只读缓存。
-// - 版本核对表：真机连按 20 次、系统提示 0 次的 macOS 版本才列进来；现在是空的，所以默认只旁听、两个都在。
-//   Aaron 真机验证时用 defaults 开关 Notch.levelSuppression.trustThisOS 强制当作已核对（默认 false）。
-// - 不向 OSDUIHelper 或任何系统进程发信号，不 killall，不 launchctl；只拦键、写三种系统数值。
-//
-// 写入端口可替换：生产是 NotchLevelSystemPort（Core Audio、DisplayServices、CoreBrightness 的键盘灯客户端），
-// 单测用替身（tests/NotchLevelControlTests.swift，编译时带 -D NOTCH_LEVEL_HOST_TESTING）。
+// 音量、亮度、键盘灯：拦下来的键由这里照系统步长写回（LV2）。拦不拦由 Core/NotchLevelSuppression 判定表定，
+// 这里只做两件：按下与对应的松开都吞、写值派到主线程稍后做（回调只解析查缓存，不碰 Core Audio）。写完读回核对，
+// 不对就把这一下带记号补发给系统（按下+松开一对），这一类键本次开机不再拦；能不能调先探好进缓存（音量按设备记）。
+// 版本核对表：真机连按 20 次、系统提示 0 次的 macOS 才列；现在是空的所以默认只旁听、两个都在；Aaron 真机验证用
+// Notch.levelSuppression.trustThisOS 强制当已核对（默认 false）。不向 OSDUIHelper 或任何系统进程发信号、不 killall、
+// 不 launchctl，只拦键写三种系统数值。写入端口可替换：生产 NotchLevelSystemPort（Core Audio、DisplayServices、
+// CoreBrightness 键盘灯），单测替身（-D NOTCH_LEVEL_HOST_TESTING）。
 
 import Foundation
 #if !NOTCH_LEVEL_HOST_TESTING

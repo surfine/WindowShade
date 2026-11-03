@@ -31,7 +31,6 @@ struct WS2HeadMotionFeed: Sendable {
     private var tracks: [UInt32: Track] = [:]
     private var lastDisplay: UInt32?
 
-    init() {}
 
     /// 一帧耳机姿态。`display` 是指针所在显示器，`source` 是当前这副耳机的匿名标记。
     mutating func ingest(display: UInt32, source: WS2HeadSource, pitchRadians: Double,

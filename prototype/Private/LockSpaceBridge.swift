@@ -24,7 +24,7 @@ final class LockSpaceBridge {
     private var unavailable = false
 
     init?() {
-        guard let h = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight", RTLD_NOW | RTLD_LOCAL) else { return nil }
+        guard let h = dlopen(SkyLightFramework.path, RTLD_NOW | RTLD_LOCAL) else { return nil }
         let names = ["SLSMainConnectionID", "SLSSpaceCreate", "SLSSpaceSetAbsoluteLevel", "SLSShowSpaces", "SLSHideSpaces", "SLSSpaceAddWindowsAndRemoveFromSpaces", "SLSRemoveWindowsFromSpaces"]
         let symbols = names.compactMap { dlsym(h, $0) }
         guard symbols.count == names.count else { dlclose(h); return nil }
@@ -68,7 +68,7 @@ final class LockSpaceBridge {
         panel.orderOut(nil) // Always hide first, even if undelegation fails.
         guard windows.remove(panel.windowNumber) != nil, let space else { return }
         let result = remove(connection, [panel.windowNumber] as CFArray, [space] as CFArray)
-        if result != 0 { NSLog("WindowShade: lock-space removal returned %d", result) }
+        if result != 0 { wlog("lock-space: removal returned \(result)") }
         if windows.isEmpty { _ = hide(connection, [space] as CFArray) }
     }
     deinit { dlclose(handle) }

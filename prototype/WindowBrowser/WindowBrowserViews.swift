@@ -1,14 +1,8 @@
 // 窗口浏览面板视图的共用部分：动作回传协议、外观刷新协议、图标缓存与表面样式。
-//
-// 结构：
-// - 网格使用 `NSCollectionView` 的复用单元，列表使用 view-based `NSTableView`；
-// - 卡片/列表行通过 `weak delegate` 回传动作，闭包不持有控件，因此不会形成
-//   “控件持有右键闭包、闭包又强引用控件”的环；
-// - 能力判断只来自 `WindowBrowserActionPresentation`，卡片、列表、菜单与
-//   VoiceOver 自定义动作读取同一份结果；
-// - 同一个实时预览 NSView 只有一个明确挂载点（卡片或列表详情），切换不会重建流。
-//
-// 各视图各占一个文件：WindowBrowserActionBar / CardView / ListRowView /
+// 网格用 NSCollectionView 复用单元、列表用 view-based NSTableView；卡片/列表行经 weak delegate 回传动作
+// （闭包不持有控件，避免“控件持有右键闭包、闭包强引用控件”的环）。能力判断只来自
+// WindowBrowserActionPresentation——卡片、列表、菜单与 VoiceOver 自定义动作读同一份结果；实时预览 NSView
+// 只有一个挂载点（卡片或列表详情），切换不重建流。各视图各占一文件：ActionBar / CardView / ListRowView /
 // SelectionDetailView / QuickLookView / ContentView。
 
 import Cocoa

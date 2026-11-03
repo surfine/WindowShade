@@ -1,12 +1,8 @@
-// 蓝牙耳机电量的纯解析（见 docs/device-battery.md）：把 `system_profiler SPBluetoothDataType -json` 的输出
-// 变成“已连接、至少有一个电量值”的设备列表。不碰 AppKit / IOKit，也不启动任何进程，来源适配器负责取数。
-//
-// 规则：
-// - 只看 device_connected；device_not_connected 里的设备一律不算。
-// - 稳定 ID = "spbt:" + 小写地址（冒号换成连字符）；没有地址的设备不建档（不拿名字冒充 ID）。
-// - 电量字符串形如 "85%"：只认 0…100 的整数；无法解析、范围外（如 "105%"）、缺失都是“这一项没有读数”，
-//   不写成 0，也不夹到边界。
-// - 一个有效电量值都没有的设备不返回。JSON 坏了返回空数组，不崩。
+// 蓝牙耳机电量的纯解析（docs/device-battery.md）：把 system_profiler SPBluetoothDataType -json 的输出变成
+// “已连接、至少有一个电量值”的设备列表；不碰 AppKit/IOKit、不起进程，来源适配器取数。规则：只看
+// device_connected（not_connected 一律不算）；稳定 ID = "spbt:"+小写地址（冒号换连字符），没地址不建档
+//（不拿名字冒充 ID）；电量形如 "85%"，只认 0…100 整数，解析不了/范围外（"105%"）/缺失都是“这一项没有读数”
+//——不写 0 也不夹边界；一个有效值都没有的设备不返回；JSON 坏了返回空数组不崩。
 
 import Foundation
 

@@ -1,11 +1,8 @@
-// 一次性授权的数据模型（认证里程碑 A，见 docs/touch-id-island.md）。
-//
-// 刘海里的 Touch ID 不再只回一个 true：每次确认都对应一个具体用途和具体目标，由本进程发出一个带随机挑战的请求，
-// 用 Secure Enclave 里受 Touch ID 保护的密钥签名，验签通过后才发一张只能用一次的授权（见 AuthorizationLedger）。
-// 这里只放纯数据和规范编码，不碰 AppKit / LocalAuthentication，所以可以单独测试。
-//
-// 规范字节：固定前缀（域分隔）+ 版本 + 定长大端整数 + 长度前缀的字段。改动任何一处都要升版本号，
-// tests/AuthorizationLedgerTests.swift 里的固定向量会拦住无意的改动。
+// 一次性授权的数据模型（认证里程碑 A，docs/touch-id-island.md）。刘海里的 Touch ID 不再只回 true：每次确认对应一个
+// 具体用途与目标，本进程发带随机挑战的请求、用 Secure Enclave 里受 Touch ID 保护的密钥签名，验签过才发只能用一次的
+// 授权（见 AuthorizationLedger）。这里只放纯数据与规范编码，不碰 AppKit / LocalAuthentication，可单独测试。
+// 规范字节：固定前缀（域分隔）+ 版本 + 定长大端整数 + 长度前缀字段；改动任何一处都要升版本号，
+// tests/AuthorizationLedgerTests.swift 的固定向量会拦住无意改动。
 
 import CryptoKit
 import Foundation

@@ -385,7 +385,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     splitController.splitView.setPosition(214, ofDividerAt: 0)
     scrollToTop()
     if let window {
-      print("DESIGN layout window=\(window.frame) min=\(window.minSize) split=\(splitController.splitView.frame) panes=\(splitController.splitView.arrangedSubviews.map { $0.frame })")
+      print("DESIGN layout window=\(window.frame) min=\(window.minSize) split=\(splitController.splitView.frame) panes=\(splitController.splitView.arrangedSubviews.map(\.frame))")
       print("DESIGN fitting \(splitController.view.fittingSize) layout=\(window.contentLayoutRect)")
     }
   }
@@ -752,8 +752,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         // 左端缩进到文字起点，右端铺到盒子边缘——macOS 分组盒的分隔线就是这样。
         separator.widthAnchor.constraint(equalTo: card.widthAnchor, constant: -16).isActive = true
       }
-      inner.addArrangedSubview(row)
-      row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
+      inner.addFullWidth(row)
     }
     return card
   }
@@ -816,31 +815,16 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   private func makeEffectsPage(controller: DuoController) -> NSView {
     let root = makePageRoot()
-    let stack = NSStackView()
-    stack.orientation = .vertical
-    stack.alignment = .leading
-    stack.distribution = .fill
-    stack.spacing = 14
-    stack.translatesAutoresizingMaskIntoConstraints = false
-    root.addSubview(stack)
-    NSLayoutConstraint.activate([
-      stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-      stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-      stack.topAnchor.constraint(equalTo: root.topAnchor),
-      stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
-    ])
+    let stack = makeSettingsStack(in: root, spacing: 14, distribution: .fill)
     // 页顶的讲解带（设计稿：效果页逐行演开关的样子；页默认是双击收起）。
     let band = SettingsExplainerBand(page: .effects)
     band.pageRoot = root
-    stack.addArrangedSubview(band)
-    stack.setCustomSpacing(14, after: band)
+    stack.addSpaced(band, spacing: 14)
 
     status.font = .monospacedDigitSystemFont(ofSize: 12, weight: .regular)
     status.textColor = .secondaryLabelColor
     status.maximumNumberOfLines = 3
-    stack.addArrangedSubview(status)
-    status.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: status)
+    stack.addFullWidth(status, spacing: 18)
     pause.target = self
     pause.action = #selector(togglePause)
     pause.bezelStyle = .rounded
@@ -849,8 +833,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     permission.bezelStyle = .rounded
 
     let automaticSection = makeSectionLabel(WSL10n.text("settings.effects.group.effects", zh: "效果"))
-    stack.addArrangedSubview(automaticSection)
-    stack.setCustomSpacing(6, after: automaticSection)
+    stack.addSpaced(automaticSection, spacing: 6)
     let automatic = makeSettingsCard([
       makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),                    control: desktop, action: #selector(changed),
                     explainer: ExplainerRow.Effects.desktop),
@@ -864,13 +847,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "所有效果先停一停，开关保持原样。"), button: pause,
                     explainer: ExplainerRow.Effects.pause),
     ])
-    stack.addArrangedSubview(automatic)
-    automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: automatic)
+    stack.addFullWidth(automatic, spacing: 18)
 
     let previewSection = makeSectionLabel(WSL10n.text("settings.effects.group.preview", zh: "预览"))
-    stack.addArrangedSubview(previewSection)
-    stack.setCustomSpacing(6, after: previewSection)
+    stack.addSpaced(previewSection, spacing: 6)
     let rendererView: NSView?
     do {
       let renderer = try FoldRenderer(size: CGSize(width: 612, height: 300))
@@ -924,9 +904,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       makeActionRow(name: WSL10n.setting("settings.effects.permission.name", zh: "屏幕录制权限"), subtitle: WSL10n.setting("settings.effects.permission.sub", zh: "实时预览需要此权限。"), button: permission),
     ].compactMap { $0 }
     let preview = makeSettingsCard(previewRows)
-    stack.addArrangedSubview(preview)
-    preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: preview)
+    stack.addFullWidth(preview, spacing: 18)
 
 
     let note = NSTextField(wrappingLabelWithString: WSL10n.text("duo.preview.note", zh: "实时预览默认关闭。按 Esc、点一下或开始打字都能撤掉。"))
@@ -943,43 +921,25 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   private func makeAdvancedPage(controller: DuoController) -> NSView {
     let root = makePageRoot()
-    let stack = NSStackView()
-    stack.orientation = .vertical
-    stack.alignment = .leading
-    stack.distribution = .fill
-    stack.spacing = 14
-    stack.translatesAutoresizingMaskIntoConstraints = false
-    root.addSubview(stack)
-    NSLayoutConstraint.activate([
-      stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-      stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-      stack.topAnchor.constraint(equalTo: root.topAnchor),
-      stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
-    ])
+    let stack = makeSettingsStack(in: root, spacing: 14, distribution: .fill)
     // 顶上的讲解带（1.0.18）：行用 SettingsExplainerHost.tag 挂牌，没挂牌的行指上去回到页默认。
     let band = SettingsExplainerBand(page: .advanced)
     band.pageRoot = root
-    stack.addArrangedSubview(band)
-    stack.setCustomSpacing(14, after: band)
+    stack.addSpaced(band, spacing: 14)
     let header = makePageHeader(
       title: WSL10n.setting("settings.advanced.title", zh: "高级"),
       subtitle: WSL10n.setting("settings.advanced.sub", zh: "恢复默认值，或打开诊断日志排查问题。"),
       symbolName: "slider.horizontal.3")
-    stack.addArrangedSubview(header)
-    stack.setCustomSpacing(16, after: header)
+    stack.addSpaced(header, spacing: 16)
 
     // 语言（第27批）：跟随系统 / 简体中文 / English；切换立即生效。
     let languageSection = makeSectionLabel(WSL10n.text("settings.language.section", zh: "语言"))
-    stack.addArrangedSubview(languageSection)
-    stack.setCustomSpacing(6, after: languageSection)
+    stack.addSpaced(languageSection, spacing: 6)
     let languageCard = makeSettingsCard([SettingsExplainerHost.tag(makeLanguageRow(), ExplainerRow.Advanced.language)])
-    stack.addArrangedSubview(languageCard)
-    languageCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: languageCard)
+    stack.addFullWidth(languageCard, spacing: 18)
 
     let actionSection = makeSectionLabel(WSL10n.text("settings.advanced.section.actions", zh: "操作"))
-    stack.addArrangedSubview(actionSection)
-    stack.setCustomSpacing(6, after: actionSection)
+    stack.addSpaced(actionSection, spacing: 6)
     let reset = NSButton(title: WSL10n.text("settings.advanced.reset.button", zh: "恢复默认值"),
                          target: self, action: #selector(reset))
     reset.bezelStyle = .rounded
@@ -1002,9 +962,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         subtitle: WSL10n.setting("settings.advanced.diagnostics.sub", zh: "打开诊断日志排查问题。"),
         button: diagnostics),
     ])
-    stack.addArrangedSubview(actionCard)
-    actionCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: actionCard)
+    stack.addFullWidth(actionCard, spacing: 18)
 
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? WSL10n.text("settings.advanced.reduceMotionOn", zh: "系统已开启“减少动态效果”，连续动画会自动暂停。")
@@ -1025,11 +983,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     infoRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
     let infoCard = makeSettingsCard([SettingsExplainerHost.tag(infoRow, ExplainerRow.Advanced.reduceMotion)])
     let infoSection = makeSectionLabel(WSL10n.text("settings.advanced.section.accessibility", zh: "辅助功能"))
-    stack.addArrangedSubview(infoSection)
-    stack.setCustomSpacing(6, after: infoSection)
-    stack.addArrangedSubview(infoCard)
-    infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: infoCard)
+    stack.addSpaced(infoSection, spacing: 6)
+    stack.addFullWidth(infoCard, spacing: 18)
 
     // 关于（Aaron 2026-10-16 定：规格 R35／R5 的入口与 R36 报告问题放这里）。都只在本机做事，没有一样自动发出去。
     func aboutButton(_ title: String, _ symbol: String, _ action: Selector) -> NSButton {
@@ -1040,8 +995,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       return button
     }
     let aboutSection = makeSectionLabel(WSL10n.text("settings.about.section", zh: "关于"))
-    stack.addArrangedSubview(aboutSection)
-    stack.setCustomSpacing(6, after: aboutSection)
+    stack.addSpaced(aboutSection, spacing: 6)
     let aboutCard = makeSettingsCard([
       SettingsExplainerHost.tag(makeActionRow(
         title: WSL10n.setting("settings.about.diagnostics.name", zh: "导出诊断信息"),
@@ -1075,22 +1029,18 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         button: aboutButton(WSL10n.text("settings.about.report.button", zh: "报告…"), "exclamationmark.bubble",
                             #selector(reportProblemAction))),
     ])
-    stack.addArrangedSubview(aboutCard)
-    aboutCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.addFullWidth(aboutCard)
 
     // 实验（1.0.17）：还在试的开关都住这里，默认都关着。每项还是原来那一个键，只是换了位置。
     if let experiments = controller.owner?.makeExperimentalSettingsCard() {
       stack.setCustomSpacing(18, after: aboutCard)
       let experimentsSection = makeSectionLabel(WSL10n.text("settings.shade.group.experiments", zh: "实验"))
-      stack.addArrangedSubview(experimentsSection)
-      stack.setCustomSpacing(6, after: experimentsSection)
+      stack.addSpaced(experimentsSection, spacing: 6)
       let caption = NSTextField(wrappingLabelWithString: WSL10n.text("settings.advanced.experiments.caption", zh: "还在试的功能，默认都关着。"))
       caption.font = SystemAppearancePolicy.font(relativeToBody: -1)
       caption.textColor = .secondaryLabelColor
-      stack.addArrangedSubview(caption)
-      stack.setCustomSpacing(8, after: caption)
-      stack.addArrangedSubview(experiments)
-      experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+      stack.addSpaced(caption, spacing: 8)
+      stack.addFullWidth(experiments)
     }
     load(controller.settings)
     return root

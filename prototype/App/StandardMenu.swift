@@ -1,13 +1,8 @@
-// 标准最小主菜单。
-//
-// WindowShade 是 LSUIElement（菜单栏代理）应用，屏幕顶部不会显示菜单栏；但 AppKit 的
-// 文本编辑快捷键（⌘X/⌘C/⌘V/⌘A/⌘Z）与 ⌘W 都通过主菜单的 key equivalent 派发。
-// 实测：没有主菜单时，即使 NSTextField 已经是 first responder，⌘V 也不会粘贴
-// （menuHandled=false / windowHandled=false）。
-//
-// 因此这里提供一份最小但标准的主菜单：应用菜单（关于/设置/服务/隐藏/退出）、编辑
-// 菜单（撤销/重做/剪切/拷贝/粘贴/删除/全选）与窗口菜单（关闭/最小化/卷轴概览）。它不改变
-// 代理应用的菜单栏行为，只让文本框和关闭快捷键恢复系统习惯。
+// 标准最小主菜单。LSUIElement（菜单栏代理）应用屏幕顶部不显示菜单栏，但 AppKit 的文本编辑快捷键（⌘X/C/V/A/Z）
+// 与 ⌘W 都经主菜单 key equivalent 派发——实测没有主菜单时即使 NSTextField 是 first responder，⌘V 也不粘贴
+// （menuHandled=false / windowHandled=false）。这里提供最小但标准的主菜单：应用（关于/设置/服务/隐藏/退出）、
+// 编辑（撤销/重做/剪切/拷贝/粘贴/删除/全选）、窗口（关闭/最小化/卷轴概览）——不改变代理应用的菜单栏行为，
+// 只让文本框与关闭快捷键恢复系统习惯。
 
 import Cocoa
 

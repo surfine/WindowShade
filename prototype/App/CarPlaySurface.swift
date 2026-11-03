@@ -164,8 +164,8 @@ final class CarPlaySurfaceController {
         timer = nil
         guard isShowing, let endpoint = Self.receiverEndpoint else { return }
         if let due = session.reconnectDueAt, now < due {
-            timer = Timer.scheduledTimer(withTimeInterval: due - now, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.receiverReconnectTimerFired() }
+            timer = MainTimer.fire(after: due - now) { [weak self] in
+                self?.receiverReconnectTimerFired()
             }
             return
         }
@@ -204,10 +204,9 @@ final class CarPlaySurfaceController {
         hasStarted = true
         session.observe(at: now)
         render()
-        timer = Timer.scheduledTimer(withTimeInterval: Self.handshakeDelay, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.handshakeFinished(started) }
+        timer = MainTimer.fire(after: Self.handshakeDelay, tolerance: 0.1) { [weak self] in
+            self?.handshakeFinished(started)
         }
-        timer?.tolerance = 0.1
     }
 
     private func handshakeFinished(_ started: WS2CarPlaySession.Ticket) {
@@ -222,10 +221,9 @@ final class CarPlaySurfaceController {
         case .fails:
             switch session.ended(started, failed: true, at: now) {
             case .retry(_, let after):
-                timer = Timer.scheduledTimer(withTimeInterval: after, repeats: false) { [weak self] _ in
-                    MainActor.assumeIsolated { self?.reconnectTimerFired() }
+                timer = MainTimer.fire(after: after, tolerance: min(0.5, after * 0.1)) { [weak self] in
+                    self?.reconnectTimerFired()
                 }
-                timer?.tolerance = min(0.5, after * 0.1)
             case .gaveUp, .none:
                 break
             }
@@ -240,8 +238,8 @@ final class CarPlaySurfaceController {
         guard isShowing else { return }
         if let due = session.reconnectDueAt, now < due {
             // 计时器不会早到；万一早到，再等差的这一点。
-            timer = Timer.scheduledTimer(withTimeInterval: due - now, repeats: false) { [weak self] _ in
-                MainActor.assumeIsolated { self?.reconnectTimerFired() }
+            timer = MainTimer.fire(after: due - now) { [weak self] in
+                self?.reconnectTimerFired()
             }
             return
         }

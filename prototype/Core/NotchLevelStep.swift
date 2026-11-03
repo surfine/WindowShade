@@ -68,7 +68,6 @@ enum NotchLevelStep {
         private var edge: Edge?
         private var last: TimeInterval = -.infinity
 
-        init() {}
 
         /// 这一下按完的结果；返回到头次数（没到头就是 0）。
         mutating func record(_ result: Result, at time: TimeInterval) -> Int {

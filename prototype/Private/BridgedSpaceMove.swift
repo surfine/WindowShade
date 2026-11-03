@@ -1,13 +1,8 @@
-// 把别的应用的窗口移到另一张桌面。
-//
-// SLSMoveWindowsToManagedSpace 从 macOS 14.5 起移不了别的应用的窗口；兼容编号的办法
-// 从 macOS 15 起要关掉系统完整性保护。SkyLight 里还有一个内部函数
-// SLSPerformAsynchronousBridgedWindowManagementOperation，把一个
-// SLSBridgedMoveWindowsToManagedSpaceOperation 交给它，SIP 开着也能移
-// （yabai 7.1.25 起用这个办法）。
-//
-// 这个函数是内部链接的，dlsym 找不到，只能遍历已载入的 SkyLight 映像的符号表。
-// 任何一步对不上就返回不可用，调用方保持原来的行为。
+// 把别的应用的窗口移到另一张桌面。SLSMoveWindowsToManagedSpace 从 macOS 14.5 起移不了别的 App 的窗口，
+// 兼容编号的办法从 macOS 15 起要关 SIP；SkyLight 内部函数 SLSPerformAsynchronousBridgedWindowManagementOperation
+// 把 SLSBridgedMoveWindowsToManagedSpaceOperation 交给它，SIP 开着也能移（yabai 7.1.25 起用这个办法）。
+// 该函数内部链接、dlsym 找不到，只能遍历已载入 SkyLight 映像的符号表；任何一步对不上就返回不可用，
+// 调用方保持原行为。
 
 import Darwin
 import Foundation
@@ -20,7 +15,7 @@ enum BridgedSpaceMove {
     private typealias ReleaseFunction = @convention(c) (UnsafeRawPointer, Selector) -> Void
 
     private static let skyLightPath =
-        "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight"
+        SkyLightFramework.path
     private static let performSymbol =
         "__ZL54SLSPerformAsynchronousBridgedWindowManagementOperationP47SLSAsynchronousBridgedWindowManagementOperation"
     private static let initializerName = "initWithWindows:spaceID:"

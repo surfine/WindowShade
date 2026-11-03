@@ -1,15 +1,10 @@
-// 卡住时刘海开口：旧习惯的规则表和判定。纯逻辑，可单测（tests/run-habit-rules-tests.sh）。
-// 按键在 App/HabitKeys.swift 里听（只听、不吞），前台 App、焦点和菜单在 App/HabitContext.swift 里读，
-// 刘海上怎么说、点一下做什么在 App/Notch+Habit.swift。规则、出处和误报条件见 docs/stuck-habits.md。
-//
-// 只在两件事都有证据时开口：刚才那一下在这里没反应（或做了别的、他马上撤回），而要教的那一下在这里一定管用。
-// 第一批：Windows 第一批 13 条、iPad 先上的 6 条（⌘H、🌐M、从 Dock 拖出图标、双击标题栏、往上甩、桌面两指下滑）；其余都不开。
-// 其中单按 ⇧ 切换中英文、PC 键盘的 Print Screen 要先上真机确认，确认之前不开（needsDeviceCheck）。
-// 另有 3 条 iPad 习惯（三指上滑瞥一眼调度中心、🌐H 显示桌面、点刘海打开主屏幕又关掉后往上滚）等真机探针
-// （tools/probes/HabitSignalProbe.swift）确认信号，同样放在 needsDeviceCheck 后面，默认不开。
-// 来处（SwitcherOrigin）决定开哪几条：答 Windows 开 Windows 那一半，答 iPad 开 iPad 那一半，答“一直用 Mac”都不开，
-// 没答的只开不会误报的几条（⌃C、⌃X、⌃S、访达里 Delete、强制退出、Alt+F4）。
-// 节奏和手势提示共用一本账（Core/GestureCoach.swift 的 HabitLedger、CoachPacing）。
+// 卡住时刘海开口：旧习惯的规则表和判定。纯逻辑可单测（tests/run-habit-rules-tests.sh）；按键在 App/HabitKeys.swift
+// 只听不吞，前台/焦点/菜单在 App/HabitContext.swift，说法与点击在 App/Notch+Habit.swift；规则出处与误报条件见
+// docs/lost-notes.md（原 stuck-habits.md）。只在两件事都有证据时开口：刚才那下在这里没反应（或做了别的马上撤回），要教的那下在这里一定管用。
+// 第一批 Windows 13 条、iPad 6 条（⌘H、🌐M、Dock 拖出、双击标题栏、上甩、桌面两指下滑）；单按 ⇧ 切中英文、PC 的
+// Print Screen 与另 3 条 iPad 习惯先上真机确认（needsDeviceCheck），确认前不开。来处（SwitcherOrigin）分流：
+// Windows 开一半、iPad 开一半、“一直用 Mac”都不开、没答的只开不会误报的几条（⌃C/⌃X/⌃S/访达 Delete/强制退出/Alt+F4）。
+// 节奏与手势提示共用一本账（Core/GestureCoach.swift 的 HabitLedger、CoachPacing）。
 
 import Foundation
 import CoreGraphics
@@ -132,7 +127,7 @@ struct HabitCombo: Hashable {
 
 /// 第一批要开口的规则。名字就是记在账上的 id（HabitLedger 按它记），改名等于换一条新规则。
 enum HabitRule: String, CaseIterable, Codable {
-    // Windows 第一批（docs/stuck-habits.md 第一部分 §2）
+    // Windows 第一批（docs/lost-notes.md（原 stuck-habits.md） 第一部分 §2）
     case copy, paste, undo, save, imeShift, closeTab, cut, trash, lineEnds, forceQuit, closeWindow, screenshot, symbols
     // iPad 先上的 6 条（第二部分 §3 的第 6、22、17、7、11、14 条）
     case hideApp, menuBar, dockRemoved, titleDoubleClick, titleFlickUp, desktopSearch

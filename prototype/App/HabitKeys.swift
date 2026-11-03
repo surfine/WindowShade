@@ -1,15 +1,8 @@
-// 卡住时刘海开口：只听、不吞的钩子（规则见 Core/HabitRules.swift，docs/stuck-habits.md 第一部分 §4.1）。
-//
-// 放在会话钩子的最后（tail）：被 WindowShade 自己吞掉的键和点按（默认的 ⌥Tab、调度中心里的 ⌘W/⌘Q、双击标题栏的那一下）
-// 根本到不了这里。回调永远原样放行，只做 O(1) 的事：按键码和四个修饰键查表、跳过自动重复、记下时间，
-// 要判断的交给 HabitContext 的队列。在自己的线程上跑（写法照 MissionControlKeys）。
-// 用 .defaultTap 而不是 .listenOnly：后者要另外申请“输入监控”；而且事件在回调返回前不会交给 App，
-// 回调里读的剪贴板 changeCount 一定是“按下之前”的值（P 的前后比较要靠它）。
-//
-// 听什么由开着的规则定：键盘规则开着才听 keyDown（单按 delete、Del 只在访达在前台时进表）；
-// Home/End、⌥ 加小键盘、单按 ⇧ 开着才听 flagsChanged；iPad 那几条开着才听鼠标按下、松开；桌面两指下滑开着才听滚动。一条都没开（来处是“一直用 Mac”、刘海或教学关着、
-// 每条都会了）时整个钩子拆掉，一个事件都不看。
-// 隐私：不记字符、不读 AXValue；日志只写规则名、bundle id 和判定结果。
+// 卡住时刘海开口：只听、不吞的钩子（规则见 Core/HabitRules.swift 与 docs/lost-notes.md（原 stuck-habits.md） 第一部分 §4.1）。
+// 放在会话钩子的最后（tail）：被 WindowShade 自己吞掉的键与点按（⌥Tab、调度中心的 ⌘W/⌘Q、双击标题栏那一下）到不了
+// 这里。回调永远原样放行且只做 O(1) 的事：键码+四修饰键查表、跳过自动重复、记时间，判断交给 HabitContext 的队列；
+// 在自己的线程上跑（写法照 MissionControlKeys）。用 .defaultTap 而非 .listenOnly：后者要另申请“输入监控”，
+// 而且事件在回调返回前不会交给 App（余下理由见文件内注释）。
 
 import Cocoa
 

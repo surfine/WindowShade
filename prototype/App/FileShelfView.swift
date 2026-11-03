@@ -1,13 +1,10 @@
-// WindowShade · FS-04。文件架卡：点那一排右段的末格（或紧凑的个数），岛长成 560 × 160 的卡。
-// 规则与数字照 docs/design-drafts/文件架.html 的“文件架卡”“一格能做的”“全部移出”；纯逻辑（尺寸、名字、
-// 拖出拷贝 / 移动、撤销、右键清单）在 Core/NotchRow.swift，这里只有画面和接线。
-//
-// 承载：和计时器卡、会话详情一样走 NotchLeaseHub.show（主人是 notchShelf，同一块屏同一时刻只有一个）。
-// 真刘海上，岛 = 刘海那一条 + 视图；左耳“文件架”和个数、右耳“隔空投送”“全部移出”画在刘海那一条里（视图上沿以外），
-// 点击靠 hitTest 转给它们。没有刘海的屏上整张卡都在视图里。
-//
-// 文件只记位置（书签），不拷贝；书签只在后台解析（FileShelfBookmarks），主线程只用解析好的 URL。
-// 缩略图不落盘，打开卡时现做，只在内存里。不轮询：打开卡时查一次，其余靠存取层的磁盘接拔通知。
+// 文件架卡（FS-04）：点那一排右段的末格（或紧凑的个数），岛长成 560×160 的卡；规则与数字照
+// docs/design-drafts/文件架.html 的“文件架卡”“一格能做的”“全部移出”，纯逻辑（尺寸、名字、拖出拷贝/移动、撤销、
+// 右键清单）在 Core/NotchRow.swift，这里只有画面和接线。承载走 NotchLeaseHub.show（主人 notchShelf，同一块屏
+// 同一时刻只有一个）；真刘海上岛 = 刘海那一条 + 视图，左耳“文件架”与个数、右耳“隔空投送”“全部移出”画在刘海那
+// 一条里（视图上沿以外），点击靠 hitTest 转给它们；没刘海的屏整张卡都在视图里。文件只记位置（书签）不拷贝，
+// 书签只在后台解析（FileShelfBookmarks），主线程只用解析好的 URL；缩略图不落盘、开卡现做只在内存。不轮询：
+// 开卡查一次，其余靠存取层的磁盘接拔通知。
 import Cocoa
 import QuartzCore
 import QuickLookUI
@@ -139,7 +136,7 @@ final class FileShelfController: NSObject, NSSharingServiceDelegate, @preconcurr
     private func apply(_ update: FileShelfUpdate) {
         guard FileShelf.enabled else { return }
         rows = update.rows
-        let ids = Set(rows.map { $0.entry.id })
+        let ids = Set(rows.map(\.entry.id))
         urls = urls.filter { ids.contains($0.key) }
         resolved = resolved.filter { ids.contains($0.key) }
         thumbnails.forget(keeping: ids)
@@ -910,7 +907,7 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
         addSubview(header)
         airDropPill.onPress = { [weak self] in
             guard let self, self.inputIsCurrent() else { return }
-            self.controller.airDrop(rowIDs: self.controller.rows.map { $0.entry.id })
+            self.controller.airDrop(rowIDs: self.controller.rows.map(\.entry.id))
         }
         clearPill.onPress = { [weak self] in
             guard let self, self.inputIsCurrent() else { return }
@@ -1033,7 +1030,7 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
         syncHeaderButtons()
 
         let previous = order
-        let ids = rows.map { $0.entry.id }
+        let ids = rows.map(\.entry.id)
         let shown = Set(ids)
         for (id, tile) in tiles where !shown.contains(id) {
             tile.removeFromSuperview()

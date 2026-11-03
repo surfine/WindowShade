@@ -1,12 +1,9 @@
-// AirPods / Beats 等蓝牙耳机的电量来源（见 docs/device-battery.md）：左耳、右耳、充电盒各一行。
-//
-// 读法：系统自带的 `/usr/sbin/system_profiler SPBluetoothDataType -json`，只解析其中 device_connected 的电量字段
-// （Core/BluetoothBatteryParse.swift）。只借了“读系统给的这份报告”这个思路，没有抄任何代码，不读系统日志，不联网、不共享。
-// - 触发：CoreAudio 默认输出设备变化，并且新的输出走蓝牙（经典或 LE）时读一次；启动时输出已经是蓝牙也读一次。
-// - 之后输出一直是蓝牙才重读，至少隔 10 分钟；输出离开蓝牙就停掉计时器，并为确认耳机是否还连着补读一次（只有手里有耳机时）。
-// - 同一时刻最多一个 system_profiler 进程，5 秒没结束就终止、当作没有读数；取数和解析都不在主线程。
-// - 只报耳机：键盘 / 鼠标 / 触控板已经由 IOKit 来源给出，这里不重复。
-// - 读不到的组件不发读数；没读成功（超时、坏 JSON）不当成设备断开。
+// AirPods / Beats 等蓝牙耳机的电量来源（docs/device-battery.md）：左耳、右耳、充电盒各一行。读系统自带的
+// system_profiler SPBluetoothDataType -json，只解析 device_connected 的电量字段（Core/BluetoothBatteryParse.swift），
+// 只借“读系统报告”的思路、没抄代码，不读日志不联网。触发：CoreAudio 默认输出设备变化且新输出走蓝牙时读一次，
+// 启动时输出已是蓝牙也读一次；之后输出一直是蓝牙才重读、至少隔 10 分钟；输出离开蓝牙停掉计时器并补读一次确认
+// 耳机是否还连着（只有手里有耳机时）。同一时刻最多一个 system_profiler，5 秒没结束终止当没有读数；取数解析都不在
+// 主线程。只报耳机（键盘/鼠标/触控板由 IOKit 来源给）；读不到的组件不发读数，读失败（超时、坏 JSON）不当断开。
 
 import CoreAudio
 import Foundation

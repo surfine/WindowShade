@@ -226,7 +226,6 @@ struct CopyProgressTracker {
     private var entries: [Int: CopyProgressSnapshot] = [:]
     private var order: [Int] = []
 
-    init() {}
 
     static func outcome(final: CopyProgressSnapshot, cancelled: Bool) -> Outcome {
         if cancelled { return .cancelled }

@@ -1,14 +1,9 @@
-// 身份证据与它进授权账的门槛（ID-01，见 docs/plans/identity-and-motion-2026-10-09.md §3.7）。
-//
-// 规则：
-// - 证据只能给某个用途“加门槛”：从“Touch ID”提到“Touch ID + 认出你”。没有任何 API 拿证据换授权；
-//   AuthorizationLedger.complete 仍然必须先过 Secure Enclave 签名和原有全部检查，最后才看证据。
-// - 证据什么时候算数，以账本收到它的那一刻为准（账本的 CLOCK_MONOTONIC_RAW），不用帧的主机时钟：
-//   帧时钟睡眠时不走，和账本期限不可比。帧时间只在同一路帧之间比较。
-// - 证据绑定产出它的那一路帧：哪台相机（cameraID）、Hub 的第几代（generation）、首末帧号（sequence）。
-// - 默认策略表对每个用途都是 .none：今天没有任何用途要证据，结果与没有证据时完全一样。
-// - requestOSUnlock 永远不接证据，不接系统解锁。
-// 这里只放纯数据，不碰相机、钥匙串和界面。
+// 身份证据与它进授权账的门槛（ID-01，见 docs/plans/identity-and-motion-2026-10-09.md §3.7）。规则：
+// 证据只能给用途“加门槛”（从“Touch ID”提到“Touch ID + 认出你”）——没有任何 API 拿证据换授权，
+// AuthorizationLedger.complete 仍必须先过 Secure Enclave 签名与原有全部检查，最后才看证据。证据何时算数以账本收到
+// 那刻为准（账本的 CLOCK_MONOTONIC_RAW）——帧时钟睡眠时不走、与账本期限不可比，帧时间只在同路帧间比较。
+// 证据绑定产出它的那路帧（cameraID、Hub generation、首末帧号）。默认策略表对每个用途都是 .none（今天没有任何用途
+// 要证据，结果与没有证据时完全一样）；requestOSUnlock 永远不接证据、不接系统解锁。这里只放纯数据。
 
 import Foundation
 

@@ -4,5 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/notch-space-gate-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library -O \
-  prototype/App/NotchSpaceGate.swift tests/NotchSpaceGateTests.swift -o .build/notch-space-gate-tests/gate
+  prototype/App/NotchSpaceGate.swift prototype/Support/SkyLightFramework.swift tests/NotchSpaceGateTests.swift \
+  -o .build/notch-space-gate-tests/gate
 .build/notch-space-gate-tests/gate

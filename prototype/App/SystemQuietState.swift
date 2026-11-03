@@ -1,14 +1,9 @@
-// 系统此刻要不要更安静：屏幕正被共享或录制（sharing），或系统专注模式开着（focused）。
-// 读不到、没授权都是 unknown，一律当作没有（更不安静的那一边不会被猜出来）。
-//
-// - sharing：CGSIsScreenWatcherPresent / SLSIsScreenWatcherPresent，私有符号，dlsym 找，找不到为 unknown（隐私登记第三层）。
-//   为 sharing 时：卡住提示一句不说（HabitGate）；刘海那一排里私人 App 的格子只剩 App 图标（NotchController.tiles）。
-// - focused：INFocusStatusCenter.default.focusStatus.isFocused，要用户授权；授权请求只在用户打开相关设置时发起
-//   （requestFocusAuthorization），启动时不弹窗，没授权为 unknown。
-//   为 focused 时：第 4 层短暂提醒只留次区域的点，不开口；第 1 层放行照常问（InteractionCoordinator）。
-//
-// 不轮询：只在启动、App 激活、App 启动或退出、锁屏或解锁、换桌面时重算一次，状态变了才发 didChange。
-// 默认开，因为它只会让刘海更安静；它不放行、不解锁任何东西。
+// 系统此刻要不要更安静：屏幕正被共享或录制（sharing），或系统专注模式开着（focused）。读不到、没授权都是 unknown，
+// 一律当没有（更不安静的那边不会被猜出来）。sharing：CGSIsScreenWatcherPresent / SLSIsScreenWatcherPresent（私有
+// 符号 dlsym 找，找不到 unknown，隐私登记第三层）——为 sharing 时卡住提示一句不说（HabitGate）、刘海那排私人 App 的
+// 格子只剩 App 图标。focused：INFocusStatusCenter 的 focusStatus.isFocused（要用户授权，请求只在用户打开相关设置时
+// 发起、启动不弹窗，没授权 unknown）——为 focused 时第 4 层短暂提醒只留点不开口，第 1 层放行照常问。不轮询：只在启动、
+// App 激活/启退、锁解锁、换桌面时重算，变了才发 didChange。默认开（只会让刘海更安静；不放行、不解锁任何东西）。
 import Foundation
 #if canImport(AppKit)
 import AppKit
@@ -146,7 +141,7 @@ final class SystemQuietState {
 
     private typealias WatcherFunction = @convention(c) () -> UInt8
     private static let watcherFunction: WatcherFunction? = {
-        guard let handle = dlopen("/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight", RTLD_LAZY) else { return nil }
+        guard let handle = dlopen(SkyLightFramework.path, RTLD_LAZY) else { return nil }
         for name in ["CGSIsScreenWatcherPresent", "SLSIsScreenWatcherPresent"] {
             if let symbol = dlsym(handle, name) { return unsafeBitCast(symbol, to: WatcherFunction.self) }
         }

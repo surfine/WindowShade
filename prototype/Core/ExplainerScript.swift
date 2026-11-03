@@ -1,23 +1,12 @@
-// 设置窗口与欢迎窗口共用的讲解动画（设计稿《首次打开 1.0.17 小样》E 节与“分镜”节，1.0.18 工作单 6）。
-// 这一层是纯逻辑：帧数据、按弹簧令牌算时长、页 / 行 / 选项 / 关着的状态机。不碰视图，可单测
-// （tests/run-explainer-tests.sh）。画面在 App/SettingsExplainerView.swift，接行在 App/SettingsExplainerHost.swift。
-//
-// ── 给各页的人：只要做三件事，不用动共用文件 ──────────────────────────────────────────────
-// 1. 新建 Core/ExplainerScenes+<页名>.swift，在 `extension ExplainerScenes` 里写这一页独有的场景
-//    （`static var 名字: ExplainerSpec { … }`）；通用场景（双击收起、两指滑、收进刘海、窗口挪到某一格、
-//    面板升起、刘海说一句、键帽、Dock 图标）已经在 ExplainerScenes+Common.swift，直接用或用 `variant` 改。
-//    读屏说明句一律走 WSL10n.setting，键名 explainer.<场景>.ax，中文以“演示：”开头，三语进 Localizable.xcstrings。
-// 2. 在同一个文件里给这一页一个 `ExplainerPage`：`ExplainerPage(id: "<页>", pageDefault: <场景>)`。
-// 3. 在 Preferences.swift 这一页的建页函数里：`makeSettingsPageRoot(explainer: .<页>)`，再给每个行构造器
-//    填 `explainer:`——`.loop(场景)`（指上去循环演）、`.still(场景)`（摆一帧不动）、`.pageDefault`
-//    （和屏幕上看到的无关，回到页默认的关键帧）、`.options([场景…])`（分段控件，每段一个场景）。
-//    有开关的行，开关关着时自动降灰并标“关着”；要换成另一段画面（例如“关掉动画”），给 `offScene:`。
-//
-// 坐标：每块 312 × 200，从左上角量（和稿里一样）；欢迎窗口按 326 / 312 等比放大，帧数据不改。
-// 时长：一轮 = 0.14 s 开场（两块淡出 0.10 + 0.04）+ Σ 每帧（这一帧里最慢的令牌时长 + 停留）；
-// 重摆（reset）一帧算 0.32 s（淡出 0.10 + 淡入 0.18 + 0.04）。弹簧令牌的时长与稿里的脚本同一算法：
-// 从 0 走到 1 的阶跃响应，离终点 0.2% 以内且 0.05 s 后仍在以内的最早时刻（0.005 s 一格，保留 3 位）。
-// ────────────────────────────────────────────────────────────────────────────────────────
+// 设置窗口与欢迎窗口共用的讲解动画（稿《首次打开 1.0.17 小样》E 节，1.0.18 工作单 6）：纯逻辑的帧数据与状态机，
+// 可单测（tests/run-explainer-tests.sh）；画面在 App/SettingsExplainerView.swift，接行在 App/SettingsExplainerHost.swift。
+// 加一页的讲解只做三件事（不动共用文件）：
+// 1. Core/ExplainerScenes+<页名>.swift 写这页独有场景（通用的在 +Common.swift；读屏句走 WSL10n.setting，键 explainer.<场景>.ax）；
+// 2. 同文件给 `ExplainerPage(id: "<页>", pageDefault: <场景>)`；
+// 3. Preferences.swift 建页处 `makeSettingsPageRoot(explainer: .<页>)`，行构造器填 explainer:（.loop/.still/.pageDefault/.options；
+//    开关行自动降灰标“关着”，要换关着的画面给 offScene:）。
+// 坐标：每块 312 × 200、左上原点（欢迎窗口等比放大，帧数据不改）。时长：一轮 = 0.14 s 开场 + Σ 每帧（最慢令牌时长 + 停留），reset 一帧
+// 0.32 s；弹簧令牌时长 = 阶跃响应离终点 0.2% 以内且 0.05 s 后仍在以内的最早时刻（0.005 s 一格，保留 3 位）。
 
 import CoreGraphics
 import Foundation

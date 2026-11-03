@@ -140,11 +140,11 @@ enum FaceParallax {
         guard window.count >= minimumSamples,
               window.allSatisfy({ $0.yaw.isFinite && $0.noseOffset.isFinite && abs($0.yaw) < 1.5 })
         else { return nil }
-        let yaws = window.map { $0.yaw }
+        let yaws = window.map(\.yaw)
         guard let lo = yaws.min(), let hi = yaws.max() else { return nil }
         guard (hi - lo) * 180 / .pi >= minimumTurnDegrees else { return nil }
         let xs = yaws.map { tan($0) }
-        let ys = window.map { $0.noseOffset }
+        let ys = window.map(\.noseOffset)
         let n = Double(window.count)
         let mx = xs.reduce(0, +) / n
         let my = ys.reduce(0, +) / n

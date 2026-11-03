@@ -1,11 +1,7 @@
-// Dock 面板与键盘面板共用的 AppKit 容器。
-//
-// 显示模式决定键盘语义：
-// - dock：nonactivating、不抢 key window、不把其他应用输入焦点转走；
-// - keyboard：用户明确打开，可以成为 key window 并编辑搜索框。
-// 不能把 canBecomeKey 永久设为 false，也不能在每次悬停时 makeKeyAndOrderFront。
-//
-// 键盘面板的有限激活重试携带打开请求代数：用户切到其他应用后不再抢回焦点。
+// Dock 面板与键盘面板共用的 AppKit 容器。显示模式决定键盘语义：dock——nonactivating、不抢 key window、
+// 不转走别的 App 的输入焦点；keyboard——用户明确打开，可以成为 key window 编辑搜索框。不能把 canBecomeKey
+// 永久设 false、也不能每次悬停 makeKeyAndOrderFront；键盘面板的有限激活重试携带打开请求代数——用户切到别的
+// App 后不再抢回焦点。
 
 import Cocoa
 

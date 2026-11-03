@@ -87,7 +87,7 @@ import Cocoa
     static var hasTemplates: Bool { shared?.templates.isEmpty == false }
 
     /// 设置行状态：已录入几组模板；nil 是还没起（开关关着或起不来）。
-    static var templateCount: Int? { shared.map { $0.templates.count } }
+    static var templateCount: Int? { shared.map(\.templates.count) }
     /// 模板变了之后要通知设置行刷新（录完、删完）。主线程上调用。
     var onTemplatesChanged: (() -> Void)?
 

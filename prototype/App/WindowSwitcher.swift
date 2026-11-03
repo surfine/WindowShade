@@ -1,13 +1,9 @@
-// 按窗口切换（Wins 叫 Cmd-Tab Plus，AltTab 也是这个）：按住 ⌥（或 ⌘）连按 Tab，一扇一扇窗口地挑，松手就切过去。
-//
-// - 快速按一下就松手：直接切到上一扇窗，面板都不出来（和系统 ⌘Tab 一样快）；按住 0.15 秒以上才出面板。
-// - 顺序是最近用过的：屏幕上的窗口按前后次序；卷帘条和刘海里收着的窗口排在后面，挑它就放回来（这是 Wins 没有的）。
-// - 连按 Tab 往后走、加 ⇧ 往回走，←→ 也行；数字键 1–9 直接切到那一扇；⌘W 关掉选中的窗口、⌘Q 退出它的 App（面板留着）；
-//   Esc 取消；鼠标点一张也行。
-// - 打字搜索（O1）：面板开着时直接打字（或先按 / ）就按 App 名和窗口标题过滤，面板顶上显示查询；Delete 删字，Esc 先清查询再关；
-//   搜索态下数字键、卡片角标都按过滤后的列表编号，松开修饰键不再自动切换（回车或点一张才切）。规则与匹配见 Core/WindowSwitcherSearch.swift。
-// - 默认用 ⌥Tab，不碰系统的 ⌘Tab；设置里能换成 ⌘Tab（替换系统的 App 切换）或关掉。
-// - 键盘钩子跑在自己的线程上，只认这几个键；面板没开时别的按键一律原样放过。
+// 按窗口切换（Wins 的 Cmd-Tab Plus / AltTab）：按住 ⌥（或 ⌘）连按 Tab 一扇扇挑，松手切过去。快按快松直接切上一扇
+// 不出面（和系统 ⌘Tab 一样快），按住 0.15 秒以上才出面。顺序按最近用过：屏幕上的按前后，卷帘条与刘海里收着的排后面、
+// 挑它就放回来（Wins 没有）。Tab/⇧Tab/←→ 走、1–9 直切、⌘W 关选中、⌘Q 退它 App（面板留着）、Esc 取消、鼠标点也行。
+// 打字搜索（O1）：开着时直接打字（或先 /）按 App 名与标题过滤，Delete 删字、Esc 先清查询再关；搜索态数字与角标按
+// 过滤后编号，松开修饰键不再自动切（回车或点一张才切），规则见 Core/WindowSwitcherSearch.swift。默认 ⌥Tab 不碰
+// 系统 ⌘Tab，设置可换 ⌘Tab（替换系统）或关。键盘钩子在自己线程只认这几个键，面板没开时别的键原样放过。
 
 import Cocoa
 
@@ -116,7 +112,7 @@ final class WindowSwitcherKeys: @unchecked Sendable {
         let keyCode = Int(event.getIntegerValueField(.keyboardEventKeycode))
         let other: CGEventFlags = modifier == .maskCommand ? [.maskControl, .maskAlternate] : [.maskControl, .maskCommand]
         let isTab = keyCode == 48
-        // 系统的 ⌘Tab 原样放过，也不拿来“教”按窗口切换：按 ⌘Tab 切 App 在 Mac 上本来就是对的（docs/direction.md）。
+        // 系统的 ⌘Tab 原样放过，也不拿来“教”按窗口切换：按 ⌘Tab 切 App 在 Mac 上本来就是对的（docs/lost-notes.md（原 direction.md））。
         if isTab, flags.contains(modifier), flags.intersection(other).isEmpty {
             if type == .keyDown {
                 let backward = flags.contains(.maskShift)

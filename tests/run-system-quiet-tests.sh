@@ -11,6 +11,7 @@ mkdir -p "$OUT"
   "$ROOT/prototype/Core/GestureCoach.swift" \
   "$ROOT/prototype/Core/WSL10n.swift" "$ROOT/prototype/Core/PrivacyPaneName.swift" \
   "$ROOT/prototype/Core/HabitRules.swift" \
+  "$ROOT/prototype/Support/SkyLightFramework.swift" \
   "$ROOT/prototype/App/SystemQuietState.swift" \
   "$ROOT/tests/SystemQuietStateTests.swift" -o "$OUT/system-quiet-tests"
 "$OUT/system-quiet-tests"

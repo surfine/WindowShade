@@ -3132,32 +3132,29 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
             completion(.failed(reason: WSL10n.text("browser.reason.cannotQuit", zh: "这个 App 不能退出")))
             return
         }
-        waitForApplicationToTerminate(pid: pid, attempt: 0) { terminated in
+        waitForApplicationToTerminate(pid: pid) { terminated in
             completion(terminated ? .completed
                        : .awaitingUser(reason: WSL10n.text("browser.reason.awaitingQuitConfirm", zh: "App 还在，可能有未保存的内容要确认")))
         }
     }
 
-    private func waitForApplicationToTerminate(pid: pid_t, attempt: Int,
-                                               completion: @escaping (Bool) -> Void) {
-        let maxAttempts = 8
-        let interval = 0.25
+    /// 定时轮询直到条件成立或次数用尽（关闭确认共用的两个等待走这里：0.25s 一次）。
+    private func pollUntil(every interval: TimeInterval, maxAttempts: Int, attempt: Int = 0,
+                           until predicate: @escaping () -> Bool,
+                           completion: @escaping (Bool) -> Void) {
         _ = scheduler.schedule(after: interval) { [weak self] in
-            guard let self else {
-                completion(false)
-                return
-            }
-            if NSRunningApplication(processIdentifier: pid)?.isTerminated ?? true {
-                completion(true)
-                return
-            }
-            if attempt + 1 >= maxAttempts {
-                completion(false)
-                return
-            }
-            self.waitForApplicationToTerminate(pid: pid, attempt: attempt + 1,
-                                                completion: completion)
+            guard let self else { return completion(false) }
+            if predicate() { return completion(true) }
+            if attempt + 1 >= maxAttempts { return completion(false) }
+            self.pollUntil(every: interval, maxAttempts: maxAttempts, attempt: attempt + 1,
+                           until: predicate, completion: completion)
         }
+    }
+
+    private func waitForApplicationToTerminate(pid: pid_t, completion: @escaping (Bool) -> Void) {
+        pollUntil(every: 0.25, maxAttempts: 8,
+                  until: { NSRunningApplication(processIdentifier: pid)?.isTerminated ?? true },
+                  completion: completion)
     }
 
     private func performClose(target: WindowKey,
@@ -3181,32 +3178,16 @@ extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
                 return
             }
         }
-        waitForWindowToDisappear(target: target, attempt: 0) { disappeared in
+        waitForWindowToDisappear(target: target) { disappeared in
             completion(disappeared ? .completed
                        : .awaitingUser(reason: WSL10n.text("browser.reason.saveSheet", zh: "窗口仍在，可能有保存确认框")))
         }
     }
 
-    private func waitForWindowToDisappear(target: WindowKey, attempt: Int,
-                                          completion: @escaping (Bool) -> Void) {
-        let maxAttempts = 12
-        let interval = 0.25
-        _ = scheduler.schedule(after: interval) { [weak self] in
-            guard let self else {
-                completion(false)
-                return
-            }
-            if !(self.owner?.windowBrowserIsWindowStillPresent(key: target) ?? false) {
-                completion(true)
-                return
-            }
-            if attempt + 1 >= maxAttempts {
-                completion(false)
-                return
-            }
-            self.waitForWindowToDisappear(target: target, attempt: attempt + 1,
-                                          completion: completion)
-        }
+    private func waitForWindowToDisappear(target: WindowKey, completion: @escaping (Bool) -> Void) {
+        pollUntil(every: 0.25, maxAttempts: 12,
+                  until: { [weak self] in self?.owner?.windowBrowserIsWindowStillPresent(key: target) != true },
+                  completion: completion)
     }
 
     private func performMinimize(target: WindowKey,

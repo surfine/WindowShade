@@ -1163,7 +1163,6 @@ final class NowPlayingCardPresenter {
     private var vanishTimer: Timer?
     private var monitors: [Any] = []
 
-    init() {}
 
     func attach(leases: NotchLeaseHub) {
         present = { [weak leases] card, onDismiss in

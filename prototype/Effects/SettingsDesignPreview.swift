@@ -19,7 +19,7 @@ private final class DesignSampleWindow: NSWindow {
         if event.type == .leftMouseDown, let contentView {
             func inspect(_ view: NSView) {
                 if view is NativeProxyTitleContentView || view is PinnedPreviewContentView {
-                    recordDesignPointer("\(type(of: view)) visible=\(view.visibleRect) tracking=\(view.trackingAreas.map { $0.options.rawValue })")
+                    recordDesignPointer("\(type(of: view)) visible=\(view.visibleRect) tracking=\(view.trackingAreas.map(\.options.rawValue))")
                 }
                 view.subviews.forEach(inspect)
             }

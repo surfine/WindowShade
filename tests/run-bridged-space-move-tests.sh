@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/bridged-space-move-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
   -module-cache-path "$(pwd)/.build/module-cache" \
+  prototype/Support/SkyLightFramework.swift \
   prototype/Private/BridgedSpaceMove.swift \
   tests/BridgedSpaceMoveTests.swift \
   -framework Cocoa \

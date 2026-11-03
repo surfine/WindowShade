@@ -1,22 +1,6 @@
-// WindowShade 的更新看护（WindowShadeUpdateGuard.app，放在 Contents/Helpers/，由 build.sh 单独编译）。
-//
-// 他点“更新并重新打开”时，正在运行的旧版把自己包里的这个小 App 拷到
-// ~/Library/Application Support/WindowShade/Update/，用 SMJobSubmit 在用户域提交（标签 com.windowshade.prototype.update-guard）。
-// 从这一刻起它盯着旧版；旧版一退出就接手，直到新版写下 healthy，或换回旧版：
-//   1. 旧版还开着：用 kqueue（DispatchSource 进程源，NOTE_EXIT）等旧 pid 退出，用目录的文件源等日志变化，不轮询。
-//      否决（cancelled / refused）后不自己退出：App 确认 Sparkle 的安装任务没了才 SMJobRemove 看护；删不掉时看护留着兜底。
-//      只有日志被换掉（放回了另存的日志、或已删掉）才退出，那一定发生在 App 确认之后。
-//   2. 旧版退出了：显示和 WindowShade 相同的菜单栏图标（看得见的进程不受后台活动限制，菜单栏也不空出来），然后按 phase 分：
-//      started / gating：关没跑完旧版就没了。等 Sparkle 安装任务结束（最多 120 秒）：没装上就打开旧版；装上了就补做 DR 比对和试跑。
-//      cancelled / refused：否决了，但旧版可能在确认安装任务没了之前就退出。同样等任务结束：没装上就安静退出（他自己退的，不重开）；
-//        装上了：refused 直接换回，cancelled 补关，不过就换回。
-//      approved：等交换完成；任务没了版本也没变是交换失败，打开旧版。
-//   3. 新版 20 秒没进 main 就自己按路径打开；4. 60 秒内等 healthy，崩溃、自查没过、卡住就换回；
-//   5. 换回先写 refused.json 和 restoring 再动文件；没做成就写终态 restoreFailed，打开装着的那一版，由它说“没能换回”；
-//   6. 拿到 healthy 就收起图标退出。
-// 补关只能把 started / gating / cancelled 改成 approved，不盖掉新版同时写下的 launched 或 healthy。
-// 带 --restore 时一起来就换回（新版在 main 里发现起不来，或他在设置里点了“回到 x.y.z”）。
-// 判断在 Core/UpdateDecisions.swift，做事的代码在 App/UpdaterSystem.swift，App 和看护编译同一份；图标在 Watchdog/GuardIcon.swift。
+// WindowShade 的更新看护（WindowShadeUpdateGuard.app，由 build.sh 单独编译进 Contents/Helpers/）。
+// 从旧版点“更新并重新打开”起盯到新版写下 healthy、或换回旧版——六步流程、各 phase 的处置与 kqueue 细节见 docs/update.md「看护」。
+// 判断在 Core/UpdateDecisions.swift，做事在 App/UpdaterSystem.swift（App 与看护编译同一份）；图标在 Watchdog/GuardIcon.swift。
 
 import Cocoa
 

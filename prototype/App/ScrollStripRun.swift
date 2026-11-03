@@ -157,7 +157,7 @@ final class ScrollStripController {
             forName: Self.notchLinkChanged, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.rewireNotch() }
         }
-        wlog("strip: start columns=\(strip.columns.map { $0.ids.count }) widths=\(strip.columns.map { Int($0.width) }) offset=\(Int(strip.offset))")
+        wlog("strip: start columns=\(strip.columns.map(\.ids.count)) widths=\(strip.columns.map { Int($0.width) }) offset=\(Int(strip.offset))")
     }
 
     func stop(reason: String) {

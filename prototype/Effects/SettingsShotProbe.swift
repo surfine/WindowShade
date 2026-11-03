@@ -1,11 +1,7 @@
-// 设置窗口截图入口：用生产设置窗口渲染每一页，不需要屏幕录制权限。
-//
-// 与 `SettingsDesignPreview`（走 ScreenCaptureKit 的整窗截图）互补：这里用
-// `CGWindowListCreateImage` 抓自己这扇窗（已合成系统侧栏材质），失败时退回
-// `cacheDisplay`；后者拍的是主题框架，侧栏由系统材质绘制、离屏渲染会是透明区域，
-// 因此只在整窗截图拿不到结果时使用。
-//
-// 用法：WindowShade.app/Contents/MacOS/WindowShade --settings-shots [输出目录]
+// 设置窗口截图入口：用生产设置窗口渲染每一页，不需要屏幕录制权限；与 SettingsDesignPreview（走 ScreenCaptureKit
+// 整窗截图）互补——这里用 CGWindowListCreateImage 抓自己这扇窗（已合成系统侧栏材质），失败退回 cacheDisplay
+//（后者拍的是主题框架，侧栏由系统材质绘制、离屏渲染会透明，只在整窗截图拿不到时用）。用法：
+// WindowShade --settings-shots [输出目录]。
 
 import Cocoa
 

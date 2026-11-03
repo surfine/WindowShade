@@ -71,7 +71,6 @@ struct TouchRoster: Sendable {
     /// 有手指的板，按最近一次变化排序（最后一个最新）。
     private var order: [UInt64] = []
 
-    init() {}
 
     mutating func apply(_ change: TouchOwnership.Change) {
         order.removeAll { $0 == change.device }

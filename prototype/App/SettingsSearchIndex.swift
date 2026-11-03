@@ -1,13 +1,10 @@
-// 设置搜索的索引从哪来（1.0.18 新表面稿第 2 节）：不另建目录，设置窗口建好全部页（rebuildAllPages）之后，
-// 从已建好的行收条目。规则在 Core/SettingsSearch.swift，这里只做三件事：
-// 1. 行文字挂牌：WS2SettingsCopy.content 建行名 / 副标题时调 `SettingsSearchRegistry.register`，记下
-//    这一行的 SettingsText（键 + 简体源句）。所有页的行构造器（makeUnified*Row、效果 / 高级页的行、手势行……）
-//    都经过它，所以一处挂牌，所有行都有键。
-// 2. 收条目：按侧栏顺序走每一页，找每个设置行（WS2SettingsRow）；有牌的用牌上的键出简体、英文、繁体三种写法，
-//    没牌的读行里第一行字。分段控件、弹出菜单的每一项进“选项”。
-//    不进：⓪ 讲解带说明句和 ⓘ 气泡（不在行文字里）；隐私页“读到的”长表（WS2PrivacyPane，有自己的页内筛选）；
-//    藏着的行（手势页没选中的那几段除外：搜到了就切到那一段）。
-// 3. 三门语言的写法从编好的目录（Contents/Resources/Localization/<语言>.lproj）里查；读不到就只有当前语言。
+// 设置搜索的索引从哪来（1.0.18 新表面稿第 2 节）：不另建目录，设置窗建好全部页（rebuildAllPages）后从已建的行
+// 收条目；规则在 Core/SettingsSearch.swift。三件事：1) 行文字挂牌——WS2SettingsCopy.content 建行名/副标题时调
+// SettingsSearchRegistry.register 记下这行的 SettingsText（键+简体源句），所有页的行构造器都经过它，一处挂牌
+// 所有行都有键；2) 收条目——按侧栏顺序走每页找每个设置行（WS2SettingsRow），有牌的用牌上的键出三语写法、没牌的
+// 读行里第一行字，分段控件与弹出菜单的每项进“选项”；不进：⓪ 讲解带说明句和 ⓘ 气泡、隐私页“读到的”长表
+// （WS2PrivacyPane 有自己的页内筛选）、藏着的行（手势页没选中的那几段除外——搜到了就切到那段）；3) 三语写法从
+// 编好的目录（Contents/Resources/Localization/<语言>.lproj）查，读不到就只有当前语言。
 
 import Cocoa
 

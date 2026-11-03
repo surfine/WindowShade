@@ -1,12 +1,7 @@
-// 外观材质宿主：由运行环境和用户选择决定使用系统玻璃、系统原生材质还是不透明纸面。
-// 材质宿主只负责外观，不持有任何窗口操作状态。
-//
-// 编译条件与运行条件分别检查：
-// - 编译：由 build.sh / 测试脚本探测本机 SDK 是否带公开玻璃 API，探测结果写入
-//   `WINDOWSHADE_SDK_HAS_GLASS` 编译条件；旧 SDK 构建时该分支整体不参与编译。
-// - 运行：macOS 26 及以上才启用玻璃，macOS 14/15 等旧系统走 NSVisualEffectView，
-//   用户开启减少透明度时走不透明纸面。
-// 不使用私有 CALayer filter、KVC、动态 selector 或整屏截图伪造玻璃。
+// 外观材质宿主：运行环境与用户选择决定用系统玻璃、系统原生材质还是不透明纸面；只管外观不持窗口操作状态。
+// 编译与运行分别检查：build.sh/测试探测 SDK 有无公开玻璃 API 写入 WINDOWSHADE_SDK_HAS_GLASS 编译条件（旧 SDK
+// 该分支不参与编译）；运行时 macOS 26+ 启用玻璃，14/15 走 NSVisualEffectView，开减少透明度走不透明纸面。
+// 不用私有 CALayer filter、KVC、动态 selector 或整屏截图伪造玻璃。
 
 import Cocoa
 

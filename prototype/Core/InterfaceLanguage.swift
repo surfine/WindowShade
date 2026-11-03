@@ -1,15 +1,9 @@
-// 界面语言的选择与生效（第27批；繁体第39批）。
-// 沿用 WSL10n 入口：这里只决定"用哪种语言"，文案查找仍在 WSL10n.text；不另造翻译系统。
-//
-// 规则：
-//   - 默认跟随系统：首选语言按文字系统分流——zh-Hant / zh-TW / zh-HK / zh-MO 用繁体，
-//     其余 zh*（zh、zh-Hans、zh-CN…）用简体，非中文用英文。
-//   - 用户在设置里可覆盖成 跟随系统 / 简体中文 / 繁體中文 / English，存偏好一个键。
-//   - 切换立即生效：写偏好 → 设 WSL10n.language → 主线程发 didChangeNotification，
-//     由已显示的界面显式重建（DuoSettingsWindow、状态菜单等各自的观察者）。
-//
-// 边界：读取只发生在显式调用点（启动、设置里改语言、开关行读当前值），不藏在静态 copy
-// 初始化里；QA 夹具直接设 WSL10n.language，不经过这里、不写偏好、不读标准域。
+// 界面语言的选择与生效（第 27 批；繁体第 39 批）。沿用 WSL10n 入口：这里只决定“用哪种语言”，文案查找仍在
+// WSL10n.text，不另造翻译系统。默认跟随系统：首选语言按文字系统分流——zh-Hant/zh-TW/zh-HK/zh-MO 用繁体，
+// 其余 zh* 用简体，非中文用英文；设置里可覆盖成 跟随系统/简体中文/繁體中文/English（存偏好一个键）。切换立即生效：
+// 写偏好 → 设 WSL10n.language → 主线程发 didChangeNotification，由已显示的界面显式重建（各自观察者）。
+// 边界：读取只在显式调用点（启动、设置里改语言、开关行读当前值），不藏在静态 copy 初始化里；QA 夹具直接设
+// WSL10n.language，不经过这里、不写偏好、不读标准域。
 import Foundation
 
 enum InterfaceLanguagePreference: String, CaseIterable, Sendable {

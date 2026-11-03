@@ -173,7 +173,6 @@ enum NotchRoomPolicy {
         private(set) var lastGrowAt: TimeInterval?
         private(set) var pointerHolds = 0
 
-        init() {}
 
         mutating func observe(_ reading: Reading, at now: TimeInterval, pointerOnMenuBar: Bool) -> Outcome {
             guard let current = inUse else {

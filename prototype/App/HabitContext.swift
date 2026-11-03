@@ -1,11 +1,9 @@
-// 卡住时刘海开口：读前台 App、焦点、菜单，前后比一比，定下说不说（docs/stuck-habits.md 第一部分 §4.2–4.6）。
-//
-// HabitWorker 在自己的串行队列上跑：钩子（HabitKeys）报上来的每一下都排到这里，AX 读取不上主线程。
-// 每个 AX 元素的等待上限设 0.3 秒；菜单按 pid 缓存（某个 App 第一次按到候选键时才扫一次，App 退出时作废；
-// 读不到的记 10 秒，这期间连按也不重扫），每个菜单最多看 60 项。没有轮询：只有按键、点按、滚动和系统通知来了才做事，
-// 等待都是一次性的 asyncAfter。不用读 AX 就能挡掉的（名单里的 App、不在访达文件列表里的 delete）最先挡，不写日志。
-// HabitCenter 在主线程：管开关（来处、刘海和教学的设置、那本账）、把决定交给刘海（Notch+Habit.swift），
-// 以及只能在主线程看的事（WindowShade 收起了哪扇窗）。
+// 卡住时刘海开口：读前台 App、焦点、菜单，前后比一比定下说不说（docs/lost-notes.md（原 stuck-habits.md） §4.2–4.6）。HabitWorker 在
+// 自己的串行队列跑：钩子（HabitKeys）报的每下都排到这里，AX 读取不上主线程；每个 AX 元素等待上限 0.3 秒；菜单按
+// pid 缓存（某 App 第一次按到候选键才扫一次、退出作废，读不到的记 10 秒连按不重扫），每菜单最多 60 项。不轮询：
+// 只有按键、点按、滚动与系统通知来了才做事，等待都是一次性 asyncAfter。不用读 AX 就能挡的（名单 App、不在访达
+// 文件列表里的 delete）最先挡、不写日志。HabitCenter 在主线程：管开关（来处、刘海与教学设置、那本账）、把决定交
+// 刘海（Notch+Habit.swift）与只能主线程看的事（WindowShade 收起了哪扇窗）。
 
 import Cocoa
 import Carbon
@@ -906,7 +904,7 @@ final class HabitWorker: @unchecked Sendable {
         let role = values[0] as? String
         let editable = values[2] != nil
         read.caret = HabitAX.range(values[3])
-        read.selection = read.caret.map { $0.length }
+        read.selection = read.caret.map(\.length)
         read.characters = HabitAX.int(values[4])
         if values[5] as? String == HabitExclusions.webTerminalDescription { read.excluded = true }
         if let marked = HabitAX.range(values[6]), marked.length > 0 { read.composing = true }

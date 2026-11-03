@@ -8,13 +8,10 @@ extension AppDelegate {
         let shouldRun = !shaded.isEmpty || !shadeJournalEntries().isEmpty
         if shouldRun {
             guard reconcileTimer == nil else { return }
-            let timer = Timer.scheduledTimer(withTimeInterval: shadedWindowReconcileInterval,
-                                             repeats: true) { [weak self] _ in
-                // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
-                MainActor.assumeIsolated { self?.reconcileShadedWindows(reason: "timer") }
+            reconcileTimer = MainTimer.repeating(
+                interval: shadedWindowReconcileInterval, tolerance: 1.5) { [weak self] in
+                self?.reconcileShadedWindows(reason: "timer")
             }
-            timer.tolerance = 1.5
-            reconcileTimer = timer
             wlog("reconcile: timer started")
         } else if let timer = reconcileTimer {
             timer.invalidate()
@@ -53,7 +50,7 @@ extension AppDelegate {
         case .privateAlpha:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
             let sampledAlpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
-                ?? (cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber).map { $0.floatValue }
+                ?? (cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber).map(\.floatValue)
             guard let alpha = sampledAlpha, alpha.isFinite, (0...1).contains(alpha) else { return false }
             return alpha > 0.05
         case .hidden:

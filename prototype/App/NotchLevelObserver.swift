@@ -1,18 +1,12 @@
-// 输出音量、屏幕亮度 → 同一颗岛上的提示。只在真的按了音量、亮度键时开口（判定在 Core/NotchLevelGate.swift）。
-// 不拦系统键：媒体键只旁听（NSEvent 全局监视器，拿不到也改不了别人的事件），系统自己的提示照常。
-// 读取点已登记：音量读 Core Audio 公开标量；亮度经 DisplayServices 读当前屏，只在按了亮度键后的一小会儿去读
-//（仓库里其它硬件形状读取同一类私有桥，失败就静默）。监视器装不上时退回原来的做法：数值一变就开口。
-//
-// 拦键（《音量与亮度》稿工作包 LV2）：允许了辅助功能、且这个 macOS 版本核对过（NotchLevelControl 的版本表，
-// 或 defaults 开关 Notch.levelSuppression.trustThisOS），才换成主动的 CGEvent 监听：掩码只有系统按键这一类
-// （NX_SYSDEFINED，子类型 8），打字的键收不到；先挂 HID 层，挂不上退会话层，排在最前，能吞键。
-// 回调里只解析、查缓存（锁屏、对方 App、能不能调都事先缓存好，靠通知更新，不轮询）；要拦的键派给
-// NotchLevelControl 写值，不拦的照旧走下面的旁听画法。被系统暂停（tapDisabledBy…）立刻重开；辅助功能被撤销就拆掉，
-// 回到只旁听。版本没核对过时什么都不换：和以前一样只旁听，系统的提示照出。不向任何系统进程发信号。
-//
-// 全屏（LV4）：老门闸不再因为“这块屏是全屏桌面”一概不出声；全屏的判定走 NotchLevelScreen / NotchLevelSuppression：
-// 全屏而且面板在这张桌面上确认过看得见才出两耳、才可能拦（两耳出不出、看得见不看得见由 Notch.presentLevel 核对）。
-// 调度中心、锁屏仍然不出声。设置里“音量和亮度”关了：不出两耳、也不拦。
+// 输出音量、屏幕亮度 → 同一颗岛上的提示；只在真按了音量/亮度键时开口（判定在 Core/NotchLevelGate.swift）。
+// 默认只旁听（NSEvent 全局监视器，拿不到也改不了别人的事件），系统自己的提示照常；监视器装不上退回“数值一变就开口”。
+// 拦键（LV2）：辅助功能允许且 macOS 版本核对过（NotchLevelControl 版本表，或 Notch.levelSuppression.trustThisOS）
+// 才换主动 CGEvent 监听——掩码只有 NX_SYSDEFINED（打字的键收不到），先挂 HID 层、挂不上退会话层、排最前能吞键；
+// 回调只解析查缓存（锁屏/对方 App/能不能调都靠通知更新，不轮询）；系统暂停立刻重开，授权撤销即拆回旁听；
+// 版本没核对过什么都不换。不向任何系统进程发信号。读取点已登记（音量 Core Audio 公开标量；亮度 DisplayServices
+// 读当前屏，只在按键后一小会儿读）。
+// 全屏（LV4）：老门闸不再一概不出声，走 NotchLevelScreen/NotchLevelSuppression——全屏且面板在这张桌面确认过
+// 看得见才出两耳、才可能拦；调度中心、锁屏仍不出声；设置里“音量和亮度”关了则不出也不拦。
 
 import AudioToolbox
 import Cocoa

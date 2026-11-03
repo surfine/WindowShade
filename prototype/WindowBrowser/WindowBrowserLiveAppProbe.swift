@@ -1,11 +1,7 @@
-// 真实入口探针：对**正在运行的另一个 WindowShade 进程**（正常启动的应用，
-// 不是本探针自己）走一遍真实入口：
-//
-//   状态栏菜单 → “选择窗口…” → 键盘面板 → 读面板里的真实窗口条目 → Esc 关闭 → 确认消失。
-//
-// 只做两次 AXPress（状态项、菜单项）和一次 Esc 按键，不点击任何卡片动作、不改设置、
-// 不移动指针、不关闭或折叠任何用户窗口。用途是证明“新入口在真实运行的应用里可用”，
-// 而不是只在本进程构造出的菜单对象里成立。
+// 真实入口探针：对正在运行的另一个 WindowShade 进程（正常启动的应用，不是本探针自己）走真实入口：
+// 状态栏菜单 → “选择窗口…” → 键盘面板 → 读面板里的真实窗口条目 → Esc 关闭 → 确认消失。只做两次 AXPress（状态项、
+// 菜单项）和一次 Esc，不点卡片动作、不改设置、不动指针、不关不折任何用户窗口——证明“新入口在真实运行的应用里
+// 可用”，而不只是本进程构造的菜单对象里成立。
 
 import Cocoa
 import ApplicationServices
@@ -82,7 +78,7 @@ final class WindowBrowserLiveAppProbe {
             retry(after: 0.2) { [self] in readStatusMenu(attempt: attempt + 1) }
             return
         }
-        let titles = items.map { $0.title }
+        let titles = items.map(\.title)
         record("status menu has items", !items.isEmpty)
         print("live-app-probe: statusMenu items=\(items.count) titles=\(titles.joined(separator: " | "))")
         guard let browserItem = items.first(where: { $0.title == WSL10n.text("menu.chooseWindow", zh: "选择窗口…") }) else {

@@ -1,19 +1,8 @@
-// 全局输入监听合成一个只听不拦的 tap（docs/performance.md 第七节“输入事件的扇出”）。
-//
-// 原来一次指针移动或滚动会分别叫醒主线程上的几处全局监听：标题栏手势的滚动和拖动、Dock 图标上的滑动、
-// Dock 悬停的回退检测、Dock 留在一块屏。打开这里以后，它们共用一个 listenOnly 的 CGEventTap，跑在
-// .userInteractive 的输入线程上：先按一份加锁的快照（各功能有没有在听、手势进行到哪、Dock 在哪一带、
-// 屏幕边在哪）过滤，只把真正会被处理的事件 async 到主线程，交给原来的处理函数，处理函数一行不改。
-//
-// 过滤条件和各处理函数开头的 guard 等价（GlobalInputPredicate，对照表见 tests/GlobalInputFilterTests.swift）：
-// 事件字段上的判断完全一样；位置判断多留 2 点余量（事件里的位置和主线程读到的指针位置会差一点），只会多送、
-// 不会少送。手势“进行中”的状态由主线程在状态变的那一刻写进快照；主线程还没处理完的“开头”（滚动开始、
-// 左键按下）之后的事件一律照送，免得主线程刚开始一个手势、输入线程还按旧状态把后面的事件丢了。
-//
-// 发给 WindowShade 自己窗口的事件，NSEvent 的全局监听本来就收不到（由本地监听或窗口自己处理），这里也不送。
-//
-// 默认关（设置键 Input.sharedListenTap）。关着、没有辅助功能授权、或者 tap 建不起来时，每个功能照旧用
-// NSEvent 的全局监听，和以前一模一样。不开计时器、不轮询；没有功能在听时输入线程退出。
+// 全局输入监听合成一个只听不拦的 listenOnly CGEventTap（缘起与设计见 docs/performance.md 第七节“输入事件的扇出”）。
+// 标题栏手势滚动/拖动、Dock 滑动、Dock 悬停回退、Dock 留屏共用它：输入线程按加锁快照过滤，只把会被处理的事件 async 给原处理函数（一行不改）。
+// 过滤条件与各处理函数开头的 guard 等价（GlobalInputPredicate，对照表 tests/GlobalInputFilterTests.swift）；位置判断多留 2 点余量，只多送不少送；
+// 手势“进行中”由主线程在状态变化那一刻写快照，未处理完的“开头”之后的事件一律照送（防竞态丢事件）。
+// 默认关（Input.sharedListenTap）；关着、无授权或 tap 建不起来时各功能照旧用 NSEvent 全局监听。不开计时器，没功能在听时输入线程退出。
 
 import Cocoa
 import os
@@ -519,7 +508,6 @@ final class GlobalInputFilter {
     private(set) var tapFailed = false
 
     /// 平时只用 shared；单测另建一个，看退回路径。
-    init() {}
 
     /// 诊断：合成的 tap 是否在跑、在听哪些。
     var isTapRunning: Bool { tap != nil }

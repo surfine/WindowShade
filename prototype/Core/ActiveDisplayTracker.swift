@@ -9,7 +9,6 @@ struct ActiveDisplayTracker {
     private var lastPointer: UInt32?
     private var lastKey: UInt32?
 
-    init() {}
 
     /// `displays`：可以承载活动的屏（让给系统的屏不在里面）；`builtin`：内建屏（可为 nil）；
     /// `pointer`、`key`：指针所在屏、焦点窗口所在屏（不在 `displays` 里的当作没有）。返回现在的活动屏。

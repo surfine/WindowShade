@@ -387,8 +387,8 @@ enum MorphRetarget {
         if values.count > 40 {
             let stride = (values.count + 39) / 40
             let keep = points.enumerated().filter { $0.offset % stride == 0 || $0.offset == points.count - 1 }
-            values = keep.map { $0.element.displacement }
-            times = keep.map { $0.element.time }
+            values = keep.map(\.element.displacement)
+            times = keep.map(\.element.time)
         }
         return (values, times)
     }

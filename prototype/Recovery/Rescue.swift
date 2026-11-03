@@ -1,12 +1,7 @@
-// 离屏窗口救援：折叠异常退出后的 journal 恢复与广域停车点扫描。
-// 扫描在后台队列、写回在主线程；作为 AppDelegate 扩展实现。
-//
-// 恢复纪律：找到 journal entry → 尝试恢复 → 验证成功 → 才清掉这条 entry。
-// 验证失败的 entry 保留到下一轮 rescue 重试，绝不先删线索再恢复。
-//
-// Swift 6：`AppDelegate` 是 `@MainActor`。后台队列上的扫描绝不能碰主线程隔离
-// 的实例方法（否则执行期 `_dispatch_assert_queue_fail` → SIGTRAP）。journal
-// 条目在 hop 之前于主线程读好；屏幕夹紧在写回主线程时做。
+// 离屏窗口救援：折叠异常退出后的 journal 恢复与广域停车点扫描；扫描在后台队列、写回在主线程（AppDelegate 扩展）。
+// 恢复纪律：找到 journal entry → 尝试恢复 → 验证成功 → 才清掉这条 entry；验证失败的留到下一轮 rescue 重试，
+// 绝不先删线索再恢复。Swift 6：AppDelegate 是 @MainActor，后台队列绝不碰主线程隔离的实例方法（否则
+// _dispatch_assert_queue_fail → SIGTRAP）——journal 条目在 hop 之前于主线程读好，屏幕夹紧在写回主线程时做。
 
 import Cocoa
 

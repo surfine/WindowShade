@@ -1,14 +1,11 @@
-// Original WS2 host-independent coordinator. Call exclusively on MainActor.
-// An input lease is NOT an authorization grant.
-//
+// Original WS2 host-independent coordinator. Call exclusively on MainActor. An input lease is NOT an authorization grant.
 // 层序（docs/design-grammar.md）：1 放行 > 2 你正在做的（手在按）> 3 你主动打开的 > 4 短暂提醒 > 5 持续活动 > 6 什么都没有。
-// - 放行不抢手势：第 2 层进行时，放行排队，松手或取消后再出现；这期间别的层一律不进来，提醒只留次区域的点。
-// - 放行对第 3 层仍然抢占：那一页挂起，让出后原样回来（由宿主另拿一份租约，进场不重播）。
-// - 同层放行排队：先来先出，连同正在显示的那件最多 8 件；只有队首露面，它有结果后下一件才出现。
-// - 次区域的点：提醒撞上第 1-3 层时记点；那一层结束、屏上不再有人时点熄，被消耗，不补说。
-// - 刘海那一排只有一个主人 notchShelf（M11）：收着的窗口、正在进行的事（播放、编程会话）是同一排，
-//   会话的“去看看”详情页也用这个主人露面；不再有独立的 agentSessions 主人。
-// - 系统专注模式开着（quiet 为真）：第 4 层提醒也只留次区域的点，不开口；专注结束点熄，不补说。放行（第 1 层）不经这里，照常问。
+// 放行不抢手势：第 2 层进行时放行排队、松手或取消后再出现，期间别的层一律不进、提醒只留次区域的点；放行对第 3 层
+// 仍抢占——那页挂起，让出后原样回来（宿主另拿租约，进场不重播）。同层放行排队先来先出、连同正在显示的最多 8 件，
+// 只有队首露面、它有结果后下一件才出现。次区域的点：提醒撞第 1-3 层时记点，那层结束、屏上没人时点熄，被消耗不补说。
+// 刘海那一排只有一个主人 notchShelf（M11）：收着的窗口与正在进行的事（播放、编程会话）同一排，“去看看”详情页也用
+// 这个主人，不再有独立 agentSessions。系统专注模式（quiet）开着：第 4 层提醒也只留点不开口，专注结束点熄不补说；
+// 放行（第 1 层）不经这里、照常问。
 import Foundation
 @MainActor
 final class InteractionCoordinator {

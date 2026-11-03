@@ -1,12 +1,7 @@
-// 应用内更新：设置里“更新”一组的行（“隐私”页，“启动”下面）。
-// 行的样子照 Preferences.swift 的 makeUnifiedToggleRow / makeUnifiedControlRow；卡片由设置页自己包。
-//
-// 接线（Preferences.swift 的 makePermissionsSettingsPage，“启动”那张卡片之后）：
-//     stack.setCustomSpacing(18, after: launch)
-//     stack.addArrangedSubview(makePrefGroupLabel(UpdateCopy.settingsGroup))
-//     let update = makeUnifiedSettingsCard(UpdaterController.shared.makeSettingsRows())
-//     stack.addArrangedSubview(update)
-//     update.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+// 应用内更新：设置里“更新”一组的行（“隐私”页“启动”下）；行样子照 Preferences.swift 的 makeUnifiedToggleRow /
+// makeUnifiedControlRow，卡片由设置页自己包。接线（makePermissionsSettingsPage，“启动”卡之后）：
+// stack.addSpaced(makePrefGroupLabel(UpdateCopy.settingsGroup), spacing: 18)，再
+// stack.addFullWidth(makeUnifiedSettingsCard(UpdaterController.shared.makeSettingsRows()))。
 
 import Cocoa
 
