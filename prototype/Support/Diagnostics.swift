@@ -489,19 +489,35 @@ final class MainThreadSampler: @unchecked Sendable {
         else { return [] }
         defer { thread_resume(mainThread) }
         var written = 0
+        // 线程状态按架构取：arm64 有 LR，x86_64 没有，当前帧的返回地址只能靠 FP 链第一跳拿到。
+        #if arch(arm64)
         var state = arm_thread_state64_t()
         var count = mach_msg_type_number_t(MemoryLayout<arm_thread_state64_t>.size / MemoryLayout<natural_t>.size)
+        let stateFlavor = ARM_THREAD_STATE64
+        #elseif arch(x86_64)
+        var state = x86_thread_state64_t()
+        var count = mach_msg_type_number_t(MemoryLayout<x86_thread_state64_t>.size / MemoryLayout<natural_t>.size)
+        let stateFlavor = x86_THREAD_STATE64
+        #else
+        return []
+        #endif
         let result = withUnsafeMutablePointer(to: &state) {
             $0.withMemoryRebound(to: natural_t.self, capacity: Int(count)) {
-                thread_get_state(mainThread, ARM_THREAD_STATE64, $0, &count)
+                thread_get_state(mainThread, stateFlavor, $0, &count)
             }
         }
         if result == KERN_SUCCESS {
+            #if arch(arm64)
             scratch[written] = Self.strip(UInt(state.__pc))
             written += 1
             scratch[written] = Self.strip(UInt(state.__lr))
             written += 1
             var fp = UInt(state.__fp)
+            #elseif arch(x86_64)
+            scratch[written] = Self.strip(UInt(state.__rip))
+            written += 1
+            var fp = UInt(state.__rbp)
+            #endif
             for _ in 0..<60 where written < Self.scratchCount {
                 guard fp >= stackLow, fp + 16 <= stackHigh, fp % 8 == 0,
                       let slot = UnsafePointer<UInt>(bitPattern: fp) else { break }
