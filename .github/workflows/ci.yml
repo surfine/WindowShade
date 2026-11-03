@@ -30,6 +30,12 @@ jobs:
       - name: Sparkle is present
         run: test -f prototype/Vendor/Sparkle.framework/Versions/B/Sparkle
 
-      - name: build.sh --check
+      - name: build.sh --check (arm64)
         working-directory: prototype
         run: ./build.sh --check
+
+      # 2026-11-04 起支持交叉编译 Intel 包（Diagnostics 采样器已加 arch 分支）；
+      # 发布仍 arm64-only，这一步只保证 x86_64 路径不烂掉。
+      - name: build.sh --check (x86_64 cross)
+        working-directory: prototype
+        run: WINDOWSHADE_ARCH=x86_64 ./build.sh --check
