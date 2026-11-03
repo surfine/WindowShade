@@ -13,6 +13,10 @@ final class VoiceprintAudioSink: @unchecked Sendable {
         var closed = false
     }
     private let state = Mutex(State())
+    /// PERF-12：转换输出缓冲跨 chunk 复用，音频回调线程上省一次堆分配。只在 state.withLock 里创建和
+    /// 使用（同一把锁串行化，跟 State 里的 converter 一样）；不放进 State 是因为 Swift 6 区域隔离
+    /// 不允许锁里的非 Sendable 引用以局部变量形式活到闭包结束。
+    private var scratchOut: AVAudioPCMBuffer?
     private let request: SFSpeechAudioBufferRecognitionRequest
     private let target: AVAudioFormat
 
@@ -26,13 +30,21 @@ final class VoiceprintAudioSink: @unchecked Sendable {
         let target = self.target
         state.withLock { s in
             guard !s.closed, s.samples.count < SpeakerVerification.maximumSamples else { return }
+            if s.samples.capacity == 0 {
+                // PERF-12：一次预留到上限（12 s × 16 kHz），避免积累过程中数组的成倍扩容拷贝。
+                s.samples.reserveCapacity(SpeakerVerification.maximumSamples)
+            }
             if s.converter == nil || s.sourceSampleRate != buffer.format.sampleRate {
                 s.converter = AVAudioConverter(from: buffer.format, to: target)
                 s.sourceSampleRate = buffer.format.sampleRate
             }
             guard let converter = s.converter else { return }
+            // 容量不够（帧长/采样率变化）才重建。
             let capacity = AVAudioFrameCount(Double(buffer.frameLength) * target.sampleRate / max(1, buffer.format.sampleRate)) + 64
-            guard let out = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: capacity) else { return }
+            if scratchOut?.frameCapacity ?? 0 < capacity {
+                scratchOut = AVAudioPCMBuffer(pcmFormat: target, frameCapacity: capacity)
+            }
+            guard let out = scratchOut else { return }
             nonisolated(unsafe) var supplied = false
             nonisolated(unsafe) let input = buffer
             var error: NSError?

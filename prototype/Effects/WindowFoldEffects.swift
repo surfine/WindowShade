@@ -24,6 +24,8 @@ final class WindowFoldEffects {
     var commitPending = false
     /// 手指给的目标进度（0 = 窗口完整，1 = 卷成卷帘条）。
     var fingerValue: Double = 0
+    /// PERF-13：当前生效的采集帧率档（WindowFoldFPS）。只在主线程 tick 里改，变了才调 updateFPS。
+    var liveFPS = WindowFoldFPS.active
     var preparedProfile: WindowChromeProfile?
     init(id: CGWindowID, element: AXUIElement, folded: Bool) {
       self.id = id
@@ -388,6 +390,12 @@ final class WindowFoldEffects {
       guard let self, let job, current(job), let session = job.session else { return }
       job.transition.advance(at: now)
       session.renderer.parameters.progress = Float(job.transition.value)
+      // PERF-13：卷完定住等待 hide 确认期间降采集帧率；反向请求会重新走 request → animate 回 60。
+      let wanted = WindowFoldFPS.wanted(transitionSettled: job.transition.settled)
+      if wanted != job.liveFPS {
+        job.liveFPS = wanted
+        session.source.updateFPS(wanted)
+      }
       if job.transition.settled, !job.awaitingFinalFrame {
         job.awaitingFinalFrame = true
         let target = job.transition.target
@@ -554,6 +562,12 @@ final class WindowFoldEffects {
       if abs(job.fingerValue - shown) < 0.0005 { shown = job.fingerValue }
       job.transition = FoldTransition(value: shown)
       session.renderer.parameters.progress = Float(shown)
+      // PERF-13：手指停住、盖板追平后降采集帧率，一动就回 60。
+      let wanted = WindowFoldFPS.wanted(fingerDelta: abs(job.fingerValue - shown))
+      if wanted != job.liveFPS {
+        job.liveFPS = wanted
+        session.source.updateFPS(wanted)
+      }
     }
   }
 

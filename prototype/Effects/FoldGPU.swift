@@ -365,16 +365,34 @@ enum FoldStillTexture {
 
   /// vImage 换色彩空间（会用上所有核心）。实测 5K 屏上 4800×2600 的窗口背景，从显示器的色彩空间换到
   /// Display P3，CGContext 画一遍要 650ms，vImage 30ms。目标就是共享 buffer 本身。
+  /// 源缓冲直接包在 CGImage 自己的字节上——省掉 vImage_Buffer(cgImage:) 的整图拷贝与临时分配
+  ///（5K ≈ 50MB）；源字节拿不到、或带 decode/mask 的少见格式再退回拷贝式初始化。
   private static func convert(
     _ image: CGImage, to space: CGColorSpace, into base: UnsafeMutableRawPointer, rowBytes: Int
   ) -> Bool {
     guard let source = vImage_CGImageFormat(cgImage: image),
       let target = vImage_CGImageFormat(
         bitsPerComponent: 8, bitsPerPixel: 32, colorSpace: space, bitmapInfo: bitmapInfo),
-      let converter = try? vImageConverter.make(sourceFormat: source, destinationFormat: target),
-      let input = try? vImage_Buffer(cgImage: image, format: source)
+      let converter = try? vImageConverter.make(sourceFormat: source, destinationFormat: target)
     else { return false }
-    defer { input.free() }
+    var input: vImage_Buffer
+    let ownsInput: Bool
+    if image.decode == nil, !image.isMask, image.bitsPerPixel / 8 > 0,
+      image.bytesPerRow >= image.bitsPerPixel / 8 * image.width,
+      let data = image.dataProvider?.data, let bytes = CFDataGetBytePtr(data),
+      CFDataGetLength(data) >= image.bytesPerRow * (image.height - 1) + image.bitsPerPixel / 8 * image.width
+    {
+      input = vImage_Buffer(
+        data: UnsafeMutableRawPointer(mutating: bytes), height: vImagePixelCount(image.height),
+        width: vImagePixelCount(image.width), rowBytes: image.bytesPerRow)
+      ownsInput = false
+    } else if let copied = try? vImage_Buffer(cgImage: image, format: source) {
+      input = copied
+      ownsInput = true
+    } else {
+      return false
+    }
+    defer { if ownsInput { input.free() } }
     var output = vImage_Buffer(
       data: base, height: vImagePixelCount(image.height), width: vImagePixelCount(image.width),
       rowBytes: rowBytes)

@@ -1,14 +1,12 @@
-// 正在播放的真实波形：录正在放的那一个播放器的声音，算出每帧 5 个电平（设计稿《正在播放》“波形要系统音频录制”，工作包 NP-6）。
-//
-// - 设置里“跟着声音跳”默认关；打开时才问系统音频录制（隐私与安全性 › 系统音频录制）。没权限 = 一个 tap 都不建。
-// - macOS 14.2 起的 CoreAudio 进程 tap：只接推送流报的那一个播放器（按 bundle id 找进程对象，容忍子进程），
-//   混成单声道，挂在一个私有聚合设备上（“声音”设置里看不见），不带任何子设备（不碰麦克风，也不碰输出设备）。
-// - 只在紧凑的封面耳或大卡露着、而且在放时开；暂停 3 秒、收回、锁屏、全屏、减少动态效果就拆。
-// - 声音不留下：离开录音那一路的只有每帧 5 个数，每秒 30 次；不写盘、不写运行记录、不发送。
-// - 没权限、tap 失败、蓝牙输出 + Spotify（照稿先跳过，待真机核实）：右耳画静止取色点，绝不画假的。
-// - 不轮询：建、拆都跟着事件走；暂停的 3 秒宽限是一次性定时器（带容差），拆了就停。
-// 读取点（进程列表、建 tap、授权私有接口、设置项）都已登记在 tools/privacy/registry.json 的 music-levels / settings。
+// 正在播放的真实波形：录正在放的那一个播放器的声音，算出每帧 5 个电平（《正在播放》“波形要系统音频录制”，NP-6）。
+// 设置“跟着声音跳”默认关，打开才问系统音频录制，没权限一个 tap 都不建。macOS 14.2 起 CoreAudio 进程 tap：
+// 只接推送流报的那一个播放器（按 bundle id 找进程对象，容忍子进程），混成单声道挂在私有聚合设备上（“声音”设置
+// 里看不见）、不带子设备（不碰麦克风与输出设备）。只在紧凑封面耳或大卡露着且在放时开；暂停 3 秒、收回、锁屏、
+// 全屏、减少动态效果就拆。声音不留下：离开录音那路的只有每帧 5 个数每秒 30 次，不写盘不写记录不发送；没权限、
+// tap 失败、蓝牙输出 + Spotify（照稿先跳过待真机核实）时右耳画静止取色点，绝不画假的。不轮询，建拆跟着事件走，
+// 暂停 3 秒宽限是一次性定时器（带容差）。读取点已登记（registry.json 的 music-levels / settings）。
 
+import Accelerate
 import Foundation
 import CoreAudio
 import AppKit
@@ -149,20 +147,28 @@ private final class AudioLevelSink: @unchecked Sendable {
         guard let first = list.first, let data = first.mData else { return }
         let frameCount: Int
         if list.count > 1 {
-            // 非交错：每个声道一个缓冲区，平均成单声道。
+            // 非交错：每个声道一个缓冲区，平均成单声道。PERF-12：vDSP 累加（第一路直接拷进来省一次清零），
+            // 通道按原顺序逐个加，浮点加法顺序与旧标量循环一致。
             frameCount = Int(first.mDataByteSize) / MemoryLayout<Float>.size
             ensure(frameCount)
-            for index in 0..<frameCount { mono[index] = 0 }
             var used = 0
             for buffer in list {
                 guard let pointer = buffer.mData?.assumingMemoryBound(to: Float.self),
                       Int(buffer.mDataByteSize) / MemoryLayout<Float>.size >= frameCount else { continue }
-                for index in 0..<frameCount { mono[index] += pointer[index] }
+                mono.withUnsafeMutableBufferPointer { dst in
+                    if used == 0 {
+                        memcpy(dst.baseAddress!, pointer, frameCount * MemoryLayout<Float>.size)
+                    } else {
+                        vDSP_vadd(dst.baseAddress!, 1, pointer, 1, dst.baseAddress!, 1, vDSP_Length(frameCount))
+                    }
+                }
                 used += 1
             }
             guard used > 0 else { return }
-            let scale = 1 / Float(used)
-            for index in 0..<frameCount { mono[index] *= scale }
+            var scale = 1 / Float(used)
+            mono.withUnsafeMutableBufferPointer {
+                vDSP_vsmul($0.baseAddress!, 1, &scale, $0.baseAddress!, 1, vDSP_Length(frameCount))
+            }
         } else {
             let perFrame = max(1, Int(first.mNumberChannels))
             let samples = data.assumingMemoryBound(to: Float.self)
@@ -171,12 +177,15 @@ private final class AudioLevelSink: @unchecked Sendable {
                 if let levels = meter.push(UnsafeBufferPointer(start: samples, count: frameCount)) { deliver(levels) }
                 return
             }
+            // PERF-12：交错混音按 stride 逐路 vDSP 累加，加法顺序与旧标量循环一致。
             ensure(frameCount)
-            let scale = 1 / Float(perFrame)
-            for frame in 0..<frameCount {
-                var sum: Float = 0
-                for channel in 0..<perFrame { sum += samples[frame * perFrame + channel] }
-                mono[frame] = sum * scale
+            var scale = 1 / Float(perFrame)
+            mono.withUnsafeMutableBufferPointer { dst in
+                vDSP_vadd(samples, vDSP_Stride(perFrame), samples + 1, vDSP_Stride(perFrame), dst.baseAddress!, 1, vDSP_Length(frameCount))
+                for channel in 2..<perFrame {
+                    vDSP_vadd(dst.baseAddress!, 1, samples + channel, vDSP_Stride(perFrame), dst.baseAddress!, 1, vDSP_Length(frameCount))
+                }
+                vDSP_vsmul(dst.baseAddress!, 1, &scale, dst.baseAddress!, 1, vDSP_Length(frameCount))
             }
         }
         let levels = mono.withUnsafeBufferPointer { meter.push(UnsafeBufferPointer(rebasing: $0[0..<frameCount])) }

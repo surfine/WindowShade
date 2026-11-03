@@ -357,9 +357,15 @@ final class DuoController: NSObject {
       var session: EffectSession?
       do {
         // 第一次只要显示器：onScreenWindowsOnly 让窗口表缩到屏上的，不必把全系统窗口都枚举一遍。
-        let content = try await SCShareableContent.excludingDesktopWindows(
-          false, onScreenWindowsOnly: true)
-        guard self.epoch.accepts(token), self.allowsAnimation,
+        // PERF-12：显示器拓扑不随窗口枚举参数变，标题栏点击/折叠路径预热过的缓存里通常就有——
+        // 命中就省一次全系统枚举（合盖时这是首帧延迟的一部分）；缓存不新鲜或没看到内建屏
+        // （可能刚插拔了显示器，过期快照不能断言「不存在」）就照旧直查。
+        var content = ShareableContentCache.shared.freshContentIfAvailable()
+        if content?.displays.contains(where: { CGDisplayIsBuiltin($0.displayID) != 0 }) != true {
+          content = try await SCShareableContent.excludingDesktopWindows(
+            false, onScreenWindowsOnly: true)
+        }
+        guard self.epoch.accepts(token), self.allowsAnimation, let content,
           let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
           let screen = screenForDisplayID(display.displayID)
         else { return }

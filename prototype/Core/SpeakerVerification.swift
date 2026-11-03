@@ -108,7 +108,11 @@ enum SpeakerEmbedding {
     static func embed(pcm: [Float], using embedder: any SpeakerEmbedder) -> [Float]? {
         guard pcm.count <= SpeakerVerification.maximumSamples * 4 else { return nil }
         let clipped = Array(pcm.prefix(SpeakerVerification.maximumSamples))
-        let speech = SpeakerSpeechTrim.trim(clipped)
+        return embedTrimmed(SpeakerSpeechTrim.trim(clipped), using: embedder)
+    }
+
+    /// PERF-12：输入已经 trim 过（登记路径在长度检查时算过一次，不再重算）。仍做最短校验。
+    static func embedTrimmed(_ speech: [Float], using embedder: any SpeakerEmbedder) -> [Float]? {
         guard speech.count >= SpeakerVerification.minimumSpeechSamples else { return nil }
         let frames = SpeakerFbank.frameCount(samples: speech.count)
         let features = SpeakerFbank.cmn(SpeakerFbank.logMel(pcm: speech), frames: frames)
@@ -257,8 +261,11 @@ struct SpeakerEnrolment {
     /// 交一句。`heard` 是本机识别听到的字；`sample` 是这句的声音（用完即丢）。
     mutating func add(expected: String, heard: String, sample: [Float]) -> Step {
         guard VoiceprintPhrase.matches(expected: expected, heard: heard) else { return .rejected(.wrongPhrase) }
-        guard SpeakerSpeechTrim.trim(sample).count >= SpeakerVerification.minimumSpeechSamples else { return .rejected(.tooShort) }
-        guard let embedding = SpeakerEmbedding.embed(pcm: sample, using: embedder) else { return .rejected(.modelUnavailable) }
+        // PERF-12：trim 一次同时做长度检查和特征提取输入（登记声音由 sink 限定 ≤12 s，clip 是空操作），
+        // 不再让 embed 内部对同一段重算一遍 RMS + sorted。
+        let speech = SpeakerSpeechTrim.trim(sample)
+        guard speech.count >= SpeakerVerification.minimumSpeechSamples else { return .rejected(.tooShort) }
+        guard let embedding = SpeakerEmbedding.embedTrimmed(speech, using: embedder) else { return .rejected(.modelUnavailable) }
         for previous in embeddings {
             guard let c = SpeakerMath.cosine(previous, embedding), c >= consistency else { return .rejected(.inconsistent) }
         }

@@ -55,6 +55,12 @@ final class ShareableContentCache {
         _ = await refresh()
     }
 
+    // PERF-12：只读访问新鲜快照（显示器拓扑这类不依赖窗口过滤的信息用）。不新鲜不刷新——
+    // 调用方对「没有」自行兜底直查，绝不拿过期快照断言「不存在」。
+    func freshContentIfAvailable() -> SCShareableContent? {
+        isFresh() ? cached : nil
+    }
+
     // "决定要发起 fetch"到"inFlight 被设置"之间必须没有 await：调用方（content(requiring:)
     // 和 prefetch()）决定发起刷新时，现有 inFlight 要么为空、要么已经完成（content
     // (requiring:) 只会在 await 完旧任务之后才走进这里），进入本函数到 `inFlight = task`

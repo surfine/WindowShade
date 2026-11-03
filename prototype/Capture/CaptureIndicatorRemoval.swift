@@ -1,18 +1,8 @@
-// 抹掉画面里的系统录屏指示器。
-//
-// macOS 26 在“正被流式捕获的窗口”的红绿灯处画一个蓝紫色胶囊（带录屏图标）。单张截图
-// 本身不会触发它，但只要这扇窗上还开着一条捕获流（收起动画、置顶预览、窗口浏览实时预览），
-// 流里的每一帧、以及同时截的单张图里都有它；在帧里它取代了红绿灯，灯根本不在画面上。
-//
-// 两种修法：
-// - 抹平：用胶囊两侧的标题栏像素逐行填回去。原貌卷帘条上面叠着真实的 AppKit 按钮，
-//   抹平就够了；收起动画那几百毫秒、窗口浏览的小预览也只抹平。
-// - 底片：置顶预览开流之前先截一张（此时还没有胶囊），之后每帧把底片上同一位置那一块
-//   贴回去，红绿灯原样回来。
-//
-// 只在确实检测到胶囊时才动：位置在左上角红绿灯区域、颜色是指示器的蓝紫色、形状像
-// 一颗胶囊（尺寸与红绿灯组相称、没有铺满整个检测区域）。其余画面一个像素都不改。
-// 纯 CPU 计算，不碰 AppKit，可在任意线程调用。
+// 抹掉画面里的系统录屏指示器：macOS 26 起“正被流式捕获的窗口”红绿灯处画一颗蓝紫色胶囊；只要这扇窗上开着一条
+// 捕获流（收起动画、置顶预览、窗口浏览），流里每帧与同时截的单张图里都有它，红绿灯根本不在画面上。
+// 两种修法：抹平——用胶囊两侧的标题栏像素逐行填回（原貌卷帘条上叠着真实 AppKit 按钮，抹平就够；收起动画、
+// 窗口浏览小预览也只抹平）；底片——置顶预览开流前先截一张无胶囊的，每帧把该位置贴回来，红绿灯原样回来。
+// 只在确实检测到时才动（左上红绿灯区、指示器蓝紫色、胶囊形状三关），其余像素一个不改。纯 CPU、不碰 AppKit、任意线程可调。
 
 import CoreGraphics
 import QuartzCore
@@ -410,23 +400,73 @@ struct RGBAPixels {
         return Pixel(r: bytes[i], g: bytes[i + 1], b: bytes[i + 2], a: bytes[i + 3])
     }
 
+    /// 解码 `image` 进调用方的缓冲（与旧整图路径同一格式：8 位预乘 RGBA、同一色彩空间）。
+    /// 先清零：旧路径的后备存储由系统分配（已清零），透明像素落在透明黑上；自备缓冲不清零的话，
+    /// sourceOver 会在透明像素处留下垃圾（stream-frame 样本的圆角四角就是这么暴露的）。
+    private static func decode(_ image: CGImage, into buffer: UnsafeMutableRawPointer,
+                               width: Int, height: Int, space: CGColorSpace) -> Bool {
+        memset(buffer, 0, width * height * 4)
+        guard let context = CGContext(
+            data: buffer, width: width, height: height, bitsPerComponent: 8,
+            bytesPerRow: width * 4, space: space,
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return false }
+        context.interpolationQuality = .none
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return true
+    }
+
     /// 把 `patch` 上 `bounds`（左上原点像素）那一块原样盖到 `image` 上，其余保持 `image`。
-    /// 色彩空间与位图格式同 `init(_:)`，所以与整图修补的结果逐像素相同。
+    /// PERF-12：原图解码进自有缓冲后直接按行替换小块字节，结果用 provider 直挂缓冲出图，
+    /// 省掉旧实现里整图 context 的第二次 makeImage 全图拷贝（Retina 整窗 ~24MB）。
+    /// 同格式同色彩空间下 .copy 混合就是字节替换，所以输出与旧实现逐像素相同（CaptureIndicatorTests 钉住）。
     static func compositing(patch: CGImage, at bounds: CGRect, over image: CGImage) -> CGImage? {
         let space = image.colorSpace.flatMap { $0.model == .rgb ? $0 : nil }
             ?? CGColorSpace(name: CGColorSpace.sRGB)!
         let w = image.width, h = image.height
         let block = bounds.integral.intersection(CGRect(x: 0, y: 0, width: w, height: h))
-        guard !block.isEmpty, let piece = patch.cropping(to: block),
-              let context = CGContext(
-                data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
-                space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        context.interpolationQuality = .none
-        context.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
-        context.setBlendMode(.copy)
-        context.draw(piece, in: CGRect(x: block.minX, y: CGFloat(h) - block.maxY,
-                                       width: block.width, height: block.height))
-        return context.makeImage()
+        guard !block.isEmpty, let piece = patch.cropping(to: block) else { return nil }
+        let rowBytes = w * 4
+        let byteCount = rowBytes * h
+        let buffer = UnsafeMutableRawPointer.allocate(byteCount: byteCount, alignment: 64)
+        guard decode(image, into: buffer, width: w, height: h, space: space) else {
+            buffer.deallocate()
+            return nil
+        }
+        // 小块解码 + 按行替换（缓冲第 0 行是图顶）。小块解码万一失败就保持原图，跟旧实现里
+        // piece 绘制不改变其余像素一致。
+        let blockWidth = Int(block.width), blockHeight = Int(block.height)
+        let blockX = Int(block.minX), blockY = Int(block.minY)
+        if blockWidth > 0, blockHeight > 0 {
+            let pieceRow = blockWidth * 4
+            let pieceBuffer = UnsafeMutableRawPointer.allocate(
+                byteCount: pieceRow * blockHeight, alignment: 64)
+            defer { pieceBuffer.deallocate() }
+            if decode(piece, into: pieceBuffer, width: blockWidth, height: blockHeight, space: space) {
+                let source = pieceBuffer.assumingMemoryBound(to: UInt8.self)
+                let destination = buffer.assumingMemoryBound(to: UInt8.self)
+                for row in 0..<blockHeight {
+                    memcpy(destination + (blockY + row) * rowBytes + blockX * 4,
+                           source + row * pieceRow, pieceRow)
+                }
+            }
+        }
+        // 缓冲的所有权交给 provider：出图前不拷贝，释放回调在最后一份引用消失时归还内存。
+        let releaseData: CGDataProviderReleaseDataCallback = { info, _, _ in
+            UnsafeMutableRawPointer(info!).deallocate()
+        }
+        guard
+            let provider = CGDataProvider(
+                dataInfo: buffer, data: buffer.assumingMemoryBound(to: UInt8.self),
+                size: byteCount, releaseData: releaseData)
+        else {
+            buffer.deallocate()
+            return nil
+        }
+        return CGImage(
+            width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: rowBytes,
+            space: space,
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
     }
 
     func makeImage() -> CGImage? {

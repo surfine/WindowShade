@@ -45,19 +45,40 @@ func dominantIconColor(pid: pid_t) -> NSColor? {
     }
     var bins = Array(repeating: Bin(), count: 36)
 
+    // PERF-12：直接扫 bitmapData（此构造下是 8 bit RGBA 直排、bytesPerRow 由系统补齐），
+    // 不走逐像素 colorAt + NSColor 转换那条慢路径。HSB 用与 NSColor 相同的标准换算；
+    // 色相分桶边界上的 ulp 抖动对取色结果没有可感影响。
+    // bitmapData 在不同 SDK 上是裸指针或已绑定的 UInt8 指针，统一经 UnsafeRawPointer 走一遍。
+    guard let bits = rep.bitmapData else { return nil }
+    let base = UnsafeRawPointer(bits).assumingMemoryBound(to: UInt8.self)
+    let bytesPerRow = rep.bytesPerRow
     for y in 0..<side {
         for x in 0..<side {
-            guard let raw = rep.colorAt(x: x, y: y),
-                  let c = raw.usingColorSpace(.deviceRGB) else { continue }
-            var hue: CGFloat = 0, sat: CGFloat = 0, bri: CGFloat = 0, alpha: CGFloat = 0
-            c.getHue(&hue, saturation: &sat, brightness: &bri, alpha: &alpha)
+            let offset = y * bytesPerRow + x * 4
+            let red: CGFloat = CGFloat(base[offset]) / 255.0
+            let green: CGFloat = CGFloat(base[offset + 1]) / 255.0
+            let blue: CGFloat = CGFloat(base[offset + 2]) / 255.0
+            let alpha: CGFloat = CGFloat(base[offset + 3]) / 255.0
+            let maxValue: CGFloat = max(red, green, blue)
+            let delta: CGFloat = maxValue - min(red, green, blue)
+            let bri: CGFloat = maxValue
+            let sat: CGFloat = maxValue == 0 ? 0 : delta / maxValue
+            var hue: CGFloat = 0
+            if delta != 0 {
+                if maxValue == red { hue = (green - blue) / delta }
+                else if maxValue == green { hue = 2 + (blue - red) / delta }
+                else { hue = 4 + (red - green) / delta }
+                hue /= 6
+                if hue < 0 { hue += 1 }
+            }
             if alpha < 0.35 || sat < 0.10 || bri < 0.16 || bri > 0.96 { continue }
             let bin = min(35, max(0, Int(floor(hue * 36))))
-            let weight = alpha * (0.35 + sat) * (0.65 + min(bri, 1 - bri))
+            let lowWeight: CGFloat = min(bri, 1 - bri)
+            let weight: CGFloat = alpha * (0.35 + sat) * (0.65 + lowWeight)
             bins[bin].weight += weight
-            bins[bin].red += c.redComponent * weight
-            bins[bin].green += c.greenComponent * weight
-            bins[bin].blue += c.blueComponent * weight
+            bins[bin].red += red * weight
+            bins[bin].green += green * weight
+            bins[bin].blue += blue * weight
         }
     }
 

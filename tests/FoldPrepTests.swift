@@ -10,6 +10,7 @@ import Foundation
         generationTests()
         cacheKeyTests()
         cacheEvictionTests()
+        cacheByteBudgetTests()
         staleResultIsDroppedTests()
         cacheHitInvalidatesInFlightTests()
         print(
@@ -116,6 +117,36 @@ import Foundation
                     source: source, colorSpace: "sRGB", width: width + 10, height: 1))
         }
         precondition(cache.count <= 2, "连续新键也不会让缓存无界增长")
+    }
+
+    /// PERF-12：字节预算。超预算按最久未用逐出，但永不逐出刚存进来的那条；同键覆盖要减掉旧字节。
+    static func cacheByteBudgetTests() {
+        let source = ObjectIdentifier(Source())
+        func key(_ width: Int) -> FoldImageCache<Int>.Key {
+            FoldImageCache<Int>.Key(source: source, colorSpace: "sRGB", width: width, height: 1)
+        }
+        // 预算 10：存 6+6 必须逐出第一条，总数回到 ≤10。
+        let cache = FoldImageCache<Int>(capacity: 4, budgetBytes: 10, sizeOf: { $0 })
+        cache.store(6, for: key(1))
+        cache.store(6, for: key(2))
+        precondition(cache.value(for: key(1)) == nil, "超预算时最久未用的被逐出")
+        precondition(cache.value(for: key(2)) == 6, "刚存进来的这条永不逐出")
+        precondition(cache.evictions == 1)
+        // 小条目：预算内就不逐出（条数也没超）。
+        let roomy = FoldImageCache<Int>(capacity: 4, budgetBytes: 100, sizeOf: { $0 })
+        for width in 1...4 { roomy.store(2, for: key(width)) }
+        precondition(roomy.count == 4 && roomy.evictions == 0, "预算内的条目都留着")
+        // 同键覆盖：字节数按新值算，不叠加。
+        roomy.store(50, for: key(1))
+        roomy.store(50, for: key(1))
+        precondition(roomy.count == 4, "覆盖不增条数")
+        precondition(roomy.value(for: key(2)) == 2, "同键覆盖两次后别的条目仍留（50×2 不超 100）")
+        // 默认参数：无预算时行为与旧实现一致。
+        let legacy = FoldImageCache<Int>(capacity: 2)
+        legacy.store(1_000_000, for: key(1))
+        legacy.store(1_000_000, for: key(2))
+        legacy.store(1_000_000, for: key(3))
+        precondition(legacy.count == 2, "无预算只按条数裁")
     }
 
     /// 渲染器换入前的那次代际复查：迟到的结果必须丢掉。

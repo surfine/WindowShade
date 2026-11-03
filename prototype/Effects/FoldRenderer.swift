@@ -32,6 +32,21 @@ import MetalKit
   private var compositePipeline: any MTLRenderPipelineState { gpu.composite }
   private var opticalSurface: MTLTexture?
   private var pageTexture: MTLTexture?
+  // PERF-12：渲染通道描述符跨帧复用（每帧只换 texture 引用），60fps 下省两次对象分配。
+  // 只在主线程 draw 里使用；编码器在 makeRenderCommandEncoder 时就取走描述符快照，之后改它不影响在飞的命令缓冲。
+  private let pagePass: MTLRenderPassDescriptor = {
+    let descriptor = MTLRenderPassDescriptor()
+    descriptor.colorAttachments[0].level = 0
+    descriptor.colorAttachments[0].loadAction = .dontCare
+    descriptor.colorAttachments[0].storeAction = .store
+    return descriptor
+  }()
+  private let opticalPass: MTLRenderPassDescriptor = {
+    let descriptor = MTLRenderPassDescriptor()
+    descriptor.colorAttachments[0].loadAction = .dontCare
+    descriptor.colorAttachments[0].storeAction = .store
+    return descriptor
+  }()
   private var cache: CVMetalTextureCache?
   private var frame: EffectFrame?
   private var imageTexture: MTLTexture?
@@ -42,7 +57,10 @@ import MetalKit
   // PERF-05：图像准备（vImage 颜色转换 + 纹理创建）不在主线程做。有界 worker：一次一个任务、
   // 每个目标至多一个待替换请求；完成时主线程只验证代际再换入，过期结果丢弃。
   private let prepQueue = DispatchQueue(label: "WindowShade.fold-prep", qos: .userInitiated)
-  private let imageCache = FoldImageCache<MTLTexture>(capacity: 4)
+  // PERF-12：按字节封顶（~96MB）。整幅静图的共享 buffer 每条可达几十 MB（5K 窗口 ≈ 50MB），
+  // 只按条数封顶的话 4 条就 ~200MB；超预算按最久未用逐出，永不逐出刚存的那条。
+  private let imageCache = FoldImageCache<MTLTexture>(
+    capacity: 4, budgetBytes: 96 * 1024 * 1024, sizeOf: { $0.allocatedSize })
   private var prepPolicy = FoldPrepPolicy()
   private var pendingPrimary: PrepRequest?
   private var pendingBackground: PrepRequest?
@@ -416,11 +434,7 @@ import MetalKit
         pageHeight: pageHeight)
       // 源画面没变就跳过 page 通道与 generateMipmaps，直接把上一份金字塔交给光学通道。
       if pageState.needsRebuild(for: pageKey) {
-        let pagePass = MTLRenderPassDescriptor()
         pagePass.colorAttachments[0].texture = pageTexture
-        pagePass.colorAttachments[0].level = 0
-        pagePass.colorAttachments[0].loadAction = .dontCare
-        pagePass.colorAttachments[0].storeAction = .store
         guard let pageEncoder = command.makeRenderCommandEncoder(descriptor: pagePass) else {
           return
         }
@@ -437,10 +451,7 @@ import MetalKit
         // GPU 真的完成这一帧后才作数（见完成回调）。
         rebuiltPageKey = pageKey
       }
-      let opticalPass = MTLRenderPassDescriptor()
       opticalPass.colorAttachments[0].texture = opticalSurface
-      opticalPass.colorAttachments[0].loadAction = .dontCare
-      opticalPass.colorAttachments[0].storeAction = .store
       guard let opticalEncoder = command.makeRenderCommandEncoder(descriptor: opticalPass) else {
         return
       }

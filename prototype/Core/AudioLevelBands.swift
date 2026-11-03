@@ -1,13 +1,10 @@
-// 正在播放的真实波形（设计稿《正在播放》“波形要系统音频录制”，工作包 NP-6）。纯函数和纯状态，只依赖 Foundation：
-// 不碰 CoreAudio、不读时钟、不起计时器。录音那一路（App/AudioLevelTap.swift）把单声道样本喂进来，拿走每帧 5 个数。
-//
-// 稿里的数字：
-// - 每 1024 个样本算 5 个频带的能量：60–250、250–800、800–2.5k、2.5k–6k、6k–14k Hz；
-// - dBFS 从 −54 到 −12 线性映射到 0–1（满幅正弦 = 0 dBFS）；不做按频带的增益（会让安静的歌也跳满）；
-// - 每秒 30 次；涨的时候系数 0.6、落的时候 0.15；
-// - 根高 = 2.4 + 11.6 × 电平（最低 2.4 是一个圆点，最高 14）。
-// 什么时候录、右耳画什么由 `AudioLevelGate` 决定：没权限、录不到、蓝牙 + Spotify 一律画静止点，绝不画假的。
+// 正在播放的真实波形（《正在播放》“波形要系统音频录制”，NP-6）。纯函数与纯状态只依赖 Foundation：不碰 CoreAudio、
+// 不读钟、不起计时器；录音那路（App/AudioLevelTap.swift）喂单声道样本、拿走每帧 5 个数。数字：每 1024 样本算 5 个
+// 频带能量（60–250、250–800、800–2.5k、2.5k–6k、6k–14k Hz）；dBFS −54…−12 线性映到 0–1（满幅正弦 = 0 dBFS），
+// 不做按频带增益（安静歌也会跳满）；每秒 30 次，涨系数 0.6、落 0.15；根高 = 2.4 + 11.6×电平（最低一个圆点，最高 14）。
+// 什么时候录、右耳画什么由 AudioLevelGate 定：没权限、录不到、蓝牙 + Spotify 一律画静止点，绝不画假的。
 
+import Accelerate
 import Foundation
 
 enum AudioLevelBands {
@@ -66,74 +63,72 @@ enum AudioLevelBands {
 
 // MARK: - 一帧 → 5 个 dBFS
 
-/// 1024 点加 Hann 窗做一次实数 FFT，按频带把能量加起来。缓冲区都在初始化时分配好，算的时候不再分配。
+/// 1024 点加 Hann 窗做一次实数 FFT（vDSP），按频带把能量加起来。缓冲区都在初始化时分配好，算的时候不再分配。
 struct AudioBandAnalyzer {
     let sampleRate: Double
     let frameSize: Int
-    private let window: [Double]
+    private let window: [Float]
     private let windowEnergy: Double
-    private let cosTable: [Double]
-    private let sinTable: [Double]
-    private let bitReverse: [Int]
+    private let log2n: vDSP_Length
+    private let fftSetup: FFTSetup?
     private let ranges: [ClosedRange<Int>?]
-    private var real: [Double]
-    private var imag: [Double]
+    private var frame: [Float]
+    private var splitReal: [Float]
+    private var splitImag: [Float]
+    private var power: [Float]
 
     /// frameSize 必须是 2 的幂；不是就退到 1024。
     init(sampleRate: Double, frameSize: Int = AudioLevelBands.frameSize) {
         let size = frameSize > 1 && frameSize & (frameSize - 1) == 0 ? frameSize : AudioLevelBands.frameSize
         self.sampleRate = sampleRate
         self.frameSize = size
-        let window = (0..<size).map { 0.5 - 0.5 * cos(2 * Double.pi * Double($0) / Double(size)) }
+        let window = (0..<size).map { Float(0.5 - 0.5 * cos(2 * Double.pi * Double($0) / Double(size))) }
         self.window = window
-        windowEnergy = window.reduce(0) { $0 + $1 * $1 }
-        cosTable = (0..<size / 2).map { cos(-2 * Double.pi * Double($0) / Double(size)) }
-        sinTable = (0..<size / 2).map { sin(-2 * Double.pi * Double($0) / Double(size)) }
+        windowEnergy = window.reduce(0) { $0 + Double($1) * Double($1) }
         var bits = 0
         while 1 << bits < size { bits += 1 }
-        bitReverse = (0..<size).map { index in
-            var reversed = 0, value = index
-            for _ in 0..<bits { reversed = (reversed << 1) | (value & 1); value >>= 1 }
-            return reversed
-        }
+        log2n = vDSP_Length(bits)
+        fftSetup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2))
         ranges = (0..<AudioLevelBands.bandCount).map { AudioLevelBands.binRange(band: $0, sampleRate: sampleRate, frameSize: size) }
-        real = Array(repeating: 0, count: size)
-        imag = Array(repeating: 0, count: size)
+        frame = [Float](repeating: 0, count: size)
+        splitReal = [Float](repeating: 0, count: size / 2)
+        splitImag = [Float](repeating: 0, count: size / 2)
+        power = [Float](repeating: 0, count: size / 2)
     }
 
     /// 一帧（正好 frameSize 个样本，多了只取前面，少了补 0）的 5 个 dBFS。满幅正弦落在哪段，哪段就是 0 dBFS。
+    /// PERF-12：CoreAudio IO 队列上每秒约 47 次，从手写的标量 Double FFT 换成 vDSP。vDSP_fft_zrip 的打包
+    /// 输出自带 1/2，幅值平方正好等于旧实现里的 (real²+imag²)/4，scale 不用动；直流 bin 不在任何频带里。
     mutating func bandDBFS(_ samples: UnsafeBufferPointer<Float>) -> [Double] {
+        guard let setup = fftSetup else {
+            return ranges.map { _ in AudioLevelBands.silenceDBFS }
+        }
         let n = frameSize
         for index in 0..<n {
-            let sample = index < samples.count ? Double(samples[index]) : 0
-            let value = sample.isFinite ? sample : 0
-            let slot = bitReverse[index]
-            real[slot] = value * window[index]
-            imag[slot] = 0
+            let sample = index < samples.count ? samples[index] : 0
+            frame[index] = sample.isFinite ? sample * window[index] : 0
         }
-        var length = 2
-        while length <= n {
-            let half = length / 2, stride = n / length
-            var start = 0
-            while start < n {
-                for k in 0..<half {
-                    let wr = cosTable[k * stride], wi = sinTable[k * stride]
-                    let a = start + k, b = a + half
-                    let tr = real[b] * wr - imag[b] * wi
-                    let ti = real[b] * wi + imag[b] * wr
-                    real[b] = real[a] - tr; imag[b] = imag[a] - ti
-                    real[a] += tr; imag[a] += ti
+        frame.withUnsafeBufferPointer { fp in
+            splitReal.withUnsafeMutableBufferPointer { rp in
+                splitImag.withUnsafeMutableBufferPointer { ip in
+                    var split = DSPSplitComplex(realp: rp.baseAddress!, imagp: ip.baseAddress!)
+                    fp.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: n / 2) {
+                        vDSP_ctoz($0, 2, &split, 1, vDSP_Length(n / 2))
+                    }
+                    vDSP_fft_zrip(setup, &split, 1, log2n, FFTDirection(kFFTDirection_Forward))
+                    // 幅值平方，向量化（含打包进 imagp[0] 的奈奎斯特点，频带用不到它）。
+                    vDSP_zvmags(&split, 1, &power, 1, vDSP_Length(n / 2))
                 }
-                start += length
             }
-            length <<= 1
         }
         // 单边功率按窗能量归一：一个幅度 A 的正弦，整段加起来是 A²，即 20·log10(A) dBFS。
-        let scale = 4 / (Double(n) * windowEnergy)
+        // vDSP_fft_zrip 的输出就是真实 DFT 幅值（对照旧标量实现实测确认，见 tests/AudioLevelBandsTests），
+        // 不再带旧手写版用 /4 抵消的那一档。
+        let scale = 1 / (Double(n) * windowEnergy)
         return ranges.map { range in
             guard let range else { return AudioLevelBands.silenceDBFS }
             var power = 0.0
-            for k in range { power += real[k] * real[k] + imag[k] * imag[k] }
+            for k in range { power += Double(self.power[k]) }
             let normalized = power * scale
             return normalized > 1e-20 ? 10 * log10(normalized) : AudioLevelBands.silenceDBFS
         }

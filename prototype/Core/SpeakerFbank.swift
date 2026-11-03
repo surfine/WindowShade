@@ -14,6 +14,9 @@ enum SpeakerFbank {
     static let melBins = 80
     /// Core ML 模型的固定窗口：300 帧 = 25 ms + 299 × 10 ms ≈ 3.015 s。
     static let modelFrames = 300
+    /// PERF-12：512 点 FFT 的 setup 建一次跨调用共享（vDSP 的 setup 创建后不可变、官方文档明确可并发使用；
+    /// OpaquePointer 在 Swift 6 里不带 Sendable，这里显式背书），省掉每次 logMel 的 create/destroy。
+    private nonisolated(unsafe) static let fftSetup = vDSP_create_fftsetup(vDSP_Length(9), FFTRadix(kFFTRadix2))
 
     static func frameCount(samples: Int) -> Int {
         samples < frameLength ? 0 : 1 + (samples - frameLength) / frameShift
@@ -64,8 +67,7 @@ enum SpeakerFbank {
         guard frames > 0, pcm.allSatisfy(\.isFinite) else { return [] }
         let t = tables
         let log2n = vDSP_Length(9)
-        guard let setup = vDSP_create_fftsetup(log2n, FFTRadix(kFFTRadix2)) else { return [] }
-        defer { vDSP_destroy_fftsetup(setup) }
+        guard let setup = fftSetup else { return [] }
         var out = [Float](repeating: 0, count: frames * melBins)
         var frame = [Float](repeating: 0, count: fftSize)
         var real = [Float](repeating: 0, count: fftSize / 2)

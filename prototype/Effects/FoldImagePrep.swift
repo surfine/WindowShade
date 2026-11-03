@@ -27,6 +27,8 @@ struct FoldPrepPolicy {
 
 /// 有界图像纹理缓存：键含来源身分、色彩空间与像素尺寸。
 /// 超过容量按最久未用淘汰；来源、颜色或尺寸一变就是新键，旧项自然失效（也会被淘汰）。
+/// PERF-12：可选字节预算（budgetBytes > 0 时生效）——整幅静图的共享 buffer 可以到几十 MB，
+/// 只按条数封顶的话 4 条 5K 图就 ~200MB；超预算时同样按最久未用逐出，但永不逐出刚存进来的那条。
 /// 只缓存不随帧变化的静态图（首帧/背景/材质），实时帧不走这里。
 final class FoldImageCache<Value>: @unchecked Sendable {
     struct Key: Hashable {
@@ -38,14 +40,19 @@ final class FoldImageCache<Value>: @unchecked Sendable {
 
     private let lock = NSLock()
     private let capacity: Int
+    private let budgetBytes: Int
+    private let sizeOf: (Value) -> Int
     private var entries: [Key: Value] = [:]
     private var order: [Key] = []
+    private var totalBytes = 0
     private var hitCount = 0
     private var storeCount = 0
     private var evictionCount = 0
 
-    init(capacity: Int = 4) {
+    init(capacity: Int = 4, budgetBytes: Int = 0, sizeOf: @escaping (Value) -> Int = { _ in 0 }) {
         self.capacity = max(1, capacity)
+        self.budgetBytes = max(0, budgetBytes)
+        self.sizeOf = sizeOf
     }
 
     func value(for key: Key) -> Value? {
@@ -61,13 +68,21 @@ final class FoldImageCache<Value>: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         storeCount &+= 1
-        entries[key] = value
+        if let old = entries.updateValue(value, forKey: key) { totalBytes -= sizeOf(old) }
         touch(key)
+        totalBytes += sizeOf(value)
         while order.count > capacity, let oldest = order.first {
-            order.removeFirst()
-            entries.removeValue(forKey: oldest)
-            evictionCount &+= 1
+            drop(oldest)
         }
+        while budgetBytes > 0, totalBytes > budgetBytes, order.count > 1, let oldest = order.first {
+            drop(oldest)
+        }
+    }
+
+    private func drop(_ key: Key) {
+        order.removeFirst()
+        if let removed = entries.removeValue(forKey: key) { totalBytes -= sizeOf(removed) }
+        evictionCount &+= 1
     }
 
     private func touch(_ key: Key) {
@@ -80,6 +95,7 @@ final class FoldImageCache<Value>: @unchecked Sendable {
         defer { lock.unlock() }
         entries.removeAll()
         order.removeAll()
+        totalBytes = 0
     }
 
     var count: Int {
