@@ -1,13 +1,8 @@
-// 刘海实时活动：纯逻辑，只依赖 Foundation，不碰 AppKit。
-//
-// 设计要点（有界的取舍都写在对应注释里）：
-// - 不引入 actor：调用方保证在 MainActor 上串行访问，内部不做线程同步。
-// - 时间一律由调用方传入单调 clock（秒），store 只比较、不读系统时钟。
-// - 缓存上限 32。排序键照《实时活动晋级》三：新鲜（过期的沉到所有新鲜的后面）＞ 种类权重 ＞ 同种类里来源给的相关度 0–4
-//   ＞ 最近更新（内容真的变了才算更新，见控制器的 put），再 startedAt 升序、id 稳定 tie-break。
-// - 可见列表最多 3 条（文件架不占这 3 条）；仍存在的选中项保留一个位置，新活动不赶走正在看的内容。
-// - 生命周期（LA-6）：开始后 `appearAfter` 秒内就结束的不出现；`staleAt` 到点内容降到 0.5、右耳“—”；
-//   结束按收场方式留最后的样子（默认 4 秒 / 立即 / 到点 ≤ 300 秒），那一排里留到看过或 15 分钟。
+// 刘海实时活动：纯逻辑只依赖 Foundation。有界取舍写在对应注释里，要点：不引入 actor（调用方保证 MainActor 串行）；
+// 时间由调用方传单调 clock，store 只比较不读钟；缓存上限 32；排序键照《实时活动晋级》三——新鲜（过期沉到新鲜后）
+// ＞种类权重＞来源相关度 0–4＞最近更新（内容真变了才算）＞startedAt 升序、id 稳定 tie-break；可见列表最多 3 条
+// （文件架不占），仍存在的选中项保留位置、新活动不赶走正看的；生命周期 LA-6——appearAfter 内结束的不出现，
+// staleAt 到点内容降 0.5、右耳“—”，结束按收场方式留最后的样子（默认 4 秒/立即/≤300 秒），留到看过或 15 分钟。
 
 import CoreGraphics
 import Foundation
@@ -266,12 +261,6 @@ struct NotchActivity: Equatable, Sendable {
         var sessionPhase: NotchSessionPhase?
         /// 结束了就不再画量（“不补数”）：默认把量换成不知道。
         var clearsProgress = true
-
-        init(title: String? = nil, subtitle: String? = nil, symbol: String? = nil, trailing: String? = nil,
-             sessionPhase: NotchSessionPhase? = nil, clearsProgress: Bool = true) {
-            self.title = title; self.subtitle = subtitle; self.symbol = symbol; self.trailing = trailing
-            self.sessionPhase = sessionPhase; self.clearsProgress = clearsProgress
-        }
     }
 
     /// 结束了吗（是不是“最后的样子”）。
@@ -1036,7 +1025,6 @@ struct CodingSessionActivities {
     private var usageLowMinutes: Int?
     private var usageLowProject: (label: String, cwd: String)?
 
-    init() {}
 
     /// 额度读数变了。nil = 没有数据（读不到、会话断了）。额度窗口第一次掉到 10% 以内返回开口的那一句。
     @discardableResult

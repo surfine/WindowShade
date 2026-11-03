@@ -38,113 +38,6 @@ enum PinnedPreviewError: Error, LocalizedError {
     }
 }
 
-/// 置顶镜像的单槽租约。旧 owner 的释放不会摘掉新 owner 的镜像层。
-final class PinnedMirrorLease {
-    private let lock = NSLock()
-    private var releaseAction: (() -> Void)?
-
-    init(release: @escaping () -> Void) {
-        releaseAction = release
-    }
-
-    func release() {
-        lock.lock()
-        let action = releaseAction
-        releaseAction = nil
-        lock.unlock()
-        action?()
-    }
-
-    deinit {
-        // deinit 只作为兜底；主要释放在面板关闭与目标切换时执行。
-        release()
-    }
-}
-
-struct PinnedPreviewSessionSnapshot {
-    let windowID: CGWindowID
-    let pid: pid_t
-    let bundleIdentifier: String
-    let appName: String
-    let title: String
-    let lastKnownFrame: NSRect
-    let isSuspended: Bool
-}
-
-@MainActor
-private final class PinnedPreviewSession {
-    let windowID: CGWindowID
-    let pid: pid_t
-    let bundleIdentifier: String
-    let appName: String
-    let title: String
-    let axWindow: AXUIElement
-    let panel: PinnedPreviewPanel
-    let contentView: PinnedPreviewContentView
-    let capture: WindowStreamCapture
-
-    var scWindow: SCWindow
-    var display: SCDisplay?
-    var lastKnownFrame: NSRect
-    var isInteracting = false
-    var isDucked = false
-    var globalMouseMonitor: Any?
-    var localMouseMonitor: Any?
-    var pendingExit: DispatchWorkItem?
-    // 交互代数：每次进入交接自增；跨线程管线的每一跳都校验，过期即中止。
-    var interactionEpoch: UInt64 = 0
-    // watchdog 稳定门：上一拍读到的源窗口 frame，连续两拍一致才应用到面板。
-    var pendingFrame: NSRect?
-    // Mission Control/genie/全屏过渡期间 WindowServer 呈现坐标会"稳定但错误"
-    // （比如 MC 缩略图排布），两拍稳定门本身挡不住。AX 确认后被判定为动画产物的
-    // 候选帧记在这里，避免同一个错误候选帧每 0.2s 都重新发一次 AX 查询。
-    var rejectedFrame: NSRect?
-    var isConfirmingFrame = false
-    // 交接管线完成前到达的点击：暂存，待面板真正透明+穿透后补发到真实窗口。
-    var pendingClick: (point: CGPoint, count: Int)?
-    // co-Space 不变量判定的短 TTL 缓存：watchdog 每 0.2s 触发，不必每拍都查 WindowServer。
-    var spaceCheckAt: CFAbsoluteTime = 0
-    // 面板当前应处的 Space（源窗口所在 Space）。nil 表示 SLS 符号不可用/尚未解析，
-    // 此时面板留在创建时的 Space，不追随源窗口跨 Space 移动。
-    var sourceSpaceID: UInt64?
-    // 挂起态（暂时取消全部置顶）：面板已 orderOut、capture 已停，会话保留，
-    // 再按一次按原来的前后顺序放回。
-    var isSuspended = false
-    // 锁屏/熄屏/会话切走时的自动暂停：只停流，面板与菜单状态不变（和 isSuspended 无关）。
-    var isEnvPaused = false
-
-    init(windowID: CGWindowID, pid: pid_t, bundleIdentifier: String, appName: String,
-         title: String, axWindow: AXUIElement, scWindow: SCWindow, display: SCDisplay?,
-         panel: PinnedPreviewPanel, contentView: PinnedPreviewContentView,
-         capture: WindowStreamCapture, lastKnownFrame: NSRect) {
-        self.windowID = windowID
-        self.pid = pid
-        self.bundleIdentifier = bundleIdentifier
-        self.appName = appName
-        self.title = title
-        self.axWindow = axWindow
-        self.scWindow = scWindow
-        self.display = display
-        self.panel = panel
-        self.contentView = contentView
-        self.capture = capture
-        self.lastKnownFrame = lastKnownFrame
-    }
-
-    func invalidate() {
-        pendingExit?.cancel()
-        pendingExit = nil
-        if let globalMouseMonitor {
-            NSEvent.removeMonitor(globalMouseMonitor)
-            self.globalMouseMonitor = nil
-        }
-        if let localMouseMonitor {
-            NSEvent.removeMonitor(localMouseMonitor)
-            self.localMouseMonitor = nil
-        }
-    }
-}
-
 struct PinnedPreviewTarget {
     let windowID: CGWindowID
     let axWindow: AXUIElement
@@ -433,17 +326,8 @@ final class PinnedPreviewController {
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let content: SCShareableContent
-                if let cached = await ShareableContentCache.shared.content(requiring: id) {
-                    content = cached
-                } else {
-                    content = try await ShareableContentLoader.current()
-                }
-                guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
-                    throw PinnedPreviewError.noSCWindow
-                }
+                let (scWindow, display) = try await Self.shareableWindow(id: id)
                 guard self.startingPreviewTokens[id] == startToken else { return }
-                let display = Self.bestDisplay(for: scWindow, displays: content.displays)
                 self.installPreview(id: id, pid: pid, bundleID: bundleID, appName: appName,
                                     title: title, axWindow: axWindow, scWindow: scWindow,
                                     display: display,
@@ -953,18 +837,7 @@ final class PinnedPreviewController {
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                // 折叠/预热之后紧接着置顶，多数情况下 ShareableContentCache 已经是热的，
-                // 走它省掉一次全系统枚举；缓存未命中时退回原始直接调用。
-                let content: SCShareableContent
-                if let cached = await ShareableContentCache.shared.content(requiring: id) {
-                    content = cached
-                } else {
-                    content = try await ShareableContentLoader.current()
-                }
-                guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
-                    throw PinnedPreviewError.noSCWindow
-                }
-                let display = Self.bestDisplay(for: scWindow, displays: content.displays)
+                let (scWindow, display) = try await Self.shareableWindow(id: id)
                 self.installPreview(id: id, pid: pid, bundleID: bundleID, appName: appName,
                                     title: title, axWindow: axWindow, scWindow: scWindow,
                                     display: display)
@@ -973,6 +846,21 @@ final class PinnedPreviewController {
                             "pin-preview: failed reason=\(error.localizedDescription)")
             }
         }
+    }
+
+    /// 按窗口 ID 找 SCWindow 与它所在的显示器。折叠/预热之后紧接着置顶时
+    /// ShareableContentCache 多半是热的，走它省一次全系统枚举；未命中再退回直接枚举。
+    private static func shareableWindow(id: CGWindowID) async throws -> (SCWindow, SCDisplay?) {
+        let content: SCShareableContent
+        if let cached = await ShareableContentCache.shared.content(requiring: id) {
+            content = cached
+        } else {
+            content = try await ShareableContentLoader.current()
+        }
+        guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
+            throw PinnedPreviewError.noSCWindow
+        }
+        return (scWindow, bestDisplay(for: scWindow, displays: content.displays))
     }
 
     private func validateAXWindow(_ axWindow: AXUIElement, id: CGWindowID) throws {
@@ -1093,12 +981,9 @@ final class PinnedPreviewController {
 
     private func ensureWatchdogStarted() {
         guard watchdogTimer == nil else { return }
-        let timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
-            // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
-            MainActor.assumeIsolated { self?.watchdogTickAll() }
+        watchdogTimer = MainTimer.repeating(interval: 0.2, tolerance: 0.05) { [weak self] in
+            self?.watchdogTickAll()
         }
-        timer.tolerance = 0.05
-        watchdogTimer = timer
     }
 
     // 共享 watchdog 的单个 tick：一次遍历所有 session。
@@ -1109,7 +994,10 @@ final class PinnedPreviewController {
     }
 
     private func maybeStopWatchdog() {
-        guard sessions.isEmpty else { return }
+        // PERF-12：没有活跃会话就停（含全部挂起）：tick 对 suspended 会话本来就提前返回，
+        // 挂着计时器只剩每 0.2s 一次的空唤醒。恢复走 resumeAll → ensureWatchdogStarted，
+        // 新建走 startPreview → ensureWatchdogStarted，两边都会把钟重新挂上。
+        guard sessions.values.allSatisfy(\.isSuspended) else { return }
         watchdogTimer?.invalidate()
         watchdogTimer = nil
     }
@@ -1415,12 +1303,10 @@ final class PinnedPreviewController {
             guard pointerDuckingTimer == nil else { return }
             // 30Hz 足够跟手（悬停 ducking 延迟 ~33ms 无感）；120Hz + 零容差会让
             // 多预览场景下主线程持续满频醒来。
-            let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
-                // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
-                MainActor.assumeIsolated { self?.pointerDuckingTick() }
+            pointerDuckingTimer = MainTimer.repeating(
+                interval: 1.0 / 30.0, tolerance: 1.0 / 120.0) { [weak self] in
+                self?.pointerDuckingTick()
             }
-            timer.tolerance = 1.0 / 120.0
-            pointerDuckingTimer = timer
         } else {
             pointerDuckingTimer?.invalidate()
             pointerDuckingTimer = nil
