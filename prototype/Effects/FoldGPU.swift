@@ -180,8 +180,12 @@ final class FoldGPU: Sendable {
 ///
 /// 默认 1 帧在飞（与原来的 busy 标志同样的上限，只是归还不再绕主线程）。只有两块 drawable 时，
 /// 一块挂在屏上、一块在飞，第二帧会在主线程的 `currentDrawable` 上等到上一帧上屏——原来是跳过，
-/// 现在会变成主线程卡住。所以 2 帧在飞先由 `WINDOWSHADE_FOLD_TWO_IN_FLIGHT=1` 打开，配合
-/// `WINDOWSHADE_DUO_DIAGNOSTICS=1` 的 fps／gpuToBusyP95ms／busySkipped 实测后再定默认值。
+/// 现在会变成主线程卡住。所以 2 帧在飞先由 `WINDOWSHADE_FOLD_TWO_IN_FLIGHT=1` 打开。
+///
+/// A/B 实测（2026-11-04，本机 60Hz，60s soak 各一轮）：2 帧在飞把 busySkipped 1844→0、
+/// 呈现 fps 50.6→55.7、newSourceFPS 60.6→91.9，但 `gpuToBusyP95ms` 3.98→19.73（×5，
+/// 正是上面警告的主线程等 drawable 延迟）；两边主线程卡顿哨兵都是 0，陈旧呈现占比都 ~0.95。
+/// 结论：吞吐换来的是跟手路径上的主线程延迟，**维持默认 1 帧在飞**，2 帧留给实验开关。
 final class FoldFrameSlots: @unchecked Sendable {
   static let maximumCapacity = 2
   static let environmentKey = "WINDOWSHADE_FOLD_TWO_IN_FLIGHT"

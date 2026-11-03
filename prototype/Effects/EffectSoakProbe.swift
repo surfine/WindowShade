@@ -34,6 +34,10 @@ final class EffectSoakProbe {
   private var lastReport = 0.0
   private var reports: [[String: Any]] = []
   private var finished = false
+  // 资格样本在 stop 之前快照：session 置 nil 是释放检查的一部分，
+  // 之后再经 session? 读指标必然全空（历史上 qualification 因此永远 not_available）。
+  private var finalRendererFields: [String: Double?] = [:]
+  private var finalSourceFields: [String: Double?] = [:]
   private var ticks = 0
   private let script = EffectSoakScript.smoke
   private var soak = EffectSoakTracker()
@@ -164,6 +168,8 @@ final class EffectSoakProbe {
     report(CACurrentMediaTime())
     sensor.stop()
     sensor.onReading = nil
+    finalRendererFields = session?.renderer.metricFields() ?? [:]
+    finalSourceFields = session?.source.metricFields() ?? [:]
     let releasedSession = WeakReference(session)
     let releasedSource = WeakReference(session?.source)
     let releasedRenderer = WeakReference(session?.renderer)
@@ -222,8 +228,8 @@ final class EffectSoakProbe {
   private func qualificationSample(
     releasedSession: Bool, releasedSource: Bool, releasedRenderer: Bool
   ) -> PerfQualificationSample {
-    let renderer = session?.renderer.metricFields() ?? [:]
-    let source = session?.source.metricFields() ?? [:]
+    let renderer = finalRendererFields
+    let source = finalSourceFields
     let sentinel = MainThreadStallSentinel.shared
     // 哨兵没装上（例如不是从主线程启动）时不能报 0 次停顿，那会把「没量」读成通过。
     let counters: (count: Int, longestMs: Double)? =

@@ -442,7 +442,9 @@ CoreAudio 的属性监听，只有真的变了（或 30 秒兜底）才重新枚
 `Effects/PerfQualification.swift` 把「这一帧的体验合格没有」变成可判定的门槛（soak 测试收尾自动判定，
 `tests/run-perf-qualification-tests.sh` 钉逻辑）：动画帧率 ≥58、源帧率 ≥30、捕获到呈现 P95 ≤120ms、GPU P95 ≤8ms、
 GPU 完成到主线程 P95 ≤50ms、陈旧呈现占比 ≤0.5、主线程卡顿 0 次、最长卡顿 ≤500ms、未释放对象 0。缺数据写
-`not_available`（不许填 0 冒充）；有一项 fail 即 FAIL。数值是建议值，真机 A/B 后校准。
+`not_available`（不许填 0 冒充）；有一项 fail 即 FAIL。数值是建议值，真机 A/B 后校准——2026-11-04 本机 60Hz 首次实测：animationFPS 41–56（门 ≥58）、
+stalePresentedRatio 0.93–0.97（门 ≤0.5）两项 fail，其余全过。这两项的门槛按 60Hz 呈现 vs
+采集帧率的真实关系重新校准前，soak 结论以「FAIL 明细」为准而不是一刀切判坏。
 
 编号说明：本文的 1–25… 是行文编号；代码注释里另有一套 `PERF-01…13` 标签（PERF-11 对应本节资格门槛、
 PERF-12 对应 27–29/31–32 的缓存与声纹批、PERF-13 对应 26 的帧率分档），两套不一一对应，按主题查找。
@@ -502,7 +504,16 @@ MainActor.assumeIsolated + tolerance` 三行样板（现 12 处调用、跨 6 �
 **33. SkyLight 框架路径收口。** 历史上带不带 `Versions/A` 的两种 dlopen 写法散在 6 处（dyld 解析到同一份库），
 统一走 `Support/SkyLightFramework.swift` 常量。一致性收口，无独立实测数字。
 
-**34. Intel (x86_64) 交叉编译验证通过（未发布）。** `WINDOWSHADE_ARCH=x86_64 ./prototype/build.sh --stage` 在
+**34. 两帧在飞 A/B：吞吐换主线程延迟，维持默认 1。** `WINDOWSHADE_FOLD_TWO_IN_FLIGHT=1`
+60s soak 对照（2026-11-04，本机 60Hz）：busySkipped 1844→0、呈现 fps 50.6→55.7、newSourceFPS
+60.6→91.9，但 gpuToBusyP95ms 3.98→19.73（×5，主线程等 `currentDrawable`，正是 FoldFrameSlots
+注释警告的形态）；主线程卡顿哨兵两边都是 0，陈旧呈现占比都 ~0.95。跟手场景交互延迟优先，
+默认维持 1 帧在飞，2 帧留实验开关。同批发现并修复：soak 探针先 `session = nil` 再读资格样本，
+导致 PerfQualification 永远 `not_available`（Effects/EffectSoakProbe.swift 改为 stop 前快照）。
+**26 的折叠会话分档收益仍待实测**：桌面 soak 不经过窗口会话的分档路径（`WindowFoldFPS`），
+需要真实窗口折叠场景的 WindowServer 采集对照。
+
+**35. Intel (x86_64) 交叉编译验证通过（未发布）。** `WINDOWSHADE_ARCH=x86_64 ./prototype/build.sh --stage` 在
 Apple Silicon 上全绿（含自检）；唯一的架构阻塞点（卡顿采样器的 `arm_thread_state64_t`）已加 `#if arch` 双分支。
 发布仍 arm64-only；发布关第 7 步强制 `lipo -archs` 与 appcast 一致，不会误发。
 
