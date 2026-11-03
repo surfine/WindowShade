@@ -34,11 +34,13 @@ Feature notes, design rules and release notes. Most of these are written in Chin
 - [computer-use-qa.md](computer-use-qa.md) — 原生界面验收手册 / UI acceptance.
 - 归档：[archive/](archive/) — 一次性调查与旧版验收记录 / one-off investigations and old acceptance records.
 - [performance.md](performance.md) — 实测与手法 / performance.
-- [window-browser-progress.md](window-browser-progress.md)、[system-integration-polish.md](system-integration-polish.md) — 功能进度与质感批次 / progress notes.
+- [perf-ledger.md](perf-ledger.md) — 卡顿账 / hitch ledger.
+- [lost-notes.md](lost-notes.md) — 未入库设计底稿的指引 / pointers to design notes that never got committed.
+- [window-browser-progress.md](archive/2026-11-04/window-browser-progress.md)、[system-integration-polish.md](system-integration-polish.md) — 功能进度与质感批次 / progress notes.
 - Build, signing and release: [DEVELOPMENT.md](DEVELOPMENT.md).
 - Third-party licenses: [THIRD-PARTY-LICENSES.md](THIRD-PARTY-LICENSES.md).
 - Original design notes: [WindowShade.md](WindowShade.md).
-- Research notes and reports: [research_notes/](research_notes/), [reports/](reports/).
+- Research notes and reports: [research_notes/](research_notes/), [reports/](reports/), [f1-experiment.md](f1-experiment.md), [f1-homeplay-study.md](f1-homeplay-study.md).
 - Branch cleanup and abandoned ideas: [abandoned-work-ideas.md](abandoned-work-ideas.md).
 
 ## Releases / 发布

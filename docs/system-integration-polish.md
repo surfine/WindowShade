@@ -118,4 +118,4 @@ cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (<CE
 ```
 
 发版前的完整验证结果见 §6；替换后的实机只读探针数字见
-[`docs/window-browser-progress.md`](window-browser-progress.md) 的 1.0.14 段落。
+[`docs/window-browser-progress.md`](archive/2026-11-04/window-browser-progress.md) 的 1.0.14 段落。

@@ -1,7 +1,7 @@
 # WindowShade 设计系统
 
 > 2026-09-29 定稿，尚未实现。这份文件规定四件事：界面怎么贴合硬件，各个表面取哪些数值，各个表面怎么动，
-> 怎样才算做到了 Apple 的水准。产品方向以 direction.md 为准；参加 Swift Student Challenge 是“入戏”用的品味标准，
+> 怎样才算做到了 Apple 的水准。产品方向以 lost-notes.md（原 direction.md） 为准；参加 Swift Student Challenge 是“入戏”用的品味标准，
 > 见 ssc.md。面向用户的文字一律按 [copy-guide.md](copy-guide.md) 写。
 >
 > 文中的“岛”“肩”“硬件层”“隐形刘海”是给开发看的内部叫法，不进界面。“下巴”按 copy-guide 只在说明里用。
@@ -38,13 +38,13 @@
 | # | 原则 | 出处 | 在 WindowShade 里 |
 |---|---|---|---|
 | V1 | **一眼就熟悉。** 更有表现力，但不丢掉用户已经熟悉的东西 | Apple Newsroom 2025-06-09（新设计发布稿）；Adopting Liquid Glass | Mac 已经有的做法优先。新东西从刘海长出来，长得像系统的一部分，不另起窗口。从 iPad、Windows、niri 搬来的行为不当默认（§8 问题 4）。不借用 Apple 的功能名和口号（Apple 商标准则） |
-| V2 | **内容优先。** 界面退后，让内容突出 | WWDC25 219；HIG Materials | 内容层（窗口画面、缩略图）不加材质。顺利时刘海一声不吐（direction.md）。浮层用完就走，停稳后不压在内容上 |
+| V2 | **内容优先。** 界面退后，让内容突出 | WWDC25 219；HIG Materials | 内容层（窗口画面、缩略图）不加材质。顺利时刘海一声不吐（lost-notes.md（原 direction.md））。浮层用完就走，停稳后不压在内容上 |
 | V3 | **玻璃只在控件层，不叠玻璃。** 玻璃是浮在内容上的导航和控件那一层 | WWDC25 219；HIG Materials | 分三层：硬件层纯黑、浮层用系统玻璃、内容层不加材质（§4.2）。浮层里再分块，用填充、透明度、分隔线，不再套一层玻璃 |
 | V4 | **用系统玻璃，不自己仿。** 光学质感和流动感说的是系统材质本身 | Adopting Liquid Glass；WWDC25 310；ssc.md §4 | macOS 26+ 用 `NSGlassEffectView` / `NSGlassEffectContainerView`，14/15 用 `NSVisualEffectView`。不手画高光、折射和灰色“玻璃”。刘海是硬件层，永远不是玻璃 |
 | V5 | **无障碍从第一行开始。** 为所有人设计，不是事后补 | apple.com/accessibility；HIG Accessibility；HIG Gestures | 每个表面都处理减少动态效果、减少透明度、增强对比度，并有 VoiceOver 名称（§4.9）。每个手势都有菜单或快捷键可以代替。少造新手势。状态不只靠颜色区分 |
 | V6 | **Apple 式文案。** 清楚、能少就少、少说“我们” | HIG Writing；Apple Style Guide；copy-guide.md | 一个东西一个名字。组合键符号 ⌃⌘⌥ 第一次出现时说明是哪个键。按设备描述手势（触控板说“两指”）。不替 Apple 的硬件下定义：对外不说“刘海是 Mac 的新入口”，候选说法如“卡住时，刘海帮你一把”，由 Aaron 挑 |
 
-另外两条照旧：画面只在本机处理，不上传；常驻耗电是 direction.md 里的“迷失信号”，所以 §3.4 的形状模型不轮询、不截图。
+另外两条照旧：画面只在本机处理，不上传；常驻耗电是 lost-notes.md（原 direction.md） 里的“迷失信号”，所以 §3.4 的形状模型不轮询、不截图。
 
 ---
 
@@ -66,10 +66,10 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | 8 | **一个会变形的整体，而不是一堆弹窗。** 多个会话可以分开、合并 | 灵动岛；10194；`NSGlassEffectContainerView` | 岛只有一个形状，在各状态之间变形。以后的第二个会话（收在边上的侧拉、藏起来的画中画）用“分开 / 合并”的语法 |
 | 9 | **紧凑样式读起来是一件事；展开是紧凑的放大版；不留额头。** | 10194；HIG Live Activities（两段读起来是一件事，两侧大小相近，内容紧贴摄像头，不加内边距） | 紧凑样式左右两段紧贴刘海、等宽。提醒和展开保留两段的位置，内容绕着刘海排 |
 | 10 | **材质分层。** 玻璃只用在浮在内容上的控件层；不叠玻璃；着色只给主要操作 | 219；HIG Materials | 见 V3 与 §4.2 |
-| 11 | **少说话，先演示再用文字。** 文字只讲会反复用到的手势，讲一次 | 803；direction.md“只在他卡住时说” | 卡住时刘海演示一遍手指怎么动，旁边一句话。每条教学有次数上限 |
+| 11 | **少说话，先演示再用文字。** 文字只讲会反复用到的手势，讲一次 | 803；lost-notes.md（原 direction.md）“只在他卡住时说” | 卡住时刘海演示一遍手指怎么动，旁边一句话。每条教学有次数上限 |
 | 12 | **动效、触感、声音是同一种性格；辅助设置自动跟随。** | 803；219；HIG Playing haptics | 越过阈值给 `.alignment`，落点确认给 `.levelChange`（[现值]，不是 HIG 的规定，见 §4.8），不加声音。三项辅助设置每个表面都有对应处理（§4.9） |
 
-**拿这些原则检查新东西**（和 direction.md 的四问一起用）：
+**拿这些原则检查新东西**（和 lost-notes.md（原 direction.md） 的四问一起用）：
 - 它是从刘海长出来的，还是另起一个窗口？刚换到 Mac 的人一眼认得出它吗？
 - 它的形状是从硬件或父容器推出来的，还是写死的？
 - 手势做到一半松手或改方向，会发生什么？
@@ -168,9 +168,9 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 所有表面都只从一个模型拿形状：`DisplayShape`（新文件 `Window/DisplayShape.swift`，私有读取放 `Private/ScreenBezel.swift`，做法和 `Private/SkyLightBridge.swift` 一致）。
 
-- 启动时和收到 `NSApplication.didChangeScreenParametersNotification` 时各算一次（`App/Notch.swift:75` 已在监听）。
+- 启动时和收到 `NSApplication.didChangeScreenParametersNotification` 时各算一次（`App/Notch/NotchController.swift:172` 已在监听）。
 - 缓存键是 `displayID + IODisplayModeID + frame.size`。
-- 不轮询，不截图，不加定时器。和 Notch.swift 已有的 2 秒对账定时器无关。
+- 不轮询，不截图，不加定时器。和 `App/Notch/NotchController.swift` 的 2 秒对账定时器（syncTimer）无关。
 
 | 字段 | ① macOS 给的 | ② 机型表（按面板 px 查） | ③ 安全默认（= 现版本） |
 |---|---|---|---|
@@ -249,9 +249,9 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 | 令牌 | 现值 | 目标 | 状态 |
 |---|---|---|---|
-| `island.hug` | 10（第一帧、下巴、悬停、下拉起步，Notch.swift:1338、1343）；12（紧凑） | = `hw.notchBottom` | [改值 §6-3] |
+| `island.hug` | 10（第一帧、下巴、悬停、下拉起步）；12（紧凑）——现值见 `App/Notch/NotchPanel.swift` 的岛装配 | = `hw.notchBottom` | [改值 §6-3] |
 | `island.shoulder` | 无 | = `hw.notchShoulder`，按 §5.1 的 S1–S5 | [改值 §6-3] |
-| `island.pull` | 10 + 下拉量/4，最大 22（Notch.swift:1274–1285） | 起点改为 `island.hug`，上限不变 | [改值 §6-3] |
+| `island.pull` | 10 + 下拉量/4，最大 22（现值见 `App/Notch/NotchPanel.swift` 的岛装配） | 起点改为 `island.hug`，上限不变 | [改值 §6-3] |
 | `island.drop` | 22 | 不变 | [现值] |
 | `island.alert` | 24 | 不变 | [现值] |
 | `island.expanded` | 28 | 不变 | [现值] |
@@ -283,7 +283,7 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 - **交互发光**：`effectIsInteractive` 只在 macOS 27 有 [系统，SDK 头文件]。给被按住或拖动的小片玻璃用，例如侧拉边上那一小片。
 - **显隐**：AppKit 没有 Liquid Glass 的“显形”API，淡入淡出要短（`fade`），不让玻璃停在半透明状态。
 - **外观**：深浅色和辅助设置都要**持续监听**（`NSWorkspace.accessibilityDisplayOptionsDidChangeNotification`、`effectiveAppearance` 变化），不能只在挂上时取一次。
-- **不自己仿**（V4）：自绘的灰色“玻璃”、手画高光、合盖和倾斜效果都属于仿造或装饰。合盖 / 倾斜效果已定默认关（direction.md），其余在 §6-8 逐个过。
+- **不自己仿**（V4）：自绘的灰色“玻璃”、手画高光、合盖和倾斜效果都属于仿造或装饰。合盖 / 倾斜效果已定默认关（lost-notes.md（原 direction.md）），其余在 §6-8 逐个过。
 
 ### 4.3 颜色
 
@@ -292,7 +292,7 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | 令牌 | 值 | 用在 | 来源 |
 |---|---|---|---|
 | `accent` | `controlAccentColor` | 主要操作；落点已对准；教学提示的边（0.8）；提示浮窗越过阈值的终点 | [现值] |
-| `problem` | `systemOrange`，边 0.75、1.5 pt | 出了问题的提醒 | [现值] Notch.swift:1312 |
+| `problem` | `systemOrange`，边 0.75、1.5 pt | 出了问题的提醒 | [现值] `App/Notch/NotchCompactViews.swift:528` |
 | `destructive` | `systemRed` | 只给退出 App、关掉这类不可撤销的操作 | — |
 | `label.*` | `labelColor` / `secondaryLabelColor` / `tertiaryLabelColor` | 浮层里的文字 | — |
 | `notch.fill` | 纯黑 | 硬件层 | 现值有两处例外：已对准 `white 0.12`（1294），隐形刘海 `black 0.88`（1330、1335）[改值 §6-2] |
@@ -302,7 +302,7 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | `notch.dim` | 黑 0.6 | 岛内压在画面上的标签底 | [现值] 2212 |
 
 规则：
-- 落点“已对准”的现状：边线 `accent` 0.9、2 pt，加 `white 0.12` 填充（Notch.swift:1294–1297）；未对准是 1 pt 白 0.14 的边线。改值只有一项：去掉灰色填充，统一成纯黑。之后两者只剩边线的区别，仍不只靠颜色（粗细也不同，HIG Accessibility），越过阈值的触感不变；要先做小样确认一眼分得出来（§6-2）。
+- 落点“已对准”的现状：边线 `accent` 0.9、2 pt，加 `white 0.12` 填充（`App/Notch/NotchPanel.swift:1750`）；未对准是 1 pt 白 0.14 的边线。改值只有一项：去掉灰色填充，统一成纯黑。之后两者只剩边线的区别，仍不只靠颜色（粗细也不同，HIG Accessibility），越过阈值的触感不变；要先做小样确认一眼分得出来（§6-2）。
 - 隐形刘海的 0.88 黑随 §8 问题 2 一起定。
 
 ### 4.4 字体
@@ -313,9 +313,9 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 |---|---|---|---|
 | `notch.title` | 13 semibold | 提醒的主句 | [现值] 2068、2084 |
 | `notch.detail` | 11 regular | 提醒的次句 | 现值 10.5（2070）和 11（2088）并存 [改值 §6-10] |
-| `notch.count` | min(13, 槽高 − 10) semibold rounded，等宽数字 | 紧凑样式右边的个数 | 字号、字重、rounded 是现值（Notch.swift:2010–2013）；等宽数字 [改值 §6-10] |
+| `notch.count` | min(13, 槽高 − 10) semibold rounded，等宽数字 | 紧凑样式右边的个数 | 字号、字重、rounded 是现值（`App/Notch/NotchCompactViews.swift:550`）；等宽数字 [改值 §6-10] |
 | `notch.hint` | 12 medium | 下拉、悬停时的提示 | [现值] 1843 |
-| `coach.caption` | 主句 = `notch.title`，次句 = `notch.detail` | 教学旁边那句话。示范画面里 9 pt 的小字属于插画，不算正文 | 现值 13 semibold ＋ 10.5 regular 白 0.55（Notch.swift:2066–2070）；次句和提醒一起统一成 11、0.6 [改值 §6-10] |
+| `coach.caption` | 主句 = `notch.title`，次句 = `notch.detail` | 教学旁边那句话。示范画面里 9 pt 的小字属于插画，不算正文 | 现值 13 semibold ＋ 10.5 regular 白 0.55（现值见 `App/Notch/` 的教学副句样式）；次句和提醒一起统一成 11、0.6 [改值 §6-10] |
 | `panel.*` | 沿用 `WindowBrowserTypography`：正文跟随系统字号，次要文字 = 正文 − 2，不小于 10 | 窗口浏览、设置 | [现值] |
 | `welcome.*` | 标题 24、导语 14、眉题 12 | 欢迎窗口 | [现值] |
 
@@ -328,7 +328,7 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | `margin.float` | 16 | 画中画离屏幕边 | [现值] Core/PiPLayout.swift:34 |
 | `margin.edgeHug` | 8 | 贴边的东西：侧拉把手、提示浮窗的夹边、卷帘架离顶 | [现值] |
 | `gap.ear` | 0 | 紧凑样式两段紧贴刘海 | 10194；HIG Live Activities |
-| `hit.pad` | 6 | 刘海按下的容差；移动超过 6 pt 不算点按 | [现值] Notch.swift:1717–1731 |
+| `hit.pad` | 6 | 刘海按下的容差；移动超过 6 pt 不算点按 | [现值] `App/Notch/NotchPanel.swift`（按下容差） |
 | `hysteresis.pan` | 8 | 锁方向前的滞后距离 | [现值] 1778；803 说 iOS 通常 10 |
 
 ### 4.6 动效（弹簧）
@@ -337,16 +337,16 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 | 令牌 | response / ζ（bounce） | 带初速度 | 何时用 | 现值出处 | 状态 |
 |---|---|---|---|---|---|
-| `calm` | 0.34 / 1.0（0） | 否 | 没有动量的变化：悬停、收回、换状态 | Notch.swift:1352 | [现值] |
-| `settle` | 0.38 / 1.0（0） | 飞进刘海时带；尺寸变化不带 | 尺寸变化；截图飞进刘海（终点是个口子，不回弹） | FlickMotion.swift:155；Notch.swift:873 | [现值] |
-| `expand` | 0.40 / 0.92（0.08） | 否 | 展开一排 | Notch.swift:1351 | [现值]，原则 5 的已知例外 |
-| `bloom` | 0.42 / 0.84（0.16） | 否 | 有变化时提醒、教学 | Notch.swift:1350 | [现值]，原则 5 的已知例外 |
-| `catch` | 0.40 / 0.80（0.2） | 现在否 → 带拖动速度 | 拖着窗口到刘海时的落点小岛 | Notch.swift:1349 | [改值 §6-10]（速度） |
+| `calm` | 0.34 / 1.0（0） | 否 | 没有动量的变化：悬停、收回、换状态 | `Core/FlickMotion.swift`（calm） | [现值] |
+| `settle` | 0.38 / 1.0（0） | 飞进刘海时带；尺寸变化不带 | 尺寸变化；截图飞进刘海（终点是个口子，不回弹） | `Core/FlickMotion.swift`（settle）；调用见 `App/Notch/NotchController.swift`（截图飞进刘海） | [现值] |
+| `expand` | 0.40 / 0.92（0.08） | 否 | 展开一排 | `Core/FlickMotion.swift`（expand） | [现值]，原则 5 的已知例外 |
+| `bloom` | 0.42 / 0.84（0.16） | 否 | 有变化时提醒、教学 | `Core/FlickMotion.swift`（bloom） | [现值]，原则 5 的已知例外 |
+| `catch` | 0.40 / 0.80（0.2） | 现在否 → 带拖动速度 | 拖着窗口到刘海时的落点小岛 | `Core/FlickMotion.swift`（catchDrop）；调用见 `App/Notch/NotchPanel.swift:1491` | [改值 §6-10]（速度） |
 | `glide` | 0.42 / 0.88（0.12） | 必须 | 甩一下标题栏后的窗口滑行位置；画中画落角沿用同一手感 | FlickMotion.swift:153 | [现值] |
-| `flyOut` | 0.38 / 0.90（0.1） | 必须 | 截图从刘海飞出 | Notch.swift:873 | [现值] |
-| `pull` | 0.36 / 0.86（0.14） | 必须（夹在 ±30） | 刘海下拉松手弹回 | Notch.swift:1255 | [现值] |
+| `flyOut` | 0.38 / 0.90（0.1） | 必须 | 截图从刘海飞出 | `Core/FlickMotion.swift`（settle）；调用同上 | [现值] |
+| `pull` | 0.36 / 0.86（0.14） | 必须（夹在 ±30） | 刘海下拉松手弹回 | `Core/FlickMotion.swift`（pull） | [现值] |
 | `pop` | 0.30 / 0.6（0.4） → 0.75（0.25） | 否 | 只给小元素的确认：提示浮窗的终点图标 | GestureHUD.swift:448–455 | [改值 §6-10] |
-| `reduced` | 0.25 / 1.0（刘海）；0.30 / 1.0（窗口滑行） | **否** | 减少动态效果时替换以上全部；挪位置改为原处淡出、目标处淡入 | Notch.swift:1348；FlickMotion.swift:157 | [现值] |
+| `reduced` | 0.25 / 1.0（刘海）；0.30 / 1.0（窗口滑行） | **否** | 减少动态效果时替换以上全部；挪位置改为原处淡出、目标处淡入 | `Core/FlickMotion.swift`（reduced）；FlickMotion.swift:157 | [现值] |
 
 - `glide`、`flyOut`、`pull` 是同一类“带动量”的弹簧，可以合并成一个 `momentum`（约 0.4 / 0.88），但这是改值，列为 §6-10 的可选项，试手感后定。
 - 启动台另有 14 组弹簧（response 0.3–0.5，bounce 0–0.3）和 11 条贝塞尔曲线，分散在 LaunchpadFolders、LaunchpadView、Launchpad、LaunchpadOpenWith、LaunchpadLibrary 五个文件里。清单不抄行号，用 `rg -n "perceptualDuration|controlPoints" App/Launchpad*.swift` 生成。按 §6-9 改成最接近的令牌；其中 bounce 0.3（LaunchpadFolders.swift:946）超过上限，LaunchpadView.swift:1329 的控制点 1.05 会过冲，两处都属于改值。
@@ -361,17 +361,17 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 | 令牌 | 值 | 性质 |
 |---|---|---|
-| `fade` | 入 0.18 s / 出 0.10 s（ease） | [现值] Notch.swift:1661、1646。岛内内容换层、玻璃显隐 |
+| `fade` | 入 0.18 s / 出 0.10 s（ease） | [现值] `App/Notch/NotchContentView.swift`（内容换层淡入淡出）。岛内内容换层、玻璃显隐 |
 | `fade.hud` | 0.12 s | [现值] GestureHUD.swift:362 |
-| `dwell.hoverExpand` | 0.12 s | [现值] Notch.swift:1209–1236；以后改成看指针的减速（§6-14） |
-| `tap.doubleWindow` | `NSEvent.doubleClickInterval`，最长 0.3 s | [现值] Notch.swift:1058–1078；单击先给按下的反馈，不让用户干等 |
-| `drop.confirmHold` | 0.55 s | [现值] Notch.swift:1183–1190 |
-| `alert.hold` | 2.6 s | [现值][自定] Notch.swift:1148，不是 Apple 的数字 |
+| `dwell.hoverExpand` | 0.12 s | [现值] `App/Notch/NotchPanel.swift:1520`（停够 0.12 秒再通知）；以后改成看指针的减速（§6-14） |
+| `tap.doubleWindow` | `NSEvent.doubleClickInterval`，最长 0.3 s | [现值] `App/Notch/NotchPanel.swift:839`；单击先给按下的反馈，不让用户干等 |
+| `drop.confirmHold` | 0.55 s | [现值] `App/Notch/NotchPanel.swift:1315` |
+| `alert.hold` | 2.6 s | [现值][自定] `Core/Contracts.swift`（MotionHold.alertSeconds），不是 Apple 的数字 |
 | `alert.throttle` | 同一扇窗口 30 s 内最多提醒一次；一直在变的只标个点 | [自定] |
-| `announce.hold` | 1.8 s + 0.05 s × 字数，最长 4.5 s | [现值][自定] Notch.swift:527 |
-| `coach.hold` | 6.6 s | [现值][自定] Notch.swift:553 |
+| `announce.hold` | 1.8 s + 0.05 s × 字数，最长 4.5 s | [现值][自定] `Core/Contracts.swift`（MotionHold.sentenceBaseHold / sentencePerCharacter / sentenceMaxHold） |
+| `coach.hold` | 6.6 s | [现值][自定]（App/NotchCoach.swift 与 CoachPacing，行号从略） |
 | `coach.limit` | 每条最多 3 次，两次之间至少隔 300 s；用过或点掉就不再出现 | [自定] Core/GestureCoach.swift:55–72 |
-| `projection.notch` | r = 0.99（故意停得快，不想一碰就拿出来） | [现值] Notch.swift:1247 |
+| `projection.notch` | r = 0.99（故意停得快，不想一碰就拿出来） | [现值] `App/Notch/NotchPanel.swift:1574` |
 | `projection.pip` | r = 0.998（普通滚动的减速率） | 803；[现值] Core/PiPLayout.swift:94–95 |
 | `rubberband` | c = 0.55 | 业界对 UIScrollView 的反推，**不是官方数字** |
 
@@ -379,9 +379,9 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 | 时刻 | 反馈 | 性质 |
 |---|---|---|
-| 越过阈值（已对准） | `.alignment` | [现值] Notch.swift:1202；HIG 里 alignment 就是“对齐”，合适 |
-| 落点确认（五格里任一格） | `.levelChange` | [现值] Notch.swift:1186（`confirmDrop`，拖到哪一格松手都触发）。HIG 里 levelChange 指“在不同的按压力度档位之间切换”，确认更接近 `.generic`；改不改见 §6-10，试手感后定 |
-| 甩一下标题栏收进刘海（`swallow()`，Notch.swift:343、1407–1428）；放回 | 无 | [现值]。加触感属于改值，建议不加：甩进时松手后手指已经离开触控板，飞行结束时的触感基本感觉不到；放回是点一下，点按本身就有触控板的反馈 |
+| 越过阈值（已对准） | `.alignment` | [现值] `App/Notch/NotchPanel.swift:1319`（.levelChange）；HIG 里 alignment 就是“对齐”，合适 |
+| 落点确认（五格里任一格） | `.levelChange` | [现值] `App/Notch/NotchPanel.swift:1315`（`confirmDrop` 一带，拖到哪一格松手都触发）。HIG 里 levelChange 指“在不同的按压力度档位之间切换”，确认更接近 `.generic`；改不改见 §6-10，试手感后定 |
+| 甩一下标题栏收进刘海（`swallow()`，`App/Notch/NotchController.swift:665`、`928`）；放回 | 无 | [现值]。加触感属于改值，建议不加：甩进时松手后手指已经离开触控板，飞行结束时的触感基本感觉不到；放回是点一下，点按本身就有触控板的反馈 |
 | 声音 | 不加 | [自定] |
 
 ### 4.9 辅助设置
@@ -404,8 +404,8 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | `notch.fill`（已对准、隐形刘海） | 已对准：填充白 0.12，边线 `accent` 0.9、2 pt；隐形刘海：黑 0.88 | 纯黑；已对准的边线不变 | §6-2 |
 | `island.hug` | 10；12 | `hw.notchBottom`（1710 下 10.7，1440 下 9.0–9.2） | §6-3 |
 | `island.shoulder` | 无 | `hw.notchShoulder`，只给悬停、下拉、紧凑样式（§5.1 S3） | §6-3 |
-| 岛宽度上限 | 不是一个上限：格子数 = floor((屏宽 − 44) / 132)，岛宽 = max(刘海 + 120, min(格子数, 8) × 132 + 20)（Notch.swift:1168–1171、1301） | 屏宽 − 2 ×（顶角延伸 + e + 8），只在画肩时生效，所以只随 §6-3 的可选项（宽状态画肩）落地；守卫：任何屏宽下格子数不少于现版本 | §6-3 |
-| 截图飞进的终点 | 40×26，在刘海底上 2 pt（Notch.swift:337） | `notch.rect` 中心，大小不超过刘海高 | §6-3 |
+| 岛宽度上限 | 不是一个上限：格子数 = floor((屏宽 − 44) / 132)，岛宽 = max(刘海 + 120, min(格子数, 8) × 132 + 20)（`App/Notch/NotchPanel.swift` 的岛宽装配） | 屏宽 − 2 ×（顶角延伸 + e + 8），只在画肩时生效，所以只随 §6-3 的可选项（宽状态画肩）落地；守卫：任何屏宽下格子数不少于现版本 | §6-3 |
+| 截图飞进的终点 | 40×26，在刘海底上 2 pt（`App/Notch/NotchController.swift:1040`） | `notch.rect` 中心，大小不超过刘海高 | §6-3 |
 | 提醒图标 | 30，上下 11、左右 14 | 24，四周 14，高度不变；加高 6 pt 只作备选 | §6-4 |
 | 启动台弹簧和贝塞尔曲线 | 14 组 + 11 条 | 引用令牌 | §6-9 |
 | `pop` | ζ 0.6 | ζ 0.75（或起始缩放 1.22 → 1.12） | §6-10 |
@@ -452,12 +452,12 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 
 每个组件写五项：结构、令牌、状态与动效、贴合硬件、价值观。
 
-### 5.1 刘海岛（App/Notch.swift）
+### 5.1 刘海岛（App/Notch/）
 
 **结构**：
 - 一个形状 = 主体（矩形加连续底角）+ 两个肩。上面叠一条边线（`notch.stroke`，只描两侧和底边）和一层内容。
 - 刘海区没有像素，岛在刘海内部怎么画都看不见；但刘海外面必须和硬件轮廓一致，贴着刘海边不能留抗锯齿缝。
-- **静止时不画**（Notch.swift:1360 设 `bare`，1548 的 `setBare` 把透明度设成 0），这一点保持。真正会露出来的是两个瞬间：变形开始前把岛亮出来（1382），动画停下后把岛藏回去（1401）。这两个瞬间、下巴、紧凑样式两侧，都必须等于硬件轮廓。
+- **静止时不画**（`App/Notch/NotchCanvas.swift:250` 设 `bare`，`App/Notch/NotchPanel.swift:1992` 的 `setBare` 把透明度设成 0），这一点保持。真正会露出来的是两个瞬间：变形开始前把岛亮出来（`NotchPanel.swift:1965`），动画停下后把岛藏回去（同文件）。这两个瞬间、下巴、紧凑样式两侧，都必须等于硬件轮廓。
 - 现状在这些瞬间已经在半个面板像素以内（每边窄 0.21 px，底边低 0.41 px，底角 r10 对 10.71）。本节落地后，肉眼能看出的变化只有悬停、下拉和紧凑样式两侧多出来的肩。
 
 **状态、令牌和动效**
@@ -468,9 +468,9 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 | 变形第一帧 / 停稳藏回 | = 刘海 | `island.hug` | 与硬件肩重合 | — |
 | 悬停提示 | 左右各 +5、下 +3 | `island.hug` | 紧凑样式上按 S1（肩跟着外移 5，外沿等于现版本悬停外沿）；下巴上按 S3，外扩 | `calm` |
 | 下巴 | 刘海宽，下 +8 | `island.hug` | 与硬件肩重合 | `calm` |
-| 紧凑样式 | 两侧各 `sideWidth`（最宽 34、最窄 26，Notch.swift:1126–1145） | `island.hug`（现值 12） | S1，从 `sideWidth` 里扣 | `calm` |
+| 紧凑样式 | 两侧各 `sideWidth`（最宽 34、最窄 26，`App/Notch/NotchPanel.swift:920`） | `island.hug`（现值 12） | S1，从 `sideWidth` 里扣 | `calm` |
 | 两指下拉 | 1:1 跟手，带橡皮筋，加宽 ≤20 | 从 `island.hug` 过渡到 22 | S3 | 松手 `pull`，带速度 |
-| 落点小岛 | 340×84（Notch.swift:1010） | `island.drop` 22 | 无（S3） | `catch` |
+| 落点小岛 | 340×84（`App/Notch/NotchCanvas.swift:46`、`NotchPanel.swift:464`） | `island.drop` 22 | 无（S3） | `catch` |
 | 提醒 | 宽 max(刘海 + 200, 400)，高 刘海 + 52 | `island.alert` 24 | 无（S3） | `bloom` |
 | 教学 | 宽 max(刘海 + 300, 500)，高 刘海 + 84 | `island.alert` 24 | 无（S3） | `bloom` |
 | 展开一排 | 宽 ≥ 刘海 + 120，高 刘海 + 142 | `island.expanded` 28；格子 14 | 无（S3） | `expand` |
@@ -484,7 +484,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
   - 如果肩画在面板窗口里：`reach`（1377–1380）和停稳后的 `settled`（1394 的 `NSIntegralRect`）都要并上 e，否则肩会被窗口边切掉；这时必须实测肩区的点击能落到菜单栏上。
   - 两种都做不到，就不画肩。
 - **S3 其它比刘海宽的状态**：主体矩形保持现值，肩在顶边外扩 e。肩只占菜单栏最顶上一个约 e×e 的小角，并且点击穿透。
-  - 肩的外沿必须落在 NotchWatch 量到的空位以内，超了这一侧不画肩。NotchWatch 只量刘海两侧各 34 pt（`reach = sideWidth`，Notch.swift:1134–1137；NotchWatch.swift:101–105、184、235–238）。
+  - 肩的外沿必须落在 NotchWatch 量到的空位以内，超了这一侧不画肩。NotchWatch 只量刘海两侧各 34 pt（`reach = sideWidth`；NotchWatch.swift:101–105、184、235–238）。
   - 悬停（每侧 +5）、下拉（每侧最多 +20）加上 e 都在 34 pt 以内，可以画肩。
   - 落点、提醒、教学、展开的肩外沿都在 34 pt 以外（落点每侧超出刘海约 77 pt），那里没有空位数据，**这四个状态不画肩**，顶角保持现在的直角。
   - 以后要给这四个状态画肩，只能在进入状态时把 `reach` 扩到“半宽 + e”再量一次，只在状态切换时量、不常驻。这是 §6-3 的可选项，先做小样。
@@ -511,7 +511,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 
 ### 5.2 收进刘海 / 放回（截图飞行）
 
-- **收进**：从窗口当前位置出发，接着甩出去的速度飞，用 `settle`，不回弹。终点现在是 40×26、在刘海底上 2 pt（Notch.swift:337），改为 `notch.rect` 中心、大小不超过刘海高 [改值 §6-3]。最后一段被刘海自然挡住；隐形刘海才淡出。
+- **收进**：从窗口当前位置出发，接着甩出去的速度飞，用 `settle`，不回弹。终点现在是 40×26、在刘海底上 2 pt（`App/Notch/NotchController.swift:1040`），改为 `notch.rect` 中心、大小不超过刘海高 [改值 §6-3]。最后一段被刘海自然挡住；隐形刘海才淡出。
 - **放回**：沿同一条路出来，用 `flyOut`（0.38 / 0.9），圆角 10。
 - **收下那一刻**：岛鼓一下（`swallow()`，1407–1428），没有触感。拖到落点松手时的 `.levelChange` 是落点确认给的，不是收下给的（§4.8）；甩进来的这一下建议也不加。
 - **减少动态效果**：不飞，原处淡出、目标处淡入（Motion.swift）。
@@ -519,18 +519,18 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 
 ### 5.3 隐形刘海（外接屏、Neo、“避开刘海”模式）
 
-- 现状：菜单栏正中一颗胶囊，80 宽，上下各缩 3，`capsule` 圆角，0.88 黑（Notch.swift:1326–1330）；放不下时退成 72×12、r6 的下巴（1333–1335）。
+- 现状：菜单栏正中一颗胶囊，80 宽，上下各缩 3，`capsule` 圆角，0.88 黑（`App/Notch/` 的隐形刘海胶囊装配）；放不下时退成 72×12、r6 的下巴。
 - 槽位（瞄准、放回起点、启动台起点）是 190 宽、高 `max(24, 菜单栏高)`（111–115）。槽位是点击目标，不是外观，保持 190。
-- direction.md 已定“没有刘海的屏幕保持看不见的顶部正中”。它打开时长什么样（浮着的胶囊，还是从顶边长出来的形状）见 §8 问题 2；定下来之前外观不动。
+- lost-notes.md（原 direction.md） 已定“没有刘海的屏幕保持看不见的顶部正中”。它打开时长什么样（浮着的胶囊，还是从顶边长出来的形状）见 §8 问题 2；定下来之前外观不动。
 - **价值观**：V1 不在没有刘海的屏上假装有硬件（原则 1 反过来也成立：没有硬件，就不画硬件的形状）。V5 胶囊和槽位的 VoiceOver 名称与真刘海一致。V6 这块屏上“收进刘海”怎么说，随问题 2 一起补进 copy-guide。
 
 ### 5.4 教学提示（App/NotchCoach.swift、Core/GestureCoach.swift）
 
 - **结构**：岛进入教学状态，里面一段手势示范加一句 `coach.caption`。
 - **令牌**：台面半径 = `island.alert − inset.island` = 10，与岛同心（现在 8，NotchCoach.swift:17）[改值 §6-12]。示范里的小刘海画成缩小版刘海的形状（带肩和底角），不画四角全圆的 28×7 小药丸（158–165）。
-- **时机**：只在卡住时出现，受 `coach.limit` 约束，规则表见 stuck-habits.md。成功播报“收进了 N 扇”（Notch.swift:614–616）也算进次数限制。
+- **时机**：只在卡住时出现，受 `coach.limit` 约束，规则表见 lost-notes.md（原 stuck-habits.md）。成功播报“收进了 N 扇”（`App/Notch/NotchController.swift:1952`）也算进次数限制。
 - **动效**：`bloom` 展开，示范循环播放；减少动态效果时停在关键帧。
-- **价值观**：V1 教的是 Mac 的做法，不是把旧系统搬过来（direction.md）。V2 顺利时不开口。V5 同时发 VoiceOver 播报；示范不只靠动画，旁边一定有一句话。V6 触控板手势说“两指”“三指”；组合键符号第一次出现时说明，例如“⌃（Control）”；按 Apple Style Guide 写组合键顺序。
+- **价值观**：V1 教的是 Mac 的做法，不是把旧系统搬过来（lost-notes.md（原 direction.md））。V2 顺利时不开口。V5 同时发 VoiceOver 播报；示范不只靠动画，旁边一定有一句话。V6 触控板手势说“两指”“三指”；组合键符号第一次出现时说明，例如“⌃（Control）”；按 Apple Style Guide 写组合键顺序。
 
 ### 5.5 侧拉（App/SlideOver.swift、App/SlideOverChrome.swift、App/SlideOverDropHint.swift）
 
@@ -591,7 +591,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 - **A2**：两行授权（辅助功能必需、屏幕录制可选），只等辅助功能就能“继续”。
 - **T**：四段分段（刘海、窗口浏览、手势与卷轴、菜单栏）自己往下走；“你之前常用哪个？”是刘海一段下面一行可选的单选。
 - **动效**：讲解带的弹簧令牌（§5.14）；两块演示之间停 0.4 s；减少动态效果时不自己走、摆关键帧。
-- **价值观**：V1 迷你桌面是示意图（带刘海的示意机），不按本机比例画。V2 三页＋四段，细节教给设置页的讲解带和卡住时的刘海（stuck-habits.md）。V5 每段演示的读屏说明句挂在讲解带上，VoiceOver 能读到。V6 标题说用户得到什么（“双击标题栏，把窗口收起来”），不列功能、不替 Apple 的硬件下定义。
+- **价值观**：V1 迷你桌面是示意图（带刘海的示意机），不按本机比例画。V2 三页＋四段，细节教给设置页的讲解带和卡住时的刘海（lost-notes.md（原 stuck-habits.md））。V5 每段演示的读屏说明句挂在讲解带上，VoiceOver 能读到。V6 标题说用户得到什么（“双击标题栏，把窗口收起来”），不列功能、不替 Apple 的硬件下定义。
 
 ### 5.12 App 图标（assets/app-icon/WindowShade.icns，build.sh:127）
 
@@ -625,7 +625,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 已经落到产品里的（都是文档里已定的值，不涉及要 Aaron 拍板的概念）：
 
 - **§6-10 改值清单的四项**：`pop` 阻尼比 0.6 → 0.75（`Overlay/GestureHUD.swift`）；
-  `notch.textSecondary` 0.55 → 0.6、`notch.detail` 10.5 → 11（教学提醒那一行，`Notch.swift`）；
+  `notch.textSecondary` 0.55 → 0.6、`notch.detail` 10.5 → 11（教学提醒那一行，`App/Notch/`）；
   `notch.count` 改成等宽数字（还是圆体，`NSFont.monospacedDigitSystemFont` + `.rounded`）。
 - **§6-11 增强对比度**：岛和内容之间那条细边的透明度跟随设置（关 0.14 / 开 0.5，`NotchPanel.hairline`），
   并且刘海现在也监听系统外观变化（`AppDelegate.systemAppearanceOptionsChanged` → `notch.refreshAppearance()`），
@@ -652,29 +652,29 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 - 守卫：任何表面的几何都不变；只在屏幕参数变化时计算，不增加常驻耗电。
 
 **2. “已对准”去掉灰色填充，统一纯黑**
-- 现状：已对准 = 边线 `accent` 0.9、2 pt，加 `white 0.12` 填充（Notch.swift:1294–1297）。
+- 现状：已对准 = 边线 `accent` 0.9、2 pt，加 `white 0.12` 填充（`App/Notch/NotchPanel.swift:1750`）。
 - 改什么：只去掉灰色填充，硬件层统一纯黑；边线不变。隐形刘海的 0.88 黑（1330、1335）随问题 2。
 - 守卫：去掉填充后，已对准和未对准只剩边线的区别（1 pt 淡白对 2 pt `accent`），必须先做小样确认仍然一眼分得出来，否则不合入；越过阈值的触感不变。
 
 **3. 刘海岛贴合硬件**
 - 改什么：第一帧、下巴、紧凑两侧等于硬件轮廓；`island.hug` 替换写死的 10 和 12；悬停、下拉、紧凑样式挂上肩（自己的叠加弹簧，S1–S5）；肩的描边在水平前收尾；截图飞进的终点跟刘海走；探针把肩算进去。
 - 可选项（先做小样）：落点、提醒、教学、展开也画肩。前提是进入这些状态时把 `reach` 扩到“半宽 + e”再量一次空位，只在状态切换时量，不常驻；同时启用宽度上限，守卫“任何屏宽下格子数不少于现版本”。
-- 文件：App/Notch.swift 1271–1345、1360–1401、1524–1597、1600–1633，探针 1082–1092，飞行 337、416、874；可选项另涉及 Notch.swift:1134–1137、1168–1171 和 App/NotchWatch.swift。
+- 文件：`App/Notch/NotchPanel.swift`（岛装配与贴合）、`App/Notch/NotchCanvas.swift`（画布与 bare）、`App/Notch/NotchShoulders.swift`（肩层），探针在 App/NotchShapeProbe.swift，飞行弹簧在 Core/FlickMotion.swift；可选项另涉及 App/NotchWatch.swift。
 - 守卫：`source == .fallback` 时逐一等于现版本；退回下巴的次数不增加（S1）；菜单栏的点击不减少（S2）；打断、跟手、内容裁剪回归通过。
 
 **4. 提醒和展开不留额头（先做小样）**
 - 改什么：内容绕着刘海排；展开时保留紧凑样式的元素位置；提醒图标 30 → 24，四周 14，高度不变。加高 6 pt 只作备选（会多压 6 pt 内容），要小样对比。
-- 文件：Notch.swift:1299–1319、1891、2053–2061。
+- 文件：`App/Notch/NotchPanel.swift`（提醒与展开的排布）。
 - 守卫：文字截断不比现在多；提醒停留时长和节流不变。
 
 **5. 动效令牌收拢（第一轮只搬现值）**
 - 改什么：扩写 Motion.swift，把刘海、截图飞行、窗口滑行、提示浮窗的参数改成引用令牌。
-- 文件：App/Motion.swift；Notch.swift:1255、1347–1353、873–874；Core/FlickMotion.swift:153–157；Overlay/GestureHUD.swift:448–455。
+- 文件：Core/FlickMotion.swift（弹簧与 reduced 表）；App/Notch/NotchPanel.swift、NotchController.swift（调用）；Overlay/GestureHUD.swift:448–455。
 - 守卫：每个调用点的 response、ζ、初速度和改之前逐字相等（写一条对照测试）。改值另走 §6-10。
 
 **6. 刘海手势全程跟手、可以改方向**
 - 改什么：横滑时岛朝手指方向伸长、露出下一个 App；上推时收紧，带橡皮筋；捏合时随手指缩放。下拉、上推、横滑放进同一个二维空间，按松手时的投影落点决定去向（803）。
-- 文件：Notch.swift:1717–1814。
+- 文件：`App/Notch/NotchPanel.swift`（按下容差与落点）。
 - 守卫：同样的手势在同样的阈值下得到同样的结果；`hysteresis.pan`、`hit.pad` 不变；取消时一定弹回。
 
 **7. 侧拉的玻璃边框**
@@ -683,7 +683,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 - 守卫：把手的命中区和位置不变；14/15 上不比现在差。
 
 **8. 玻璃用量逐个过一遍（V3、V4）**
-- 改什么：列出所有玻璃和自绘材质，检查“只在控件层”“不叠玻璃”“不自己仿”；合盖 / 倾斜效果按 direction.md 默认关。
+- 改什么：列出所有玻璃和自绘材质，检查“只在控件层”“不叠玻璃”“不自己仿”；合盖 / 倾斜效果按 lost-notes.md（原 direction.md） 默认关。
 - 文件：用 `NSGlassEffectView` 的有 Overlay/SystemAppearance.swift、Overlay/GestureHUD.swift、WindowBrowser/WindowBrowserMaterial.swift、WindowBrowser/WindowBrowserContentView.swift、App/Launchpad.swift；自绘的有 App/SlideOverChrome.swift、App/Launchpad.swift:215–260（`LaunchpadGlass`，用在 LaunchpadFolders.swift:26、Launchpad.swift:304 和 466、LaunchpadLibrary.swift:111、LaunchpadToday.swift:65；遮罩另用它的 `filters`，LaunchpadFolders.swift:508、LaunchpadView.swift:145）；合盖和倾斜在 Effects/（FoldRenderer.swift、LidAngleSource.swift、DuoController.swift）。
 - 守卫：只删叠层和仿造，不删功能；设置里还能打开合盖 / 倾斜效果。
 
@@ -694,17 +694,17 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 
 **10. 改值清单（§4.10 里除 §6-2、3、4、11、12 以外的项）**
 - 改什么：`pop` ζ 0.6 → 0.75；`catch` 带拖动速度；`notch.textSecondary` 统一 0.6；`notch.detail` 统一 11（含教学的次句）；`notch.count` 用等宽数字；可选：`glide` / `flyOut` / `pull` 合并，落点确认触感改 `.generic`。
-- 文件：GestureHUD.swift:448–455；Notch.swift:1186、1349、2010–2013、2070。
+- 文件：Overlay/GestureHUD.swift:448–455；App/Notch/NotchPanel.swift:1315、NotchCompactViews.swift:550、App/Notch/ 的教学副句。
 - 守卫：每项单独提交，单独对比手感；可选项手感不更好就不改。
 
 **11. 增强对比度**
 - 改什么：`notch.stroke` 跟随设置升到 0.5，并持续监听；提示浮窗不透明底的边从 `separatorColor` 改成 `labelColor`，和窗口浏览一致。
-- 文件：Notch.swift:932、1297、1314；Overlay/GestureHUD.swift:538–539。
+- 文件：App/Notch/（落点、对准边线、problem 色）；Overlay/GestureHUD.swift:538–539。
 - 守卫：设置关着时像素不变。
 
 **12. 教学**
 - 改什么：台面半径 8 → 10；示范里画刘海形；成功播报算进次数限制。
-- 文件：App/NotchCoach.swift:17、158–165；Notch.swift:614–616、2053；Core/GestureCoach.swift:55–72。
+- 文件：App/NotchCoach.swift:17、158–165；App/Notch/NotchController.swift:1952；Core/GestureCoach.swift:55–72。
 - 守卫：`coach.limit` 的语义不变，只是多算一种播报。
 
 **13. 欢迎窗口**（问题 3）
@@ -714,7 +714,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 
 **14. 意图判断**
 - 改什么：悬停展开从 0.12 s 计时器改成看指针在刘海上的减速；单击不等双击间隔，先给按下的反馈。
-- 文件：Notch.swift:1058–1078、1209–1236。
+- 文件：App/Notch/NotchPanel.swift:839、1520。
 - 守卫：误展开不增加（划过刘海不展开），双击仍然能用。
 
 **15. 贴角的表面：包含测试探针**
@@ -728,7 +728,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 - 守卫：旧系统（14/15）上仍有图标。
 
 **17. 注释更正**
-- 改什么：GestureHUD 的“胶囊”注释删掉，写明固定圆角 24（GestureHUD.swift:2、295）；橡皮筋 c=0.55 不写成“Apple 的”（Core/FlickMotion.swift:253–259，Notch.swift 1260 附近）。
+- 改什么：GestureHUD 的“胶囊”注释删掉，写明固定圆角 24（GestureHUD.swift:2、295）；橡皮筋 c=0.55 不写成“Apple 的”（Core/FlickMotion.swift:253–259；App/Notch/NotchPanel.swift 的橡皮筋）。
 - 守卫：只改注释。
 
 **18. 官网与宣传片**
@@ -790,7 +790,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 1. 读私有的 `NSScreen.bezelPath`，带守卫和校验，失败退回机型表。
 2. 没有刘海的屏：浮着的胶囊（选项一）。
 3. 欢迎窗口缩成三步。
-4. 搬来的行为逐项定，结果见 direction.md“设计系统与‘少做’的逐项决定”：启动台、侧拉、画中画、卷轴、魔法平铺、晃一晃保持默认开；
+4. 搬来的行为逐项定，结果见 lost-notes.md（原 direction.md）“设计系统与‘少做’的逐项决定”：启动台、侧拉、画中画、卷轴、魔法平铺、晃一晃保持默认开；
    ⌃⌘ 默认快捷键全部不占（老用户保留正在用的）；“让开这个 App”加守卫并对换机的人默认关；变化提醒只加“让开系统”；主动推销类的提示删掉。
 
 ---

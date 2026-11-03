@@ -586,7 +586,7 @@
 
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
-**快捷键默认不占（1.0.16 起，docs/direction.md 最后一张表）。** 新装的 WindowShade 一个全局快捷键都不占，⌃⌘1…9 也不占：
+**快捷键默认不占（1.0.16 起，docs/lost-notes.md（原 direction.md） 最后一张表）。** 新装的 WindowShade 一个全局快捷键都不占，⌃⌘1…9 也不占：
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
 Windows 的 Win+Ctrl+← 到了 Mac 上正是 ⌃⌘←，一装上就撞上左半屏；⌃⌘ 这一组也容易撞上别的 App。要用的人在设置 → 快捷键里
@@ -865,7 +865,7 @@ IJKL 是 I 上、K 下、J 左、L 右；HJKL 照 Vim，K 上、J 下、H 左、
 **再点一下 Dock 图标：让开这个 App。** 点 Dock 上最前面那个 App 的图标、它在这张桌面上有窗口露着时，它让开（和 ⌘H 一样），
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
-再点一下回来（详见 [窗口浏览](window-browser.md)）。1.0.16 起按 docs/direction.md 最后一张表加了两条：
+再点一下回来（详见 [窗口浏览](window-browser.md)）。1.0.16 起按 docs/lost-notes.md（原 direction.md） 最后一张表加了两条：
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
 
@@ -1306,7 +1306,9 @@ Dock 图标上的两指上下滑在设置 → **窗口浏览** → 触发，默�
 | `prototype/Overlay/GestureHUD.swift` | 提示浮窗：玻璃胶囊、进度条、两端图标、弹跳与淡入淡出 |
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
-| `prototype/App/TrackpadGestures.swift` | 控制器：事件监听、区域判定、执行（收起、展开、排布与撤销） |
+| `prototype/App/TrackpadGestures.swift` | 控制器：区域判定、执行（收起、展开、排布与撤销）、跟手状态机（含嵌套 FlickDrag） |
+| `prototype/App/PinchEventTap.swift` | 张合与轻点两下的只读事件 tap（自线程收副本、主线程回调） |
+| `prototype/App/TrackpadGestureSupport.swift` | 支撑件：排布撤销载荷、AX 链与坐标换算、长按菜单目标、冲突 App 缓存 |
 
 > 2026-10-03：鼠标、妙控鼠标、妙控板、Siri 遥控器的新一轮设计（整合 Mos、Mac Mouse Fix 的思路）见 [input-devices.md](input-devices.md)。
 | `prototype/App/GestureProbe.swift` | 真机探针 `--gesture` |

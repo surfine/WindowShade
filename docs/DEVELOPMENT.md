@@ -62,6 +62,7 @@ prototype/
 ├── WindowShade.swift                 # 全局常量 + AppDelegate 骨架（启动、观察者、生命周期）
 ├── ScreenCaptureBridge.swift         # SCStream 捕获（置顶预览的实时流）
 ├── PinnedPreview.swift               # 置顶预览控制器（目标解析、watchdog、交互接管）
+├── PinnedPreviewSession.swift        # 会话层：镜像租约、快照、单个会话的挂起态
 ├── PinnedPreviewPanel.swift          # 预览面板与菜单实时缩略图
 ├── App/                              # AppDelegate 扩展（按功能拆分的控制器）
 │   ├── MenuBarController.swift       # 状态栏图标、菜单重建与菜单代理回调
@@ -70,7 +71,8 @@ prototype/
 │   ├── EventTapCallback.swift        # CGEventTap 的 C 回调与标题栏带预过滤
 │   ├── Permissions.swift             # 权限检测与隐私设置跳转
 │   ├── StatusBarIcon.swift           # 状态栏模板图标
-│   ├── Preferences.swift             # 设置窗口与引导页
+│   ├── Preferences.swift             # 设置窗口与引导页（视图与独立控件在 PreferencesViews.swift）
+│   ├── Notch/                        # 刘海的 10 个文件：Controller / Panel / Canvas / ContentView / CompactViews / RowViews / Alert / Shoulders / Tile / Peek
 │   ├── OverlayPresentation.swift     # 覆盖层展示与 Space 不变量
 │   ├── HoverPreview.swift            # 悬停预览（peek / 菜单悬停）
 │   ├── OverlayFactory.swift          # 覆盖层窗口工厂（截图条/经典条/代理标题栏）
@@ -114,6 +116,8 @@ prototype/
 │   ├── WindowBrowserViews.swift      # 视图共用部分（协议、图标缓存、表面样式）
 │   └── WindowBrowser*View.swift 等   # 每个视图一个文件：卡片、列表行、详情、大图预览、内容视图
 ├── Support/
+│   ├── MainTimer.swift               # 主线程定时器统一入口（assumeIsolated + tolerance）
+│   ├── SkyLightFramework.swift       # SkyLight 私有框架加载路径常量
 │   └── Diagnostics.swift             # 日志、主线程活动标记、慢调用日志、卡顿哨兵
 ├── Recovery/
 │   ├── Journal.swift                 # 恢复日志数据层（持久化/匹配/生命周期标记）
@@ -230,7 +234,7 @@ cd prototype
   （身份/目录/动作/缩略图/布局/状态机；不请求权限、不操作用户窗口）。
 
   - 该脚本编译窗口浏览的生产源文件并运行 690 项断言，另运行预览启动取消/乱序和元数据队列阻塞回归；每次都会打印 50/200 窗口的
-    首屏耗时，便于和 `docs/window-browser-performance.md` 的数字对照。
+    首屏耗时，便于和 docs/performance.md 的数字对照。
   - 生产源文件清单与 `prototype/build.sh` 的自动收集保持一致；新增窗口浏览源文件
     时同步更新该脚本（只是显式列出，不复制实现）。
 
@@ -301,7 +305,7 @@ cd prototype
   分段控件（用来验证“点了就换布局”，输出里的 `renderedStyle/renderedRows/renderedCards`
   是真实渲染结果）。
 - 只读真机探针（不移动用户指针、不捕获用户窗口；详见
-  [窗口浏览进度](window-browser-progress.md) 的命令清单）：
+  [窗口浏览进度](archive/2026-11-04/window-browser-progress.md) 的命令清单）：
   `--window-browser-dock-probe`、`--window-browser-hover-probe`、
   `--window-browser-catalog-probe`、`--window-browser-capture-probe`
   （只捕获本应用自己的探针窗口）、`--window-browser-thumbnail-probe`、
@@ -387,11 +391,14 @@ cd prototype
    5. `CFBundleVersion` 大于上一版（`bash scripts/check-release-version.sh` PASS）。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。
    7. `lipo -archs` 和清单的 `hardwareRequirements` 一致。
+      7b. 清单 enclosure 的 length 等于 zip 的实际字节数。
+      7c. 换证书的一版要在清单条目里标 `informationalUpdate`（docs/update.md）。
    8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
    9. 上一版读得懂这一版的状态：新版 `--self-check --write-sample-state <目录>`，上一版 `--self-check --read-state <目录>` 返回 0。
       第一个带更新器的版本没有“上一版”，跳过；从第二个起必做。
    10. 有 DMG 时加 `--dmg prototype/dist/WindowShade-v${VERSION}.dmg` 过 `release-gate.sh`（第 12 项）：签名、公证、钉票据，挂载后恰好一个
       `.app` 加一个指向 `/Applications` 的链接，`codesign --deep --strict` 通过，build 号与 zip 相同。
+   11. Developer ID 包跑一遍公证校验（`stapler validate` + `spctl -a -vv`）；卡顿账按 INFO 记一行（只报不挡）。
 5. 提交并推送实际构建的源文件、版本与发布说明，打新标签，上传 zip、DMG 和各自的 `.sha256`（dSYM 另存档，不上传），再下载回来核对 SHA-256：
 
    ```sh
@@ -417,7 +424,7 @@ cd prototype
 9. **Homebrew**：在 [surfine/homebrew-tap](https://github.com/surfine/homebrew-tap) 的 `Casks/windowshade.rb` 改 `version` 和 `sha256`（取 `dist/WindowShade-v${VERSION}.zip.sha256`），
    `brew style` 与 `brew audit --cask --strict --online surfine/tap/windowshade` 通过后提交推送。
 
-`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构；发布说明须标明实际架构。Apple Development 签名不等于公证，不宣称已经 notarized。
+`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构（可用 `WINDOWSHADE_ARCH=x86_64` 交叉编译出 Intel 包——2026-11-04 已验证全绿，但发布仍是 arm64-only）；发布说明须标明实际架构。发布关第 7 步强制 `lipo -archs` 与 appcast 的 `sparkle:hardwareRequirements` 一致，架构不匹配的包发不出去。Apple Development 签名不等于公证，不宣称已经 notarized。
 
 ### 更新签名的密钥
 

@@ -266,7 +266,7 @@ Sparkle 调用 `showReadyToInstallAndRelaunch:`（或续装时进入上一节）
 
 ### 看护
 
-`prototype/UpdateGuard/`，一个不带 Dock 图标的小 App（`LSUIElement`），约三百行，用我们的证书签名。它在 `started` 就已经在跑，做完立刻退出：
+`prototype/UpdateGuard/`（**路径已变：实际在 `prototype/Watchdog/`**，见文末「实现和上文不一样的地方」），一个不带 Dock 图标的小 App（`LSUIElement`），约三百行，用我们的证书签名。它在 `started` 就已经在跑，做完立刻退出：
 
 1. **旧版还开着**：盯旧 pid（kqueue `NOTE_EXIT`），同时读日志。日志变成 `cancelled` 或 `refused`、旧版干净退出，它就退出。
 2. **旧版退出了**：从这一刻起显示和 WindowShade 相同的菜单栏图标，直到交给新版或旧版为止。屏幕上看得见的进程不受后台活动限制，菜单栏图标也不会空出来。
@@ -834,8 +834,9 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
   只碰给定目录，偏好只读。改停车日志字段时要同步那里的样例。
 - **`--stage`**：多了两项。`main.swift`、`WindowShade.swift` 里没接齐更新器入口时打警告（不停下，别的验证也用 `--stage`），这样的包不能发布；
   接齐了就试跑 `--self-check`，5 秒内返回 0 且输出 `build=N`，否则停下。
-- **还没写的**：`scripts/release-gate.sh`、`scripts/make-appcast.sh`、`tests/run-update-integration.sh`、`site/public/appcast.xml`。
-  发布关和清单先按 docs/DEVELOPMENT.md 手动做。
+- **（2026-11-04 更新）当初“还没写的”四样都已存在**：`scripts/release-gate.sh`（发布关已脚本化）、
+  `tests/run-update-integration.sh`、`site/public/appcast.xml`；`scripts/make-appcast.sh` 仍未写（清单条目照
+  docs/DEVELOPMENT.md 手工维护）。
 - **接线由协调者做**（这些文件不归更新器这一批改）：`main.swift` 的 `UpdateLaunch.handleEarlyArguments()` 和 `UpdateLaunch.recordLaunch()`，
   `WindowShade.swift` 的 `start()`、`applicationShouldTerminate()`、`applicationWillTerminate()`，菜单、设置、欢迎窗口。
   前两处是发布阻断项。

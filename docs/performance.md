@@ -224,9 +224,9 @@ macOS 27.0 上实测第一次 496ms（同一进程随后立即再播是 0ms）�
 基本就是它。加速度计是驱动**推**上来的（62 份/秒，回调几乎不花钱），所以拿它当「机器在动」的信号：
 `Core/MotionActivity.swift` 的 `MotionActivityDetector`（相邻读数差 ≥0.02g 算动，之后保持 0.6 秒）判断动静，
 `LidPollInterval` 定采样率——**合盖途中 60Hz、机器在动 12Hz（原来的空闲速率）、确实静止 4Hz**。
-`AppleSPUAccelerometer` 只在状态变化时发一次 `onMotionChange`；没有运动数据时（加速度计不可用、
-倾斜效果关着、传感器停了）保持 12Hz，降频不靠猜。日志里 `lid: poll 4.0Hz (still)` 就是省下来的那部分，
-`tests/run-motion-activity-tests.sh` 钉住判定与三档间隔。手感上：手一碰盖子，加速度计在 ~16ms 内
+（**历史机制注记 2026-11-04**：`Core/MotionActivity.swift`、`LidPollInterval`、`tests/run-motion-activity-tests.sh`
+已随合盖效果重做删除——现行 `LidAngleSource` 是「推送为主路径 + 1Hz 看门狗 + 断推 4Hz 兜底」，见第 16 条与
+docs/lid-effect.md；本条的实测数字与结论仍然成立，机制描述留作历史。）手感上：手一碰盖子，加速度计在 ~16ms 内
 就把采样率拉回 12Hz，所以「开始合盖」的发现速度和以前一样。另有一条自愈兜底：
 **铰链自己看到角度变化 ≥0.3°**（`HingeMoveGate`）也当作「在动」并保持 3 秒——覆盖「慢慢合盖、
 底座几乎不动、加速度计看不出来」的情况，最多晚一个 4Hz 周期（250ms）就把采样率拉回来。
@@ -251,8 +251,7 @@ macOS 27.0 上实测第一次 496ms（同一进程随后立即再播是 0ms）�
 于是 `LidAngleSource` 改成：**订阅推送作为主路径**（约 10Hz，比原来静止的 4Hz 更跟手、回调几乎不花钱），
 定时器退化成 **1Hz 看门狗**（那一拍不读 HID，只检查推送有没有断）；推送断了（>3 秒）才退回
 4Hz / 12Hz 的 feature 轮询，合盖途中仍然是 60Hz 轮询保证动画跟手。
-间隔判定收进 `Core/MotionActivity.swift` 的 `LidPollInterval.seconds(engaged:moving:pushFresh:)`，
-由 `tests/run-motion-activity-tests.sh` 覆盖。静止时那一笔从 4Hz×0.914ms≈**0.37%** 降到
+静止时那一笔从 4Hz×0.914ms≈**0.37%** 降到
 1Hz×0.914ms≈**0.09%**（合盖那几秒照旧 60Hz，短促、不影响常驻）。
 真机日志里会写成 `lid: poll 1.0Hz (push)`；这一行要解锁后才会出现（锁屏不起传感器，见上一条）。
 
@@ -438,6 +437,16 @@ CoreAudio 的属性监听，只有真的变了（或 30 秒兜底）才重新枚
 `orderOut` 里的 `_updateWMWindowPresentationMode`（444ms）、屏幕参数变化回调里的 `isOnActiveSpace`（482ms）。
 这是 WindowServer 重排显示器期间任何同步调用都会等，不是单点 bug；那一刻内建屏已黑，外接屏上 Aaron 没注意到卡，暂不处理。
 
+## 六之二、效果路径的资格门槛（PERF-11）
+
+`Effects/PerfQualification.swift` 把「这一帧的体验合格没有」变成可判定的门槛（soak 测试收尾自动判定，
+`tests/run-perf-qualification-tests.sh` 钉逻辑）：动画帧率 ≥58、源帧率 ≥30、捕获到呈现 P95 ≤120ms、GPU P95 ≤8ms、
+GPU 完成到主线程 P95 ≤50ms、陈旧呈现占比 ≤0.5、主线程卡顿 0 次、最长卡顿 ≤500ms、未释放对象 0。缺数据写
+`not_available`（不许填 0 冒充）；有一项 fail 即 FAIL。数值是建议值，真机 A/B 后校准。
+
+编号说明：本文的 1–25… 是行文编号；代码注释里另有一套 `PERF-01…13` 标签（PERF-11 对应本节资格门槛、
+PERF-12 对应 27–29/31–32 的缓存与声纹批、PERF-13 对应 26 的帧率分档），两套不一一对应，按主题查找。
+
 ## 七、2026-10-03：常驻唤醒与实时活动来源
 
 **测量**（Aaron 日常用的 build 16，他正在用电脑，`top -l 31 -s 1 -stats cpu,idlew,power`）：CPU 平均 2.16%，
@@ -459,6 +468,43 @@ bundle ID（每个都是一次到 coreaudiod 的 IPC），原来每 2 秒做一�
 Dock 悬停打开时常驻）、标题栏手势（全局 scrollWheel、左键拖动）、捏合（手势事件 tap 线程）、卷轴边上那一条（有卷轴时）、
 Dock 留在一块屏（打开时）。方向是合成一个只听不拦的输入线程，在那里先按位置和状态过滤，只有真正相关的事件才回到主线程。
 先量“没人碰”和“正常使用”两种情况下的唤醒次数，再决定改哪几处；改的时候守住已发布的手势手感（帕累托）。
+
+## 八、2026-11：压缩与收敛批（PERF-12 / PERF-13）
+
+**26. 折叠会话的采集分档：盖板定住就降到 15fps。** 窗口折叠会话原来全程 60fps 上限采集（`EffectSession.start` 默认），
+手指停住、动画播完等待 hide 确认的 1.2 秒里也在满速采集。现在 `Effects/WindowFoldFPS.swift`（active 60 / idle 15，
+追平判定阈值 0.001）在跟手 tick 与动画 tick 双挂钩，一动就回 60；与桌面会话的静止档（resting 恒 15）对齐。
+`tests/run-fold-fps-tier-tests.sh` 钉档位。**采集/合成的省量还没实测**——下次 soak 对照补。
+
+**27. 静图纹理缓存按字节封顶。** `FoldImageCache`（Effects/FoldImagePrep.swift）原来按条数 LRU（4 条）；
+5K 整窗静图共享 buffer 单条约 50MB，4 条就是 ~200MB。现在挂 96MB 字节预算（`allocatedSize` 计量），
+超了按最久未用逐出、永不逐出刚存进来的那条（Effects/FoldRenderer.swift 挂接）。
+
+**28. 静图准备零拷贝：源缓冲直接包 CGImage 自己的字节。** `FoldGPU.convert` 原来用 `vImage_Buffer(cgImage:)`
+初始化源缓冲——整图分配加拷贝（5K ≈ 50MB）。现在源图同色彩空间路径下直接把 vImage_Buffer 包在 CGImage 自己的
+字节上；带 decode/mask 或拿不到源字节才退回拷贝式。run-fold-renderer-tests 的 A/B：换空间 **9.9→5.3ms（−46%）**、
+同空间 **7.1→3.3ms**（4800×2600 中位数，2026-11-04 实测）。
+
+**29. 频带分析换 vDSP。** CoreAudio IO 队列上每秒约 47 次 1024 点标量 Double FFT（Core/AudioLevelBands.swift）
+换成 `vDSP_fft_zrip`（Float）+ `vDSP_zvmags`；与旧实现逐带对照偏差 0.01–0.15 dB（tests/run-audio-level-tests.sh 全过）。
+同批 `Core/SpeakerFbank.swift` 的 512 点 FFT setup 建一次跨调用共享。
+
+**30. 声纹采集的每 chunk 堆分配消除。** `VoiceprintAudioSink`（App/SpeechVoiceprintCapture.swift）原来每个音频
+chunk 新建一个转换输出缓冲；现在复用按最大容量预分配的一块（只在锁内活、不逃逸），样本数组一次预留 12s 上限。
+
+**31. 声纹登记去掉双重 trim。** 登记 `SpeakerEnrolment.add` 原来对同一段音频 trim 两次（判长一次、特征提取内再一次；
+每次是整段 RMS + sorted）；现在 `SpeakerEmbedding.embedTrimmed` 直接收 trim 过的输入（Core/SpeakerVerification.swift）。
+
+**32. 主线程定时器样板收敛进 `MainTimer`。** `Support/MainTimer.swift` 收拢 `Timer.scheduledTimer +
+MainActor.assumeIsolated + tolerance` 三行样板（现 12 处调用、跨 6 文件），容差一处说清；run loop mode 特殊的
+站点（如显式挂 .common 的亮度轮询）保留原样。
+
+**33. SkyLight 框架路径收口。** 历史上带不带 `Versions/A` 的两种 dlopen 写法散在 6 处（dyld 解析到同一份库），
+统一走 `Support/SkyLightFramework.swift` 常量。一致性收口，无独立实测数字。
+
+**34. Intel (x86_64) 交叉编译验证通过（未发布）。** `WINDOWSHADE_ARCH=x86_64 ./prototype/build.sh --stage` 在
+Apple Silicon 上全绿（含自检）；唯一的架构阻塞点（卡顿采样器的 `arm_thread_state64_t`）已加 `#if arch` 双分支。
+发布仍 arm64-only；发布关第 7 步强制 `lipo -archs` 与 appcast 一致，不会误发。
 
 
 ### 七之二、空闲唤醒归因：测量模板（F09）
