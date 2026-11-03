@@ -201,7 +201,7 @@ import Cocoa
     /// 中文（简体、繁体）一行副标题的字数预算。规格 R24（Aaron 选 B）：原来的 16 字是拍脑袋的，
     /// 实际一行放得下的远不止——900×680 窗口里，只有开关的行约 35 字，带录制按钮的快捷键行约 13 到 25 字。
     /// 取 40 作兜底线：超过它的全文才收成「…」并出 ⓘ；40 以内的句子靠布局层省略（label 自己带「…」），
-    /// 放不下的行在 short／shortHant／shortEn 里写短句。逐行的实测见 docs/handoff/R24-copy-proposal-2026-10-17.md。
+    /// 放不下的行在 short／shortHant／shortEn 里写短句。
     nonisolated static let cjkLineBudget = 48
 
     /// 兜底截到预算：被截就以省略号收尾，不留半个字（规格 R24）；全文仍在 ⓘ 与 tooltip 里。

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # 第三份的纯核：配对限流与 TLV、认证后的事件路由、手柄映射、HID 写入事务、
 # 多触点准入、输入资格、锁来源策略、配置事务、有界输入与 Unix socket。
-# 证据与逐例结果保留在 docs/handoff/chatgpt-review-2/part3/。
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD="$ROOT/.build/part3-core"

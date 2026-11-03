@@ -1,6 +1,6 @@
 import Foundation
 
-// 外部接收器的 WebSocket 线协议（对端是独立进程，见 docs/handoff/ws2-reuse-2026-10-07/carplay.md）。
+// 外部接收器的 WebSocket 线协议（对端是独立进程）。
 // 这里只有字节格式：小端二进制媒体帧 + 文本 JSON 控制消息。纯解析，不碰网络、不碰窗口。
 // 线格式属于协议事实；实现是原创 Swift，不复制上游代码。
 
