@@ -510,8 +510,11 @@ MainActor.assumeIsolated + tolerance` 三行样板（现 12 处调用、跨 6 �
 注释警告的形态）；主线程卡顿哨兵两边都是 0，陈旧呈现占比都 ~0.95。跟手场景交互延迟优先，
 默认维持 1 帧在飞，2 帧留实验开关。同批发现并修复：soak 探针先 `session = nil` 再读资格样本，
 导致 PerfQualification 永远 `not_available`（Effects/EffectSoakProbe.swift 改为 stop 前快照）。
-**26 的折叠会话分档收益仍待实测**：桌面 soak 不经过窗口会话的分档路径（`WindowFoldFPS`），
-需要真实窗口折叠场景的 WindowServer 采集对照。
+**26 的折叠会话分档收益仍待实测**：桌面 soak 不经过窗口会话的分档路径（`WindowFoldFPS`）。
+已验证的探针边界：`--glance-probe` 模式不启动完整 App 生命周期（`DuoController.start` 不调用，
+`windowEffects.controller` 为 nil，`enabled` 恒 false），折叠全走 legacy 路径——**探针无法行使
+duo 折叠路径**。窗口会话验证需要一台效果开启的机器上真实折叠一次（teardown 日志 `duo:` 行的
+newSourceFPS 对照；A/B 钩子 `WINDOWSHADE_FOLD_IDLE_FPS=60` 关分档对照，已就位）。
 
 **35. Intel (x86_64) 交叉编译验证通过（未发布）。** `WINDOWSHADE_ARCH=x86_64 ./prototype/build.sh --stage` 在
 Apple Silicon 上全绿（含自检）；唯一的架构阻塞点（卡顿采样器的 `arm_thread_state64_t`）已加 `#if arch` 双分支。
