@@ -947,7 +947,9 @@ final class NotchPanel: NSPanel {
     private var compactShape: CompactShape {
         guard let room else { return roomWaitOver ? .chin : .pending }
         if isVirtual { return room.leading >= 39 && room.trailing >= 39 ? .pill : .chin }
-        return sideWidth >= Self.narrowestSide ? .sides : .chin
+        // 2026-11-04（Aaron 定）：有物理刘海的屏不画两侧的耳——在有缺口的屏上做灵动岛很怪。
+        // 紧凑内容一律从刘海下沿向下长，见 islandFrame。
+        return .pill
     }
 
     /// 锁屏时把已经挂在岛上的那句收掉，不留到解锁后再说。
@@ -1622,6 +1624,17 @@ final class NotchPanel: NSPanel {
         return tiles.isEmpty ? NotchRow.pitch + 2 * NotchRow.edgeMargin - NotchRow.cellGap : rowLayout.islandWidth(minimum: 0)
     }
 
+    /// 灵动岛外框（2026-11-04 Aaron 定）：
+    /// - 没有刘海的外接屏：悬浮在菜单栏中央（紧凑），展开/提醒从菜单栏下沿向下长。
+    /// - 有物理刘海的屏：不画常驻岛；有内容时从刘海下沿（notch.minY）向下长，不在菜单栏高度向两侧扩。
+    private func islandFrame(width: CGFloat, height: CGFloat, hanging: Bool) -> NSRect {
+        let x = notch.midX - width / 2
+        if isVirtual, !hanging {
+            return NSRect(x: x, y: notch.midY - height / 2, width: width, height: height)
+        }
+        return NSRect(x: x, y: notch.minY - height, width: width, height: height)
+    }
+
     /// 这一刻岛该是什么样：外框（Cocoa 坐标）、样式、面板要占的范围、两个肩。
     /// 展开时外框圆角 28、四周边距 14，格子圆角 14（HIG：同心、边距一致）。
     private func target() -> Target {
@@ -1769,8 +1782,9 @@ final class NotchPanel: NSPanel {
                 let rawBelow: CGFloat = stacksActivityCard ? (tiles.isEmpty ? 144 : 286) : (tiles.isEmpty ? 56 : 142)
                 height = notch.height + NotchIsland.peninsulaContentHeight(rawBelow)
             }
-            // 无刘海：S4 四角全圆、不画肩；真刘海仍从硬件肩长出。
-            return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
+            // 2026-11-04：从锚点下沿向下长——外接屏从菜单栏下沿、真刘海屏从刘海下沿；
+            // 不在菜单栏高度向两侧扩（那会在有缺口的屏上读成"第二块黑色"）。
+            return (islandFrame(width: width, height: height, hanging: true),
                     IslandStyle(cornerRadius: 28, allCorners: isVirtual, fill: .black, border: 1))
         }
         if let alert = alertInfo, alert.peek != nil {
@@ -1778,7 +1792,7 @@ final class NotchPanel: NSPanel {
             let side = NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
             let width = notch.width + side * 2
             let height = CGFloat(NowPlayingPeek.height(notchHeight: Double(notch.height)))
-            return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
+            return (islandFrame(width: width, height: height, hanging: true),
                     IslandStyle(cornerRadius: CGFloat(NowPlayingPeek.cornerRadius), allCorners: isVirtual, fill: .black, border: 1,
                                 borderColor: NotchPanel.hairline))
         }
@@ -1794,7 +1808,7 @@ final class NotchPanel: NSPanel {
             case .tip: border = NSColor.controlAccentColor.withAlphaComponent(0.8)
             default: border = NotchPanel.hairline
             }
-            return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
+            return (islandFrame(width: width, height: height, hanging: true),
                     IslandStyle(cornerRadius: 24, allCorners: isVirtual, fill: .black,
                                 border: alert.tone == .problem || alert.tone == .tip ? 1.5 : 1, borderColor: border))
         }
@@ -1819,10 +1833,9 @@ final class NotchPanel: NSPanel {
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
             case .pill, .pending:
-                let width: CGFloat = 200
-                let height = max(22, isVirtual ? notch.height - 6 : notch.height)
-                let y = isVirtual ? notch.minY + 3 : notch.maxY - height
-                return (NSRect(x: notch.midX - width / 2, y: y, width: width, height: height),
+                let height = IslandMetrics.iosCompactHeight
+                let width = max(IslandMetrics.iosCompactWidth, isVirtual ? 0 : notch.width)
+                return (islandFrame(width: width, height: height, hanging: false),
                         IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: height, preferred: capsuleCorner),
                                     allCorners: true, fill: .black, border: 0))
             }
@@ -1835,10 +1848,12 @@ final class NotchPanel: NSPanel {
                 return (compactEarsRect(side: sideWidth),
                         IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .pill:
-                // 隐形刘海：菜单栏正中一颗小胶囊，左边图标、右边个数。
-                let rect = NSRect(x: notch.midX - 40, y: notch.minY + 3, width: 80, height: notch.height - 6)
-                return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
-                                          allCorners: true, fill: .black, border: 0))
+                // 灵动岛（iOS 尺寸）：外接屏悬浮在菜单栏中央；真刘海屏从刘海下沿向下长。
+                let height = IslandMetrics.iosCompactHeight
+                let width = max(IslandMetrics.iosCompactWidth, isVirtual ? 0 : notch.width)
+                return (islandFrame(width: width, height: height, hanging: false),
+                        IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: height, preferred: capsuleCorner),
+                                    allCorners: true, fill: .black, border: 0))
             case .chin:
                 // 刘海旁边被菜单或菜单栏图标占着：退回刘海下面的下巴，一个点一扇窗。
                 if isVirtual {

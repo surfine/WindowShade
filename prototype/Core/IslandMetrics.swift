@@ -7,6 +7,20 @@
 import Foundation
 
 enum IslandMetrics {
+    // MARK: 灵动岛（iOS 原尺寸，2026-11-04 Aaron 定）
+    //
+    // 显示规则：**有物理刘海的屏不画常驻岛**——静止时什么都不画，只在有内容时从刘海下沿向下长；
+    // **没有刘海的外接屏**才画灵动岛，悬浮在菜单栏中央。尺寸用 iPhone 14 Pro 的真实值。
+
+    /// 紧凑岛宽（iOS：126）。
+    static let iosCompactWidth: CGFloat = 126
+    /// 紧凑岛高（iOS：37.33）。
+    static let iosCompactHeight: CGFloat = 37.33
+    /// 展开岛宽（iOS：371）。
+    static let iosExpandedWidth: CGFloat = 371
+    /// 展开岛高（iOS：160）。
+    static let iosExpandedHeight: CGFloat = 160
+
     // MARK: 紧凑（刘海两侧各一块）
 
     /// 紧凑每耳宽（iOS 52.33 至 62.33，取下限）。
@@ -42,8 +56,8 @@ enum IslandMetrics {
 
     // MARK: 展开
 
-    /// 展开宽（iOS 371 至 408）：提醒、那一排用上限，落点小岛用下限。
-    static let expandedWidth: CGFloat = 408
+    /// 展开宽（iOS 371）：2026-11-04 Aaron 定按 iOS 原尺寸（原取上限 408）。那一排随之收窄、格子左右滚。
+    static let expandedWidth: CGFloat = 371
     static let expandedMinimumWidth: CGFloat = 371
     /// 提醒的总高（从屏幕顶边量起）。内容多时可到 `expandedMaximumHeight`。
     static let alertHeight: CGFloat = 84

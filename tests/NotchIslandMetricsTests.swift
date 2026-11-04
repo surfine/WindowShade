@@ -14,7 +14,7 @@ struct NotchIslandMetricsTests {
         t.expect(M.compactEarWidth >= 52.33 && M.compactEarWidth <= M.compactEarMaxWidth && M.compactEarMaxWidth == 62.33, "耳宽在 52.33…62.33 内")
         t.expect(abs(36.67 / 2 /* deprecated compactCornerRadius */ - 18.335) < 0.0001, "紧凑底角 = 高的一半")
         t.expect(M.minimalDiameter == 36.67 && M.minimalDiameter == M.compactHeight, "小圆直径 36.67，和紧凑同高")
-        t.expect(M.expandedWidth == 408 && M.expandedMinimumWidth == 371, "展开宽 371…408")
+        t.expect(M.expandedWidth == 371 && M.expandedMinimumWidth == 371, "展开宽 371（iOS 原尺寸）")
         t.expect(M.alertHeight == 84 && M.teachingHeight == 112 && M.expandedMaximumHeight == 160, "提醒 84、教手势 112、上限 160")
         t.expect(M.rowHeight == 160 && M.rowCellHeight == 104, "那一排 160，格 104")
         t.expect(NotchRow.cellWidth == 124 && NotchRow.islandWidth == Double(M.expandedWidth), "格 124 宽；岛宽取自 IslandMetrics")
