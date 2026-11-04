@@ -46,6 +46,14 @@ final class GlanceProbe {
     glance.hitTestsByGeometry = true
     glance.pointerLocation = { [unowned self] in self.pointer }
 
+    // 不需要临时窗口的探针放在 --fixture 守卫之前：只要刘海面板，不用临时 App。
+    if CommandLine.arguments.contains("--notch-debug-cycle") {
+      task = Task { @MainActor [self] in
+        do { try await exerciseNotchDebugCycle() } catch { finish("\(error)") }
+      }
+      return
+    }
+
     // 临时窗口必须是独立的 App（tests/fixtures/GlanceFixture.swift）：WindowShade 对自己的
     // 窗口另有收起策略（只隐藏或最小化），拿自己当临时窗口测不出真实路径。
     guard let index = CommandLine.arguments.firstIndex(of: "--fixture"),

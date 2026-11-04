@@ -863,6 +863,11 @@ final class NotchPanel: NSPanel {
         return canvas.isBare && island.offsetBy(dx: frame.minX, dy: frame.minY) == notch
     }
 
+    /// 探针用：岛此刻（含动画中）在屏幕上的呈现外框。
+    var islandOnScreenForProbe: NSRect? {
+        canvas.islandOnScreen(panelOrigin: frame.origin)
+    }
+
     /// 这块屏是原生全屏桌面或调度中心开着：紧凑、提醒、展开、最小一律不画。第 1 层（授权放行、离开就锁倒数）照常出现。
     /// 摄像头正被任何 App 用着（视频通话）：自己长大的提醒只留一个点（第 40 条）。由 NotchController 接上；默认没有。
     var cameraInUse: () -> Bool = { false }
@@ -877,15 +882,27 @@ final class NotchPanel: NSPanel {
     private func updateVisibility() {
         if yieldsToSystem, !isAuthenticating, !levelYieldOpen {
             if isVisible { orderOut(nil) }
+            notchDebugLog("visibility: yield → orderOut")
             return
         }
         let needed = isAuthenticating || !isVirtual || compact != nil || dropState != .none || isExpanded
             || alertInfo != nil || !activityItems.isEmpty || meter != nil || powerFlashState != nil || companionText != nil || showsSecondaryDot
         if needed, !isVisible {
+            notchDebugLog("visibility: needed → orderFront (compact=\(compact != nil) activities=\(activityItems.count) companion=\(companionText != nil))")
             orderFrontRegardless()
             shoulderWindow?.orderFrontRegardless()
         }
-        if !needed, isVisible { orderOut(nil) }
+        if !needed, isVisible {
+            notchDebugLog("visibility: not needed → orderOut (compact=\(compact != nil) activities=\(activityItems.count) expanded=\(isExpanded))")
+            orderOut(nil)
+        }
+    }
+
+    /// DEBUG: 统一的调试日志出口（WINDOWSHADE_NOTCH_DEBUG=1 才写）。
+    func notchDebugLog(_ s: String) {
+        if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
+            wlog("notch-debug: \(s)")
+        }
     }
 
     func setCompact(_ value: Compact?, room newRoom: MenuBarRoom.Sides?) {
@@ -1984,22 +2001,37 @@ final class NotchPanel: NSPanel {
         }
         let (shoulders, snap) = shoulderMotion(to: target, from: now)
         canvas.setBare(false)
+        // pendingShift：这一拍真搬了窗口就传 delta——morph 的 from 值要从搬之前的呈现层坐标里补回来。
+        var pendingShift = CGVector.zero
         if frame != container {
             let delta = CGVector(dx: frame.minX - container.minX, dy: frame.minY - container.minY)
+            pendingShift = delta
+            notchDebugLog("apply: setFrame \(frame) → \(container) delta=(\(delta.dx),\(delta.dy))")
             setFrame(container, display: false)
             canvas.shift(by: delta)
         }
         settleGeneration += 1
         let generation = settleGeneration
-        // DEBUG: 验证面板定位（验证完删）
+        // DEBUG: 刘海面板定位与形状决策（WINDOWSHADE_NOTCH_DEBUG=1 打开；配 --glance-probe --notch-debug-cycle
+        // 能复现悬停展开→收回全程，明细在 ~/Library/Logs/WindowShade/windowshade.log）。
         if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
-            wlog("notch-debug: notch=(\(notch.minX),\(notch.minY),\(notch.width)x\(notch.height)) target=(\(rect.minX),\(rect.minY),\(rect.width)x\(rect.height)) container=(\(container.minX),\(container.minY),\(container.width)x\(container.height)) panelFrame=\(frame)")
+            let visual = displayCompact()
+            let leading = visual?.leading?.prefix(14) ?? "nil"
+            let roomText = room.map { "(\($0.leading),\($0.trailing))" } ?? "nil"
+            let state = "shape=\(shape) compactNil=\(compact == nil) visualLeading=\(leading)"
+                + " cardItems=\(cardItems.count) resting=\(resting) bare=\(bare)"
+                + " compactShown=\(compactShown) chinShown=\(chinShown) room=\(roomText) visible=\(isVisible)"
+            wlog("notch-debug: notch=(\(notch.minX),\(notch.minY),\(notch.width)x\(notch.height)) target=(\(rect.minX),\(rect.minY),\(rect.width)x\(rect.height))"
+                + " container=(\(container.minX),\(container.minY),\(container.width)x\(container.height)) panelFrame=\(frame) " + state)
         }
         var local = rect.offsetBy(dx: -container.minX, dy: -container.minY)
-        // 硬约束：岛 layer 顶边永远在面板顶边（= 屏幕顶）。目标 rect 的 maxY 理论上就是 notch.maxY，
-        // 但取整或飞行动画保护（preserving 路径跳过了 frame 直设）可能让它低于面板顶——这里兜底。
+        // 硬约束（64629782）：顶边该贴屏幕顶的形状（刘海本身、两侧耳、下巴、音量亮度耳——它们的
+        // rect.maxY 就是 notch.maxY），取整或飞行动画保护（preserving 跳过了 frame 直设）让它低于
+        // 面板顶时，钉回屏幕顶。2026-11-05 收窄：bab193b0 之后悬垂形状（紧凑胶囊、展开、提醒、一瞥）
+        // 的顶边是刘海下沿（notch.minY），不在这个名单里——强行上钉会把 37 点的胶囊撑成盖住刘海的
+        // 70 点胖块（录屏 2026-11-05 4:11 的元凶，探针 --notch-debug-cycle 实测 island 高 70.83）。
         let localTop = container.maxY - container.minY
-        if local.maxY < localTop - 0.5 {
+        if abs(rect.maxY - notch.maxY) <= 0.5, local.maxY < localTop - 0.5 {
             let missing = localTop - local.maxY
             local.origin.y += missing
             local.size.height += missing
@@ -2010,7 +2042,8 @@ final class NotchPanel: NSPanel {
             return shape
         }
         canvas.morph(to: local, style: style, content: content, spring: animated ? (custom ?? spring()) : nil,
-                     shoulders: shoulders, shoulderSnap: snap, shoulderFade: roomOnly) { [weak self] in
+                     shoulders: shoulders, shoulderSnap: snap, shoulderFade: roomOnly,
+                     pendingShift: animated ? pendingShift : .zero) { [weak self] in
             // 停下来了：面板缩回岛的大小，旁边透明的地方不挡东西。
             guard let self, generation == self.settleGeneration, (self.pulled == 0 && self.pushed == 0) || !animated else { return }
             let settled = NSIntegralRectWithOptions(target.hit, .alignAllEdgesOutward)

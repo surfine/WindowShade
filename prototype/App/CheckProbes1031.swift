@@ -231,3 +231,63 @@ extension GlanceProbe {
     }
   }
 }
+
+// MARK: - 刘海动画调试探针（--notch-debug-cycle，2026-11-05 排查录屏三乱：飞行起点偏移、收回踢动、胶囊中途消失）
+
+extension GlanceProbe {
+  /// 复现悬停展开→收回全程：喂一个确定的正在播放活动，expand/collapse 走生产路径，
+  /// 每 100ms 采样岛在屏幕上的呈现外框与面板可见性。明细在 ~/Library/Logs/WindowShade/windowshade.log
+  /// （窗口进程要配 WINDOWSHADE_NOTCH_DEBUG=1 才写状态行；采样行总写）。
+  func exerciseNotchDebugCycle() async throws {
+    owner.notch.install()
+    try await Task.sleep(for: .milliseconds(2500), clock: .suspending)
+    guard let panel = owner.notch.notchPanelForProbe else {
+      print("INFO notch-debug-cycle: this Mac has no notch panel; nothing to cycle")
+      return
+    }
+    let music = NotchActivity(id: "debug-music", generation: 1, kind: .music, title: "Pictured Res…",
+                              subtitle: "Poolsuite ON AIR", symbol: "music.note", startedAt: 0,
+                              progress: .unknown, isPaused: false, detail: "")
+    panel.setActivities([music], selected: nil)
+    try await Task.sleep(for: .milliseconds(800), clock: .suspending)
+    panel.notchDebugLog("cycle: feeding music activity done")
+    panel.expand(with: [], animated: true)
+    for step in 1...18 {
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
+      panel.notchDebugLog(String(format: "cycle[expand+%0.1fs] visible=%d island=%@ bare=%d",
+                                 Double(step) / 10, panel.isVisible ? 1 : 0,
+                                 panel.islandOnScreenForProbe.map(String.init(describing:)) ?? "nil",
+                                 panel.isBareNotch ? 1 : 0))
+    }
+    panel.notchDebugLog("cycle: collapse")
+    panel.collapse()
+    for step in 1...30 {
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
+      panel.notchDebugLog(String(format: "cycle[collapse+%0.1fs] visible=%d island=%@ bare=%d",
+                                 Double(step) / 10, panel.isVisible ? 1 : 0,
+                                 panel.islandOnScreenForProbe.map(String.init(describing:)) ?? "nil",
+                                 panel.isBareNotch ? 1 : 0))
+    }
+    panel.notchDebugLog("cycle: done")
+    // 第二循环：不再喂活动，从停稳的胶囊直接展开/收回——隔离“接力在飞弹簧”是不是偏移的触发器。
+    try await Task.sleep(for: .milliseconds(2500), clock: .suspending)
+    panel.notchDebugLog("cycle2: expand from settled pill")
+    panel.expand(with: [], animated: true)
+    for step in 1...10 {
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
+      panel.notchDebugLog(String(format: "cycle2[expand+%0.1fs] island=%@",
+                                 Double(step) / 10,
+                                 panel.islandOnScreenForProbe.map(String.init(describing:)) ?? "nil"))
+    }
+    panel.notchDebugLog("cycle2: collapse")
+    panel.collapse()
+    for step in 1...10 {
+      try await Task.sleep(for: .milliseconds(100), clock: .suspending)
+      panel.notchDebugLog(String(format: "cycle2[collapse+%0.1fs] island=%@",
+                                 Double(step) / 10,
+                                 panel.islandOnScreenForProbe.map(String.init(describing:)) ?? "nil"))
+    }
+    panel.notchDebugLog("cycle2: done")
+    print("PASS notch-debug-cycle: timeline written to ~/Library/Logs/WindowShade/windowshade.log")
+  }
+}

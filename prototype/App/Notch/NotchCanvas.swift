@@ -289,11 +289,13 @@ final class NotchCanvasView: NSView {
     /// 变到 rect（画布坐标）。spring 为 nil 时立刻到位（跟手的时候）。
     /// shoulders：两个肩各长出多少（0…1），和岛在同一个 transaction 里挂同参数的叠加弹簧；
     /// shoulderSnap：这一侧的肩本来就看不出来（和硬件重合、岛没画），直接收掉不动画；shoulderFade：只是空位变了，肩淡入淡出。
+    /// pendingShift：调用方这一拍刚 setFrame+shift 搬过面板时传当时的 delta——呈现层还停留在上一次提交
+    /// （搬之前的画布坐标），from 值要补上 delta 才是真起点；走 0.14s 退场缓冲那条路时事务已提交，传 .zero。
     /// 退场：丰富内容先淡出，形状再收回（稿 / 文法）。半路又改方向则打断淡出。
     func morph(to rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,
                shoulders scale: (leading: CGFloat, trailing: CGFloat) = (0, 0),
                shoulderSnap snap: (leading: Bool, trailing: Bool) = (false, false), shoulderFade: Bool = false,
-               done: @escaping () -> Void) {
+               pendingShift: CGVector = .zero, done: @escaping () -> Void) {
         contentExitGeneration += 1
         let exitGeneration = contentExitGeneration
         if contentExitPending {
@@ -313,7 +315,7 @@ final class NotchCanvasView: NSView {
                     guard let self, self.contentExitGeneration == generation else { return }
                     self.performMorph(to: rect, style: style, content: content, spring: spring,
                                       shoulders: scale, shoulderSnap: snap,
-                                      shoulderFade: shoulderFade, done: done)
+                                      shoulderFade: shoulderFade, pendingShift: .zero, done: done)
                 }
             }
             return
@@ -347,7 +349,7 @@ final class NotchCanvasView: NSView {
                             self.performMorph(to: pending.rect, style: pending.style, content: pending.content,
                                               spring: pending.spring,
                                               shoulders: pending.scale, shoulderSnap: pending.snap,
-                                              shoulderFade: pending.shoulderFade, done: pending.done)
+                                              shoulderFade: pending.shoulderFade, pendingShift: .zero, done: pending.done)
                         }
                     }
                 }
@@ -356,7 +358,7 @@ final class NotchCanvasView: NSView {
         }
         performMorph(to: rect, style: style, content: content, spring: spring,
                      shoulders: scale, shoulderSnap: snap,
-                     shoulderFade: shoulderFade, done: done)
+                     shoulderFade: shoulderFade, pendingShift: pendingShift, done: done)
     }
 
     /// 展开 / 提醒 / 落点退回紧凑或空手：字先淡，形状再收。
@@ -446,14 +448,22 @@ final class NotchCanvasView: NSView {
                               shoulders scale: (leading: CGFloat, trailing: CGFloat),
                               shoulderSnap snap: (leading: Bool, trailing: Bool),
                               shoulderFade: Bool,
+                              pendingShift: CGVector,
                               done: @escaping () -> Void) {
         // 富有内容退场时形状收得晚（0.10 淡出 + 0.04 一拍）：真正开始时重读呈现层，
         // 不复用 morph() 那一刻的旧位置——期间岛可能已经动过。
-        let presented = island.presentation()?.frame ?? island.frame
+        // pendingShift 非零：调用方这一拍刚搬过面板（setFrame+shift），呈现层还停在搬之前的画布
+        // 坐标（同一条事务没提交）——补上 delta 才是真起点，否则飞行的 from 带上整个搬运量，
+        // 岛从旁边飞进来（录屏 2026-11-05 4:11 的左偏飞行；--notch-debug-cycle cycle2 实测复现）。
+        let presented = (island.presentation()?.frame ?? island.frame).offsetBy(dx: pendingShift.dx, dy: pendingShift.dy)
         let presentedRadius = CGFloat(island.presentation()?.cornerRadius ?? island.cornerRadius)
-        let presentedKey = keyLine.presentation()?.frame ?? keyLine.frame
-        let presentedClip = clip.presentation()?.frame ?? clip.frame
+        let presentedKey = (keyLine.presentation()?.frame ?? keyLine.frame).offsetBy(dx: pendingShift.dx, dy: pendingShift.dy)
+        let presentedClip = (clip.presentation()?.frame ?? clip.frame).offsetBy(dx: pendingShift.dx, dy: pendingShift.dy)
         let now = CACurrentMediaTime()
+        if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
+            wlog("notch-debug: morph presented=(\(presented.origin.x),\(presented.origin.y),\(presented.width)x\(presented.height))"
+                + " → rect=(\(rect.origin.x),\(rect.origin.y),\(rect.width)x\(rect.height))")
+        }
         // 减少动态效果：岛的外框和圆角直接跳到终点，不挂弹簧，也不做 position / bounds 动画；只交叉淡化内容。
         // 呈现层还没进过渲染（width 为 0）时同样不挂动画：没有可接的起点，直接换模型值。
         let motion = Motion.reduced ? nil : (presented.width > 0 ? spring : nil)
@@ -544,7 +554,7 @@ final class NotchCanvasView: NSView {
         CATransaction.commit()
         present(content, in: rect, from: presented, animated: spring != nil)
         placeCompanion(content.companion, beside: rect, spring: spring)
-        placeMinimum(content.minimum, island: rect)
+        placeMinimum(content.minimum, island: rect, pendingShift: pendingShift)
     }
 
     // MARK: 最小形（M13）
@@ -562,7 +572,8 @@ final class NotchCanvasView: NSView {
     }
 
     /// 最小形的出现、挪位、退场。弹簧用 `calm`（0.34 / 1.0）；减少动态效果时不挪位置，只淡。
-    private func placeMinimum(_ shapes: [NotchMinimumShape], island: NSRect) {
+    /// pendingShift：和 performMorph 同一个理由——这一拍搬过面板时，呈现层还停在搬之前的画布坐标。
+    private func placeMinimum(_ shapes: [NotchMinimumShape], island: NSRect, pendingShift: CGVector) {
         guard !shapes.isEmpty || !minimumViews.isEmpty else { return }
         let reduced = Motion.reduced
         let motion = Spring(response: Motion.Spring.calm.response, bounce: Motion.Spring.calm.bounce)
@@ -578,7 +589,8 @@ final class NotchCanvasView: NSView {
         minimumViews.removeAll { !wanted.contains($0.shapeID) }
         for shape in shapes {
             if let view = minimumViews.first(where: { $0.shapeID == shape.id }) {
-                let before = view.layer?.presentation()?.frame ?? view.frame
+                let before = (view.layer?.presentation()?.frame ?? view.frame)
+                    .offsetBy(dx: pendingShift.dx, dy: pendingShift.dy)
                 view.update(shape)
                 guard view.frame != shape.frame else { continue }
                 view.frame = shape.frame
