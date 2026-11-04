@@ -249,7 +249,7 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 | 令牌 | 现值 | 目标 | 状态 |
 |---|---|---|---|
-| `island.hug` | 10（第一帧、下巴、悬停、下拉起步）；12（紧凑）——现值见 `App/Notch/NotchPanel.swift` 的岛装配 | = `hw.notchBottom` | [改值 §6-3] |
+| `island.hug` | 10（第一帧、下巴、悬停、下拉起步）；紧凑样式同底角（`NotchIsland.compactRadius`，知道硬件 = 真实刘海底角，不知道退 12） | = `hw.notchBottom` | [改值 §6-3] |
 | `island.shoulder` | 无 | = `hw.notchShoulder`，按 §5.1 的 S1–S5 | [改值 §6-3] |
 | `island.pull` | 10 + 下拉量/4，最大 22（现值见 `App/Notch/NotchPanel.swift` 的岛装配） | 起点改为 `island.hug`，上限不变 | [改值 §6-3] |
 | `island.drop` | 22 | 不变 | [现值] |

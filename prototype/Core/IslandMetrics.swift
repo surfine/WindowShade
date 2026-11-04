@@ -15,7 +15,10 @@ enum IslandMetrics {
     static let compactEarMaxWidth: CGFloat = 62.33
     /// 紧凑高（从屏幕顶边量起）。
     static let compactHeight: CGFloat = 36.67
-    /// 紧凑底角 = 高的一半（稿的假设，圆角系统没有公布）。
+    /// 紧凑底角 = 高的一半（稿的假设，圆角系统没有公布）。已废弃：紧凑底角改用
+    /// `NotchIsland.compactRadius(hardware)`（知道硬件时 = 真实刘海底角，不知道退 12）；
+    /// 这里只留作历史参考。
+    @available(*, deprecated)
     static var compactCornerRadius: CGFloat { compactHeight / 2 }
 
     // MARK: 紧凑右耳里的编程会话（稿《刘海里的编程会话》②，同样暂定）

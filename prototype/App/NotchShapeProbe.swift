@@ -106,7 +106,7 @@ extension GlanceProbe {
       return near(s.island.minX, rect.minX - body) && near(s.island.maxX, rect.maxX + body)
         // 耳宽 52.33 不是整数，面板按整点取整，差不到 1 点（肩在另一层窗口，不受影响）。
         && near(s.panel.minX, expectedPanel.minX, 1) && near(s.panel.maxX, expectedPanel.maxX, 1)
-        && near(s.radius, IslandMetrics.compactCornerRadius)
+        && near(s.radius, NotchIsland.compactRadius(curves))
         && s.shoulders.map {
           $0.ignoresMouse && $0.leading.scale == 1 && $0.trailing.scale == 1
             && near($0.leading.corner.x, s.island.minX) && near($0.trailing.corner.x, s.island.maxX)
@@ -154,14 +154,14 @@ extension GlanceProbe {
     let backOK = back?.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1 && !$0.resizing } == true
     print("\(snapped && held && backOK ? "PASS" : "FAIL") notch-shape: from the chin the unseen shoulders go at once when the row expands (not shown and shrunk), stay off on the way back, and sit on the hardware ones again once settled (snap \(snapped), held \(held), \(back.map { describe($0.shoulders) } ?? "did not settle"))")
 
-    // 假装不知道硬件形状：没有肩那层窗口，静止底角回到 10，紧凑样式两耳照 IslandMetrics（底角 = 高的一半）。
+    // 假装不知道硬件形状：没有肩那层窗口，静止底角回到 10，紧凑样式两耳退回 legacyCompact（12）。
     panel.hardware = nil
     let legacyBare = try await settle({ panel.setCompact(nil, room: nil) }, until: { $0 == rect })
     let legacySides = try await settle({ panel.setCompact(fake, room: full) }, until: { near($0.width, rect.width + 2 * sideWidth) })
     panel.hardware = curves
     let legacyOK = legacyBare.map { $0.shoulders == nil && near($0.radius, 10) } == true
-      && legacySides.map { $0.shoulders == nil && near($0.radius, IslandMetrics.compactCornerRadius) && near($0.island.minX, rect.minX - sideWidth) } == true
-    print("\(legacyOK ? "PASS" : "FAIL") notch-shape: with the shape unknown there are no shoulders, 10 pt at rest, and compact ears \(sideWidth) pt wide with \(IslandMetrics.compactCornerRadius) pt corners (\(legacySides.map { "\($0.island) r\($0.radius)" } ?? "did not settle, last \(panel.shapeForProbe.map { "\($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "-") settled \(panel.isSettledForProbe)"))")
+      && legacySides.map { $0.shoulders == nil && near($0.radius, NotchIsland.compactRadius(nil)) && near($0.island.minX, rect.minX - sideWidth) } == true
+    print("\(legacyOK ? "PASS" : "FAIL") notch-shape: with the shape unknown there are no shoulders, 10 pt at rest, and compact ears \(sideWidth) pt wide with \(NotchIsland.compactRadius(nil)) pt corners (\(legacySides.map { "\($0.island) r\($0.radius)" } ?? "did not settle, last \(panel.shapeForProbe.map { "\($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "-") settled \(panel.isSettledForProbe)"))")
   }
 
   /// 亲眼校准（--notch-calibrate，设计系统 §7.3）：自动测试只能证明“和 bezelPath 一致”，这一步看它和实物是不是一致。

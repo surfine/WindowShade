@@ -1810,7 +1810,7 @@ final class NotchPanel: NSPanel {
                 let activitySide = ears.sessionFace.map { NotchSessionEar.earSide(face: $0, earWidth: sideWidth, room: sessionRoom) }
                     ?? NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
                 return (compactEarsRect(side: ears.flash != nil ? sideWidth : activitySide),
-                        IslandStyle(cornerRadius: IslandMetrics.compactCornerRadius, allCorners: false, fill: .black, border: 0))
+                        IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .chin:
                 if isVirtual {
                     let rect = NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12)
@@ -1834,7 +1834,7 @@ final class NotchPanel: NSPanel {
                 // 紧凑样式：刘海往左右各长出一小段，左边 App 图标、右边个数（HIG：紧贴摄像头，两段读起来是一件事）。
                 // 知道硬件形状时底角就是刘海的底角，和刘海读起来是一件事。
                 return (compactEarsRect(side: sideWidth),
-                        IslandStyle(cornerRadius: IslandMetrics.compactCornerRadius, allCorners: false, fill: .black, border: 0))
+                        IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .pill:
                 // 隐形刘海：菜单栏正中一颗小胶囊，左边图标、右边个数。
                 let rect = NSRect(x: notch.midX - 40, y: notch.minY + 3, width: 80, height: notch.height - 6)
