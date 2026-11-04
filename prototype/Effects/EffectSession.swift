@@ -190,8 +190,11 @@ final class EffectDisplayClock: NSObject {
     onFailure = nil
     onVisible = nil
     if expectedLive && ProcessInfo.processInfo.environment["WINDOWSHADE_DUO_DIAGNOSTICS"] == "1" {
+      // 源侧三个数（交帧数、交帧率、间隔 P95）是采集分档（WindowFoldFPS）能否生效的观测量：
+      // 渲染侧的 newSourceFps 对静止/已隐藏的窗口恒为 0，分档 A/B 必须看这里。
+      let source = source.metricFields().compactMapValues { $0 }
       wlog(
-        "duo: \(renderer.metrics()) rendererInit=\(String(format: "%.1f", rendererInitMs))ms inFlight=\(renderer.framesInFlightLimit)"
+        "duo: \(renderer.metrics()) rendererInit=\(String(format: "%.1f", rendererInitMs))ms inFlight=\(renderer.framesInFlightLimit) source: delivered=\(source["deliveredFrames"].map { Int($0) } ?? -1) sourceFPS=\(source["sourceFPS"].map { String(format: "%.1f", $0) } ?? "-") intervalP95=\(source["sourceIntervalP95ms"].map { String(format: "%.1fms", $0) } ?? "-")"
       )
     }
   }

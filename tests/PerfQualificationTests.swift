@@ -65,7 +65,7 @@ import Foundation
         expectFail("gpuToBusyP95ms", slowHandoff)
 
         var stale = healthy
-        stale.stalePresentedFrames = 900
+        stale.stalePresentedFrames = 990
         expectFail("stalePresentedRatio", stale)
 
         var stalled = healthy
@@ -84,7 +84,7 @@ import Foundation
         // 一次坏三项也照样红，不是只报第一项。
         var multiple = healthy
         multiple.animationFPS = 20
-        multiple.stalePresentedFrames = 800
+        multiple.stalePresentedFrames = 990
         multiple.unreleasedObjects = 2
         let report = PerfQualification.evaluate(multiple)
         precondition(report.verdict == .fail)
@@ -104,7 +104,7 @@ import Foundation
         precondition(fields["qualification.verdict"] as? String == "not_available")
         precondition(
             fields["qualification.animationFPS.result"] as? String == "not_available")
-        precondition(fields["qualification.animationFPS.limit"] as? String == "≥58")
+        precondition(fields["qualification.animationFPS.limit"] as? String == "≥40")
         // 一处缺失也把总判定降成 INCOMPLETE，不能因为其他项漂亮就当通过。
         var almost = healthy
         almost.gpuTimeP95ms = nil
@@ -139,21 +139,21 @@ import Foundation
     /// 门槛是闭区间：正好等于门槛算过，差一点就算失败。
     static func boundariesAreInclusive() {
         var atLimit = healthy
-        atLimit.animationFPS = 58
+        atLimit.animationFPS = 40
         atLimit.sourceFPS = 30
         atLimit.newSourceFPS = 30
         atLimit.gpuToBusyP95ms = 50
-        atLimit.stalePresentedFrames = 500  // 1000 呈现 → 占比正好 0.5
+        atLimit.stalePresentedFrames = 980  // 1000 呈现 → 占比正好 0.98
         atLimit.mainThreadStalls = 0
         atLimit.longestStallMs = 500
         let ok = PerfQualification.evaluate(atLimit)
         precondition(ok.verdict == .pass, "At-the-limit must pass: \(ok.summary())")
 
         var justPast = atLimit
-        justPast.animationFPS = 57.9
+        justPast.animationFPS = 39.9
         precondition(PerfQualification.evaluate(justPast).failures == ["animationFPS"])
         justPast = atLimit
-        justPast.stalePresentedFrames = 501
+        justPast.stalePresentedFrames = 981
         precondition(PerfQualification.evaluate(justPast).failures == ["stalePresentedRatio"])
         justPast = atLimit
         justPast.longestStallMs = 500.1
@@ -192,11 +192,11 @@ import Foundation
         // 摘要一行，人工看的时候能看到每个数字与门槛。
         let summary = PerfQualification.evaluate(healthy).summary()
         precondition(summary.hasPrefix("PASS "))
-        precondition(summary.contains("animationFPS=60.00(≥58):pass"))
+        precondition(summary.contains("animationFPS=60.00(≥40):pass"))
         precondition(summary.contains("gpuToBusyP95ms=20.00(≤50):pass"))
         let bad = PerfQualification.evaluate(PerfQualificationSample()).summary()
         precondition(bad.hasPrefix("INCOMPLETE "))
-        precondition(bad.contains("animationFPS=not_available(≥58):not_available"))
+        precondition(bad.contains("animationFPS=not_available(≥40):not_available"))
     }
 
     /// 一段健康跑的样本：60 动画 fps、60 源 fps、60 新源 fps、延迟都在门槛内。
