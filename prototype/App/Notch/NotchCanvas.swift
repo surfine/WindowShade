@@ -305,9 +305,17 @@ final class NotchCanvasView: NSView {
                 current = nil
                 shown = nil
             }
-            performMorph(to: rect, style: style, content: content, spring: spring,
-                         shoulders: scale, shoulderSnap: snap,
-                         shoulderFade: shoulderFade, done: done)
+            // 被取消时仍等一拍（Motion.Fade.gap）再执行新 morph：收回启动那一拍的 0.14 秒
+            // 退场缓冲不该被同 tick 的 setCompact→morph 吞掉，否则形状与内容同帧突变。
+            let generation = exitGeneration
+            DispatchQueue.main.asyncAfter(deadline: .now() + Motion.Fade.gap) { [weak self] in
+                MainActor.assumeIsolated {
+                    guard let self, self.contentExitGeneration == generation else { return }
+                    self.performMorph(to: rect, style: style, content: content, spring: spring,
+                                      shoulders: scale, shoulderSnap: snap,
+                                      shoulderFade: shoulderFade, done: done)
+                }
+            }
             return
         }
         // 减少动态效果：不先淡出再等形状，岛直接到位，内容在 performMorph 里交叉淡化。
@@ -449,12 +457,22 @@ final class NotchCanvasView: NSView {
         // 减少动态效果：岛的外框和圆角直接跳到终点，不挂弹簧，也不做 position / bounds 动画；只交叉淡化内容。
         // 呈现层还没进过渲染（width 为 0）时同样不挂动画：没有可接的起点，直接换模型值。
         let motion = Motion.reduced ? nil : (presented.width > 0 ? spring : nil)
+        // 弹簧飞行保护（S5 打断规则）：没弹簧可挂（正在播放 tick 的 apply 等）但岛正在飞、
+        // 目标和呈现层有可见偏差时，不杀在飞动画、不直设 frame——让那根弹簧自然到达终点。
+        // 岛的模型值已被上一根弹簧的 target 设对（在飞的终点就是本次的目标），视觉不会错。
+        let inFlight = island.animation(forKey: "morph.bounds.size.width") != nil
+            || island.animation(forKey: "morph.position.x") != nil
+        let preserving = motion == nil && inFlight
+            && (abs(presented.width - rect.width) > 0.5 || abs(presented.height - rect.height) > 0.5
+                || abs(presented.midX - rect.midX) > 0.5)
         let shape = motion.map { handoffAxes(to: (rect, style.cornerRadius), presented: presented,
                                              presentedRadius: presentedRadius, spring: $0, now: now) }
-        stripMorph(island)
-        stripMorph(clip)
-        stripMorph(keyLine)
-        stripMorph(keyMask)
+        if !preserving {
+            stripMorph(island)
+            stripMorph(clip)
+            stripMorph(keyLine)
+            stripMorph(keyMask)
+        }
         let corners: CACornerMask = style.allCorners
             ? [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
             : [.layerMinXMinYCorner, .layerMaxXMinYCorner]
@@ -463,14 +481,20 @@ final class NotchCanvasView: NSView {
         CATransaction.setDisableActions(true)
         CATransaction.setCompletionBlock(done)
         island.maskedCorners = corners
-        island.frame = rect
+        if !preserving {
+            island.frame = rect
+        }
         island.cornerRadius = style.cornerRadius
         island.backgroundColor = style.fill.cgColor
         clip.maskedCorners = corners
-        clip.frame = rect
+        if !preserving {
+            clip.frame = rect
+        }
         clip.cornerRadius = style.cornerRadius
         keyLine.maskedCorners = corners
-        keyLine.frame = keyFrame
+        if !preserving {
+            keyLine.frame = keyFrame
+        }
         keyLine.cornerRadius = style.cornerRadius
         keyLine.borderWidth = style.border
         keyLine.borderColor = style.borderColor.cgColor
@@ -478,7 +502,9 @@ final class NotchCanvasView: NSView {
         if style.allCorners || style.border <= 0 {
             keyLine.mask = nil
         } else {
-            keyMask.frame = CGRect(origin: .zero, size: keyFrame.size)
+            if !preserving {
+                keyMask.frame = CGRect(origin: .zero, size: keyFrame.size)
+            }
             keyMask.locations = NotchSmallBehaviour.keyLineLocations(layerHeight: keyFrame.height, overscan: 2)
                 .map { NSNumber(value: $0) }
             keyLine.mask = keyMask
@@ -690,12 +716,12 @@ final class NotchCanvasView: NSView {
 
     /// 内容：同一份就原地挪到新位置；换了就旧的一层先淡出，新的一层等形状走到四成再淡入（都被岛裁着）。
     private func present(_ content: Content, in rect: NSRect, from start: NSRect, animated: Bool) {
-        stopContentWatch()
         if let current, let shown, shown.same(as: content) {
             current.place(in: rect, content: content)
             self.shown = content
-            return
+            return  // 同层原地更新：看门狗继续盯（新内容可能在等形状走到四成才淡入），不杀它
         }
+        stopContentWatch()
         presentGeneration += 1
         let generation = presentGeneration
         let reduced = Motion.reduced
@@ -837,7 +863,11 @@ final class NotchCanvasView: NSView {
     /// 落定：旧的一层都撤掉。
     func settle() {
         for view in clipHost.subviews where view !== current && view !== authenticationView && view !== retreatingView { view.removeFromSuperview() }
-        current?.alphaValue = 1
+        // 淡入被中途打断（alpha 还在 0 到 1 之间）时直接拍亮会闪一下；
+        // 只在完全不可见（alpha < 0.01）或已可见时才设。
+        if let current, current.alphaValue < 0.01 || current.alphaValue >= 0.99 {
+            current.alphaValue = 1
+        }
     }
 
     /// 最近一扇窗的图标此刻在屏幕上的位置（两指往下拉出来时，窗口从这里飞出去）。

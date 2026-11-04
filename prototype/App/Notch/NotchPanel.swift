@@ -364,13 +364,12 @@ final class NotchPanel: NSPanel {
 
     func setActivities(_ items: [NotchActivity], selected: String?) {
         guard activityItems != items || activitySelection != selected else { return }
-        let changedShape = activityItems.isEmpty != items.isEmpty
-        // 最小呈现开着：谁是紧凑、谁退成最小变了（点最小形互换、有活动来去），最小形走弹簧挪；关着一概不动。
-        let minimalChanged = minimalPresentation
-            && minimalLayoutIDs(activityItems, activitySelection) != minimalLayoutIDs(Array(items.prefix(3)), selected)
         activityItems = Array(items.prefix(3)); activitySelection = selected
         updateVisibility()
-        apply(animated: changedShape || minimalChanged)
+        // 正在播放每 tick 都到这里；animated:false 的 morph 会杀掉在飞的弹簧（stripMorph + frame 直设），
+        // 岛正从紧凑展开/收回的那 0.4 秒里来一次就瞬跳。常规 tick（形状没变）也带弹簧：
+        // 目标和呈现层一致时 from=0 不挂动画，不影响手感。
+        apply(animated: true)
     }
 
     /// 正在播放的这首的封面（NP-2）。由 NotchController 在换曲取到、换掉、丢掉时推过来；只在紧凑两耳里用，内存里只此一张。
