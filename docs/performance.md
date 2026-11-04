@@ -510,11 +510,15 @@ MainActor.assumeIsolated + tolerance` 三行样板（现 12 处调用、跨 6 �
 注释警告的形态）；主线程卡顿哨兵两边都是 0，陈旧呈现占比都 ~0.95。跟手场景交互延迟优先，
 默认维持 1 帧在飞，2 帧留实验开关。同批发现并修复：soak 探针先 `session = nil` 再读资格样本，
 导致 PerfQualification 永远 `not_available`（Effects/EffectSoakProbe.swift 改为 stop 前快照）。
-**26 的折叠会话分档收益仍待实测**：桌面 soak 不经过窗口会话的分档路径（`WindowFoldFPS`）。
-已验证的探针边界：`--glance-probe` 模式不启动完整 App 生命周期（`DuoController.start` 不调用，
-`windowEffects.controller` 为 nil，`enabled` 恒 false），折叠全走 legacy 路径——**探针无法行使
-duo 折叠路径**。窗口会话验证需要一台效果开启的机器上真实折叠一次（teardown 日志 `duo:` 行的
-newSourceFPS 对照；A/B 钩子 `WINDOWSHADE_FOLD_IDLE_FPS=60` 关分档对照，已就位）。
+**26 的折叠会话分档——2026-11-04 本机实测收尾：此场景无可测收益，逻辑保留为纵深防御。**
+效果开启的机器上真实折叠 A/B（同一扇 Finder 窗口，各一轮，源侧遥测）查明三件事：
+① 窗口折叠会话只活 0.8–1.2 秒（`phase=folding` 的 hide 验证一过即 dispose，盖板交给 legacy
+卷帘条），不存在"持住期间的持续采集"；② 静图先到位时 live 流**整场零交帧**（A/B 两轮全部
+`source: delivered=0`——窗口静止/被隐藏时 SCK 不交新帧，分档与不分档采集量同为 0）；
+③ 探针沙盒也无法行使 duo 路径（`--glance-probe` 不调用 `DuoController.start`）。
+结论：分档逻辑（测试钉住、钩子 `WINDOWSHADE_FOLD_IDLE_FPS` 可对照）保留——若未来窗口会话
+延长（如跟手停留、动画拉长）它立即生效；当前 1 秒生命周期里它只是无害的空转开关。
+收益声明从"待实测"改记为"此场景无采集可省"。
 
 **35. Intel (x86_64) 交叉编译验证通过（未发布）。** `WINDOWSHADE_ARCH=x86_64 ./prototype/build.sh --stage` 在
 Apple Silicon 上全绿（含自检）；唯一的架构阻塞点（卡顿采样器的 `arm_thread_state64_t`）已加 `#if arch` 双分支。
