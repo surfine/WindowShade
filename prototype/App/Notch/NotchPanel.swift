@@ -1959,7 +1959,14 @@ final class NotchPanel: NSPanel {
         let now = canvas.islandOnScreen(panelOrigin: frame.origin) ?? rect
         var reach = (animated ? target.hit.union(now) : target.hit).insetBy(dx: animated ? -16 : 0, dy: animated ? -16 : 0)
         reach.size.height = notch.maxY - reach.minY
-        let container = NSIntegralRectWithOptions(reach, .alignAllEdgesOutward)
+        var container = NSIntegralRectWithOptions(reach, .alignAllEdgesOutward)
+        // 硬约束：容器顶边永远钉在屏幕顶（notch.maxY）——刘海是"大陆"（灵动大陆），
+        // 岛的渲染必须从物理刘海无缝延伸，面板哪怕一像素低于屏幕顶都会在刘海和岛之间露出菜单栏底色。
+        if container.maxY < notch.maxY {
+            let missing = notch.maxY - container.maxY
+            container.origin.y += missing
+            container.size.height += missing
+        }
         let (shoulders, snap) = shoulderMotion(to: target, from: now)
         canvas.setBare(false)
         if frame != container {
@@ -1969,7 +1976,19 @@ final class NotchPanel: NSPanel {
         }
         settleGeneration += 1
         let generation = settleGeneration
-        let local = rect.offsetBy(dx: -container.minX, dy: -container.minY)
+        // DEBUG: 验证面板定位（验证完删）
+        if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
+            wlog("notch-debug: notch=(\(notch.minX),\(notch.minY),\(notch.width)x\(notch.height)) target=(\(rect.minX),\(rect.minY),\(rect.width)x\(rect.height)) container=(\(container.minX),\(container.minY),\(container.width)x\(container.height)) panelFrame=\(frame)")
+        }
+        var local = rect.offsetBy(dx: -container.minX, dy: -container.minY)
+        // 硬约束：岛 layer 顶边永远在面板顶边（= 屏幕顶）。目标 rect 的 maxY 理论上就是 notch.maxY，
+        // 但取整或飞行动画保护（preserving 路径跳过了 frame 直设）可能让它低于面板顶——这里兜底。
+        let localTop = container.maxY - container.minY
+        if local.maxY < localTop - 0.5 {
+            let missing = localTop - local.maxY
+            local.origin.y += missing
+            local.size.height += missing
+        }
         content.minimum = target.minimum.map {
             var shape = $0
             shape.frame = shape.frame.offsetBy(dx: -container.minX, dy: -container.minY)
