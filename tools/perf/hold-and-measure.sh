@@ -26,7 +26,8 @@ done
 case "$KIND" in pins|slide-over|carry|strip|split|pip|browser|shaded|none) ;; *) echo "未知 kind：$KIND" >&2; exit 2 ;; esac
 mkdir -p "$(dirname "$OUT")"
 
-IDLE="$(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ {print int($NF/1e9); exit}')"
+# awk 提前 exit 会让 ioreg 吃 SIGPIPE；pipefail 下整条管道就是 141、set -e 直接退出，所以读完全部输出。
+IDLE="$(ioreg -c IOHIDSystem | awk '/HIDIdleTime/ && !seen {print int($NF/1e9); seen=1}')"
 if [ "${IDLE:-0}" -lt 120 ]; then
   echo "拒绝：键鼠空闲只有 ${IDLE:-0} 秒（需要 ≥ 120）。等机器安静下来再跑。" >&2
   exit 1
@@ -74,7 +75,7 @@ echo "$READY"
 APP_PID="$(sed -n 's/.* pid=\([0-9][0-9]*\).*/\1/p' <<<"$READY")"
 [ -n "$APP_PID" ] || { echo "读不出进程号：$READY" >&2; exit 1; }
 
-tools/perf/idle-wakeups.sh "$APP_PID" "$LABEL" --out "$OUT"
+bash tools/perf/idle-wakeups.sh "$APP_PID" "$LABEL" --out "$OUT"
 
 # 探针睡满 80 秒后收场；多等 60 秒。
 for _ in $(seq 1 60); do
