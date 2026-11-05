@@ -42,6 +42,24 @@ enum SplitScan {
         max(eventCoalesce, eventMinimumGap - max(0, elapsed))
     }
 
+    /// 有缝时要盯的窗口：别家的普通窗口（层 0），连不在屏的（最小化、orderOut 的）也盯——SkyLight 对重新提到前面、
+    /// 从程序坞还原的窗口不发全局事件（本机实测只有被盯窗口的 815），不盯就只能等 1 秒心跳。外框要够大、
+    /// 并且落在某块屏的可用区域上（和认缝的窗口同一道尺寸门槛）。
+    static func isWatchCandidate(layer: Int?, pid: pid_t?, me: pid_t, bounds: CGRect?, areas: [CGRect]) -> Bool {
+        guard layer == 0, let pid, pid != me, let bounds, bounds.width > 80, bounds.height > 60 else { return false }
+        return areas.isEmpty || areas.contains { $0.intersects(bounds) }
+    }
+
+    /// observeAnyChange 的一批里只有桌面成员事件（1325/1326：菜单、提示框、弹出框也有）：先查这几扇是不是别家的
+    /// 普通窗口，是才重认。有被盯窗口的变化或叠放次序变化时直接重认。
+    static func needsSpaceWindowCheck(windowChanges: Int, reordered: Int, spaceEvents: Int) -> Bool {
+        windowChanges == 0 && reordered == 0 && spaceEvents > 0
+    }
+
+    static func spaceWindowsWarrantScan(_ windows: [(layer: Int?, pid: pid_t?)], me: pid_t) -> Bool {
+        windows.contains { $0.layer == 0 && $0.pid != nil && $0.pid != me }
+    }
+
     /// 平时靠什么维持把手：有缝且窗口事件可用时全靠事件（hub 的 1 秒心跳兜底），没缝时 2 秒一次找新分屏，
     /// 有缝但事件不可用时和改动前一样半秒一次。
     static func maintenance(hasSeams: Bool, eventDriven: Bool) -> SplitMaintenance {
