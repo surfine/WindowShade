@@ -49,7 +49,7 @@ final class GlanceProbe {
     // 不需要临时窗口的探针放在 --fixture 守卫之前：只要刘海面板，不用临时 App。
     if CommandLine.arguments.contains("--notch-debug-cycle") {
       task = Task { @MainActor [self] in
-        do { try await exerciseNotchDebugCycle() } catch { finish("\(error)") }
+        do { try await exerciseNotchDebugCycle(); finish(nil) } catch { finish("\(error)") }
       }
       return
     }
