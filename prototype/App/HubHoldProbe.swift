@@ -65,7 +65,7 @@ extension GlanceProbe {
         try await wait("pinned \(target)", timeout: 8) { pins.isRunning(id: target) && pins.panelVisibleForProbe(id: target) }
       }
       try await Task.sleep(for: .milliseconds(800), clock: .suspending)
-      try require(pins.watchdogAliveForProbe, "the 0.2 s pin watchdog is not running")
+      try require(pins.watchdogAliveForProbe, "the pin source-window maintenance (watchdog or hub watch) is not running")
       try require(pins.pointerDuckingAliveForProbe, "the 30 Hz pointer-ducking timer is not running with two pins")
       return { pins.stopAllPreviews(reason: "hold done") }
 
@@ -85,7 +85,7 @@ extension GlanceProbe {
       let carry = owner.carry
       carry.carry(element, id: wid)
       try require(carry.isCarried(wid), "carry refused the window")
-      try require(carry.timerAliveForProbe, "the carry 1.5 s timer is not running")
+      try require(carry.timerAliveForProbe, "the carry source-window maintenance (timer or hub watch) is not running")
       try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
       return { carry.stop(wid, reason: "hold done") }
 

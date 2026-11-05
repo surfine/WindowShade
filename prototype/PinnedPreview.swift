@@ -598,7 +598,7 @@ final class PinnedPreviewController {
     }
 
     /// 探针用（--hold pins）：共享 watchdog（0.2 s）与指针避让定时器（30 Hz）此刻在不在跑。
-    var watchdogAliveForProbe: Bool { watchdogTimer != nil }
+    var watchdogAliveForProbe: Bool { sessions.values.contains { $0.watch != nil } }
     var pointerDuckingAliveForProbe: Bool { pointerDuckingTimer != nil }
 
     /// 探针用：置顶面板此刻在不在屏幕上。

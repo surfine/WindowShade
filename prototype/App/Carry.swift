@@ -227,8 +227,8 @@ final class CarryController: GlanceCarrySource {
     }
 
     func isCarried(_ id: CGWindowID) -> Bool { carried[id] != nil }
-    /// 探针用（--hold carry）：1.5 秒的刷新定时器在不在跑。
-    var timerAliveForProbe: Bool { timer != nil }
+    /// 探针用（--hold carry）：源窗口的维护在不在跑（改动前是 1.5 秒定时器，现在是 WindowStateHub 订阅）。
+    var timerAliveForProbe: Bool { carried.values.contains { $0.watch != nil } }
 
     func stripPanel(_ id: CGWindowID) -> NSPanel? { carried[id]?.panel }
 
