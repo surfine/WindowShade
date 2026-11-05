@@ -1,7 +1,7 @@
 // 卷轴的执行：把 ScrollStrip 算出来的外框摆到真窗口上，手指滑动时整条跟手，松手按惯性停在列边上
 // （停稳时正好停在屏幕边上、挨着停靠列的那一列让出边上露出来的那一条）；
-// 每半秒对一次账：关掉的窗口让出位置、被人拖走的不再管、新开的窗口接在当前这列右边、
-// 点到（或 ⌘Tab 到）停在屏幕边上的窗口时把它滑出来。
+// 对账按事件做（WindowStateHub、辅助功能的焦点通知）：关掉的窗口让出位置、被人拖走的不再管、新开的窗口接在当前这列右边、
+// 点到（或 ⌘Tab 到）停在屏幕边上的窗口时把它滑出来；hub 的 1 秒心跳再整轮对一次账，兜事件盖不到的。
 // 指针停在露出来的那一条上看一眼（ScrollStripPeek.swift）；两指张开整条缩小铺开（ScrollStripOverview.swift）。
 //
 // 挪窗口放在每个 App 各自的后台队列上，只挪最新的目标：慢 App 跟不上时跳过中间几帧，不拖慢手指、不拖慢别的 App。
@@ -53,9 +53,33 @@ final class ScrollStripController {
     private var applied: [CGWindowID: CGRect] = [:]
     /// 开卷轴时这块屏上已经有的窗口：之后新出现的才算“新开的”。
     private var seen: Set<CGWindowID> = []
-    private var watchTimer: Timer?
-    /// 对账正在后台问：一次没回来之前不再发第二次（那个 App 卡住时要等满消息超时）。
+    /// 对账（整轮）正在后台问：一次没回来之前不再发第二次（那个 App 卡住时要等满消息超时）；期间又有人要对账就记下，回来后补一轮。
     private var watchInFlight = false
+    private var reconcileAgain = false
+    private var reconcileQueued = false
+    // 维护（WindowStateHub）：改动前是一个 0.5 秒的定时器，现在按事件。
+    /// 每列窗口的订阅：挪动、改大小、隐藏、消失。卷轴自己在挪窗口时（滑动、停稳动画）整体退订，见 pauseColumnWatches。
+    private var columnWatches: [CGWindowID: WindowWatch] = [:]
+    /// 锚：只为拿 hub 的 1 秒心跳（整轮对账）；一直在，卷轴里换了窗口就换一扇。
+    private var anchorWatch: WindowWatch?
+    private var anchorID: CGWindowID?
+    /// 新窗口加入桌面（SkyLight 1325，事件模式才有）。
+    private var appearanceWatch: WindowWatch?
+    private var watchesPaused = false
+    private var resumeWork: DispatchWorkItem?
+    private var evaluationQueued = false
+    private var driftRecheck: DispatchWorkItem?
+    /// 正在为“新窗口加入桌面”事件核对的窗口：整轮对账先不碰它们。
+    private var qualifying: Set<CGWindowID> = []
+    /// 开卷轴、关卷轴各加一：延后的闭包带着开时的值，过期了就不动。
+    private var maintenanceGeneration = 0
+    private var focusCheckInFlight = false
+    private var focusCheckAgain = false
+    private var activateObserver: NSObjectProtocol?
+    private var screenObserver: NSObjectProtocol?
+    /// 每个有卷轴列的 App 一个辅助功能观察者，听“焦点窗口换了”（挂在主 RunLoop 上；创建在后台，不让主线程等 App）。
+    private var focusObservers: [pid_t: AXObserver] = [:]
+    private var focusObserversPending: Set<pid_t> = []
     /// 停稳动画：和官网那段一样，按「经过了多少时间」算一条解析的阻尼弹簧，帧由显示器的刷新时钟给。
     /// 不再用 60Hz 定时器每帧固定走一小步——那样掉一帧就慢一截、还会和刷新不同步。
     private var motionLink: CADisplayLink?
@@ -86,8 +110,14 @@ final class ScrollStripController {
     private var lastFocused: CGWindowID?
     /// 停在边上的那一条：指针停上去看一眼。
     private(set) lazy var peek = StripPeek(strips: self)
-    /// 概览开着时是它。
-    private(set) var overview: StripOverview?
+    /// 概览开着时是它。收起后补一轮对账（概览开着时事件都先放着）。
+    private(set) var overview: StripOverview? {
+        didSet {
+            guard oldValue != nil, overview == nil, strip != nil, maintaining else { return }
+            reconcileSoon()
+            queueEvaluation()
+        }
+    }
     /// 标题栏上两指张开攒了多少（落在哪扇、最后一次什么时候）：张开时概览跟着长，松手按推算过一半才打开。
     private var spread: (id: CGWindowID, total: CGFloat, at: TimeInterval)?
     /// 张开的进度（原始进度，不夹）按时间记下：松手时取最后 0.15 秒算速度。
@@ -145,13 +175,7 @@ final class ScrollStripController {
         seen = Set((CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? [])
             .compactMap { ($0[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) } })
         apply()
-        let timer = Timer(timeInterval: 0.5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.watch() }
-        }
-        // 容差 10%（规格 E4）：让系统把这次唤醒和别的合在一起，0.05 秒的偏差对「窗口关了没」无感。
-        timer.tolerance = 0.05
-        RunLoop.main.add(timer, forMode: .common)
-        watchTimer = timer
+        startMaintenance()
         wireNotch()
         notchSettingObserver = NotificationCenter.default.addObserver(
             forName: Self.notchLinkChanged, object: nil, queue: .main) { [weak self] _ in
@@ -161,8 +185,8 @@ final class ScrollStripController {
     }
 
     func stop(reason: String) {
-        guard strip != nil || watchTimer != nil else { return }
-        watchTimer?.invalidate(); watchTimer = nil
+        guard strip != nil || isMaintained else { return }
+        stopMaintenance()
         endMotion()
         peek.stop()
         cancelTitleDrag()
@@ -198,6 +222,14 @@ final class ScrollStripController {
             mover.move(element, pid: pid, id: id, to: frame, resize: resize)
         }
         busyUntil = CACurrentMediaTime() + 0.9
+        if offset != nil {
+            // 窗口正被卷轴一帧一帧地挪：每一帧都会来“挪动”事件，没必要听；停下来再接上（scheduleResumeWatches）。
+            pauseColumnWatches()
+        } else {
+            syncWatches()
+            syncFocusObservers()
+            scheduleResumeWatches()
+        }
         // 停稳了才能看一眼边上那一条；还在动就先收掉。
         if offset == nil, !motionActive {
             peek.update(strip.slivers(gap: ArrangeGap.points), area: strip.area)
@@ -856,6 +888,7 @@ final class ScrollStripController {
             mover.move(element, pid: pid, id: id, to: frame, resize: false)
         }
         busyUntil = CACurrentMediaTime() + 0.9
+        pauseColumnWatches()
         drag.update(pointer: titleEdgePointer, strip: strip, offset: next)
         titleDrag = drag
         showSeam(drag.seam)
@@ -863,30 +896,480 @@ final class ScrollStripController {
 
     // MARK: 对账
 
-    private func watch() {
+    /// 维护开着吗（探针用）：锚订阅在，说明 hub 在替卷轴盯着。
+    private var isMaintained: Bool { anchorWatch != nil }
+    private var maintaining = false
+
+    /// 开卷轴时接上：新窗口加入桌面、换前台 App、屏幕变了，以及每列窗口的订阅。
+    /// 改动前是一个 0.5 秒定时器，每拍整轮问一遍；现在这些各自按事件来，整轮对账只在 hub 的 1 秒心跳上做一次，
+    /// 兜事件盖不到的（hub 退回轮询时心跳就是 0.5 秒，和原来一样）。
+    private func startMaintenance() {
+        maintenanceGeneration += 1
+        maintaining = true
+        StripFocusRoute.controller = self
+        let hub = WindowStateHub.shared
+        appearanceWatch = hub.observeAppearances { [weak self] id, _ in self?.windowAppeared(id) }
+        activateObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.focusMaybeChanged(settle: true) }
+        }
+        screenObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reconcileSoon() }
+        }
+        syncWatches()
+        syncFocusObservers()
+        // 开卷轴后第一次对账：和原来的第一拍（0.5 秒）一样，焦点已经在某一列时把它滑出来。
+        let generation = maintenanceGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.maintenanceGeneration == generation else { return }
+                self.reconcile()
+            }
+        }
+    }
+
+    private func stopMaintenance() {
+        maintaining = false
+        maintenanceGeneration += 1
+        for watch in columnWatches.values { watch.cancel() }
+        columnWatches.removeAll()
+        anchorWatch?.cancel(); anchorWatch = nil; anchorID = nil
+        appearanceWatch?.cancel(); appearanceWatch = nil
+        resumeWork?.cancel(); resumeWork = nil
+        driftRecheck?.cancel(); driftRecheck = nil
+        if let token = activateObserver { NSWorkspace.shared.notificationCenter.removeObserver(token) }
+        activateObserver = nil
+        if let token = screenObserver { NotificationCenter.default.removeObserver(token) }
+        screenObserver = nil
+        for pid in Array(focusObservers.keys) { dropFocusObserver(pid) }
+        focusObserversPending.removeAll()
+        if StripFocusRoute.controller === self { StripFocusRoute.controller = nil }
+        watchesPaused = false
+        evaluationQueued = false
+        reconcileQueued = false
+        reconcileAgain = false
+        watchInFlight = false
+        focusCheckInFlight = false
+        focusCheckAgain = false
+        qualifying.removeAll()
+    }
+
+    /// 让订阅和卷轴里的窗口对上：新列订阅、走了的退订；锚不在卷轴里了就换一扇。
+    private func syncWatches() {
+        guard maintaining, let strip else { return }
+        let hub = WindowStateHub.shared
+        let ids = strip.ids
+        let idSet = Set(ids)
+        if let anchorID, !idSet.contains(anchorID) {
+            anchorWatch?.cancel(); anchorWatch = nil; self.anchorID = nil
+        }
+        if anchorWatch == nil, let first = ids.first {
+            anchorID = first
+            anchorWatch = hub.watch(first, fallbackInterval: Self.watchFallbackInterval, heartbeat: true) { [weak self] change, _ in
+                self?.anchorChanged(change)
+            }
+        }
+        guard !watchesPaused else { return }
+        for (id, watch) in columnWatches where !idSet.contains(id) {
+            watch.cancel()
+            columnWatches.removeValue(forKey: id)
+        }
+        for id in ids where columnWatches[id] == nil {
+            columnWatches[id] = hub.watch(id, fallbackInterval: Self.watchFallbackInterval) { [weak self] change, _ in
+                self?.columnChanged(change)
+            }
+        }
+    }
+
+    /// SkyLight 通知用不了时 hub 退回的轮询间隔（原来对账定时器的间隔）。
+    private static let watchFallbackInterval: TimeInterval = 0.5
+
+    /// 卷轴自己在一帧一帧挪窗口（手指滑动、停稳动画、靠边自动卷）：每一帧每扇窗都会来一次“挪动”，hub 每轮要为它们问一次
+    /// WindowServer，没人需要这些。整体退订（锚留着，心跳照走），停稳、busy 过去后接回（见 scheduleResumeWatches）。
+    private func pauseColumnWatches() {
+        guard maintaining else { return }
+        resumeWork?.cancel(); resumeWork = nil
+        guard !watchesPaused else { return }
+        watchesPaused = true
+        for watch in columnWatches.values { watch.cancel() }
+        columnWatches.removeAll()
+    }
+
+    private func scheduleResumeWatches() {
+        guard maintaining, watchesPaused else { return }
+        resumeWork?.cancel()
+        let generation = maintenanceGeneration
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.maintenanceGeneration == generation else { return }
+                self.resumeWatches()
+            }
+        }
+        resumeWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(0.05, busyUntil - CACurrentMediaTime() + 0.05), execute: work)
+    }
+
+    /// 接回订阅，并整轮对一次账：暂停期间被人拖走、关掉的，和原来 busy 一过的下一拍一样马上处理。
+    private func resumeWatches() {
+        resumeWork = nil
+        guard maintaining, watchesPaused else { return }
+        guard CACurrentMediaTime() > busyUntil, !motionActive else {
+            scheduleResumeWatches()
+            return
+        }
+        watchesPaused = false
+        syncWatches()
+        reconcile()
+    }
+
+    /// 每列窗口的变化：只记一笔，等这一轮的事件都落地（hub 一轮里逐扇分发，别扇的事实还没更新）再统一核对。
+    private func columnChanged(_ change: WindowChange) {
+        if change == .heartbeat { return }
+        queueEvaluation()
+    }
+
+    /// 锚的变化：心跳触发整轮对账（也是暂停没接回时的兜底）；它自己的变化当一列的变化。
+    private func anchorChanged(_ change: WindowChange) {
+        switch change {
+        case .heartbeat:
+            if watchesPaused, CACurrentMediaTime() > busyUntil, !motionActive { resumeWatches() } else { reconcile() }
+        case .moved, .resized, .restyled:
+            if !watchesPaused { queueEvaluation() }
+        case .hidden, .shown, .gone:
+            queueEvaluation()
+        }
+    }
+
+    private func queueEvaluation() {
+        guard !evaluationQueued else { return }
+        evaluationQueued = true
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated { self?.evaluateColumns() }
+        }
+    }
+
+    private func scheduleDriftRecheck(after delay: TimeInterval) {
+        guard driftRecheck == nil else { return }
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                self?.driftRecheck = nil
+                self?.evaluateColumns()
+            }
+        }
+        driftRecheck = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    /// 按 hub 最近的事实核对每一列：关掉、被收起、侧拉、收进刘海的让出位置；被人拖走、改了大小的不再管。
+    /// 卷轴自己刚挪过窗口时（busy）差得多也先不判，等 busy 过去再看一次——变化不丢，也不比原来的 0.5 秒慢。
+    /// 没有事实的列（暂停中、刚订阅）不动，整轮对账会看到它。
+    private func evaluateColumns() {
+        evaluationQueued = false
+        guard overview == nil, var strip, maintaining else { return }
+        let owner = gestures.owner
+        let hub = WindowStateHub.shared
+        var facts: [CGWindowID: WindowFact] = [:]
+        for id in strip.ids { if let fact = hub.fact(for: id) { facts[id] = fact } }
+        func visible(_ fact: WindowFact) -> Bool { fact.exists && fact.isOnScreen && fact.layer == 0 }
+        // 卷轴里的窗口全都不在屏幕上：切到了别的桌面、锁了屏、调度中心开着，这时不核对。
+        guard facts.values.contains(where: visible) else { return }
+        let now = CACurrentMediaTime()
+        let quiet = now > busyUntil && !motionActive
+        let parkedColumns = strip.parked()
+        let parked = Set((parkedColumns.left + parkedColumns.right).flatMap { strip.columns[$0].ids })
+        var changed = false
+        var recheck: TimeInterval?
+        for id in strip.ids {
+            let flagged = owner.shaded[id] != nil || owner.slideOver.isSlideOver(id) || owner.notch.isTucked(id)
+            var leave = flagged
+            if !leave, let fact = facts[id] {
+                leave = StripWatchPolicy.leaves(visible: visible(fact), flagged: false)
+                if !leave {
+                    switch StripWatchPolicy.drift(actual: fact.bounds, expected: applied[id], quiet: quiet,
+                                                  busyRemaining: busyUntil - now, parked: parked.contains(id),
+                                                  holdsTitleDrag: holdsTitleDrag(id)) {
+                    case .forget:
+                        leave = true
+                        gestures.forgetPlacement(for: id)
+                    case .recheck(let delay):
+                        recheck = min(recheck ?? delay, delay)
+                    case .none:
+                        break
+                    }
+                }
+            }
+            if leave {
+                removeColumn(id, from: &strip)
+                changed = true
+            }
+        }
+        if let recheck { scheduleDriftRecheck(after: recheck) }
+        if changed { commitColumns(strip) }
+    }
+
+    private func removeColumn(_ id: CGWindowID, from strip: inout ScrollStrip) {
+        gestures.noteLeft(id)
+        strip.remove(id)
+        elements.removeValue(forKey: id); pids.removeValue(forKey: id); applied.removeValue(forKey: id)
+        wlog("strip: window \(id) left the strip")
+    }
+
+    /// 列有增减后落地：摆一轮；只剩一列卷轴就结束，窗口留在原处。
+    private func commitColumns(_ strip: ScrollStrip) {
+        self.strip = strip
+        apply()
+        if strip.columns.count <= 1 { stop(reason: "one column left") }
+    }
+
+    // MARK: 新窗口（SkyLight 1325）
+
+    /// 有窗口加入某张桌面。只核对这一扇（不整轮问）；事件可能先于 App 把窗口摆好、让辅助功能看得到，
+    /// 没成就在 0.15 秒、0.4 秒（自事件起）再试，仍不行就留给心跳的整轮对账（和原来 0.5 秒轮询会再看到它一样）。
+    private func windowAppeared(_ id: CGWindowID) {
+        guard strip != nil, !seen.contains(id), !qualifying.contains(id), !contains(id) else { return }
+        qualifying.insert(id)
+        attemptAppearance(id, attempt: 0, generation: maintenanceGeneration)
+    }
+
+    private func attemptAppearance(_ id: CGWindowID, attempt: Int, generation: Int) {
+        guard maintenanceGeneration == generation, strip != nil else { qualifying.remove(id); return }
+        // 概览开着：焦点在概览上，等它收起（didSet 会整轮对账）；这里每 0.25 秒看它收了没有。
+        guard overview == nil else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+                MainActor.assumeIsolated { self?.attemptAppearance(id, attempt: attempt, generation: generation) }
+            }
+            return
+        }
+        guard let screen = NSScreen.screens.first(where: { displayID(for: $0) == screenID }) else { qualifying.remove(id); return }
+        let ownPID = getpid()
+        let arrangeOnly = gestures.arrangeOnlyPID
+        let screenAX = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let probe = Self.probeNewWindow(id, ownPID: ownPID, arrangeOnly: arrangeOnly, screenAX: screenAX)
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    self?.finishAppearance(id, attempt: attempt, generation: generation, probe: probe)
+                }
+            }
+        }
+    }
+
+    private func finishAppearance(_ id: CGWindowID, attempt: Int, generation: Int, probe: NewWindowProbe) {
+        guard maintenanceGeneration == generation, strip != nil else { qualifying.remove(id); return }
+        switch probe {
+        case .qualified(let window, let focusedID):
+            qualifying.remove(id)
+            guard !seen.contains(id), var strip else { return }
+            if admitNewWindow(window, focusedID: focusedID, into: &strip) { commitColumns(strip) }
+        case .notYet:
+            guard let delay = StripWatchPolicy.appearanceRetryDelay(afterAttempt: attempt) else {
+                qualifying.remove(id)
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                MainActor.assumeIsolated { self?.attemptAppearance(id, attempt: attempt + 1, generation: generation) }
+            }
+        case .never:
+            qualifying.remove(id)
+        }
+    }
+
+    /// 一扇新窗口的核对结果（后台问出来的）。
+    private struct NewWindow {
+        var id: CGWindowID
+        var pid: pid_t
+        var bounds: CGRect
+        var element: AXUIElement
+    }
+
+    private enum NewWindowProbe {
+        case qualified(NewWindow, focusedID: CGWindowID?)
+        /// 现在还不够格（没上屏、太小、辅助功能还看不到）：窗口可能还没摆好。
+        case notYet
+        /// 不会成为卷轴的列（自己的、已经没了、不是普通层）。
+        case never
+    }
+
+    /// 只问这一扇：在屏、普通层、够大、在这块屏上、辅助功能里是标准窗口且不是全屏。和整轮对账里的检查是同一套。
+    private nonisolated static func probeNewWindow(_ id: CGWindowID, ownPID: pid_t, arrangeOnly: pid_t?,
+                                                   screenAX: CGRect) -> NewWindowProbe {
+        guard let info = (CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]])?
+            .first(where: { ($0[kCGWindowNumber as String] as? NSNumber)?.uint32Value == id }),
+              let frame = cgWindowBounds(info), let pid = info[kCGWindowOwnerPID as String] as? pid_t else { return .never }
+        guard (info[kCGWindowLayer as String] as? Int) == 0 else { return .never }
+        guard (info[kCGWindowIsOnscreen as String] as? Bool) == true else { return .notYet }
+        switch StripWatchPolicy.newWindowEligibility(pid: pid, bounds: frame, ownPID: ownPID, arrangeOnly: arrangeOnly, screenAX: screenAX) {
+        case .never: return .never
+        case .notYet: return .notYet
+        case .eligible: break
+        }
+        guard let element = appWindows(pid: pid).first(where: { windowID(of: $0) == id }),
+              axSubrole(element) == kAXStandardWindowSubrole as String,
+              !axBoolAttribute(element, "AXFullScreen") else { return .notYet }
+        return .qualified(NewWindow(id: id, pid: pid, bounds: frame, element: element),
+                          focusedID: focusedWindow().flatMap { windowID(of: $0) })
+    }
+
+    /// 新开的窗口：接在当前这列右边（别的列不变窄）。返回 true：卷轴多了一列。
+    private func admitNewWindow(_ window: NewWindow, focusedID: CGWindowID?, into strip: inout ScrollStrip) -> Bool {
+        let owner = gestures.owner
+        seen.insert(window.id)
+        guard owner.shaded[window.id] == nil, !owner.slideOver.isSlideOver(window.id) else { return false }
+        let app = NSRunningApplication(processIdentifier: window.pid)
+        let category = app?.bundleURL.flatMap { Bundle(url: $0)?.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String }
+        let role = MagicTiling.role(bundleID: app?.bundleIdentifier, category: category)
+        let after = focusedID.flatMap { strip.column(of: $0) } ?? (strip.columns.count - 1)
+        // 你给这个 App 改过宽度就用那一档，没改过照 App 要的地方给。
+        let remembered = StripWidthMemory.isEnabled() ? widthMemory.width(for: app?.bundleIdentifier, in: strip.area) : nil
+        strip.insert(window.id, width: remembered ?? ScrollStrip.width(for: role, in: strip.area), after: after)
+        elements[window.id] = window.element
+        pids[window.id] = window.pid
+        gestures.noteJoined(window.id, element: window.element, before: window.bounds, area: strip.area)
+        wlog("strip: new window \(window.id) joins after column \(after)")
+        return true
+    }
+
+    // MARK: 焦点
+
+    /// 换了前台 App，或某个 App 里焦点窗口换了（辅助功能通知）。settle：App 刚激活时它的焦点窗口可能还没报，0.15 秒后再看一次。
+    private func focusMaybeChanged(settle: Bool) {
+        guard strip != nil else { return }
+        checkFocus()
+        guard settle else { return }
+        let generation = maintenanceGeneration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.maintenanceGeneration == generation else { return }
+                self.checkFocus()
+            }
+        }
+    }
+
+    /// 问一次焦点窗口（后台，问 App 可能要等），回来后和 lastFocused 比。概览开着先不管（收起会整轮对账）。
+    private func checkFocus() {
+        guard strip != nil, overview == nil else { return }
+        guard !focusCheckInFlight else { focusCheckAgain = true; return }
+        focusCheckInFlight = true
+        let generation = maintenanceGeneration
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let focusedID = focusedWindow().flatMap { windowID(of: $0) }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.maintenanceGeneration == generation else { return }
+                    self.focusCheckInFlight = false
+                    if let strip = self.strip, self.overview == nil { _ = self.revealFocused(strip, focusedID: focusedID, changed: false) }
+                    if self.focusCheckAgain {
+                        self.focusCheckAgain = false
+                        self.checkFocus()
+                    }
+                }
+            }
+        }
+    }
+
+    /// 点到（或 ⌘Tab 到）停在边上、只露出一部分的窗口：把它整列滑出来。只在焦点换了的时候。
+    /// changed：这一轮卷轴刚增减过列，先摆好，不抢着滑。返回 true：开始滑了。
+    private func revealFocused(_ strip: ScrollStrip, focusedID: CGWindowID?, changed: Bool) -> Bool {
+        let focusChanged = focusedID != lastFocused
+        let previousColumn = lastFocused.flatMap { strip.column(of: $0) }
+        lastFocused = focusedID
+        guard !changed, focusChanged, !motionActive, let focusedID, let index = strip.column(of: focusedID) else { return false }
+        let target = strip.offsetFor(index, previous: previousColumn)
+        guard abs(target - strip.offset) > 1 else { return false }
+        self.strip = strip
+        animate(from: strip.offset, to: target, velocity: 0)
+        wlog("strip: reveal focused window \(focusedID)")
+        return true
+    }
+
+    /// 让每个有卷轴列的 App 都有一个“焦点窗口换了”的观察者，没列了的拆掉。创建在后台（要问那个 App，可能等），
+    /// 回主线程时卷轴已经变了就丢掉。
+    private func syncFocusObservers() {
+        guard maintaining, strip != nil else { return }
+        let wanted = Set(pids.values)
+        for pid in Array(focusObservers.keys) where !wanted.contains(pid) { dropFocusObserver(pid) }
+        let generation = maintenanceGeneration
+        for pid in wanted where focusObservers[pid] == nil && !focusObserversPending.contains(pid) {
+            focusObserversPending.insert(pid)
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                var created: AXObserver?
+                var attached = false
+                if AXObserverCreate(pid, stripFocusObserverCallback, &created) == .success, let observer = created {
+                    let refcon = UnsafeMutableRawPointer(bitPattern: UInt(bitPattern: Int(pid)))
+                    attached = AXObserverAddNotification(observer, AXUIElementCreateApplication(pid),
+                                                         kAXFocusedWindowChangedNotification as CFString, refcon) == .success
+                }
+                let observer = attached ? created : nil
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        guard let self else { return }
+                        self.focusObserversPending.remove(pid)
+                        guard let observer else { return }
+                        guard self.maintenanceGeneration == generation, self.pids.values.contains(pid) else { return }
+                        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
+                        self.focusObservers[pid] = observer
+                    }
+                }
+            }
+        }
+    }
+
+    private func dropFocusObserver(_ pid: pid_t) {
+        guard let observer = focusObservers.removeValue(forKey: pid) else { return }
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
+    }
+
+    fileprivate func focusNotified() { focusMaybeChanged(settle: false) }
+
+    // MARK: 整轮对账
+
+    /// 合并短时间内的几次整轮对账请求（概览收起、屏幕变了、暂停接回）。
+    private func reconcileSoon() {
+        guard !reconcileQueued else { return }
+        reconcileQueued = true
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.reconcileQueued = false
+                self.reconcile()
+            }
+        }
+    }
+
+    /// 整轮对账：hub 的 1 秒心跳（退回轮询时 0.5 秒）上做，也在概览收起、屏幕变了、暂停接回时做。
+    /// 事件已经管了的（让位、被拖走、新窗口、焦点）这里再兜一遍；事件盖不到的也靠它。
+    private func reconcile() {
         guard isActive else { stop(reason: "screen gone"); return }
         guard let screen = NSScreen.screens.first(where: { displayID(for: $0) == screenID }) else {
             stop(reason: "screen gone")
             return
         }
         // 概览开着：焦点在概览上，窗口也没人动，等它收起再对账。
-        guard overview == nil, !watchInFlight else { return }
+        guard overview == nil else { return }
+        // 上一轮还没回来（那个 App 卡着）：不发第二次，回来后补一轮。
+        guard !watchInFlight else { reconcileAgain = true; return }
         watchInFlight = true
         // 问窗口服务器和别的 App 都很贵：CGWindowList 一次约 3 毫秒，appWindows 一次实测约 20 毫秒，
         // 碰上一个不响应的 App 还能等到 2 秒的消息超时。这些全放后台线程问，主线程只拿结果对账——
-        // 对账每半秒一次，压在主线程上就是动画掉帧。AX 可以在任意线程调用（见 AppWindows.swift）。
+        // 压在主线程上就是动画掉帧。AX 可以在任意线程调用（见 AppWindows.swift）。
         let ownPID = getpid()
-        let seenIDs = seen
+        let seenIDs = seen.union(qualifying)
         let arrangeOnly = gestures.arrangeOnlyPID
         let screenAX = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
+        let generation = maintenanceGeneration
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let facts = Self.gatherWatchFacts(ownPID: ownPID, seenIDs: seenIDs,
                                               arrangeOnly: arrangeOnly, screenAX: screenAX)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    guard let self else { return }
+                    guard let self, self.maintenanceGeneration == generation else { return }
                     self.watchInFlight = false
                     self.applyWatch(facts)
+                    if self.reconcileAgain {
+                        self.reconcileAgain = false
+                        self.reconcileSoon()
+                    }
                 }
             }
         }
@@ -918,9 +1401,8 @@ final class ScrollStripController {
         }
         // 新窗口：这块屏上、标准窗口、够大。辅助功能那两次读最贵，也在这里做完。
         for window in facts.onscreen where !seenIDs.contains(window.id) {
-            guard window.pid != ownPID, window.bounds.width >= 240, window.bounds.height >= 160,
-                  screenAX.contains(CGPoint(x: window.bounds.midX, y: window.bounds.midY)),
-                  arrangeOnly.map({ $0 == window.pid }) ?? true,
+            guard StripWatchPolicy.newWindowEligibility(pid: window.pid, bounds: window.bounds, ownPID: ownPID,
+                                                        arrangeOnly: arrangeOnly, screenAX: screenAX) == .eligible,
                   let element = appWindows(pid: window.pid).first(where: { windowID(of: $0) == window.id }),
                   axSubrole(element) == kAXStandardWindowSubrole as String,
                   !axBoolAttribute(element, "AXFullScreen") else { continue }
@@ -946,64 +1428,34 @@ final class ScrollStripController {
         for id in strip.ids {
             // 关掉了、被收起、侧拉、收进刘海：让出位置。
             // 别的窗口都还在、它却不在屏幕上了：关掉、最小化、隐藏了。
-            var leave = bounds[id] == nil || !visibleIDs.contains(id)
-                || owner.shaded[id] != nil || owner.slideOver.isSlideOver(id) || owner.notch.isTucked(id)
+            var leave = StripWatchPolicy.leaves(visible: bounds[id] != nil && visibleIDs.contains(id),
+                                                flagged: owner.shaded[id] != nil || owner.slideOver.isSlideOver(id) || owner.notch.isTucked(id))
             // 被人拖走、改了大小：不再管它（露在屏幕上的列才比；停在边上的会被系统挪一点）。
             // 拖着标题栏、还在卷轴里挑缝的那扇不算被拖走：松手才知道它去哪。
-            if !leave, quiet, !parked.contains(id), !holdsTitleDrag(id), let actual = bounds[id], let expected = applied[id],
-               abs(actual.minX - expected.minX) > 24 || abs(actual.minY - expected.minY) > 24
-                || abs(actual.width - expected.width) > 24 || abs(actual.height - expected.height) > 24 {
+            // 忙着时（卷轴刚挪过窗口）不判，事件那边会在 busy 过去后复查。
+            if !leave, quiet, StripWatchPolicy.drift(actual: bounds[id], expected: applied[id], quiet: true, busyRemaining: 0,
+                                                    parked: parked.contains(id), holdsTitleDrag: holdsTitleDrag(id)) == .forget {
                 leave = true
                 gestures.forgetPlacement(for: id)
             }
             if leave {
-                gestures.noteLeft(id)
-                strip.remove(id)
-                elements.removeValue(forKey: id); pids.removeValue(forKey: id); applied.removeValue(forKey: id)
+                removeColumn(id, from: &strip)
                 changed = true
-                wlog("strip: window \(id) left the strip")
             }
         }
-        // 新开的窗口：接在当前这列右边（别的列不变窄）。
-        for window in onscreen where !seen.contains(window.id) {
+        // 新开的窗口：接在当前这列右边（别的列不变窄）。事件那边正核对的先不碰。
+        for window in onscreen where !seen.contains(window.id) && !qualifying.contains(window.id) {
             seen.insert(window.id)
-            guard let element = facts.candidates[window.id],
-                  owner.shaded[window.id] == nil, !owner.slideOver.isSlideOver(window.id) else { continue }
-            let app = NSRunningApplication(processIdentifier: window.pid)
-            let category = app?.bundleURL.flatMap { Bundle(url: $0)?.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String }
-            let role = MagicTiling.role(bundleID: app?.bundleIdentifier, category: category)
-            let after = facts.focusedID.flatMap { strip.column(of: $0) } ?? (strip.columns.count - 1)
-            // 你给这个 App 改过宽度就用那一档，没改过照 App 要的地方给。
-            let remembered = StripWidthMemory.isEnabled() ? widthMemory.width(for: app?.bundleIdentifier, in: strip.area) : nil
-            strip.insert(window.id, width: remembered ?? ScrollStrip.width(for: role, in: strip.area), after: after)
-            elements[window.id] = element
-            pids[window.id] = window.pid
-            gestures.noteJoined(window.id, element: element, before: window.bounds, area: strip.area)
-            changed = true
-            wlog("strip: new window \(window.id) joins after column \(after)")
+            guard let element = facts.candidates[window.id] else { continue }
+            if admitNewWindow(NewWindow(id: window.id, pid: window.pid, bounds: window.bounds, element: element),
+                              focusedID: facts.focusedID, into: &strip) {
+                changed = true
+            }
         }
         // 点到（或 ⌘Tab 到）停在边上、只露出一部分的窗口：把它整列滑出来。只在焦点换了的时候。
-        let focusChanged = facts.focusedID != lastFocused
-        let previousColumn = lastFocused.flatMap { strip.column(of: $0) }
-        lastFocused = facts.focusedID
-        if !changed, focusChanged, !motionActive, let focusedID = facts.focusedID, let index = strip.column(of: focusedID) {
-            let target = strip.offsetFor(index, previous: previousColumn)
-            if abs(target - strip.offset) > 1 {
-                self.strip = strip
-                animate(from: strip.offset, to: target, velocity: 0)
-                wlog("strip: reveal focused window \(focusedID)")
-                return
-            }
-        }
+        if revealFocused(strip, focusedID: facts.focusedID, changed: changed) { return }
         guard changed else { return }
-        if strip.columns.count <= 1 {
-            self.strip = strip
-            apply()
-            stop(reason: "one column left")
-            return
-        }
-        self.strip = strip
-        apply()
+        commitColumns(strip)
     }
 
     /// 卷轴在哪块屏上，就用那块屏的刷新时钟。
@@ -1017,8 +1469,8 @@ final class ScrollStripController {
     // MARK: 探针
 
     var offsetForProbe: CGFloat? { strip?.offset }
-    /// 探针用（--hold strip）：0.5 秒的巡检定时器在不在跑。
-    var watchTimerAliveForProbe: Bool { watchTimer != nil }
+    /// 探针用（--hold strip）：卷轴的维护在不在跑（改动前是 0.5 秒定时器，现在是 WindowStateHub 订阅）。
+    var watchTimerAliveForProbe: Bool { isMaintained }
     var isSettledForProbe: Bool { !motionActive }
     func scrollForProbe(by fingerDX: CGFloat, steps: Int) async {
         beginScroll()
@@ -1093,4 +1545,16 @@ final class StripSeamBar {
         panel.setAccessibilityElement(false)
         return panel
     }
+}
+
+/// 听“焦点窗口换了”的观察者回调：refcon 是 App 的 pid（不是指针），控制器经 StripFocusRoute 找。回调在主线程的 run loop 上。
+private func stripFocusObserverCallback(_ observer: AXObserver, _ element: AXUIElement, _ notification: CFString,
+                                        _ refcon: UnsafeMutableRawPointer?) {
+    guard Thread.isMainThread else { return }
+    MainActor.assumeIsolated { StripFocusRoute.controller?.focusNotified() }
+}
+
+@MainActor
+private enum StripFocusRoute {
+    static weak var controller: ScrollStripController?
 }
