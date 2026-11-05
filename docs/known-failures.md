@@ -14,6 +14,8 @@
 | 1.0.20 未跑虚拟机回归 | 发布机 | `tests/vm/run-core-probes.sh` 未在 wsqa-15 / wsqa-manual 上执行 | 2026-11-02 | 按发布决定跳过；1.0.21 补两台各一轮 | 2026-11-02 | `tests/vm/run-core-probes.sh` |
 | 跨桌面携带依赖 SkyLight 内部符号 | 任意构建 | `SLSPerformAsynchronousBridgedWindowManagementOperation` 或 `SLSBridgedMoveWindowsToManagedSpaceOperation` 缺失 | 2026-11-02 | 静默回退到“窗口留在原桌面”，日志 `method=fallback`；每个 macOS 大版本复核一次 | 2026-11-02 | `run-bridged-space-move-tests.sh` |
 | `release-gate.sh` 默认联网取上一版 | 离线 | 不传 `--previous` 时调用 `gh release download` | 2026-11-02 | 离线门禁显式传 `--previous <zip>`；`local-gate.sh release` 已强制 | 2026-11-02 | `scripts/release-gate.sh` |
+| `--restore-guard`：另一扇收起的窗被带回来 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --restore-guard` → `FAIL restore-guard: the other window came back (still folded=true visible=true)` | 2026-11-06 | 11-05 改动前的 3cb3ba32 同样失败，不是本轮回归；待单独查「叫回前台后 App 把窗都摆出来」这条路 | 2026-11-06 | `--restore-guard` |
+| `--notch`：收进刘海 5 秒内没离屏 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --notch` → `verdict: FAIL timeout: tucked away after 5.0 s` | 2026-11-06 | 3cb3ba32 同样失败，不是本轮回归；前两项（甩向刘海、落点小岛）通过 | 2026-11-06 | `--notch` |
 
 ## 登记模板
 
