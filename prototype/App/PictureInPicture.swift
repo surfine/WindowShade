@@ -28,6 +28,8 @@ final class PictureInPictureController {
 
     // MARK: - 探针用
 
+    /// 探针用（--hold pip）：1 秒的维护定时器在不在跑。
+    var maintenanceAliveForProbe: Bool { maintenance != nil }
     func panelFrameForProbe(_ id: CGWindowID) -> NSRect? { sessions[id].map(\.panel.frame) }
     func isStashedForProbe(_ id: CGWindowID) -> Bool { sessions[id]?.stashed != nil }
     func framesForProbe(_ id: CGWindowID) -> UInt64 { sessions[id]?.capture.pixelFrameCount ?? 0 }

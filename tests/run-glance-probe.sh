@@ -7,6 +7,7 @@
 # --second-display（V9）：把临时窗挪到非主屏收起再展开；--finder-columns（R23）：开一扇临时访达窗口量列表列宽，用完关掉、删掉临时文件夹；--finder-alias（R23）：临时目录里建文件夹和指向它的替身，用合成鼠标双击替身，核对访达照常打开它、没被当成窗口动作。
 # --launchpad-tiling（R18）：启动台开着，往系统发 fn＋Control＋←→↑↓／F／C，对照临时 App 的参考窗，看启动台会不会被系统平铺挪动；会发真的合成键，跑的时候别碰键盘。
 # --hitch [--hitch-rounds N]（规格 E3 改做法）：临时窗口收起／展开、窗口浏览开／关、看一眼出现／收回各 N 次（默认 20），每次交互量显示链接帧间隔，打印 HITCH <类> n=… ratio=… ms/s worst=… ms p95=… ms refresh=… Hz，按 Apple 卡顿预算判（真机 ratio < 5 ms/s 且 worst < 100 ms；虚拟机只拦 ≥ 500 ms 的单帧），自行只开一扇临时窗、总是带动画。
+# --hold <kind> [--hold-seconds N]（空闲唤醒基线）：kind 取 pins、slide-over、carry、strip、split、pip、browser、shaded、none；摆好该功能的场景、确认它的定时器在跑后打印 HOLD READY kind=… pid=… seconds=…，然后一动不动撑 N 秒（默认 120）再收场，配 tools/perf/hold-and-measure.sh 量空闲唤醒；会占用屏幕，跑的时候别碰键鼠。
 # --restore-guard（R9）：临时 App 两扇窗都收起，只展开一扇，另一扇不能冒出来、展开的那扇要在最前；--fold-unminimizable：另一扇不能最小化，核对收起前就被拒绝、没播动画、窗口原位不动。
 set -euo pipefail
 cd "$(dirname "$0")/.."

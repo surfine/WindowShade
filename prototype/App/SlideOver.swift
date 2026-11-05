@@ -90,6 +90,8 @@ final class SlideOverController {
     var notchInfo: (id: CGWindowID, pid: pid_t)? { docked.map { ($0.id, $0.pid) } }
     var isHidden: Bool { docked?.hidden ?? false }
     func isSlideOver(_ id: CGWindowID) -> Bool { docked?.id == id }
+    /// 探针用（--hold slide-over）：维护定时器（0.5 秒）在不在跑。
+    var maintenanceRunningForProbe: Bool { maintenance?.isRunning ?? false }
     /// 探针用：把手是否挂着、靠边时的外框。
     var tabVisible: Bool { tab.isVisible }
     var mirrorVisible: Bool { mirror?.isVisible ?? false }
