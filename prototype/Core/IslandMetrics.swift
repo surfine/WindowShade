@@ -42,6 +42,16 @@ enum IslandMetrics {
     /// 内容和刘海之间只留这么宽：量刘海的误差（每边 0.125）和抗锯齿（HIG：snug against the camera）。
     static let earInnerGap: CGFloat = 2
 
+    /// 刘海屏活动两耳里的字号、符号框边长与符号字号（AARON-DECISIONS 11-05 第 86 条：稿的 15 / 18 折中成 13 / 16）。
+    /// 量（NotchPanel.earContent）和画（NotchCompactView）都照这一组，量多宽就画多宽。
+    static let notchEarTextSize: CGFloat = 13
+    static let notchEarSymbolSide: CGFloat = 16
+    static let notchEarSymbolPointSize: CGFloat = 14
+    /// 外接屏胶囊、编程会话的耳、窗口个数照旧：字 12、符号框 14（符号 12 号）。
+    static let earTextSize: CGFloat = 12
+    static let earSymbolSide: CGFloat = 14
+    static let earSymbolPointSize: CGFloat = 12
+
     /// 刘海屏一只耳的主体宽（不含肩，《两耳的岛》§二）：内侧 2 + 内容宽 + 外侧留白，外侧留白 = 内容上下的留白；
     /// 夹在 26 至 52.33 − 肩。两耳取宽的那一边、再和量到的空位取小由调用方做。
     static func compactBody(contentWidth: CGFloat, contentHeight: CGFloat, notchHeight: CGFloat,

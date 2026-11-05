@@ -134,6 +134,12 @@ struct NotchFocusController: Sendable {
 
     // MARK: 默认焦点
 
+    /// 一开始落在哪一格：点名的那一格在这一排里就是它，否则照默认。
+    static func startFocus(in cells: [Cell], preferring: UInt32?) -> UInt32? {
+        if let preferring, cells.contains(where: { $0.id == preferring }) { return preferring }
+        return defaultFocus(in: cells)
+    }
+
     static func defaultFocus(in cells: [Cell]) -> UInt32? {
         cells.first(where: \.waiting)?.id ?? cells.first(where: \.away)?.id ?? cells.first(where: \.tucked)?.id ?? cells.first?.id
     }
@@ -265,13 +271,14 @@ struct NotchFocusController: Sendable {
     }
 
     /// 开始。`.hover` 不接键盘：什么都不做（那一排由悬停展开，焦点和键盘都不归这里）。
-    mutating func begin(origin: Origin) -> Effect {
+    /// preferring：按住某颗小圆展开时，焦点落在那件活动的格上（《两耳的岛》§三第 3 问 A）；不在这一排里就照默认挑。
+    mutating func begin(origin: Origin, preferring: UInt32? = nil) -> Effect {
         guard origin != .hover, !isActive else { return .none }
         isActive = true
         acceptsTyping = true
         query = ""
         cells = allCells
-        focusedID = Self.defaultFocus(in: cells)
+        focusedID = Self.startFocus(in: cells, preferring: preferring)
         navigator.clear()
         return .begin(announcement: Self.openAnnouncement(count: cells.count))
     }

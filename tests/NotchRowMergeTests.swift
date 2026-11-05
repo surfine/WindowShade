@@ -101,6 +101,9 @@ struct NotchRowMergeTests {
         t.expect(ids.id(for: "ws2.session") == a, "同一个活动再问还是同一个号")
         t.expect(a.map(NotchRow.isOngoingID) == true && !NotchRow.isOngoingID(4_000_000), "号在高位，窗口号都不是")
         t.expect(a.flatMap { ids.activityID(for: $0) } == "ws2.session" && ids.activityID(for: 7) == nil, "能反查回活动 id")
+        t.expect(ids.existingID(for: "source.music") == b && ids.existingID(for: "never.seen") == nil,
+                 "只查不登记：按住小圆时找它那一格的号，没见过的不发新号")
+        t.expect(ids.id(for: "never.seen") == (b.map { $0 + 1 }), "只查过的活动之后照常按顺序发号（没被只查占号）")
         for n in 0..<80 { _ = ids.id(for: "x\(n)") }
         t.expect(ids.id(for: "overflow") == nil && ids.id(for: "ws2.session") == a, "登记有上限；已登记的不受影响")
 

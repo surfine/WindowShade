@@ -317,7 +317,30 @@ import Cocoa
         expect(!hub.isLockScreenCurrent(.faceRecognition, on: main), "收走后不算数")
         locked = false
 
-        print(failures == 0 ? "PASS NotchLeaseHostTests: 18 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
+        print("CASE LEASE-H19 | 换歌一瞥压在音乐两耳上（《两耳的岛》怎么变）：两耳原地不动，只差下面那一行")
+        func content(compact: NotchPanel.Compact?, alert: NotchPanel.Alert?) -> NotchCanvasView.Content {
+            NotchCanvasView.Content(tiles: [], dots: 0, dotsChanged: false, dotsY: 0, compact: compact,
+                                    compactSlots: nil, alert: alert, hint: nil, notchHeight: 33.5)
+        }
+        let musicEars = NotchPanel.Compact(count: 0, changed: false, leading: "September", leadingSymbol: "music.note",
+                                           music: NotchPanel.MusicEar(paused: false, artwork: nil, spoken: "September", coverSide: 20))
+        let peekAlert = NotchPanel.Alert(id: 0, icon: nil, title: "Boogie Wonderland", subtitle: "Earth, Wind & Fire",
+                                         peek: NotchPanel.PeekLine(title: "Boogie Wonderland", artist: "Earth, Wind & Fire", artistColor: nil))
+        let earsOnly = content(compact: musicEars, alert: nil)
+        let peekOverEars = content(compact: musicEars, alert: peekAlert)
+        expect(peekOverEars.peeksOverEars && earsOnly.same(as: peekOverEars) && peekOverEars.same(as: earsOnly),
+               "真刘海屏：两耳 ↔ 一瞥是同一份内容（原地挪，封面、波形不淡出重画）")
+        expect(peekOverEars.onlyPeekLineDiffers(from: earsOnly) && NotchCanvasView.shouldExitContentFirst(from: peekOverEars, to: earsOnly),
+               "收回时仍是“字先淡、再收形状”，只是只淡那一行")
+        let virtualPeek = content(compact: nil, alert: peekAlert)
+        expect(!virtualPeek.peeksOverEars && !earsOnly.same(as: virtualPeek) && !virtualPeek.onlyPeekLineDiffers(from: earsOnly),
+               "外接屏的一瞥不带两耳：照旧换一层")
+        let otherAlert = content(compact: musicEars, alert: NotchPanel.Alert(id: 3, icon: nil, title: "好了", subtitle: ""))
+        expect(!earsOnly.same(as: otherAlert) && !otherAlert.onlyPeekLineDiffers(from: earsOnly), "别的提醒照旧换一层")
+        let timerEars = content(compact: NotchPanel.Compact(count: 0, changed: false, leading: "计时器"), alert: nil)
+        expect(!timerEars.onlyPeekLineDiffers(from: peekOverEars), "不是音乐两耳：不算")
+
+        print(failures == 0 ? "PASS NotchLeaseHostTests: 19 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
         if failures > 0 { exit(1) }
     }
 }

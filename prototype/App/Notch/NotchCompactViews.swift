@@ -113,13 +113,29 @@ final class NotchCompactView: NSView {
     /// 计时器的橙色（稿 #ff9f0a）；超时的右耳字用它。
     private static let timerOrange = NSColor(srgbRed: CountdownTimerStyle.orangeRGB.0, green: CountdownTimerStyle.orangeRGB.1,
                                              blue: CountdownTimerStyle.orangeRGB.2, alpha: 1)
-    private static func earFont() -> NSFont {
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
+    /// notched：刘海屏上按内容排的活动两耳（13 号，`IslandMetrics.notchEarTextSize`）；其余照旧 12 号。
+    private static func earFont(notched: Bool = false) -> NSFont {
+        let size = notched ? IslandMetrics.notchEarTextSize : IslandMetrics.earTextSize
+        let font = NSFont.monospacedDigitSystemFont(ofSize: size, weight: .semibold)
         return font.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: font.pointSize) } ?? font
     }
     static func textWidth(_ text: String) -> CGFloat {
         text.isEmpty ? 0 : ceil(NSAttributedString(string: text, attributes: [.font: earFont()]).size().width)
     }
+    /// 刘海屏活动两耳里的字多宽（13 号）：NotchPanel.earContent 量的就是它，画的也是它。
+    static func notchTextWidth(_ text: String) -> CGFloat {
+        text.isEmpty ? 0 : ceil(NSAttributedString(string: text, attributes: [.font: earFont(notched: true)]).size().width)
+    }
+    /// 刘海屏活动两耳里一行字多高（13 号）。
+    static var notchTextHeight: CGFloat {
+        let font = earFont(notched: true)
+        return ceil(font.ascender - font.descender + font.leading)
+    }
+    /// 此刻这两耳的字按刘海屏的 13 / 16 画（面板量好了内容、贴着刘海排时才是）。
+    private var notched = false
+    private var earSymbolSide: CGFloat { notched ? IslandMetrics.notchEarSymbolSide : IslandMetrics.earSymbolSide }
+    private var earSymbolPointSize: CGFloat { notched ? IslandMetrics.notchEarSymbolPointSize : IslandMetrics.earSymbolPointSize }
+    private func measure(_ text: String) -> CGFloat { notched ? Self.notchTextWidth(text) : Self.textWidth(text) }
 
     /// 右耳放得下什么：环（或弧）加字都放得下才画图形，放不下就退回原来的样子（音乐、拷贝的比例回到细条，不确定弧不画）；
     /// 只写个数的，放不下“第 3 / 12”就写“3/12”。
@@ -132,10 +148,10 @@ final class NotchCompactView: NSView {
         let text = compact.trailing ?? ""
         switch compact.quantity.drawing {
         case .ring, .spinningArc:
-            let need = Self.textWidth(text) + CGFloat(NotchProgressPart.reservedWidth(for: .ring))
+            let need = measure(text) + CGFloat(NotchProgressPart.reservedWidth(for: .ring))
             partShown = (text.isEmpty ? CGFloat(NotchProgressPart.ringDiameter) : need) <= room
         case .countText:
-            if let full = compact.quantity.countText, text == full, Self.textWidth(text) > room,
+            if let full = compact.quantity.countText, text == full, measure(text) > room,
                let short = compact.quantity.shortCountText { earText = short }
         case .none: break
         }
@@ -162,8 +178,14 @@ final class NotchCompactView: NSView {
         part.setAttached(window != nil)
     }
 
-    func update(_ compact: NotchPanel.Compact?, slots: (leading: NSRect, trailing: NSRect)?) {
+    /// 换歌一瞥压在这两耳上（真刘海屏）：两耳照画在顶上那一条，下面是歌名。
+    private var underPeekLine = false
+
+    func update(_ compact: NotchPanel.Compact?, slots: (leading: NSRect, trailing: NSRect)?, underPeekLine: Bool = false,
+                notched: Bool = false) {
         self.compact = compact
+        self.underPeekLine = underPeekLine
+        self.notched = notched
         self.slots = slots
         resolveEar()
         needsDisplay = true
@@ -492,9 +514,12 @@ final class NotchCompactView: NSView {
         }
         if coverEars != nil {
             // 封面耳：封面和点在图层上；有收起的窗口时，信息点照旧画。
+            // 换歌一瞥时两耳那一条在岛的顶上（槽的高度），信息点跟着两耳那一条，不掉到一瞥的底角；平时那一条就是整块岛。
             if compact.count > 0 {
                 compact.dotTone.color.setFill()
-                NSBezierPath(ovalIn: NotchInfoDot.rect(in: bounds)).fill()
+                let band = underPeekLine
+                    ? NSRect(x: bounds.minX, y: slots.trailing.minY, width: bounds.width, height: slots.trailing.height) : bounds
+                NSBezierPath(ovalIn: NotchInfoDot.rect(in: band)).fill()
             }
             return
         }
@@ -573,7 +598,7 @@ final class NotchCompactView: NSView {
         }
         wantsLayer = true
         guard let host = layer else { return }
-        let font = Self.earFont()
+        let font = Self.earFont(notched: notched)
         let height = ceil(font.ascender - font.descender + font.leading)
         let width = max(0, slots.trailing.width - 12)
         let frame = CGRect(x: slots.trailing.maxX - 6 - width, y: slots.trailing.midY - height / 2, width: width, height: height)
@@ -667,18 +692,19 @@ final class NotchCompactView: NSView {
                          tint: NSColor? = nil) {
         guard !text.isEmpty || symbol != nil || ring != nil else { return }
         var x = slot.minX + 6
-        let side: CGFloat = 14
+        let side = earSymbolSide
+        let point = earSymbolPointSize
         if let ring {
             let box = CGFloat(NotchFocusRing.viewport)
             drawRing(ring.progress, tone: ring.tone, in: NSRect(x: x, y: slot.midY - box / 2, width: box, height: box))
             x += box + 4
         } else if let symbol, let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
-            .withSymbolConfiguration(tint.map { .init(pointSize: 12, weight: .semibold).applying(.init(paletteColors: [$0])) }
-                                     ?? .init(pointSize: 12, weight: .semibold)) {
+            .withSymbolConfiguration(tint.map { .init(pointSize: point, weight: .semibold).applying(.init(paletteColors: [$0])) }
+                                     ?? .init(pointSize: point, weight: .semibold)) {
             image.draw(in: NSRect(x: align == .right ? slot.maxX - side - 6 : x, y: slot.midY - side / 2, width: side, height: side))
             if align != .right { x += side + 4 }
         }
-        let rounded = Self.earFont()
+        let rounded = Self.earFont(notched: notched)
         let string = NSAttributedString(string: text, attributes: [
             .font: rounded, .foregroundColor: color ?? NSColor.white.withAlphaComponent(0.92),
         ])

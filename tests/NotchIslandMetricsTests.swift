@@ -47,6 +47,13 @@ struct NotchIslandMetricsTests {
                  "长标题：主体夹到 52.33 − 肩 = 44.59，连肩不超过 HIG 最小的那一档紧凑宽")
         t.expect(M.compactBody(contentWidth: 200, contentHeight: 15, notchHeight: 33.5) == M.compactEarWidth, "不画肩：上限就是 52.33")
         t.expect(M.earInnerGap == 2 && M.compactNarrowestBody == 26, "内容离刘海 2；最窄 26")
+        t.expect(M.notchEarTextSize == 13 && M.notchEarSymbolSide == 16 && M.notchEarSymbolPointSize == 14,
+                 "刘海屏活动两耳：字 13、符号框 16（11-05 第 86 条，稿 15 / 18 折中）")
+        t.expect(M.earTextSize == 12 && M.earSymbolSide == 14 && M.earSymbolPointSize == 12,
+                 "外接屏胶囊、编程会话、窗口个数照旧：字 12、符号框 14")
+        t.expect(abs(M.compactBody(contentWidth: M.notchEarSymbolSide, contentHeight: M.notchEarSymbolSide, notchHeight: 33.5,
+                                   shoulderExtent: shoulder) - 26.75) < 0.0001,
+                 "只有一枚 16 的符号：主体 26.75（2 + 16 + 8.75）")
         t.expect(M.minimalDiameter(notchHeight: 33.5) == 33.5 && M.minimalDiameter(notchHeight: nil) == 36.67 && M.minimalDiameter(notchHeight: 0) == 36.67,
                  "小圆直径 = 刘海高；不知道刘海高退 36.67")
 

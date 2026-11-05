@@ -210,6 +210,8 @@ enum NotchRow {
         }
 
         func activityID(for id: UInt32) -> String? { backward[id] }
+        /// 只查不登记：这件活动已经有格子编号就给出来（按住小圆展开后要滚到它那一格），没有就是 nil。
+        func existingID(for activityID: String) -> UInt32? { forward[activityID] }
     }
 
     // MARK: 右段放什么

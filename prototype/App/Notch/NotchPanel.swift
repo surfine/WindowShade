@@ -278,6 +278,8 @@ final class NotchPanel: NSPanel {
     var onActivitySelect: ((String) -> Void)?
     /// 点最小形（小圆）：打开它那件活动的 App（不和紧凑那件互换）。
     var onMinimumTap: ((String) -> Void)?
+    /// 按住某颗小圆（活动 id）：展开那一排并滚到它那一格。
+    var onMinimumLongPress: ((String) -> Void)?
     var onActivityAction: ((NotchActivityAction) -> Void)?
     var canSwipeActivities: (() -> Bool)?
     /// 那一排收起时，里面摆过结束了的活动：看过了，控制器据此调 `rowSeen()`。
@@ -582,12 +584,12 @@ final class NotchPanel: NSPanel {
             if isMusic { self.openNowPlayingCard() } else { self.onActivityAction?(.open) }
         }
         canvas.onMinimumTap = { [weak self] id in self?.onMinimumTap?(id) }
-        // 按住小圆：和按住刘海一样展开那一排（《两耳的岛》§三第 3 问 A）。
-        // TODO(两耳的岛)：展开后滚到这件活动的格——格子 id 由 NotchController 的 OngoingIDs 发，要它把 id 传下来才能滚。
-        canvas.onMinimumLongPress = { [weak self] _ in
+        // 按住小圆：和按住刘海一样展开那一排，并滚到这件活动的格（《两耳的岛》§三第 3 问 A）。
+        // 格子编号由 NotchController 发（ongoingIDs），所以把活动 id 交给它；没接上就照按住刘海。
+        canvas.onMinimumLongPress = { [weak self] id in
             guard let self else { return }
             if self.onHold?() == true { return }
-            self.onLongPress?()
+            if let onMinimumLongPress = self.onMinimumLongPress { onMinimumLongPress(id) } else { self.onLongPress?() }
         }
         canvas.onFiles = { [weak self] files in
             guard let self else { return }
@@ -672,13 +674,20 @@ final class NotchPanel: NSPanel {
     }
 
     /// 那一排已经展开着：从默认那一格开始，面板临时接键盘。指针这时在刘海里，焦点先藏着，交给指针。
+    /// preferring：焦点先落在这一格（按住小圆展开时是那件活动的格）。
     @discardableResult
-    func beginFocus(pointerInside: Bool, origin: NotchFocusController.Origin = .shortcut) -> Bool {
+    func beginFocus(pointerInside: Bool, origin: NotchFocusController.Origin = .shortcut, preferring: CGWindowID? = nil) -> Bool {
         // 悬停打开的那一排不接键盘：你在别的 App 里打字，不会被刘海吃掉。
         guard origin != .hover, isExpanded, !tiles.isEmpty, !isAuthenticating, !focus.isActive else { return false }
         focus.setCells(focusCells())
         if pointerInside { focus.pointerEntered() } else { focus.pointerLeft() }
-        return applyFocus(focus.begin(origin: origin))
+        return applyFocus(focus.begin(origin: origin, preferring: preferring))
+    }
+
+    /// 那一排滚到看得全这一格（按住小圆展开后；指针在岛里时焦点藏着，不靠焦点滚）。
+    func revealTile(_ id: CGWindowID) {
+        guard isExpanded else { return }
+        canvas.revealTile(id)
     }
 
     /// 方向、Return、Esc、展开动作的统一出口（键盘、遥控器、手柄都从 NotchController.perform 进来）。返回有没有处理。
@@ -971,9 +980,10 @@ final class NotchPanel: NSPanel {
 
     /// 紧凑两耳里左右两块内容各多大（和 NotchCompactView 画的一样量）：宽、高。nil = 不认得的样子。
     private func earContent(_ compact: Compact) -> (leading: CGSize, trailing: CGSize)? {
-        let symbol = CGSize(width: 14, height: 14)
-        let textHeight: CGFloat = 15
-        func text(_ string: String?) -> CGFloat { NotchCompactView.textWidth(string ?? "") }
+        // 字 13、符号 16（AARON-DECISIONS 11-05 第 86 条），和 NotchCompactView 在刘海屏上画的同一组（IslandMetrics）。
+        let symbol = CGSize(width: IslandMetrics.notchEarSymbolSide, height: IslandMetrics.notchEarSymbolSide)
+        let textHeight = NotchCompactView.notchTextHeight
+        func text(_ string: String?) -> CGFloat { NotchCompactView.notchTextWidth(string ?? "") }
         if compact.level != nil { return nil }
         if let flash = compact.flash {
             let percent = NotchCompactView.flashPercentageLayout(flash, in: .zero, color: .white).frame.size
@@ -1009,7 +1019,8 @@ final class NotchPanel: NSPanel {
 
     /// 这一刻紧凑两耳每只多宽（主体 + 肩）：编程会话照它自己的规则（NotchSessionEar），其余按内容（`earSide`）。
     private var compactEarSide: CGFloat {
-        let visual = displayCompact()
+        // 换歌一瞥（真刘海屏）：宽 = 音乐两耳的宽（《两耳的岛》§六），按一瞥底下那对音乐两耳量，不按窗口个数量。
+        let visual = displayCompact(peeking: !isVirtual && alertInfo?.peek != nil)
         if let face = visual?.sessionFace { return NotchSessionEar.earSide(face: face, earWidth: sideWidth, room: sessionRoom) }
         return earSide(for: visual)
     }
@@ -2044,14 +2055,25 @@ final class NotchPanel: NSPanel {
         // 半岛展开时保留紧凑左右耳（谁 / 数）在传感器两侧，格子绕着排——相对位置继承，不留额头。
         let shelfEars = isExpanded && (cardItems.isEmpty || mergedRow) && compact != nil
             && dropState == .none && alertInfo == nil && meter == nil
-        let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars
+        // 换歌一瞥（真刘海屏，《两耳的岛》§六、怎么变）：音乐两耳往下长 30，封面和波形原地不动、照样画，歌名那一行在下面淡入。
+        // 外接屏的一瞥照旧只有那一行（胶囊里没有两耳可留）。
+        let peekEars: Compact? = {
+            guard !isVirtual, alertInfo?.peek != nil, !isExpanded, dropState == .none, meter == nil, !isAuthenticating,
+                  shape == .sides, let ears = displayCompact(peeking: true), ears.music != nil else { return nil }
+            return ears
+        }()
+        let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars || peekEars != nil
         let chinShown = resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
         let extra = resting ? trayExtra : 0
         // 音量亮度两耳不管紧凑退成了什么：左右各 76，一定是两侧的版式。
         let earShape: CompactShape = shelfEars || meter != nil ? .sides : shape
-        let earCompact = shelfEars ? compact : visual
+        let earCompact = shelfEars ? compact : (peekEars ?? visual)
         // 真刘海屏：两耳里的东西贴着刘海（内侧 2），量得出内容才这样排；展开时原地不动（《两耳的岛》§二、怎么变第 1 问 A）。
         let earBoxes = !isVirtual && earShape == .sides && meter == nil ? earCompact.flatMap { earContent($0) } : nil
+        // 一瞥的 target 不扣肩（compactSide 是主体 + 肩、肩照展开画满）：按紧凑两耳那一刻的主体和肩算，槽、封面才和两耳时一模一样。
+        let peekFit = peekEars == nil ? nil
+            : NotchIsland.compactSide(sideWidth: target.compactSide, narrowest: Self.narrowestSide, curves: hardware)
+        let earBody = peekFit?.body ?? target.compactSide
         var content = NotchCanvasView.Content(
             tiles: isExpanded ? tiles : [],
             dots: chinShown ? (compact?.count ?? 0) : 0,
@@ -2059,7 +2081,7 @@ final class NotchPanel: NSPanel {
             dotsY: isVirtual ? 4 : 2.5 + extra,
             compact: compactShown ? earCompact : nil,
             compactSlots: compactShown
-                ? compactSlots(in: rect.size, shape: earShape, side: target.compactSide, anchorToNotch: shelfEars, content: earBoxes)
+                ? compactSlots(in: rect.size, shape: earShape, side: earBody, anchorToNotch: shelfEars, content: earBoxes)
                 : nil,
             alert: (!isExpanded && dropState == .none) ? alertInfo.map { alert in
                 // 真刘海屏的提醒照 HIG 分四块：符号、状态在刘海两侧，句子在下面（《两耳的岛》§五第 1 问 A）。
@@ -2081,11 +2103,14 @@ final class NotchPanel: NSPanel {
         content.query = isExpanded && focus.isActive ? focus.query : ""
         content.notchWidth = notch.width
         content.stripLanding = stripLanding && dropState != .none
+        // 量好了内容、贴着刘海排的两耳按刘海屏的 13 / 16 画（量多宽就画多宽）；编程会话、窗口个数、外接屏照旧。
+        content.compactNotched = earBoxes != nil
         // 封面耳：只在真刘海的两侧版式里换成封面；边长按这一耳的主体宽、肩宽、刘海高算，放不下就是 nil（退回今天的样子）。
         if var ears = content.compact, ears.music != nil, !shelfEars, let slots = content.compactSlots {
-            let shoulder = target.shoulders.leading > 0 ? Double(hardware?.shoulderExtent ?? 0) : 0
+            let shoulders = peekFit.map { $0.shoulders } ?? (target.shoulders.leading > 0)
+            let shoulder = shoulders ? Double(hardware?.shoulderExtent ?? 0) : 0
             // 主体宽：贴刘海排的槽比主体窄（只装内容），按 target 的主体算；量不出内容时槽就是主体。
-            let body = earBoxes == nil ? Double(slots.leading.width) : Double(target.compactSide)
+            let body = earBoxes == nil ? Double(slots.leading.width) : Double(earBody)
             let side = earShape == .sides && !isVirtual
                 ? NowPlayingEars.coverSide(body: body, shoulder: shoulder, notchHeight: Double(notch.height))
                 : nil
@@ -2227,7 +2252,8 @@ final class NotchPanel: NSPanel {
 
     /// 紧凑两耳。有实时活动时左耳是那一件、右耳是进度；窗口个数退成一个点。
     /// 音量和亮度也走这两耳，不另开一扇窗。
-    private func displayCompact() -> Compact? {
+    /// peeking：换歌一瞥挂着时照样给出那件活动的两耳（一瞥是两耳往下长，耳朵里的东西原地不动）；平时提醒在就没有活动两耳。
+    private func displayCompact(peeking: Bool = false) -> Compact? {
         if let meter {
             // 左耳一个会变的符号，右耳一根白条；不写百分比（读屏念数，见 scheduleLevelAnnouncement）。
             let ear = meter.ear
@@ -2237,7 +2263,7 @@ final class NotchPanel: NSPanel {
             return Compact(count: 0, changed: false, leading: flash.spoken, trailing: flash.trailing, flash: flash)
         }
         if let item = activityItems.first(where: { $0.id == activitySelection }) ?? activityItems.first,
-           !isExpanded, dropState == .none, alertInfo == nil {
+           !isExpanded, dropState == .none, alertInfo == nil || peeking {
             let timer = item.kind == .timer
             let calendarEar = item.kind == .calendar
             let focus = item.kind == .focus || timer || calendarEar

@@ -98,6 +98,20 @@ struct NotchFocusTests {
         _ = g.handle(.focusRight); g.pointerEntered()
         t.expect(g.focusFirst() == .none && g.focusedID == 2, "指针占着：不抢")
 
+        t.section("M07-06c", "按住小圆展开（《两耳的岛》§三第 3 问 A，11-05 第 84 条）：焦点落在那件活动的格")
+        t.expect(NotchFocusController.startFocus(in: [cell(1), cell(2, waiting: true), cell(9)], preferring: 9) == 9,
+                 "点名的格在这一排里：落在它上面，等你的会话格也不抢")
+        t.expect(NotchFocusController.startFocus(in: [cell(1), cell(2, waiting: true)], preferring: 9) == 2,
+                 "点名的格不在这一排（合成一排关着）：照默认落点")
+        t.expect(NotchFocusController.startFocus(in: [cell(1), cell(2)], preferring: nil) == 1, "没点名：照默认")
+        var held = NotchFocusController()
+        held.setCells([cell(1), cell(2), cell(9)])
+        if case .begin = held.begin(origin: .press, preferring: 9) { t.expect(held.focusedID == 9, "按住开始：焦点就是那一格") }
+        else { t.expect(false, "按住展开应该开始接键盘") }
+        var hovered = NotchFocusController()
+        hovered.setCells([cell(1), cell(9)])
+        t.expect(hovered.begin(origin: .hover, preferring: 9) == .none && hovered.focusedID == nil, "悬停打开的仍不接键盘")
+
         t.section("M07-07", "按键对应动作")
         t.expect(NotchFocusController.action(forKeyCode: 123, hasCommandModifiers: false) == .focusLeft
                  && NotchFocusController.action(forKeyCode: 124, hasCommandModifiers: false) == .focusRight

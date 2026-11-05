@@ -30,6 +30,8 @@ final class NotchCanvasView: NSView {
         var dotsY: CGFloat
         var compact: NotchPanel.Compact?
         var compactSlots: (leading: NSRect, trailing: NSRect)?
+        /// 紧凑两耳按刘海屏的字 13、符号 16 画（NotchPanel 量好内容、贴着刘海排时）。
+        var compactNotched = false
         var alert: NotchPanel.Alert?
         var hint: String?
         var notchHeight: CGFloat
@@ -62,6 +64,15 @@ final class NotchCanvasView: NSView {
         /// 最小呈现的最小形（画布坐标）。它们在岛外，自己一层，不参与“是不是同一份内容”。
         var minimum: [NotchMinimumShape] = []
 
+        /// 换歌一瞥压在音乐两耳上（真刘海屏）：两耳照画，下面多一行歌名。
+        var peeksOverEars: Bool { alert?.peek != nil && compact?.music != nil }
+        /// 音乐两耳 ↔ 换歌一瞥：只差下面那一行歌名（《两耳的岛》怎么变：封面、波形原地不动，歌名淡入淡出）。
+        /// 外接屏的一瞥不带两耳（compact 为 nil），永远不是这一种。
+        func onlyPeekLineDiffers(from other: Content) -> Bool {
+            (peeksOverEars && other.alert == nil && other.compact?.music != nil)
+                || (other.peeksOverEars && alert == nil && compact?.music != nil)
+        }
+
         /// 是不是同一份内容（只是岛的大小、位置变了）：同一份就原地挪，不淡出淡入。
         /// 故意不比较格子的画面：画面是后台截到后原地换的（updateTileSnapshot），换图不该让整排淡出淡入。
         /// 紧凑两耳的曲名/进度用 layoutSame：数字与文案 content replace，不整岛重建。
@@ -71,7 +82,8 @@ final class NotchCanvasView: NSView {
                 && activities.isEmpty == other.activities.isEmpty && activitiesExpanded == other.activitiesExpanded
                 && dots == other.dots && dotsChanged == other.dotsChanged
                 && (compact?.layoutSame(as: other.compact) ?? (other.compact == nil))
-                && alert?.id == other.alert?.id && ((alert?.peek != nil && other.alert?.peek != nil) || alert?.title == other.alert?.title)
+                && ((alert?.id == other.alert?.id && ((alert?.peek != nil && other.alert?.peek != nil) || alert?.title == other.alert?.title))
+                    || onlyPeekLineDiffers(from: other))
                 && (pullIcon == nil) == (other.pullIcon == nil)
                 // 落点的几种样子是同一份内容：原地换符号和字（托盘 → 对勾），不淡出淡入。
                 && ((drop != .none && other.drop != .none) || (drop == .none && other.drop == .none && hint == other.hint))
@@ -134,6 +146,8 @@ final class NotchCanvasView: NSView {
         focusedTileID = id
         current?.setFocus(id, bump: bump, animated: animated)
     }
+    /// 那一排滚到看得全这一格，不亮焦点。
+    func revealTile(_ id: CGWindowID) { current?.revealTile(id) }
     @discardableResult
     func activateTile(_ id: CGWindowID) -> Bool { current?.activateTile(id) ?? false }
     func tileScreenRect(_ id: CGWindowID) -> NSRect? { current?.tileScreenRect(id) }
@@ -280,6 +294,8 @@ final class NotchCanvasView: NSView {
     /// 退场淡出还没做完又来了新目标：打断淡出，立刻从当前外框接上。
     private var contentExitGeneration = 0
     private var contentExitPending = false
+    /// 这一次退场只淡了换歌一瞥那一行、层留着（两耳原地不动）：被打断时不拆层。
+    private var exitKeepsLayer = false
     /// 退场淡出完成后要接上的变形。放在 self 上，避免把 Content / done 送进 @Sendable 回调。
     /// 不存那一刻的外框：内容淡出的 0.14 秒里旧形状还在飞，performMorph 真正开始时自己重读呈现层。
     private var pendingExitMorph: (
@@ -303,7 +319,8 @@ final class NotchCanvasView: NSView {
         if contentExitPending {
             contentExitPending = false
             pendingExitMorph = nil
-            if let outgoing = current {
+            // 一瞥收回两耳那种退场只淡了那一行：层留着（两耳不重建），新内容到时原地排、那一行按需淡回来。
+            if !exitKeepsLayer, let outgoing = current {
                 outgoing.alphaValue = 0
                 outgoing.removeFromSuperview()
                 current = nil
@@ -324,38 +341,50 @@ final class NotchCanvasView: NSView {
         }
         // 减少动态效果：不先淡出再等形状，岛直接到位，内容在 performMorph 里交叉淡化。
         if spring != nil, !Motion.reduced, Self.shouldExitContentFirst(from: shown, to: content), let outgoing = current, !outgoing.isEmpty {
-            stopContentWatch()
-            presentGeneration += 1
-            outgoing.inert = true
+            // 换歌一瞥收回音乐两耳：只有歌名那一行先淡出、停一拍，形状再收；两耳原地不动、不重建（《两耳的岛》怎么变）。
+            let keepsLayer = shown?.onlyPeekLineDiffers(from: content) == true
+            exitKeepsLayer = keepsLayer
+            if !keepsLayer {
+                stopContentWatch()
+                presentGeneration += 1
+                outgoing.inert = true
+            }
             contentExitPending = true
             pendingExitMorph = (rect, style, content, spring, scale, snap, shoulderFade, done)
-            // 退场：内容 0.10 秒淡出，停 0.04 秒，再收形状（`Motion.Fade`）。
-            NSAnimationContext.runAnimationGroup({ context in
-                context.duration = Motion.Fade.out
-                outgoing.animator().alphaValue = 0
-            }, completionHandler: { [weak self] in
-                MainActor.assumeIsolated {
-                    guard let self, self.contentExitGeneration == exitGeneration else { return }
+            let finished: @MainActor @Sendable () -> Void = { [weak self] in
+                guard let self, self.contentExitGeneration == exitGeneration else { return }
+                if !keepsLayer {
                     outgoing.removeFromSuperview()
                     if self.current === outgoing {
                         self.current = nil
                         self.shown = nil
                     }
-                    // 停一小拍：这一拍里又来了新目标（morph 把 contentExitGeneration 往前推了），就不接旧的。
-                    DispatchQueue.main.asyncAfter(deadline: .now() + Motion.Fade.gap) { [weak self] in
-                        MainActor.assumeIsolated {
-                            guard let self, self.contentExitGeneration == exitGeneration, self.contentExitPending else { return }
-                            self.contentExitPending = false
-                            guard let pending = self.pendingExitMorph else { return }
-                            self.pendingExitMorph = nil
-                            self.performMorph(to: pending.rect, style: pending.style, content: pending.content,
-                                              spring: pending.spring,
-                                              shoulders: pending.scale, shoulderSnap: pending.snap,
-                                              shoulderFade: pending.shoulderFade, pendingShift: .zero, done: pending.done)
-                        }
+                }
+                // 停一小拍：这一拍里又来了新目标（morph 把 contentExitGeneration 往前推了），就不接旧的。
+                DispatchQueue.main.asyncAfter(deadline: .now() + Motion.Fade.gap) { [weak self] in
+                    MainActor.assumeIsolated {
+                        guard let self, self.contentExitGeneration == exitGeneration, self.contentExitPending else { return }
+                        self.contentExitPending = false
+                        guard let pending = self.pendingExitMorph else { return }
+                        self.pendingExitMorph = nil
+                        self.performMorph(to: pending.rect, style: pending.style, content: pending.content,
+                                          spring: pending.spring,
+                                          shoulders: pending.scale, shoulderSnap: pending.snap,
+                                          shoulderFade: pending.shoulderFade, pendingShift: .zero, done: pending.done)
                     }
                 }
-            })
+            }
+            // 退场：内容 0.10 秒淡出，停 0.04 秒，再收形状（`Motion.Fade`）。
+            if keepsLayer {
+                outgoing.fadeAlert(duration: Motion.Fade.out, completion: finished)
+            } else {
+                NSAnimationContext.runAnimationGroup({ context in
+                    context.duration = Motion.Fade.out
+                    outgoing.animator().alphaValue = 0
+                }, completionHandler: {
+                    MainActor.assumeIsolated { finished() }
+                })
+            }
             return
         }
         performMorph(to: rect, style: style, content: content, spring: spring,

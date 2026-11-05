@@ -558,19 +558,12 @@ final class NotchController {
         }
         panel.onLongPress = { [weak self, weak panel] in
             guard let self, let panel else { return }
-            // 照系统的岛（第 33 条）：那一排有任何东西（收起的窗口、正在进行的事、文件架）就展开；
-            // 什么都没有才打开启动台“今天”。以前只看有没有活动，只收着窗口时长按会去启动台。
-            self.refreshShelf()
-            let row = self.tiles()
-            if row.isEmpty { self.owner.launchpad.navigate(to: .today) }
-            else {
-                panel.expand(with: row)
-                self.requestThumbnails()
-                // 点（长按）打开的那一排接键盘，直接打字就筛（LA-7）；悬停打开的不接。
-                if panel.isExpanded, !panel.isFocusActive {
-                    panel.beginFocus(pointerInside: panel.islandContains(NSEvent.mouseLocation), origin: .press)
-                }
-            }
+            self.expandRow(on: panel)
+        }
+        // 按住小圆（《两耳的岛》§三第 3 问 A）：同样展开那一排，焦点落在、并滚到那件活动的格。
+        panel.onMinimumLongPress = { [weak self, weak panel] activityID in
+            guard let self, let panel else { return }
+            self.expandRow(on: panel, revealing: activityID)
         }
         panel.pushIsTuck = { [weak self] in !(self?.owner.launchpad.isShowing ?? false) }
         panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
@@ -2427,6 +2420,23 @@ final class NotchController {
         let windows = windowTiles().filter { !listed.contains(UInt32($0.id)) }
         let away = awayTiles()
         return Self.mergedRowEnabled ? away + windows + ongoingTiles() : away + windows
+    }
+
+    /// 按住刘海（或一颗小圆）：照系统的岛（第 33 条）：那一排有任何东西（收起的窗口、正在进行的事、文件架）就展开；
+    /// 什么都没有才打开启动台“今天”。以前只看有没有活动，只收着窗口时长按会去启动台。
+    /// revealing：按住的那颗小圆的活动 id；那一排里有它的格就让焦点落在它上面、滚到看得全（合成一排关着时没有这一格，照旧只展开）。
+    private func expandRow(on panel: NotchPanel, revealing activityID: String? = nil) {
+        refreshShelf()
+        let row = tiles()
+        if row.isEmpty { owner.launchpad.navigate(to: .today); return }
+        panel.expand(with: row)
+        requestThumbnails()
+        let tileID = activityID.flatMap { ongoingIDs.existingID(for: $0) }.flatMap { id in row.contains { $0.id == id } ? id : nil }
+        // 点（长按）打开的那一排接键盘，直接打字就筛（LA-7）；悬停打开的不接。
+        if panel.isExpanded, !panel.isFocusActive {
+            panel.beginFocus(pointerInside: panel.islandContains(NSEvent.mouseLocation), origin: .press, preferring: tileID)
+        }
+        if let tileID { panel.revealTile(tileID) }
     }
 
     /// 竖线右边的格：正在播放的、编程会话，以及下载、路线、录音这类正在进行的事。活动 id 到格子编号的对应一直不变。

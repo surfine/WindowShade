@@ -35,6 +35,15 @@ final class NotchContentView: NSView {
     private var rowRank: [CGWindowID: Int] = [:]
     private static let rowScrollKey = "row.scroll"
     func echoAlertKeys() { alertView.echoKeys() }
+    /// 换歌一瞥收回两耳：只把那一行淡掉，两耳留在原地（NotchCanvasView.morph 的退场）。
+    func fadeAlert(duration: TimeInterval, completion: @escaping @MainActor @Sendable () -> Void) {
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = duration
+            alertView.animator().alphaValue = 0
+        }, completionHandler: {
+            MainActor.assumeIsolated { completion() }
+        })
+    }
     func setMusicWave(_ wave: NowPlayingWave) { compactView.setMusicWave(wave) }
     private let pullView = NSImageView()
     /// 落点里的符号：托盘，收下后换成对勾（原地换，符号自己的过渡）。
@@ -159,6 +168,9 @@ final class NotchContentView: NSView {
         }
         if let id { revealRowCell(id, animated: animated) }
     }
+
+    /// 只滚不亮：按住小圆展开后滚到那件活动的格。
+    func revealTile(_ id: CGWindowID) { revealRowCell(id, animated: true) }
 
     // MARK: 那一排的滚动（照系统的岛：宽固定 408，格子全部排出，放不下左右滚）
 
@@ -301,10 +313,20 @@ final class NotchContentView: NSView {
         dots.update(count: content.dots, changed: content.dotsChanged, y: content.dotsY)
         compactView.isHidden = content.compact == nil
         compactView.frame = bounds
-        compactView.update(content.compact, slots: content.compactSlots)
+        compactView.update(content.compact, slots: content.compactSlots, underPeekLine: content.peeksOverEars,
+                           notched: content.compactNotched)
         mark.frame = bounds
         mark.visible = content.secondaryDot
+        // 换歌一瞥在原地长出来、收回去（同一层，两耳不重建）：只有那一行自己淡入；收回时它先由 fadeAlert 淡掉。
+        let alertWasHidden = alertView.isHidden
         alertView.isHidden = content.alert == nil
+        if placedOnce, content.alert != nil, alertWasHidden || alertView.alphaValue < 1 {
+            if alertWasHidden { alertView.alphaValue = 0 }
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = Motion.Fade.fadeIn()
+                alertView.animator().alphaValue = 1
+            }
+        }
         // 真刘海屏的提醒分四块（besideNotch）：刘海两侧那一条也归它排，视图盖住整块岛；其余只占刘海下面。
         alertView.frame = NSRect(x: 0, y: 0, width: rect.width,
                                  height: content.alert?.besideNotch != nil ? rect.height : max(0, rect.height - content.notchHeight))
