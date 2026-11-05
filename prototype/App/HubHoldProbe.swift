@@ -115,7 +115,7 @@ extension GlanceProbe {
       try await wait("strip on", timeout: 3) { strips.isActive }
       try await wait("strip settled", timeout: 3) { strips.isSettledForProbe }
       try await Task.sleep(for: .milliseconds(1200), clock: .suspending)
-      try require(strips.watchTimerAliveForProbe, "the scroll strip 0.5 s watch timer is not running")
+      try require(strips.watchTimerAliveForProbe, "the scroll strip maintenance (WindowStateHub watches) is not running")
       return {
         strips.stop(reason: "hold done")
         gestures.arrangeOnlyPID = nil
