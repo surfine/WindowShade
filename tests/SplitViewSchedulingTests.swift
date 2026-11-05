@@ -50,6 +50,19 @@ struct SplitViewSchedulingTests {
         check(!SplitScan.canRefresh(dragging: false, paused: true, inFlight: false), "no refresh while paused")
         check(!SplitScan.canRefresh(dragging: false, paused: false, inFlight: true), "no refresh while in flight")
 
+        // 维持方式：没缝 2 秒一次；有缝且事件可用靠事件；有缝但事件不可用退回半秒一次。
+        check(SplitScan.maintenance(hasSeams: false, eventDriven: true) == .timer(2), "no seams: idle timer even with events")
+        check(SplitScan.maintenance(hasSeams: false, eventDriven: false) == .timer(2), "no seams: idle timer")
+        check(SplitScan.maintenance(hasSeams: true, eventDriven: true) == .events, "seams + events: no timer")
+        check(SplitScan.maintenance(hasSeams: true, eventDriven: false) == .timer(0.5), "seams, no events: 0.5 s as before")
+
+        // 事件触发的刷新：久没刷过几乎立刻；刚刷过等满最小间隔；最慢也不超过最小间隔。
+        check(SplitScan.eventRefreshDelay(sinceLast: 60) == SplitScan.eventCoalesce, "idle then event: coalesce only")
+        check(abs(SplitScan.eventRefreshDelay(sinceLast: 0.04) - 0.06) < 1e-9, "partial gap")
+        check(SplitScan.eventRefreshDelay(sinceLast: 0) == SplitScan.eventMinimumGap, "just refreshed: full gap")
+        check(SplitScan.eventRefreshDelay(sinceLast: -3) == SplitScan.eventMinimumGap, "clock going backwards is clamped")
+        check(SplitScan.eventRefreshDelay(sinceLast: 0) < SplitScan.seamInterval, "event refresh beats the old 0.5 s poll")
+
         if failures == 0 { print("SplitViewSchedulingTests: all passed") } else { exit(1) }
     }
 }

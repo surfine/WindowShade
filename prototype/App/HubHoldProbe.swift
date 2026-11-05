@@ -157,10 +157,11 @@ extension GlanceProbe {
         try await teardown()
         throw EffectError.unavailable("two side-by-side windows produced no divider seam (input enhancements module off?)")
       }
-      guard let interval = split.timerIntervalForProbe, abs(interval - 0.5) < 0.01 else {
-        let seen = split.timerIntervalForProbe.map { "\($0)" } ?? "none"
+      // 有缝时维持把手的是窗口事件（hub 订阅，没有定时器）；SkyLight 通知用不了时退回半秒一次的定时器。
+      let maintenance = split.maintenanceForProbe
+      guard maintenance == "events" || maintenance == "timer 0.5" else {
         try await teardown()
-        throw EffectError.unavailable("the split divider timer is not polling at 0.5 s (interval \(seen))")
+        throw EffectError.unavailable("the split divider maintenance is not alive with a seam (\(maintenance))")
       }
       return teardown
 
