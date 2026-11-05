@@ -460,21 +460,20 @@ final class NotchCanvasView: NSView {
         let presentedKey = (keyLine.presentation()?.frame ?? keyLine.frame).offsetBy(dx: pendingShift.dx, dy: pendingShift.dy)
         let presentedClip = (clip.presentation()?.frame ?? clip.frame).offsetBy(dx: pendingShift.dx, dy: pendingShift.dy)
         let now = CACurrentMediaTime()
-        if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
+        if NotchPanel.debugLogging {
             wlog("notch-debug: morph presented=(\(presented.origin.x),\(presented.origin.y),\(presented.width)x\(presented.height))"
                 + " → rect=(\(rect.origin.x),\(rect.origin.y),\(rect.width)x\(rect.height))")
         }
         // 减少动态效果：岛的外框和圆角直接跳到终点，不挂弹簧，也不做 position / bounds 动画；只交叉淡化内容。
         // 呈现层还没进过渲染（width 为 0）时同样不挂动画：没有可接的起点，直接换模型值。
         let motion = Motion.reduced ? nil : (presented.width > 0 ? spring : nil)
-        // 弹簧飞行保护（S5 打断规则）：没弹簧可挂（正在播放 tick 的 apply 等）但岛正在飞、
-        // 目标和呈现层有可见偏差时，不杀在飞动画、不直设 frame——让那根弹簧自然到达终点。
-        // 岛的模型值已被上一根弹簧的 target 设对（在飞的终点就是本次的目标），视觉不会错。
+        // 弹簧飞行保护（S5 打断规则）：没弹簧可挂（正在播放 tick 的 apply 等）但岛正在飞时，不杀在飞动画、
+        // 不直设 frame——让那根弹簧自然到达终点。只在岛的模型值（在飞的终点）已经是本次目标时这样做：
+        // 2026-11-05 修，以前比的是呈现层，提醒、那一排正长着时来了不带动画的收回（dismissPeek、
+        // dismissVisibleAlert、suspendShelf、cancelLease），旧弹簧照样落在旧的大小，面板却已缩小，卡住。
         let inFlight = island.animation(forKey: "morph.bounds.size.width") != nil
             || island.animation(forKey: "morph.position.x") != nil
-        let preserving = motion == nil && inFlight
-            && (abs(presented.width - rect.width) > 0.5 || abs(presented.height - rect.height) > 0.5
-                || abs(presented.midX - rect.midX) > 0.5)
+        let preserving = NotchFlight.preserves(animated: motion != nil, inFlight: inFlight, model: island.frame, target: rect)
         let shape = motion.map { handoffAxes(to: (rect, style.cornerRadius), presented: presented,
                                              presentedRadius: presentedRadius, spring: $0, now: now) }
         if !preserving {

@@ -42,6 +42,16 @@ final class NotchController {
     private var audioScreenLocked = false
     private var audioAsleep = false
     private var screenObserver: NSObjectProtocol?
+    /// 上一次 install 时各块屏的样子。
+    private var installedLayout: DisplayLayout?
+    /// 屏真的换了：DisplayLayout 变了，或者某块屏的“刘海”外框变了（没有内建刘海的 Mac 上，隐形刘海高跟着菜单栏走）。
+    private var screensChanged: Bool {
+        guard DisplayLayout.current() == installedLayout else { return true }
+        return NSScreen.screens.contains { screen in
+            guard let id = Self.displayID(screen), let panel = panels[id] else { return false }
+            return panel.notch != Self.slotRect(on: screen).rect
+        }
+    }
     private var flights: [SnapshotFlight] = []
     /// 正在后台截图、还没收进去的窗口：防止同一扇收两次。
     private var pendingTucks: Set<CGWindowID> = []
@@ -170,7 +180,11 @@ final class NotchController {
         self.owner = owner
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.install() }
+            MainActor.assumeIsolated {
+                // 接 Studio Display 时这条通知每隔几秒就来一次（Coordinates.swift DisplayLayout）：屏真的换了才重装。
+                guard let self, self.screensChanged else { return }
+                self.install()
+            }
         }
         // 锁屏、睡眠、换用户：先撤销展示权再做别的，可见内容和输入一起停下。
         let workspace = NSWorkspace.shared.notificationCenter
@@ -443,6 +457,7 @@ final class NotchController {
 
     /// 启动、换屏时调用：每块屏挂一个，屏没了就拆掉。
     func install() {
+        installedLayout = DisplayLayout.current()
         guard Self.isEnabled else {
             teardownPanels()
             return

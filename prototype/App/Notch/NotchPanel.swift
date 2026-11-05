@@ -229,6 +229,8 @@ final class NotchPanel: NSPanel {
 
     var notch: NSRect {
         didSet {
+            // 屏幕参数通知（接 Studio Display 时每隔几秒一次）会重设同一个值：没变就不重排，免得打断在飞的弹簧。
+            guard notch != oldValue else { return }
             refitShoulders()
             apply(animated: false)
         }
@@ -898,10 +900,13 @@ final class NotchPanel: NSPanel {
         }
     }
 
-    /// DEBUG: 统一的调试日志出口（WINDOWSHADE_NOTCH_DEBUG=1 才写）。
-    func notchDebugLog(_ s: String) {
-        if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
-            wlog("notch-debug: \(s)")
+    /// DEBUG: WINDOWSHADE_NOTCH_DEBUG=1 才写调试日志。启动时读一次：动画路径上每拍都会问。
+    nonisolated static let debugLogging = ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1"
+
+    /// DEBUG: 统一的调试日志出口（WINDOWSHADE_NOTCH_DEBUG=1 才写；关着时不拼字符串）。
+    func notchDebugLog(_ s: @autoclosure () -> String) {
+        if Self.debugLogging {
+            wlog("notch-debug: \(s())")
         }
     }
 
@@ -1645,11 +1650,7 @@ final class NotchPanel: NSPanel {
     /// - 没有刘海的外接屏：悬浮在菜单栏中央（紧凑），展开/提醒从菜单栏下沿向下长。
     /// - 有物理刘海的屏：不画常驻岛；有内容时从刘海下沿（notch.minY）向下长，不在菜单栏高度向两侧扩。
     private func islandFrame(width: CGFloat, height: CGFloat, hanging: Bool) -> NSRect {
-        let x = notch.midX - width / 2
-        if isVirtual, !hanging {
-            return NSRect(x: x, y: notch.midY - height / 2, width: width, height: height)
-        }
-        return NSRect(x: x, y: notch.minY - height, width: width, height: height)
+        NotchIslandGeometry.islandFrame(notch: notch, width: width, height: height, virtual: isVirtual, hanging: hanging)
     }
 
     /// 这一刻岛该是什么样：外框（Cocoa 坐标）、样式、面板要占的范围、两个肩。
@@ -2014,7 +2015,7 @@ final class NotchPanel: NSPanel {
         let generation = settleGeneration
         // DEBUG: 刘海面板定位与形状决策（WINDOWSHADE_NOTCH_DEBUG=1 打开；配 --glance-probe --notch-debug-cycle
         // 能复现悬停展开→收回全程，明细在 ~/Library/Logs/WindowShade/windowshade.log）。
-        if ProcessInfo.processInfo.environment["WINDOWSHADE_NOTCH_DEBUG"] == "1" {
+        if Self.debugLogging {
             let visual = displayCompact()
             let leading = visual?.leading?.prefix(14) ?? "nil"
             let roomText = room.map { "(\($0.leading),\($0.trailing))" } ?? "nil"
@@ -2043,7 +2044,7 @@ final class NotchPanel: NSPanel {
         }
         canvas.morph(to: local, style: style, content: content, spring: animated ? (custom ?? spring()) : nil,
                      shoulders: shoulders, shoulderSnap: snap, shoulderFade: roomOnly,
-                     pendingShift: animated ? pendingShift : .zero) { [weak self] in
+                     pendingShift: pendingShift) { [weak self] in
             // 停下来了：面板缩回岛的大小，旁边透明的地方不挡东西。
             guard let self, generation == self.settleGeneration, (self.pulled == 0 && self.pushed == 0) || !animated else { return }
             let settled = NSIntegralRectWithOptions(target.hit, .alignAllEdgesOutward)
