@@ -3563,56 +3563,56 @@
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 2,
+      "line": 3,
       "symbol": "IOBluetooth",
       "source": "import IOBluetooth",
       "signal": "presence-bluetooth"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 4,
+      "line": 5,
       "symbol": "IOBluetooth",
-      "source": "// 离开就锁的蓝牙在场来源（App 侧）。IOBluetooth 桥：",
+      "source": "// 离开就锁的蓝牙在场来源（App 侧）。IOBluetooth 桥，事件驱动、没有周期轮询：",
       "signal": "presence-bluetooth"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 16,
+      "line": 7,
+      "symbol": "IOBluetooth",
+      "source": "// - 启动和唤醒后读一次 isConnected() 当快照，之后靠 IOBluetooth 的连接／断开通知推进；",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 20,
       "symbol": "UserDefaults",
       "source": "WS2BluetoothPresenceModel.normalize(UserDefaults.standard.string(forKey: key))",
       "signal": "settings"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 21,
+      "line": 25,
       "symbol": "UserDefaults",
       "source": "if let normalized { UserDefaults.standard.set(normalized, forKey: key) }",
       "signal": "settings"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 22,
+      "line": 26,
       "symbol": "UserDefaults",
       "source": "else { UserDefaults.standard.removeObject(forKey: key) }",
       "signal": "settings"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 26,
+      "line": 29,
       "symbol": "IOBluetooth",
       "source": "/// 蓝牙授权状态（查询本身不触发弹窗）。设置页只在 allowedAlways 时才碰 IOBluetooth——",
       "signal": "presence-bluetooth"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 27,
-      "symbol": "IOBluetooth",
-      "source": "guard let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return [] }",
-      "signal": "presence-bluetooth"
-    },
-    {
-      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 27,
+      "line": 38,
       "symbol": "IOBluetooth",
       "source": "guard let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return [] }",
       "signal": "presence-bluetooth"
@@ -3621,28 +3621,154 @@
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
       "line": 38,
       "symbol": "IOBluetooth",
-      "source": "private var device: IOBluetoothDevice?",
+      "source": "guard let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return [] }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 46,
+      "symbol": "IOBluetooth",
+      "source": "/// IOBluetooth 的接缝：来源只认这两个协议，测试用假实现驱动通知。",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 61,
+      "symbol": "IOBluetooth",
+      "source": "/// 一次通知登记的接收端：IOBluetooth 只认 selector，所以要一个 NSObject。通知走主 run loop。",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 62,
+      "symbol": "IOBluetooth",
+      "source": "@MainActor private final class WS2IOBluetoothReceiver: NSObject {",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 63,
+      "symbol": "IOBluetooth",
+      "source": "private let handler: @MainActor (IOBluetoothDevice) -> Void",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 64,
+      "symbol": "IOBluetooth",
+      "source": "init(handler: @escaping @MainActor (IOBluetoothDevice) -> Void) { self.handler = handler }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 65,
+      "symbol": "IOBluetooth",
+      "source": "@objc func fired(_ note: IOBluetoothUserNotification, fromDevice device: IOBluetoothDevice) { handler(device) }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 65,
+      "symbol": "IOBluetooth",
+      "source": "@objc func fired(_ note: IOBluetoothUserNotification, fromDevice device: IOBluetoothDevice) { handler(device) }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 68,
+      "symbol": "IOBluetooth",
+      "source": "@MainActor private final class WS2IOBluetoothLinkDevice: WS2BluetoothLinkDevice {",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 69,
+      "symbol": "IOBluetooth",
+      "source": "private let device: IOBluetoothDevice",
       "signal": "presence-bluetooth"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
       "line": 70,
       "symbol": "IOBluetooth",
-      "source": "let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return }",
+      "source": "init(_ device: IOBluetoothDevice) { self.device = device }",
       "signal": "presence-bluetooth"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 70,
+      "line": 75,
       "symbol": "IOBluetooth",
-      "source": "let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return }",
+      "source": "let receiver = WS2IOBluetoothReceiver { _ in handler() }",
       "signal": "presence-bluetooth"
     },
     {
       "path": "prototype/App/WS2BluetoothPresenceSource.swift",
-      "line": 123,
+      "line": 76,
       "symbol": "IOBluetooth",
-      "source": "private func readableRSSI(_ device: IOBluetoothDevice) -> Int? {",
+      "source": "let note = device.register(forDisconnectNotification: receiver, selector: #selector(WS2IOBluetoothReceiver.fired(_:fromDevice:)))",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 81,
+      "symbol": "IOBluetooth",
+      "source": "@MainActor final class WS2IOBluetoothBackend: WS2BluetoothBackend {",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 84,
+      "symbol": "IOBluetooth",
+      "source": "let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return nil }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 84,
+      "symbol": "IOBluetooth",
+      "source": "let devices = IOBluetoothDevice.pairedDevices() as? [IOBluetoothDevice] else { return nil }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 86,
+      "symbol": "IOBluetooth",
+      "source": ".map { WS2IOBluetoothLinkDevice($0) }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 90,
+      "symbol": "IOBluetooth",
+      "source": "// 未授权就调 IOBluetooth 会被 TCC 杀进程，所以没授权什么都不登记。",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 92,
+      "symbol": "IOBluetooth",
+      "source": "let receiver = WS2IOBluetoothReceiver { handler(WS2BluetoothPresenceModel.normalize($0.addressString)) }",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 93,
+      "symbol": "IOBluetooth",
+      "source": "let note = IOBluetoothDevice.register(forConnectNotifications: receiver, selector: #selector(WS2IOBluetoothReceiver.fired(_:fromDevice:)))",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 93,
+      "symbol": "IOBluetooth",
+      "source": "let note = IOBluetoothDevice.register(forConnectNotifications: receiver, selector: #selector(WS2IOBluetoothReceiver.fired(_:fromDevice:)))",
+      "signal": "presence-bluetooth"
+    },
+    {
+      "path": "prototype/App/WS2BluetoothPresenceSource.swift",
+      "line": 120,
+      "symbol": "IOBluetooth",
+      "source": "self.backend = backend ?? WS2IOBluetoothBackend()",
       "signal": "presence-bluetooth"
     },
     {
