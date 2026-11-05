@@ -192,7 +192,7 @@ import Cocoa
             return false
         }
         guard sources.notchAvailable() else { return false }
-        let screen = NotchController.notchScreen() ?? NSScreen.main ?? NSScreen.screens[0]
+        guard let screen = NotchController.notchScreen() ?? NSScreen.main ?? NSScreen.screens.first else { return false }
         guard let id = NotchController.displayID(screen) else { return false }
         let display = WS2.DisplayID(value: id)
         if !presentsWithoutLockSpace {

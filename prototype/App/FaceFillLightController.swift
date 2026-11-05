@@ -34,7 +34,8 @@ import Cocoa
 
     private func light() {
         guard panel == nil else { return }
-        let screen = NSScreen.main ?? NSScreen.screens[0]
+        // 屏幕表在显示器休眠、合盖时会短暂为空；摄像头在内建屏上，补光也点那一块。
+        guard let screen = NotchController.notchScreen() ?? NSScreen.screens.first else { return }
         let panel = EffectPanel(frame: screen.frame, desktop: true)
         // 独立的屏幕边缘层，压在菜单栏和刘海之下：顶边那一段被菜单栏压弱，刘海保持纯黑（《认你、指挥页与露出》稿 ①）。
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) - 1)

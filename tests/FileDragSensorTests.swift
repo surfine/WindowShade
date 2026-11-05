@@ -2,6 +2,8 @@
 import AppKit
 import Foundation
 
+func wlog(_ message: String) { print(message) }
+
 @main
 struct FileDragSensorTests {
     nonisolated(unsafe) static var failures = 0

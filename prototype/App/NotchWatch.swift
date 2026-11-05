@@ -14,29 +14,64 @@ final class WindowTitleWatcher {
     private var observers: [pid_t: AXObserver] = [:]
     private var watched: [CGWindowID: (pid: pid_t, element: AXUIElement)] = [:]
     private var pending: [CGWindowID: DispatchWorkItem] = [:]
+    /// 挂失败的窗口：到点前不再问（syncWatchers 每 2 秒来一次，每次都是同步的辅助功能调用）。
+    private var failures: [CGWindowID: (retryAt: TimeInterval, delay: TimeInterval)] = [:]
+    private var terminateObserver: NSObjectProtocol?
     static let settle: TimeInterval = 1.0
 
     var watchedIDs: [CGWindowID] { Array(watched.keys) }
     func isWatching(_ id: CGWindowID) -> Bool { watched[id] != nil }
 
+    init() {
+        // pid 会被复用：退出的 App 留下的观察者不能让新进程碰到。
+        terminateObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier else { return }
+            MainActor.assumeIsolated { self?.dropApp(pid) }
+        }
+    }
+
     func watch(id: CGWindowID, pid: pid_t, element: AXUIElement) {
-        guard watched[id] == nil, let observer = observer(for: pid) else { return }
+        guard watched[id] == nil else { return }
+        let now = CACurrentMediaTime()
+        if let failure = failures[id], now < failure.retryAt { return }
         let refcon = Unmanaged.passUnretained(self).toOpaque()
-        guard AXObserverAddNotification(observer, element, kAXTitleChangedNotification as CFString, refcon) == .success else {
+        if let observer = observer(for: pid),
+           AXObserverAddNotification(observer, element, kAXTitleChangedNotification as CFString, refcon) == .success {
+            failures.removeValue(forKey: id)
+            watched[id] = (pid, element)
             return
         }
-        watched[id] = (pid, element)
+        let delay = AXWatchRetryPolicy.nextDelay(after: failures[id]?.delay)
+        failures[id] = (now + delay, delay)
+        // 窗口早已不在了的记录没人来 unwatch，过了重试时间的顺手清掉。
+        if failures.count > 32 { failures = failures.filter { $0.key == id || $0.value.retryAt > now } }
+        removeObserverIfIdle(pid)
+    }
+
+    private func dropApp(_ pid: pid_t) {
+        for (id, entry) in watched where entry.pid == pid {
+            pending.removeValue(forKey: id)?.cancel()
+            watched.removeValue(forKey: id)
+        }
+        removeObserverIfIdle(pid)
+    }
+
+    private func removeObserverIfIdle(_ pid: pid_t) {
+        guard !watched.values.contains(where: { $0.pid == pid }),
+              let observer = observers.removeValue(forKey: pid) else { return }
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
     }
 
     func unwatch(_ id: CGWindowID) {
         pending.removeValue(forKey: id)?.cancel()
+        failures.removeValue(forKey: id)
         guard let entry = watched.removeValue(forKey: id) else { return }
         if let observer = observers[entry.pid] {
             AXObserverRemoveNotification(observer, entry.element, kAXTitleChangedNotification as CFString)
         }
-        if !watched.values.contains(where: { $0.pid == entry.pid }), let observer = observers.removeValue(forKey: entry.pid) {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
-        }
+        removeObserverIfIdle(entry.pid)
     }
 
     private func observer(for pid: pid_t) -> AXObserver? {

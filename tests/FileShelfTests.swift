@@ -1,6 +1,8 @@
 // FS-01 / FS-02：文件架模型与存取。
 import Foundation
 
+func wlog(_ message: String) { print(message) }
+
 @main
 struct FileShelfTests {
     nonisolated(unsafe) static var failures = 0

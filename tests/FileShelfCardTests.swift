@@ -3,6 +3,8 @@ import Foundation
 // FS-04：文件架卡的纯逻辑——那一排的末格、拖出拷贝 / ⌘ 移动、全部移出撤销、失效格、右键与读屏动作。
 // 画面（FileShelfView）在 AppKit 那一层，由整模块检查和真机验收看。
 
+func wlog(_ message: String) { print(message) }
+
 @main
 struct FileShelfCardTests {
     @MainActor static func main() {

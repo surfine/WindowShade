@@ -325,8 +325,12 @@ final class UpdateStore: @unchecked Sendable {  // 只有不可变的 root；并
     // MARK: 看护
 
     func writeGuardPID(_ pid: Int32) {
-        try? FileManager.default.createDirectory(at: updateDirectory, withIntermediateDirectories: true)
-        try? "\(pid)".data(using: .utf8)?.write(to: guardPIDURL, options: .atomic)
+        do {
+            try FileManager.default.createDirectory(at: updateDirectory, withIntermediateDirectories: true)
+            try Data("\(pid)".utf8).write(to: guardPIDURL, options: .atomic)
+        } catch {
+            UpdateLog.write("guard pid write failed: \(error.localizedDescription)")
+        }
     }
 
     func guardPID() -> Int32? {

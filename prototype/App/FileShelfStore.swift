@@ -325,9 +325,13 @@ final class FileShelfStore: @unchecked Sendable {
     }
 
     private func persist() {
-        guard let data = try? model.encoded() else { return }
-        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        try? data.write(to: itemsURL, options: .atomic)
+        do {
+            let data = try model.encoded()
+            try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+            try data.write(to: itemsURL, options: .atomic)
+        } catch {
+            wlog("file-shelf: persist failed: \(error.localizedDescription)")
+        }
     }
 
     private func publish(notice: String?) {
