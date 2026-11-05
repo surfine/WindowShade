@@ -11,7 +11,7 @@ struct WS2BluetoothPresenceModel: Equatable {
     var chosenAddress: String?
     /// 断开持续这么久才算离开（秒）。期间重连即取消，不发任何事件。
     var awayDebounce: TimeInterval
-    /// 读数间隔（秒）。接入层按这个节奏喂 poll。
+    /// 读数间隔（秒）。App 来源已改成通知驱动，不再按它轮询；模型测试仍用它。
     var pollInterval: TimeInterval
 
     private var wasConnected: Bool?
