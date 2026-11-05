@@ -139,9 +139,17 @@ final class WindowBrowserController: NSObject {
     private var discoveryRequestTotal = 0
     private var axCallTotal = 0
     private var environmentSuspended = false
-    /// 面板开着时定时看一眼列表里的窗口还在不在；关掉的窗口靠一次成功的重新查询移出列表。
-    private var livenessTimer: Timer?
+    /// 面板开着时盯着列表里的窗口还在不在（WindowStateHub 的每窗口订阅，原来是 0.6s 的定时扫描）；
+    /// 关掉的窗口靠一次成功的重新查询移出列表。
+    private var livenessActive = false
+    private var livenessWatches: [WindowKey: WindowWatch] = [:]
+    /// 等着核对的窗口和各自最早的核对时刻；同一时刻附近来的合成一次。
+    private var livenessPending: [WindowKey: CFAbsoluteTime] = [:]
     private var livenessAsked: Set<WindowKey> = []
+    /// SkyLight 通知用不了时 hub 退回的轮询间隔（原来的扫描间隔）。
+    static let livenessFallbackInterval: TimeInterval = 0.6
+    /// 窗口“藏起来”事件到核对之间留的余量：最小化、收起这类的状态记录比事件稍晚才更新，立刻核对会误报。
+    static let livenessHiddenSettle: TimeInterval = 0.3
     /// 唤醒后应用要过一会儿才重画窗口，太早截到的图只有红绿灯；稍后整批重截一次。
     private var wakeSettleWork: DispatchWorkItem?
     private var workspaceTokens: [NSObjectProtocol] = []
@@ -1332,31 +1340,77 @@ final class WindowBrowserController: NSObject {
 
     // MARK: 关掉的窗口移出列表
 
-    private func startLivenessSweep() {
-        livenessAsked.removeAll()
-        let timer = Timer(timeInterval: 0.6, repeats: true) { [weak self] _ in
-            self?.sweepClosedWindows()
+    /// 让订阅集合和列表一致：列表里每扇窗订阅一次，走了的退订；新订阅的窗口过一会儿核对一次，
+    /// 兜住订阅之前就已经藏起来或消失、不会再有变化事件的窗口。
+    private func syncLivenessWatches() {
+        if !livenessActive { livenessAsked.removeAll() }
+        livenessActive = true
+        guard let contentView else { return }
+        let hub = WindowStateHub.shared
+        var wanted = Set<WindowKey>()
+        for record in contentView.records where record.key.originalWindowID != 0 { wanted.insert(record.key) }
+        for key in livenessWatches.keys where !wanted.contains(key) {
+            livenessWatches[key]?.cancel()
+            livenessWatches[key] = nil
+            livenessPending[key] = nil
         }
-        // 只在面板开着时跑（closePanel 里停）。容差 10%（规格 E4）：允许系统合并唤醒。
-        timer.tolerance = 0.06
-        RunLoop.main.add(timer, forMode: .common)
-        livenessTimer = timer
+        for key in wanted.sorted() where livenessWatches[key] == nil {
+            livenessWatches[key] = hub.watch(key.originalWindowID, fallbackInterval: Self.livenessFallbackInterval) {
+                [weak self] change, _ in
+                self?.livenessChanged(key, change: change)
+            }
+            scheduleLivenessCheck(key, after: Self.livenessFallbackInterval)
+        }
     }
 
     private func stopLivenessSweep() {
-        livenessTimer?.invalidate()
-        livenessTimer = nil
+        livenessActive = false
+        for watch in livenessWatches.values { watch.cancel() }
+        livenessWatches.removeAll()
+        livenessPending.removeAll()
         livenessAsked.removeAll()
+    }
+
+    /// 窗口没了立刻核对；藏起来（orderOut 一类，规格 R20）留一点余量再核对，规则和以前的扫描一样。
+    private func livenessChanged(_ key: WindowKey, change: WindowChange) {
+        switch change {
+        case .gone:
+            scheduleLivenessCheck(key, after: 0)
+        case .hidden:
+            scheduleLivenessCheck(key, after: WindowStateHub.shared.isEventDriven ? Self.livenessHiddenSettle : 0)
+        default:
+            break
+        }
+    }
+
+    private func scheduleLivenessCheck(_ key: WindowKey, after delay: TimeInterval) {
+        let due = CFAbsoluteTimeGetCurrent() + delay
+        if let existing = livenessPending[key], existing <= due { return }
+        livenessPending[key] = due
+        // 附近已经排了一次的（面板刚开时整批订阅）合成一次：到点时顺带处理 0.06s 内到期的。
+        if livenessPending.contains(where: { $0.key != key && abs($0.value - due) < 0.05 }) { return }
+        MainTimer.fire(after: max(0.001, delay), tolerance: delay > 0 ? 0.06 : 0) { [weak self] in
+            self?.runDueLivenessChecks()
+        }
+    }
+
+    private func runDueLivenessChecks() {
+        guard livenessActive else { return }
+        let now = CFAbsoluteTimeGetCurrent()
+        let due = Set(livenessPending.filter { $0.value <= now + 0.06 }.keys)
+        guard !due.isEmpty else { return }
+        for key in due { livenessPending[key] = nil }
+        sweepClosedWindows(only: due)
     }
 
     /// 列表里有窗口在 WindowServer 里已经找不到：重新查一次它的应用。一次缺席不直接删，
     /// 由那次成功的查询决定去留；每个窗口只问一次，查到还在就不再反复问。
-    private func sweepClosedWindows() {
+    private func sweepClosedWindows(only keys: Set<WindowKey>) {
         guard running, !environmentSuspended, let session, let contentView,
               panel?.isVisible == true else { return }
         var missingPIDs = Set<pid_t>()
         var missingKeys: [WindowKey] = []
-        let byPID = Dictionary(grouping: contentView.records, by: { $0.key.application.pid })
+        let byPID = Dictionary(grouping: contentView.records.filter { keys.contains($0.key) }, by: { $0.key.application.pid })
         // 规格 R20：有的 App 关窗只是 orderOut（日历一类），窗口在 WindowServer 里还在，光看「在不在」永远发现不了。
         // 查到时在屏上、现在不在屏上的（不是最小化、不是我们自己收起的），也重新问一次它的应用；去留仍由那次查询定。
         let onScreen = WindowListCache.shared.onScreenIDs()
@@ -1460,7 +1514,7 @@ final class WindowBrowserController: NSObject {
         // 以内容视图的真实视口为准（布局尚未完成时会退回前 8 条兜底），
         // 不能用固定“前 8 条”覆盖用户已经滚动到的位置。
         requestThumbnails(forKeys: contentView.visibleWindowKeys)
-        if livenessTimer == nil { startLivenessSweep() }
+        syncLivenessWatches()
         if listState.selection != liveSelection {
             liveSelection = listState.selection
             statusOverride = nil
@@ -3375,7 +3429,7 @@ extension WindowBrowserController {
     var probeListedKeys: [WindowKey] { contentView?.records.map(\.key) ?? [] }
     var probePanelVisible: Bool { panel?.isVisible == true }
     /// 面板开着时 0.6 秒的关窗清扫定时器在不在跑（--hold browser）。
-    var probeLivenessSweepAlive: Bool { livenessTimer != nil }
+    var probeLivenessSweepAlive: Bool { livenessActive }
     var probeDepartureAnimationCount: Int { contentView?.departureAnimationCount ?? 0 }
     /// 这个 Dock 会话一起列出的辅助进程。
     var probeSessionHelperPIDs: Set<pid_t> { session?.helperPIDs ?? [] }
