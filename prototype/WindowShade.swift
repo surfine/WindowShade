@@ -178,6 +178,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var foldSignposts: [CGWindowID: OSSignpostIntervalState] = [:]
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
+    /// 收起的源窗口在 WindowStateHub 上的订阅：被 App 叫回来（挪动/出现/透明度回升）时立刻多巡一次，
+    /// 5 秒定时巡检原样保留（见 Reconcile.swift）。
+    var reconcileWatches: [CGWindowID: WindowWatch] = [:]
+    var reconcileEventQueued = false
+    var lastEventReconcileAt: TimeInterval = 0
     var axReadGate = AXReadGate<pid_t, [WS2FoldCallbackStamp]>()
     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
@@ -913,6 +918,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         restoreAll()
         reconcileTimer?.invalidate()
         reconcileTimer = nil
+        MainActor.assumeIsolated { for watch in reconcileWatches.values { watch.cancel() } }
+        reconcileWatches.removeAll()
         if let pinnedPreviewFocusMonitor {
             NSEvent.removeMonitor(pinnedPreviewFocusMonitor)
             self.pinnedPreviewFocusMonitor = nil

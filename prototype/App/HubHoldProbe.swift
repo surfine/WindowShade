@@ -204,6 +204,7 @@ extension GlanceProbe {
       }
       try await Task.sleep(for: .milliseconds(2000), clock: .suspending)
       try require(owner.reconcileTimer != nil, "the 5 s shaded-window reconcile timer is not running")
+      try require(owner.reconcileWatches[wid] != nil, "the shaded source window is not watched on the hub")
       return { [owner] in
         _ = owner.unshadeReturningElement(wid, playSound: false)
         try await Task.sleep(for: .milliseconds(800), clock: .suspending)
