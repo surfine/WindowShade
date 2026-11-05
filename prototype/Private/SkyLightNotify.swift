@@ -1,6 +1,7 @@
 // SkyLight 窗口通知（私有）：给 WindowStateHub 当事件来源。
 // - 每窗口事件：向 WindowServer 登记一个连接级回调，再报上要盯的窗口号，之后这几扇窗挪动（806）、
-//   改大小（807）、出现（815）、消失（816，关窗也是它；27.0.1 上 804 从不来）都会回调，载荷前 4 字节是窗口号。
+//   改大小（807）、叠放次序变了（808，被提到前面或被压下去）、出现（815）、消失（816，关窗也是它；27.0.1 上 804 从不来）
+//   都会回调，载荷前 4 字节是窗口号。
 //   没报上的窗口（包括我们自己的面板）不回调；报一张空表就全停（2026-11-06 本机实测）。
 // - 全局事件：1325 窗口加入某张桌面、1326 离开某张桌面，载荷是 UInt64 桌面号 + UInt32 窗口号（共 12 字节）。
 //   整个系统的窗口都会来，所以只在有人要时登记，没人要时注销（注销实测有效）。
@@ -14,6 +15,7 @@ import CoreGraphics
 enum SkyLightWindowEvent: Equatable, Sendable {
     case moved(CGWindowID)
     case resized(CGWindowID)
+    case reordered(CGWindowID)
     case shown(CGWindowID)
     case hidden(CGWindowID)
     case addedToSpace(window: CGWindowID, space: UInt64)
@@ -21,7 +23,7 @@ enum SkyLightWindowEvent: Equatable, Sendable {
 
     var windowID: CGWindowID {
         switch self {
-        case .moved(let id), .resized(let id), .shown(let id), .hidden(let id): id
+        case .moved(let id), .resized(let id), .reordered(let id), .shown(let id), .hidden(let id): id
         case .addedToSpace(let id, _), .removedFromSpace(let id, _): id
         }
     }
@@ -31,6 +33,7 @@ enum SkyLightWindowEvent: Equatable, Sendable {
         switch event {
         case 806: .moved(windowID)
         case 807: .resized(windowID)
+        case 808: .reordered(windowID)
         case 815: .shown(windowID)
         case 816: .hidden(windowID)
         default: nil
@@ -77,7 +80,7 @@ final class SkyLightWindowNotifier: WindowEventSource {
         let removeGlobal: GlobalRegistration?
     }
 
-    private static let perWindowEvents: [UInt32] = [806, 807, 815, 816]
+    private static let perWindowEvents: [UInt32] = [806, 807, 808, 815, 816]
     private static let spaceEvents: [UInt32] = [1325, 1326]
 
     private let symbols: Symbols?

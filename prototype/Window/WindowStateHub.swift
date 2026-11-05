@@ -88,7 +88,10 @@ struct WindowHubBatch: Sendable {
     }
     var changes: [Item] = []
     var spaceEvents: [WindowSpaceEvent] = []
-    var isEmpty: Bool { changes.isEmpty && spaceEvents.isEmpty }
+    /// 叠放次序变了的被盯窗口（808）。外框和在屏状态都没变，事实比对看不出来，所以不进 changes、不发给 watch，
+    /// 只给 observeAnyChange（SplitView：同一 App 把别的窗口提到缝上方时要重认）。
+    var reordered: [CGWindowID] = []
+    var isEmpty: Bool { changes.isEmpty && spaceEvents.isEmpty && reordered.isEmpty }
 }
 
 /// 订阅凭证：cancel() 或释放即退订。
@@ -163,6 +166,7 @@ final class WindowStateHub {
     private var facts: [CGWindowID: WindowFact] = [:]
     private var dirty: Set<CGWindowID> = []
     private var pendingSpaceEvents: [WindowSpaceEvent] = []
+    private var pendingReorders: Set<CGWindowID> = []
     private var flushScheduled = false
     private var sourceStarted = false
     private var sourceFailed = false
@@ -288,6 +292,9 @@ final class WindowStateHub {
         case .moved(let id), .resized(let id), .shown(let id), .hidden(let id):
             guard tokensByWindow[id] != nil else { return }
             dirty.insert(id)
+        case .reordered(let id):
+            guard tokensByWindow[id] != nil, !anyChangeObservers.isEmpty else { return }
+            pendingReorders.insert(id)
         case .addedToSpace(let id, let space), .removedFromSpace(let id, let space):
             guard !membershipObservers.isEmpty || !anyChangeObservers.isEmpty || tokensByWindow[id] != nil else { return }
             if !membershipObservers.isEmpty || !anyChangeObservers.isEmpty {
@@ -316,6 +323,8 @@ final class WindowStateHub {
         let spaceEvents = pendingSpaceEvents
         pendingSpaceEvents.removeAll()
         batch.spaceEvents = spaceEvents
+        batch.reordered = pendingReorders.sorted()
+        pendingReorders.removeAll()
         for event in spaceEvents {
             for token in membershipObservers.keys.sorted() {
                 membershipObservers[token]?(event)

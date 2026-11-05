@@ -289,8 +289,16 @@ func wlog(_ s: String) {}
         expect(batches.first?.spaceEvents == [WindowSpaceEvent(kind: .added, windowID: 50, spaceID: 9)], "batch 带上桌面成员事件")
         rig.source.send(.moved(4)); rig.runTurns()
         expect(batches.count == 1, "没有变化的一轮不回调")
+        var watchCalls = 0
+        let probe = rig.hub.watch(4) { _, _ in watchCalls += 1 }
+        rig.source.send(.reordered(4)); rig.source.send(.reordered(4)); rig.source.send(.reordered(77)); rig.runTurns()
+        expect(batches.count == 2 && batches.last?.reordered == [4] && batches.last?.changes.isEmpty == true,
+               "叠放次序变了（808）：只进 batch.reordered，同一轮合并，没被盯的不算")
+        expect(watchCalls == 0, "叠放次序变化不发给 watch（外框和在屏都没变）")
         token.cancel()
-        _ = watches
+        rig.source.send(.reordered(4)); rig.runTurns()
+        expect(batches.count == 2, "没人 observeAnyChange 时 808 直接丢掉")
+        _ = watches; _ = probe
     }
 
     @MainActor static func reentrancy() {
