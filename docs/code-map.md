@@ -23,13 +23,13 @@
 | `App/` | 见上。大块：刘海 `App/Notch/`（10 文件：Controller/Panel/Canvas/ContentView/CompactViews/RowViews/Alert/Shoulders/Tile/Peek）＋顶层 `Notch*`（20）、启动台 `Launchpad*`（13）、更新 `Updater*`（8）、刷脸 `Face*`、程序坞 `Dock*`、侧拉 `Slide*`、卷轴 `Scroll*`/`Strip*`、偏好设置 `Preferences.swift`＋`PreferencesViews.swift`、菜单 `MenuBarController.swift`/`StandardMenu.swift`、手势 `TrackpadGestures.swift`＋`PinchEventTap.swift`＋`TrackpadGestureSupport.swift`、WindowShade 2 的 `WS2*` | 9 支事件 tap 分散在 `EventTap`、`GlobalInputFilter`、`ScrollTap`、`HabitKeys`、`MiddleTitlebarTap`、`MissionControlKeys`、`NotchLevelObserver`、`TrackpadGestures`＋`PinchEventTap`（捏合）、`WindowSwitcher`：**新加的 tap 要在开着时向 `Core/EventTapHealth.swift` 登记、关掉时注销** |
 | `App/FoldTransaction.swift`、`FoldExit.swift`、`FoldCompletion.swift` | 收起／展开的事务 | **回调序号校验与「销毁通知只当提示」是踩出来的不变量**，改前把注释读完 |
 | `Core/` | 见上。大块：刘海策略 `Notch*`（15）、静音会话 `WS2Silent*`（11）、刷脸 `Face*`（9）、遥控 `Remote*`、发布开关 `ReleaseDefaults.swift`、本地化 `WSL10n.swift` | `ReleaseDefaults.swift` 是唯一开关表：没真机验过的一律默认关但功能在 |
-| `Window/` | AX 读写与窗口几何：`AXWindow`、坐标换算、窗口列表缓存、外框画像 | **`AXStallBreaker` 的单次预算与按进程熔断**防一个 App 卡死拖垮全局，别绕过 |
+| `Window/` | AX 读写与窗口几何：`AXWindow`、坐标换算、窗口列表缓存、外框画像；`WindowStateHub` 是盯窗口挪动/改大小/隐藏/关掉的共享来源（SkyLight 事件 + 合并后一次批量查询 + 1 秒共享看门狗），置顶、侧拉、带到每张桌面都从这里订阅 | **`AXStallBreaker` 的单次预算与按进程熔断**防一个 App 卡死拖垮全局，别绕过 |
 | `WindowBrowser/` | 窗口浏览（Dock 悬停与键盘面板）：发现、目录、缩略图、动作、探针 | 窗口只从 AX 的 `kAXWindowsAttribute` 发现（`WindowBrowserDiscovery`），原生标签页的后台标签因此本来不出现（规格 R4） |
 | `Capture/` | 截图与采集：快速截图、私有快照、缓存、采集尺寸 | 每个入口先判屏幕录制权限；没有权限时退回无画面路径（规格 R29 的降级清单） |
 | `Effects/` | 合盖／倾斜的 Metal 效果（`Duo.metal`、`FoldRenderer`）、锁屏装饰、效果探针；折叠会话采集帧率分档（`WindowFoldFPS.swift`，纯逻辑） | `FoldRenderer` 已用 `CVMetalTextureCache` 零拷贝、静图缓存带 96MB 字节预算；探针类文件只在显式参数下进入 |
 | `Overlay/` | 卷帘条、看一眼卡片、手势提示、系统外观策略 | 外观每次现读 `NSApp.effectiveAppearance`，不缓存 |
 | `Compatibility/` | 按 App 的特殊处理：隐藏策略、特殊外框高度 | 所有 App 特例集中在这里，别散到调用点 |
-| `Private/` | 私有框架桥：SkyLight、程序坞通知、锁屏 Space、屏幕形状 | 全部 `dlopen`／`dlsym` 运行时载入，`nm -u` 看不见；量私有面要连这里一起数 |
+| `Private/` | 私有框架桥：SkyLight（含窗口事件通知 `SkyLightNotify.swift`）、程序坞通知、锁屏 Space、屏幕形状 | 全部 `dlopen`／`dlsym` 运行时载入，`nm -u` 看不见；量私有面要连这里一起数 |
 | `Recovery/` | 恢复日志与离屏窗口救援：异常退出后把窗口找回来 | 日志字段坏值拒绝、不截断（`JournalNumeric`） |
 | `Support/` | 诊断日志、Sendable 担保、本机 socket、进程通道、配对加密、CarPlay 接收端、主线程定时器入口（`MainTimer.swift`）、SkyLight 加载路径（`SkyLightFramework.swift`） | `SendableSystemHandles.swift` 里每条担保都要写清为什么安全 |
 | `Watchdog/` | 更新看护 `WindowShadeUpdateGuard.app` | 只能依赖 Foundation/AppKit 和几份共用的更新文件（见 `build.sh` 的 `GUARD_SOURCES`） |

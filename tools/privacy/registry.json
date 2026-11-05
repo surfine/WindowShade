@@ -7900,6 +7900,41 @@
       "symbol": "CGSHWCaptureWindowList",
       "source": "// 窗口快照：CGSHWCaptureWindowList（按符号动态取，SDK 不直接引用；设 WINDOWSHADE_DISABLE_WINDOW_SNAPSHOT",
       "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightNotify.swift",
+      "line": 91,
+      "symbol": "SLSMainConnectionID",
+      "source": "let main = dlsym(handle, \"SLSMainConnectionID\"),",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightNotify.swift",
+      "line": 92,
+      "symbol": "SLSRegisterConnectionNotifyProc",
+      "source": "let register = dlsym(handle, \"SLSRegisterConnectionNotifyProc\"),",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightNotify.swift",
+      "line": 93,
+      "symbol": "SLSRequestNotificationsForWindows",
+      "source": "let request = dlsym(handle, \"SLSRequestNotificationsForWindows\") else {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightNotify.swift",
+      "line": 97,
+      "symbol": "SLSRegisterNotifyProc",
+      "source": "let registerGlobal = dlsym(handle, \"SLSRegisterNotifyProc\")",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightNotify.swift",
+      "line": 98,
+      "symbol": "SLSRemoveNotifyProc",
+      "source": "let removeGlobal = dlsym(handle, \"SLSRemoveNotifyProc\")",
+      "signal": "spaces-private"
     }
   ],
   "groups": [
