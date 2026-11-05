@@ -18,7 +18,8 @@ final class PictureInPictureController {
     private var exiting: [CGWindowID: PiPSession] = [:]
     /// 进画中画的先后：同一个角落里先来的离角近。
     private var order: [CGWindowID] = []
-    private var maintenance: Timer?
+    /// SkyLight 通知用不了时 hub 退回的轮询间隔（原来的 1 秒维护定时器）。
+    static let fallbackInterval: TimeInterval = 1.0
 
     init(owner: AppDelegate) { self.owner = owner }
 
@@ -28,8 +29,8 @@ final class PictureInPictureController {
 
     // MARK: - 探针用
 
-    /// 探针用（--hold pip）：1 秒的维护定时器在不在跑。
-    var maintenanceAliveForProbe: Bool { maintenance != nil }
+    /// 探针用（--hold pip）：有没有会话在 WindowStateHub 上盯着源窗口（原来的 1 秒维护定时器）。
+    var maintenanceAliveForProbe: Bool { sessions.values.contains { $0.watch != nil } }
     func panelFrameForProbe(_ id: CGWindowID) -> NSRect? { sessions[id].map(\.panel.frame) }
     func isStashedForProbe(_ id: CGWindowID) -> Bool { sessions[id]?.stashed != nil }
     func framesForProbe(_ id: CGWindowID) -> UInt64 { sessions[id]?.capture.pixelFrameCount ?? 0 }
@@ -186,7 +187,7 @@ final class PictureInPictureController {
             session.panel.alphaValue = 1
             session.panel.orderFrontRegardless()
             self.animate(session.panel, to: target, velocity: .zero)
-            self.ensureMaintenance()
+            self.watchSource(session)
         }
     }
 
@@ -198,6 +199,8 @@ final class PictureInPictureController {
         exiting[id] = s
         owner.gestures.forgetSteps(.pictureInPicture, id: id)
         order.removeAll { $0 == id }
+        s.watch?.cancel()
+        s.watch = nil
         s.animation?.invalidate()
         s.panel.ignoresMouseEvents = true
         s.tab?.orderOut(nil)
@@ -213,19 +216,18 @@ final class PictureInPictureController {
             }
         }
         wlog("pip: exit id=\(id) activate=\(activate)")
-        if sessions.isEmpty { maintenance?.invalidate(); maintenance = nil }
     }
 
     /// 退出本应用：所有画中画的窗口放回原处，正在回到原处的也算（同步，只在退出时用）。放到了才删恢复记录。
     func shutdown() {
         dropHint.cancel()
-        maintenance?.invalidate()
-        maintenance = nil
         let all = Array(sessions.values) + Array(exiting.values)
         sessions.removeAll()
         exiting.removeAll()
         order.removeAll()
         for s in all {
+            s.watch?.cancel()
+            s.watch = nil
             s.animation?.invalidate()
             s.capture.stop()
             s.panel.orderOut(nil)
@@ -263,6 +265,8 @@ final class PictureInPictureController {
         sessions[s.id] = nil
         owner.gestures.forgetSteps(.pictureInPicture, id: s.id)
         order.removeAll { $0 == s.id }
+        s.watch?.cancel()
+        s.watch = nil
         s.animation?.invalidate()
         s.capture.stop()
         s.panel.orderOut(nil)
@@ -275,29 +279,26 @@ final class PictureInPictureController {
             clearRecord(s.id)
         }
         restack(corner: s.corner)
-        if sessions.isEmpty { maintenance?.invalidate(); maintenance = nil }
         wlog("pip: ended id=\(s.id) reason=\(reason)")
         if reason.hasPrefix("capture") || reason.hasPrefix("no shareable") {
             owner.notch.announce(WSL10n.text("pip.cannot", zh: "放不进画中画"), detail: WSL10n.text("pip.noPicture", zh: "拿不到它的画面"), tone: .problem)
         }
     }
 
-    private func ensureMaintenance() {
-        guard maintenance == nil else { return }
-        let t = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                for s in Array(self.sessions.values) {
-                    guard let info = cgWindowInfo(s.id), (info[kCGWindowOwnerPID as String] as? pid_t) == s.pid else {
-                        self.abandon(s, reason: "window gone")
-                        continue
-                    }
-                }
+    /// 订阅源窗口（WindowStateHub），原来的 1 秒维护定时器拆成按事件做：窗口关掉（`.gone`）或窗口号换了
+    /// 进程（`.restyled` 里 pid 变了）就放弃这个会话；其余变化与这里无关。订阅当下 pid 就不对也算。
+    private func watchSource(_ s: PiPSession) {
+        guard sessions[s.id] === s, s.watch == nil else { return }
+        let id = s.id
+        s.watch = WindowStateHub.shared.watch(id, fallbackInterval: Self.fallbackInterval) { [weak self] change, fact in
+            guard let self, let session = self.sessions[id], session.watch != nil else { return }
+            if change == .gone || (fact != nil && fact?.pid != session.pid) {
+                self.abandon(session, reason: "window gone")
             }
         }
-        t.tolerance = 0.3
-        RunLoop.main.add(t, forMode: .common)
-        maintenance = t
+        if let fact = WindowStateHub.shared.fact(for: id), fact.exists, fact.pid != s.pid {
+            abandon(s, reason: "window gone")
+        }
     }
 
     // MARK: - 让开
@@ -652,6 +653,8 @@ final class PiPSession {
     let panel: NSPanel
     let view: PiPView
     var tab: NSPanel?
+    /// WindowStateHub 上对源窗口的订阅：窗口关掉或换了进程就放弃会话。
+    var watch: WindowWatch?
 
     init(id: CGWindowID, pid: pid_t, element: AXUIElement, original: CGRect, entered: CGRect, windowSize: CGSize, corner: PiPCorner,
          displayID: CGDirectDisplayID?) {

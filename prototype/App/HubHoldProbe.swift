@@ -157,10 +157,11 @@ extension GlanceProbe {
         try await teardown()
         throw EffectError.unavailable("two side-by-side windows produced no divider seam (input enhancements module off?)")
       }
-      guard let interval = split.timerIntervalForProbe, abs(interval - 0.5) < 0.01 else {
-        let seen = split.timerIntervalForProbe.map { "\($0)" } ?? "none"
+      // 有缝时维持把手的是窗口事件（hub 订阅，没有定时器）；SkyLight 通知用不了时退回半秒一次的定时器。
+      let maintenance = split.maintenanceForProbe
+      guard maintenance == "events" || maintenance == "timer 0.5" else {
         try await teardown()
-        throw EffectError.unavailable("the split divider timer is not polling at 0.5 s (interval \(seen))")
+        throw EffectError.unavailable("the split divider maintenance is not alive with a seam (\(maintenance))")
       }
       return teardown
 
@@ -173,7 +174,7 @@ extension GlanceProbe {
       pip.enter(long, id: lid, pid: pid)
       try await wait("in picture in picture", timeout: 5) { pip.framesForProbe(lid) > 3 && pip.panelFrameForProbe(lid) != nil }
       try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
-      try require(pip.maintenanceAliveForProbe, "the picture in picture 1 s maintenance timer is not running")
+      try require(pip.maintenanceAliveForProbe, "the picture in picture source-window watch (hub) is not running")
       return {
         pip.exit(lid, activate: false)
         try await self.wait("pip gone", timeout: 4) { pip.panelFrameForProbe(lid) == nil }
@@ -204,6 +205,7 @@ extension GlanceProbe {
       }
       try await Task.sleep(for: .milliseconds(2000), clock: .suspending)
       try require(owner.reconcileTimer != nil, "the 5 s shaded-window reconcile timer is not running")
+      try require(owner.reconcileWatches[wid] != nil, "the shaded source window is not watched on the hub")
       return { [owner] in
         _ = owner.unshadeReturningElement(wid, playSound: false)
         try await Task.sleep(for: .milliseconds(800), clock: .suspending)

@@ -2,7 +2,8 @@
 // ⅓/½/⅔，推到屏幕边那一扇让开进侧拉、另一扇铺满；竖屏上下拼满时是横条。Apple 支持文档 125309：“拖中间那条来
 // 调整两个窗口的大小”。不止两扇：四角、三分、网格、魔法平铺带侧栏，排好的窗口之间每条缝都有一根把手，拖它这条缝
 // 两边的窗口一起变（Swish 的“拖分隔线同时调多扇”）；只有两扇拼满时推边上才让一扇进侧拉。什么时候看：切 App、
-// 排窗口、换桌面立刻看一次，平时两秒一次、有把手时半秒一次（只问 WindowServer 一张窗口表，不问各 App）；认缝规则
+// 排窗口、换桌面立刻看一次；没缝时两秒一次找新分屏，有把手时靠 WindowStateHub 的窗口事件（挪动、改大小、来了、走了立刻重认，
+// 1 秒心跳兜底，SkyLight 通知用不了时退回半秒一次；都只问 WindowServer 一张窗口表，不问各 App）；认缝规则
 // 见 Core/SeamLayout.swift。不认收起的、侧拉的、画中画的、收进刘海的、卷轴里的；有别的窗浮在前面时把手收掉。
 // 松手后窗口还在滑的那会儿按落点认缝，滑完回读实际外框——App 不肯缩放时按它实际的边再挪一次缝。
 
@@ -20,6 +21,20 @@ final class SplitViewController {
     private var dividers: [SplitDivider] = []
     private var seams: [Seam] = []
     private var timer: Timer?
+    /// 有缝时靠 WindowStateHub 的事件维持（不再半秒一次）：盯着当前桌面在屏的每扇普通窗口，
+    /// 任何一扇挪了/改了/来了/走了就合成一次重认；没缝时不盯，仍是 2 秒一次的定时刷新。
+    private var windowWatches: [CGWindowID: WindowWatch] = [:]
+    private var anyChangeWatch: WindowWatch?
+    /// 最近一次后台扫描里在屏的普通窗口：要盯的集合。
+    private var scannedWindowIDs: [CGWindowID] = []
+    /// 1 秒心跳只认这一扇（共享看门狗每拍给每个订阅发一次）：事件盖不到的变化（比如换前后顺序）靠它兜底重认。
+    private var heartbeatID: CGWindowID?
+    private var eventRefreshQueued = false
+    private var lastEventRefreshAt: TimeInterval = 0
+    /// 事件来时上一次扫描还没回来：回来后补一次。
+    private var refreshAfterScan = false
+    /// hub 试过了事件用不了（SkyLight 通知载不到）：不再每次扫描都试，退回半秒一次的定时器。
+    private var eventsUnavailable = false
     private var observers: [NSObjectProtocol] = []
     private var distributedObservers: [NSObjectProtocol] = []
     /// 认缝在后台算：一次只放一个；锁屏、睡眠时作废在途的结果。
@@ -74,8 +89,11 @@ final class SplitViewController {
 
     /// 探针用。
     var seamsForProbe: [Seam] { seams }
-    /// 探针用（--hold split）：分隔条轮询定时器的间隔，没在跑是 nil。
-    var timerIntervalForProbe: TimeInterval? { timer?.timeInterval }
+    /// 探针用（--hold split）：现在靠什么维持把手——"events"（盯着窗口，没有定时器）、"timer 0.5"/"timer 2"、"none"。
+    var maintenanceForProbe: String {
+        if let timer { return "timer \(timer.timeInterval)" }
+        return anyChangeWatch != nil && !windowWatches.isEmpty ? "events" : "none"
+    }
     var dividerFramesForProbe: [NSRect] { dividers.prefix(seams.count).filter(\.isVisible).map(\.frame) }
 
     /// 探针用：按住第 index 根把手拖到 position（沿缝的法向），以 velocity（点/秒）松手。
@@ -93,6 +111,7 @@ final class SplitViewController {
     func start() {
         guard FeatureCatalog.isEnabled(.inputEnhancements) else { return }
         guard observers.isEmpty else { return }
+        eventsUnavailable = false
         let center = NSWorkspace.shared.notificationCenter
         for name in [NSWorkspace.didActivateApplicationNotification,
                      NSWorkspace.didHideApplicationNotification, NSWorkspace.didUnhideApplicationNotification,
@@ -134,6 +153,7 @@ final class SplitViewController {
     func stop() {
         timer?.invalidate()
         timer = nil
+        dropWatches()
         let center = NSWorkspace.shared.notificationCenter
         for observer in observers { center.removeObserver(observer) }
         observers.removeAll()
@@ -148,6 +168,7 @@ final class SplitViewController {
         guard pause.pause(reason) else { return }
         timer?.invalidate()
         timer = nil
+        dropWatches()
         scanGeneration += 1
         scanInFlight = false
     }
@@ -176,19 +197,81 @@ final class SplitViewController {
     private func schedule() {
         timer?.invalidate()
         timer = nil
-        guard !pause.isPaused else { return }
-        let interval: TimeInterval = seams.isEmpty ? 2 : 0.5
-        let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.refresh() }
+        guard !pause.isPaused else { dropWatches(); return }
+        if seams.isEmpty || eventsUnavailable { dropWatches() } else { syncWatches() }
+        let eventDriven = !windowWatches.isEmpty && WindowStateHub.shared.isEventDriven
+        if !seams.isEmpty, !windowWatches.isEmpty, !eventDriven { eventsUnavailable = true }
+        switch SplitScan.maintenance(hasSeams: !seams.isEmpty, eventDriven: eventDriven) {
+        case .events:
+            return
+        case .timer(let interval):
+            // 有缝却用不了事件（hub 退回轮询）：别让 hub 白白多查，退回改动前的定时器。
+            if !seams.isEmpty { dropWatches() }
+            let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.refresh() }
+            }
+            t.tolerance = interval * 0.2
+            RunLoop.main.add(t, forMode: .common)
+            timer = t
         }
-        t.tolerance = interval * 0.2
-        RunLoop.main.add(t, forMode: .common)
-        timer = t
+    }
+
+    /// 让订阅和最近一次扫描里在屏的窗口一致；只在有缝时调用。
+    private func syncWatches() {
+        let hub = WindowStateHub.shared
+        let wanted = Set(scannedWindowIDs)
+        for id in Array(windowWatches.keys) where !wanted.contains(id) {
+            windowWatches[id]?.cancel()
+            windowWatches[id] = nil
+        }
+        // 心跳那扇走了（或还没有）就换一扇：留着旧的订阅不动，只改认哪一扇。
+        if heartbeatID == nil || !wanted.contains(heartbeatID!) { heartbeatID = wanted.min() }
+        for id in wanted.sorted() where windowWatches[id] == nil {
+            windowWatches[id] = hub.watch(id, fallbackInterval: SplitScan.seamInterval, heartbeat: true) {
+                [weak self] change, _ in
+                if change == .heartbeat { self?.heartbeat(from: id) }
+            }
+        }
+        if anyChangeWatch == nil {
+            anyChangeWatch = hub.observeAnyChange { [weak self] _ in self?.queueEventRefresh() }
+        }
+    }
+
+    private func dropWatches() {
+        for watch in windowWatches.values { watch.cancel() }
+        windowWatches.removeAll()
+        anyChangeWatch?.cancel()
+        anyChangeWatch = nil
+        heartbeatID = nil
+        refreshAfterScan = false
+    }
+
+    /// hub 的 1 秒心跳：事件盖不到的变化（前后顺序）靠它兜底。事件突然不可用了就退回定时器。
+    private func heartbeat(from id: CGWindowID) {
+        guard id == heartbeatID else { return }
+        if !WindowStateHub.shared.isEventDriven { eventsUnavailable = true; schedule(); return }
+        refresh()
+    }
+
+    /// 窗口事件来了：合成一次刷新（松手后窗口滑动时每帧都有事件，最多每 0.1 秒认一次）。
+    private func queueEventRefresh() {
+        guard !eventRefreshQueued else { return }
+        eventRefreshQueued = true
+        let delay = SplitScan.eventRefreshDelay(sinceLast: ProcessInfo.processInfo.systemUptime - lastEventRefreshAt)
+        MainTimer.fire(after: delay, tolerance: 0) { [weak self] in
+            guard let self else { return }
+            self.eventRefreshQueued = false
+            self.lastEventRefreshAt = ProcessInfo.processInfo.systemUptime
+            self.refresh()
+        }
     }
 
     /// 平时的刷新：CGWindowList 和认缝在后台串行队列算，回到主线程再按收起、侧拉等状态过滤、摆把手。
     func refresh() {
-        guard SplitScan.canRefresh(dragging: drag != nil, paused: pause.isPaused, inFlight: scanInFlight) else { return }
+        guard SplitScan.canRefresh(dragging: drag != nil, paused: pause.isPaused, inFlight: scanInFlight) else {
+            if scanInFlight, drag == nil, !pause.isPaused, anyChangeWatch != nil { refreshAfterScan = true }
+            return
+        }
         guard Self.isEnabled && AXIsProcessTrusted() else {
             candidates = []; signatureGate.reset()
             show([])
@@ -204,23 +287,37 @@ final class SplitViewController {
             let windows = Self.windows(glideTargets: glideTargets)
             let signature = SplitScan.signature(windows: windows, areas: areas)
             let fresh: [Seam]? = signature == lastSignature ? nil : Self.candidateSeams(windows, areas: areas, gap: gap)
+            let ids = windows.map(\.id)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { self?.finishScan(generation: generation, signature: signature, fresh: fresh) }
+                MainActor.assumeIsolated {
+                    self?.finishScan(generation: generation, signature: signature, fresh: fresh, windowIDs: ids)
+                }
             }
         }
     }
 
-    private func finishScan(generation: Int, signature: Int, fresh: [Seam]?) {
+    private func finishScan(generation: Int, signature: Int, fresh: [Seam]?, windowIDs: [CGWindowID]) {
         guard generation == scanGeneration else { return }
         scanInFlight = false
+        // 扫描期间又来过事件：回来补一次（队列里排，不在这里递归）。
+        defer { if refreshAfterScan { refreshAfterScan = false; queueEventRefresh() } }
         // 拖着把手时不刷新：结果丢掉，松手后会重认。
         guard drag == nil, !pause.isPaused else { return }
         _ = signatureGate.shouldCompute(signature)   // 不同则记下，相同则计一次跳过
+        if fresh != nil { scannedWindowIDs = windowIDs }
         if let fresh { candidates = fresh }
         let found = filtered(candidates)
         // 候选和收起、侧拉等状态都没变：把手已经摆好，不用再 show。
         if fresh == nil, found == seams { return }
         show(found)
+        // 窗口集合变了（来了新窗口、关了旧的）而有没有缝没变：show 不会重排维护，这里补上订阅。
+        if !seams.isEmpty {
+            if anyChangeWatch != nil {
+                syncWatches()
+            } else if timer != nil, !eventsUnavailable, !scannedWindowIDs.isEmpty {
+                schedule()   // 之前没窗口可盯、先用了定时器：现在有了，改成靠事件
+            }
+        }
     }
 
     /// 松手后马上重认：一次性、要立刻拿到结果，仍在主线程同步算。

@@ -4,6 +4,7 @@
 // 三、能不能刷新：拖着把手时不刷新；上一次还在后台算时不叠新的。
 
 import CoreGraphics
+import Foundation
 
 enum SplitScan {
     /// 窗口列表（含屏幕可用区域）的签名：顺序也算（前后顺序决定谁压着谁）。
@@ -27,6 +28,31 @@ enum SplitScan {
     static func canRefresh(dragging: Bool, paused: Bool, inFlight: Bool) -> Bool {
         !dragging && !paused && !inFlight
     }
+
+    /// 没缝时的定时刷新间隔（要发现新拼出来的分屏）。
+    static let idleInterval: TimeInterval = 2
+    /// 有缝、但窗口事件用不了（SkyLight 通知载不到，hub 退回轮询）时的定时刷新间隔。
+    static let seamInterval: TimeInterval = 0.5
+    /// 事件触发的刷新：同一阵事件合成一次，两次之间至少隔这么久（松手后窗口滑动时每帧都有挪动事件）。
+    static let eventCoalesce: TimeInterval = 0.03
+    static let eventMinimumGap: TimeInterval = 0.1
+
+    /// 事件来了之后，隔多久起一次刷新：离上一次事件刷新够久就几乎立刻，否则等到满最小间隔。
+    static func eventRefreshDelay(sinceLast elapsed: TimeInterval) -> TimeInterval {
+        max(eventCoalesce, eventMinimumGap - max(0, elapsed))
+    }
+
+    /// 平时靠什么维持把手：有缝且窗口事件可用时全靠事件（hub 的 1 秒心跳兜底），没缝时 2 秒一次找新分屏，
+    /// 有缝但事件不可用时和改动前一样半秒一次。
+    static func maintenance(hasSeams: Bool, eventDriven: Bool) -> SplitMaintenance {
+        guard hasSeams else { return .timer(idleInterval) }
+        return eventDriven ? .events : .timer(seamInterval)
+    }
+}
+
+enum SplitMaintenance: Equatable {
+    case events
+    case timer(TimeInterval)
 }
 
 /// 相同签名跳过：记着上一次算过的签名。
