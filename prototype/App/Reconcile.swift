@@ -39,7 +39,9 @@ extension AppDelegate {
     }
 
     /// 收起的源窗口出了变化：只会让反应更快，定时巡检照旧。
-    /// 挪动/出现/样式变 → 排一轮核对（同一阵合成一次，两轮之间至少隔 1 秒）；窗口没了 → 1 秒后再确认一次。
+    /// 挪动/出现/样式变 → 排一轮核对（同一阵合成一次，两轮之间至少隔 1 秒）；窗口没了 → 同样只提前排一轮
+    /// 普通核对，收不收卷帘条仍由巡检里的孤儿判据决定（AX 读不到尺寸、连续两轮定时巡检、实时查询为空），
+    /// 不在这里直接收：sourceWindowID 对有些 App 是按外框/标题配出来的，单凭“这个号没了”可能收错窗口。
     private func shadedSourceChanged(_ id: CGWindowID, change: WindowChange) {
         guard let state = shaded[id] else { return }
         switch ReconcileEventPolicy.reaction(for: change) {
@@ -49,11 +51,8 @@ extension AppDelegate {
             // 我们自己刚收起/刚挪动的那阵子，App 的动静不算唤回（和巡检里同一道忽略期）。
             guard Date() >= state.ignoreAppRevealUntil else { return }
             queueEventReconcile()
-        case .confirmGone:
-            let stamp = foldCallbackStamp(id: id, state: state)
-            MainTimer.fire(after: ReconcileEventPolicy.goneConfirmDelay, tolerance: 0.1) { [weak self] in
-                self?.confirmShadedSourceGone(id, stamp: stamp)
-            }
+        case .recheck:
+            queueEventReconcile()
         }
     }
 
@@ -70,16 +69,6 @@ extension AppDelegate {
         }
     }
 
-    /// 和定时巡检里“孤儿卷帘条”同一个判据：App 还在、窗口服务器的实时查询成功且结果为空（快速查看收起的不算）。
-    private func confirmShadedSourceGone(_ id: CGWindowID, stamp: WS2FoldCallbackStamp) {
-        guard foldCallbackIsCurrent(stamp, maximumAge: 5), let state = shaded[id],
-              state.hide != .quickLookClosed,
-              let app = runningApp(pid: state.pid), !app.isTerminated,
-              let windows = CGWindowListCopyWindowInfo(.optionIncludingWindow, state.sourceWindowID) as? [[String: Any]],
-              windows.isEmpty else { return }
-        wlog("reconcile: orphan strip id=\(id) app=\(state.appName) hide=\(state.hide.rawValue) (hub saw window gone); window closed elsewhere, closing strip")
-        forceCleanup(id)
-    }
     func shouldRetryJournalRescue(now: Date) -> Bool {
         guard !shadeJournalEntries().isEmpty else { return false }
         guard let last = lastJournalRescueAttempt else { return true }

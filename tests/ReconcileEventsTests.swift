@@ -15,7 +15,7 @@ struct ReconcileEventsTests {
         check(ReconcileEventPolicy.reaction(for: .moved(r)) == .reconcile, "moved reconciles")
         check(ReconcileEventPolicy.reaction(for: .shown) == .reconcile, "shown reconciles")
         check(ReconcileEventPolicy.reaction(for: .restyled) == .reconcile, "restyled (alpha back) reconciles")
-        check(ReconcileEventPolicy.reaction(for: .gone) == .confirmGone, "gone confirms")
+        check(ReconcileEventPolicy.reaction(for: .gone) == .recheck, "gone only schedules a regular pass (never cleans up directly)")
         check(ReconcileEventPolicy.reaction(for: .hidden) == .ignore, "hidden ignored")
         check(ReconcileEventPolicy.reaction(for: .resized(r)) == .ignore, "resized ignored")
         check(ReconcileEventPolicy.reaction(for: .heartbeat) == .ignore, "heartbeat ignored")

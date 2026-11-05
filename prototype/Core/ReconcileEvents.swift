@@ -7,8 +7,9 @@ enum ReconcileEventPolicy {
     enum Reaction: Equatable {
         /// 源窗口看起来动了、出现了或透明度变了（被 App 自己叫回来）：立刻排一轮核对。
         case reconcile
-        /// 窗口服务器说它没了：过一会儿再确认一次，仍查不到就收掉卷帘条。
-        case confirmGone
+        /// 窗口服务器说它没了：只提前排一轮普通核对（不过忽略期那道门）。收卷帘条仍只走巡检里的孤儿判据，
+        /// 事件轮次不计入“连续几轮查不到”（见 countsTowardMissing），所以不会比改动前更早收。
+        case recheck
         case ignore
     }
 
@@ -17,7 +18,7 @@ enum ReconcileEventPolicy {
     static func reaction(for change: WindowChange) -> Reaction {
         switch change {
         case .moved, .shown, .restyled: return .reconcile
-        case .gone: return .confirmGone
+        case .gone: return .recheck
         case .hidden, .resized, .heartbeat: return .ignore
         }
     }
@@ -25,8 +26,6 @@ enum ReconcileEventPolicy {
     /// 事件触发的轮次之间至少隔这么久（同一阵事件合成一次）。
     static let minimumGap: TimeInterval = 1.0
     static let coalesceDelay: TimeInterval = 0.05
-    /// 事件看到窗口没了之后，再确认一次前等多久（和定时巡检的“连续两轮”同一道保险，只是更短）。
-    static let goneConfirmDelay: TimeInterval = 1.0
 
     /// 从上一轮事件核对到现在过了 `elapsed` 秒，这一轮该等多久再跑。
     static func delay(sinceLastRun elapsed: TimeInterval) -> TimeInterval {
