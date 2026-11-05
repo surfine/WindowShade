@@ -1,6 +1,6 @@
 // 侧拉用的两件小东西，单独放这里好单独测：
 // - 边框的底：macOS 26 起用系统玻璃，14/15 用系统磨砂，“减少透明度”打开时用不透明的窗口底色。
-// - 维护定时器：只在有侧拉窗口时跑，没有时一个都不留。
+// - 维护：只在有侧拉窗口时订阅它（WindowStateHub），没有时一个订阅都不留。
 
 import Cocoa
 
@@ -77,22 +77,39 @@ final class SlideOverOpaqueBase: NSView {
     }
 }
 
-/// 侧拉的维护定时器：start 之后每隔 interval 秒调一次，stop 或释放后不再调。可注入 factory 做测试。
+/// 侧拉的维护：有侧拉窗口时订阅它（WindowStateHub：挪动、改大小、隐藏、出现、关掉，外加 1 秒心跳兜底），
+/// 没有时一个订阅都不留。SkyLight 通知用不了时 hub 退回 0.5s 轮询，和原来的维护定时器一样。
+/// 处理器返回 false 表示这次被跳过（正在滑、拖、改大小、按着标题栏……）：这时挂一个 0.25s 的复查，
+/// 直到不再跳过，跳过期间来的变化不用等下一个事件或心跳（原来最多等下一拍 0.5s）。
+/// 订阅和复查定时器都可注入 factory 做测试。
 @MainActor
 final class SlideOverMaintenanceTicker {
     typealias Factory = @MainActor (_ interval: TimeInterval, _ tolerance: TimeInterval, _ fire: @escaping @Sendable () -> Void) -> Timer
+    typealias WatchFactory = @MainActor (_ id: CGWindowID, _ fallbackInterval: TimeInterval,
+                                         _ onChange: @escaping @MainActor (WindowChange, WindowFact?) -> Void) -> WindowWatch
 
+    /// SkyLight 通知用不了时 hub 退回的轮询间隔（原来维护定时器的间隔）。
     static let interval: TimeInterval = 0.5
-    static let tolerance: TimeInterval = 0.1
+    /// 被跳过之后的复查间隔与容差。
+    static let recheckInterval: TimeInterval = 0.25
+    static let tolerance: TimeInterval = 0.05
 
     private let factory: Factory
-    private var timer: Timer?
-    private let handler: () -> Void
+    private let watchFactory: WatchFactory
+    private var watch: WindowWatch?
+    private(set) var watchedID: CGWindowID?
+    private var recheck: Timer?
+    private var lastSample: CFAbsoluteTime?
+    private let handler: () -> Bool
 
-    var isRunning: Bool { timer != nil }
+    var isRunning: Bool { watch != nil }
+    var isRechecking: Bool { recheck != nil }
 
-    init(factory: @escaping Factory = SlideOverMaintenanceTicker.systemFactory, handler: @escaping () -> Void) {
+    init(factory: @escaping Factory = SlideOverMaintenanceTicker.systemFactory,
+         watchFactory: @escaping WatchFactory = SlideOverMaintenanceTicker.systemWatchFactory,
+         handler: @escaping () -> Bool) {
         self.factory = factory
+        self.watchFactory = watchFactory
         self.handler = handler
     }
 
@@ -102,16 +119,47 @@ final class SlideOverMaintenanceTicker {
         return timer
     }
 
-    func start() {
-        guard timer == nil else { return }
-        timer = factory(Self.interval, Self.tolerance) { [weak self] in
-            MainActor.assumeIsolated { self?.handler() }
+    static let systemWatchFactory: WatchFactory = { id, fallbackInterval, onChange in
+        WindowStateHub.shared.watch(id, fallbackInterval: fallbackInterval, heartbeat: true, onChange: onChange)
+    }
+
+    /// 开始（或换成）盯这扇窗。同一扇重复调用无副作用。
+    func start(id: CGWindowID) {
+        guard watchedID != id || watch == nil else { return }
+        stop()
+        watchedID = id
+        watch = watchFactory(id, Self.interval) { [weak self] change, fact in
+            self?.changed(change, fact: fact)
         }
     }
 
     func stop() {
-        timer?.invalidate()
-        timer = nil
+        watch?.cancel()
+        watch = nil
+        watchedID = nil
+        lastSample = nil
+        recheck?.invalidate()
+        recheck = nil
     }
 
+    private func changed(_ change: WindowChange, fact: WindowFact?) {
+        // 同一次查询里的几条变化（又挪又隐藏）只处理一次：处理器自己会读全部状态。
+        if let sampledAt = fact?.sampledAt {
+            if sampledAt == lastSample { return }
+            lastSample = sampledAt
+        }
+        run()
+    }
+
+    /// 跑一次处理器；被跳过就挂上复查，处理完就撤掉复查。
+    func run() {
+        if handler() {
+            recheck?.invalidate()
+            recheck = nil
+        } else if recheck == nil {
+            recheck = factory(Self.recheckInterval, Self.tolerance) { [weak self] in
+                MainActor.assumeIsolated { self?.run() }
+            }
+        }
+    }
 }

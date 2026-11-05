@@ -1,5 +1,5 @@
 #!/bin/bash
-# 侧拉边框：底的选择（减少透明度 -> 不透明）、维护定时器生命周期、几何常量不变（对源码核对）。
+# 侧拉边框：底的选择（减少透明度 -> 不透明）、维护订阅与复查的生命周期、几何常量不变（对源码核对）。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 CHROME=prototype/App/SlideOverChrome.swift
@@ -15,5 +15,6 @@ fi
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
   prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/App/SlideOverGlass.swift tests/SlideOverChromeTests.swift \
+  prototype/Support/SkyLightFramework.swift prototype/Support/MainTimer.swift prototype/Private/SkyLightNotify.swift prototype/Window/WindowStateHub.swift \
   -framework Cocoa -o .build/slideover-chrome-tests/tests
 .build/slideover-chrome-tests/tests

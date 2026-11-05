@@ -33,8 +33,8 @@ final class SlideOverController {
     unowned let owner: AppDelegate
     private var docked: Docked? {
         didSet {
-            // 维护定时器只在有侧拉窗口时跑。
-            if docked != nil { maintenance?.start() } else { maintenance?.stop() }
+            // 维护只在有侧拉窗口时订阅它（换了一扇就换订阅）。
+            if let docked { maintenance?.start(id: docked.id) } else { maintenance?.stop() }
             // 不再侧拉（不论走哪条路退出）：排布历史里那几步侧拉作废。
             if let old = oldValue, old.id != docked?.id { owner.gestures.forgetSteps(.slideOver, id: old.id) }
         }
@@ -56,7 +56,7 @@ final class SlideOverController {
     private var maintenance: SlideOverMaintenanceTicker?
     private var dragWriter: SlideOverDragWriter?
     private var draggingMirror = false
-    /// 正按着标题栏拖着的那扇（dragMoved 起，到松手）：这期间边框收着，定时检查不把它挂回来。
+    /// 正按着标题栏拖着的那扇（dragMoved 起，到松手）：这期间边框收着，维护检查不把它挂回来。
     private var titleDragging: CGWindowID?
     private var edgeDrag: (start: CGRect, latest: CGRect, wasHidden: Bool)?
     private var spaceObserver: NSObjectProtocol?
@@ -78,7 +78,7 @@ final class SlideOverController {
         chrome.onResizeBegin = { [weak self] in self?.beginResize() }
         chrome.onResize = { [weak self] delta in self?.updateResize(delta) }
         chrome.onResizeEnd = { [weak self] in self?.endResize() }
-        maintenance = SlideOverMaintenanceTicker { [weak self] in self?.validateWindow() }
+        maintenance = SlideOverMaintenanceTicker { [weak self] in self?.validateWindow() ?? true }
         spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.spaceChanged() }
@@ -552,24 +552,31 @@ final class SlideOverController {
         }
     }
 
-    private func validateWindow() {
-        guard let d = docked else { return }
+    /// 侧拉窗口有变化（WindowStateHub 的事件或 1 秒心跳）时核对一遍。返回 false 表示这次被跳过
+    /// （正在滑、拖、改大小，或按着标题栏）：维护会每 0.25s 复查，直到不再跳过。
+    private func validateWindow() -> Bool {
+        guard let d = docked else { return true }
         guard let info = cgWindowInfo(d.id), (info[kCGWindowOwnerPID as String] as? pid_t) == d.pid else {
             windowGone(d.id)
-            return
+            return true
         }
-        if screenForDisplayID(d.display) == nil { screensChanged(); return }
-        guard glide == nil, edgeDrag == nil, chromeDrag == nil, resizing == nil else { return }
+        if screenForDisplayID(d.display) == nil { screensChanged(); return true }
+        guard glide == nil, edgeDrag == nil, chromeDrag == nil, resizing == nil else { return false }
         // 窗口被最小化、App 被隐藏，或窗口关了进程还留着它：边框、拖动带和把手不能围着一块空处挡别的 App 的点击。
         // 窗口回来了再挂上（置顶要是跟着断了也接上）；标题栏上还按着（正拖着它）时不挂，松手后 dragEnded、released 会挂。
         let onScreen = (info[kCGWindowIsOnscreen as String] as? Bool) == true
-        if chrome.isVisible, !onScreen { updateChrome(); return }
-        if !chrome.isVisible, onScreen, !d.hidden, titleDragging != d.id, NSEvent.pressedMouseButtons & 1 == 0 { pin(); return }
+        if chrome.isVisible, !onScreen { updateChrome(); return true }
+        if !chrome.isVisible, onScreen, !d.hidden {
+            guard titleDragging != d.id, NSEvent.pressedMouseButtons & 1 == 0 else { return false }
+            pin()
+            return true
+        }
         // 被人从窗口自己的边上改了大小、挪了位置：边框跟过去。
         if chrome.isVisible, let now = cgWindowBounds(info), let shown = chrome.frameAX,
            abs(now.minX - shown.minX) + abs(now.minY - shown.minY) + abs(now.width - shown.width) + abs(now.height - shown.height) > 1 {
             chrome.place(now)
         }
+        return true
     }
 
     func screensChanged() {
