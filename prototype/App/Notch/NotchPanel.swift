@@ -927,6 +927,11 @@ final class NotchPanel: NSPanel {
         }
     }
 
+    /// 两耳有没有活动、电量闪要画：有就要量刘海两边的空位（不只是收着窗口的时候）。
+    /// 2026-11-06：以前空位只跟着「收着窗口」送进来，只放着音乐时 room 一直是 nil，真刘海屏停在 .pending——
+    /// 11-04 前画成 200 宽的临时胶囊，《两耳的岛》后干脆不画。由 NotchController.refresh 读它决定送不送空位。
+    var wantsMenuRoom: Bool { !activityItems.isEmpty || powerFlashState != nil }
+
     func setCompact(_ value: Compact?, room newRoom: MenuBarRoom.Sides?) {
         let sameContent = value?.same(as: compact) ?? (compact == nil)
         guard !sameContent || newRoom != room else { return }
@@ -934,7 +939,7 @@ final class NotchPanel: NSPanel {
         let roomOnly = sameContent
         compact = value
         room = newRoom
-        if newRoom != nil || value == nil {
+        if newRoom != nil || (value == nil && !wantsMenuRoom) {
             roomTimer?.invalidate()
             roomTimer = nil
             roomWaitOver = false

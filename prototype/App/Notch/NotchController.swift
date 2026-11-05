@@ -290,6 +290,7 @@ final class NotchController {
             guard let self else { return }
             let ids = values.filter { !$0.kind.isShelf }.map(\.id)
             let minimal = Self.minimalPresentationEnabled
+            let wanted = self.roomWants()
             for (display, panel) in self.panels {
                 // 持续活动只登记在这里，不会顶掉上面的层；超过三条由协调器自己去重截断。
                 // 只给正在用的那块屏（别的屏上是空的）。
@@ -298,6 +299,7 @@ final class NotchController {
                 panel.setMinimalPresentation(minimal)
                 panel.setActivities(mine ? values : [], selected: mine ? selected : nil)
             }
+            if self.roomWants() != wanted { self.refresh() }
             // 合成一排开着：右段的格子（会话换了状态、曲名变了）原地换，不重新展开。
             if Self.mergedRowEnabled { self.refreshOngoingRows() }
             self.owner.launchpad.updateActivities(values.filter { !$0.kind.isShelf }, selected: selected)
@@ -1524,7 +1526,9 @@ final class NotchController {
     func showPowerFlash(_ flash: PowerFlash) -> Bool {
         guard !announcementsHeld, Self.isEnabled, !Self.probeSilence, !isBusyForPowerFlash,
               let panel = pointerPanel() else { return false }
-        return panel.presentPowerFlash(flash)
+        let shown = panel.presentPowerFlash(flash)
+        if shown { refresh() }
+        return shown
     }
 
     /// 刘海上现在有没有别的东西：插电那一下用它判断“撞上就不出”。
@@ -2293,6 +2297,7 @@ final class NotchController {
     func thumbnailForProbe(_ id: CGWindowID) -> CGImage? { thumbnails.image(id) }
     /// 探针用：一排展开后要格子图（和指针停上来时一样）。
     func requestThumbnailsForProbe() { requestThumbnails() }
+    func refreshForProbe() { refresh() }
     func endPeekForProbe() { endPeek() }
 
     /// 按让开的集合更新每块屏：让开的藏起来，退出后立刻按当前状态画回来，不补播进场。
@@ -2313,7 +2318,7 @@ final class NotchController {
             panel.setMinimalPresentation(minimal)
             panel.setCapsuleBelowMenuBar(capsuleBelow)
             // 收进刘海的窗口不是实时活动（第 41 条只管活动）：照旧每块屏都显示。
-            panel.setCompact(compact, room: compact == nil ? nil : room(for: panel, display: display))
+            panel.setCompact(compact, room: compact == nil && !panel.wantsMenuRoom ? nil : room(for: panel, display: display))
         }
     }
 
@@ -2350,12 +2355,18 @@ final class NotchController {
     private func pushActivities() {
         let values = activities.store.visible, selected = activities.store.selectedID
         let ids = values.filter { !$0.kind.isShelf }.map(\.id)
+        let wanted = roomWants()
         for (display, panel) in panels {
             let mine = ownsActivities(display)
             leases.publishOngoing(mine ? ids : [], on: WS2.DisplayID(value: display))
             panel.setActivities(mine ? values : [], selected: mine ? selected : nil)
         }
+        if roomWants() != wanted { refresh() }
     }
+
+    /// 每块屏要不要两耳的空位（NotchPanel.wantsMenuRoom）。活动来了、走了时它会变：变了才 refresh 送空位，
+    /// 正在播放每一拍都推活动，不能每拍都 refresh。
+    private func roomWants() -> [CGDirectDisplayID: Bool] { panels.mapValues(\.wantsMenuRoom) }
 
     /// 只有多块屏时才需要跟：每半秒看一眼指针和焦点在哪块屏上（读一个坐标，不碰别的）。
     private func scheduleActiveDisplayTimer() {

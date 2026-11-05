@@ -249,6 +249,8 @@ extension GlanceProbe {
                               subtitle: "Poolsuite ON AIR", symbol: "music.note", startedAt: 0,
                               progress: .unknown, isPaused: false, detail: "")
     panel.setActivities([music], selected: nil)
+    // 和 NotchController.pushActivities 一样：有了活动就送两耳的空位（wantsMenuRoom），不然真刘海屏停在 .pending。
+    owner.notch.refreshForProbe()
     try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     panel.notchDebugLog("cycle: feeding music activity done")
     panel.expand(with: [], animated: true)
