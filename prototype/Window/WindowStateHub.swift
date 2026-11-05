@@ -513,9 +513,16 @@ final class WindowStateHub {
         DispatchQueue.main.async { MainActor.assumeIsolated { work() } }
     }
 
+    /// 看门狗挂在 .common：菜单跟踪、拖窗口改大小时也照走（改动前画中画、SplitView、卷轴条、窗口浏览的轮询
+    /// 都是 .common；退回模式下钟停了就等于轮询停了）。事件模式的回调走主队列，本来就不受模式影响。
     static func systemTimer(interval: TimeInterval, tolerance: TimeInterval,
                             fire: @escaping @MainActor () -> Void) -> WindowHubTimer {
-        SystemWindowHubTimer(MainTimer.repeating(interval: interval, tolerance: tolerance, fire))
+        let timer = Timer(timeInterval: interval, repeats: true) { _ in
+            MainActor.assumeIsolated { fire() }
+        }
+        timer.tolerance = tolerance
+        RunLoop.main.add(timer, forMode: .common)
+        return SystemWindowHubTimer(timer)
     }
 }
 
