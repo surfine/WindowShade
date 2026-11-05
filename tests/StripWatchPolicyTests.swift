@@ -54,6 +54,9 @@ struct StripWatchPolicyTests {
         expect(P.leaves(visible: true, flagged: true), "收起、侧拉、收进刘海：让出")
         expect(!P.leaves(visible: true, flagged: false), "还在屏上、没被收走：留着")
 
+        // 标记晚于事件：补查延迟 + 一次核对要不比原来的 0.5 秒对账慢
+        expect(P.flagRecheckDelay > 0 && P.flagRecheckDelay <= 0.4, "补查在最后一次变化后不超过 0.4 秒（原对账间隔 0.5 秒）")
+
         // 新窗口资格
         let screen = CGRect(x: 0, y: 0, width: 1470, height: 956)
         let big = CGRect(x: 300, y: 100, width: 800, height: 600)

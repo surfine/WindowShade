@@ -38,6 +38,9 @@ enum StripWatchPolicy {
         return .recheck(after: max(0.05, busyRemaining + 0.02))
     }
 
+    /// 一列有变化后，补查收起/侧拉/收进刘海标记的延迟（标记可能晚于窗口事件才打上）。必须明显小于原来的 0.5 秒对账间隔。
+    static let flagRecheckDelay: TimeInterval = 0.3
+
     /// 这扇卷轴里的窗要不要让出位置（不含被拖走）：看不到了（关掉、最小化、隐藏、层级变了），
     /// 或被收起、侧拉、收进刘海。
     static func leaves(visible: Bool, flagged: Bool) -> Bool { flagged || !visible }

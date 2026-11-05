@@ -69,6 +69,8 @@ final class ScrollStripController {
     private var resumeWork: DispatchWorkItem?
     private var evaluationQueued = false
     private var driftRecheck: DispatchWorkItem?
+    /// 一列有变化后的那一次补查（收起/侧拉/收进刘海的标记可能比窗口的挪动事件晚一点才打上）。
+    private var flagRecheck: DispatchWorkItem?
     /// 正在为“新窗口加入桌面”事件核对的窗口：整轮对账先不碰它们。
     private var qualifying: Set<CGWindowID> = []
     /// 开卷轴、关卷轴各加一：延后的闭包带着开时的值，过期了就不动。
@@ -938,6 +940,7 @@ final class ScrollStripController {
         appearanceWatch?.cancel(); appearanceWatch = nil
         resumeWork?.cancel(); resumeWork = nil
         driftRecheck?.cancel(); driftRecheck = nil
+        flagRecheck?.cancel(); flagRecheck = nil
         if let token = activateObserver { NSWorkspace.shared.notificationCenter.removeObserver(token) }
         activateObserver = nil
         if let token = screenObserver { NotificationCenter.default.removeObserver(token) }
@@ -1027,6 +1030,21 @@ final class ScrollStripController {
     private func columnChanged(_ change: WindowChange) {
         if change == .heartbeat { return }
         queueEvaluation()
+        scheduleFlagRecheck()
+    }
+
+    /// 收起、侧拉、收进刘海是我们自己的动作：窗口挪动/隐藏的事件到了，标记可能还没打上，事件就查不出来。
+    /// 每次有变化就把唯一一个补查往后顺延到最后一次变化后 0.3 秒，补查只有一个、没有常驻定时器，最慢 0.3 秒 + 一次核对，不比原来的 0.5 秒慢。
+    private func scheduleFlagRecheck() {
+        flagRecheck?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                self?.flagRecheck = nil
+                self?.evaluateColumns()
+            }
+        }
+        flagRecheck = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + StripWatchPolicy.flagRecheckDelay, execute: work)
     }
 
     /// 锚的变化：心跳触发整轮对账（也是暂停没接回时的兜底）；它自己的变化当一列的变化。
@@ -1035,9 +1053,10 @@ final class ScrollStripController {
         case .heartbeat:
             if watchesPaused, CACurrentMediaTime() > busyUntil, !motionActive { resumeWatches() } else { reconcile() }
         case .moved, .resized, .restyled:
-            if !watchesPaused { queueEvaluation() }
+            if !watchesPaused { queueEvaluation(); scheduleFlagRecheck() }
         case .hidden, .shown, .gone:
             queueEvaluation()
+            scheduleFlagRecheck()
         }
     }
 
