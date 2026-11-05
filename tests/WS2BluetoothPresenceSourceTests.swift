@@ -36,7 +36,7 @@ import Foundation
     let backend = FakeBackend()
     let link = FakeLink()
     var now: TimeInterval = 1000
-    var timers: [(delay: TimeInterval, fire: @MainActor () -> Void, live: Bool)] = []
+    var timers: [(delay: TimeInterval, due: TimeInterval, fire: @MainActor () -> Void, live: Bool)] = []
     var batches: [[PresenceLock.Event]] = []
     var source: WS2BluetoothPresenceSource!
 
@@ -45,24 +45,30 @@ import Foundation
         source = WS2BluetoothPresenceSource(
             backend: backend,
             schedule: { [unowned self] delay, fire in
-                timers.append((delay, fire, true))
+                timers.append((delay, now + delay, fire, true))
                 let index = timers.count - 1
                 return { self.timers[index].live = false }
             },
             uptime: { [unowned self] in now })
     }
     var liveTimers: Int { timers.filter { $0.live }.count }
+    /// 去抖计时（60 秒那个）；连着时的 5 秒保底另算。
+    var liveDebounce: Int { timers.filter { $0.live && $0.delay > 5 }.count }
+    var liveSafety: Int { timers.filter { $0.live && $0.delay == 5 }.count }
     var flat: [PresenceLock.Event] { batches.flatMap { $0 } }
     func start() { source.start { [self] in batches.append($0) } }
     /// 假装通知到达：先改设备状态（和真机一样，通知在状态变化之后）。
     func connectNotification() { link.isConnected = true; backend.connectHandler?(Harness.address) }
     func disconnectNotification() { link.isConnected = false; link.disconnectHandler?() }
+    /// 时间往前走：按到期先后触发，触发里新排的计时只要也在这段时间内到期就接着触发（保底会自己续排）。
     func advance(_ seconds: TimeInterval) {
-        now += seconds
-        for index in timers.indices where timers[index].live {
+        let end = now + seconds
+        while let index = timers.indices.filter({ timers[$0].live && timers[$0].due <= end }).min(by: { timers[$0].due < timers[$1].due }) {
+            now = max(now, timers[index].due)
             timers[index].live = false
             timers[index].fire()
         }
+        now = end
     }
     func count(_ match: (PresenceLock.Event) -> Bool) -> Int { flat.filter(match).count }
 }
@@ -84,7 +90,9 @@ import Foundation
             h.start()
             expect(h.count(isConnected) == 1, "start while connected emits connected once")
             expect(h.count(isReadStarted) == 1 && h.count(isRSSI) == 1, "start snapshot carries one probe with rssi")
-            expect(h.liveTimers == 0, "no periodic timer while connected")
+            expect(h.liveTimers == 1 && h.liveSafety == 1, "while connected only the 5 s safety re-read is armed")
+            h.batches = []; h.advance(60)
+            expect(h.flat.isEmpty && h.liveSafety == 1, "safety re-reads stay silent while still connected")
             expect(h.backend.connectHandler != nil && h.link.disconnectHandler != nil, "connect and disconnect notifications registered")
         }
 
@@ -94,9 +102,9 @@ import Foundation
             h.start(); h.batches = []
             h.disconnectNotification()
             expect(h.flat.isEmpty, "disconnect notification alone stays silent (debounce)")
-            expect(h.liveTimers == 1 && h.timers.last?.delay == 60, "one 60 s one-shot timer armed")
+            expect(h.liveDebounce == 1 && h.liveSafety == 0, "one 60 s one-shot timer armed, safety stopped")
             h.advance(30); h.connectNotification()
-            expect(h.liveTimers == 0, "reconnect cancels the debounce timer")
+            expect(h.liveDebounce == 0 && h.liveSafety == 1, "reconnect cancels the debounce timer and resumes the safety re-read")
             expect(h.count(isDisconnected) == 0, "reconnect inside 60 s never reports away")
             h.disconnectNotification(); h.advance(60)
             expect(h.count(isDisconnected) == 1, "60 s after disconnect reports away once")
@@ -123,6 +131,17 @@ import Foundation
             h.link.isConnected = true // 没有通知
             h.advance(60)
             expect(h.count(isDisconnected) == 0, "timer re-read finds it connected, no false away")
+        }
+
+        // 断开通知漏发：5 秒保底读到断开，从那时起去抖 60 秒
+        do {
+            let h = Harness(); h.link.isConnected = true
+            h.start(); h.batches = []
+            h.link.isConnected = false // 没有通知
+            h.advance(5)
+            expect(h.flat.isEmpty && h.liveDebounce == 1, "safety re-read notices the drop within 5 s and starts the away window")
+            h.advance(60)
+            expect(h.count(isDisconnected) == 1, "missed disconnect notification still reports away (≤ 5 s + 60 s)")
         }
 
         // 启动时不在：不算离开，没有计时；它连上再断才开始计

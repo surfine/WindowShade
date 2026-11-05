@@ -106,6 +106,7 @@ final class WS2BluetoothPresenceSource: PresenceSource {
     private var unregisterConnect: (() -> Void)?
     private var unregisterDisconnect: (() -> Void)?
     private var cancelDebounce: (() -> Void)?
+    private var cancelSafety: (() -> Void)?
     private var awayStart: TimeInterval?
     private var seenConnected = false
     private var emit: (([PresenceLock.Event]) -> Void)?
@@ -148,6 +149,7 @@ final class WS2BluetoothPresenceSource: PresenceSource {
 
     private func unregisterAll() {
         cancelDebounce?(); cancelDebounce = nil
+        cancelSafety?(); cancelSafety = nil
         unregisterConnect?(); unregisterConnect = nil
         unregisterDisconnect?(); unregisterDisconnect = nil
         device = nil
@@ -191,6 +193,15 @@ final class WS2BluetoothPresenceSource: PresenceSource {
         } else {
             awayStart = nil
             cancelDebounce?(); cancelDebounce = nil
+        }
+        // 保底（Aaron 11-06 定）：连着的时候每 pollInterval 秒再读一次 isConnected()，不读 RSSI。
+        // 万一断开通知漏发，最多晚这么久开始去抖，和改动前的 5 秒轮询一样；断开期间由去抖计时接手。
+        cancelSafety?(); cancelSafety = nil
+        if connected == true {
+            cancelSafety = schedule(model.pollInterval) { [weak self] in
+                self?.cancelSafety = nil
+                self?.observe()
+            }
         }
     }
 
