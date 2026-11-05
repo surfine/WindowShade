@@ -428,6 +428,11 @@ final class GlanceProbe {
       finish(nil)
       return
     }
+    if CommandLine.arguments.contains("--pin-follow") {
+      try await exercisePinFollow(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--pins") {
       try await exercisePinSuspend(element: element, pid: process.processIdentifier)
       finish(nil)
@@ -460,6 +465,17 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--notch") {
       try await exerciseNotch(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    // GapProbesSlideOver.swift 的两项原来没接进调度，跑它们会落到默认的看一眼流程（11-06 发现）。
+    if CommandLine.arguments.contains("--slide-over-border") {
+      try await exerciseSlideOverBorder(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--slide-over-spaces") {
+      try await exerciseSlideOverSpaces(element: element, pid: process.processIdentifier)
       finish(nil)
       return
     }

@@ -2904,6 +2904,13 @@
       "signal": "authorization-key"
     },
     {
+      "path": "prototype/App/PinFollowProbe.swift",
+      "line": 42,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &ref) == .success, let button = ref else {",
+      "signal": "window-ax"
+    },
+    {
       "path": "prototype/App/GestureProbe.swift",
       "line": 909,
       "symbol": "AXUIElementCopyAttributeValue",

@@ -606,6 +606,9 @@ final class PinnedPreviewController {
         sessions[id]?.panel.isVisible ?? false
     }
 
+    /// 探针用（--pin-follow）：置顶面板此刻的外框。
+    func panelFrameForProbe(id: CGWindowID) -> NSRect? { sessions[id]?.panel.frame }
+
     // MARK: 暂时取消全部置顶
 
     /// 有被暂时取消的置顶（菜单显示“恢复全部置顶”）。
