@@ -173,7 +173,7 @@ extension GlanceProbe {
       pip.enter(long, id: lid, pid: pid)
       try await wait("in picture in picture", timeout: 5) { pip.framesForProbe(lid) > 3 && pip.panelFrameForProbe(lid) != nil }
       try await Task.sleep(for: .milliseconds(1500), clock: .suspending)
-      try require(pip.maintenanceAliveForProbe, "the picture in picture 1 s maintenance timer is not running")
+      try require(pip.maintenanceAliveForProbe, "the picture in picture source-window watch (hub) is not running")
       return {
         pip.exit(lid, activate: false)
         try await self.wait("pip gone", timeout: 4) { pip.panelFrameForProbe(lid) == nil }
