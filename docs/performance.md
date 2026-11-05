@@ -527,7 +527,7 @@ Apple Silicon 上全绿（含自检）；唯一的架构阻塞点（卡顿采样
 
 ### 七之二、空闲唤醒归因：测量模板（F09）
 
-测量脚本：`tools/perf/idle-wakeups.sh <pid> [label] [--out FILE] [--build NUM] [--powermetrics]`。每次运行等 36 秒后采 30 秒，追加一行 JSON（label、时间、build、cpu、idlew）。`--powermetrics` 只打印需要 Aaron 手动 sudo 执行的 `powermetrics` 与 `spindump` 命令，脚本本身不提权。
+测量脚本：`tools/perf/idle-wakeups.sh <pid> [label] [--out FILE] [--build NUM] [--powermetrics]`。每次运行等 36 秒后采 30 秒，追加一行 JSON（label、时间、build、cpu、`idlew_per_s`、`interrupt_wakeups_per_s`）。2026-11-05 起唤醒数用 `proc_pid_rusage`（v4 的 `ri_pkg_idle_wkups`、`ri_interrupt_wkups`）前后差：macOS 27 上 `top` 的 IDLEW 是累计值，旧结果不可用。`--powermetrics` 只打印需要 Aaron 手动 sudo 执行的 `powermetrics` 与 `spindump` 命令，脚本本身不提权。
 
 **AppleSPUAccelerometer 的调用方（S05 的结论）：** 截至 build 对应的这个提交，`prototype/` 里没有任何代码实例化 `AppleSPUAccelerometer`，只有类型自身与 `EffectEnvironment.swift` 里的一处注释提到它。它当前没有调用方，因此空闲唤醒里不会来自这个传感器。去留由 F09 之后的决定定，未决前不删类型。
 
@@ -536,7 +536,8 @@ Apple Silicon 上全绿（含自检）；唯一的架构阻塞点（卡顿采样
 | 场景 | build | CPU（%） | IDLEW（次/秒） | wakeups/s | 备注 |
 |---|---|---|---|---|---|
 | 锁屏 30 秒 | | | | | |
-| 解锁空闲 60 秒 | | | | | |
+| 解锁空闲 60 秒 | 3cb3ba32（11-05 改动前） | 0.19 | 0（pkg_idle） | 5.55（interrupt） | 用户空闲；`idle-wakeups.sh` 改用 proc_pid_rusage 后量 |
+| 解锁、用户在用 | 600fc6a2+（11-05/06 这一轮后） | 0.02 | 0（pkg_idle） | 2.01（interrupt） | 用户正在操作（HID 空闲 0 秒），条件和上一行不同，只作方向参考；同条件复量待补 |
 | 两扇窗口并排 | | | | | |
 | 隐私页开 | | | | | |
 | 隐私页关 | | | | | |
