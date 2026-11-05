@@ -501,15 +501,6 @@ enum UpdateJobs {
         return ok
     }
 
-    /// 等任务不在跑，最多 timeout 秒。
-    static func waitUntilNotRunning(label: String, timeout: TimeInterval) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if !isRunning(label: label) { return true }
-            Thread.sleep(forTimeInterval: 0.25)
-        }
-        return !isRunning(label: label)
-    }
 }
 
 // MARK: - 看护的交接

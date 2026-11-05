@@ -230,7 +230,7 @@ final class NotchLevelObserver {
     private func pointerDisplay() -> CGDirectDisplayID? {
         let point = NSEvent.mouseLocation
         let screen = NSScreen.screens.first(where: { NSMouseInRect(point, $0.frame, false) }) ?? NSScreen.main
-        return (screen?.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
+        return displayID(for: screen)
     }
 
     // MARK: 拦键（LV2）
@@ -515,10 +515,10 @@ final class NotchLevelObserver {
         // 指针所在那块可调亮度的屏；没有就内建屏。
         let point = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) }
-            ?? NSScreen.screens.first { ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID) == CGMainDisplayID() }
+            ?? NSScreen.screens.first { displayID(for: $0) == CGMainDisplayID() }
             ?? NSScreen.main
         guard let screen,
-              let id = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
+              let id = displayID(for: screen)
         else { return nil }
         var value: Float = 0
         guard getBrightness(id, &value) == 0 else { return nil }

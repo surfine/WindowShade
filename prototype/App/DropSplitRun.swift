@@ -19,7 +19,7 @@ extension TrackpadGestureController {
     func dropSplit(id: CGWindowID, pid: pid_t, frameAtDown: CGRect, down: CGPoint, release: CGPoint,
                    stillOpen: Bool) -> Bool {
         guard Self.dropSplitEnabled,
-              let screen = NSScreen.screens.first(where: { $0.frame.contains(release) }),
+              let screen = screenAtPoint(release),
               let info = freshWindowInfo(id), (info[kCGWindowOwnerPID as String] as? pid_t) == pid,
               let landed = cgWindowBounds(info),
               abs(landed.width - frameAtDown.width) <= 2, abs(landed.height - frameAtDown.height) <= 2,

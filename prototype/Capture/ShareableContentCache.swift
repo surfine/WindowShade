@@ -102,14 +102,3 @@ final class ShareableContentCache {
         return content
     }
 }
-
-// continuation 竞速的"只 resume 一次"守卫。两个赛跑的 Task 不在同一 actor 上，
-// 需要真正的互斥而非"没有 await 就不会交错"这类单线程论证。
-actor SingleResumeGuard {
-    private var resumed = false
-    func tryResume() -> Bool {
-        guard !resumed else { return false }
-        resumed = true
-        return true
-    }
-}

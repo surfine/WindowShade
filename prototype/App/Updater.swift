@@ -866,10 +866,11 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     private func markThisUpdate(_ offer: UpdateOffer, phase: UpdatePhase, reason: UpdateRestoreReason?) {
         let from = currentBuild
         store.mutateJournal { j in
-            guard j != nil, j!.to.build == offer.build, j!.from.build == from else { return }
-            UpdateLog.write("phase \(j!.phase.rawValue) -> \(phase.rawValue)")
-            j!.phase = phase
-            if let reason { j!.restoreReason = reason }
+            guard var journal = j, journal.to.build == offer.build, journal.from.build == from else { return }
+            UpdateLog.write("phase \(journal.phase.rawValue) -> \(phase.rawValue)")
+            journal.phase = phase
+            if let reason { journal.restoreReason = reason }
+            j = journal
         }
     }
 

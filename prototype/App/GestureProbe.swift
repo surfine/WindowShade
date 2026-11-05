@@ -76,7 +76,7 @@ extension GlanceProbe {
     let hud = gestures.hud
     let bar = CGPoint(x: original.minX + 180, y: original.minY + 12)
     let content = CGPoint(x: original.midX, y: original.minY + 220)
-    let screen = NSScreen.screens.first { $0.frame.contains(cocoaMousePoint(fromAXPoint: bar)) }
+    let screen = screenAtPoint(cocoaMousePoint(fromAXPoint: bar))
     guard let visible = screen?.visibleFrame else { throw EffectError.unavailable("no screen") }
     let visibleAX = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
 
@@ -417,7 +417,7 @@ extension GlanceProbe {
     try await wait("key: left third", timeout: 3) { self.bounds(self.id).map { self.near($0, oneThird) } == true }
     print("PASS gesture: ⌃⌘← again and again walks the left ladder: half, two thirds, one third")
     try await Task.sleep(for: .milliseconds(900), clock: .suspending)
-    let here = NSScreen.screens.first { $0.frame.contains(cocoaMousePoint(fromAXPoint: leftBar)) }
+    let here = screenAtPoint(cocoaMousePoint(fromAXPoint: leftBar))
     if let here, let neighbor = TrackpadGestureController.neighbor(of: here, toward: .left) {
       let area = CGRect(origin: axPosition(fromCocoaFrame: neighbor.visibleFrame), size: neighbor.visibleFrame.size)
       let landing = CGRect(x: area.midX, y: area.minY, width: area.width / 2, height: area.height)
@@ -436,7 +436,7 @@ extension GlanceProbe {
     try await Task.sleep(for: .milliseconds(900), clock: .suspending)
     try await key(.right)
     guard let now = bounds(id),
-          let screen = NSScreen.screens.first(where: { $0.frame.contains(cocoaMousePoint(fromAXPoint: CGPoint(x: now.midX, y: now.midY))) })
+          let screen = screenAtPoint(cocoaMousePoint(fromAXPoint: CGPoint(x: now.midX, y: now.midY)))
     else { throw EffectError.unavailable("no screen for the keyboard corner") }
     let area = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame), size: screen.visibleFrame.size)
     let rightHalf = CGRect(x: area.midX, y: area.minY, width: area.width / 2, height: area.height)
@@ -1186,7 +1186,7 @@ extension GlanceProbe {
     try await wait("fixture windows", timeout: 6) { appWindows(pid: pid).filter { axTitle($0).hasPrefix("卷轴") }.count == 4 }
     let wins = appWindows(pid: pid).filter { axTitle($0).hasPrefix("卷轴") }
     guard let ida = windowID(of: wins[0]), let idb = windowID(of: wins[1]), let idc = windowID(of: wins[2]),
-          let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main else {
+          let screen = screenAtPoint(NSEvent.mouseLocation) ?? NSScreen.main else {
       throw EffectError.unavailable("split fixture windows")
     }
     let visible = screen.visibleFrame
@@ -2194,7 +2194,7 @@ extension GlanceProbe {
       NSWorkspace.shared.frontmostApplication?.processIdentifier == pid
     }
     let bar = cocoaMousePoint(fromAXPoint: CGPoint(x: original.midX, y: original.minY + 12))
-    guard let visible = NSScreen.screens.first(where: { $0.frame.contains(bar) })?.visibleFrame else {
+    guard let visible = screenAtPoint(bar)?.visibleFrame else {
       throw EffectError.unavailable("no screen for the flick check")
     }
     try await exerciseFlicks(element: element,
@@ -2225,7 +2225,7 @@ extension GlanceProbe {
                                              release: release, at: t0) {
       print("INFO gesture: flick not taken — \(rejected); frame before=\(before) after drag=\(String(describing: bounds(id)))")
     }
-    let flickArea = NSScreen.screens.first { $0.frame.contains(down) }.map {
+    let flickArea = screenAtPoint(down).map {
       CGRect(origin: axPosition(fromCocoaFrame: $0.visibleFrame), size: $0.visibleFrame.size)
     } ?? visibleAX
     let flickLeft = CGRect(x: flickArea.minX, y: flickArea.minY, width: flickArea.width / 2, height: flickArea.height)

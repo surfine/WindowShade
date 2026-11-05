@@ -233,10 +233,6 @@ final class FileShelfController: NSObject, NSSharingServiceDelegate, @preconcurr
         return list
     }
 
-    func allLiveURLs() -> [URL] {
-        rows.flatMap { liveURLs(for: $0.entry.id) ?? [] }
-    }
-
     // MARK: 动作
 
     func announce(_ text: String) {

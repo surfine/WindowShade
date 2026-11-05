@@ -253,7 +253,7 @@ final class GestureHUD {
         let size = Self.size
         var rect = NSRect(x: anchor.x - size.width / 2, y: anchor.y - size.height,
                           width: size.width, height: size.height)
-        let area = (screen ?? NSScreen.screens.first { $0.frame.contains(anchor) } ?? NSScreen.main)?
+        let area = (screen ?? screenAtPoint(anchor) ?? NSScreen.main)?
             .visibleFrame.insetBy(dx: 8, dy: 8)
         if let area {
             rect.origin.x = min(max(rect.minX, area.minX), area.maxX - size.width)

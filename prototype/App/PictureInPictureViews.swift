@@ -308,7 +308,7 @@ final class PiPDropHint {
     static let margin: CGFloat = 14
 
     static func target(at point: CGPoint) -> Target? {
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) else { return nil }
+        guard let screen = screenAtPoint(point) else { return nil }
         let v = screen.visibleFrame
         let z = zone, m = margin
         let zones: [(PiPCorner, CGRect)] = [

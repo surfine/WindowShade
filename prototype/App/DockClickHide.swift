@@ -71,8 +71,7 @@ final class DockClickHide {
             spaces[window.id] = mover.windowSpace(id: window.id)
         }
         let current = Set(NSScreen.screens.compactMap { screen in
-            (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)
-                .flatMap { mover.currentSpace(displayID: $0.uint32Value) }
+            displayID(for: screen).flatMap { mover.currentSpace(displayID: $0) }
         })
         // 哪些最小化了、屏幕外的是不是标准窗口，要问 App 自己（辅助功能），放到后台；
         // 普通窗口都在屏上、也没有停在屏幕外的时不用问（通常就是这样）。
@@ -128,7 +127,7 @@ final class DockClickHide {
 
     /// 指针在 Dock 那一带（屏幕底边、左右边往里 110 点以内）：只在这里才去问辅助功能，别处的点击立刻放过。
     private static func nearDock(_ point: NSPoint) -> Bool {
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) else { return false }
+        guard let screen = screenAtPoint(point) else { return false }
         let frame = screen.frame
         return point.y - frame.minY < 110 || point.x - frame.minX < 110 || frame.maxX - point.x < 110
     }

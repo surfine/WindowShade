@@ -55,9 +55,7 @@ final class HeadphoneMotionSource: NSObject, CMHeadphoneMotionManagerDelegate {
     /// 指针所在显示器的编号。找不到就不记这一帧。
     private static func pointerDisplay() -> UInt32? {
         let point = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }),
-              let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
-        return number.uint32Value
+        return displayID(for: screenAtPoint(point))
     }
 
     // MARK: CMHeadphoneMotionManagerDelegate

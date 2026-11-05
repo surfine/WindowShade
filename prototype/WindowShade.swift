@@ -750,10 +750,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
 
-@objc func finishOnboarding() {
-        dismissOnboarding()
-    }
-
 @objc func dismissOnboarding() {
         UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
         onboardingRefreshTimer?.invalidate()

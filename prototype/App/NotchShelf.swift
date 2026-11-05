@@ -52,10 +52,10 @@ final class NotchShelf {
         let shown = Set(apps.filter { !$0.isHidden }.map(\.processIdentifier))
         let names = Dictionary(apps.map { ($0.processIdentifier, $0.localizedName ?? "") }, uniquingKeysWith: { a, _ in a })
         let started = generation
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let found = Self.scan(shown: shown, hidden: hidden, exclude: exclude, names: names)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     self.scanning = false
                     // 查的途中被作废了（还原了一扇、换了桌面）：这份结果是旧的，下次再查。
@@ -83,11 +83,11 @@ final class NotchShelf {
         let names = Dictionary(apps.map { ($0.processIdentifier, $0.localizedName ?? "") }, uniquingKeysWith: { a, _ in a })
         let started = generation
         let others = Set(items.filter { $0.kind != .elsewhere }.map(\.id))
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
             let found = Self.elsewhere(list: list, shown: shown, exclude: exclude.union(others), names: names)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     self.elsewhereScanning = false
                     guard started == self.generation else { return }

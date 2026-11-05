@@ -124,13 +124,13 @@ final class SlideOverController {
         generation &+= 1
         let request = generation
         // 找前台窗口要问那个 App，放到后台去问，主线程不等。
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let win = focusedWindow()
             let id = win.flatMap { windowID(of: $0) }
             var pid: pid_t = 0
             if let win { AXUIElementGetPid(win, &pid) }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self, self.generation == request, self.docked == nil else { return }
                     guard let win, let id else {
                         self.owner.quietNotice(WSL10n.text("notice.slideOver.noWindow", zh: "没有可以侧拉的窗口"), kind: .problem, log: "slide-over: no focused window")
@@ -1103,7 +1103,7 @@ final class SlideOverMirror {
         // 先滑进来（背景和 App 图标垫着），画面到了就接上：不让人等开流的那一两百毫秒。
         if !interactive { content.animateShift(to: 0, velocity: 0, token: .glide, done: nil) }
         let id = self.id
-        let screenID = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
+        let screenID = displayID(for: screen)
         Task { @MainActor [weak self] in
             let shareable: SCShareableContent?
             if let cached = await ShareableContentCache.shared.content(requiring: id) {

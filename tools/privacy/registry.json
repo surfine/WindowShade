@@ -4573,14 +4573,14 @@
       "path": "prototype/App/DockLock.swift",
       "line": 25,
       "symbol": "UserDefaults",
-      "source": "UserDefaults.standard.set(Int(Self.displayID(screen)), forKey: Self.displayKey)",
+      "source": "UserDefaults.standard.set(Int(displayID(for: screen) ?? 0), forKey: Self.displayKey)",
       "signal": "settings"
     },
     {
       "path": "prototype/App/DockLock.swift",
       "line": 40,
       "symbol": "UserDefaults",
-      "source": "UserDefaults.standard.set(Self.displayUUID(Self.displayID(screen)), forKey: Self.displayUUIDKey)",
+      "source": "UserDefaults.standard.set(Self.displayUUID(displayID(for: screen) ?? 0), forKey: Self.displayUUIDKey)",
       "signal": "settings"
     },
     {

@@ -81,8 +81,6 @@ final class WindowProxyStage {
         plate.isHidden = false
     }
 
-    func hidePlate() { plate.isHidden = true }
-
     private func apply(look: ProxyLook, snapshot: CGImage?) {
         self.look = look
         switch look {

@@ -398,10 +398,10 @@ final class WindowSwitcher {
         let targets = allItems.enumerated().filter { $0.element.kind == .window }.map { ($0.offset, $0.element.id) }
         guard !targets.isEmpty else { return }
         let generation = allItems.map(\.id)
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let images = concurrentQuickPreviews(targets.map(\.1))
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self, self.isOpen, self.allItems.map(\.id) == generation else { return }
                     for (index, id) in targets { self.allItems[index].image = images[id] }
                     let keep = self.items.indices.contains(self.selected) ? self.items[self.selected].id : nil
@@ -416,7 +416,7 @@ final class WindowSwitcher {
     private func showPanel() {
         guard isOpen else { return }
         let pointer = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(pointer) } ?? NSScreen.main
+        let screen = screenAtPoint(pointer) ?? NSScreen.main
         guard let screen else { return }
         let panel = WindowSwitcherPanel(items: items, selected: selected, query: query.isSearching ? query.text : nil, screen: screen)
         panel.onPick = { [weak self] index in

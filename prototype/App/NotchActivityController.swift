@@ -155,7 +155,6 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     var sessionMenuRows: [CodingSessionActivities.MenuRow] { sessions.menuRows }
     /// 有会话在等你的目录（M07 的 NotchTile.waiting 读这个，M11 再接到那一排）。
     var waitingSessionDirectories: Set<String> { sessions.waitingDirectories }
-    func isSessionWaiting(cwd: String) -> Bool { sessions.isWaiting(cwd: cwd) }
 
     /// 一个会话的状态变了。返回时刘海上的持续活动已经对上；开口那一句交给 `onSessionBloom`。
     /// 睡着、锁屏时只记状态不上刘海（项目名不上锁屏），回来时再对一次。

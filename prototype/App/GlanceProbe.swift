@@ -218,8 +218,8 @@ final class GlanceProbe {
       print("INFO space-follow restored err=\(restored.rawValue): \(spaces()) frontmost=\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?")")
       // 再试：用我们自己的连接把别的进程的窗口挪到当前桌面。
       if let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }),
-         let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
-         let here = PrivateSLSWindowMover.shared.currentSpace(displayID: CGDirectDisplayID(n.uint32Value)) {
+         let screenID = displayID(for: screen),
+         let here = PrivateSLSWindowMover.shared.currentSpace(displayID: screenID) {
         let moved = PrivateSLSWindowMover.shared.moveWindow(id: id, toSpace: here)
         try await Task.sleep(for: .milliseconds(800), clock: .suspending)
         print("INFO space-follow SLS move to \(here) reported=\(moved): \(spaces())")
@@ -1059,9 +1059,6 @@ final class GlanceProbe {
     let previousVolume = shadeSounds.volume
     shadeSounds.volume = 0
     defer { shadeSounds.volume = previousVolume }
-    func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
-      (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber).map { CGDirectDisplayID($0.uint32Value) }
-    }
     // AX 坐标原点在主屏左上角、y 向下；Cocoa 原点在主屏左下角、y 向上。
     let mainHeight = main?.frame.height ?? 0
     let target = CGPoint(x: other.visibleFrame.minX + 80, y: mainHeight - other.visibleFrame.maxY + 80)
@@ -1081,9 +1078,9 @@ final class GlanceProbe {
     let stripScreen = state?.overlay?.screen
     let recorded = state?.sourceDisplayID
     // NSScreen 物件每次都可能重新建立，比顯示器編號，不比物件身份。
-    let sameScreen = stripScreen.flatMap(displayID) == displayID(other)
-    let sameDisplay = recorded == displayID(other)
-    print("INFO second-display: strip frame \(String(describing: state?.overlay?.frame)) on \(stripScreen?.localizedName ?? "-"), recorded display \(recorded.map(String.init) ?? "-"), target \(other.localizedName) \(displayID(other).map(String.init) ?? "-")")
+    let sameScreen = stripScreen.flatMap { displayID(for: $0) } == displayID(for: other)
+    let sameDisplay = recorded == displayID(for: other)
+    print("INFO second-display: strip frame \(String(describing: state?.overlay?.frame)) on \(stripScreen?.localizedName ?? "-"), recorded display \(recorded.map(String.init) ?? "-"), target \(other.localizedName) \(displayID(for: other).map(String.init) ?? "-")")
     print(sameScreen ? "PASS second-display: the strip lands on the display the window was on"
       : "FAIL second-display: the strip landed on \(stripScreen?.localizedName ?? "no display") instead of \(other.localizedName)")
     print(sameDisplay ? "PASS second-display: the fold remembers that display"

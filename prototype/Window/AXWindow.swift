@@ -186,12 +186,11 @@ func movePointerRaw(to p: CGPoint, includeDisplayMove: Bool) -> (CGError, CGErro
     let warpErr = CGWarpMouseCursorPosition(p)
     var displayErr: CGError?
     if includeDisplayMove {
-        if let screen = NSScreen.screens.first(where: { $0.frame.contains(p) }),
-           let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber {
-            let displayID = CGDirectDisplayID(number.uint32Value)
-            let bounds = CGDisplayBounds(displayID)
+        if let screen = screenAtPoint(p),
+           let id = displayID(for: screen) {
+            let bounds = CGDisplayBounds(id)
             let local = CGPoint(x: p.x - bounds.minX, y: p.y - bounds.minY)
-            displayErr = CGDisplayMoveCursorToPoint(displayID, local)
+            displayErr = CGDisplayMoveCursorToPoint(id, local)
         } else {
             displayErr = CGDisplayMoveCursorToPoint(CGMainDisplayID(), p)
         }

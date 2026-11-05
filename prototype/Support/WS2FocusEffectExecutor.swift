@@ -17,7 +17,6 @@ import Foundation
         try plan.transition(run: run, windows: windows); pump()
     }
     func suspend() { plan.setSuspended(true) }
-    func resumeAfterVerifiedUnlock() { plan.setSuspended(false); pump() }
     func manualChange(_ identity: WS2FocusEffectPlan.Identity) { plan.manualChange(identity); pump() }
     // Do not cancel an in-flight port call and forget it. Its late completion may require compensation.
     func end() throws { try transition(run: nil, windows: []) }

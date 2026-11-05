@@ -224,8 +224,9 @@ enum UpdateLaunch {
         guard case .recordAndContinue = action else { return }
         let pid = getpid()
         store.mutateJournal { j in
-            guard j != nil, let index = j!.launches.lastIndex(where: { $0.pid == pid && $0.build == myBuild }) else { return }
-            body(&j!.launches[index])
+            guard var journal = j, let index = journal.launches.lastIndex(where: { $0.pid == pid && $0.build == myBuild }) else { return }
+            body(&journal.launches[index])
+            j = journal
         }
     }
 }

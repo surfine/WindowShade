@@ -4,10 +4,6 @@ import Cocoa
 
 // MARK: - 内容视图
 
-final class WindowBrowserFlippedView: NSView {
-    nonisolated override var isFlipped: Bool { true }
-}
-
 final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewDelegate,
                                       NSCollectionViewDataSource, NSCollectionViewDelegate,
                                       NSTableViewDataSource, NSTableViewDelegate,

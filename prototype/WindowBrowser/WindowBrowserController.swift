@@ -2408,7 +2408,7 @@ final class WindowBrowserController: NSObject {
             if zone != drag.zone || drag.zone == nil {
                 if let action = zone?.placementAction,
                    let plan = placementPlan(for: key, action: action,
-                                            on: NSScreen.screens.first(where: { $0.frame.contains(point) })) {
+                                            on: screenAtPoint(point)) {
                     let preview = dragPreview ?? WindowPlacementPreviewWindow()
                     dragPreview = preview
                     preview.show(plan: plan)
@@ -2432,7 +2432,7 @@ final class WindowBrowserController: NSObject {
             ? MainActor.assumeIsolated { owner?.slideOver.dropHint.take(id: id, at: point).map { $0.side == .left } }
             : nil
         finishCardDrag()
-        let screen = NSScreen.screens.first { $0.frame.contains(point) }
+        let screen = screenAtPoint(point)
         if let slideLeft, let screen {
             wlog("window-browser: card dropped into slide-over id=\(id)")
             dropIntoSlideOver(key: key, left: slideLeft, screen: screen)
@@ -2474,7 +2474,7 @@ final class WindowBrowserController: NSObject {
     }
 
     private func dropZone(at point: NSPoint) -> WindowBrowserDropZone? {
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) else { return nil }
+        guard let screen = screenAtPoint(point) else { return nil }
         let edgeHit = MainActor.assumeIsolated { SlideOverDropHint.target(at: point) != nil }
         return WindowBrowserCardDragPolicy.zone(
             pointer: point, screenFrame: screen.frame, visibleFrame: screen.visibleFrame,

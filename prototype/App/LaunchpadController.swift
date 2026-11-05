@@ -110,10 +110,10 @@ final class LaunchpadController {
         let screens = NSScreen.screens.compactMap { screen in
             NSWorkspace.shared.desktopImageURL(for: screen).map { ($0, max(screen.frame.width, screen.frame.height) * screen.backingScaleFactor) }
         }
-        DispatchQueue.global(qos: .utility).async {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
             let made = screens.compactMap { url, pixels in AppCatalog.wallpaper(url: url, pixels: pixels).map { (url.path, $0) } }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     // 只留当前各屏的壁纸，换屏或换壁纸后旧的淘汰。
                     self.wallpapers = LaunchpadBackdrop.retaining(self.wallpapers, keeping: Set(made.map { $0.0 }))
@@ -217,10 +217,10 @@ final class LaunchpadController {
     private func openFiles(_ files: [URL], with app: LaunchpadApp) {
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        NSWorkspace.shared.open(files, withApplicationAt: URL(fileURLWithPath: app.path), configuration: configuration) { _, error in
+        NSWorkspace.shared.open(files, withApplicationAt: URL(fileURLWithPath: app.path), configuration: configuration) { [weak self] _, error in
             guard let error else { return }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     self?.owner.quietNotice(WSL10n.text("notice.launchpad.openFailed", zh: "%@ 没能打开它", app.name), kind: .problem, log: "launchpad: open with \(app.name) failed: \(error.localizedDescription)")
                 }
             }
@@ -231,7 +231,7 @@ final class LaunchpadController {
 
     func show(from notch: NSRect? = nil) {
         let pointer = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else {
+        guard let screen = screenAtPoint(pointer) ?? NSScreen.main else {
             noteShowRefused("no screen (pointer=\(NSStringFromPoint(pointer)) screens=\(NSScreen.screens.count))")
             return
         }
@@ -317,10 +317,10 @@ final class LaunchpadController {
                 view.setWallpaper(ready)
             } else {
                 let pixels = max(screen.frame.width, screen.frame.height) * screen.backingScaleFactor
-                DispatchQueue.global(qos: .userInitiated).async {
+                DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                     let image = AppCatalog.wallpaper(url: url, pixels: pixels)
                     DispatchQueue.main.async {
-                        MainActor.assumeIsolated { [weak self] in
+                        MainActor.assumeIsolated {
                             guard let self, let image else { return }
                             self.wallpapers = LaunchpadBackdrop.retaining(self.wallpapers, keeping: Set(NSScreen.screens.compactMap { NSWorkspace.shared.desktopImageURL(for: $0)?.path }))
                             self.wallpapers[url.path] = image
@@ -471,10 +471,10 @@ final class LaunchpadController {
         guard !scanning else { return }
         scanning = true
         let saved = loaded ? nil : UserDefaults.standard.data(forKey: Self.layoutKey)
-        DispatchQueue.global(qos: qos).async {
+        DispatchQueue.global(qos: qos).async { [weak self] in
             let found = AppCatalog.scan()
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     self.scanning = false
                     var base = self.layout
@@ -525,14 +525,14 @@ final class LaunchpadController {
         wlog("launchpad: open \(app.bundleID ?? app.path) drop=\(drop)")
         let configuration = NSWorkspace.OpenConfiguration()
         configuration.activates = true
-        NSWorkspace.shared.openApplication(at: URL(fileURLWithPath: app.path), configuration: configuration) { running, error in
+        NSWorkspace.shared.openApplication(at: URL(fileURLWithPath: app.path), configuration: configuration) { [weak self] running, error in
             if let error { wlog("launchpad: open failed \(error.localizedDescription)") }
             guard drop != .open, let pid = running?.processIdentifier else { return }
             // 等它的窗口出来（刚启动的 App 要一会儿；最多 6 秒），问 App 的事都在后台。
             DispatchQueue.global(qos: .userInitiated).async {
                 let found = Self.waitForWindow(pid: pid, timeout: 6)
                 DispatchQueue.main.async {
-                    MainActor.assumeIsolated { [weak self] in
+                    MainActor.assumeIsolated {
                         guard let self, self.placementGeneration == ticket else { return }
                         guard let running, !running.isTerminated, let (window, id) = found else {
                             wlog("launchpad: no window to place pid=\(pid)")

@@ -34,12 +34,9 @@ extension GlanceProbe {
           let fullStart = bounds(full.id), let otherStart = bounds(other.id) else {
       throw EffectError.unavailable("fullscreen: the fixture's windows are missing (run through tests/run-glance-probe.sh --fullscreen)")
     }
-    func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
-      (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
-    }
     guard let mainScreen = NSScreen.screens.first else { throw EffectError.unavailable("fullscreen: no screen") }
     var targets = [mainScreen]
-    if let notchScreen = NotchController.notchScreen(), displayID(notchScreen) != displayID(mainScreen) {
+    if let notchScreen = NotchController.notchScreen(), displayID(for: notchScreen) != displayID(for: mainScreen) {
       targets.append(notchScreen)
     }
     if NotchController.isEnabled { owner.notch.install() }
@@ -60,7 +57,7 @@ extension GlanceProbe {
     var currentTarget = mainScreen
 
     func currentSpace(_ screen: NSScreen) -> UInt64? {
-      displayID(screen).flatMap { PrivateSLSWindowMover.shared.currentSpace(displayID: $0) }
+      displayID(for: screen).flatMap { PrivateSLSWindowMover.shared.currentSpace(displayID: $0) }
     }
     func isFullScreen() -> Bool { axBoolAttribute(full.element, axFullScreenAttribute) }
     func post(_ name: String) {
@@ -113,9 +110,9 @@ extension GlanceProbe {
 
     for (round, target) in targets.enumerated() {
       currentTarget = target
-      let isMain = displayID(target) == displayID(mainScreen)
+      let isMain = displayID(for: target) == displayID(for: mainScreen)
       let notchHere = NotchController.isEnabled
-        && NotchController.notchScreen().map { displayID($0) == displayID(target) } == true
+        && NotchController.notchScreen().map { displayID(for: $0) == displayID(for: target) } == true
       let name = isMain ? "main display" : "notch display"
       do {
         // 全屏用的那扇先挪到这块屏上：它就在这块屏上进全屏。
@@ -123,7 +120,7 @@ extension GlanceProbe {
         setAXPosition(full.element, CGPoint(x: spot.x + 60, y: spot.y + 60))
         try await wait("full-screen window on the \(name)", timeout: 4) {
           self.bounds(full.id).flatMap { screenForAXWindow(pos: $0.origin, size: $0.size) }.flatMap(displayID)
-            == displayID(target)
+            == displayID(for: target)
         }
 
         // 侧拉“参考”那扇到这块屏的边上，不收起：窗口在这张桌面上时把手本来就藏着，换到全屏桌面上才该挂出来。

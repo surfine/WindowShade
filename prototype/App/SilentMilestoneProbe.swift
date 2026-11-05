@@ -95,7 +95,7 @@ final class SilentMilestoneProbe {
             finish("打开静音页之后焦点不在临时窗口上，已停止")
             return
         }
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) else {
+        guard let screen = screenAtPoint(NSEvent.mouseLocation) else {
             host.invalidatePending()
             finish("鼠标不在任何一块屏幕上")
             return

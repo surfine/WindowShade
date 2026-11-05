@@ -74,7 +74,7 @@ extension TrackpadGestureController {
         let anchorID = preferred ?? focusedID
         let anchorFrame = anchorID.flatMap { cgWindowInfo($0) }.flatMap { cgWindowBounds($0) }
         guard let screen = anchorFrame.flatMap({ screenForAXWindow(pos: $0.origin, size: $0.size) })
-                ?? NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main else { return false }
+                ?? screenAtPoint(NSEvent.mouseLocation) ?? NSScreen.main else { return false }
         let visible = screen.visibleFrame
         let area = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
         let found = arrangeableWindows(on: screen, focused: focusedID)
@@ -140,7 +140,7 @@ extension TrackpadGestureController {
         }
         if !stripExtras.isEmpty {
             startStrip(plan: plan, extras: stripExtras, lookup: lookup, area: area, screen: screen, entries: &entries)
-        } else if strips.isActive, strips.displayID == (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value {
+        } else if strips.isActive, strips.displayID == displayID(for: screen) {
             strips.stop(reason: "rearranged")
         }
         magicGroup = MagicGroup(entries: entries, slideOver: plan.slideOver, tucked: plan.tuck)

@@ -310,11 +310,4 @@ extension AppDelegate {
         }
     }
 
-    /// 中键下拉：展开该点下已收起的窗口。
-    func expandWindowAtScreenPoint(_ point: CGPoint) {
-        guard ensureAccessibility() else { return }
-        guard let win = frontmostWindowContaining(point: point, requireCompatProfile: false),
-              let id = windowID(of: win) else { return }
-        if shaded[id] != nil { _ = unshade(id) }
-    }
 }

@@ -23,7 +23,7 @@ extension GlanceProbe {
     }
     try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     let bar = CGPoint(x: original.minX + 180, y: original.minY + 12)
-    let screen = NSScreen.screens.first { $0.frame.contains(cocoaMousePoint(fromAXPoint: bar)) }
+    let screen = screenAtPoint(cocoaMousePoint(fromAXPoint: bar))
     guard let visible = screen?.visibleFrame else { throw EffectError.unavailable("no screen") }
     let visibleAX = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
     let rightHalf = CGRect(x: visibleAX.midX, y: visibleAX.minY, width: visibleAX.width / 2, height: visibleAX.height)

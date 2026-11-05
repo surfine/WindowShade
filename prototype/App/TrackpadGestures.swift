@@ -771,7 +771,7 @@ final class TrackpadGestureController {
     func doubleTap(at location: CGPoint) {
         guard Self.isEnabled, AXIsProcessTrusted(), session == nil else { return }
         let pointer = cocoaMousePoint(fromAXPoint: location)
-        let screen = NSScreen.screens.first { $0.frame.contains(pointer) }
+        let screen = screenAtPoint(pointer)
         // 卷帘条是我们自己的窗口：按位置找。
         if let (id, state) = owner.shaded.first(where: {
             $0.value.overlay.map { $0.isVisible && $0.frame.contains(pointer) } == true
@@ -1388,7 +1388,7 @@ final class TrackpadGestureController {
             }
             // 真的拖起来了（不是点一下标题栏）：在后台截好窗口和背景，抬手时替身滑行用得上。
             if !drag.picturesRequested, hypot(point.x - drag.down.x, point.y - drag.down.y) > 16,
-               let screen = NSScreen.screens.first(where: { $0.frame.contains(drag.down) }) {
+               let screen = screenAtPoint(drag.down) {
                 drag.picturesRequested = true
                 let id = drag.id
                 let screenAX = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
@@ -1654,7 +1654,7 @@ final class TrackpadGestureController {
             return ("fingers left at the trackpad edge: moving them to drag on", measured)
         }
         // 贴着屏幕边离手：那是系统的拖边平铺在处理，不抢。
-        if let screen = NSScreen.screens.first(where: { $0.frame.contains(release) }) {
+        if let screen = screenAtPoint(release) {
             let f = screen.frame
             if release.x <= f.minX + 3 || release.x >= f.maxX - 3 || release.y <= f.minY + 3 || release.y >= f.maxY - 3 {
                 return ("at the screen edge: left to the system", measured)
@@ -1831,7 +1831,7 @@ final class TrackpadGestureController {
                              touches: fingers)
         drag.samples = samples.map { FlickSample(time: $0.0, point: $0.1) }
         // 真拖动时这两张图在拖动中后台截好；探针直接截，好走替身滑行那条路。
-        if capturePictures, let screen = NSScreen.screens.first(where: { $0.frame.contains(down) }) {
+        if capturePictures, let screen = screenAtPoint(down) {
             drag.pictures = DragPictures.capture(id: windowID,
                                                  screenAX: CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size))
         }
@@ -1840,8 +1840,6 @@ final class TrackpadGestureController {
 
     /// 窗口正在滑，或者正要滑（探针等它落定）。
     func isGliding(_ id: CGWindowID) -> Bool { glides[id] != nil || proxies[id] != nil }
-    /// 探针用：这扇窗此刻是不是替身在滑。
-    func isProxyGliding(_ id: CGWindowID) -> Bool { proxies[id] != nil }
 
     private func flickAnchor(_ frameAX: CGRect) -> CGPoint {
         let barBottom = cocoaMousePoint(fromAXPoint: CGPoint(x: frameAX.midX, y: frameAX.minY + 28))

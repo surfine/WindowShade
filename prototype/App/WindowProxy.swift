@@ -233,7 +233,7 @@ final class WindowProxyGlide {
     func start(completion: @escaping (CGRect) -> Void) {
         self.completion = completion
         let element = self.element, target = self.target, id = self.id
-        DispatchQueue.global(qos: .userInteractive).async {
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
             // App 还在拖动里时这几下会排队，等它能动了一起生效。
             setAXSize(element, target.size)
             setAXPosition(element, target.origin)
@@ -250,7 +250,7 @@ final class WindowProxyGlide {
                 usleep(16_000)
             }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     self?.moved = observed
                     self?.finishIfReady()
                 }

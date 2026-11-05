@@ -36,8 +36,8 @@ final class DockLock {
             return
         }
         if UserDefaults.standard.object(forKey: Self.displayKey) == nil, let screen = Self.dockScreen() {
-            UserDefaults.standard.set(Int(Self.displayID(screen)), forKey: Self.displayKey)
-            UserDefaults.standard.set(Self.displayUUID(Self.displayID(screen)), forKey: Self.displayUUIDKey)
+            UserDefaults.standard.set(Int(displayID(for: screen) ?? 0), forKey: Self.displayKey)
+            UserDefaults.standard.set(Self.displayUUID(displayID(for: screen) ?? 0), forKey: Self.displayUUIDKey)
         }
         guard monitor == nil else { return }
         watchLayout()
@@ -66,8 +66,8 @@ final class DockLock {
         guard let lockedID = DisplayKeyResolver.resolve(
                 storedUUID: UserDefaults.standard.string(forKey: Self.displayUUIDKey),
                 storedID: stored.flatMap { UInt32(exactly: $0) },
-                among: screens.map { DisplayKeyResolver.Display(id: Self.displayID($0), uuid: Self.displayUUID(Self.displayID($0))) }),
-              let locked = screens.first(where: { Self.displayID($0) == lockedID }) else { return }
+                among: screens.map { DisplayKeyResolver.Display(id: displayID(for: $0) ?? 0, uuid: Self.displayUUID(displayID(for: $0) ?? 0)) }),
+              let locked = screens.first(where: { (displayID(for: $0) ?? 0) == lockedID }) else { return }
         // 旧设置只存了编号：这次按编号认出来了，把 UUID 补上，以后按 UUID 认（规格 R27 的迁移）。
         if UserDefaults.standard.string(forKey: Self.displayUUIDKey) == nil, let uuid = Self.displayUUID(lockedID) {
             UserDefaults.standard.set(uuid, forKey: Self.displayUUIDKey)
@@ -123,10 +123,6 @@ final class DockLock {
     static func displayUUID(_ id: CGDirectDisplayID) -> String? {
         guard let uuid = CGDisplayCreateUUIDFromDisplayID(id)?.takeRetainedValue() else { return nil }
         return CFUUIDCreateString(nil, uuid) as String?
-    }
-
-    static func displayID(_ screen: NSScreen) -> CGDirectDisplayID {
-        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
     }
 }
 

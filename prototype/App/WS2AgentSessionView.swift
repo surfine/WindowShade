@@ -165,11 +165,6 @@ import ObjectiveC
     override func cancelOperation(_ sender:Any?) { onCancel?() }
     func revoke() { inputIsCurrent = { false }; cancelPeek(); render([]); bindings.removeAll() }
 
-    // 页面级探针：不进鼠标事件，直接驱动悬停路径。
-    func probeDwell(context: WS2.Context, frame: NSRect) {
-        peek?(context.projectID, (NSApp.delegate as? AppDelegate)?.ws2Runtime.terminalForSession(context.session.id), frame)
-    }
-    func probeEndPeek() { peekEnd?() }
 }
 
 @MainActor private final class WS2AgentSessionDocumentView: NSView {

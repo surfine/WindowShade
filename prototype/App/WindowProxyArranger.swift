@@ -226,10 +226,6 @@ final class WindowProxyArranger {
         wlog("gesture: proxy id=\(id) dropped (\(item.phase))")
     }
 
-    func dropAll() {
-        for id in Array(items.keys) { drop(id) }
-    }
-
     // MARK: - 内部
 
     /// 落定的弹簧：位置带着手的速度，用 `glide`（甩的动作本身带动量，回弹一点点）；尺寸用 `settle`（不回弹）。
@@ -251,7 +247,7 @@ final class WindowProxyArranger {
         item.captureRequested = true
         let id = item.id, original = item.original
         let center = cocoaFrame(fromAXPosition: original.origin, size: original.size)
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: center.midX, y: center.midY)) })
+        guard let screen = screenAtPoint(NSPoint(x: center.midX, y: center.midY))
                 ?? NSScreen.main else { return }
         let screenAX = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in

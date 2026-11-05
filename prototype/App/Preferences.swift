@@ -6,13 +6,6 @@ import Carbon.HIToolbox
 import ServiceManagement
 
 extension AppDelegate {
-@objc func toggleTitlebarDoubleClick(_ sender: NSMenuItem) {
-        titlebarDoubleClickEnabled.toggle()
-        UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)
-        rebuildMenu()
-        refreshPreferencesWindowIfOpen()
-    }
-
 
 @objc func togglePinnedPreviewAction() {
         pinnedPreviewController.pinCurrentTargetPreview()
@@ -909,11 +902,6 @@ extension AppDelegate {
         NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
     }
 
-    @objc func prefToggleLevelSystemPopups(_ sender: NSSwitch) {
-        NotchLevelSetting.setUsesSystemPopups(sender.state == .on)
-        NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
-    }
-
     /// 调系统的辅助功能询问并打开"隐私与安全性 › 辅助功能"；之后设置窗口在前台时每 1 秒看一次，允许了就装监听。
     @objc func prefAllowLevelKeys(_ sender: NSButton) {
         _ = ensureAccessibility()
@@ -1553,18 +1541,8 @@ extension AppDelegate {
 
     // MARK: 窗口浏览
 
-    @objc func openActivitiesAction() {
-        MainActor.assumeIsolated { launchpad.navigate(to: .today) }
-    }
-
     @objc func verifyTouchIDAction() {
         MainActor.assumeIsolated { notch.authentication.selfCheck() }
-    }
-
-    @objc func toggleLockOverlayAction() {
-        duoController.lockOverlay.setEnabled(!duoController.lockOverlay.enabled)
-        duoController.settingsChanged()
-        scheduleMenuRebuild()
     }
 
     @objc func observeFaceAction(_ sender: NSMenuItem) {
@@ -1582,63 +1560,72 @@ extension AppDelegate {
             title: WSL10n.text("settings.shortcuts.title", zh: "快捷键"),
             subtitle: WSL10n.setting("settings.shortcuts.subtitle", zh: "在任何应用里都能用。点“录制…”再按下新的组合；“清除”会关掉这个快捷键。"),
             symbolName: "command"))
+        addShortcutsWindowGroup(to: stack)
+        addShortcutsArrangeGroup(to: stack)
+        addShortcutsMoreGroup(to: stack)
+        addShortcutsFoldedGroup(to: stack)
+        addShortcutsBrowserGroup(to: stack)
+        addShortcutsResetRow(to: stack)
+        return root
+    }
 
-        // 讲解：每一行演这一行现在录的组合（没录写“还没录”）；没有自己画面的动作跟页默认。
-        func explainerAction(_ shortcut: GlobalShortcut) -> ExplainerRow.Shortcuts.Action {
-            switch shortcut {
-            case .leftHalf: return .place(.leftHalf)
-            case .rightHalf: return .place(.rightHalf)
-            case .topHalf: return .place(.topHalf)
-            case .bottomHalf: return .place(.bottomHalf)
-            case .topLeft: return .place(.topLeft)
-            case .topRight: return .place(.topRight)
-            case .bottomLeft: return .place(.bottomLeft)
-            case .bottomRight: return .place(.bottomRight)
-            case .leftThird: return .place(.leftThird)
-            case .centerThird: return .place(.centerThird)
-            case .rightThird: return .place(.rightThird)
-            case .leftTwoThirds: return .place(.leftTwoThirds)
-            case .rightTwoThirds: return .place(.rightTwoThirds)
-            case .fill, .stepLarger: return .place(.fill)
-            case .fullHeight: return .place(.fullHeight)
-            case .center: return .place(.center)
-            case .larger: return .place(.larger)
-            case .smaller: return .place(.smaller)
-            case .toggleShade, .stepSmaller: return .roll
-            case .pinPreview: return .pin
-            case .tuckAll, .tuckCurrent: return .tuck
-            case .magicTile: return .tile
-            case .windowBrowser: return .browser
-            default: return .none
-            }
+    // 讲解：每一行演这一行现在录的组合（没录写“还没录”）；没有自己画面的动作跟页默认。
+    private func explainerAction(_ shortcut: GlobalShortcut) -> ExplainerRow.Shortcuts.Action {
+        switch shortcut {
+        case .leftHalf: return .place(.leftHalf)
+        case .rightHalf: return .place(.rightHalf)
+        case .topHalf: return .place(.topHalf)
+        case .bottomHalf: return .place(.bottomHalf)
+        case .topLeft: return .place(.topLeft)
+        case .topRight: return .place(.topRight)
+        case .bottomLeft: return .place(.bottomLeft)
+        case .bottomRight: return .place(.bottomRight)
+        case .leftThird: return .place(.leftThird)
+        case .centerThird: return .place(.centerThird)
+        case .rightThird: return .place(.rightThird)
+        case .leftTwoThirds: return .place(.leftTwoThirds)
+        case .rightTwoThirds: return .place(.rightTwoThirds)
+        case .fill, .stepLarger: return .place(.fill)
+        case .fullHeight: return .place(.fullHeight)
+        case .center: return .place(.center)
+        case .larger: return .place(.larger)
+        case .smaller: return .place(.smaller)
+        case .toggleShade, .stepSmaller: return .roll
+        case .pinPreview: return .pin
+        case .tuckAll, .tuckCurrent: return .tuck
+        case .magicTile: return .tile
+        case .windowBrowser: return .browser
+        default: return .none
         }
+    }
 
-        func recorderRow(_ shortcut: GlobalShortcut, subtitle: SettingsText?, quickEnable: Bool = false) -> NSView {
-            let recorder = HotKeyRecorderView(accessibilityName: shortcut.titleText.shown)
-            recorder.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
-            recorder.validate = { hotKey in
-                GlobalShortcutSettings.conflictName(for: hotKey, excluding: shortcut)
-                    .map { WSL10n.text("settings.shortcuts.alreadyUsed", zh: "已用于：\($0)") }
-            }
-            recorder.onCapture = { [weak self, weak recorder] hotKey in
-                self?.applyShortcut(hotKey, for: shortcut)
-                recorder?.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
-            }
-            let explainer = ExplainerRow.Shortcuts.row(
-                explainerAction(shortcut), combo: GlobalShortcutSettings.hotKey(for: shortcut).map(WindowBrowserSettings.displayName(for:)))
-            guard quickEnable else {
-                return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: recorder, explainer: explainer)
-            }
-            // 计时器出厂不占键：这一个按钮一下用 ⌃⌥T 开上，已经是 ⌃⌥T 就不可按。
-            let enable = NSButton(title: WSL10n.text("settings.shortcuts.enableCountdown", zh: "用 ⌃⌥T 开计时器"), target: self, action: #selector(prefEnableCountdownShortcut))
-            enable.bezelStyle = .rounded
-            enable.isEnabled = GlobalShortcutSettings.hotKey(for: shortcut) != GlobalShortcutSettings.countdownHotKey
-            let control = NSStackView(views: [enable, recorder])
-            control.orientation = .horizontal
-            control.spacing = 8
-            return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: control, explainer: explainer)
+    private func recorderRow(_ shortcut: GlobalShortcut, subtitle: SettingsText?, quickEnable: Bool = false) -> NSView {
+        let recorder = HotKeyRecorderView(accessibilityName: shortcut.titleText.shown)
+        recorder.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
+        recorder.validate = { hotKey in
+            GlobalShortcutSettings.conflictName(for: hotKey, excluding: shortcut)
+                .map { WSL10n.text("settings.shortcuts.alreadyUsed", zh: "已用于：\($0)") }
         }
+        recorder.onCapture = { [weak self, weak recorder] hotKey in
+            self?.applyShortcut(hotKey, for: shortcut)
+            recorder?.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
+        }
+        let explainer = ExplainerRow.Shortcuts.row(
+            explainerAction(shortcut), combo: GlobalShortcutSettings.hotKey(for: shortcut).map(WindowBrowserSettings.displayName(for:)))
+        guard quickEnable else {
+            return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: recorder, explainer: explainer)
+        }
+        // 计时器出厂不占键：这一个按钮一下用 ⌃⌥T 开上，已经是 ⌃⌥T 就不可按。
+        let enable = NSButton(title: WSL10n.text("settings.shortcuts.enableCountdown", zh: "用 ⌃⌥T 开计时器"), target: self, action: #selector(prefEnableCountdownShortcut))
+        enable.bezelStyle = .rounded
+        enable.isEnabled = GlobalShortcutSettings.hotKey(for: shortcut) != GlobalShortcutSettings.countdownHotKey
+        let control = NSStackView(views: [enable, recorder])
+        control.orientation = .horizontal
+        control.spacing = 8
+        return makeUnifiedControlRow(name: shortcut.titleText, subtitle: subtitle, control: control, explainer: explainer)
+    }
 
+    private func addShortcutsWindowGroup(to stack: NSStackView) {
         let window = makeUnifiedSettingsCard([
             recorderRow(.toggleShade, subtitle: nil),
             recorderRow(.pinPreview, subtitle: nil),
@@ -1650,7 +1637,9 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.window", zh: "当前窗口")))
         stack.addFullWidth(window, spacing: 18)
+    }
 
+    private func addShortcutsArrangeGroup(to stack: NSStackView) {
         // 和标题栏手势同一架梯子：往上变小、往下变大，左右占半屏。每一次都能撤销。
         let arrange = makeUnifiedSettingsCard([
             recorderRow(.stepLarger, subtitle: WSL10n.setting("settings.shortcuts.stepLarger.sub", zh: "卷帘条展开；原来大小的窗口铺满屏幕")),
@@ -1667,7 +1656,9 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.arrange", zh: "排布当前窗口")))
         stack.addFullWidth(arrange, spacing: 18)
+    }
 
+    private func addShortcutsMoreGroup(to stack: NSStackView) {
         // Rectangle、Raycast 里有的那些排法：默认不占快捷键。一键换成 Rectangle 的那一套，用惯它的人手上不用改。
         let takeOver = NSButton(title: WSL10n.text("settings.shortcuts.takeOver", zh: "换上"), target: self, action: #selector(prefUseRectangleShortcuts))
         takeOver.bezelStyle = .rounded
@@ -1710,7 +1701,9 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.more", zh: "更多排法")))
         stack.addFullWidth(more, spacing: 18)
+    }
 
+    private func addShortcutsFoldedGroup(to stack: NSStackView) {
         let strips = makeUnifiedSettingsCard([
             recorderRow(.arrangeOrFocus, subtitle: WSL10n.setting("settings.shortcuts.arrangeOrFocus.sub", zh: "外观选“统一标题栏”时，改为专注当前 App；选“缩略图”时，把缩略图排到屏幕下边，再按放回原位")),
             makeUnifiedToggleRow(
@@ -1722,14 +1715,18 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.folded", zh: "已收起的窗口")))
         stack.addFullWidth(strips, spacing: 18)
+    }
 
+    private func addShortcutsBrowserGroup(to stack: NSStackView) {
         let browser = makeUnifiedSettingsCard([
             recorderRow(.windowBrowser,
                         subtitle: WSL10n.setting("settings.shortcuts.notchShelfRow.sub", zh: "默认不设置。再按一次同一个组合会关掉面板。")),
         ])
         stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.shortcuts.group.browser", zh: WSL10n.text("settings.section.browser", zh: "窗口浏览"))))
         stack.addFullWidth(browser, spacing: 12)
+    }
 
+    private func addShortcutsResetRow(to stack: NSStackView) {
         let reset = NSButton(title: WSL10n.text("settings.shortcuts.reset", zh: "恢复默认"), target: self, action: #selector(prefResetShortcuts))
         reset.bezelStyle = .rounded
         reset.isEnabled = !GlobalShortcutSettings.isAllDefault
@@ -1739,7 +1736,6 @@ extension AppDelegate {
         resetRow.orientation = .horizontal
         resetRow.addView(reset, in: .trailing)
         stack.addFullWidth(resetRow)
-        return root
     }
 
     /// 改键后立刻生效：重新注册、刷新菜单；新组合注册失败时退回原来的组合。

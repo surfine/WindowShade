@@ -42,6 +42,11 @@ func screenForCocoaFrame(_ rect: NSRect) -> NSScreen? {
     } ?? NSScreen.main
 }
 
+/// 第一块 frame 包含该点的屏幕（Cocoa 坐标）。落在屏间空隙或屏幕上沿/右沿之外返回 nil。
+func screenAtPoint(_ point: CGPoint) -> NSScreen? {
+    NSScreen.screens.first { $0.frame.contains(point) }
+}
+
 func displayID(for screen: NSScreen?) -> CGDirectDisplayID? {
     screen?.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")]
         .flatMap { ($0 as? NSNumber)?.uint32Value }

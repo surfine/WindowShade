@@ -859,8 +859,8 @@ extension AppDelegate {
     }
 
     // 单次 capture 的内部竞速：timeout 获胜 → 取消 capture task；capture 完成 →
-    // 取消 timeout task。被取消或过期的 capture 不写回缓存。continuation 仍然
-    // 只允许 resume 一次（SingleResumeGuard），两个赛跑的 Task 不会双 resume。
+    // 取消 timeout task。被取消或过期的 capture 不写回缓存。竞速本身交给
+    // TimeoutRace，两个赛跑的 Task 只会有一个结果。
     private func raceCaptureWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                         maxPixelSize: CGSize?, timeoutNanoseconds: UInt64,
                                         key: WindowSnapshotKey) async -> CGImage? {

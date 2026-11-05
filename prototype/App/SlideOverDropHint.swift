@@ -15,7 +15,7 @@ final class SlideOverDropHint {
     private var serial: UInt64 = 0
 
     static func target(at point: CGPoint) -> Target? {
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) else { return nil }
+        guard let screen = screenAtPoint(point) else { return nil }
         let visible = screen.visibleFrame
         // 拖动中每个事件都会问一次：先看指针在不在那一小块里，在了才去比对相邻的屏。
         for side in [SlideOverController.Side.left, .right] {

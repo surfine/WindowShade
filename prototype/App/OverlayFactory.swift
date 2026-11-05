@@ -120,25 +120,6 @@ extension AppDelegate {
         return overlay
     }
 
-    func makeClassicOverlay(axPos: CGPoint, width: CGFloat, height: CGFloat,
-                                    pid: pid_t, appName: String, title: String, id: CGWindowID) -> NSWindow {
-        let overlay = makeBaseOverlay(axPos: axPos, width: width, height: height)
-        overlay.hasShadow = false
-        let view = ClassicTitleStripView(frame: NSRect(origin: .zero, size: overlay.frame.size),
-                                         appName: appName, windowTitle: title,
-                                         pid: pid)
-        view.onDoubleClick = { [weak self] in self?.unshade(id) }
-        view.onAction = { [weak self] action in self?.handleClassicAction(action, id) }
-        view.onMoveEnded = { [weak self] frame in
-            self?.noteUserMovedOverlay(id: id, frame: frame)
-        }
-        overlay.contentView = view
-        overlay.invalidateShadow()
-        // 卷帘条只有上面两角是圆的，阴影要跟着同一条轮廓。
-        PaperSurfaceStyle.installShadow(on: overlay, corners: .top)
-        return overlay
-    }
-
     func makeProxyOverlay(axPos: CGPoint, width: CGFloat, height: CGFloat,
                                   pid: pid_t, appName: String, title: String, id: CGWindowID,
                                   canResize: Bool, windowManagement: WindowManagementCapability,

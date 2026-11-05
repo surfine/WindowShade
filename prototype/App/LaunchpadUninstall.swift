@@ -284,7 +284,7 @@ final class LaunchpadUninstallOverlay: NSView {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let outcome = WS2AppUninstallTrash.trash(paths)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     self.spinner.stopAnimation(nil)
                     self.spinner.removeFromSuperview()

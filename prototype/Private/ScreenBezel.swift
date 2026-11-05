@@ -48,9 +48,6 @@ enum ScreenBezel {
         return CGSize(width: native.pixelWidth, height: native.pixelHeight)
     }
 
-    static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
-        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
-    }
 }
 
 /// 每块屏的形状，按显示器 + 显示模式 + frame 大小（以及旋转、镜像）缓存：只在这些变了以后才重新算。
@@ -82,7 +79,7 @@ final class DisplayShapes {
     private static let idleTries = 20
 
     private func key(for screen: NSScreen) -> Key? {
-        guard let id = ScreenBezel.displayID(screen) else { return nil }
+        guard let id = displayID(for: screen) else { return nil }
         return Key(display: id, mode: CGDisplayCopyDisplayMode(id)?.ioDisplayModeID ?? -1,
                    width: screen.frame.width, height: screen.frame.height,
                    rotation: CGDisplayRotation(id), mirrored: CGDisplayIsInMirrorSet(id) != 0)
@@ -141,7 +138,7 @@ final class DisplayShapes {
 
     /// 这块屏的形状：算过就用缓存，没算过就当场算（探针和 prepare 用；平时走 known + prepare）。
     func shape(for screen: NSScreen) -> DisplayShape {
-        guard let id = ScreenBezel.displayID(screen), let key = key(for: screen) else {
+        guard let id = displayID(for: screen), let key = key(for: screen) else {
             return DisplayShape.resolve(DisplayShapeInput(frame: screen.frame, notch: NotchController.notchRect(on: screen), isBuiltIn: false))
         }
         if let known = cache[key] { return known }
@@ -167,7 +164,7 @@ final class DisplayShapes {
 
     /// 探针用：只按机型表算（不读 bezelPath），和实际用的对照。
     func tableOnly(for screen: NSScreen) -> DisplayShape? {
-        guard let id = ScreenBezel.displayID(screen) else { return nil }
+        guard let id = displayID(for: screen) else { return nil }
         return DisplayShape.resolve(DisplayShapeInput(frame: screen.frame, notch: NotchController.notchRect(on: screen),
                                                       isBuiltIn: CGDisplayIsBuiltin(id) != 0, rotation: CGDisplayRotation(id),
                                                       mirrored: CGDisplayIsInMirrorSet(id) != 0,

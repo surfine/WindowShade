@@ -430,21 +430,4 @@ extension AppDelegate {
             performForwardedTrafficAction(state: state, pos: pos, id: id, action: .fullScreen)
         }
     }
-    func handleClassicAction(_ action: ClassicAction, _ id: CGWindowID) {
-        guard let state = shaded[id], let overlay = state.overlay else { return }
-        let f = restoreReferenceFrame(id: id, overlay: overlay)
-        let pos = axPosition(fromCocoaFrame: f)
-        switch action {
-        case .close:
-            restoreWindow(state, to: pos)
-            pressAXButton(state.element, kAXCloseButtonAttribute as String)
-            forceCleanup(id)
-        case .zoom:
-            let el = state.element
-            unshade(id)
-            pressAXButton(el, kAXZoomButtonAttribute as String)
-        case .expand:
-            unshade(id)
-        }
-    }
 }

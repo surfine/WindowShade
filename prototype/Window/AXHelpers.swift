@@ -160,17 +160,6 @@ func systemTitlebarDoubleClickAction() -> SystemTitlebarDoubleClickAction {
     return .zoom
 }
 
-func systemTitlebarTripleClickDescription() -> String? {
-    switch systemTitlebarDoubleClickAction() {
-    case .zoom:
-        return "三击标题栏会缩放窗口"
-    case .minimize:
-        return "三击标题栏会最小化窗口"
-    case .none:
-        return nil
-    }
-}
-
 enum WindowManagementCapability {
     case none
     case zoom

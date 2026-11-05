@@ -425,8 +425,6 @@ extension AppDelegate {
     if let id = pinnedPreviewController.currentTargetWindowID, shaded[id] != nil { return state(true) }
     return state(false)
   }
-  /// 悬停提示与探针用的全称。
-  func foldToggleMenuTitle() -> String { foldToggleState().caption }
   /// 菜单项显示当前设置的快捷键；关掉了、被其他应用占用或按键画不出来时不显示。
   private func applyShortcut(_ shortcut: GlobalShortcut, to item: NSMenuItem) {
     guard let hotKey = menuHotKey(for: shortcut),
@@ -439,9 +437,6 @@ extension AppDelegate {
     item.keyEquivalentModifierMask = equivalent.modifiers
   }
 
-  func pinnedPreviewMenuTitle() -> String {
-    pinnedPreviewController.currentTargetMenuTitle()
-  }
   /// 单个折叠窗口的菜单项（内联时带 ⌃⌘1…9，子菜单里不带快捷键）。
   private func foldedWindowMenuItem(_ entry: (CGWindowID, ShadeState),
                                     index: Int?) -> NSMenuItem {

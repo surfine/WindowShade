@@ -730,7 +730,6 @@ import Cocoa
 }
 extension AppDelegate {
     @objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }
-    @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.startFocus() } }
     @objc func ws2ShowFocus() { MainActor.assumeIsolated { ws2Runtime.showFocusStatus() } }
     @objc func ws2OpenSilent() { MainActor.assumeIsolated { _ = ws2Runtime.openSilent() } }
     @objc func ws2OpenConductor() { MainActor.assumeIsolated { _ = ws2Runtime.openConductor() } }

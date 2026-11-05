@@ -228,8 +228,6 @@ final class StripOverview {
     var frameForProbe: NSRect { panel.frame }
     func keyForProbe(_ keyCode: UInt16) { view.handleKey(keyCode) }
     func pickForProbe(_ id: CGWindowID) { close(picking: id) }
-    func moveForProbe(_ id: CGWindowID, _ drop: ScrollStrip.Drop) { view.commitMove(id, drop) }
-    func tuckForProbe(_ id: CGWindowID) { close(picking: nil, tucking: id) }
 
     // MARK: 从刘海拖回来的一格（SS-04）
 

@@ -157,7 +157,7 @@ final class WS2SilentHost {
         guard let runtime, let owner, NotchController.isEnabled,
               AuthorizationService.shared.lockState() == .unlocked else { return false }
         freezeIfNeeded()
-        frozenScreen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
+        frozenScreen = screenAtPoint(NSEvent.mouseLocation)
         intentLease = UUID()
         intentBoot = AuthorizationService.shared.ledger.bootID
         let view = WS2SilentPageView(host: self)
@@ -350,10 +350,6 @@ final class WS2SilentHost {
             lastResult = .failed(WS2SilentCopy.saying("notTried"))
             page?.note(WS2SilentCopy.saying("notTried"))
         }
-    }
-
-    func sendSeparately() {
-        offer("assistant.sendDraft")
     }
 
     private func apply(_ request: WS2SilentHostRequest) -> SilentExecutionResult {

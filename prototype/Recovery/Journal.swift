@@ -43,16 +43,6 @@ extension AppDelegate {
         JournalNumeric.windowID(entry["id"])
     }
 
-    nonisolated func journalDisplayID(_ entry: [String: Any]) -> CGDirectDisplayID? {
-        guard entry["displayID"] != nil else { return nil }
-        return JournalNumeric.displayID(entry["displayID"])
-    }
-
-    nonisolated func journalSpaceID(_ entry: [String: Any]) -> UInt64? {
-        guard entry["spaceID"] != nil else { return nil }
-        return JournalNumeric.spaceID(entry["spaceID"])
-    }
-
     func pruneShadeJournal(reason: String) {
         let now = Date().timeIntervalSince1970
         let entries = shadeJournalEntries()

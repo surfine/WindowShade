@@ -276,6 +276,6 @@ extension GlanceProbe {
   private func fixtureScreen() -> NSScreen? {
     guard let frame = bounds(id), let primary = NSScreen.screens.first else { return nil }
     let point = NSPoint(x: frame.midX, y: primary.frame.maxY - frame.midY)
-    return NSScreen.screens.first { $0.frame.contains(point) }
+    return screenAtPoint(point)
   }
 }
