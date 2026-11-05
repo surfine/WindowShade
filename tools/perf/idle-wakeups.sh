@@ -5,7 +5,7 @@
 #   tools/perf/idle-wakeups.sh <pid> [label] [--out FILE] [--build NUM] [--powermetrics]
 #
 # 流程：等 36 秒让界面安静下来，再用 top 连续采 30 秒（每秒一次），
-# 取 %CPU 与 IDLEW 的均值，追加一行 JSON 到 --out 指定的文件（默认 ./idle-wakeups.jsonl）。
+# 取 %CPU 均值与 rusage 唤醒差（每秒），追加一行 JSON 到 --out 指定的文件（默认 ./idle-wakeups.jsonl）。
 #
 # --powermetrics：不自己提权，只打印需要 Aaron 手动用 sudo 执行的
 # powermetrics 与 spindump 命令；脚本本身不 sudo。
@@ -61,22 +61,41 @@ fi
 echo "等待 ${DELAY} 秒让空闲稳定（pid ${PID}，${LABEL}）……"
 sleep "$DELAY"
 
-echo "采样 ${SAMPLES} 秒……"
-TOP_OUT="$(top -l $((SAMPLES + 1)) -s 1 -stats pid,cpu,idlew -pid "$PID" 2>/dev/null || true)"
+# 唤醒次数取 proc_pid_rusage 的前后差（ri_pkg_idle_wkups、ri_interrupt_wkups）：
+# 2026-11-05 在 macOS 27 上实测，top -pid 的 IDLEW 列是进程累计值、30 秒内纹丝不动，不能当每秒次数用。
+rusage_wakeups() {
+  python3 -I -c '
+import ctypes, sys, time
+class RU(ctypes.Structure):
+    _fields_ = [("uuid", ctypes.c_uint8 * 16), ("user", ctypes.c_uint64), ("system", ctypes.c_uint64),
+                ("pkg_idle", ctypes.c_uint64), ("interrupt", ctypes.c_uint64), ("rest", ctypes.c_uint64 * 40)]
+r = RU()
+if ctypes.CDLL("/usr/lib/libproc.dylib").proc_pid_rusage(int(sys.argv[1]), 4, ctypes.byref(r)) != 0:
+    sys.exit(1)
+print(r.pkg_idle, r.interrupt, time.time())
+' "$PID"
+}
 
-# top 的第一次采样是起算的，丢掉；其余每行格式为 "PID CPU IDLEW"。
-read -r CPU IDLEW N <<EOF
+echo "采样 ${SAMPLES} 秒……"
+read -r IDLE0 INTR0 T0 <<<"$(rusage_wakeups)" || { echo "读不到 pid $PID 的 rusage" >&2; exit 1; }
+TOP_OUT="$(top -l $((SAMPLES + 1)) -s 1 -stats pid,cpu -pid "$PID" 2>/dev/null || true)"
+read -r IDLE1 INTR1 T1 <<<"$(rusage_wakeups)" || { echo "读不到 pid $PID 的 rusage" >&2; exit 1; }
+
+# top 的第一次采样是起算的，丢掉；其余每行格式为 "PID CPU"。
+read -r CPU N <<EOF
 $(printf '%s\n' "$TOP_OUT" | awk -v pid="$PID" '
-  $1 == pid && NF >= 3 {
+  $1 == pid && NF >= 2 {
     n++
     if (n == 1) next
-    cpu += $2; idle += $3; m++
+    cpu += $2; m++
   }
   END {
-    if (m == 0) { print "NaN NaN 0"; exit }
-    printf "%.3f %.3f %d\n", cpu / m, idle / m, m
+    if (m == 0) { print "NaN 0"; exit }
+    printf "%.3f %d\n", cpu / m, m
   }')
 EOF
+read -r IDLEW INTRW <<<"$(awk -v a="$IDLE0" -v b="$IDLE1" -v c="$INTR0" -v d="$INTR1" -v s="$T0" -v e="$T1" \
+  'BEGIN { dt = e - s; printf "%.3f %.3f\n", (b - a) / dt, (d - c) / dt }')"
 
 if [ "$N" = "0" ]; then
   echo "没有采到数据：top 没有输出 pid $PID 的行" >&2
@@ -87,20 +106,20 @@ TS="$(date '+%Y-%m-%dT%H:%M:%S%z')"
 mkdir -p "$(dirname "$OUT")"
 python3 -I -c '
 import json, sys
-label, ts, build, cpu, idlew, n, out = sys.argv[1:]
+label, ts, build, cpu, idlew, intrw, n, out = sys.argv[1:]
 row = {
     "label": label,
     "time": ts,
     "build": build,
     "cpu": float(cpu),
-    "idlew": float(idlew),
     "idlew_per_s": float(idlew),
+    "interrupt_wakeups_per_s": float(intrw),
     "samples": int(n),
 }
 with open(out, "a", encoding="utf-8") as f:
     f.write(json.dumps(row, ensure_ascii=False) + "\n")
 print(json.dumps(row, ensure_ascii=False))
-' "$LABEL" "$TS" "$BUILD" "$CPU" "$IDLEW" "$N" "$OUT"
+' "$LABEL" "$TS" "$BUILD" "$CPU" "$IDLEW" "$INTRW" "$N" "$OUT"
 
 echo "已追加到：$OUT"
 
