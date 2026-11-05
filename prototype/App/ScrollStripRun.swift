@@ -68,6 +68,12 @@ final class ScrollStripController {
     private var watchesPaused = false
     private var resumeWork: DispatchWorkItem?
     private var evaluationQueued = false
+    /// 订阅暂停（卷轴在挪窗口）期间每 0.5 秒问一次“有没有关掉的”；只在暂停时有，接回订阅就撤。
+    private var busyCheck: DispatchWorkItem?
+    /// 新窗口前几次核对都没成时临时盯着它（最多 lateWatchDuration）：id → 订阅，和开始盯的时刻。
+    private var lateWatches: [CGWindowID: WindowWatch] = [:]
+    private var lateStarted: [CGWindowID: CFTimeInterval] = [:]
+    private var lateProbing: Set<CGWindowID> = []
     private var driftRecheck: DispatchWorkItem?
     /// 一列有变化后的那一次补查（收起/侧拉/收进刘海的标记可能比窗口的挪动事件晚一点才打上）。
     private var flagRecheck: DispatchWorkItem?
@@ -939,6 +945,9 @@ final class ScrollStripController {
         anchorWatch?.cancel(); anchorWatch = nil; anchorID = nil
         appearanceWatch?.cancel(); appearanceWatch = nil
         resumeWork?.cancel(); resumeWork = nil
+        busyCheck?.cancel(); busyCheck = nil
+        for watch in lateWatches.values { watch.cancel() }
+        lateWatches.removeAll(); lateStarted.removeAll(); lateProbing.removeAll()
         driftRecheck?.cancel(); driftRecheck = nil
         flagRecheck?.cancel(); flagRecheck = nil
         if let token = activateObserver { NSWorkspace.shared.notificationCenter.removeObserver(token) }
@@ -997,6 +1006,52 @@ final class ScrollStripController {
         watchesPaused = true
         for watch in columnWatches.values { watch.cancel() }
         columnWatches.removeAll()
+        scheduleBusyCheck()
+    }
+
+    /// 暂停期间没有每列的订阅，关窗只剩锚的 1 秒心跳，比原来的 0.5 秒慢。不接回订阅（每帧每扇窗一次“挪动”，hub 每轮要为它们各问一次
+    /// WindowServer），而是暂停期间每 0.5 秒在后台问一次所有列的同一时刻快照，只处理关掉、隐藏的；只在卷轴忙时才有，接回订阅就撤，空闲零成本。
+    private func scheduleBusyCheck() {
+        busyCheck?.cancel(); busyCheck = nil
+        guard maintaining, watchesPaused else { return }
+        let generation = maintenanceGeneration
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.maintenanceGeneration == generation, self.watchesPaused else { return }
+                self.busyCheck = nil
+                self.runBusyCheck(generation: generation)
+            }
+        }
+        busyCheck = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + StripWatchPolicy.busyCheckInterval, execute: work)
+    }
+
+    private func runBusyCheck(generation: Int) {
+        guard let strip, overview == nil else { scheduleBusyCheck(); return }
+        let ids = strip.ids
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let snapshot = Self.coherentFacts(ids)
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.maintenanceGeneration == generation, self.watchesPaused else { return }
+                    self.evaluateColumns(snapshot: snapshot, busyCheck: true)
+                    self.scheduleBusyCheck()
+                }
+            }
+        }
+    }
+
+    /// 一次问完所有列，得到同一时刻的事实（没查到的当作没了）。
+    private nonisolated static func coherentFacts(_ ids: [CGWindowID]) -> [CGWindowID: WindowFact] {
+        let now = CFAbsoluteTimeGetCurrent()
+        var raw: [UnsafeRawPointer?] = ids.filter { $0 != 0 }.map { UnsafeRawPointer(bitPattern: UInt($0)) }
+        var facts: [CGWindowID: WindowFact] = [:]
+        if !raw.isEmpty, let array = CFArrayCreate(kCFAllocatorDefault, &raw, raw.count, nil),
+           let infos = CGWindowListCreateDescriptionFromArray(array) as? [[String: Any]] {
+            for info in infos { if let fact = WindowFact.parse(info, at: now) { facts[fact.id] = fact } }
+        }
+        for id in ids where facts[id] == nil { facts[id] = .missing(id, at: now) }
+        return facts
     }
 
     private func scheduleResumeWatches() {
@@ -1022,6 +1077,7 @@ final class ScrollStripController {
             return
         }
         watchesPaused = false
+        busyCheck?.cancel(); busyCheck = nil
         syncWatches()
         reconcile()
     }
@@ -1083,16 +1139,23 @@ final class ScrollStripController {
     /// 按 hub 最近的事实核对每一列：关掉、被收起、侧拉、收进刘海的让出位置；被人拖走、改了大小的不再管。
     /// 卷轴自己刚挪过窗口时（busy）差得多也先不判，等 busy 过去再看一次——变化不丢，也不比原来的 0.5 秒慢。
     /// 没有事实的列（暂停中、刚订阅）不动，整轮对账会看到它。
-    private func evaluateColumns() {
-        evaluationQueued = false
+    /// snapshot：忙时检查（见 scheduleBusyCheck）给的同一时刻快照；busyCheck 时只管关掉、隐藏的，不判被拖走。
+    private func evaluateColumns(snapshot: [CGWindowID: WindowFact]? = nil, busyCheck: Bool = false) {
+        if snapshot == nil { evaluationQueued = false }
         guard overview == nil, var strip, maintaining else { return }
         let owner = gestures.owner
         let hub = WindowStateHub.shared
-        var facts: [CGWindowID: WindowFact] = [:]
-        for id in strip.ids { if let fact = hub.fact(for: id) { facts[id] = fact } }
+        var facts: [CGWindowID: WindowFact] = snapshot ?? [:]
+        if snapshot == nil { for id in strip.ids { if let fact = hub.fact(for: id) { facts[id] = fact } } }
         func visible(_ fact: WindowFact) -> Bool { fact.exists && fact.isOnScreen && fact.layer == 0 }
+        func visibility() -> [Bool] { strip.ids.compactMap { facts[$0] }.map(visible) }
+        // 每列的事实是各自事件落地时才刷新的，不是同一时刻：有一列看似不在屏上就先对所有列重问一次，
+        // 免得 A、B 已经不在屏上（切桌面、锁屏）而 C 还停在旧的“在屏上”，把 A、B 当成被关掉。
+        if snapshot == nil, StripWatchPolicy.needsCoherentSnapshot(visible: visibility()) {
+            facts = Self.coherentFacts(strip.ids)
+        }
         // 卷轴里的窗口全都不在屏幕上：切到了别的桌面、锁了屏、调度中心开着，这时不核对。
-        guard facts.values.contains(where: visible) else { return }
+        guard !StripWatchPolicy.nothingOnScreen(visible: visibility()) else { return }
         let now = CACurrentMediaTime()
         let quiet = now > busyUntil && !motionActive
         let parkedColumns = strip.parked()
@@ -1104,7 +1167,7 @@ final class ScrollStripController {
             var leave = flagged
             if !leave, let fact = facts[id] {
                 leave = StripWatchPolicy.leaves(visible: visible(fact), flagged: false)
-                if !leave {
+                if !leave, !busyCheck {
                     switch StripWatchPolicy.drift(actual: fact.bounds, expected: applied[id], quiet: quiet,
                                                   busyRemaining: busyUntil - now, parked: parked.contains(id),
                                                   holdsTitleDrag: holdsTitleDrag(id)) {
@@ -1183,7 +1246,8 @@ final class ScrollStripController {
             if admitNewWindow(window, focusedID: focusedID, into: &strip) { commitColumns(strip) }
         case .notYet:
             guard let delay = StripWatchPolicy.appearanceRetryDelay(afterAttempt: attempt) else {
-                qualifying.remove(id)
+                // 前几次都没成：再临时盯它几秒，晚点才够大、才被辅助功能看到的也能马上接上（原来 0.5 秒轮询会看到）。
+                beginLateWatch(id, generation: generation)
                 return
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
@@ -1191,6 +1255,69 @@ final class ScrollStripController {
             }
         case .never:
             qualifying.remove(id)
+        }
+    }
+
+    /// 临时盯这扇窗 lateWatchDuration：挪动、改大小、显示立刻重试，另外每 lateRetryInterval 试一次；到点或成了就撤，
+    /// 再没成交给心跳整轮对账（改动前的 0.5 秒轮询没有这个期限，3 秒之后才够格的由 1 秒心跳接，最慢多等 0.5 秒）。
+    private func beginLateWatch(_ id: CGWindowID, generation: Int) {
+        guard lateWatches[id] == nil else { return }
+        lateStarted[id] = CACurrentMediaTime()
+        lateWatches[id] = WindowStateHub.shared.watch(id, fallbackInterval: StripWatchPolicy.lateRetryInterval) { [weak self] change, _ in
+            switch change {
+            case .heartbeat: break
+            case .gone: self?.endLateWatch(id)
+            case .moved, .resized, .hidden, .shown, .restyled: self?.lateProbe(id, generation: generation)
+            }
+        }
+        scheduleLateTick(id, generation: generation)
+    }
+
+    private func endLateWatch(_ id: CGWindowID) {
+        lateWatches.removeValue(forKey: id)?.cancel()
+        lateStarted.removeValue(forKey: id)
+        lateProbing.remove(id)
+        qualifying.remove(id)
+    }
+
+    private func scheduleLateTick(_ id: CGWindowID, generation: Int) {
+        guard let started = lateStarted[id],
+              let delay = StripWatchPolicy.lateRetryDelay(elapsed: CACurrentMediaTime() - started) else {
+            endLateWatch(id)
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.maintenanceGeneration == generation, self.lateWatches[id] != nil else { return }
+                self.lateProbe(id, generation: generation)
+                self.scheduleLateTick(id, generation: generation)
+            }
+        }
+    }
+
+    private func lateProbe(_ id: CGWindowID, generation: Int) {
+        guard maintenanceGeneration == generation, strip != nil, lateWatches[id] != nil, !lateProbing.contains(id),
+              overview == nil, let screen = NSScreen.screens.first(where: { displayID(for: $0) == screenID }) else { return }
+        lateProbing.insert(id)
+        let ownPID = getpid()
+        let arrangeOnly = gestures.arrangeOnlyPID
+        let screenAX = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let probe = Self.probeNewWindow(id, ownPID: ownPID, arrangeOnly: arrangeOnly, screenAX: screenAX)
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    guard let self, self.maintenanceGeneration == generation, self.lateWatches[id] != nil else { return }
+                    self.lateProbing.remove(id)
+                    switch probe {
+                    case .qualified(let window, let focusedID):
+                        self.endLateWatch(id)
+                        guard !self.seen.contains(id), var strip = self.strip else { return }
+                        if self.admitNewWindow(window, focusedID: focusedID, into: &strip) { self.commitColumns(strip) }
+                    case .notYet: break
+                    case .never: self.endLateWatch(id)
+                    }
+                }
+            }
         }
     }
 

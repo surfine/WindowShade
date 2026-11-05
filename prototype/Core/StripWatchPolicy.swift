@@ -70,4 +70,24 @@ enum StripWatchPolicy {
         guard attempt >= 0, attempt + 1 < appearanceAttemptTimes.count else { return nil }
         return appearanceAttemptTimes[attempt + 1] - appearanceAttemptTimes[attempt]
     }
+
+    /// 各列的事实不是同一时刻采的（每列只在自己的事件落地时才刷新）：有一列看起来不在屏上，别的列可能还停在旧的“在屏上”。
+    /// 这时不能拿它们去判“让出”，先对所有列重问一次，得到同一时刻的快照。
+    static func needsCoherentSnapshot(visible: [Bool]) -> Bool { visible.contains(false) }
+
+    /// 同一时刻的快照里卷轴的窗口一扇都不在屏上：切到了别的桌面、锁了屏、调度中心开着，这时不核对（和原来整轮对账一样）。
+    static func nothingOnScreen(visible: [Bool]) -> Bool { !visible.contains(true) }
+
+    /// 卷轴自己在挪窗口时列的订阅暂停，只靠一个半秒的“关掉了没有”检查兜关窗（和原来的 0.5 秒对账一样慢）。
+    static let busyCheckInterval: TimeInterval = 0.5
+
+    /// 新窗口 1325 之后前几次都没成，再临时盯它这么久：它挪动、改大小、显示时立刻重试，另外每 0.5 秒也试一次
+    /// （辅助功能晚点才看得到它是没有事件的）。过了这个时间就交给 1 秒心跳。
+    static let lateWatchDuration: TimeInterval = 3
+    static let lateRetryInterval: TimeInterval = 0.5
+    /// 临时盯着的第 elapsed 秒，下一次定时重试前等多久；盯够了返回 nil。
+    static func lateRetryDelay(elapsed: TimeInterval) -> TimeInterval? {
+        guard elapsed < lateWatchDuration else { return nil }
+        return min(lateRetryInterval, lateWatchDuration - elapsed)
+    }
 }
