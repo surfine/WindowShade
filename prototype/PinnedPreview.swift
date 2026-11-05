@@ -92,10 +92,16 @@ final class PinnedPreviewController {
     // AX 同步调用可被忙 app 阻塞（超时 2s/次）；交接管线全部走这条串行队列，
     // 主线程只做面板状态切换。
     private let axWorkQueue = DispatchQueue(label: "WindowShade.pin-ax", qos: .userInteractive)
-    // 共享 watchdog：一次 tick 遍历所有 session。每路一个 0.2s Timer 会让
-    // N 个置顶窗口线性增加 Timer 唤醒、WindowServer 查询与 Space 检查；
-    // 合并成单个 tick 后每 0.2s 只醒来一次。
-    private var watchdogTimer: Timer?
+    // 源窗口的追踪交给共享的 WindowStateHub：每个会话订阅自己的源窗口（挪动/改大小/隐藏/关掉的
+    // 事件 + 1 秒心跳），不再有每 0.2s 一拍的轮询。SkyLight 通知用不了时 hub 退回 0.2s 看门狗，
+    // 行为和原来一样。换桌面事件（1325/1326）用来让面板立刻跟着源窗口换桌面。
+    private var spaceMembershipWatch: WindowWatch?
+    // Space 切换动画窗口期里被跳过的事件：窗口期一结束就补一次全量核对。
+    private var spaceTransitionRecheck: Timer?
+    /// 稳定门：最后一次挪动/改大小后再等这么久采样，和上一次一致才应用（原来是隔 0.2s 的两拍，0.2–0.4s）。
+    static let settleDelay: TimeInterval = 0.15
+    /// SkyLight 通知用不了时，hub 退回的看门狗间隔（原来的 watchdog 间隔）。
+    static let watchdogFallbackInterval: TimeInterval = 0.2
     private var pointerDuckingTimer: Timer?
     private var lastPointerDuckingID: CGWindowID?
     private var lockedDuckingID: CGWindowID?
@@ -634,6 +640,8 @@ final class PinnedPreviewController {
             unexpectedStopRetries.removeValue(forKey: id)
             session.isSuspended = true
             session.isDucked = false
+            // 挂起的会话不盯源窗口（放回时 resumeSession 先实时确认源窗口还在）。
+            session.stopWatching()
             session.capture.stop()
             session.panel.ignoresMouseEvents = true
             session.panel.orderOut(nil)
@@ -645,6 +653,7 @@ final class PinnedPreviewController {
         lastPointerDuckingID = nil
         duckingFrontID = nil
         updatePointerDuckingTimer()
+        maybeStopWatchdog()
         wlog("pin-preview: suspend-all count=\(suspendedOrder.count)")
         sessionsDidChange()
     }
@@ -673,7 +682,7 @@ final class PinnedPreviewController {
     private func resumeSession(_ session: PinnedPreviewSession, id: CGWindowID) {
         guard session.isSuspended else { return }
         session.isSuspended = false
-        // 暂停期间 watchdog 不追踪它：先确认源窗口还在，关掉了就直接结束这个置顶。
+        // 暂停期间没有订阅它的源窗口：先确认源窗口还在，关掉了就直接结束这个置顶。
         guard let frame = currentSourceFrame(id: id) else {
             wlog("pin-preview: resume found closed source id=\(id)")
             stopPreview(id: id, reason: "resume-lost-source")
@@ -771,7 +780,7 @@ final class PinnedPreviewController {
 
     func refreshAll(reason: String) {
         for id in Array(sessions.keys) {
-            watchdogTick(id: id, reason: reason)
+            evaluateSource(id: id, reason: reason)
         }
     }
 
@@ -783,17 +792,33 @@ final class PinnedPreviewController {
         lockedDuckingID = nil
         lastPointerDuckingID = nil
         duckingFrontID = nil
+        // 窗口期里到达的事件都被跳过：窗口期一结束补一次全量核对（原来靠窗口期后的下一拍 watchdog）。
+        if !sessions.isEmpty { scheduleSpaceTransitionRecheck() }
     }
 
     private var isInSpaceTransition: Bool {
         CFAbsoluteTimeGetCurrent() < spaceTransitionUntil
     }
 
+    private func scheduleSpaceTransitionRecheck() {
+        guard spaceTransitionRecheck == nil else { return }
+        let delay = max(0, spaceTransitionUntil - CFAbsoluteTimeGetCurrent()) + 0.02
+        spaceTransitionRecheck = MainTimer.fire(after: delay, tolerance: 0.02) { [weak self] in
+            guard let self else { return }
+            self.spaceTransitionRecheck = nil
+            if self.isInSpaceTransition {
+                self.scheduleSpaceTransitionRecheck()
+            } else {
+                self.refreshAll(reason: "space-settled")
+            }
+        }
+    }
+
     // 面板与源窗口同 Space 的不变量（与折叠条 overlay 的 enforceOverlaySpaceInvariant
     // 同构）：源窗口被拖到别的 Space（比如在 Mission Control 里）就让面板跟过去；
     // 面板自己漂移了（防御性，正常不会发生）就搬回源 Space。SLS 符号不可用时
-    // 整个不变量不生效，面板留在创建时的 Space。0.5s TTL：watchdog 每 0.2s 触发，
-    // 不必每拍都查 WindowServer。
+    // 整个不变量不生效，面板留在创建时的 Space。0.5s TTL：源窗口事件可能一秒来很多次，
+    // 不必每次都查 WindowServer；换桌面事件到达时 TTL 清零立刻核对，1 秒心跳兜底。
     private func enforcePanelSpaceInvariant(_ session: PinnedPreviewSession, reason: String) {
         let now = CFAbsoluteTimeGetCurrent()
         guard now - session.spaceCheckAt >= 0.5 else { return }
@@ -973,57 +998,134 @@ final class PinnedPreviewController {
         }
     }
 
+    /// 给每个没挂起、还没订阅的会话订阅它的源窗口；有人在盯时顺带订阅换桌面事件。
     private func ensureWatchdogStarted() {
-        guard watchdogTimer == nil else { return }
-        watchdogTimer = MainTimer.repeating(interval: 0.2, tolerance: 0.05) { [weak self] in
-            self?.watchdogTickAll()
+        let hub = WindowStateHub.shared
+        for (id, session) in sessions where !session.isSuspended && session.watch == nil {
+            session.watch = hub.watch(id, fallbackInterval: Self.watchdogFallbackInterval, heartbeat: true) {
+                [weak self] change, fact in
+                self?.sourceChanged(id: id, change: change, fact: fact)
+            }
         }
-    }
-
-    // 共享 watchdog 的单个 tick：一次遍历所有 session。
-    private func watchdogTickAll() {
-        for id in Array(sessions.keys) {
-            watchdogTick(id: id, reason: "watchdog")
+        if spaceMembershipWatch == nil, sessions.values.contains(where: { $0.watch != nil }) {
+            spaceMembershipWatch = hub.observeSpaceMembership { [weak self] event in
+                self?.sourceSpaceMembershipChanged(event)
+            }
         }
     }
 
     private func maybeStopWatchdog() {
-        // PERF-12：没有活跃会话就停（含全部挂起）：tick 对 suspended 会话本来就提前返回，
-        // 挂着计时器只剩每 0.2s 一次的空唤醒。恢复走 resumeAll → ensureWatchdogStarted，
-        // 新建走 startPreview → ensureWatchdogStarted，两边都会把钟重新挂上。
-        guard sessions.values.allSatisfy(\.isSuspended) else { return }
-        watchdogTimer?.invalidate()
-        watchdogTimer = nil
+        // PERF-12：没有活跃会话就停（含全部挂起）：挂起和结束的会话已经各自退订，这里收掉换桌面订阅；
+        // 最后一个订阅走了 hub 自己会停钟、清空 SkyLight 请求。恢复走 resumeAll → ensureWatchdogStarted，
+        // 新建走 installPreview → ensureWatchdogStarted，两边都会重新订阅。
+        guard sessions.values.allSatisfy({ $0.watch == nil }) else { return }
+        spaceMembershipWatch?.cancel()
+        spaceMembershipWatch = nil
+        spaceTransitionRecheck?.invalidate()
+        spaceTransitionRecheck = nil
     }
 
-    private func watchdogTick(id: CGWindowID, reason: String) {
+    /// hub 报来的变化（挪动、改大小、隐藏、出现、样式、关掉）或 1 秒心跳。事实是这一轮刚查到的，直接用，不再单查。
+    private func sourceChanged(id: CGWindowID, change: WindowChange, fact: WindowFact?) {
+        let frame: NSRect? = fact.flatMap { usableSourceFrame($0) }
+        evaluateSource(id: id, reason: change == .heartbeat ? "watchdog" : "window-event", sampled: .some(frame))
+    }
+
+    /// 源窗口换了桌面（1325/1326）：TTL 清零立刻核对面板该在哪张桌面；桌面归属在事件到达那一刻可能还没落定，
+    /// 0.25s 后再核一次（原来靠 0.2s watchdog + 0.5s TTL，最慢 0.7s）。
+    private func sourceSpaceMembershipChanged(_ event: WindowSpaceEvent) {
+        let id = event.windowID
+        guard let session = sessions[id], !session.isSuspended else { return }
+        session.spaceCheckAt = 0
+        evaluateSource(id: id, reason: "space-event")
+        MainTimer.fire(after: 0.25, tolerance: 0.02) { [weak self] in
+            guard let self, let session = self.sessions[id] else { return }
+            session.spaceCheckAt = 0
+            self.evaluateSource(id: id, reason: "space-event-settled")
+        }
+    }
+
+    /// 原来每 0.2s 一拍的 watchdogTick：现在由事件、心跳、换桌面和外部 refreshAll 触发。
+    /// sampled：调用方已有这一刻的采样（.some(nil) 表示源窗口不可用）；nil 表示现查一次。
+    private func evaluateSource(id: CGWindowID, reason: String, sampled: NSRect?? = nil) {
         guard let session = sessions[id], !session.isSuspended, !session.isEnvPaused else { return }
         // Space 切换动画期间 CGWindow 坐标整屏滑动，全部跳过（也不更新 lastKnownFrame，
-        // 避免把动画中间坐标记成稳定值）；窗口期结束后下一次 tick 一次性校正。
-        if isInSpaceTransition { return }
+        // 避免把动画中间坐标记成稳定值）；窗口期结束后补一次全量核对。
+        if isInSpaceTransition {
+            scheduleSpaceTransitionRecheck()
+            return
+        }
         enforcePanelSpaceInvariant(session, reason: reason)
-        guard let frame = currentSourceFrame(id: id) else {
+        guard let frame = sampled ?? currentSourceFrame(id: id) else {
             wlog("pin-preview: closed lost source id=\(id)")
             stopPreview(id: id, reason: "lost-source")
             return
         }
         if session.isInteracting {
             // 交互中窗口由用户直接操作，持续跟随（exit 时要用）；稳定门/AX 确认不适用。
-            session.lastKnownFrame = frame
-            session.pendingFrame = nil
-            session.rejectedFrame = nil
+            followDuringInteraction(session, frame: frame)
             return
         }
-        // 稳定门：frame 需与上一拍一致（连续两拍相同）才应用。最小化/恢复 genie、
-        // 全屏过渡等动画期间坐标每拍都在变，绝不能把面板 setFrame 成动画中间态
+        if framesAlmostEqual(frame, session.lastKnownFrame, tolerance: 1.0)
+            || (session.rejectedFrame.map { framesAlmostEqual($0, frame, tolerance: 1.0) } ?? false) {
+            // 没变，或是已被 AX 判定为动画产物的那一帧（MC 缩略排布）：不必再等稳定门。
+            session.pendingFrame = nil
+            session.settleTimer?.invalidate()
+            session.settleTimer = nil
+            return
+        }
+        // 稳定门：最后一次挪动/改大小后再等 150ms 采一次，和这次一致才应用。最小化/恢复 genie、
+        // 全屏过渡等动画期间坐标一直在变，绝不能把面板 setFrame 成动画中间态
         // （曾把 855x502 的面板追成 Dock 缩略图大小的 109x97）。
-        let isStable = framesAlmostEqual(frame, session.lastKnownFrame, tolerance: 1.0)
-            || (session.pendingFrame.map { framesAlmostEqual($0, frame, tolerance: 1.0) } ?? false)
         session.pendingFrame = frame
-        guard isStable else { return }
+        armSettle(session, id: id, reason: reason)
+    }
+
+    private func armSettle(_ session: PinnedPreviewSession, id: CGWindowID, reason: String) {
+        session.settleTimer?.invalidate()
+        session.settleTimer = MainTimer.fire(after: Self.settleDelay, tolerance: 0.01) { [weak self] in
+            self?.settle(id: id, reason: reason)
+        }
+    }
+
+    /// 稳定门到点：现查一次（不靠事件：genie 这类动画未必每步都发事件），和上次采样一致才去 AX 确认，
+    /// 否则记下这次、再等 150ms。
+    private func settle(id: CGWindowID, reason: String) {
+        guard let session = sessions[id] else { return }
+        session.settleTimer = nil
+        guard !session.isSuspended, !session.isEnvPaused else { return }
+        if isInSpaceTransition {
+            scheduleSpaceTransitionRecheck()
+            return
+        }
+        guard let frame = currentSourceFrame(id: id) else {
+            wlog("pin-preview: closed lost source id=\(id)")
+            stopPreview(id: id, reason: "lost-source")
+            return
+        }
+        if session.isInteracting {
+            followDuringInteraction(session, frame: frame)
+            return
+        }
+        if framesAlmostEqual(frame, session.lastKnownFrame, tolerance: 1.0) {
+            session.pendingFrame = nil
+            return
+        }
+        guard let pending = session.pendingFrame, framesAlmostEqual(pending, frame, tolerance: 1.0) else {
+            session.pendingFrame = frame
+            armSettle(session, id: id, reason: reason)
+            return
+        }
         session.pendingFrame = nil
-        guard !framesAlmostEqual(session.lastKnownFrame, frame, tolerance: 1.0) else { return }
         confirmAndApplyFrame(session: session, id: id, frame: frame, reason: reason)
+    }
+
+    private func followDuringInteraction(_ session: PinnedPreviewSession, frame: NSRect) {
+        session.lastKnownFrame = frame
+        session.pendingFrame = nil
+        session.rejectedFrame = nil
+        session.settleTimer?.invalidate()
+        session.settleTimer = nil
     }
 
     // Mission Control 缩略排布、genie、全屏过渡期间 WindowServer 呈现坐标会"稳定但
@@ -1048,13 +1150,15 @@ final class PinnedPreviewController {
                 session.isConfirmingFrame = false
                 // AX 读取失败（忙 app 超时等）时不因此卡死，退回信任 WindowServer 坐标，
                 // 与改动前行为一致。
-                guard let axFrame, !framesAlmostEqual(axFrame, frame, tolerance: 2.0) else {
+                if let axFrame, !framesAlmostEqual(axFrame, frame, tolerance: 2.0) {
+                    session.rejectedFrame = frame
+                    wlog("pin-preview: watchdog rejected animated frame id=\(id) cg=\(Self.format(frame)) ax=\(Self.format(axFrame)) reason=\(reason)")
+                } else {
                     session.rejectedFrame = nil
                     self.applyConfirmedFrame(session: session, id: id, frame: frame, reason: reason)
-                    return
                 }
-                session.rejectedFrame = frame
-                wlog("pin-preview: watchdog rejected animated frame id=\(id) cg=\(Self.format(frame)) ax=\(Self.format(axFrame)) reason=\(reason)")
+                // 确认期间又来的变化被 isConfirmingFrame 挡掉了（原来下一拍 watchdog 会再试）：现在补一次核对。
+                if session.settleTimer == nil { self.evaluateSource(id: id, reason: "confirm-recheck") }
             }
         }
     }
@@ -1506,6 +1610,13 @@ final class PinnedPreviewController {
             return nil
         }
         return cocoaFrame(fromWindowServerBounds: bounds)
+    }
+
+    /// 和 sourceInfoIsUsable 同一套规则，作用在 hub 的事实上：层级 0、透明度 > 0.05、至少 80×80。
+    private func usableSourceFrame(_ fact: WindowFact) -> NSRect? {
+        guard fact.exists, fact.layer == 0, fact.alpha > 0.05,
+              fact.bounds.width >= 80, fact.bounds.height >= 80 else { return nil }
+        return cocoaFrame(fromWindowServerBounds: fact.bounds)
     }
 
     nonisolated private static func sourceInfoIsUsable(_ info: [String: Any]) -> Bool {
