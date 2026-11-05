@@ -1,9 +1,10 @@
-// 正在播放的紧凑两耳（《正在播放》“紧凑”两张卡，NP-2）。纯函数只依赖 Foundation：左耳封面边长与退回规则、
-// 右耳 5 个静止取色点的颜色尺寸；不碰 AppKit 不读钟不起计时器。数字：左耳封面边长 = round(0.6×刘海高)
-//（33.5 高刘海上是 20）、圆角 = 边长÷4（20→5）、上下居中在主体里水平居中；耳宽 = 主体+肩（34 = 26.6+7.4），
+// 正在播放的紧凑两耳（《正在播放》“紧凑”两张卡，NP-2；2026-11-05《两耳的岛》§八 改了贴边和圆角）。纯函数只依赖 Foundation：
+// 左耳封面边长与退回规则、右耳 5 个静止取色点的颜色尺寸；不碰 AppKit 不读钟不起计时器。数字：左耳封面边长 = round(0.6×刘海高)
+//（33.5 高刘海上是 20）、圆角和耳朵底角同心 = 耳底角 − (刘海高 − 边长) ÷ 2（10.7 − 6.75 = 3.95；不知道底角时退回边长÷4）；
+// 封面右边、点的左边都离刘海 2（面板排槽位时贴好，这里只在槽里居中）；耳宽按内容（IslandMetrics.compactBody，上限 52.33），
 // 压到 30 以下时边长 = 主体−6、不到 14 退回音符符号；右耳 5 点宽 2、间距 1.6、静止圆点 2.4 高，上下居中、
 // 主副色交替；暂停时点白 0.45、封面透明度降 0.5（0.18s 淡过去）；没封面时白 0.14 圆角方块中间白 0.6 音符。
-// 不画会动的波形——真实波形要系统音频录制（NP-6），本包不做。
+// 跟着声音跳的波形在 NP-6（AudioLevelBands），这里只给静止点的位置。
 
 import Foundation
 
@@ -32,6 +33,13 @@ enum NowPlayingEars {
     }
 
     static func coverCorner(side: Double) -> Double { side * coverCornerFraction }
+
+    /// 和耳朵同心的封面圆角（HIG ContainerRelativeShape）：耳底角减去封面到耳底的留白；知道硬件底角时用它。
+    /// earCorner：耳朵的底角（= 刘海底角）；留白 = (刘海高 − 边长) ÷ 2。算出来不到 1 就取 1，不画直角。
+    static func coverCorner(side: Double, earCorner: Double?, notchHeight: Double) -> Double {
+        guard let earCorner, earCorner.isFinite, notchHeight.isFinite, side > 0 else { return coverCorner(side: side) }
+        return max(1, earCorner - (notchHeight - side) / 2)
+    }
 
     // MARK: 右耳静止点
 

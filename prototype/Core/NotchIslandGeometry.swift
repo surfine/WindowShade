@@ -1,14 +1,18 @@
-// 刘海岛的两处纯几何决定：外接屏胶囊的外框、弹簧飞行保护。纯 CoreGraphics，不碰 AppKit；
+// 刘海岛的两处纯几何决定：岛的外框（刘海屏贴顶、外接屏胶囊）、弹簧飞行保护。纯 CoreGraphics，不碰 AppKit；
 // NotchPanel / NotchCanvas 把量好的数字交进来。
 
 import CoreGraphics
 
 enum NotchIslandGeometry {
-    /// 岛的外框。外接屏的紧凑胶囊悬在菜单栏中央，但顶边不高过屏幕顶：隐形刘海只有 24 或 33.5 高，
-    /// 胶囊 37.33，按中心对齐会顶出屏幕。其余从刘海下沿向下长（bab193b0）。
+    /// 岛的外框。
+    /// - 有物理刘海的屏（2026-11-05《两耳的岛》，推翻 bab193b0 的“从刘海下沿垂下”）：顶边贴屏幕顶，把刘海包在里面
+    ///   往两边、往下长；`hanging` 不看。
+    /// - 外接屏：紧凑胶囊悬在菜单栏中央，但顶边不高过屏幕顶（隐形刘海只有 24 或 33.5 高，胶囊 37.33，按中心对齐会顶出屏幕）；
+    ///   展开、提醒从菜单栏下沿往下长。
     static func islandFrame(notch: CGRect, width: CGFloat, height: CGFloat, virtual: Bool, hanging: Bool) -> CGRect {
         let x = notch.midX - width / 2
-        if virtual, !hanging {
+        guard virtual else { return CGRect(x: x, y: notch.maxY - height, width: width, height: height) }
+        if !hanging {
             return CGRect(x: x, y: min(notch.midY - height / 2, notch.maxY - height), width: width, height: height)
         }
         return CGRect(x: x, y: notch.minY - height, width: width, height: height)

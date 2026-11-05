@@ -69,7 +69,7 @@ enum NotchRoomPolicy {
 
     // MARK: 档位
 
-    /// 宽裕：两耳各 34 带肩；偏挤：收窄到量到的宽度、不画肩；下巴：不长耳朵；让开：全屏、调度中心、锁屏时不画。
+    /// 宽裕：两耳最宽 52.33 带肩；偏挤：收窄到量到的宽度、不画肩；下巴：不长耳朵；让开：全屏、调度中心、锁屏时不画。
     enum Tier: Equatable, Sendable {
         case roomy, tight, chin, yield
     }
@@ -83,7 +83,8 @@ enum NotchRoomPolicy {
         return side >= narrowestSide ? .tight : .chin
     }
 
-    /// 耳朵每边多宽：最宽 34，否则就是量到的那么宽（窄的那边，向下取整）；不到 26 由档位退回下巴。
+    /// 耳朵每边最多多宽：最宽 52.33，否则就是量到的那么宽（窄的那边，向下取整）；不到 26 由档位退回下巴。
+    /// 刘海屏实际画多宽还要按内容收（IslandMetrics.compactBody，《两耳的岛》§二），这里只给空位那一头的上限。
     /// 和 App/Notch.swift 以前自己算的完全一样，只是搬到这里。
     static func earWidth(leading: CGFloat?, trailing: CGFloat?) -> CGFloat {
         min(fullSide, floor(min(leading ?? 0, trailing ?? 0)))

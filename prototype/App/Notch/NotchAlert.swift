@@ -1,4 +1,4 @@
-// // 提醒样式视图：刘海下面一行（App 图标、窗口新标题、App 名字）。
+// // 提醒样式视图：刘海下面一行（App 图标、窗口新标题、App 名字）；真刘海屏上照 HIG 分四块（《两耳的岛》§五）。
 
 import Cocoa
 import ApplicationServices
@@ -49,7 +49,19 @@ final class NotchAlertView: NSView {
     private func earFrame(for text: NSAttributedString) -> CGRect {
         let size = text.size()
         let width = ceil(size.width), height = ceil(size.height)
+        if let strip = notchStrip {
+            // 四块：状态贴着刘海右边（内侧 2），竖直居中在刘海那一条里。
+            return CGRect(x: strip.trailingX, y: strip.midY - height / 2, width: width, height: height)
+        }
         return CGRect(x: bounds.width - Self.earMargin - width, y: (bounds.height - height) / 2, width: width, height: height)
+    }
+
+    /// 真刘海屏四块排法里刘海那一条：左边符号的右缘、右边状态的左缘（都离刘海 2）、那一条的竖直中线、下面句子区的高。
+    private var notchStrip: (leadingX: CGFloat, trailingX: CGFloat, midY: CGFloat, below: CGFloat)? {
+        guard let notch = alert?.besideNotch, alert?.peek == nil, alert?.demo == nil, bounds.height > notch.height else { return nil }
+        let notchX = (bounds.width - notch.width) / 2
+        let gap = IslandMetrics.earInnerGap
+        return (notchX - gap, notchX + notch.width + gap, bounds.height - notch.height / 2, bounds.height - notch.height)
     }
 
     /// 倒数数字变了：旧字淡出 0.10 下移 2 点，新字从上 2 点淡入并 pop 0.9→1；减少动态效果只交叉淡化 0.18。
@@ -134,11 +146,17 @@ final class NotchAlertView: NSView {
         NSRect(x: 14, y: (bounds.height - 24) / 2, width: 24, height: 24)
     }
 
+    /// 这一句的图标画在哪：真刘海屏贴着刘海左边、竖直居中在刘海那一条里（和两耳的左耳同一个位置）；其余照 §6-4。
+    private var iconRect: NSRect {
+        guard let strip = notchStrip else { return Self.iconRect(in: bounds) }
+        let side = min(24, max(0, bounds.height - strip.below - 6))
+        return NSRect(x: strip.leadingX - side, y: strip.midY - side / 2, width: side, height: side)
+    }
+
     /// 窗口提醒里的图标此刻在屏幕上的位置；没有图标（教手势、没显示）就是 nil。
     var iconScreenRect: NSRect? {
         guard let alert, alert.demo == nil, alert.icon != nil, let window, !isHidden else { return nil }
-        let rect = Self.iconRect(in: bounds)
-        return window.convertToScreen(convert(rect, to: nil))
+        return window.convertToScreen(convert(iconRect, to: nil))
     }
 
     /// 卡住提示里新的那排键帽按一下（见 CoachEcho）。
@@ -178,11 +196,61 @@ final class NotchAlertView: NSView {
                   options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
     }
 
+    /// 四块排法（真刘海屏）：符号、状态在刘海两侧（状态的数字在 earLayers 里），刘海下面主句 15 半粗白、
+    /// 副句 13 白 0.62，左对齐到边距 14；有“加入”按钮时它在句子右边。
+    private func drawBesideNotch(_ alert: NotchPanel.Alert, strip: (leadingX: CGFloat, trailingX: CGFloat, midY: CGFloat, below: CGFloat)) {
+        let margin: CGFloat = 14
+        alert.icon?.draw(in: iconRect)
+        var width = max(0, bounds.width - margin * 2)
+        if let label = alert.actionLabel, !label.isEmpty {
+            drawAction(label, in: NSRect(x: bounds.width - margin - 74, y: (strip.below - 26) / 2, width: 74, height: 26))
+            width = max(0, width - 74 - 10)
+        }
+        let titleParagraph = NSMutableParagraphStyle()
+        titleParagraph.lineBreakMode = .byTruncatingMiddle
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byTruncatingTail
+        let title = NSAttributedString(string: alert.title, attributes: [
+            .font: NSFont.systemFont(ofSize: 15, weight: .semibold), .foregroundColor: NSColor.white, .paragraphStyle: titleParagraph])
+        let subtitle = NSAttributedString(string: alert.subtitle, attributes: [
+            .font: NSFont.systemFont(ofSize: 13), .foregroundColor: NSColor.white.withAlphaComponent(0.62), .paragraphStyle: paragraph])
+        let titleHeight = ceil(title.size().height)
+        let subtitleHeight = alert.subtitle.isEmpty ? 0 : ceil(subtitle.size().height)
+        let block = titleHeight + (subtitleHeight > 0 ? 1 + subtitleHeight : 0)
+        let bottom = max(0, (strip.below - block) / 2)
+        if subtitleHeight > 0 {
+            subtitle.draw(with: NSRect(x: margin, y: bottom, width: width, height: subtitleHeight),
+                          options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+        }
+        title.draw(with: NSRect(x: margin, y: bottom + (subtitleHeight > 0 ? subtitleHeight + 1 : 0), width: width, height: titleHeight),
+                   options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+    }
+
+    /// 绿色小按钮（稿：74 × 26，圆头，摄像机加字）。点整条提醒都是同一件事。
+    private func drawAction(_ label: String, in pill: NSRect) {
+        NSColor(srgbRed: 0x30 / 255, green: 0xD1 / 255, blue: 0x58 / 255, alpha: 1).setFill()
+        NSBezierPath(roundedRect: pill, xRadius: 13, yRadius: 13).fill()
+        let text = NSAttributedString(string: label, attributes: [
+            .font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.white])
+        let glyph = NSImage(systemSymbolName: "video.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold).applying(.init(paletteColors: [.white])))
+        let glyphWidth = glyph?.size.width ?? 0
+        let gap: CGFloat = glyph == nil ? 0 : 4
+        let total = glyphWidth + gap + ceil(text.size().width)
+        var x = pill.midX - total / 2
+        if let glyph {
+            glyph.draw(in: NSRect(x: x, y: pill.midY - glyph.size.height / 2, width: glyph.size.width, height: glyph.size.height))
+            x += glyphWidth + gap
+        }
+        text.draw(at: NSPoint(x: x, y: pill.midY - text.size().height / 2))
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         guard let alert else { return }
         if let peek = alert.peek { drawPeek(peek); return }
+        if let strip = notchStrip { drawBesideNotch(alert, strip: strip); return }
         let margin: CGFloat = 14
-        let iconRect = Self.iconRect(in: bounds)
+        let iconRect = self.iconRect
         if alert.demo == nil { alert.icon?.draw(in: iconRect) }
         let textX = alert.demo == nil ? iconRect.maxX + 10 : margin + NotchDemoView.size.width + 12
         if alert.demo != nil {
@@ -203,23 +271,7 @@ final class NotchAlertView: NSView {
         }
         var width = max(0, bounds.width - textX - margin)
         if let label = alert.actionLabel, !label.isEmpty {
-            // 绿色小按钮（稿：74 × 26，圆头，摄像机加字）。点整条提醒都是同一件事。
-            let pill = NSRect(x: bounds.width - margin - 74, y: (bounds.height - 26) / 2, width: 74, height: 26)
-            NSColor(srgbRed: 0x30 / 255, green: 0xD1 / 255, blue: 0x58 / 255, alpha: 1).setFill()
-            NSBezierPath(roundedRect: pill, xRadius: 13, yRadius: 13).fill()
-            let text = NSAttributedString(string: label, attributes: [
-                .font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.white])
-            let glyph = NSImage(systemSymbolName: "video.fill", accessibilityDescription: nil)?
-                .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold).applying(.init(paletteColors: [.white])))
-            let glyphWidth = glyph?.size.width ?? 0
-            let gap: CGFloat = glyph == nil ? 0 : 4
-            let total = glyphWidth + gap + ceil(text.size().width)
-            var x = pill.midX - total / 2
-            if let glyph {
-                glyph.draw(in: NSRect(x: x, y: pill.midY - glyph.size.height / 2, width: glyph.size.width, height: glyph.size.height))
-                x += glyphWidth + gap
-            }
-            text.draw(at: NSPoint(x: x, y: pill.midY - text.size().height / 2))
+            drawAction(label, in: NSRect(x: bounds.width - margin - 74, y: (bounds.height - 26) / 2, width: 74, height: 26))
             width = max(0, width - 74 - 10)
         }
         if let ear = alert.ear, !ear.isEmpty {

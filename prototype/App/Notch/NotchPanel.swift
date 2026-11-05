@@ -125,13 +125,15 @@ final class NotchPanel: NSPanel {
 
     /// 紧凑两耳放正在播放的：暂停与否、这首的封面（还没取到就是 nil，画占位）、读屏那一句。
     /// coverSide 由面板按主体宽、肩宽、刘海高算（`NowPlayingEars.coverSide`）；nil = 放不下，退回音符符号（今天的样子）。
+    /// coverCorner：和耳朵同心的封面圆角（`NowPlayingEars.coverCorner(side:earCorner:notchHeight:)`）；nil 退回边长 ÷ 4。
     struct MusicEar: Equatable {
         var paused: Bool
         var artwork: NowPlayingArtworkImage?
         var spoken: String
         var coverSide: Double?
+        var coverCorner: Double? = nil
         static func == (a: MusicEar, b: MusicEar) -> Bool {
-            a.paused == b.paused && a.spoken == b.spoken && a.coverSide == b.coverSide
+            a.paused == b.paused && a.spoken == b.spoken && a.coverSide == b.coverSide && a.coverCorner == b.coverCorner
                 && a.artwork?.trackKey == b.artwork?.trackKey && a.artwork?.fingerprint == b.artwork?.fingerprint
         }
     }
@@ -213,6 +215,9 @@ final class NotchPanel: NSPanel {
         var actionLabel: String? = nil
         /// 换歌一瞥（NP-3）：不为 nil 时是低矮的一行“歌名 + 歌手”，不画图标和副句。
         var peek: PeekLine? = nil
+        /// 真刘海屏上排版用的刘海大小（面板在 apply 时填）：不为 nil 时提醒照 HIG 分四块——符号贴刘海左边、
+        /// 状态（右边的数字）贴刘海右边，主句、副句在刘海下面左对齐到边距 14（《两耳的岛》§五）。外接屏是 nil，照旧排。
+        var besideNotch: CGSize? = nil
     }
 
     /// 换歌一瞥那一行的字。歌手的颜色取自封面（`ArtworkPalette.text`），还没取到就是白 0.6 的副句色。
@@ -437,10 +442,6 @@ final class NotchPanel: NSPanel {
         capsuleBelowMenuBar = on
         if isVirtual { apply(animated: false) }
     }
-    private func minimalLayoutIDs(_ items: [NotchActivity], _ selected: String?) -> [String] {
-        let layout = NotchMinimalPresentation.layout(items: items, selected: selected, enabled: true)
-        return [layout.compact?.id ?? ""] + layout.minimum.map(\.id)
-    }
     private var pressWork: DispatchWorkItem?
     /// 现在有没有东西能往下拉出来（收进刘海的窗、收在屏幕边的侧拉）。
     var canPull: (() -> Bool)?
@@ -581,6 +582,13 @@ final class NotchPanel: NSPanel {
             if isMusic { self.openNowPlayingCard() } else { self.onActivityAction?(.open) }
         }
         canvas.onMinimumTap = { [weak self] id in self?.onMinimumTap?(id) }
+        // 按住小圆：和按住刘海一样展开那一排（《两耳的岛》§三第 3 问 A）。
+        // TODO(两耳的岛)：展开后滚到这件活动的格——格子 id 由 NotchController 的 OngoingIDs 发，要它把 id 传下来才能滚。
+        canvas.onMinimumLongPress = { [weak self] _ in
+            guard let self else { return }
+            if self.onHold?() == true { return }
+            self.onLongPress?()
+        }
         canvas.onFiles = { [weak self] files in
             guard let self else { return }
             self.onFiles?(files, self.notch)
@@ -936,30 +944,91 @@ final class NotchPanel: NSPanel {
         apply(animated: true, roomOnly: roomOnly)
     }
 
-    /// 紧凑样式在刘海左右各占多宽：最宽 34 点；两边空位不够时收窄，最窄 26 点（图标 18 点、两边各 4 点），
-    /// 再窄就放到刘海下面（WWDC23：紧凑样式尽量窄，不留空白）。
+    /// 紧凑样式在刘海左右各占多宽的上限（主体 + 肩）：52.33（IslandMetrics.compactEarWidth，e2e1825f 起）；
+    /// 两边空位不够时收窄，最窄 26 点（图标 18 点、两边各 4 点），再窄就放到刘海下面（WWDC23：紧凑样式尽量窄，不留空白）。
+    /// 2026-11-05《两耳的岛》：真刘海屏上实际画多宽按内容定（`earSide`），这个上限只管量空位和退下巴。
     static let sideWidth: CGFloat = IslandMetrics.compactEarWidth
-    static let narrowestSide: CGFloat = 26
+    static let narrowestSide: CGFloat = IslandMetrics.compactNarrowestBody
     private var sideWidth: CGFloat {
-        // 由规则给（NotchRoomPolicy，LA-3）：最宽 34，否则按量到的窄的那边，和以前算得一样。
+        // 由规则给（NotchRoomPolicy，LA-3）：最宽 52.33，否则按量到的窄的那边，和以前算得一样。
         NotchRoomPolicy.earWidth(leading: room?.leading, trailing: room?.trailing)
     }
 
-    /// 紧凑样式要量的两段：真刘海是刘海左右各往外 34 点，隐形刘海是那颗小胶囊的左右两半（从正中往外 40 点）。
+    /// 真刘海屏这一刻每只耳画多宽（主体 + 肩，《两耳的岛》§二）：两耳等宽，取内容宽的那一边按
+    /// `IslandMetrics.compactBody` 算主体、加肩，再和量到的空位（`sideWidth`）取小；空位不到 26 由 compactShape 退下巴。
+    /// 量不出内容（窗口个数以外的未知样子）就按空位画满，和以前一样。
+    private func earSide(for compact: Compact?) -> CGFloat {
+        let room = sideWidth
+        guard !isVirtual, let content = compact.flatMap({ earContent($0) }) else { return room }
+        let shoulder = hardware?.shoulderExtent ?? 0
+        let body = [content.leading, content.trailing].map {
+            IslandMetrics.compactBody(contentWidth: $0.width, contentHeight: $0.height, notchHeight: notch.height, shoulderExtent: shoulder)
+        }.max() ?? Self.narrowestSide
+        // 肩扣完主体还要有 26 才画肩（NotchIsland.compactSide），所以连肩的总宽至少 26 + 肩。
+        let wanted = body + (body >= Self.narrowestSide ? shoulder : 0)
+        return min(room, wanted)
+    }
+
+    /// 紧凑两耳里左右两块内容各多大（和 NotchCompactView 画的一样量）：宽、高。nil = 不认得的样子。
+    private func earContent(_ compact: Compact) -> (leading: CGSize, trailing: CGSize)? {
+        let symbol = CGSize(width: 14, height: 14)
+        let textHeight: CGFloat = 15
+        func text(_ string: String?) -> CGFloat { NotchCompactView.textWidth(string ?? "") }
+        if compact.level != nil { return nil }
+        if let flash = compact.flash {
+            let percent = NotchCompactView.flashPercentageLayout(flash, in: .zero, color: .white).frame.size
+            // 百分比贴在槽的右边缘往里 2（不是 6），量的宽扣回这 4 点，排槽位时同一套 ±6 就对得上。
+            return (symbol, CGSize(width: max(0, percent.width - 4), height: percent.height))
+        }
+        if compact.music != nil, compact.level == nil {
+            let side = (NowPlayingEars.coverHeightFraction * Double(notch.height)).rounded()
+            return (CGSize(width: side, height: side),
+                    CGSize(width: NowPlayingEars.dotsWidth, height: AudioLevelBands.rootHeight(level: 1)))
+        }
+        // 窗口个数（左耳 App 图标、右耳个数）不是实时活动，稿只给活动按内容定宽：照旧按空位画满。
+        guard let leading = compact.leading else { return nil }
+        if compact.sessionFace != nil || compact.sessionPhase != nil { return nil }
+        let timerEar = compact.progressTone == .timer || compact.progressTone == .timerPaused
+            || compact.progressTone == .calendar || compact.progressTone == .calendarJoin || compact.shelfSpoken != nil
+        var left: CGFloat = 0
+        if compact.progressStyle == .ring { left = CGFloat(NotchFocusRing.viewport) }
+        else if compact.leadingSymbol != nil { left = symbol.width }
+        let title = timerEar ? 0 : text(leading)
+        if title > 0 { left += (left > 0 ? 4 : 0) + title }
+        if compact.progressTone == .calendarJoin { return (CGSize(width: left, height: textHeight), symbol) }
+        var right = text(compact.trailing)
+        switch compact.quantity.drawing {
+        case .ring, .spinningArc:
+            right = right > 0 ? right + CGFloat(NotchProgressPart.reservedWidth(for: compact.quantity.drawing))
+                              : CGFloat(NotchProgressPart.ringDiameter)
+        case .countText, .none: break
+        }
+        if compact.progressStyle == .bar, compact.progress != nil { right = max(right, 18) }
+        return (CGSize(width: left, height: textHeight), CGSize(width: max(right, 6), height: textHeight))
+    }
+
+    /// 这一刻紧凑两耳每只多宽（主体 + 肩）：编程会话照它自己的规则（NotchSessionEar），其余按内容（`earSide`）。
+    private var compactEarSide: CGFloat {
+        let visual = displayCompact()
+        if let face = visual?.sessionFace { return NotchSessionEar.earSide(face: face, earWidth: sideWidth, room: sessionRoom) }
+        return earSide(for: visual)
+    }
+
+    /// 紧凑样式要量的两段：真刘海是刘海左右各往外 52.33 点（耳宽上限），隐形刘海是那颗小胶囊的左右两半（从正中往外 40 点）。
     var compactSpans: (leadingEdge: CGFloat, trailingEdge: CGFloat, reach: CGFloat) {
-        // 最小呈现开着：多量几颗最小形要的那一段（量得更远不改 sideWidth：它仍最宽 34）；关着照旧。
+        // 最小呈现开着：多量几颗最小形要的那一段（量得更远不改 sideWidth：它仍最宽 52.33）；关着照旧。
         if isVirtual { return (notch.midX, notch.midX, minimalPresentation ? NotchMinimalPresentation.measuredReach(for: .capsule) : 40) }
         return (notch.minX, notch.maxX, minimalPresentation ? NotchMinimalPresentation.measuredReach(for: .notched) : Self.sideWidth)
     }
 
-    /// 提醒展开后有多宽：照系统的岛，提醒和教手势都是展开的上限 408（暂定，iOS 尺寸，数字在 IslandMetrics）。
-    static func alertWidth(notch: NSRect, teaching: Bool) -> CGFloat {
-        IslandMetrics.expandedWidth
+    /// 提醒展开后有多宽：照系统的岛，提醒和教手势都和那一排同宽——刘海屏 408（11-05 回到上限），外接屏 371（11-04 的 iOS 尺寸）。
+    static func alertWidth(notch: NSRect, teaching: Bool, virtual: Bool = false) -> CGFloat {
+        IslandMetrics.expandedWidth(virtual: virtual)
     }
 
     /// 变化提醒展开后要盖住的那两段菜单栏：真刘海是刘海左右各往外到提醒的边，隐形刘海是从正中往两边到提醒的边。
     static func alertCoverSpans(notch: NSRect, virtual: Bool, screen: NSRect) -> MenuBarRoom.Spans {
-        let half = alertWidth(notch: notch, teaching: false) / 2
+        let half = alertWidth(notch: notch, teaching: false, virtual: virtual) / 2
         return MenuBarRoom.Spans(leadingEdge: virtual ? notch.midX : notch.minX, trailingEdge: virtual ? notch.midX : notch.maxX,
                                  reach: virtual ? half : max(0, half - notch.width / 2),
                                  midY: notch.midY, screen: screen, notch: virtual ? nil : notch)
@@ -969,9 +1038,8 @@ final class NotchPanel: NSPanel {
     private var compactShape: CompactShape {
         guard let room else { return roomWaitOver ? .chin : .pending }
         if isVirtual { return room.leading >= 39 && room.trailing >= 39 ? .pill : .chin }
-        // 2026-11-04（Aaron 定）：有物理刘海的屏不画两侧的耳——在有缺口的屏上做灵动岛很怪。
-        // 紧凑内容一律从刘海下沿向下长，见 islandFrame。
-        return .pill
+        // 2026-11-05（Aaron 推翻 11-04 的“从刘海下沿垂下”，《两耳的岛》）：回到刘海左右两耳，放不下 26 退回下巴（bab193b0^ 原样）。
+        return sideWidth >= Self.narrowestSide ? .sides : .chin
     }
 
     /// 锁屏时把已经挂在岛上的那句收掉，不留到解锁后再说。
@@ -1149,7 +1217,7 @@ final class NotchPanel: NSPanel {
             || isVirtual || compactShape != .sides
     }
 
-    /// 电量那一下：settle 长出两耳（宽 刘海+68、高同刘海），停 2.6 秒，calm 收回。返回有没有出。
+    /// 电量那一下：settle 长出两耳（按内容定宽、高同刘海），停 2.6 秒，calm 收回；闪着时点击穿透。返回有没有出。
     @discardableResult
     func presentPowerFlash(_ flash: PowerFlash) -> Bool {
         guard !isBusyForPowerFlash else { return false }
@@ -1646,9 +1714,9 @@ final class NotchPanel: NSPanel {
         return tiles.isEmpty ? NotchRow.pitch + 2 * NotchRow.edgeMargin - NotchRow.cellGap : rowLayout.islandWidth(minimum: 0)
     }
 
-    /// 灵动岛外框（2026-11-04 Aaron 定）：
-    /// - 没有刘海的外接屏：悬浮在菜单栏中央（紧凑），展开/提醒从菜单栏下沿向下长。
-    /// - 有物理刘海的屏：不画常驻岛；有内容时从刘海下沿（notch.minY）向下长，不在菜单栏高度向两侧扩。
+    /// 灵动岛外框（NotchIslandGeometry）：
+    /// - 没有刘海的外接屏（11-04 定，不动）：紧凑悬浮在菜单栏中央，展开/提醒从菜单栏下沿向下长。
+    /// - 有物理刘海的屏（2026-11-05《两耳的岛》）：顶边贴屏幕顶，把刘海包在里面往两边、往下长。
     private func islandFrame(width: CGFloat, height: CGFloat, hanging: Bool) -> NSRect {
         NotchIslandGeometry.islandFrame(notch: notch, width: width, height: height, virtual: isVirtual, hanging: hanging)
     }
@@ -1674,19 +1742,24 @@ final class NotchPanel: NSPanel {
         guard compactShape == (isVirtual ? CompactShape.pill : CompactShape.sides) else { return [] }
         let layout = NotchMinimalPresentation.layout(items: activityItems, selected: activitySelection, enabled: true)
         let placement: NotchMinimalPresentation.Placement = isVirtual ? .capsule : .notched
-        let count = NotchMinimalPresentation.fittingCount(wanted: layout.minimum.count, room: room?.trailing, placement: placement)
+        // 刘海屏：island 是含肩的外框（hit），小圆离肩尖 6、直径 = 刘海高，和两耳顶边、底边对齐（《两耳的岛》§三）。
+        let notchHeight: CGFloat? = isVirtual ? nil : notch.height
+        let count = NotchMinimalPresentation.fittingCount(wanted: layout.minimum.count, room: room?.trailing, placement: placement,
+                                                          earExtent: isVirtual ? nil : island.maxX - notch.maxX, notchHeight: notchHeight)
         guard count > 0 else { return [] }
-        let frames = NotchMinimalPresentation.frames(island: island, count: count, placement: placement)
+        let frames = NotchMinimalPresentation.frames(island: island, count: count, placement: placement, notchHeight: notchHeight)
         return zip(layout.minimum.prefix(count), frames).map { item, frame in
+            // 音乐退成小圆：画圆形封面（§八第 2 问 A），不是看不出是哪首歌的语气色圆点。
             NotchMinimumShape(id: item.id, label: NotchMinimalPresentation.label(for: item), tone: NotchInfoDot.tone(for: item),
-                              fraction: NotchMinimalPresentation.arcFraction(for: item), frame: frame)
+                              fraction: NotchMinimalPresentation.arcFraction(for: item), frame: frame,
+                              cover: !isVirtual && item.kind == .music ? musicArtwork : nil)
         }
     }
 
     private func restingTarget() -> Target {
         var (rect, style) = baseTarget()
         let resting = !isAuthenticating && !isExpanded && dropState == .none && alertInfo == nil
-        // 音量亮度两耳比 34 宽：不画肩（S3），原来的肩跟着同一根弹簧收到 0；不跟下拉、悬停走；面板就占两耳那么宽。
+        // 音量亮度两耳（每耳 76）比紧凑耳宽：不画肩（S3），原来的肩跟着同一根弹簧收到 0；不跟下拉、悬停走；面板就占两耳那么宽。
         if meter != nil, resting {
             var ears = Target(rect: rect, style: style, hit: rect, compactSide: CGFloat(NotchLevelEars.earWidth))
             ears.shoulders = NotchLevelEars.drawsShoulders() && !isVirtual ? (1, 1) : (0, 0)
@@ -1700,17 +1773,22 @@ final class NotchPanel: NSPanel {
             style.cornerRadius = max(style.cornerRadius, NotchIsland.pullRadius(hardware, extra: extra))
             style.fill = .black
         }
-        var result = Target(rect: rect, style: style, hit: rect, compactSide: sideWidth)
-        // 肩（§5.1）：只给真刘海、知道硬件形状、贴着刘海的几种样子（静止、下巴、紧凑、悬停、下拉）；
-        // 落点、提醒、教学、展开的肩外沿在量过的空位以外，不画（S3），肩跟着同一条弹簧缩回去（S5）。
-        guard let curves = hardware, !isVirtual, resting else { return result }
-        if compact != nil, compactShape == .sides {
-            // S1：紧凑样式的肩从 sideWidth 里扣，外沿不超过现在；扣完不够 26 点就不画，和现版本一样。
-            // 悬停时（每侧 +5）照样扣：主体 sideWidth − e + 5，肩的外沿正好是现版本悬停的外沿 sideWidth + 5，
-            // 主体、图标都只往外挪 5 点，肩不收不长。
-            let fit = NotchIsland.compactSide(sideWidth: sideWidth, narrowest: Self.narrowestSide, curves: curves)
+        let side = compactEarSide
+        var result = Target(rect: rect, style: style, hit: rect, compactSide: side)
+        // 肩（§5.1）：只给真刘海、知道硬件形状。贴着刘海的几种样子（静止、下巴、紧凑、下拉）照 S1、S3；
+        // 2026-11-05《两耳的岛》展开第 2 问 A：展开、提醒、换歌一瞥顶边也贴屏幕顶，肩跟着卡片外沿画（原 S3 的“展开不画肩”作废），
+        // 读成同一块黑长大。认证、落点仍不画。
+        guard let curves = hardware, !isVirtual else { return result }
+        if !resting {
+            guard !isAuthenticating, dropState == .none, isExpanded || alertInfo != nil else { return result }
+            result.shoulders = (1, 1)
+            return result
+        }
+        if displayCompact() != nil, compactShape == .sides, meter == nil {
+            // S1：紧凑样式的肩从耳宽里扣，外沿不超过量到的空位；扣完不够 26 点就不画。
+            let fit = NotchIsland.compactSide(sideWidth: side, narrowest: Self.narrowestSide, curves: curves)
             guard fit.shoulders else { return result }
-            result.rect = rect.insetBy(dx: sideWidth - fit.body, dy: 0)
+            result.rect = rect.insetBy(dx: side - fit.body, dy: 0)
             result.compactSide = fit.body
             result.shoulders = (1, 1)
             return result
@@ -1761,8 +1839,11 @@ final class NotchPanel: NSPanel {
             let radius: CGFloat = isVirtual
                 ? (authenticationView is NowPlayingCard ? NowPlayingCardLayout.bottomRadius : 34)
                 : (content?.interactionCornerRadius ?? 24)
+            // 正在播放大卡是音乐的展开：描边 1、取封面主色（《两耳的岛》展开第 3 问 A）；其余交互卡照旧 0.5 灰。
+            let musicCard = authenticationView is NowPlayingCard
             return (NSRect(x: notch.midX - width / 2, y: top - height, width: width, height: height),
-                    IslandStyle(cornerRadius: radius, allCorners: isVirtual, fill: .black, border: 0.5))
+                    IslandStyle(cornerRadius: radius, allCorners: isVirtual, fill: .black, border: musicCard ? 1 : 0.5,
+                                borderColor: keyLine(music: musicCard)))
         }
         if stripLanding, dropState != .none {
             // 卷轴概览拖来的一扇：340 × 84，圆角 22，顶边贴着屏幕顶，横向居中在刘海上（稿 SS-04，数字在 StripNotchExchange）。
@@ -1791,8 +1872,8 @@ final class NotchPanel: NSPanel {
             let width: CGFloat
             let height: CGFloat
             if !stacksActivityCard, !tiles.isEmpty {
-                // 照系统的岛：那一排固定 408 × 160（从屏幕顶边量起），不随格子数、屏宽变（暂定，iOS 尺寸，IslandMetrics）。
-                width = min(IslandMetrics.expandedWidth, screenWidth)
+                // 照系统的岛：那一排固定宽 × 160（从屏幕顶边量起），不随格子数、屏宽变：刘海屏 408、外接屏 371（IslandMetrics）。
+                width = min(IslandMetrics.expandedWidth(virtual: isVirtual), screenWidth)
                 height = IslandMetrics.rowHeight
             } else {
                 // 没有格子的空岛、活动卡叠在窗口上的旧样子：照旧。
@@ -1800,31 +1881,35 @@ final class NotchPanel: NSPanel {
                 let rawBelow: CGFloat = stacksActivityCard ? (tiles.isEmpty ? 144 : 286) : (tiles.isEmpty ? 56 : 142)
                 height = notch.height + NotchIsland.peninsulaContentHeight(rawBelow)
             }
-            // 2026-11-04：从锚点下沿向下长——外接屏从菜单栏下沿、真刘海屏从刘海下沿；
-            // 不在菜单栏高度向两侧扩（那会在有缺口的屏上读成"第二块黑色"）。
+            // 外接屏从菜单栏下沿往下长（11-04）；真刘海屏顶边贴屏幕顶、把刘海包在里面（11-05《两耳的岛》§四，Newsroom 照片）。
             return (islandFrame(width: width, height: height, hanging: true),
                     IslandStyle(cornerRadius: 28, allCorners: isVirtual, fill: .black, border: 1))
         }
         if let alert = alertInfo, alert.peek != nil {
-            // 换歌一瞥：宽不变（还是两耳那么宽），只往下鼓 30（63.5），底角 24；不走半岛的矮档，那一档会把它撑到 72。
-            let side = NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
+            // 换歌一瞥：宽不变（还是两耳那么宽：主体同两耳，肩照样在外上角），只往下鼓 30（63.5），底角 24；
+            // 不走半岛的矮档，那一档会把它撑到 72。描边取封面主色（《两耳的岛》展开第 3 问 A）。
+            let side = isVirtual
+                ? NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
+                : NotchIsland.compactSide(sideWidth: compactEarSide, narrowest: Self.narrowestSide, curves: hardware).body
             let width = notch.width + side * 2
             let height = CGFloat(NowPlayingPeek.height(notchHeight: Double(notch.height)))
             return (islandFrame(width: width, height: height, hanging: true),
                     IslandStyle(cornerRadius: CGFloat(NowPlayingPeek.cornerRadius), allCorners: isVirtual, fill: .black, border: 1,
-                                borderColor: NotchPanel.hairline))
+                                borderColor: keyLine(music: true)))
         }
         if let alert = alertInfo {
             let teaching = alert.demo != nil
-            let width = Self.alertWidth(notch: notch, teaching: teaching)
+            let width = Self.alertWidth(notch: notch, teaching: teaching, virtual: isVirtual)
             // 照系统的岛：提醒总高 84、教手势 112，都从屏幕顶边量起。不再走半岛矮档（72 的内容高，总高 100）：
             // 那一档是为避开 WWDC23 10194 的临界高度，系统自己的提醒就是 84，稿的对照账第 6 行定了按稿画。
             let height = teaching ? IslandMetrics.teachingHeight : IslandMetrics.alertHeight
+            // 描边取语气色（《两耳的岛》展开第 3 问 A）：问题橙、提示强调色照今天加粗 1.5；做完绿 1；其余系统灰。
             let border: NSColor
             switch alert.tone {
             case .problem: border = NSColor.systemOrange.withAlphaComponent(0.75)
             case .tip: border = NSColor.controlAccentColor.withAlphaComponent(0.8)
-            default: border = NotchPanel.hairline
+            case .done: border = NSColor.systemGreen.withAlphaComponent(0.6)
+            case .info: border = NotchPanel.hairline
             }
             return (islandFrame(width: width, height: height, hanging: true),
                     IslandStyle(cornerRadius: 24, allCorners: isVirtual, fill: .black,
@@ -1836,11 +1921,9 @@ final class NotchPanel: NSPanel {
             if meter != nil { return levelEarsTarget() }
             switch compactShape {
             case .sides:
-                // LA-2：画多宽就要量到多宽。以前按 max(sideWidth, 54) 画、只验 ≥ 26，26–54 点的图标会被盖住。
-                // 电量那一下：宽 = 刘海 + 68（每耳 34）、高同刘海。
-                let activitySide = ears.sessionFace.map { NotchSessionEar.earSide(face: $0, earWidth: sideWidth, room: sessionRoom) }
-                    ?? NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
-                return (compactEarsRect(side: ears.flash != nil ? sideWidth : activitySide),
+                // LA-2：画多宽就要量到多宽（earSide 和量到的空位取小）。2026-11-05《两耳的岛》§二：两耳等宽、按内容定宽，
+                // 电量那一下也一样（“82%”主体约 37.75）。
+                return (compactEarsRect(side: compactEarSide),
                         IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .chin:
                 if isVirtual {
@@ -1851,9 +1934,10 @@ final class NotchPanel: NSPanel {
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
             case .pill, .pending:
+                // 外接屏的 iOS 胶囊（11-04）。真刘海屏只有空位还没量到的那 0.35 秒会走到 .pending：先停在刘海本身，量到再长耳朵。
+                guard isVirtual else { return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0)) }
                 let height = IslandMetrics.iosCompactHeight
-                let width = max(IslandMetrics.iosCompactWidth, isVirtual ? 0 : notch.width)
-                return (islandFrame(width: width, height: height, hanging: false),
+                return (islandFrame(width: IslandMetrics.iosCompactWidth, height: height, hanging: false),
                         IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: height, preferred: capsuleCorner),
                                     allCorners: true, fill: .black, border: 0))
             }
@@ -1863,12 +1947,12 @@ final class NotchPanel: NSPanel {
             case .sides:
                 // 紧凑样式：刘海往左右各长出一小段，左边 App 图标、右边个数（HIG：紧贴摄像头，两段读起来是一件事）。
                 // 知道硬件形状时底角就是刘海的底角，和刘海读起来是一件事。
-                return (compactEarsRect(side: sideWidth),
+                return (compactEarsRect(side: compactEarSide),
                         IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .pill:
-                // 灵动岛（iOS 尺寸）：外接屏悬浮在菜单栏中央；真刘海屏从刘海下沿向下长。
+                // 灵动岛（iOS 尺寸，11-04）：只有外接屏会走到这里，悬浮在菜单栏中央。
                 let height = IslandMetrics.iosCompactHeight
-                let width = max(IslandMetrics.iosCompactWidth, isVirtual ? 0 : notch.width)
+                let width = IslandMetrics.iosCompactWidth
                 return (islandFrame(width: width, height: height, hanging: false),
                         IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: height, preferred: capsuleCorner),
                                     allCorners: true, fill: .black, border: 0))
@@ -1892,6 +1976,15 @@ final class NotchPanel: NSPanel {
                                        allCorners: true, fill: .black, border: 0))
         }
         return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
+    }
+
+    /// 展开、提醒那一圈描边的颜色（HIG：深色模式下岛外一圈描边要配合内容）：音乐取封面主色，其余系统灰（`hairline`）。
+    /// 提高对比度时一律用 hairline（它已升到白 0.5）。
+    private func keyLine(music: Bool) -> NSColor {
+        guard music, !SystemAppearanceCapabilities.current.increaseContrast,
+              let palette = musicArtwork?.palette, palette.hasColor else { return Self.hairline }
+        let c = palette.fill
+        return NSColor(srgbRed: CGFloat(c.r), green: CGFloat(c.g), blue: CGFloat(c.b), alpha: 0.6)
     }
 
     /// 紧凑两耳的外框：刘海往左右各长 `side`，高与刘海一致（这台 Mac 的真实尺寸）。
@@ -1940,8 +2033,9 @@ final class NotchPanel: NSPanel {
         // 顶边贴着屏幕边缘，不留一像素的缝；也不比刘海多出半点。
         let target = target()
         let rect = target.rect, style = target.style
-        // 两耳只亮一小会儿：点击穿透，菜单栏照常能点（稿“形状”一节）。
-        ignoresMouseEvents = meter != nil
+        // 两耳只亮一小会儿：点击穿透，菜单栏照常能点（稿“形状”一节）。电量闪的两耳同理（《两耳的岛》§七第 2 问 A）：
+        // 2.6 秒的东西不吃掉一下点按。
+        ignoresMouseEvents = meter != nil || powerFlashState != nil
         // 平时（什么都没有）岛就是刘海本身：不画，免得圆角和刘海的圆角对不齐、从边上露出黑点。
         let bare = !isVirtual && rect == notch && pulled == 0 && pushed == 0
         let resting = !isExpanded && dropState == .none && alertInfo == nil
@@ -1955,16 +2049,24 @@ final class NotchPanel: NSPanel {
         let extra = resting ? trayExtra : 0
         // 音量亮度两耳不管紧凑退成了什么：左右各 76，一定是两侧的版式。
         let earShape: CompactShape = shelfEars || meter != nil ? .sides : shape
+        let earCompact = shelfEars ? compact : visual
+        // 真刘海屏：两耳里的东西贴着刘海（内侧 2），量得出内容才这样排；展开时原地不动（《两耳的岛》§二、怎么变第 1 问 A）。
+        let earBoxes = !isVirtual && earShape == .sides && meter == nil ? earCompact.flatMap { earContent($0) } : nil
         var content = NotchCanvasView.Content(
             tiles: isExpanded ? tiles : [],
             dots: chinShown ? (compact?.count ?? 0) : 0,
             dotsChanged: chinShown && (compact?.changed ?? false),
             dotsY: isVirtual ? 4 : 2.5 + extra,
-            compact: compactShown ? (shelfEars ? compact : visual) : nil,
+            compact: compactShown ? earCompact : nil,
             compactSlots: compactShown
-                ? compactSlots(in: rect.size, shape: earShape, side: target.compactSide, anchorToNotch: shelfEars)
+                ? compactSlots(in: rect.size, shape: earShape, side: target.compactSide, anchorToNotch: shelfEars, content: earBoxes)
                 : nil,
-            alert: (!isExpanded && dropState == .none) ? alertInfo : nil,
+            alert: (!isExpanded && dropState == .none) ? alertInfo.map { alert in
+                // 真刘海屏的提醒照 HIG 分四块：符号、状态在刘海两侧，句子在下面（《两耳的岛》§五第 1 问 A）。
+                var alert = alert
+                if !isVirtual, alert.peek == nil, alert.demo == nil { alert.besideNotch = notch.size }
+                return alert
+            } : nil,
             hint: hintText(), notchHeight: notch.height,
             pullIcon: extra > 0 && pushed == 0 ? compact?.icon : nil, pullExtra: extra, pullProgress: min(1, extra / 50),
             drop: dropState, dropChoice: dropChoice,
@@ -1982,9 +2084,15 @@ final class NotchPanel: NSPanel {
         // 封面耳：只在真刘海的两侧版式里换成封面；边长按这一耳的主体宽、肩宽、刘海高算，放不下就是 nil（退回今天的样子）。
         if var ears = content.compact, ears.music != nil, !shelfEars, let slots = content.compactSlots {
             let shoulder = target.shoulders.leading > 0 ? Double(hardware?.shoulderExtent ?? 0) : 0
-            ears.music?.coverSide = earShape == .sides && !isVirtual
-                ? NowPlayingEars.coverSide(body: Double(slots.leading.width), shoulder: shoulder, notchHeight: Double(notch.height))
+            // 主体宽：贴刘海排的槽比主体窄（只装内容），按 target 的主体算；量不出内容时槽就是主体。
+            let body = earBoxes == nil ? Double(slots.leading.width) : Double(target.compactSide)
+            let side = earShape == .sides && !isVirtual
+                ? NowPlayingEars.coverSide(body: body, shoulder: shoulder, notchHeight: Double(notch.height))
                 : nil
+            ears.music?.coverSide = side
+            ears.music?.coverCorner = side.map {
+                NowPlayingEars.coverCorner(side: $0, earCorner: hardware.map { Double($0.bottomRadius) }, notchHeight: Double(notch.height))
+            }
             content.compact = ears
         }
         // 面板开到能装下“现在”和“终点”（四周多留一点给回弹），顶边贴着屏幕顶；岛在屏幕上原地不动。
@@ -2031,6 +2139,7 @@ final class NotchPanel: NSPanel {
         // 面板顶时，钉回屏幕顶。2026-11-05 收窄：bab193b0 之后悬垂形状（紧凑胶囊、展开、提醒、一瞥）
         // 的顶边是刘海下沿（notch.minY），不在这个名单里——强行上钉会把 37 点的胶囊撑成盖住刘海的
         // 70 点胖块（录屏 2026-11-05 4:11 的元凶，探针 --notch-debug-cycle 实测 island 高 70.83）。
+        // 同日《两耳的岛》改回后真刘海屏上所有形状顶边都贴屏幕顶，这个条件在刘海屏上恒成立；悬垂只剩外接屏。
         let localTop = container.maxY - container.minY
         if abs(rect.maxY - notch.maxY) <= 0.5, local.maxY < localTop - 0.5 {
             let missing = localTop - local.maxY
@@ -2179,8 +2288,22 @@ final class NotchPanel: NSPanel {
 
     /// 紧凑样式左右两段在岛里的位置。side：每侧主体多宽（画肩时从 sideWidth 里扣掉了肩）。
     /// anchorToNotch：展开时两耳贴着硬件刘海左右，不漂到整块岛的外沿。
+    /// content：真刘海屏上量好的左右内容大小（`earContent`）。给了就贴着刘海排：左槽的内容右缘离刘海 2、右槽的内容左缘离刘海 2，
+    /// 不再在整只耳里居中（《两耳的岛》改哪里第 6 行）。槽比内容左右各宽 `earSlotInset`：NotchCompactView 在槽里留 6 的边，
+    /// 左对齐、右对齐、居中三种画法都正好落在内容盒上。
     private func compactSlots(in size: NSSize, shape: CompactShape, side: CGFloat,
-                              anchorToNotch: Bool = false) -> (leading: NSRect, trailing: NSRect) {
+                              anchorToNotch: Bool = false,
+                              content: (leading: CGSize, trailing: CGSize)? = nil) -> (leading: NSRect, trailing: NSRect) {
+        if let content, shape == .sides {
+            let inset = Self.earSlotInset, gap = IslandMetrics.earInnerGap
+            // 内容比主体宽（长标题被夹到上限）：外侧至少留 4，字从尾巴截。
+            let most = max(0, max(side, Self.narrowestSide) - gap - 4)
+            let leading = min(content.leading.width, most), trailing = min(content.trailing.width, most)
+            let notchX = (size.width - notch.width) / 2
+            let y = size.height - notch.height
+            return (NSRect(x: notchX - gap - leading - inset, y: y, width: leading + 2 * inset, height: notch.height),
+                    NSRect(x: notchX + notch.width + gap - inset, y: y, width: trailing + 2 * inset, height: notch.height))
+        }
         if anchorToNotch {
             let ear = max(side, Self.narrowestSide)
             let notchX = (size.width - notch.width) / 2
@@ -2195,6 +2318,9 @@ final class NotchPanel: NSPanel {
         return (NSRect(x: 0, y: 0, width: side, height: size.height),
                 NSRect(x: size.width - side, y: 0, width: side, height: size.height))
     }
+
+    /// NotchCompactView 画耳朵时在槽里留的边（drawEar、进度零件的 6）。
+    private static let earSlotInset: CGFloat = 6
 
     private func hintText() -> String? {
         if stripLanding, dropState != .none { return StripNotchExchange.landingLine }

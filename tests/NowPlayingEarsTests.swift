@@ -34,7 +34,11 @@ import Foundation
     static func testCoverSide() {
         // 33.5 高的刘海：round(0.6 × 33.5) = round(20.1) = 20；34 宽的耳 = 主体 26.6 + 肩 7.4。
         close(NowPlayingEars.coverSide(body: 26.6, shoulder: 7.4, notchHeight: 33.5), 20, "本机边长 20")
-        close(NowPlayingEars.coverCorner(side: 20), 5, "圆角 5")
+        close(NowPlayingEars.coverCorner(side: 20), 5, "不知道耳底角：圆角 = 边长 ÷ 4 = 5")
+        // 《两耳的岛》§八第 1 问 A：和耳朵同心，10.7 − (33.5 − 20) ÷ 2 = 3.95。
+        close(NowPlayingEars.coverCorner(side: 20, earCorner: 10.7, notchHeight: 33.5), 3.95, "同心圆角 3.95")
+        close(NowPlayingEars.coverCorner(side: 20, earCorner: nil, notchHeight: 33.5), 5, "没有硬件底角退回 5")
+        close(NowPlayingEars.coverCorner(side: 14, earCorner: 6, notchHeight: 33.5), 1, "算出来不到 1 取 1，不画直角")
         // 没画肩：主体就是 34。
         close(NowPlayingEars.coverSide(body: 34, shoulder: 0, notchHeight: 33.5), 20, "没肩也是 20")
         // 别的刘海高：32 → round(19.2) = 19；38 → round(22.8) = 23。

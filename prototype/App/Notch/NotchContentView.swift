@@ -305,7 +305,9 @@ final class NotchContentView: NSView {
         mark.frame = bounds
         mark.visible = content.secondaryDot
         alertView.isHidden = content.alert == nil
-        alertView.frame = NSRect(x: 0, y: 0, width: rect.width, height: max(0, rect.height - content.notchHeight))
+        // 真刘海屏的提醒分四块（besideNotch）：刘海两侧那一条也归它排，视图盖住整块岛；其余只占刘海下面。
+        alertView.frame = NSRect(x: 0, y: 0, width: rect.width,
+                                 height: content.alert?.besideNotch != nil ? rect.height : max(0, rect.height - content.notchHeight))
         alertView.update(content.alert)
         activityView.isHidden = content.activities.isEmpty || !content.activitiesExpanded
         let activityHeight: CGFloat = content.activitiesExpanded ? 142 : 30

@@ -1403,51 +1403,70 @@ enum NotchMinimalPresentation {
         case capsule
     }
 
-    static func size(for placement: Placement) -> CGSize {
+    /// notchHeight：刘海屏的小圆直径 = 刘海高（《两耳的岛》§三，和两耳同高、顶边贴屏幕顶）；nil 退回 36.67。
+    static func size(for placement: Placement, notchHeight: CGFloat? = nil) -> CGSize {
         switch placement {
-        case .notched: return CGSize(width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter)
+        case .notched:
+            let diameter = IslandMetrics.minimalDiameter(notchHeight: notchHeight)
+            return CGSize(width: diameter, height: diameter)
         case .capsule: return CGSize(width: 26, height: 22)
         }
     }
 
     /// 最小形和岛右边缘、最小形和最小形之间的空隙。
     static let gap: CGFloat = IslandMetrics.minimalGap
-    /// 最多同时排几颗（可见活动最多 3 条，一条是紧凑）。
-    static let maxShapes = 2
-    /// 进度弧的线宽、绕着圆点的弧的直径、圆点直径。
+    /// 最多同时排几颗：一颗（第 30 条，《两耳的岛》§三第 2 问 A）。第三件只在那一排里，菜单栏不拖出一串。
+    static let maxShapes = 1
+    /// 进度弧的线宽、绕着圆点的弧的直径、圆点直径（外接屏 26 × 22 的胶囊里用这一组）。
     static let arcLineWidth: CGFloat = 2
     static let arcDiameter: CGFloat = 16
     static let dotDiameter: CGFloat = 8
+    /// 刘海屏小圆里的进度弧（直径 22、线宽 2.5）和音乐的圆形封面（直径 22），《两耳的岛》§三、§八第 2 问 A。
+    static let notchedArcDiameter: CGFloat = 22
+    static let notchedArcLineWidth: CGFloat = 2.5
+    static let notchedCoverDiameter: CGFloat = 22
 
-    /// 有活动时紧凑岛从刘海（或正中）往右伸出多远：真刘海是一只紧凑耳的宽，隐形刘海那颗 200 宽的胶囊是 100。
+    /// 一颗最小形里弧的直径和线宽：高到能放下 22 的弧（刘海屏的小圆）用大的一组，外接屏胶囊用小的。
+    static func arc(forHeight height: CGFloat) -> (diameter: CGFloat, lineWidth: CGFloat) {
+        height >= notchedArcDiameter + notchedArcLineWidth + 4 ? (notchedArcDiameter, notchedArcLineWidth) : (arcDiameter, arcLineWidth)
+    }
+
+    /// 有活动时紧凑岛从刘海（或正中）往右伸出多远：真刘海最多是一只紧凑耳的宽（耳按内容定宽，实际常窄些，
+    /// 面板知道这一刻的耳宽时用 `earExtent` 传进来），隐形刘海那颗 200 宽的胶囊是 100。
     static func islandExtent(for placement: Placement) -> CGFloat {
         placement == .notched ? IslandMetrics.compactEarWidth : 100
     }
 
     /// 要放下 `count` 颗，从刘海边（隐形刘海是正中）往外至少要空多宽。
-    static func roomNeeded(count: Int, placement: Placement) -> CGFloat {
+    /// earExtent：这一刻右耳连肩伸出多远（nil 按上限）；notchHeight：刘海屏小圆的直径（nil 按 36.67）。
+    static func roomNeeded(count: Int, placement: Placement, earExtent: CGFloat? = nil, notchHeight: CGFloat? = nil) -> CGFloat {
         guard count > 0 else { return 0 }
-        let size = size(for: placement)
-        return islandExtent(for: placement) + gap + CGFloat(count) * size.width + CGFloat(count - 1) * gap
+        let size = size(for: placement, notchHeight: notchHeight)
+        let extent = placement == .notched ? (earExtent ?? islandExtent(for: placement)) : islandExtent(for: placement)
+        return extent + gap + CGFloat(count) * size.width + CGFloat(count - 1) * gap
     }
 
-    /// 量菜单栏空位时要量多远（开关开着才用，关着照旧量原来的）。
+    /// 量菜单栏空位时要量多远（开关开着才用，关着照旧量原来的）：按上限量，耳朵变宽也够。
     static func measuredReach(for placement: Placement) -> CGFloat {
         roomNeeded(count: maxShapes, placement: placement)
     }
 
     /// 量到的空位 `room`（从刘海边往外）放得下几颗；放不下就一颗也不画，不压到菜单栏图标上。
-    static func fittingCount(wanted: Int, room: CGFloat?, placement: Placement) -> Int {
+    static func fittingCount(wanted: Int, room: CGFloat?, placement: Placement,
+                             earExtent: CGFloat? = nil, notchHeight: CGFloat? = nil) -> Int {
         guard let room, wanted > 0 else { return 0 }
         var count = min(wanted, maxShapes)
-        while count > 0, roomNeeded(count: count, placement: placement) > room { count -= 1 }
+        while count > 0, roomNeeded(count: count, placement: placement, earExtent: earExtent, notchHeight: notchHeight) > room {
+            count -= 1
+        }
         return count
     }
 
     /// 最小形的外框（和 `island` 同一个坐标系）：从岛右边缘往右排，竖直居中。
-    static func frames(island: CGRect, count: Int, placement: Placement) -> [CGRect] {
+    /// 刘海屏传进来的 `island` 要含肩（小圆离右耳肩尖 6）；直径 = 刘海高时竖直居中就是顶边贴屏幕顶。
+    static func frames(island: CGRect, count: Int, placement: Placement, notchHeight: CGFloat? = nil) -> [CGRect] {
         guard count > 0 else { return [] }
-        let size = size(for: placement)
+        let size = size(for: placement, notchHeight: notchHeight)
         let y: CGFloat = island.midY - size.height / 2
         var result: [CGRect] = []
         var x: CGFloat = island.maxX + gap

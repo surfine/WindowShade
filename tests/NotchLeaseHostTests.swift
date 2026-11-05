@@ -112,7 +112,26 @@ import Cocoa
         let ears = NotchPanel(notch: NSRect(x: -5200, y: 900, width: 180, height: 32), virtual: true)
         ears.setActivities([music], selected: "music")
         let earShape = ears.shapeForProbe!.island
-        expect(earShape.width == 200 && abs(earShape.height - 26) < 0.01, "紧凑是一颗胶囊，不是旧的横条")
+        expect(abs(earShape.width - IslandMetrics.iosCompactWidth) < 0.01 && abs(earShape.height - IslandMetrics.iosCompactHeight) < 0.01
+               && earShape.maxY <= 932 + 0.01, "外接屏：紧凑是菜单栏正中一颗 126 × 37.33 的胶囊，顶边不高过屏幕顶（11-04，不动）")
+        // 真刘海屏（2026-11-05《两耳的岛》）：刘海左右两耳，高同刘海、顶边贴屏幕顶，按内容定宽、两耳等宽，不超过 52.33。
+        let realNotch = NSRect(x: -5600, y: 900, width: 180, height: 32)
+        let twoEars = NotchPanel(notch: realNotch, virtual: false)
+        twoEars.setActivities([music], selected: "music")
+        twoEars.setCompact(nil, room: MenuBarRoom.Sides(leading: 200, trailing: 200))
+        let pair = twoEars.shapeForProbe!.island
+        let side = (pair.width - realNotch.width) / 2
+        expect(abs(pair.height - realNotch.height) < 0.01 && abs(pair.maxY - realNotch.maxY) < 0.01,
+               "真刘海：两耳高同刘海、顶边贴屏幕顶，不从刘海下沿垂下")
+        expect(abs(pair.midX - realNotch.midX) < 0.01 && side >= NotchPanel.narrowestSide - 0.01 && side <= IslandMetrics.compactEarWidth + 0.01,
+               "两耳等宽（以刘海为中心），每只 26…52.33（实际 \(side)）")
+        twoEars.setCompact(nil, room: MenuBarRoom.Sides(leading: 20, trailing: 200))
+        let chin = twoEars.shapeForProbe!.island
+        expect(abs(chin.width - realNotch.width) < 0.01 && chin.minY < realNotch.minY, "一边放不下 26：退回刘海下面的下巴")
+        twoEars.expand(with: [])
+        let card = twoEars.shapeForProbe!.island
+        expect(abs(card.maxY - realNotch.maxY) < 0.01 && card.minX <= realNotch.minX && card.maxX >= realNotch.maxX,
+               "真刘海：展开顶边贴屏幕顶，把刘海包在里面")
         expect(ears.compactForProbe?.leading == "September" && ears.compactForProbe?.trailing == "2:14",
                "左耳是这一件，右耳是剩余时间（音乐不写 %）")
         ears.expand(with: [])
@@ -240,7 +259,7 @@ import Cocoa
         merged.expand(with: [window(1), window(2), sessionTile, playTile], merged: true)
         let mergedShape = merged.shapeForProbe!.island
         expect(merged.mergedRow && abs(mergedShape.height - plainShape.height) < 0.5, "合成一排：高度和只有窗口时一样，没有叠放")
-        expect(abs(mergedShape.width - IslandMetrics.expandedWidth) < 0.5, "照系统的岛：那一排固定 408 宽，格子多了左右滚")
+        expect(abs(mergedShape.width - IslandMetrics.expandedWidth(virtual: true)) < 0.5, "照系统的岛：外接屏那一排固定 371 宽，格子多了左右滚")
         expect(merged.ongoingSignatures.count == 2, "右段两格")
         let noOngoing = NotchPanel(notch: NSRect(x: -7000, y: 900, width: 180, height: 32), virtual: true)
         noOngoing.setActivities([busy], selected: busy.id)

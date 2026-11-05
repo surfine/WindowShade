@@ -299,7 +299,7 @@ final class NotchCompactView: NSView {
         coverHost.isHidden = false
         coverHost.bounds = CGRect(x: 0, y: 0, width: frame.width, height: frame.height)
         coverHost.position = CGPoint(x: frame.x, y: frame.y)
-        coverHost.cornerRadius = CGFloat(NowPlayingEars.coverCorner(side: side))
+        coverHost.cornerRadius = CGFloat(music.coverCorner ?? NowPlayingEars.coverCorner(side: side))
         coverHost.opacity = Float(NowPlayingEars.coverAlpha(paused: music.paused))
         for sub in [coverImage, coverPlaceholder] { sub.bounds = coverHost.bounds; sub.position = .zero }
         coverImage.contentsScale = scale
@@ -814,6 +814,10 @@ final class NotchMinimumView: NSView {
     private let dot = CALayer()
     private let track = CAShapeLayer()
     private let arc = CAShapeLayer()
+    /// 音乐退成小圆时的圆形封面（直径 22）。
+    private let cover = CALayer()
+    private var shownCoverKey: String?
+    private var arcDiameter: CGFloat = 0
 
     init(shape: NotchMinimumShape) {
         shapeID = shape.id
@@ -821,19 +825,15 @@ final class NotchMinimumView: NSView {
         wantsLayer = true
         layer?.backgroundColor = NSColor.black.cgColor
         layer?.cornerCurve = .continuous
-        let diameter = NotchMinimalPresentation.arcDiameter
-        let line = NotchMinimalPresentation.arcLineWidth
-        let ring = CGMutablePath()
-        ring.addArc(center: CGPoint(x: diameter / 2, y: diameter / 2), radius: (diameter - line) / 2,
-                    startAngle: .pi / 2, endAngle: .pi / 2 - 2 * .pi, clockwise: true)
         for layer in [track, arc] {
-            layer.bounds = CGRect(x: 0, y: 0, width: diameter, height: diameter)
-            layer.path = ring
             layer.fillColor = nil
-            layer.lineWidth = line
             layer.lineCap = .round
             self.layer?.addSublayer(layer)
         }
+        cover.masksToBounds = true
+        cover.contentsGravity = .resizeAspectFill
+        cover.isHidden = true
+        self.layer?.addSublayer(cover)
         track.lineCap = .butt
         track.strokeColor = NSColor.white.withAlphaComponent(CGFloat(NotchProgressPart.trackWhiteAlpha)).cgColor
         dot.bounds = CGRect(x: 0, y: 0, width: NotchMinimalPresentation.dotDiameter, height: NotchMinimalPresentation.dotDiameter)
@@ -854,14 +854,41 @@ final class NotchMinimumView: NSView {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         layer?.cornerRadius = shape.frame.height / 2
+        // 弧的大小跟着这颗的高走：刘海屏 33.5 的小圆里是 22 / 2.5，外接屏 26 × 22 的胶囊里是 16 / 2。
+        let (diameter, line) = NotchMinimalPresentation.arc(forHeight: shape.frame.height)
+        if diameter != arcDiameter {
+            arcDiameter = diameter
+            let ring = CGMutablePath()
+            ring.addArc(center: CGPoint(x: diameter / 2, y: diameter / 2), radius: (diameter - line) / 2,
+                        startAngle: .pi / 2, endAngle: .pi / 2 - 2 * .pi, clockwise: true)
+            for layer in [track, arc] {
+                layer.bounds = CGRect(x: 0, y: 0, width: diameter, height: diameter)
+                layer.path = ring
+                layer.lineWidth = line
+            }
+        }
         let center = CGPoint(x: shape.frame.width / 2, y: shape.frame.height / 2)
         dot.position = center
         track.position = center
         arc.position = center
+        let side = NotchMinimalPresentation.notchedCoverDiameter
+        cover.bounds = CGRect(x: 0, y: 0, width: side, height: side)
+        cover.cornerRadius = side / 2
+        cover.position = center
+        let key = shape.cover.map { "\($0.trackKey)#\($0.fingerprint)" }
+        if key != shownCoverKey {
+            shownCoverKey = key
+            cover.contents = shape.cover?.makeCGImage()
+            cover.contentsScale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        }
+        // 有封面就只画封面（音乐），没有照旧画进度弧或语气色圆点。
+        let showsCover = cover.contents != nil
+        cover.isHidden = !showsCover
+        dot.isHidden = showsCover
         let color = shape.tone.color.cgColor
         dot.backgroundColor = color
         arc.strokeColor = color
-        if let fraction = shape.fraction {
+        if let fraction = shape.fraction, !showsCover {
             track.isHidden = false
             arc.isHidden = false
             arc.strokeEnd = CGFloat(fraction)

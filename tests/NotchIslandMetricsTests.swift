@@ -9,12 +9,14 @@ struct NotchIslandMetricsTests {
         typealias M = IslandMetrics
         typealias I = IslandInteraction
 
-        t.section("IM-01", "暂定尺寸（iOS）：紧凑耳 52.33 × 36.67，小圆 36.67，展开 408，提醒 84，那一排 160，格 104")
-        t.expect(M.compactEarWidth == 52.33 && M.compactHeight == 36.67, "紧凑每耳 52.33 × 36.67")
+        t.section("IM-01", "暂定尺寸（iOS）：紧凑耳上限 52.33，iOS 紧凑高 36.67，小圆 36.67，展开 408（刘海屏）/ 371（外接屏），提醒 84，那一排 160，格 104")
+        t.expect(M.compactEarWidth == 52.33 && M.compactHeight == 36.67, "紧凑每耳上限 52.33；iOS 紧凑高 36.67 只作参考")
         t.expect(M.compactEarWidth >= 52.33 && M.compactEarWidth <= M.compactEarMaxWidth && M.compactEarMaxWidth == 62.33, "耳宽在 52.33…62.33 内")
         t.expect(abs(36.67 / 2 /* deprecated compactCornerRadius */ - 18.335) < 0.0001, "紧凑底角 = 高的一半")
         t.expect(M.minimalDiameter == 36.67 && M.minimalDiameter == M.compactHeight, "小圆直径 36.67，和紧凑同高")
-        t.expect(M.expandedWidth == 371 && M.expandedMinimumWidth == 371, "展开宽 371（iOS 原尺寸）")
+        t.expect(M.expandedWidth == 408 && M.expandedMinimumWidth == 371, "展开宽 371…408，刘海屏取 408")
+        t.expect(M.expandedWidth(virtual: false) == 408 && M.expandedWidth(virtual: true) == 371 && M.iosExpandedWidth == 371,
+                 "按屏取：刘海屏 408（11-05），外接屏 371（11-04 的 iOS 尺寸）")
         t.expect(M.alertHeight == 84 && M.teachingHeight == 112 && M.expandedMaximumHeight == 160, "提醒 84、教手势 112、上限 160")
         t.expect(M.rowHeight == 160 && M.rowCellHeight == 104, "那一排 160，格 104")
         t.expect(NotchRow.cellWidth == 124 && NotchRow.islandWidth == Double(M.expandedWidth), "格 124 宽；岛宽取自 IslandMetrics")
@@ -31,7 +33,22 @@ struct NotchIslandMetricsTests {
                  "小圆是正圆，竖直居中在紧凑的岛上")
         t.expect(frames[0].minX == 260.67 + M.minimalGap, "离右耳 6")
         let reach = NotchMinimalPresentation.measuredReach(for: .notched)
-        t.expect(abs(reach - (M.compactEarWidth + M.minimalGap + 2 * M.minimalDiameter + M.minimalGap)) < 0.0001, "量空位 = 耳宽 + 间距 + 两颗小圆")
+        t.expect(abs(reach - (M.compactEarWidth + M.minimalGap + M.minimalDiameter)) < 0.0001, "量空位 = 耳宽上限 + 间距 + 一颗小圆（最多一颗）")
+
+        t.section("IM-05a", "刘海屏两耳按内容定宽（《两耳的岛》§二）：主体 = 2 + 内容宽 + (刘海高 − 内容高) ÷ 2，夹在 26 至 52.33 − 肩")
+        let shoulder: CGFloat = 7.74
+        t.expect(abs(M.compactBody(contentWidth: 20, contentHeight: 20, notchHeight: 33.5, shoulderExtent: shoulder) - 28.75) < 0.0001,
+                 "音乐封面 20：主体 28.75（2 + 20 + 6.75）")
+        t.expect(abs(M.compactBody(contentWidth: 16.4, contentHeight: 14, notchHeight: 33.5, shoulderExtent: shoulder) - 28.15) < 0.0001,
+                 "五根波形 16.4 × 14：主体 28.15")
+        t.expect(M.compactBody(contentWidth: 10, contentHeight: 14, notchHeight: 33.5, shoulderExtent: shoulder) == M.compactNarrowestBody,
+                 "内容很窄：不窄于 26")
+        t.expect(abs(M.compactBody(contentWidth: 200, contentHeight: 15, notchHeight: 33.5, shoulderExtent: shoulder) - (52.33 - shoulder)) < 0.0001,
+                 "长标题：主体夹到 52.33 − 肩 = 44.59，连肩不超过 HIG 最小的那一档紧凑宽")
+        t.expect(M.compactBody(contentWidth: 200, contentHeight: 15, notchHeight: 33.5) == M.compactEarWidth, "不画肩：上限就是 52.33")
+        t.expect(M.earInnerGap == 2 && M.compactNarrowestBody == 26, "内容离刘海 2；最窄 26")
+        t.expect(M.minimalDiameter(notchHeight: 33.5) == 33.5 && M.minimalDiameter(notchHeight: nil) == 36.67 && M.minimalDiameter(notchHeight: 0) == 36.67,
+                 "小圆直径 = 刘海高；不知道刘海高退 36.67")
 
         t.section("IM-03", "点：耳朵打开那件活动的 App，本体回到主屏幕")
         let width: CGFloat = 260.67, notch: CGFloat = 156

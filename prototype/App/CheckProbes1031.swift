@@ -269,6 +269,16 @@ extension GlanceProbe {
                                  panel.isBareNotch ? 1 : 0))
     }
     panel.notchDebugLog("cycle: done")
+    // 2026-11-05《两耳的岛》：收回停稳不再是 185 × 37.33 的悬垂胶囊，而是刘海两耳——高同刘海、顶边贴屏幕顶、以刘海为中心；
+    // 菜单栏挤到放不下 26 时是下巴（宽同刘海、往下多 8）。外接屏照旧是胶囊，这里只看内建刘海屏。
+    if !panel.isVirtual, let settled = panel.islandOnScreenForProbe {
+      let notch = panel.notch
+      let ears = abs(settled.height - notch.height) < 0.5 && abs(settled.maxY - notch.maxY) < 0.5
+        && abs(settled.midX - notch.midX) < 0.5 && settled.width > notch.width + 2 * (NotchPanel.narrowestSide - 0.5)
+        && settled.width <= notch.width + 2 * (IslandMetrics.compactEarWidth + 0.5)
+      let chin = abs(settled.width - notch.width) < 0.5 && abs(settled.maxY - notch.maxY) < 0.5 && settled.height > notch.height + 4
+      print("\(ears || chin ? "PASS" : "FAIL") notch-debug-cycle: settled after collapse as \(ears ? "two ears" : chin ? "the chin" : "neither ears nor chin") \(settled) (notch \(notch))")
+    }
     // 第二循环：不再喂活动，从停稳的胶囊直接展开/收回——隔离“接力在飞弹簧”是不是偏移的触发器。
     try await Task.sleep(for: .milliseconds(2500), clock: .suspending)
     panel.notchDebugLog("cycle2: expand from settled pill")

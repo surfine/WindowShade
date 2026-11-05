@@ -10,6 +10,8 @@ struct NotchMinimumShape: Equatable {
     var tone: NotchInfoDot.Tone
     var fraction: Double?
     var frame: NSRect
+    /// 音乐退成小圆时画的圆形封面（直径 22，《两耳的岛》§八第 2 问 A）；nil 照旧画语气色圆点或进度弧。
+    var cover: NowPlayingArtworkImage? = nil
 }
 
 /// 刘海面板的画布：岛（一层图层，带细边）和岛里的内容。
@@ -943,6 +945,8 @@ final class NotchCanvasView: NSView {
     var onEarTap: ((Bool) -> Void)?
     /// 点在最小形（小圆）上：参数是那件活动的 id。
     var onMinimumTap: ((String) -> Void)?
+    /// 按住最小形（小圆）：参数是那件活动的 id（HIG：按住看展开，《两耳的岛》§三第 3 问 A）。
+    var onMinimumLongPress: ((String) -> Void)?
     private var pressedAt: NSPoint?
     /// 这一次触控板手势归不归那一排（nil：还没定）。
     private var rowScrollOwner: Bool?
@@ -953,7 +957,19 @@ final class NotchCanvasView: NSView {
         guard authenticationView == nil else { return }
         // 按在最小形上：只记下是哪一颗，松手还在它上面才算点一下（互换）；不鼓岛、不起长按计时。
         pressedMinimum = minimumView(at: event)
-        if pressedMinimum != nil { holdTimer?.invalidate(); pressedAt = nil; return }
+        if let pressed = pressedMinimum {
+            // 按住够长：展开那一排（松手不再算点一下）；不鼓岛。
+            holdTimer?.invalidate(); pressedAt = nil; holdUsed = false
+            let id = pressed.shapeID
+            holdTimer = Timer.scheduledTimer(withTimeInterval: Motion.Hold.longPress, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, self.pressedMinimum === pressed else { return }
+                    self.holdUsed = true; self.holdTimer = nil
+                    self.onMinimumLongPress?(id)
+                }
+            }
+            return
+        }
         holdTimer?.invalidate(); holdUsed = false
         pressedAt = mouseScreenPoint(event); mouseDragAxis = nil; mouseDragSamples = []
         if event.clickCount == 1 {
@@ -970,6 +986,8 @@ final class NotchCanvasView: NSView {
     override func mouseUp(with event: NSEvent) {
         if let pressed = pressedMinimum {
             pressedMinimum = nil
+            holdTimer?.invalidate(); holdTimer = nil
+            if holdUsed { holdUsed = false; return }
             if minimumView(at: event) === pressed { pressed.select() }
             return
         }

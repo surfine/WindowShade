@@ -134,25 +134,27 @@ extension GlanceProbe {
     } == true
     print("\(chinOK ? "PASS" : "FAIL") notch-shape: with one side taken it falls back to the chin, as wide as the notch, shoulders on the hardware ones (\(chin.map { "island \($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "did not settle"))")
 
-    // 展开一排：肩收掉（外沿在量过的空位以外），停稳后再收回。
+    // 展开一排（2026-11-05《两耳的岛》展开第 2 问 A）：顶边贴屏幕顶、把刘海包在里面，肩跟着卡片的两个上角（原 S3“展开不画肩”作废）。
     panel.setCompact(fake, room: full)
     let expanded = try await settle({ panel.expand(with: []) }, until: { $0.height > rect.height + 40 })
-    let expandedOK = expanded?.shoulders.map { $0.leading.scale == 0 && $0.trailing.scale == 0 } == true
+    let expandedOK = expanded.map { x in
+      near(x.island.maxY, rect.maxY) && x.island.minX < rect.minX && x.island.maxX > rect.maxX
+        && x.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1
+          && near($0.leading.corner.x, x.island.minX) && near($0.trailing.corner.x, x.island.maxX) } == true
+    } == true
     panel.collapse()
-    print("\(expandedOK ? "PASS" : "FAIL") notch-shape: the expanded row has no shoulders (\(expanded.map { describe($0.shoulders) } ?? "did not settle"))")
+    print("\(expandedOK ? "PASS" : "FAIL") notch-shape: the expanded row is flush with the screen top around the notch and its shoulders ride its top corners (\(expanded.map { "island \($0.island) \(describe($0.shoulders))" } ?? "did not settle"))")
 
-    // 从下巴（肩和硬件重合，看不出来）展开：肩当场收掉，不先亮出来再一边外移一边缩；收回下巴时一路不长，停稳后换回和硬件重合。
+    // 从下巴展开再收回：肩跟到卡片上角，收回下巴停稳后换回和硬件的肩重合。
     _ = try await settle({ panel.setCompact(fake, room: MenuBarRoom.Sides(leading: 10, trailing: 34)) },
                          until: { near($0.width, rect.width) && $0.height > rect.height + 4 })
-    func hidden(_ s: NotchShoulders.Probe?) -> Bool { s.map { $0.leading.scale == 0 && $0.trailing.scale == 0 && !$0.resizing } == true }
-    panel.expand(with: [])
-    let snapped = hidden(panel.shapeForProbe?.shoulders)
-    _ = try await settle({}, until: { $0.height > rect.height + 40 })
+    let grown = try await settle({ panel.expand(with: []) }, until: { $0.height > rect.height + 40 })
+    let grownOK = grown?.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1 && !$0.resizing } == true
     panel.collapse()
-    let held = hidden(panel.shapeForProbe?.shoulders)
     let back = try await settle({}, until: { near($0.width, rect.width) && $0.height < rect.height + 20 })
-    let backOK = back?.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1 && !$0.resizing } == true
-    print("\(snapped && held && backOK ? "PASS" : "FAIL") notch-shape: from the chin the unseen shoulders go at once when the row expands (not shown and shrunk), stay off on the way back, and sit on the hardware ones again once settled (snap \(snapped), held \(held), \(back.map { describe($0.shoulders) } ?? "did not settle"))")
+    let backOK = back?.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1 && !$0.resizing
+      && near($0.leading.corner.x, rect.minX) && near($0.trailing.corner.x, rect.maxX) } == true
+    print("\(grownOK && backOK ? "PASS" : "FAIL") notch-shape: from the chin the shoulders follow the card out and sit on the hardware ones again once back (\(grown.map { describe($0.shoulders) } ?? "did not settle") → \(back.map { describe($0.shoulders) } ?? "did not settle"))")
 
     // 假装不知道硬件形状：没有肩那层窗口，静止底角回到 10，紧凑样式两耳退回 legacyCompact（12）。
     panel.hardware = nil

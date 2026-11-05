@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-// 刘海岛的纯几何：外接屏胶囊不顶出屏幕；弹簧飞行保护只在模型值已是新目标时留着在飞的弹簧。
+// 刘海岛的纯几何：刘海屏顶边贴屏幕顶（《两耳的岛》）；外接屏胶囊不顶出屏幕；弹簧飞行保护只在模型值已是新目标时留着在飞的弹簧。
 @main
 struct NotchIslandGeometryTests {
     static func main() {
@@ -23,6 +23,18 @@ struct NotchIslandGeometryTests {
         t.expect(abs(centred.midY - roomy.midY) < 0.0001, "放得下时仍竖直居中在菜单栏里")
         let alert = G.islandFrame(notch: virtualShort, width: 371, height: 84, virtual: true, hanging: true)
         t.expect(alert.maxY == virtualShort.minY, "悬垂形状不受影响：顶边 = 隐形刘海下沿")
+
+        t.section("NG-03", "刘海屏（2026-11-05 推翻 bab193b0 的“从刘海下沿垂下”）：展开、提醒、一瞥顶边都贴屏幕顶，把刘海包在里面")
+        let real = CGRect(x: 762.5, y: 1073.5, width: 185, height: 33.5)
+        for (width, height) in [(CGFloat(408), CGFloat(160)), (408, 84), (408, 112), (257.98, 63.5)] {
+            for hanging in [true, false] {
+                let frame = G.islandFrame(notch: real, width: width, height: height, virtual: false, hanging: hanging)
+                t.expect(frame.maxY == real.maxY && frame.height == height && abs(frame.midX - real.midX) < 0.0001,
+                         "\(width) × \(height)（hanging \(hanging)）：顶边 = 屏幕顶，横向居中在刘海上")
+            }
+        }
+        let row = G.islandFrame(notch: real, width: 408, height: 160, virtual: false, hanging: true)
+        t.expect(row.contains(real), "那一排把刘海整个包在里面（不再挂在刘海下沿以下）")
 
         t.section("NG-02", "弹簧飞行保护：只有模型值已经是新目标才留着在飞的弹簧")
         let big = CGRect(x: 0, y: 0, width: 371, height: 84)

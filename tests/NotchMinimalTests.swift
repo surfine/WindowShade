@@ -95,14 +95,19 @@ struct NotchMinimalTests {
         t.expect(NotchMinimalPresentation.alertPlan(hasActivities: false, meterShowing: false, enabled: true) == .bloom,
                  "开着 + 没有活动：照旧直接出提醒")
 
-        t.section("M13-06", "几何：有刘海是直径 36.67 的圆（照系统的岛，暂定），没有刘海 26×22")
-        t.expect(NotchMinimalPresentation.size(for: .notched) == CGSize(width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter), "刘海屏：正圆 36.67")
+        t.section("M13-06", "几何：有刘海是直径 = 刘海高的圆（《两耳的岛》§三；不知道刘海高退 36.67），没有刘海 26×22")
+        t.expect(NotchMinimalPresentation.size(for: .notched) == CGSize(width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter), "不知道刘海高：正圆 36.67")
+        t.expect(NotchMinimalPresentation.size(for: .notched, notchHeight: 33.5) == CGSize(width: 33.5, height: 33.5), "本机刘海 33.5：小圆 33.5，和两耳同高")
+        let ears = CGRect(x: 600, y: 1073.5, width: 258, height: 33.5)
+        let flush = NotchMinimalPresentation.frames(island: ears, count: 1, placement: .notched, notchHeight: 33.5)
+        t.expect(flush.count == 1 && flush[0].maxY == ears.maxY && flush[0].minY == ears.minY, "顶边、底边都和两耳对齐（顶边贴屏幕顶，不被切掉）")
+        t.expect(flush[0].minX == ears.maxX + 6, "离含肩的右耳外沿 6")
         t.expect(NotchMinimalPresentation.size(for: .capsule) == CGSize(width: 26, height: 22), "无刘海胶囊 26×22")
         let island = CGRect(x: 100, y: 800, width: 200, height: IslandMetrics.compactHeight)
         let one = NotchMinimalPresentation.frames(island: island, count: 1, placement: .notched)
         t.expect(one == [CGRect(x: 306, y: 800, width: IslandMetrics.minimalDiameter, height: IslandMetrics.minimalDiameter)], "贴着右边缘 + 6，和紧凑同高所以竖直居中")
         let both = NotchMinimalPresentation.frames(island: island, count: 2, placement: .notched)
-        t.expect(both.count == 2 && both[1].minX == both[0].maxX + NotchMinimalPresentation.gap, "两颗之间也是 6")
+        t.expect(both.count == 2 && both[1].minX == both[0].maxX + NotchMinimalPresentation.gap, "（排版本身）两颗之间也是 6")
         t.expect(both.allSatisfy { $0.minX >= island.maxX }, "都在岛的右侧，不压到岛")
         let capsule = NotchMinimalPresentation.frames(island: CGRect(x: 0, y: 10, width: 200, height: 26), count: 1, placement: .capsule)
         t.expect(capsule == [CGRect(x: 206, y: 12, width: 26, height: 22)], "胶囊：26×22 居中")
@@ -113,12 +118,17 @@ struct NotchMinimalTests {
         let need2 = NotchMinimalPresentation.roomNeeded(count: 2, placement: .notched)
         let ear = IslandMetrics.compactEarWidth, dot = IslandMetrics.minimalDiameter
         t.expect(need1 == ear + 6 + dot && need2 == ear + 6 + dot + 6 + dot, "刘海屏：岛伸出一只耳 + 6 + 每颗一个直径（颗间 6）")
-        t.expect(NotchMinimalPresentation.measuredReach(for: .notched) == need2, "量空位量到放得下两颗为止")
-        t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need2, placement: .notched) == 2, "刚好放得下两颗")
-        t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need2 - 1, placement: .notched) == 1, "差 1 点：只画一颗")
-        t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need1 - 1, placement: .notched) == 0, "一颗也放不下：不画")
+        t.expect(NotchMinimalPresentation.maxShapes == 1, "最多一颗（第 30 条，《两耳的岛》§三第 2 问 A）")
+        t.expect(NotchMinimalPresentation.measuredReach(for: .notched) == need1, "量空位量到放得下一颗为止")
+        t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need1, placement: .notched) == 1, "刚好放得下一颗")
+        t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: need1 - 1, placement: .notched) == 0, "差 1 点：不画")
         t.expect(NotchMinimalPresentation.fittingCount(wanted: 2, room: nil, placement: .notched) == 0, "还没量到空位：不画")
-        t.expect(NotchMinimalPresentation.fittingCount(wanted: 5, room: 1000, placement: .notched) == 2, "最多两颗")
+        t.expect(NotchMinimalPresentation.fittingCount(wanted: 5, room: 1000, placement: .notched) == 1, "想挂五颗也只挂一颗")
+        let narrow = NotchMinimalPresentation.roomNeeded(count: 1, placement: .notched, earExtent: 36.49, notchHeight: 33.5)
+        t.expect(abs(narrow - (36.49 + 6 + 33.5)) < 0.0001, "按这一刻的耳宽（音乐 28.75 + 肩 7.74）和刘海高算：76 放得下")
+        t.expect(NotchMinimalPresentation.fittingCount(wanted: 1, room: 76, placement: .notched, earExtent: 36.49, notchHeight: 33.5) == 1
+                 && NotchMinimalPresentation.fittingCount(wanted: 1, room: 75.9, placement: .notched, earExtent: 36.49, notchHeight: 33.5) == 0,
+                 "76 → 1、75.9 → 0")
         t.expect(NotchMinimalPresentation.fittingCount(wanted: 0, room: 1000, placement: .capsule) == 0, "没有要画的就是 0")
         t.expect(NotchMinimalPresentation.roomNeeded(count: 1, placement: .capsule) == 100 + 6 + 26, "胶囊：伸出 100 + 6 + 26")
 
@@ -142,6 +152,10 @@ struct NotchMinimalTests {
         t.expect(NotchMinimalPresentation.arcLineWidth == 2, "弧线宽 2pt")
         t.expect(NotchMinimalPresentation.arcDiameter + NotchMinimalPresentation.arcLineWidth <= NotchMinimalPresentation.size(for: .capsule).height,
                  "弧放得进最小的胶囊")
+        t.expect(NotchMinimalPresentation.arc(forHeight: 33.5) == (22, 2.5), "刘海屏 33.5 的小圆：弧直径 22、线宽 2.5")
+        t.expect(NotchMinimalPresentation.arc(forHeight: 22) == (16, 2), "外接屏 26 × 22 的胶囊：照旧 16 / 2")
+        t.expect(NotchMinimalPresentation.notchedCoverDiameter == 22 && NotchMinimalPresentation.notchedCoverDiameter < 33.5,
+                 "音乐的圆形封面 22，放得进小圆")
 
         t.section("M13-11", "弹簧：最小形用 calm(0.34/1.0)")
         t.expect(MotionSpring.calm.response == 0.34 && MotionSpring.calm.dampingRatio == 1, "calm 令牌就是 0.34 / 1.0")
