@@ -165,8 +165,8 @@ final class MenuBarRoom {
     private var generation: UInt64 = 0
     private var observers: [NSObjectProtocol] = []
     /// 读数的寿命：会让它变的事件（换前台、开退 App、睡醒、屏参）都已监听、事件来时整体作废，
-    /// 所以兜底只留给没有事件的变化（图标偷偷增减），不必每 20 秒就用 AX 重量一次。
-    static let maxAge: TimeInterval = 300
+    /// 所以兜底只留给没有事件的变化（图标偷偷增减），一分钟量一次足够。
+    static let maxAge: TimeInterval = 60
 
     init() {
         // 换了前台 App，菜单就换了；App 开了或退出，菜单栏图标会多或少；睡醒后菜单栏重排。

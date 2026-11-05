@@ -35,7 +35,6 @@ enum NotchRoomPolicy {
     /// 刘海屏最小形：直径 36.67 的圆（IslandMetrics），和岛、彼此之间隔 6；最多两颗。
     static let minimalWidth: CGFloat = IslandMetrics.minimalDiameter
     static let minimalGap: CGFloat = IslandMetrics.minimalGap
-    static let maxMinimal = 2
 
     // MARK: 怎么量
 
@@ -95,40 +94,6 @@ enum NotchRoomPolicy {
     static func activitySide(earWidth: CGFloat, leading: CGFloat?, trailing: CGFloat?) -> CGFloat {
         let room = floor(min(leading ?? 0, trailing ?? 0))
         return room >= legacyActivitySide ? legacyActivitySide : earWidth
-    }
-
-    /// 从刘海边往外放下 `count` 颗最小形要空多宽：耳宽 + 6 + 每颗一个直径（颗间 6）。
-    static func minimalRoomNeeded(count: Int, earWidth: CGFloat) -> CGFloat {
-        guard count > 0 else { return 0 }
-        return earWidth + minimalGap + CGFloat(count) * minimalWidth + CGFloat(count - 1) * minimalGap
-    }
-
-    /// 一个档位最后长什么样：耳宽、画不画肩、挂几颗最小形。
-    struct Layout: Equatable, Sendable {
-        var tier: Tier
-        var earWidth: CGFloat
-        var shoulders: Bool
-        var minimalCount: Int
-    }
-
-    /// 空位 → 档位 → 耳宽、肩、最小形个数。
-    /// - shoulderExtent：硬件刘海肩的外伸（不知道硬件形状就是 nil，不画肩）。
-    /// - wantedMinimal：想挂几颗最小形（右边那段放得下才挂）。
-    static func layout(leading: CGFloat?, trailing: CGFloat?, overflow: Bool, yielding: Bool,
-                       shoulderExtent: CGFloat?, wantedMinimal: Int) -> Layout {
-        let room = min(leading ?? 0, trailing ?? 0)
-        let tier = tier(room: (leading == nil || trailing == nil) ? nil : room, overflow: overflow, yielding: yielding)
-        switch tier {
-        case .chin, .yield:
-            return Layout(tier: tier, earWidth: 0, shoulders: false, minimalCount: 0)
-        case .roomy, .tight:
-            let ear = earWidth(leading: leading, trailing: trailing)
-            // 肩从耳宽里扣，扣完还要有 26（NotchIsland.compactSide 的约定）；偏挤一律不画。
-            let shoulders = tier == .roomy && shoulderExtent.map { ear - $0 >= narrowestSide } == true
-            var count = min(max(0, wantedMinimal), maxMinimal)
-            while count > 0, minimalRoomNeeded(count: count, earWidth: ear) > floor(trailing ?? 0) { count -= 1 }
-            return Layout(tier: tier, earWidth: ear, shoulders: shoulders, minimalCount: count)
-        }
     }
 
     // MARK: 指针

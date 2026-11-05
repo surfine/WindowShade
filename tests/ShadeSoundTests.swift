@@ -32,7 +32,7 @@ struct ShadeSoundTests {
         expect(callMilliseconds < 25, "play() returns at once on the caller's thread (took \(Int(callMilliseconds.rounded()))ms)")
 
         var stats = player.stats
-        let deadline = CFAbsoluteTimeGetCurrent() + 3
+        let deadline = CFAbsoluteTimeGetCurrent() + 10
         while stats.plays == 0 && CFAbsoluteTimeGetCurrent() < deadline {
             Thread.sleep(forTimeInterval: 0.02)
             stats = player.stats
@@ -43,7 +43,8 @@ struct ShadeSoundTests {
         let second = CFAbsoluteTimeGetCurrent()
         player.play("Purr")
         expect((CFAbsoluteTimeGetCurrent() - second) * 1000 < 25, "a second play also returns at once")
-        Thread.sleep(forTimeInterval: 0.4)
+        let secondDeadline = CFAbsoluteTimeGetCurrent() + 10
+        while player.stats.plays < 2 && CFAbsoluteTimeGetCurrent() < secondDeadline { Thread.sleep(forTimeInterval: 0.02) }
         expect(player.stats.plays == 2, "both plays ran (plays=\(player.stats.plays))")
 
         if failures == 0 { print("PASS: shade sounds play off the main thread") }

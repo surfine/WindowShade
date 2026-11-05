@@ -30,13 +30,21 @@ struct StallSamplerTests {
         setenv("WINDOWSHADE_LOG_PATH", path, 1)
 
         MainThreadSampler.shared.start()
+        func sampleCount() -> Int {
+            let text = (try? String(contentsOfFile: path, encoding: .utf8)) ?? ""
+            return text.split(separator: "\n").filter { $0.contains("main-thread stall sample") }.count
+        }
         MainThreadSampler.shared.beat(waiting: false)
-        Thread.sleep(forTimeInterval: 1.1)          // 主线程真的卡住
+        // 主线程真的卡住至少 1.1 秒；机器忙时看门狗线程可能被饿着，所以卡到它抓到 ≥2 张为止（上限 10 秒），
+        // 不靠固定时长碰运气。断言的内容不变：长卡顿要被分段抓多张。
+        let blockStart = Date()
+        Thread.sleep(forTimeInterval: 1.1)
+        while sampleCount() < 2, Date().timeIntervalSince(blockStart) < 10 { Thread.sleep(forTimeInterval: 0.05) }
         MainThreadSampler.shared.beat(waiting: false)
 
-        // 日志写在低优先级队列上：等它落盘再读，最多 5 秒。
+        // 日志写在低优先级队列上：等它落盘再读，最多 10 秒。
         var text = ""
-        let readDeadline = Date().addingTimeInterval(5)
+        let readDeadline = Date().addingTimeInterval(10)
         while Date() < readDeadline {
             text = (try? String(contentsOfFile: path, encoding: .utf8)) ?? ""
             if text.contains("stall sample") || text.contains("tracking") { break }

@@ -46,7 +46,7 @@ final class StripMover: @unchecked Sendable {
 final class ScrollStripController {
     unowned let gestures: TrackpadGestureController
     private(set) var strip: ScrollStrip?
-    private(set) var displayID: CGDirectDisplayID?
+    private(set) var screenID: CGDirectDisplayID?
     private var elements: [CGWindowID: AXUIElement] = [:]
     private var pids: [CGWindowID: pid_t] = [:]
     /// 最近一次摆上去的外框：对账时拿它和窗口实际位置比，差得多就是被人拖走了。
@@ -139,7 +139,7 @@ final class ScrollStripController {
         strip.applyStoredCentering()
         self.strip = strip
         widthMemory = StripWidthMemory.load()
-        displayID = Self.displayID(screen)
+        screenID = displayID(for: screen)
         self.elements = elements
         self.pids = pids
         seen = Set((CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? [])
@@ -176,7 +176,7 @@ final class ScrollStripController {
         spread = nil
         spreadSamples = []
         strip = nil
-        displayID = nil
+        screenID = nil
         elements.removeAll(); pids.removeAll(); applied.removeAll(); seen.removeAll()
         wlog("strip: stop reason=\(reason)")
     }
@@ -476,7 +476,7 @@ final class ScrollStripController {
 
     private func makeOverview() -> StripOverview? {
         guard let strip, overview == nil,
-              NSScreen.screens.contains(where: { Self.displayID($0) == displayID }) else { return nil }
+              NSScreen.screens.contains(where: { displayID(for: $0) == screenID }) else { return nil }
         peek.dismiss(reason: "overview")
         let owner = gestures.owner
         let view = StripOverview(strip: strip, selected: lastFocused, pids: pids,
@@ -498,7 +498,7 @@ final class ScrollStripController {
         }
         // 拖进刘海（SS-04）：跟着“概览接线开关”走，默认关；关着时一个口子都不接，和从前一样。
         if Self.notchLinkEnabled() {
-            view.notchLink = owner.notch.stripNotchLink(display: displayID)
+            view.notchLink = owner.notch.stripNotchLink(display: screenID)
             view.onTuck = { [weak self] id in
                 self?.overview = nil
                 self?.overviewTracking = false
@@ -865,7 +865,7 @@ final class ScrollStripController {
 
     private func watch() {
         guard isActive else { stop(reason: "screen gone"); return }
-        guard let screen = NSScreen.screens.first(where: { Self.displayID($0) == displayID }) else {
+        guard let screen = NSScreen.screens.first(where: { displayID(for: $0) == screenID }) else {
             stop(reason: "screen gone")
             return
         }
@@ -1006,13 +1006,9 @@ final class ScrollStripController {
         apply()
     }
 
-    private static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
-        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
-    }
-
     /// 卷轴在哪块屏上，就用那块屏的刷新时钟。
     private func motionScreen() -> NSScreen? {
-        if let displayID, let screen = NSScreen.screens.first(where: { Self.displayID($0) == displayID }) {
+        if let screenID, let screen = NSScreen.screens.first(where: { displayID(for: $0) == screenID }) {
             return screen
         }
         return NSScreen.main ?? NSScreen.screens.first

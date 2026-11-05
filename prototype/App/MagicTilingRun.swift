@@ -140,7 +140,7 @@ extension TrackpadGestureController {
         }
         if !stripExtras.isEmpty {
             startStrip(plan: plan, extras: stripExtras, lookup: lookup, area: area, screen: screen, entries: &entries)
-        } else if strips.isActive, strips.displayID == displayID(for: screen) {
+        } else if strips.isActive, strips.screenID == displayID(for: screen) {
             strips.stop(reason: "rearranged")
         }
         magicGroup = MagicGroup(entries: entries, slideOver: plan.slideOver, tucked: plan.tuck)

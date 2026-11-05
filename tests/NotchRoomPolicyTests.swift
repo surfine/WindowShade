@@ -10,46 +10,19 @@ struct NotchRoomPolicyTests {
     static func main() {
         var t = TestSuite("NotchRoomPolicy")
 
-        t.section("LA3-01", "四档：宽裕 ≥ 52.33 两耳 52.33 带肩；偏挤 26–52 收窄不画肩；挤 < 26 下巴；让开不画（耳宽取自 IslandMetrics）")
-        let e: CGFloat = 7.4
+        t.section("LA3-01", "档位：宽裕 ≥ 52.33；偏挤 26–52；挤 < 26 下巴；让开优先（耳宽取自 IslandMetrics）")
         let full = IslandMetrics.compactEarWidth
-        let roomy = Policy.layout(leading: 80, trailing: 140, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 2)
-        t.expect(roomy == .init(tier: .roomy, earWidth: full, shoulders: true, minimalCount: 2), "宽裕：耳 52.33、带肩、右边 140 挂两颗")
-        let exact = Policy.layout(leading: 53, trailing: 53.9, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 0)
-        t.expect(exact.tier == .roomy && exact.earWidth == full && exact.shoulders, "量到 53（取整后够 52.33）仍是宽裕，主体 44.93 + 肩 7.4")
-        t.expect(Policy.layout(leading: 52.9, trailing: 80, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 0).tier == .tight,
-                 "52.9 取整 52 不够 52.33：偏挤，耳 52")
-        let tight = Policy.layout(leading: 30.7, trailing: 60, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 2)
-        t.expect(tight == .init(tier: .tight, earWidth: 30, shoulders: false, minimalCount: 0), "偏挤：耳收到 30（向下取整），不画肩")
-        t.expect(Policy.layout(leading: 33.9, trailing: 40, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 0).tier == .tight,
-                 "33.9 取整 33 是偏挤")
-        t.expect(Policy.layout(leading: 26, trailing: 26, overflow: false, yielding: false, shoulderExtent: nil, wantedMinimal: 0).earWidth == 26,
-                 "26 还是耳朵")
-        let chin = Policy.layout(leading: 25.9, trailing: 90, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 2)
-        t.expect(chin == .init(tier: .chin, earWidth: 0, shoulders: false, minimalCount: 0), "挤：不到 26 退回下巴，不挂最小形")
-        let unknown = Policy.layout(leading: nil, trailing: 34, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 1)
-        t.expect(unknown.tier == .chin, "一边没量到：当挤")
-        let yield = Policy.layout(leading: 80, trailing: 80, overflow: false, yielding: true, shoulderExtent: e, wantedMinimal: 2)
-        t.expect(yield == .init(tier: .yield, earWidth: 0, shoulders: false, minimalCount: 0), "让开：全屏、调度中心、锁屏时不画")
-        t.expect(!Policy.layout(leading: 40, trailing: 40, overflow: false, yielding: false, shoulderExtent: nil, wantedMinimal: 0).shoulders,
-                 "不知道硬件形状：宽裕也不画肩")
-
-        t.section("LA3-02", "最小形：耳宽 52.33 时一颗要 95、两颗要 137.67；放不下就少挂")
-        let dot = IslandMetrics.minimalDiameter
-        t.expect(abs(Policy.minimalRoomNeeded(count: 1, earWidth: full) - 95) < 0.0001
-                 && abs(Policy.minimalRoomNeeded(count: 2, earWidth: full) - (95 + 6 + dot)) < 0.0001, "一颗 95、两颗 137.67")
-        func count(_ trailing: CGFloat, wanted: Int = 2) -> Int {
-            Policy.layout(leading: 80, trailing: trailing, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: wanted).minimalCount
-        }
-        t.expect(count(94) == 0 && count(95) == 1 && count(137) == 1 && count(138) == 2 && count(500, wanted: 5) == 2,
-                 "94 → 0、95 → 1、137 → 1、138 → 2、最多 2")
-        t.expect(count(138, wanted: 1) == 1 && count(138, wanted: 0) == 0, "只想挂一颗就挂一颗")
-        t.expect(Policy.layout(leading: 30, trailing: 73, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 1).minimalCount == 1,
-                 "偏挤时按收窄后的耳宽算：30 + 6 + 36.67 = 72.67 放得下一颗")
+        t.expect(Policy.tier(room: 53.9, overflow: false, yielding: false) == .roomy, "量到 53.9 取整 53，够 52.33：宽裕")
+        t.expect(Policy.tier(room: 52.9, overflow: false, yielding: false) == .tight, "52.9 取整 52 不够 52.33：偏挤")
+        t.expect(Policy.tier(room: 26, overflow: false, yielding: false) == .tight, "26 还是耳朵")
+        t.expect(Policy.tier(room: 25.9, overflow: false, yielding: false) == .chin, "不到 26 退回下巴")
+        t.expect(Policy.tier(room: nil, overflow: false, yielding: false) == .chin, "一边没量到：当挤")
+        t.expect(Policy.tier(room: 80, overflow: false, yielding: true) == .yield, "让开：全屏、调度中心、锁屏时不画")
+        t.expect(Policy.earWidth(leading: 30.7, trailing: 60) == 30 && Policy.earWidth(leading: 80, trailing: 140) == full, "耳宽：向下取整、最宽 52.33")
 
         t.section("LA3-03", "系统的 » 当挤：在就落到下巴；» 自己占着时右边只剩约 6 点，也是下巴")
         t.expect(Policy.tier(room: 80, overflow: true, yielding: false) == .chin, "» 在：空位再大也是下巴")
-        t.expect(Policy.layout(leading: 80, trailing: 6, overflow: false, yielding: false, shoulderExtent: e, wantedMinimal: 1).tier == .chin,
+        t.expect(Policy.tier(room: 6, overflow: false, yielding: false) == .chin,
                  "» 挨着刘海、右边只剩 6 点：下巴")
         t.expect(Policy.tier(room: 80, overflow: true, yielding: true) == .yield, "让开优先于 »")
 
