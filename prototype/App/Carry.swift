@@ -177,6 +177,8 @@ final class CarryController: GlanceCarrySource {
         let panel: CarryStripPanel
         let view: CarryStripView
         var snapshot: CGImage?
+        /// WindowStateHub 上对源窗口的订阅：关掉、改大小、隐藏/出现，外加 1 秒心跳（刷标题）。
+        var watch: WindowWatch?
 
         init(id: CGWindowID, pid: pid_t, bundleID: String, appName: String, title: String,
              axWindow: AXUIElement, windowSize: CGSize, panel: CarryStripPanel, view: CarryStripView) {
@@ -195,7 +197,10 @@ final class CarryController: GlanceCarrySource {
     unowned let owner: AppDelegate
     private var carried: [CGWindowID: Carried] = [:]
     private var order: [CGWindowID] = []
-    private var timer: Timer?
+    /// 同一轮里几扇窗的变化或心跳只排一次 refreshVisibility。
+    private var visibilityRefreshQueued = false
+    /// SkyLight 通知用不了时 hub 退回的轮询间隔（原来的定时刷新间隔）。
+    static let fallbackInterval: TimeInterval = 1.5
     private var promotedID: CGWindowID?
     private var overflowIDs: [CGWindowID] = []
     private var morePanel: CarryStripPanel?
@@ -272,24 +277,25 @@ final class CarryController: GlanceCarrySource {
         view.onStop = { [weak self] in self?.stop(id, reason: "strip-button") }
         carried[id] = item
         order.append(id)
+        item.watch = WindowStateHub.shared.watch(id, fallbackInterval: Self.fallbackInterval, heartbeat: true) {
+            [weak self] change, fact in
+            self?.sourceChanged(id, change: change, fact: fact)
+        }
         refreshVisibility(reason: "carry")
         refreshSnapshot(item)
-        ensureTimer()
         owner.quietNotice(WSL10n.text("notice.carry.done", zh: "已带到每张桌面"), kind: .done, log: "carry: start id=\(id) app=\(appName)")
         owner.rebuildMenu()
     }
 
     func stop(_ id: CGWindowID, reason: String) {
         guard let item = carried.removeValue(forKey: id) else { return }
+        item.watch?.cancel()
+        item.watch = nil
         order.removeAll { $0 == id }
         if promotedID == id { promotedID = nil }
         owner.glance.detach(id: id)
         item.panel.orderOut(nil)
         layout()
-        if carried.isEmpty {
-            timer?.invalidate()
-            timer = nil
-        }
         wlog("carry: stop id=\(id) reason=\(reason)")
         owner.rebuildMenu()
     }
@@ -420,26 +426,41 @@ final class CarryController: GlanceCarrySource {
         }
     }
 
-    private func ensureTimer() {
-        guard timer == nil, !carried.isEmpty else { return }
-        let timer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.periodicRefresh() }
-        }
-        timer.tolerance = 0.5
-        self.timer = timer
-    }
-
-    private func periodicRefresh() {
-        refreshVisibility(reason: "timer")
-        for item in carried.values {
+    /// 源窗口的变化（WindowStateHub）：原来每 1.5s 一次的定时刷新拆成按事件做——关掉就放下，
+    /// 隐藏/出现（最小化、换桌面）就重排卷帘条，改大小就记下尺寸；标题没有可靠的事件，跟着 1 秒心跳刷，
+    /// 心跳也顺带重排一次兜底。退回模式下心跳就是原来的 1.5s。
+    private func sourceChanged(_ id: CGWindowID, change: WindowChange, fact: WindowFact?) {
+        guard let item = carried[id] else { return }
+        switch change {
+        case .gone:
+            stop(id, reason: "window-gone")
+        case .resized(let bounds):
+            if bounds.width >= 80, bounds.height >= 60 { item.windowSize = bounds.size }
+        case .hidden, .shown:
+            queueVisibilityRefresh(reason: "window-event")
+        case .moved, .restyled:
+            break
+        case .heartbeat:
+            queueVisibilityRefresh(reason: "timer")
             let title = descriptiveDisplayTitle(appName: item.appName, windowTitle: axTitle(item.axWindow))
             if title != item.title {
                 item.title = title
                 item.view.setTitle(title)
             }
-            if let size = cgWindowInfo(item.id).flatMap(cgWindowBounds)?.size,
-               size.width >= 80, size.height >= 60 {
+            if let size = fact?.bounds.size, size.width >= 80, size.height >= 60 {
                 item.windowSize = size
+            }
+        }
+    }
+
+    private func queueVisibilityRefresh(reason: String) {
+        guard !visibilityRefreshQueued else { return }
+        visibilityRefreshQueued = true
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.visibilityRefreshQueued = false
+                self.refreshVisibility(reason: reason)
             }
         }
     }
