@@ -1017,6 +1017,8 @@ final class ScrollStripController {
     // MARK: 探针
 
     var offsetForProbe: CGFloat? { strip?.offset }
+    /// 探针用（--hold strip）：0.5 秒的巡检定时器在不在跑。
+    var watchTimerAliveForProbe: Bool { watchTimer != nil }
     var isSettledForProbe: Bool { !motionActive }
     func scrollForProbe(by fingerDX: CGFloat, steps: Int) async {
         beginScroll()

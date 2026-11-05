@@ -74,6 +74,8 @@ final class SplitViewController {
 
     /// 探针用。
     var seamsForProbe: [Seam] { seams }
+    /// 探针用（--hold split）：分隔条轮询定时器的间隔，没在跑是 nil。
+    var timerIntervalForProbe: TimeInterval? { timer?.timeInterval }
     var dividerFramesForProbe: [NSRect] { dividers.prefix(seams.count).filter(\.isVisible).map(\.frame) }
 
     /// 探针用：按住第 index 根把手拖到 position（沿缝的法向），以 velocity（点/秒）松手。

@@ -3374,6 +3374,8 @@ extension WindowBrowserController {
     /// 面板列表里现在有哪几扇（和用户看到的是同一份）。
     var probeListedKeys: [WindowKey] { contentView?.records.map(\.key) ?? [] }
     var probePanelVisible: Bool { panel?.isVisible == true }
+    /// 面板开着时 0.6 秒的关窗清扫定时器在不在跑（--hold browser）。
+    var probeLivenessSweepAlive: Bool { livenessTimer != nil }
     var probeDepartureAnimationCount: Int { contentView?.departureAnimationCount ?? 0 }
     /// 这个 Dock 会话一起列出的辅助进程。
     var probeSessionHelperPIDs: Set<pid_t> { session?.helperPIDs ?? [] }

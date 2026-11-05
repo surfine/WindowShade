@@ -63,16 +63,19 @@ final class GlanceProbe {
     }
     let process = Process()
     process.executableURL = URL(fileURLWithPath: CommandLine.arguments[index + 1])
-    let manyWindows = CommandLine.arguments.contains("--strip") || CommandLine.arguments.contains("--wins")
+    let holdKind = Self.requestedHoldKind ?? ""
+    let manyWindows = ["strip", "split"].contains(holdKind) || CommandLine.arguments.contains("--strip") || CommandLine.arguments.contains("--wins")
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
       || CommandLine.arguments.contains("--dock-scenarios")
-    let pipRun = CommandLine.arguments.contains("--pip")
+    let pipRun = CommandLine.arguments.contains("--pip") || holdKind == "pip"
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
     let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit", "--hitch",
                       "--dock-autohide-frames", "--reduce-transparency", "--overlay-input", "--display-hotplug"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
-    if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
+    // --hold：多数场景只要一扇窗；pins 要两扇（默认的参考窗加另一扇）。
+    let holdSingle = ["slide-over", "carry", "shaded", "browser", "none"].contains(holdKind)
+    if single || manyWindows || pipRun || foldTiming || holdSingle { fixtureArguments.append("--single") }
     if manyWindows { fixtureArguments.append("--strip") }
     if pipRun { fixtureArguments.append("--scroll") }
     for flag in ["--other-space", "--minimize", "--fullscreen"] where CommandLine.arguments.contains(flag) {
@@ -90,6 +93,7 @@ final class GlanceProbe {
     if ["--soak", "--hitch", "--idle-first-op", "--browser-identity", "--dock-scenarios", "--window-classes"].contains(where: { CommandLine.arguments.contains($0) }) {
       fixtureArguments += ["--lifetime", "1800"]
     }
+    if !holdKind.isEmpty { fixtureArguments += ["--lifetime", String(Self.holdSeconds + 240)] }
     process.arguments = fixtureArguments
     do {
       try process.run()
@@ -130,6 +134,14 @@ final class GlanceProbe {
     }
     guard let element, let original = bounds(id) else { throw EffectError.unavailable("no fixture") }
     try await Task.sleep(for: .milliseconds(300), clock: .suspending)
+    // 空闲唤醒基线：摆好一个功能场景，确认它的定时器在跑，一动不动撑 N 秒（App/HubHoldProbe.swift）。
+    if let kind = Self.requestedHoldKind {
+      adoptFixture(pid: process.processIdentifier)
+      NotchController.probeSilence = true
+      try await exerciseHold(kind, element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--fold-timing") {
       try await foldTiming(element: element)
       finish(nil)
