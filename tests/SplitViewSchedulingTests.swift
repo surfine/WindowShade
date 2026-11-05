@@ -63,6 +63,25 @@ struct SplitViewSchedulingTests {
         check(SplitScan.eventRefreshDelay(sinceLast: -3) == SplitScan.eventMinimumGap, "clock going backwards is clamped")
         check(SplitScan.eventRefreshDelay(sinceLast: 0) < SplitScan.seamInterval, "event refresh beats the old 0.5 s poll")
 
+        // 有缝时盯的窗口：别家的层 0 窗口，不在屏的也算；太小的、我们自己的、浮动层的、不在任何屏上的不算。
+        let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let frame = CGRect(x: 100, y: 100, width: 600, height: 400)
+        check(SplitScan.isWatchCandidate(layer: 0, pid: 7, me: 1, bounds: frame, areas: [screen]), "normal window watched (on-screen or not)")
+        check(!SplitScan.isWatchCandidate(layer: 3, pid: 7, me: 1, bounds: frame, areas: [screen]), "floating layer not watched")
+        check(!SplitScan.isWatchCandidate(layer: 0, pid: 1, me: 1, bounds: frame, areas: [screen]), "own windows not watched")
+        check(!SplitScan.isWatchCandidate(layer: 0, pid: 7, me: 1, bounds: CGRect(x: 0, y: 0, width: 40, height: 40), areas: [screen]), "tiny not watched")
+        check(!SplitScan.isWatchCandidate(layer: 0, pid: 7, me: 1, bounds: frame.offsetBy(dx: 5000, dy: 0), areas: [screen]), "off every display not watched")
+        check(!SplitScan.isWatchCandidate(layer: nil, pid: 7, me: 1, bounds: frame, areas: [screen]), "unknown layer not watched")
+
+        // 只有桌面成员事件的一批：先看是不是别家的普通窗口（菜单、提示框不重认）。
+        check(SplitScan.needsSpaceWindowCheck(windowChanges: 0, reordered: 0, spaceEvents: 2), "space-only batch is checked")
+        check(!SplitScan.needsSpaceWindowCheck(windowChanges: 1, reordered: 0, spaceEvents: 2), "watched-window change: scan directly")
+        check(!SplitScan.needsSpaceWindowCheck(windowChanges: 0, reordered: 1, spaceEvents: 0), "808 reorder: scan directly")
+        check(SplitScan.spaceWindowsWarrantScan([(layer: 101, pid: 7), (layer: 0, pid: 7)], me: 1), "a normal window among menus warrants a scan")
+        check(!SplitScan.spaceWindowsWarrantScan([(layer: 101, pid: 7), (layer: 3, pid: 7)], me: 1), "menus/popovers only: no scan")
+        check(!SplitScan.spaceWindowsWarrantScan([(layer: 0, pid: 1)], me: 1), "our own window: no scan")
+        check(!SplitScan.spaceWindowsWarrantScan([], me: 1), "already gone (1326): no scan")
+
         if failures == 0 { print("SplitViewSchedulingTests: all passed") } else { exit(1) }
     }
 }

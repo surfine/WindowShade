@@ -86,6 +86,7 @@ func wlog(_ s: String) {}
         unwatchStops()
         fallback()
         heartbeat()
+        eventCadence()
         spaceMembership()
         anyChange()
         reentrancy()
@@ -248,6 +249,25 @@ func wlog(_ s: String) {}
         _ = (a, b)
     }
 
+    @MainActor static func eventCadence() {
+        let rig = Rig()
+        rig.set(1); rig.set(2)
+        var slowHearts = 0
+        let reconcile = rig.hub.watch(1, fallbackInterval: 5, heartbeat: true) { c, _ in if c == .heartbeat { slowHearts += 1 } }
+        expect(rig.hub.mode == .events && rig.liveTimer?.interval == 5, "事件模式只有 5 秒的订阅：看门狗 5 秒（闲置开销不比改动前高）")
+        var fast: WindowWatch? = rig.hub.watch(2, fallbackInterval: 0.2) { _, _ in }
+        expect(rig.liveTimer?.interval == 1, "再来一个 0.2 秒的订阅：看门狗 1 秒（事件模式最快 1 秒）")
+        for _ in 0..<5 { rig.tick(advance: 1) }
+        expect(slowHearts == 1, "1 秒钟上 5 秒订阅的心跳仍按 5 秒给（5 秒 1 次），实际 \(slowHearts)")
+        fast = nil
+        expect(fast == nil && rig.liveTimer?.interval == 5, "快的退订后回到 5 秒")
+        rig.tick(advance: 5)
+        expect(slowHearts == 2, "5 秒钟上每拍一次心跳")
+        let carry = rig.hub.watch(2, fallbackInterval: 1.5) { _, _ in }
+        expect(rig.liveTimer?.interval == 1.5, "1.5 秒的订阅（Carry）：看门狗 1.5 秒，不慢于改动前")
+        _ = (reconcile, carry)
+    }
+
     @MainActor static func spaceMembership() {
         let rig = Rig()
         rig.set(4)
@@ -297,8 +317,20 @@ func wlog(_ s: String) {}
         expect(watchCalls == 0, "叠放次序变化不发给 watch（外框和在屏都没变）")
         token.cancel()
         rig.source.send(.reordered(4)); rig.runTurns()
-        expect(batches.count == 2, "没人 observeAnyChange 时 808 直接丢掉")
+        expect(batches.count == 2, "没人 observeAnyChange 时 808 不进 batch.reordered")
         _ = watches; _ = probe
+        // 808 也报层级变化（浮动 ↔ 普通）：被盯的窗口当轮重查，层级变了就是 .restyled，不等看门狗。
+        let rig2 = Rig()
+        rig2.set(9)
+        var seen: [WindowChange] = []
+        let pinned = rig2.hub.watch(9) { c, _ in seen.append(c) }
+        rig2.set(9, layer: 3)
+        rig2.describeCalls.removeAll()
+        rig2.source.send(.reordered(9)); rig2.runTurns()
+        expect(rig2.describeCalls == [[9]] && seen == [.restyled], "被盯窗口收到 808 且层级变了：同一轮分发 .restyled")
+        rig2.source.send(.reordered(9)); rig2.runTurns()
+        expect(seen == [.restyled], "808 但事实没变：不再分发")
+        _ = pinned
     }
 
     @MainActor static func reentrancy() {

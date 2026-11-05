@@ -21,11 +21,12 @@ final class SplitViewController {
     private var dividers: [SplitDivider] = []
     private var seams: [Seam] = []
     private var timer: Timer?
-    /// 有缝时靠 WindowStateHub 的事件维持（不再半秒一次）：盯着当前桌面在屏的每扇普通窗口，
-    /// 任何一扇挪了/改了/来了/走了就合成一次重认；没缝时不盯，仍是 2 秒一次的定时刷新。
+    /// 有缝时靠 WindowStateHub 的事件维持（不再半秒一次）：盯着屏上的每扇普通窗口（连最小化、orderOut 的也盯，
+    /// 它们被叫回来时 SkyLight 只给被盯的窗口发事件），任何一扇挪了/改了/来了/走了就合成一次重认；
+    /// 没缝时不盯，仍是 2 秒一次的定时刷新。
     private var windowWatches: [CGWindowID: WindowWatch] = [:]
     private var anyChangeWatch: WindowWatch?
-    /// 最近一次后台扫描里在屏的普通窗口：要盯的集合。
+    /// 最近一次后台扫描里要盯的窗口（在屏的普通窗口，有缝时再加上不在屏的，见 SplitScan.isWatchCandidate）。
     private var scannedWindowIDs: [CGWindowID] = []
     /// 1 秒心跳只认这一扇（共享看门狗每拍给每个订阅发一次）：事件盖不到的变化（比如换前后顺序）靠它兜底重认。
     private var heartbeatID: CGWindowID?
@@ -233,7 +234,7 @@ final class SplitViewController {
             }
         }
         if anyChangeWatch == nil {
-            anyChangeWatch = hub.observeAnyChange { [weak self] _ in self?.queueEventRefresh() }
+            anyChangeWatch = hub.observeAnyChange { [weak self] batch in self?.anyChange(batch) }
         }
     }
 
@@ -251,6 +252,21 @@ final class SplitViewController {
         guard id == heartbeatID else { return }
         if !WindowStateHub.shared.isEventDriven { eventsUnavailable = true; schedule(); return }
         refresh()
+    }
+
+    /// hub 的一批变化。只有桌面成员事件（1325/1326，菜单、提示框、弹出框都有）时先查一次这几扇的层级，
+    /// 有别家的普通窗口才重认；被盯窗口的变化、叠放次序变化（808）直接重认。
+    private func anyChange(_ batch: WindowHubBatch) {
+        if SplitScan.needsSpaceWindowCheck(windowChanges: batch.changes.count, reordered: batch.reordered.count,
+                                           spaceEvents: batch.spaceEvents.count) {
+            let ids = Array(Set(batch.spaceEvents.map(\.windowID)))
+            let windows = WindowStateHub.describeWindows(ids).map {
+                (layer: ($0[kCGWindowLayer as String] as? NSNumber)?.intValue,
+                 pid: ($0[kCGWindowOwnerPID as String] as? NSNumber).map { pid_t($0.int32Value) })
+            }
+            guard SplitScan.spaceWindowsWarrantScan(windows, me: getpid()) else { return }
+        }
+        queueEventRefresh()
     }
 
     /// 窗口事件来了：合成一次刷新（松手后窗口滑动时每帧都有事件，最多每 0.1 秒认一次）。
@@ -287,16 +303,26 @@ final class SplitViewController {
             let windows = Self.windows(glideTargets: glideTargets)
             let signature = SplitScan.signature(windows: windows, areas: areas)
             let fresh: [Seam]? = signature == lastSignature ? nil : Self.candidateSeams(windows, areas: areas, gap: gap)
-            let ids = windows.map(\.id)
+            // 要盯的集合只在窗口有变（签名不同）时重算，和以前一样；有候选缝时再查一次全部窗口，把不在屏的
+            // 普通窗口也算进来（窗口最小化、移走都会让签名变，所以集合不会过期）。没缝的平时不多查。
+            var watchIDs: [CGWindowID]?
+            if let fresh {
+                var ids = windows.map(\.id)
+                if !fresh.isEmpty {
+                    let onScreen = Set(ids)
+                    ids += Self.offScreenWatchCandidates(areas: areas).filter { !onScreen.contains($0) }
+                }
+                watchIDs = ids.sorted()
+            }
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    self?.finishScan(generation: generation, signature: signature, fresh: fresh, windowIDs: ids)
+                    self?.finishScan(generation: generation, signature: signature, fresh: fresh, watchIDs: watchIDs)
                 }
             }
         }
     }
 
-    private func finishScan(generation: Int, signature: Int, fresh: [Seam]?, windowIDs: [CGWindowID]) {
+    private func finishScan(generation: Int, signature: Int, fresh: [Seam]?, watchIDs: [CGWindowID]?) {
         guard generation == scanGeneration else { return }
         scanInFlight = false
         // 扫描期间又来过事件：回来补一次（队列里排，不在这里递归）。
@@ -304,7 +330,7 @@ final class SplitViewController {
         // 拖着把手时不刷新：结果丢掉，松手后会重认。
         guard drag == nil, !pause.isPaused else { return }
         _ = signatureGate.shouldCompute(signature)   // 不同则记下，相同则计一次跳过
-        if fresh != nil { scannedWindowIDs = windowIDs }
+        if let watchIDs { scannedWindowIDs = watchIDs }
         if let fresh { candidates = fresh }
         let found = filtered(candidates)
         // 候选和收起、侧拉等状态都没变：把手已经摆好，不用再 show。
@@ -387,6 +413,20 @@ final class SplitViewController {
     /// 候选缝：只看窗口外框，不碰收起、侧拉这些主线程状态（回到主线程再过滤）。
     nonisolated private static func candidateSeams(_ windows: [SplitWindow], areas: [CGRect], gap: CGFloat) -> [Seam] {
         areas.flatMap { SeamLayout.seams(frontToBack: windows, area: $0, gap: gap) }
+    }
+
+    /// 不在屏的普通窗口（最小化、orderOut、别的桌面上的）：有缝时也盯着，它们被叫回到缝上时才有事件。
+    nonisolated private static func offScreenWatchCandidates(areas: [CGRect]) -> [CGWindowID] {
+        guard let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] else { return [] }
+        let me = getpid()
+        return list.compactMap { info in
+            guard (info[kCGWindowIsOnscreen as String] as? Bool) != true,
+                  SplitScan.isWatchCandidate(layer: info[kCGWindowLayer as String] as? Int,
+                                             pid: info[kCGWindowOwnerPID as String] as? pid_t, me: me,
+                                             bounds: cgWindowBounds(info), areas: areas) else { return nil }
+            return info[kCGWindowNumber as String] as? CGWindowID
+        }
     }
 
     /// 收起的、侧拉的、画中画的、收进刘海的、卷轴里的窗口不认。
