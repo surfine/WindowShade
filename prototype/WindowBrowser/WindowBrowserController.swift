@@ -1399,30 +1399,37 @@ final class WindowBrowserController: NSObject {
         let now = CFAbsoluteTimeGetCurrent()
         let due = Set(livenessPending.filter { $0.value <= now + 0.06 }.keys)
         guard !due.isEmpty else { return }
+        // 面板暂时不能核对（藏着、环境挂起）：留着这些窗口，按原来扫描的间隔再试。hub 对一扇窗的 .gone 只发一次，
+        // 这里丢了就再也没人提醒。
+        guard sweepClosedWindows(only: due) else {
+            for key in due { livenessPending[key] = nil }
+            for key in due.sorted() where livenessWatches[key] != nil {
+                scheduleLivenessCheck(key, after: Self.livenessFallbackInterval)
+            }
+            return
+        }
         for key in due { livenessPending[key] = nil }
-        sweepClosedWindows(only: due)
     }
 
     /// 列表里有窗口在 WindowServer 里已经找不到：重新查一次它的应用。一次缺席不直接删，
     /// 由那次成功的查询决定去留；每个窗口只问一次，查到还在就不再反复问。
-    private func sweepClosedWindows(only keys: Set<WindowKey>) {
+    /// 返回 false：这次没能核对（面板不在），调用方稍后再试。
+    @discardableResult
+    private func sweepClosedWindows(only keys: Set<WindowKey>) -> Bool {
         guard running, !environmentSuspended, let session, let contentView,
-              panel?.isVisible == true else { return }
+              panel?.isVisible == true else { return false }
         var missingPIDs = Set<pid_t>()
         var missingKeys: [WindowKey] = []
         let byPID = Dictionary(grouping: contentView.records.filter { keys.contains($0.key) }, by: { $0.key.application.pid })
         // 规格 R20：有的 App 关窗只是 orderOut（日历一类），窗口在 WindowServer 里还在，光看「在不在」永远发现不了。
         // 查到时在屏上、现在不在屏上的（不是最小化、不是我们自己收起的），也重新问一次它的应用；去留仍由那次查询定。
-        let onScreen = WindowListCache.shared.onScreenIDs()
+        // 只查这几扇、实时查（不走 WindowListCache：150ms 内的快照可能早于关窗，hub 之后不会再提醒）。
+        let live = Self.liveWindowFacts(Array(Set(byPID.values.joined().map(\.key.originalWindowID))))
         for (pid, records) in byPID {
-            let alive = Set(WindowListCache.shared.allWindows(ofPID: pid).compactMap {
-                ($0[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) }
-            })
             func vanished(_ record: WindowRecord) -> Bool {
-                let id = record.key.originalWindowID
-                if !alive.contains(id) { return true }
+                guard let fact = live[record.key.originalWindowID] else { return true }
                 return record.isOnScreen && !record.isMinimized && !record.isFoldedOffscreen && !record.isManaged
-                    && !onScreen.contains(id)
+                    && !fact.isOnScreen
             }
             for record in records where vanished(record) && !livenessAsked.contains(record.key) {
                 livenessAsked.insert(record.key)
@@ -1430,11 +1437,25 @@ final class WindowBrowserController: NSObject {
                 missingKeys.append(record.key)
             }
         }
-        guard !missingPIDs.isEmpty else { return }
+        guard !missingPIDs.isEmpty else { return true }
         wlog("window-browser: closed windows noticed pids=\(missingPIDs.sorted())")
         // 真的被移出时（那次重新查询确认它没了）卡片做一次退场；查到还在就不会移出，标记自然过期。
         contentView.markDeparting(missingKeys)
         scheduleMetadataRefresh(pids: Array(missingPIDs), requestID: session.requestID)
+        return true
+    }
+
+    /// 几扇窗此刻的实时事实：一次批量查询，批量里缺的再用单窗口查询确认（和 hub 判 .gone 同一道保险）。
+    private static func liveWindowFacts(_ ids: [CGWindowID]) -> [CGWindowID: WindowFact] {
+        let now = CFAbsoluteTimeGetCurrent()
+        var facts: [CGWindowID: WindowFact] = [:]
+        for info in WindowStateHub.describeWindows(ids) {
+            if let fact = WindowFact.parse(info, at: now) { facts[fact.id] = fact }
+        }
+        for id in ids where facts[id] == nil {
+            if let fact = cgWindowInfo(id).flatMap({ WindowFact.parse($0, at: now) }) { facts[id] = fact }
+        }
+        return facts
     }
 
     // MARK: 面板渲染
