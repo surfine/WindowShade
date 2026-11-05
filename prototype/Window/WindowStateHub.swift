@@ -6,8 +6,10 @@
 // - 合并再查：同一轮 run loop 里来的事件只记下“哪几扇脏了”，下一轮用一次
 //   CGWindowListCreateDescriptionFromArray 把它们一起查回来（不是每扇一次 cgWindowInfo），和上一份事实比，
 //   真有变化才分发。查不到的窗口先用单窗口实时查询再确认一次才算 `.gone`，不让批量查询的意外把会话关掉。
-// - 看门狗：只要还有人在盯就有一个 1 秒的共享钟（容差 0.1 秒），每拍做同样的批量查询；订阅时要了心跳的，
-//   每拍还会收到一次 `.heartbeat`（没变化也给），用来兜事件盖不到的状态（标题、桌面归属的 TTL 检查等）。
+// - 看门狗：只要还有人在盯就有一个共享钟（容差 0.1 秒），每拍做同样的批量查询。间隔取各订阅
+//   max(1 秒, fallbackInterval) 里最小的：最快 1 秒，但不比最快的那个订阅原来的轮询更勤（只有 Reconcile 的
+//   5 秒订阅时就 5 秒一拍，闲置开销不涨）。订阅时要了心跳的，按各自的 max(1 秒, fallbackInterval) 收
+//   `.heartbeat`（没变化也给），用来兜事件盖不到的状态（标题、桌面归属的 TTL 检查等）。
 //   最后一个订阅取消时，SkyLight 的窗口请求清空、钟停掉。
 // - 退回：SkyLight 符号载不到、登记或请求返回非 0 时，退回纯看门狗：钟按当前订阅里最小的
 //   `fallbackInterval`（各功能改动前的轮询间隔）走，心跳也按各自的间隔给，行为和改动前一样；只记一行
@@ -130,7 +132,7 @@ protocol WindowHubTimer: AnyObject {
 final class WindowStateHub {
     static let shared = WindowStateHub()
 
-    /// 事件模式下共享看门狗的间隔与容差（Aaron 2026-11-06 定为 1 秒）。
+    /// 事件模式下共享看门狗的最短间隔与容差（Aaron 2026-11-06 定为 1 秒）；实际间隔见 eventSpacing。
     static let watchdogInterval: TimeInterval = 1.0
     static let watchdogTolerance: TimeInterval = 0.1
 
@@ -205,7 +207,7 @@ final class WindowStateHub {
     // MARK: 订阅
 
     /// 盯一扇窗。`fallbackInterval`：退回纯看门狗时这扇窗需要的轮询间隔（改动前的轮询间隔）。
-    /// `heartbeat`：每个看门狗拍子都回调一次 `.heartbeat`（事件模式 1 秒；退回模式按 fallbackInterval）。
+    /// `heartbeat`：定时回调 `.heartbeat`（事件模式按 max(1 秒, fallbackInterval)；退回模式按 fallbackInterval）。
     /// 订阅当下做一次单窗口基线查询；之后只分发相对基线的真实变化。窗口当下就查不到时，下一次查询分发 `.gone`。
     func watch(_ id: CGWindowID, fallbackInterval: TimeInterval = WindowStateHub.watchdogInterval,
                heartbeat: Bool = false,
@@ -409,7 +411,7 @@ final class WindowStateHub {
         let now = clock()
         for token in subscriptions.keys.sorted() {
             guard var sub = subscriptions[token], sub.heartbeat else { continue }
-            let spacing = mode == .fallback ? sub.fallbackInterval : Self.watchdogInterval
+            let spacing = mode == .fallback ? sub.fallbackInterval : Self.eventSpacing(sub.fallbackInterval)
             // 钟是共享的，拍子未必正好落在各自的间隔上：差不到半拍就算到点，宁快勿慢。
             guard now - sub.lastHeartbeat >= spacing - watchdogPeriod / 2 - 0.001 else { continue }
             sub.lastHeartbeat = now
@@ -476,13 +478,19 @@ final class WindowStateHub {
             let fastest = subscriptions.values.map(\.fallbackInterval).min() ?? Self.watchdogInterval
             period = min(Self.watchdogInterval, fastest)
         } else {
-            period = Self.watchdogInterval
+            // 事件模式：最快 1 秒，但不比最快的订阅原来的轮询更勤（只剩 5 秒的 Reconcile 时 5 秒一拍）。
+            period = subscriptions.values.map { Self.eventSpacing($0.fallbackInterval) }.min() ?? Self.watchdogInterval
         }
         if watchdog != nil, abs(period - watchdogPeriod) < 0.0001 { return }
         watchdog?.cancel()
         watchdogPeriod = period
         let tolerance = mode == .fallback ? min(Self.watchdogTolerance, period * 0.25) : Self.watchdogTolerance
         watchdog = makeTimer(period, tolerance) { [weak self] in self?.watchdogTick() }
+    }
+
+    /// 事件模式下一个订阅需要的看门狗间隔：事件兜底最快 1 秒，原来本就更慢的订阅保持原来的间隔。
+    static func eventSpacing(_ fallbackInterval: TimeInterval) -> TimeInterval {
+        max(watchdogInterval, fallbackInterval)
     }
 
     // MARK: 默认实现

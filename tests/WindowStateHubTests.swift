@@ -86,6 +86,7 @@ func wlog(_ s: String) {}
         unwatchStops()
         fallback()
         heartbeat()
+        eventCadence()
         spaceMembership()
         anyChange()
         reentrancy()
@@ -246,6 +247,25 @@ func wlog(_ s: String) {}
         expect(hearts == 2, "事件模式每个 1 秒拍子都给心跳（容差内也算）")
         expect(plain.isEmpty, "没要心跳的订阅不收心跳，没变化也不收东西")
         _ = (a, b)
+    }
+
+    @MainActor static func eventCadence() {
+        let rig = Rig()
+        rig.set(1); rig.set(2)
+        var slowHearts = 0
+        let reconcile = rig.hub.watch(1, fallbackInterval: 5, heartbeat: true) { c, _ in if c == .heartbeat { slowHearts += 1 } }
+        expect(rig.hub.mode == .events && rig.liveTimer?.interval == 5, "事件模式只有 5 秒的订阅：看门狗 5 秒（闲置开销不比改动前高）")
+        var fast: WindowWatch? = rig.hub.watch(2, fallbackInterval: 0.2) { _, _ in }
+        expect(rig.liveTimer?.interval == 1, "再来一个 0.2 秒的订阅：看门狗 1 秒（事件模式最快 1 秒）")
+        for _ in 0..<5 { rig.tick(advance: 1) }
+        expect(slowHearts == 1, "1 秒钟上 5 秒订阅的心跳仍按 5 秒给（5 秒 1 次），实际 \(slowHearts)")
+        fast = nil
+        expect(fast == nil && rig.liveTimer?.interval == 5, "快的退订后回到 5 秒")
+        rig.tick(advance: 5)
+        expect(slowHearts == 2, "5 秒钟上每拍一次心跳")
+        let carry = rig.hub.watch(2, fallbackInterval: 1.5) { _, _ in }
+        expect(rig.liveTimer?.interval == 1.5, "1.5 秒的订阅（Carry）：看门狗 1.5 秒，不慢于改动前")
+        _ = (reconcile, carry)
     }
 
     @MainActor static func spaceMembership() {
