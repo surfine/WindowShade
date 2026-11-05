@@ -98,10 +98,10 @@ final class WindowTitleWatcher {
         pending.removeValue(forKey: id)
         guard let entry = watched[id] else { return }
         let element = entry.element
-        DispatchQueue.global(qos: .utility).async {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
             let title = axTitle(element)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self, self.watched[id] != nil, !title.isEmpty else { return }
                     self.onTitleSettled?(id, title)
                 }
@@ -164,7 +164,9 @@ final class MenuBarRoom {
     /// 作废令牌：屏没了、功能关了就加一，在途的测量结果与重试一律丢掉（先把自己摘出 measuring，见 measure）。
     private var generation: UInt64 = 0
     private var observers: [NSObjectProtocol] = []
-    static let maxAge: TimeInterval = 20
+    /// 读数的寿命：会让它变的事件（换前台、开退 App、睡醒、屏参）都已监听、事件来时整体作废，
+    /// 所以兜底只留给没有事件的变化（图标偷偷增减），不必每 20 秒就用 AX 重量一次。
+    static let maxAge: TimeInterval = 300
 
     init() {
         // 换了前台 App，菜单就换了；App 开了或退出，菜单栏图标会多或少；睡醒后菜单栏重排。
@@ -276,7 +278,8 @@ final class MenuBarRoom {
                     let unsure = leadingHit == nil || trailingHit == nil
                     self.known[display] = (used, spans, unsure ? now - Self.maxAge + 1.5 : now)
                     let held = used != reading ? " (reading \(Int(reading.leading))/\(Int(reading.trailing))\(pointerOnMenuBar ? ", pointer on menu bar" : ""))" : ""
-                    wlog("notch: menu bar room display=\(display) leading=\(Int(used.leading)) trailing=\(Int(used.trailing))\(held)\(unsure ? " (covered, will retry)" : "")\(hit.found.isEmpty ? "" : " found: \(hit.found)")")
+                    // 没变就不写日志（覆盖着、要重试的照写：那是在排查为什么量不到）。
+                    if changed || unsure { wlog("notch: menu bar room display=\(display) leading=\(Int(used.leading)) trailing=\(Int(used.trailing))\(held)\(unsure ? " (covered, will retry)" : "")\(hit.found.isEmpty ? "" : " found: \(hit.found)")") }
                     if changed { self.onChange?() }
                     // 事件后补一次复核；要长、或指针按住了要长，按规则再看一次。都不要就不排：空闲时一次也不量。
                     let afterEvent = self.eventPending.remove(display) != nil
@@ -362,18 +365,7 @@ final class MenuBarRoom {
 
     /// 碰到的那一项左右沿（x 在辅助功能和 Cocoa 里同一个原点）：读位置和大小，只为算空位，不读别的。
     nonisolated private static func itemSpan(_ element: AXUIElement) -> (minX: CGFloat, maxX: CGFloat)? {
-        var positionValue: CFTypeRef?
-        var sizeValue: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &positionValue) == .success,
-              AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &sizeValue) == .success,
-              let positionValue, let sizeValue,
-              CFGetTypeID(positionValue) == AXValueGetTypeID(), CFGetTypeID(sizeValue) == AXValueGetTypeID()
-        else { return nil }
-        var position = CGPoint.zero
-        var size = CGSize.zero
-        guard AXValueGetValue(positionValue as! AXValue, .cgPoint, &position),
-              AXValueGetValue(sizeValue as! AXValue, .cgSize, &size), size.width > 0
-        else { return nil }
+        guard let position = axPosition(element), let size = axSize(element), size.width > 0 else { return nil }
         return (position.x, position.x + size.width)
     }
 

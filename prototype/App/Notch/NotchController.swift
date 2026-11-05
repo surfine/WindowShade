@@ -48,7 +48,7 @@ final class NotchController {
     private var screensChanged: Bool {
         guard DisplayLayout.current() == installedLayout else { return true }
         return NSScreen.screens.contains { screen in
-            guard let id = Self.displayID(screen), let panel = panels[id] else { return false }
+            guard let id = displayID(for: screen), let panel = panels[id] else { return false }
             return panel.notch != Self.slotRect(on: screen).rect
         }
     }
@@ -64,6 +64,8 @@ final class NotchController {
     private var leaseObservers: [NSObjectProtocol] = []
     private let menuRoom = MenuBarRoom()
     private var syncTimer: Timer?
+    /// compactInfo 每次刷新都要图标；NSRunningApplication.icon 要问 LaunchServices，按 pid 记着，App 退出就忘。
+    private var appIconCache: [pid_t: NSImage] = [:]
     /// 实时活动跟着正在用的那块屏（第 41–43 条）；见 NotchController 里“活动跟着正在用的屏”一节。
     private var activeTracker = ActiveDisplayTracker()
     private var activeDisplayTimer: Timer?
@@ -130,7 +132,7 @@ final class NotchController {
               !panel.isAuthenticating, !owner.launchpad.isShowing else { return false }
         if panel.isExpanded { panel.collapse() }
         guard let id = panel.displayID?.value,
-              let screen = NSScreen.screens.first(where: { Self.displayID($0) == id }) else { return false }
+              let screen = NSScreen.screens.first(where: { displayID(for: $0) == id }) else { return false }
         carPlaySurface.enter(on: screen)
         return true
     }
@@ -153,10 +155,9 @@ final class NotchController {
     }
     /// 展开时窗口和正在进行的事合成一排：左段收着的窗口，一条竖线，右段正在播放的、编程会话（M11，设计上默认开；1.0.18 起 Aaron 拍板默认开，见 ReleaseDefaults）。
     /// 关着是旧样子：活动卡和窗口格上下叠放。
-    nonisolated static let mergedRowKey = "Notch.mergedRow"
     nonisolated static var mergedRowEnabled: Bool {
         get { NotchMergedRowPreference.isEnabled(in: .standard) }
-        set { UserDefaults.standard.set(newValue, forKey: mergedRowKey) }
+        set { UserDefaults.standard.set(newValue, forKey: NotchMergedRowPreference.defaultsKey) }
     }
     /// 最小呈现（M13，设计上默认开；1.0.18 起 Aaron 拍板默认开，见 ReleaseDefaults）：同时有两件以上持续活动时，选中的是紧凑，其余退成岛右侧的最小形；
     /// 短暂提醒撞上正在播放时不另开第二颗岛，这一颗岛 bloom 成提醒。关着是旧样子。
@@ -196,6 +197,7 @@ final class NotchController {
                     self?.leases.invalidate(reason)
                     self?.audioAsleep = true
                     self?.syncAudioLevels()
+                    self?.updatePollingTimers()
                 }
             })
         }
@@ -205,6 +207,7 @@ final class NotchController {
                     self?.releaseAnnouncements()
                     self?.audioAsleep = false
                     self?.syncAudioLevels()
+                    self?.updatePollingTimers()
                 }
             })
         }
@@ -215,6 +218,7 @@ final class NotchController {
                 self?.leases.invalidate(.locked)
                 self?.audioScreenLocked = true
                 self?.syncAudioLevels()
+                self?.updatePollingTimers()
             }
         })
         leaseObservers.append(DistributedNotificationCenter.default().addObserver(
@@ -223,6 +227,14 @@ final class NotchController {
                 self?.releaseAnnouncements()
                 self?.audioScreenLocked = false
                 self?.syncAudioLevels()
+                self?.updatePollingTimers()
+            }
+        })
+        leaseObservers.append(workspace.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
+            let pid = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier
+            MainActor.assumeIsolated {
+                if let pid { self?.appIconCache[pid] = nil }
             }
         })
         // 右耳 5 根（NP-6）：电平和样子推给每块屏；每交来一批顺手问一次现状（耳朵收了、卡关了就拆）。
@@ -316,11 +328,29 @@ final class NotchController {
         away.present = { [weak self] summary in self?.showAwaySummary(summary) }
         // 收起的窗口来来去去（双击、快捷键、菜单），每 2 秒对一次账：只加减观察者，不问任何 App。
         // 刘海上有东西时顺便看看两边的菜单栏空位是不是该重新量了（量在后台）。
+        startSyncTimer()
+    }
+
+    private func startSyncTimer() {
+        guard syncTimer == nil else { return }
         syncTimer = MainTimer.repeating(interval: 2, tolerance: 0.5) { [weak self] in
             guard let self else { return }
             self.leases.tick()
             self.syncWatchers()
             if !self.tucked.isEmpty || !self.changed.isEmpty { self.refresh() }
+        }
+    }
+
+    /// 锁屏、睡眠时没人看刘海（展示权已撤、输入已停）：两个轮询一起停，回来再起，省掉整段锁屏的 2 秒与 0.5 秒唤醒。
+    private func updatePollingTimers() {
+        if audioScreenLocked || audioAsleep {
+            syncTimer?.invalidate()
+            syncTimer = nil
+            activeDisplayTimer?.invalidate()
+            activeDisplayTimer = nil
+        } else {
+            startSyncTimer()
+            scheduleActiveDisplayTimer()
         }
     }
 
@@ -354,16 +384,12 @@ final class NotchController {
         return (NSRect(x: screen.frame.midX - 95, y: screen.frame.maxY - menuBar, width: 190, height: menuBar), true)
     }
 
-    static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
-        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
-    }
-
     private func panel(for screen: NSScreen) -> NotchPanel? {
-        Self.displayID(screen).flatMap { panels[$0] }
+        displayID(for: screen).flatMap { panels[$0] }
     }
 
     private func panel(containing point: CGPoint) -> NotchPanel? {
-        NSScreen.screens.first { $0.frame.contains(point) }.flatMap { panel(for: $0) }
+        screenAtPoint(point).flatMap { panel(for: $0) }
     }
 
     private var notchPanel: NotchPanel? { Self.notchScreen().flatMap { panel(for: $0) } }
@@ -475,7 +501,7 @@ final class NotchController {
         var alive = Set<CGDirectDisplayID>()
         refreshActiveDisplay()
         for screen in NSScreen.screens where Self.isEnabled {
-            guard let id = Self.displayID(screen) else { continue }
+            guard let id = displayID(for: screen) else { continue }
             alive.insert(id)
             let slot = Self.slotRect(on: screen)
             let panel = panels[id] ?? NotchPanel(notch: slot.rect, virtual: slot.virtual)
@@ -495,105 +521,7 @@ final class NotchController {
             let mine = ownsActivities(id)
             panel.setActivities(mine ? activities.store.visible : [], selected: mine ? activities.store.selectedID : nil)
             panel.setMusicArtwork(activities.nowPlayingArtwork)
-            panel.onActivitySelect = { [weak self] id in self?.activities.select(id) }
-            panel.onMinimumTap = { [weak self] id in self?.activities.openActivity(id: id) }
-            panel.onActivityAction = { [weak self] action in self?.activities.perform(action) }
-            panel.onRowSeen = { [weak self] in self?.activities.rowSeen() }
-            panel.canSwipeActivities = { [weak self] in self?.owner.launchpad.isShowing == false }
-            panel.onHold = { [weak self, weak panel] in
-                guard let self, let panel else { return false }
-                return self.carPlayHold(on: panel)
-            }
-            panel.onLongPress = { [weak self, weak panel] in
-                guard let self, let panel else { return }
-                // 照系统的岛（第 33 条）：那一排有任何东西（收起的窗口、正在进行的事、文件架）就展开；
-                // 什么都没有才打开启动台“今天”。以前只看有没有活动，只收着窗口时长按会去启动台。
-                self.refreshShelf()
-                let row = self.tiles()
-                if row.isEmpty { self.owner.launchpad.navigate(to: .today) }
-                else {
-                    panel.expand(with: row)
-                    self.requestThumbnails()
-                    // 点（长按）打开的那一排接键盘，直接打字就筛（LA-7）；悬停打开的不接。
-                    if panel.isExpanded, !panel.isFocusActive {
-                        panel.beginFocus(pointerInside: panel.islandContains(NSEvent.mouseLocation), origin: .press)
-                    }
-                }
-            }
-            panel.pushIsTuck = { [weak self] in !(self?.owner.launchpad.isShowing ?? false) }
-            panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
-            panel.onTileAccessory = { [weak self] id in self?.tileAccessory(id) }
-            panel.nowPlayingCardOpener = { [weak self, weak panel] in
-                guard let self, let panel else { return false }
-                return self.openNowPlayingCard(on: panel)
-            }
-            panel.onSwipeDown = { [weak self] rect in
-                guard let self else { return }
-                if self.owner.launchpad.isShowing { self.owner.launchpad.navigate(to: .home) }
-                else if !self.tucked.isEmpty || self.owner.slideOver.isHidden { self.releaseLatest(reason: "swipe", from: rect) }
-                else { self.owner.launchpad.navigate(to: .home) }
-            }
-            panel.onNavigation = { [weak self, weak panel] destination in
-                guard let self else { return }
-                // 主屏幕开着：刘海是主屏幕的翻页和返回。没开：往上推把这块屏上的窗口全收进来，
-                // 左右滑切到上一个、下一个 App（iPhone 底部横条的做法）；捏合仍是回主屏幕。
-                if self.owner.launchpad.isShowing || destination == .home || destination == .spotlight {
-                    self.owner.launchpad.navigate(to: destination)
-                    return
-                }
-                switch destination {
-                case .back:
-                    let center = panel.map { NSPoint(x: $0.notch.midX, y: $0.notch.midY) }
-                    // 往上推（够远、松手够快才走到这里，见 NotchPushUp）：收完在刘海里留一张“已收起 N 扇 · 撤销”。
-                    self.tuckAll(on: center.flatMap { point in NSScreen.screens.first { $0.frame.contains(point) } },
-                                 undoReceipt: true)
-                case .today: self.switchApp(back: true, panel: panel)
-                case .library: self.switchApp(back: false, panel: panel)
-                default: break
-                }
-            }
-            // 张开 = 展开那一排；上推（onNavigation 的 .back）= 全部收进刘海（拍板 10-29 第 16 条）。
-            // 主屏幕开着时张开照旧是主屏幕的返回：先收起这一排，再退一层（和原来同一条路）。
-            panel.onSpread = { [weak self, weak panel] in
-                guard let self, let panel else { return }
-                if self.owner.launchpad.isShowing {
-                    panel.collapse()
-                    self.owner.launchpad.navigate(to: .back)
-                    return
-                }
-                self.spreadRow(on: panel)
-            }
-            panel.onPress = { [weak self] clicks, rect in self?.homeKey(clicks, from: rect) }
-            panel.onFiles = { [weak self] files, rect in self?.owner.launchpad.openWith(files, from: rect) }
-            panel.onFileDrop = { [weak self, weak panel] release, pasteboard in
-                guard let self, let panel else { return false }
-                return self.fileDropped(release, pasteboard: pasteboard, on: panel)
-            }
-            panel.onFileDropDwell = { [weak self, weak panel] in
-                guard let self, let panel else { return }
-                self.fileDropDwell(on: panel)
-            }
-            panel.canPull = { [weak self] in
-                return self != nil
-            }
-            panel.onTileHover = { [weak self] id, inside, rect in
-                // 离开期间的格子：只有窗口格能看一眼，看的是它说的那扇窗。
-                if AwayList.isAwayID(UInt32(id)) {
-                    guard let self, let window = self.awayList?.cells.first(where: { $0.id == UInt32(id) })?.item.windowID else { return }
-                    if inside { self.showPeek(CGWindowID(window), tile: rect) } else { self.endPeek() }
-                    return
-                }
-                // 竖线右边的格子不是窗口，没有“看一眼”。
-                if NotchRow.isOngoingID(id) { return }
-                // 停在屏幕外的卷轴列不是收着的窗口，没有“看一眼”。
-                if self?.stripReturn != nil, self?.owner.gestures.strips.allParkedIDs.contains(id) == true { return }
-                if inside { self?.showPeek(id, tile: rect) } else { self?.endPeek() }
-            }
-            panel.onFocusKind = { [weak self] kind in self?.onShelfFocusKind?(kind) }
-            panel.onMusicEarChange = { [weak self] in self?.syncAudioLevels() }
-            panel.onAlertEnded = { [weak self] in self?.retryPendingPeek(); self?.awayAlertEnded() }
-            panel.onRowExpanded = { [weak self] in self?.awayRowOpened() }
-            panel.onRowCollapsed = { [weak self] in self?.awayRowClosed() }
+            wirePanelCallbacks(panel)
             panel.setMusicWave(audioLevels.wave)
         }
         for (id, panel) in panels where !alive.contains(id) {
@@ -617,6 +545,109 @@ final class NotchController {
         // 刘海能做什么，等他自己把指针停到刘海上时再说（hoverChanged）；Rectangle 那一套在设置 → 快捷键 → 更多排法。
     }
 
+    /// 面板上各个手势、点按、悬停、拖放的回调接到这里（每块屏的面板都一样；install 里先摆好样子再接）。
+    private func wirePanelCallbacks(_ panel: NotchPanel) {
+        panel.onActivitySelect = { [weak self] id in self?.activities.select(id) }
+        panel.onMinimumTap = { [weak self] id in self?.activities.openActivity(id: id) }
+        panel.onActivityAction = { [weak self] action in self?.activities.perform(action) }
+        panel.onRowSeen = { [weak self] in self?.activities.rowSeen() }
+        panel.canSwipeActivities = { [weak self] in self?.owner.launchpad.isShowing == false }
+        panel.onHold = { [weak self, weak panel] in
+            guard let self, let panel else { return false }
+            return self.carPlayHold(on: panel)
+        }
+        panel.onLongPress = { [weak self, weak panel] in
+            guard let self, let panel else { return }
+            // 照系统的岛（第 33 条）：那一排有任何东西（收起的窗口、正在进行的事、文件架）就展开；
+            // 什么都没有才打开启动台“今天”。以前只看有没有活动，只收着窗口时长按会去启动台。
+            self.refreshShelf()
+            let row = self.tiles()
+            if row.isEmpty { self.owner.launchpad.navigate(to: .today) }
+            else {
+                panel.expand(with: row)
+                self.requestThumbnails()
+                // 点（长按）打开的那一排接键盘，直接打字就筛（LA-7）；悬停打开的不接。
+                if panel.isExpanded, !panel.isFocusActive {
+                    panel.beginFocus(pointerInside: panel.islandContains(NSEvent.mouseLocation), origin: .press)
+                }
+            }
+        }
+        panel.pushIsTuck = { [weak self] in !(self?.owner.launchpad.isShowing ?? false) }
+        panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
+        panel.onTileAccessory = { [weak self] id in self?.tileAccessory(id) }
+        panel.nowPlayingCardOpener = { [weak self, weak panel] in
+            guard let self, let panel else { return false }
+            return self.openNowPlayingCard(on: panel)
+        }
+        panel.onSwipeDown = { [weak self] rect in
+            guard let self else { return }
+            if self.owner.launchpad.isShowing { self.owner.launchpad.navigate(to: .home) }
+            else if !self.tucked.isEmpty || self.owner.slideOver.isHidden { self.releaseLatest(reason: "swipe", from: rect) }
+            else { self.owner.launchpad.navigate(to: .home) }
+        }
+        panel.onNavigation = { [weak self, weak panel] destination in
+            guard let self else { return }
+            // 主屏幕开着：刘海是主屏幕的翻页和返回。没开：往上推把这块屏上的窗口全收进来，
+            // 左右滑切到上一个、下一个 App（iPhone 底部横条的做法）；捏合仍是回主屏幕。
+            if self.owner.launchpad.isShowing || destination == .home || destination == .spotlight {
+                self.owner.launchpad.navigate(to: destination)
+                return
+            }
+            switch destination {
+            case .back:
+                let center = panel.map { NSPoint(x: $0.notch.midX, y: $0.notch.midY) }
+                // 往上推（够远、松手够快才走到这里，见 NotchPushUp）：收完在刘海里留一张“已收起 N 扇 · 撤销”。
+                self.tuckAll(on: center.flatMap { screenAtPoint($0) },
+                             undoReceipt: true)
+            case .today: self.switchApp(back: true, panel: panel)
+            case .library: self.switchApp(back: false, panel: panel)
+            default: break
+            }
+        }
+        // 张开 = 展开那一排；上推（onNavigation 的 .back）= 全部收进刘海（拍板 10-29 第 16 条）。
+        // 主屏幕开着时张开照旧是主屏幕的返回：先收起这一排，再退一层（和原来同一条路）。
+        panel.onSpread = { [weak self, weak panel] in
+            guard let self, let panel else { return }
+            if self.owner.launchpad.isShowing {
+                panel.collapse()
+                self.owner.launchpad.navigate(to: .back)
+                return
+            }
+            self.spreadRow(on: panel)
+        }
+        panel.onPress = { [weak self] clicks, rect in self?.homeKey(clicks, from: rect) }
+        panel.onFiles = { [weak self] files, rect in self?.owner.launchpad.openWith(files, from: rect) }
+        panel.onFileDrop = { [weak self, weak panel] release, pasteboard in
+            guard let self, let panel else { return false }
+            return self.fileDropped(release, pasteboard: pasteboard, on: panel)
+        }
+        panel.onFileDropDwell = { [weak self, weak panel] in
+            guard let self, let panel else { return }
+            self.fileDropDwell(on: panel)
+        }
+        panel.canPull = { [weak self] in
+            return self != nil
+        }
+        panel.onTileHover = { [weak self] id, inside, rect in
+            // 离开期间的格子：只有窗口格能看一眼，看的是它说的那扇窗。
+            if AwayList.isAwayID(UInt32(id)) {
+                guard let self, let window = self.awayList?.cells.first(where: { $0.id == UInt32(id) })?.item.windowID else { return }
+                if inside { self.showPeek(CGWindowID(window), tile: rect) } else { self.endPeek() }
+                return
+            }
+            // 竖线右边的格子不是窗口，没有“看一眼”。
+            if NotchRow.isOngoingID(id) { return }
+            // 停在屏幕外的卷轴列不是收着的窗口，没有“看一眼”。
+            if self?.stripReturn != nil, self?.owner.gestures.strips.allParkedIDs.contains(id) == true { return }
+            if inside { self?.showPeek(id, tile: rect) } else { self?.endPeek() }
+        }
+        panel.onFocusKind = { [weak self] kind in self?.onShelfFocusKind?(kind) }
+        panel.onMusicEarChange = { [weak self] in self?.syncAudioLevels() }
+        panel.onAlertEnded = { [weak self] in self?.retryPendingPeek(); self?.awayAlertEnded() }
+        panel.onRowExpanded = { [weak self] in self?.awayRowOpened() }
+        panel.onRowCollapsed = { [weak self] in self?.awayRowClosed() }
+    }
+
     /// 关掉刘海：把每块屏上的面板和登记都拆掉，别只停新增。
     private func teardownPanels() {
         authentication.reconcile(panels: [])
@@ -632,7 +663,7 @@ final class NotchController {
     /// 每块真刘海的面板用这块屏的硬件曲线；隐形刘海用机型顶角做胶囊圆角（S4，不画肩）。
     private func applyShapes() {
         for (display, panel) in panels {
-            let screen = NSScreen.screens.first { Self.displayID($0) == display }
+            let screen = NSScreen.screens.first { displayID(for: $0) == display }
             let shape = screen.flatMap { DisplayShapes.shared.known(for: $0) }
             if panel.isVirtual {
                 panel.hardware = nil
@@ -680,7 +711,7 @@ final class NotchController {
     /// 甩一下标题栏时问：从 release 以 velocity 往上甩出去，会不会穿过刘海那一段（左右放宽 80 点）。
     /// release：Cocoa 坐标；velocity：点/秒，y 向上。
     func aims(from release: CGPoint, velocity: CGVector) -> Bool {
-        guard Self.isEnabled, let screen = NSScreen.screens.first(where: { $0.frame.contains(release) }),
+        guard Self.isEnabled, let screen = screenAtPoint(release),
               velocity.dy > 0 else { return false }
         let notch = Self.slotRect(on: screen).rect
         let t = (notch.minY - release.y) / velocity.dy
@@ -875,7 +906,7 @@ final class NotchController {
 
     /// 落点小岛在哪块屏上（排到这块屏上）。
     func screen(containing point: CGPoint) -> NSScreen? {
-        NSScreen.screens.first { $0.frame.contains(point) }
+        screenAtPoint(point)
     }
 
     /// 把这扇窗口收进刘海。landed：它现在的外框；home：回来时落到哪里（拖之前的位置）；
@@ -893,10 +924,10 @@ final class NotchController {
             let plate = BackgroundPlate(image: background, rect: landed)
             coverUntilHidden(plate, id: id, attempts: 0)
             let title = win
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let windowTitle = axTitle(title)
                 DispatchQueue.main.async {
-                    MainActor.assumeIsolated { [weak self] in
+                    MainActor.assumeIsolated {
                         self?.finishTuck(win, id: id, pid: pid, landed: landed, home: home, velocity: velocity,
                                          notch: notch, snapshot: snapshot, windowTitle: windowTitle)
                     }
@@ -906,11 +937,11 @@ final class NotchController {
         }
         pendingTucks.insert(id)
         // 截图（大窗口要几十毫秒）和问标题（要问那个 App）都放到后台，主线程不等；拿到就接着飞。
-        DispatchQueue.global(qos: .userInteractive).async {
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
             let snapshot = FastCapture.window(id)
             let windowTitle = axTitle(win)
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     self?.pendingTucks.remove(id)
                     self?.finishTuck(win, id: id, pid: pid, landed: landed, home: home, velocity: velocity,
                                      notch: notch, snapshot: snapshot, windowTitle: windowTitle)
@@ -930,7 +961,7 @@ final class NotchController {
         tucked.append(item)
         wlog("notch: tuck id=\(id) landed=\(landed) home=\(home)")
         // 窗口缩小、飞进刘海：从它现在的样子出发，接上甩出去的速度。
-        if let snapshot, let screen = NSScreen.screens.first(where: { $0.frame.contains(CGPoint(x: notch.midX, y: notch.midY)) })
+        if let snapshot, let screen = screenAtPoint(CGPoint(x: notch.midX, y: notch.midY))
             ?? NSScreen.main ?? NSScreen.screens.first {
             let from = cocoaFrame(fromAXPosition: landed.origin, size: landed.size)
             // 知道刘海形状时落在刘海正中（整个被摄像头那一块挡住）；不知道时照旧在刘海底上 2 点。
@@ -1944,7 +1975,7 @@ final class NotchController {
             return 0
         }
         let pointer = NSEvent.mouseLocation
-        guard let target = screen ?? NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else { return 0 }
+        guard let target = screen ?? screenAtPoint(pointer) ?? NSScreen.main else { return 0 }
         let windows = owner.gestures.arrangeableWindows(on: target, focused: nil)
         for (window, element) in windows {
             tuck(element, id: window.id, pid: window.pid, landed: window.frame, home: window.frame, velocity: .zero)
@@ -2312,11 +2343,11 @@ final class NotchController {
     /// 重新算正在用的屏。变了返回 true；合盖、拔线后原来的屏没了，也在这里挪到还在的屏上。
     @discardableResult
     private func refreshActiveDisplay() -> Bool {
-        let screens = NSScreen.screens.compactMap { screen in Self.displayID(screen).map { (screen, $0) } }
+        let screens = NSScreen.screens.compactMap { screen in displayID(for: screen).map { (screen, $0) } }
         let displays = screens.map(\.1).filter { !yieldsToSystemIsland($0) }.sorted()
         let builtin = displays.first { CGDisplayIsBuiltin($0) != 0 }
         let pointer = screens.first { $0.0.frame.contains(NSEvent.mouseLocation) }?.1
-        let key = NSScreen.main.flatMap(Self.displayID)
+        let key = displayID(for: NSScreen.main)
         let before = activeTracker.active
         activeTracker.update(displays: displays, builtin: builtin, pointer: pointer, key: key)
         return activeTracker.active != before
@@ -2335,7 +2366,7 @@ final class NotchController {
 
     /// 只有多块屏时才需要跟：每半秒看一眼指针和焦点在哪块屏上（读一个坐标，不碰别的）。
     private func scheduleActiveDisplayTimer() {
-        guard panels.count > 1 else {
+        guard panels.count > 1, !audioScreenLocked, !audioAsleep else {
             activeDisplayTimer?.invalidate()
             activeDisplayTimer = nil
             return
@@ -2355,7 +2386,7 @@ final class NotchController {
 
     /// 这块屏上刘海两边的菜单栏空不空（量过就用上次的，旧了在后台重新量）。
     private func room(for panel: NotchPanel, display: CGDirectDisplayID) -> MenuBarRoom.Sides? {
-        guard let screen = NSScreen.screens.first(where: { Self.displayID($0) == display }) else { return nil }
+        guard let screen = NSScreen.screens.first(where: { displayID(for: $0) == display }) else { return nil }
         let spans = panel.compactSpans
         return menuRoom.sides(for: display, spans: MenuBarRoom.Spans(
             leadingEdge: spans.leadingEdge, trailingEdge: spans.trailingEdge, reach: spans.reach,
@@ -2371,8 +2402,15 @@ final class NotchController {
         guard !tucked.isEmpty || notchChanged else { return nil }
         let latestChanged = changed.max { $0.value < $1.value }?.key
         let pid = tucked.last?.pid ?? latestChanged.flatMap { owner.shaded[$0]?.pid }
-        return NotchPanel.Compact(pid: pid, icon: pid.flatMap { NSRunningApplication(processIdentifier: $0)?.icon },
+        return NotchPanel.Compact(pid: pid, icon: pid.flatMap { appIcon(pid: $0) },
                                   count: tucked.count, changed: notchChanged)
+    }
+
+    private func appIcon(pid: pid_t) -> NSImage? {
+        if let cached = appIconCache[pid] { return cached }
+        guard let icon = NSRunningApplication(processIdentifier: pid)?.icon else { return nil }
+        appIconCache[pid] = icon
+        return icon
     }
 
     /// 被别的途径展开了（⌃⌘1…9、菜单）的窗口，从刘海里拿掉。
@@ -2558,7 +2596,7 @@ final class NotchController {
         // 在指针所在那块屏的刘海上说（人正看着那里）。
         let pointer = NSEvent.mouseLocation
         guard let panel = panel(containing: pointer) ?? notchPanel ?? panels.values.first,
-              let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: panel.notch.midX, y: panel.notch.midY)) })
+              let screen = screenAtPoint(NSPoint(x: panel.notch.midX, y: panel.notch.midY))
         else { return }
         // 展开前先让开系统：要盖住的那段菜单栏上有系统的东西，就只标点（上面已经标了），不展开。问在后台。
         let spans = NotchPanel.alertCoverSpans(notch: panel.notch, virtual: panel.isVirtual, screen: screen.frame)
@@ -2643,7 +2681,7 @@ extension NotchController: GlanceElsewhereSource {
     /// 实时的从窗口所在的桌面、屏幕边外开流；静止的只给那一张，右下角一直写“不是实时画面”。
     func glanceTarget(forElsewhere id: CGWindowID) -> GlanceTarget? {
         guard let anchor = tileAnchor, anchor.id == id, hasScreenRecordingPermission(),
-              let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: anchor.tile.midX, y: anchor.tile.midY)) })
+              let screen = screenAtPoint(NSPoint(x: anchor.tile.midX, y: anchor.tile.midY))
                 ?? NSScreen.main else { return nil }
         let windowAX: CGRect
         let still: CGImage?

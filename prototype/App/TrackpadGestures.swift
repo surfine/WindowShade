@@ -1952,7 +1952,7 @@ final class TrackpadGestureController {
     func windowIsOn(_ win: AXUIElement, screen: NSScreen) -> Bool {
         guard let pos = axPosition(win), let size = axSize(win),
               let found = screenForAXWindow(pos: pos, size: size) else { return false }
-        if let want = NotchController.displayID(screen), let got = NotchController.displayID(found) {
+        if let want = displayID(for: screen), let got = displayID(for: found) {
             return want == got
         }
         return found.frame.equalTo(screen.frame)

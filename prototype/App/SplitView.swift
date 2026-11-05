@@ -337,11 +337,11 @@ final class SplitViewController {
         timer?.invalidate()
         let ids = (seam.before + seam.after).map(\.id)
         // 找窗口的辅助功能元素要问各个 App：放到后台去问，找到之前拖动只挪把手。
-        DispatchQueue.global(qos: .userInteractive).async {
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
             var found: [UInt32: AXUIElement] = [:]
             for id in ids { if let element = Self.element(for: id) { found[id] = element } }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self, self.drag === d, found.count == ids.count else { return }
                     // 这几扇窗上一次松手的滑行还没停：先停下再开写，免得它收尾校准时把这次拖好的位置盖回去。
                     // 别的缝（比如另一块屏上）那一批不相干，照样滑完、校准、记撤销。

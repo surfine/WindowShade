@@ -7793,7 +7793,7 @@
       "path": "prototype/App/Notch/NotchController.swift",
       "line": 150,
       "symbol": "UserDefaults",
-      "source": "set { UserDefaults.standard.set(newValue, forKey: mergedRowKey) }",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: NotchMergedRowPreference.defaultsKey) }",
       "signal": "settings"
     },
     {

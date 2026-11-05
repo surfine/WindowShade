@@ -69,7 +69,7 @@ extension NotchController {
         let panels = NSApp.windows.compactMap { $0 as? NotchPanel }
         let mouse = NSEvent.mouseLocation
         func screen(of panel: NotchPanel) -> NSScreen? {
-            NSScreen.screens.first { $0.frame.contains(NSPoint(x: panel.notch.midX, y: panel.notch.midY)) }
+            screenAtPoint(NSPoint(x: panel.notch.midX, y: panel.notch.midY))
         }
         return panels.first { screen(of: $0)?.frame.contains(mouse) == true }
             ?? panels.first { !$0.isVirtual }

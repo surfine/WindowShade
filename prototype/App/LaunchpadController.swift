@@ -66,7 +66,7 @@ final class LaunchpadController {
     /// 面板正在这块屏上。没打开，或开在另一块屏，都不是。
     func panelIsOn(_ screen: NSScreen) -> Bool {
         guard let panel, let shown = panel.screen else { return false }
-        if let want = NotchController.displayID(screen), let got = NotchController.displayID(shown) {
+        if let want = displayID(for: screen), let got = displayID(for: shown) {
             return want == got
         }
         return shown.frame.equalTo(screen.frame)
@@ -250,7 +250,7 @@ final class LaunchpadController {
         owner.notch.prepareForLaunchpad()
         // 启动台层先占这块屏；占不到（授权、指挥正占着）就不开。
         // 这块屏上没有刘海面板（刘海关着、还没装上）时没有谁来抢，不拿租约直接开（规格 V11）。
-        if let id = NotchController.displayID(screen) {
+        if let id = displayID(for: screen) {
             let display = WS2.DisplayID(value: id)
             let leases = owner.notch.leases
             switch leases.screenClaim(on: display) {

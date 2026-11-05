@@ -21989,29 +21989,6 @@
         }
       }
     },
-    "menu.pinCurrentWindow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Pin Current Window"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "置顶当前窗口"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "置頂當前視窗"
-          }
-        }
-      }
-    },
     "menu.pinWindow": {
       "extractionState": "manual",
       "localizations": {
@@ -22445,29 +22422,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "全部取消置頂"
-          }
-        }
-      }
-    },
-    "menu.unpinCurrentWindow": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unpin Current Window"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消置顶当前窗口"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消置頂當前視窗"
           }
         }
       }

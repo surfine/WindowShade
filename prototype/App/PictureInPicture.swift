@@ -58,13 +58,13 @@ final class PictureInPictureController {
     /// 快捷键、菜单：最前面那扇窗进画中画；它已经在画中画里就回到原处。
     func toggleCurrentWindow() {
         guard Self.isEnabled else { return }
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let win = focusedWindow()
             let id = win.flatMap { windowID(of: $0) }
             var pid: pid_t = 0
             if let win { AXUIElementGetPid(win, &pid) }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     guard let self else { return }
                     guard let win, let id else {
                         self.owner.notch.announce(WSL10n.text("pip.noWindow", zh: "没有可放的窗口"), detail: WSL10n.text("pip.tapFirst", zh: "先点一下要放的窗口"), tone: .problem)
@@ -328,11 +328,11 @@ final class PictureInPictureController {
     /// 放好之前这扇窗算在 exiting 里，不接新的画中画。
     private func putBack(_ s: PiPSession, to home: CGRect, activate: Bool) {
         let element = s.element, id = s.id, pid = s.pid
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let landed = Self.place(element, at: home)
             if activate { AXUIElementPerformAction(element, kAXRaiseAction as CFString) }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in
+                MainActor.assumeIsolated {
                     if activate { NSRunningApplication(processIdentifier: pid)?.activate() }
                     guard let self, self.exiting[id] === s else { return }
                     self.exiting[id] = nil

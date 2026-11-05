@@ -142,7 +142,7 @@ final class NotchLeaseHub {
         guard !locked(), controller?.authentication.isPresenting != true,
               let panel = controller?.authenticationPanel(),
               let screen = panel.screen ?? NSScreen.main,
-              let display = NotchController.displayID(screen).map({ WS2.DisplayID(value: $0) }),
+              let display = displayID(for: screen).map({ WS2.DisplayID(value: $0) }),
               let owner = Owner(rawValue: ownerID) else { return false }
         // 由协调器原子决定换页：绝不能先关掉审阅来腾地方，申请失败时旧页必须原样留着。
         let previous = contentHandle

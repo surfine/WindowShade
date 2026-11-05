@@ -561,12 +561,6 @@ final class PinnedPreviewController {
                                               : WSL10n.text("menu.pinWindow", zh: "置顶窗口"))
     }
 
-    /// 悬停提示里的全称（“置顶当前窗口 / 取消置顶当前窗口”）。
-    func currentTargetMenuTitle() -> String {
-        currentTargetPinState().isPinned ? WSL10n.text("menu.unpinCurrentWindow", zh: "取消置顶当前窗口")
-                                         : WSL10n.text("menu.pinCurrentWindow", zh: "置顶当前窗口")
-    }
-
     func pinCurrentTargetPreview() {
         guard hasAccessibilityPermission() else {
             notice(WSL10n.text("notice.shade.needsPermission", zh: "需要权限"), "pin-preview: failed reason=accessibility")
