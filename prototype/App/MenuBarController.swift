@@ -31,10 +31,12 @@ extension AppDelegate {
     statusItem.button?.setAccessibilityLabel(PaperSurfaceAccessibility.statusItemLabel)
     statusItem.button?.setAccessibilityValue(
       PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))
-    rebuildMenu()
+    rebuildMenu(forceItems: true)
     wlog("status item visible=\(statusItem.isVisible)")
   }
-  func rebuildMenu() {
+  /// 状态栏按钮的标题、提示和计时器随时同步；菜单项本身（SF Symbol、权限检查）只在菜单展开时才建——
+  /// 关着的菜单没人看，下一次展开 menuNeedsUpdate 本来就会整个重建一遍。forceItems 给启动和探针读菜单项用。
+  func rebuildMenu(forceItems: Bool = false) {
     guard !duoController.isDesignPreview else { return }
     // 会话变化可能在 setupStatusItem 之前就排到这里；那时状态栏项还不存在，
     // 强解包会当场 brk（静音探针真机踩过）。
@@ -62,6 +64,12 @@ extension AppDelegate {
       let value = PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count)
       if button.accessibilityValue() as? String != value { button.setAccessibilityValue(value) }
     }
+    if forceItems || statusMenuIsOpen { buildStatusMenuItems() }
+    updateReconcileTimer()
+    // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
+    windowBrowserController?.managedWindowsDidChange()
+  }
+  private func buildStatusMenuItems() {
     statusMenu.removeAllItems()
 
     let menuState = makeMenuState()
@@ -262,9 +270,6 @@ extension AppDelegate {
     if StatusMenuLayout.visibleFixedIDs(in: statusMenu) != StatusMenuLayout.fixedTopLevel.map(\.id) {
       wlog("menu: 顶层固定项与约定不一致")
     }
-    updateReconcileTimer()
-    // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
-    windowBrowserController?.managedWindowsDidChange()
   }
   func addPinnedPreviewMenuSection(_ entries: [PinnedPreviewMenuEntry], into menu: NSMenu) {
     guard !entries.isEmpty else { return }
@@ -345,7 +350,11 @@ extension AppDelegate {
     rebuildMenu()
     refreshPreferencesWindowIfOpen()
   }
+  func menuWillOpen(_ menu: NSMenu) {
+    if menu === statusMenu { statusMenuIsOpen = true }
+  }
   func menuDidClose(_ menu: NSMenu) {
+    if menu === statusMenu { statusMenuIsOpen = false }
     hideMenuHoverPreview()
     menuPreviewHoverID = nil
     menuPreviewAnchor = nil
@@ -358,7 +367,7 @@ extension AppDelegate {
     // 先用最近一次快照即时展示菜单，再后台校正下一次菜单内容；不能为一个
     // 动态标题把菜单打开和系统鼠标输入阻塞在目标 app 的 AX timeout 上。
     refreshPinnedPreviewTarget(reason: "menu-needs-update")
-    rebuildMenu()
+    rebuildMenu(forceItems: true)
   }
   func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
     guard StatusMenuLayout.belongsToStatusMenu(menu, root: statusMenu) else { return }

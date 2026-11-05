@@ -599,30 +599,25 @@ final class PictureInPictureController {
         let path = FlickGlidePath.honoringMotion(from: fromAX, to: toAX, velocity: CGVector(dx: velocity.dx, dy: -velocity.dy))
         let length = Motion.reduced ? 0.12 : (duration ?? min(path.duration, 0.6))
         let began = CACurrentMediaTime()
-        let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { timer in
-            let finished = MainActor.assumeIsolated { () -> Bool in
-                let t = CACurrentMediaTime() - began
-                let finished = t >= length
-                let frameAX: CGRect
-                if duration != nil || Motion.reduced {
-                    let p = min(1, t / length)
-                    let e = CGFloat(1 - pow(1 - p, 3))
-                    frameAX = CGRect(x: fromAX.minX + (toAX.minX - fromAX.minX) * e, y: fromAX.minY + (toAX.minY - fromAX.minY) * e,
-                                     width: fromAX.width + (toAX.width - fromAX.width) * e, height: fromAX.height + (toAX.height - fromAX.height) * e)
-                } else {
-                    frameAX = finished ? toAX : path.frame(at: t)
-                }
-                panel.setFrame(cocoaFrame(fromAXPosition: frameAX.origin, size: frameAX.size), display: true)
-                if finished {
-                    panel.setFrame(target, display: true)
-                    done?()
-                }
-                return finished
+        session?.animation = FrameTicker(screen: panel.screen ?? screenForCocoaFrame(panel.frame)) { ticker in
+            let t = CACurrentMediaTime() - began
+            let finished = t >= length
+            let frameAX: CGRect
+            if duration != nil || Motion.reduced {
+                let p = min(1, t / length)
+                let e = CGFloat(1 - pow(1 - p, 3))
+                frameAX = CGRect(x: fromAX.minX + (toAX.minX - fromAX.minX) * e, y: fromAX.minY + (toAX.minY - fromAX.minY) * e,
+                                 width: fromAX.width + (toAX.width - fromAX.width) * e, height: fromAX.height + (toAX.height - fromAX.height) * e)
+            } else {
+                frameAX = finished ? toAX : path.frame(at: t)
             }
-            if finished { timer.invalidate() }
+            panel.setFrame(cocoaFrame(fromAXPosition: frameAX.origin, size: frameAX.size), display: true)
+            if finished {
+                panel.setFrame(target, display: true)
+                done?()
+                ticker.invalidate()
+            }
         }
-        RunLoop.main.add(timer, forMode: .common)
-        session?.animation = timer
     }
 }
 
@@ -648,7 +643,7 @@ final class PiPSession {
     var parkedFrame: CGRect?
     var dragging = false
     var dragStart: NSPoint?
-    var animation: Timer?
+    var animation: FrameTicker?
     let capture = WindowStreamCapture()
     /// 往原窗口的滚动区写滚动位置（后台串行，连续滚动只写最新的）。
     let scroller: PiPScroller

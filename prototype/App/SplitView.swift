@@ -570,7 +570,7 @@ final class SplitDivider {
     var onDrag: ((CGVector) -> Void)?
     var onEnd: ((CGVector) -> Void)?
     private var panel: NSPanel?
-    private var animation: Timer?
+    private var animation: FrameTicker?
     static let grab = CGSize(width: 28, height: 160)
 
     var isVisible: Bool { panel?.isVisible ?? false }
@@ -623,24 +623,19 @@ final class SplitDivider {
         let token = Motion.reduced ? Motion.Spring.reducedWindow : Motion.Spring.settle
         let omega = token.angularFrequency
         let zeta = token.dampingRatio
-        let t = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] timer in
-            let finished = MainActor.assumeIsolated { () -> Bool in
-                let elapsed = max(0, CACurrentMediaTime() - began)
-                let x = FluidMotion.spring(elapsed, from: Double(from.x), to: Double(to.x),
-                                           velocity: 0, zeta: zeta, omega: omega)
-                let y = FluidMotion.spring(elapsed, from: Double(from.y), to: Double(to.y),
-                                           velocity: 0, zeta: zeta, omega: omega)
-                self?.place(at: CGPoint(x: x, y: y), vertical: vertical)
-                let dx = abs(x - Double(to.x)), dy = abs(y - Double(to.y))
-                return elapsed > token.response * 4 || (dx < 0.25 && dy < 0.25)
-            }
-            if finished {
-                MainActor.assumeIsolated { self?.place(at: to, vertical: vertical) }
-                timer.invalidate()
+        animation = FrameTicker(screen: panel?.screen ?? screenForAXWindow(pos: from, size: Self.grab)) { [weak self] ticker in
+            let elapsed = max(0, CACurrentMediaTime() - began)
+            let x = FluidMotion.spring(elapsed, from: Double(from.x), to: Double(to.x),
+                                       velocity: 0, zeta: zeta, omega: omega)
+            let y = FluidMotion.spring(elapsed, from: Double(from.y), to: Double(to.y),
+                                       velocity: 0, zeta: zeta, omega: omega)
+            self?.place(at: CGPoint(x: x, y: y), vertical: vertical)
+            let dx = abs(x - Double(to.x)), dy = abs(y - Double(to.y))
+            if elapsed > token.response * 4 || (dx < 0.25 && dy < 0.25) {
+                self?.place(at: to, vertical: vertical)
+                ticker.invalidate()
             }
         }
-        RunLoop.main.add(t, forMode: .common)
-        animation = t
     }
 
     private func makePanel() -> NSPanel {

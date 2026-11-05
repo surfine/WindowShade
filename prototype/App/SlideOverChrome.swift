@@ -33,7 +33,7 @@ final class SlideOverChrome {
     var cornerRadius: CGFloat = defaultCornerRadius {
         didSet { ringLayer?.innerRadius = cornerRadius; ringHost?.innerRadius = cornerRadius }
     }
-    private var following: Timer?
+    private var following: FrameTicker?
 
     var isVisible: Bool { ring?.isVisible ?? false }
     /// 探针用：把手面板此刻的外框（Cocoa 坐标）。
@@ -79,18 +79,12 @@ final class SlideOverChrome {
         stopFollowing()
         if !isVisible || onOtherDesktop { show(around: path.from, side: side) } else { self.side = side }
         let began = CACurrentMediaTime()
-        let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] timer in
-            let ownerGone = MainActor.assumeIsolated { () -> Bool in
-                guard let self else { return true }
-                let t = CACurrentMediaTime() - began
-                self.place(t >= path.duration ? path.to : path.frame(at: t))
-                if t >= path.duration { self.stopFollowing() }
-                return false
-            }
-            if ownerGone { timer.invalidate() }
+        following = FrameTicker(screen: screenForAXWindow(pos: path.from.origin, size: path.from.size)) { [weak self] ticker in
+            guard let self else { ticker.invalidate(); return }
+            let t = CACurrentMediaTime() - began
+            self.place(t >= path.duration ? path.to : path.frame(at: t))
+            if t >= path.duration { self.stopFollowing() }
         }
-        RunLoop.main.add(timer, forMode: .common)
-        following = timer
     }
 
     /// 不再跟着滑行走（手开始拖边框或把手时，由手来摆）。

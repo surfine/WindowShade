@@ -424,6 +424,8 @@ final class FileDragSensor {
 
     private var monitor: Any?
     private var baseline = 0
+    private var downPoint = CGPoint.zero
+    private var firstDragAt: TimeInterval?
     private var state: State = .idle
     private enum State { case idle, watching, dragging, ignored }
 
@@ -450,12 +452,23 @@ final class FileDragSensor {
         switch type {
         case .leftMouseDown:
             baseline = NSPasteboard(name: .drag).changeCount
+            downPoint = point
+            firstDragAt = nil
             state = .watching
         case .leftMouseDragged:
             switch state {
             case .watching:
                 let pasteboard = NSPasteboard(name: .drag)
-                guard pasteboard.changeCount != baseline else { return }
+                guard pasteboard.changeCount != baseline else {
+                    // 窗口拖动、滚动条、框选这类拖动不会换拖动剪贴板；拖了够远够久还没换，这次就不是拖东西，
+                    // 到松手前不再问剪贴板（每次读都是一趟到 pboard 的 XPC）。
+                    let now = ProcessInfo.processInfo.systemUptime
+                    let first = firstDragAt ?? now
+                    firstDragAt = first
+                    let moved = hypot(point.x - downPoint.x, point.y - downPoint.y)
+                    if Self.shouldStopWatching(moved: moved, sinceFirstDrag: now - first) { state = .ignored }
+                    return
+                }
                 guard let kind = Self.kind(of: pasteboard) else { state = .ignored; return }
                 if onBegan?(kind) == true {
                     state = .dragging
@@ -471,6 +484,14 @@ final class FileDragSensor {
             state = .idle
         default: break
         }
+    }
+
+    /// 真拖东西的会话在越过几点的拖动阈值时就写好了拖动剪贴板；离按下点 24 点、拖动事件已经来了 0.3 秒
+    /// 还没换份，就不是拖东西。阈值取宽：慢起步、先按住再拖的应用不会被误判。
+    nonisolated static let giveUpDistance: CGFloat = 24
+    nonisolated static let giveUpDuration: TimeInterval = 0.3
+    nonisolated static func shouldStopWatching(moved: CGFloat, sinceFirstDrag: TimeInterval) -> Bool {
+        moved >= giveUpDistance && sinceFirstDrag >= giveUpDuration
     }
 
     /// 看拖动剪贴板里每一项带什么类型。只在拖动开始时看一次。

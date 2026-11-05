@@ -138,7 +138,7 @@ final class TrackpadGestureController {
     private var globalMonitor: Any?
     private var localMonitor: Any?
     private let pinchTap = PinchEventTap()
-    private var pinchTapRetry: Timer?
+    private var pinchTapRetry: AccessibilityTrustWatch?
     private var session: Session? {
         // 合成输入监听在输入线程上要知道“有没有进行中的手势”，才能和 handle 开头的 guard 一样过滤。
         didSet { if (oldValue == nil) != (session == nil) { let on = session != nil; GlobalInputFilter.publish { $0.titleSessionActive = on } } }
@@ -259,7 +259,7 @@ final class TrackpadGestureController {
             pinchTap.setEnabled(false)
         }
         if !wanted {
-            pinchTapRetry?.invalidate()
+            pinchTapRetry?.stop()
             pinchTapRetry = nil
             if let monitor = globalMonitor { GlobalInputFilter.shared.removeMonitor(monitor) }
             if let monitor = localMonitor { NSEvent.removeMonitor(monitor) }
@@ -287,27 +287,24 @@ final class TrackpadGestureController {
             MainActor.assumeIsolated { self?.touchesChanged(change) }
         }
         if pinchTap.start() {
-            pinchTapRetry?.invalidate()
+            pinchTapRetry?.stop()
             pinchTapRetry = nil
             return
         }
         guard pinchTapRetry == nil else { return }
-        // 没有辅助功能授权时每 3 秒重试。不要在 Timer 回调里 assumeIsolated：
-        // 这台 macOS 27 上未授权 + 打开指挥页会让它在不同定时器间随机崩；跳一次主 actor 更稳。
-        pinchTapRetry = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self, Self.isEnabled else {
-                    self?.pinchTapRetry?.invalidate()
-                    self?.pinchTapRetry = nil
-                    return
-                }
-                guard !self.pinchTap.start() else {
-                    self.pinchTapRetry?.invalidate()
-                    self.pinchTapRetry = nil
-                    return
-                }
+        // 没有辅助功能授权时等授权通知再试（30 秒兜底）。回调里同样不 assumeIsolated 计时器：
+        // 这台 macOS 27 上未授权 + 打开指挥页会让它在不同定时器间随机崩（helper 已跳一次主 actor）。
+        let retry = AccessibilityTrustWatch { [weak self] in
+            guard let self, Self.isEnabled else {
+                self?.pinchTapRetry = nil
+                return true
             }
+            guard self.pinchTap.start() else { return false }
+            self.pinchTapRetry = nil
+            return true
         }
+        pinchTapRetry = retry
+        retry.start()
     }
 
     /// 换桌面、设置关闭等：丢掉进行中的手势，不执行。

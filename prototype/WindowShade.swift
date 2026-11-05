@@ -165,9 +165,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let rescueWorkQueue = DispatchQueue(label: "WindowShade.rescue", qos: .utility)
     var isRescuingOffscreenWindows = false
     var isRescueQueued = false
-    private var tapSetupTimer: Timer?
+    private var tapSetupWatch: AccessibilityTrustWatch?
     // 装好之后的周期体检，见 startEnvironmentWatch()：
     private var environmentWatch: Timer?
+    private var environmentWatchStarted = false
     private var tapSilentStops = 0
     private var lastAccessibilityTrusted = true
     // 睡醒后的三档恢复（规格 R3），见 startWakeRecovery()。
@@ -224,6 +225,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var suppressMenuRebuilds = false
     var pendingMenuRebuild = false
     var isUpdatingMenuFromDelegate = false
+    var statusMenuIsOpen = false
     private var pinnedPreviewFocusMonitor: Any?
     private var pinnedPreviewTargetRefreshWorkItem: DispatchWorkItem?
     private var titlebarPrefetchInFlight = false
@@ -986,25 +988,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // MARK: 双击标题栏（CGEventTap）
 
-    // tap 创建需要辅助功能权限；权限可能晚于启动才授予，所以轮询到授权后再装。
+    // tap 创建需要辅助功能权限；权限可能晚于启动才授予，所以等授权通知（加 30 秒兜底）到了再装。
     func setupEventTapWhenTrusted() {
         if setupEventTap() {
             rescueOffscreenWindows(silent: true, announceRestored: true)
             startEnvironmentWatch()
             return
         }
-        tapSetupTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] t in
-            // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
-            // 计时器本身留在闭包原来的隔离域里停掉，不送进主线程闭包。
-            let installed = MainActor.assumeIsolated { () -> Bool in
-                guard self?.setupEventTap() == true else { return false }
-                self?.rescueOffscreenWindows(silent: true, announceRestored: true)
-                self?.startEnvironmentWatch()
-                self?.reinstallAccessibilityHooks()
-                return true
-            }
-            if installed { t.invalidate() }
+        tapSetupWatch?.stop()
+        let watch = AccessibilityTrustWatch { [weak self] in
+            guard self?.setupEventTap() == true else { return false }
+            self?.rescueOffscreenWindows(silent: true, announceRestored: true)
+            self?.startEnvironmentWatch()
+            self?.reinstallAccessibilityHooks()
+            return true
         }
+        tapSetupWatch = watch
+        watch.start()
     }
 
     /// 辅助功能晚于启动才给（首次启动时系统弹窗还开着，用户后点「允许」）：启动那一刻因没有授权而没装上的
@@ -1057,7 +1057,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for (name, reason) in [(NSWorkspace.didWakeNotification, "wake"),
                                (NSWorkspace.screensDidWakeNotification, "screens-wake")] {
             wakeRecoveryObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.runWakeRecovery(reason: reason) }
+                MainActor.assumeIsolated {
+                    self?.resumeEnvironmentWatch()
+                    self?.runWakeRecovery(reason: reason)
+                }
+            })
+        }
+        // 屏幕睡着期间不需要 5 秒体检；醒来时上面的三档恢复会补扫 tap，体检计时器随后重起。
+        for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification] {
+            wakeRecoveryObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.pauseEnvironmentWatch() }
             })
         }
     }
@@ -1090,11 +1099,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 检查、为假则重建；Wins 把 `missionControl.tapDisabled` 当成一个专门的埋点。
     /// 间隔取 5 秒：够快能自愈，够慢不打扰。
     private func startEnvironmentWatch() {
+        guard !environmentWatchStarted else { return }
+        environmentWatchStarted = true
+        scheduleEnvironmentWatch()
+        lastAccessibilityTrusted = AXIsProcessTrusted()
+    }
+
+    private func scheduleEnvironmentWatch() {
         guard environmentWatch == nil else { return }
-        environmentWatch = MainTimer.repeating(interval: 5) { [weak self] in
+        // 容差 1.5 秒让系统把它并进别的唤醒；自愈节奏仍是 5 秒量级。
+        environmentWatch = MainTimer.repeating(interval: 5, tolerance: 1.5) { [weak self] in
             self?.runEnvironmentCheck()
         }
-        lastAccessibilityTrusted = AXIsProcessTrusted()
+    }
+
+    private func pauseEnvironmentWatch() {
+        environmentWatch?.invalidate()
+        environmentWatch = nil
+    }
+
+    private func resumeEnvironmentWatch() {
+        guard environmentWatchStarted else { return }
+        scheduleEnvironmentWatch()
     }
 
     private func runEnvironmentCheck() {

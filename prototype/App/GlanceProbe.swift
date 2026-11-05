@@ -1451,7 +1451,7 @@ final class GlanceProbe {
         for title in titles where !seen.insert(title).inserted { dupes.append("\(path)▸\(title)") }
         return dupes + menu.items.flatMap { duplicates(in: $0.submenu, path: "\(path)▸\($0.title)") }
       }
-      owner.rebuildMenu()
+      owner.rebuildMenu(forceItems: true)
       let menuDupes = duplicates(in: NSApp.mainMenu, path: "main") + duplicates(in: owner.statusMenu, path: "status")
       print(menuDupes.isEmpty ? "PASS r32: no duplicate items in the main or status menu"
                               : "FAIL r32: duplicate menu items \(menuDupes.prefix(5).joined(separator: ", "))")

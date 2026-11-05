@@ -231,7 +231,10 @@ extension AppDelegate {
                 case .absent:
                     discard = "absent"
                 }
-                wlog("reconcile: ax pid=\(ticket.app) elapsedMs=\(elapsed) occupied=\(occupied) remaining=\(self.axReadGate.occupiedCount) ageMs=\(age) discard=\(discard) returned=1")
+                // 正常的一次读（几毫秒、结果被采用）每 5 秒每个收起的 App 一次，只写慢的和被丢弃的。
+                if elapsed >= 50 || discard != "none" {
+                    wlog("reconcile: ax pid=\(ticket.app) elapsedMs=\(elapsed) occupied=\(occupied) remaining=\(self.axReadGate.occupiedCount) ageMs=\(age) discard=\(discard) returned=1")
+                }
                 self.pumpReconcileAXReads(reason: reason, refreshWanted: false)
             }
         }

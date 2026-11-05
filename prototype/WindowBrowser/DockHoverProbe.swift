@@ -1109,12 +1109,12 @@ final class WindowBrowserUIRouteProbe {
               + "enabled=\(enabledItem?.isEnabled ?? false) "
               + "hasAction=\(enabledItem?.action != nil)")
         WindowBrowserSettings.keyboardPanelEnabled = false
-        delegate.rebuildMenu()
+        delegate.rebuildMenu(forceItems: true)
         let disabledItem = browserMenuItem()
         print("ui-probe: menuItemWhenDisabled present=\(disabledItem != nil) "
               + "enabled=\(disabledItem?.isEnabled ?? false)")
         WindowBrowserSettings.keyboardPanelEnabled = keyboardWasEnabled
-        delegate.rebuildMenu()
+        delegate.rebuildMenu(forceItems: true)
         let restoredItem = browserMenuItem()
         print("ui-probe: menuItemRestored enabled=\(restoredItem?.isEnabled ?? false) "
               + "settingsRestored=\(WindowBrowserSettings.keyboardPanelEnabled == keyboardWasEnabled)")

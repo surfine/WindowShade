@@ -211,12 +211,12 @@ final class HotKeyRecorderView: NSControl {
     }
 }
 
-/// 点"允许…"之后等你在系统设置里打开辅助功能：设置窗口在前台时每 1 秒看一次，最多 2 分钟；
+/// 点"允许…"之后等你在系统设置里打开辅助功能：设置窗口在前台时等系统的授权通知（30 秒兜底），最多 2 分钟；
 /// 窗口不在前台就停，回到前台再看一次、接着数；不在后台轮询。允许了就马上装监听，不用重开。
 @MainActor final class LevelAllowWatcher {
     static let shared = LevelAllowWatcher()
     private var watch: NotchLevelAllowWatch?
-    private var timer: Timer?
+    private var trustWatch: AccessibilityTrustWatch?
     private weak var window: NSWindow?
     private var observers: [NSObjectProtocol] = []
 
@@ -253,19 +253,19 @@ final class HotKeyRecorderView: NSControl {
         case .paused:
             stopTimer()
         case .waiting:
-            guard timer == nil else { return }
-            let next = Timer.scheduledTimer(withTimeInterval: NotchLevelAllowWatch.interval, repeats: true) { [weak self] _ in
-                MainActor.assumeIsolated { self?.evaluate() }
+            guard trustWatch == nil else { return }
+            let next = AccessibilityTrustWatch { [weak self] in
+                self?.evaluate()
+                return false
             }
-            next.tolerance = NotchLevelAllowWatch.interval / 4
-            RunLoop.main.add(next, forMode: .common)
-            timer = next
+            trustWatch = next
+            next.start()
         }
     }
 
     private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
+        trustWatch?.stop()
+        trustWatch = nil
     }
 
     private func finish() {

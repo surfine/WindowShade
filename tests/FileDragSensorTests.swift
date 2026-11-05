@@ -20,6 +20,7 @@ struct FileDragSensorTests {
         promises()
         plan()
         geometry()
+        giveUp()
         MainActor.assumeIsolated { pasteboard() }
         if failures > 0 { print("\(failures) 项失败"); exit(1) }
         print("全部通过")
@@ -135,6 +136,14 @@ struct FileDragSensorTests {
 
         expect(FileDropGeometry.shouldKeep(pointer: CGPoint(x: island.midX, y: island.minY - 23), island: island), "出岛外不到 24 点还留着")
         expect(!FileDropGeometry.shouldKeep(pointer: CGPoint(x: island.midX, y: island.minY - 25), island: island), "出岛外 24 点就收")
+    }
+
+    static func giveUp() {
+        expect(!FileDragSensor.shouldStopWatching(moved: 0, sinceFirstDrag: 5), "按住不动再拖：还没挪开不放弃")
+        expect(!FileDragSensor.shouldStopWatching(moved: 200, sinceFirstDrag: 0.05), "一下子甩很远但才几十毫秒：还不放弃")
+        expect(!FileDragSensor.shouldStopWatching(moved: 10, sinceFirstDrag: 2), "挪得近：还不放弃")
+        expect(FileDragSensor.shouldStopWatching(moved: 24, sinceFirstDrag: 0.3), "够远够久：放弃，到松手前不再读剪贴板")
+        expect(FileDragSensor.shouldStopWatching(moved: 500, sinceFirstDrag: 10), "长拖：放弃")
     }
 
     @MainActor

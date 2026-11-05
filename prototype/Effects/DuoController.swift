@@ -32,8 +32,8 @@ final class DuoController: NSObject {
   private var observers: [(NotificationCenter, NSObjectProtocol)] = []
   private var distributedObservers: [NSObjectProtocol] = []
   private var inputMonitors: [Any] = []
-  private var desktop: EffectSession?
-  private var startTask: Task<Void, Never>?
+  private var desktop: EffectSession? { didSet { syncInputMonitors() } }
+  private var startTask: Task<Void, Never>? { didSet { syncInputMonitors() } }
   private var epoch = EffectEpoch()
   private var suspended = false
   // 合盖效果（docs/lid-effect.md）：合上和展开都跟着盖子走，进度只由 LidGesture 一处算，
@@ -165,21 +165,6 @@ final class DuoController: NSObject {
           EffectEnvironment.refresh()
           if note.name.rawValue.hasSuffix("IsLocked") { self?.suspend() } else { self?.resume() }
         })
-    }
-    let mask: NSEvent.EventTypeMask = [.keyDown, .leftMouseDown, .rightMouseDown, .scrollWheel]
-    if let monitor = NSEvent.addGlobalMonitorForEvents(
-      matching: mask, handler: { [weak self] _ in self?.dismissForInput() })
-    {
-      inputMonitors.append(monitor)
-    }
-    if let monitor = NSEvent.addLocalMonitorForEvents(
-      matching: mask,
-      handler: { [weak self] event in
-        self?.dismissForInput()
-        return event
-      })
-    {
-      inputMonitors.append(monitor)
     }
     settingsChanged()
     lockOverlay.start()
@@ -476,6 +461,32 @@ final class DuoController: NSObject {
     }
     // 回到静止、画面也回到桌面，收掉会话。
     if foldOnceStartedAt == nil, lid.phase == .resting, spring.value == 0 { stopDesktop() }
+  }
+
+  /// 输入监听只在桌面会话存在期间挂着：全局监听会让系统里每次按键、滚动都唤醒本进程，
+  /// 没有会话时 dismissForInput 什么也不做。
+  private func syncInputMonitors() {
+    if desktopActive {
+      guard inputMonitors.isEmpty else { return }
+      let mask: NSEvent.EventTypeMask = [.keyDown, .leftMouseDown, .rightMouseDown, .scrollWheel]
+      if let monitor = NSEvent.addGlobalMonitorForEvents(
+        matching: mask, handler: { [weak self] _ in self?.dismissForInput() })
+      {
+        inputMonitors.append(monitor)
+      }
+      if let monitor = NSEvent.addLocalMonitorForEvents(
+        matching: mask,
+        handler: { [weak self] event in
+          self?.dismissForInput()
+          return event
+        })
+      {
+        inputMonitors.append(monitor)
+      }
+    } else if !inputMonitors.isEmpty {
+      inputMonitors.forEach(NSEvent.removeMonitor)
+      inputMonitors.removeAll()
+    }
   }
 
   private func dismissForInput() {
