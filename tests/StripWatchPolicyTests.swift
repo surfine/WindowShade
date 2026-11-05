@@ -77,6 +77,22 @@ struct StripWatchPolicyTests {
         expect(P.appearanceRetryDelay(afterAttempt: 2) == nil, "第三次没成：不再试，交给心跳的整轮对账")
         expect(P.appearanceRetryDelay(afterAttempt: -1) == nil, "非法次数：不试")
 
+        // 各列事实不同时刻：A、B 已经不在屏上，C 还停在旧的“在屏上”——不能直接判；要先取同一时刻的快照
+        let mixed = [false, false, true]
+        expect(P.needsCoherentSnapshot(visible: mixed), "混合时刻的事实（有列看似不在屏上）：先重取同一时刻快照")
+        expect(!P.nothingOnScreen(visible: mixed), "混合事实里还有一列在屏上：旧规则的“全不在屏就跳过”没触发")
+        let coherentAfterSpaceSwitch = [false, false, false]
+        expect(P.nothingOnScreen(visible: coherentAfterSpaceSwitch), "同一时刻快照全不在屏（切桌面、锁屏）：跳过，不拆卷轴")
+        let coherentAfterClose = [false, true, true]
+        expect(!P.nothingOnScreen(visible: coherentAfterClose), "同一时刻快照只有 A 不在屏：照常让出 A")
+        expect(!P.needsCoherentSnapshot(visible: [true, true, true]), "都在屏上：不用多问一次")
+
+        // 晚成格的新窗口：3 秒内每 0.5 秒试一次，之后交给心跳
+        expect(P.lateRetryDelay(elapsed: 0) == 0.5, "临时盯的开头：0.5 秒后再试")
+        expect(abs((P.lateRetryDelay(elapsed: 2.8) ?? 0) - 0.2) < 0.0001, "快到 3 秒：只等到 3 秒那一刻")
+        expect(P.lateRetryDelay(elapsed: 3) == nil, "满 3 秒：不再试，交给心跳")
+        expect(P.busyCheckInterval <= 0.5, "忙时关窗检查不比原来的 0.5 秒慢")
+
         if failures > 0 { print("\(failures) FAILED"); exit(1) }
         print("all passed")
     }
