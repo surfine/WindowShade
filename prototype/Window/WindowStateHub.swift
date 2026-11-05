@@ -90,8 +90,9 @@ struct WindowHubBatch: Sendable {
     }
     var changes: [Item] = []
     var spaceEvents: [WindowSpaceEvent] = []
-    /// 叠放次序变了的被盯窗口（808）。外框和在屏状态都没变，事实比对看不出来，所以不进 changes、不发给 watch，
-    /// 只给 observeAnyChange（SplitView：同一 App 把别的窗口提到缝上方时要重认）。
+    /// 叠放次序变了的被盯窗口（808）。单纯换次序时事实比对看不出来，所以次序本身不进 changes、不发给 watch，
+    /// 只给 observeAnyChange（SplitView：同一 App 把别的窗口提到缝上方时要重认）。808 也报层级变化，
+    /// 所以被盯的窗口照样重查，层级真变了会作为 .restyled 进 changes。
     var reordered: [CGWindowID] = []
     var isEmpty: Bool { changes.isEmpty && spaceEvents.isEmpty && reordered.isEmpty }
 }
@@ -295,8 +296,11 @@ final class WindowStateHub {
             guard tokensByWindow[id] != nil else { return }
             dirty.insert(id)
         case .reordered(let id):
-            guard tokensByWindow[id] != nil, !anyChangeObservers.isEmpty else { return }
-            pendingReorders.insert(id)
+            guard tokensByWindow[id] != nil else { return }
+            // 808 也报层级变化（浮动 ↔ 普通，本机实测）：被盯的窗口下一轮重查，层级变了就按 .restyled 分发
+            // （置顶预览靠它判源窗口丢了），不用等看门狗。透明度变化没有任何 SkyLight 事件，仍靠看门狗。
+            dirty.insert(id)
+            if !anyChangeObservers.isEmpty { pendingReorders.insert(id) }
         case .addedToSpace(let id, let space), .removedFromSpace(let id, let space):
             guard !membershipObservers.isEmpty || !anyChangeObservers.isEmpty || tokensByWindow[id] != nil else { return }
             if !membershipObservers.isEmpty || !anyChangeObservers.isEmpty {

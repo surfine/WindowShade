@@ -317,8 +317,20 @@ func wlog(_ s: String) {}
         expect(watchCalls == 0, "叠放次序变化不发给 watch（外框和在屏都没变）")
         token.cancel()
         rig.source.send(.reordered(4)); rig.runTurns()
-        expect(batches.count == 2, "没人 observeAnyChange 时 808 直接丢掉")
+        expect(batches.count == 2, "没人 observeAnyChange 时 808 不进 batch.reordered")
         _ = watches; _ = probe
+        // 808 也报层级变化（浮动 ↔ 普通）：被盯的窗口当轮重查，层级变了就是 .restyled，不等看门狗。
+        let rig2 = Rig()
+        rig2.set(9)
+        var seen: [WindowChange] = []
+        let pinned = rig2.hub.watch(9) { c, _ in seen.append(c) }
+        rig2.set(9, layer: 3)
+        rig2.describeCalls.removeAll()
+        rig2.source.send(.reordered(9)); rig2.runTurns()
+        expect(rig2.describeCalls == [[9]] && seen == [.restyled], "被盯窗口收到 808 且层级变了：同一轮分发 .restyled")
+        rig2.source.send(.reordered(9)); rig2.runTurns()
+        expect(seen == [.restyled], "808 但事实没变：不再分发")
+        _ = pinned
     }
 
     @MainActor static func reentrancy() {
