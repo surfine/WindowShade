@@ -541,6 +541,9 @@ if [ "$stage_only" = "1" ]; then
   if [ "$UPDATER_WIRED" = "1" ]; then
     # 试跑：5 秒内返回 0，输出里有这次的 build 号（安装前的关给 10 秒；这里留余量给高负载，正常不到 1 秒）。
     STAGE_BUILD=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" "$APP/Contents/Info.plist")
+    # 在 Apple Silicon 上出 Intel 包时，第一次运行要等 Rosetta 翻译（高负载下 5 秒以上）；先不计时跑一次暖好，再按原规则计时。
+    # 真 Intel 机器上是原生运行，没有这一步的开销。
+    if [ "$ARCH" != "$(uname -m)" ]; then perl -e 'alarm 120; exec @ARGV' "$BIN" --self-check >/dev/null 2>&1 || true; fi
     if ! SELF_CHECK_OUT=$(perl -e 'alarm 5; exec @ARGV' "$BIN" --self-check 2>&1) \
       || ! printf '%s' "$SELF_CHECK_OUT" | grep -qF "build=$STAGE_BUILD"; then
       echo "ERROR: --self-check 没有在 5 秒内返回 0 并输出 build=${STAGE_BUILD}：${SELF_CHECK_OUT:-无输出}" >&2
