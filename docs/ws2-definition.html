@@ -1,0 +1,155 @@
+<title>WindowShade 2 一页定义</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 一张纸：单栏、左对齐，像一份产品简报；只有下载量那张条形图是图 */
+:root{
+  --bg:#f6f7f9; --paper:#ffffff; --fg:#1d2430; --muted:#5d6878; --rule:#dfe3ea;
+  --accent:#303b49; --keep:#1f7a4d; --cut:#a23b2a; --bar:#8a97ab; --bar-hi:#303b49;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14171c; --paper:#1c2027; --fg:#e7eaf0; --muted:#9aa4b3; --rule:#2e343e;
+  --accent:#c9d3e2; --keep:#5cc08b; --cut:#ef8a76; --bar:#56627a; --bar-hi:#c9d3e2; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171c; --paper:#1c2027; --fg:#e7eaf0; --muted:#9aa4b3; --rule:#2e343e;
+  --accent:#c9d3e2; --keep:#5cc08b; --cut:#ef8a76; --bar:#56627a; --bar-hi:#c9d3e2; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.65 var(--sans);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 56px}
+.sheet{max-width:760px;margin:0 auto;background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:clamp(20px,5vw,44px);display:grid;gap:30px}
+header{display:grid;gap:8px}
+.eyebrow{font-size:12px;letter-spacing:.06em;color:var(--muted)}
+h1{font-size:clamp(24px,4.4vw,32px);line-height:1.25;margin:0;text-wrap:balance;font-weight:700}
+.thesis{font-size:18px;line-height:1.55;margin:0;color:var(--fg)}
+h2{font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:600}
+section{min-width:0}
+p{margin:0 0 10px;max-width:65ch}
+.muted{color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 20px;margin-top:6px}
+.fact b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.fact span{font-size:13px;color:var(--muted)}
+.chart{display:grid;gap:5px;margin:8px 0 12px}
+.row{display:grid;grid-template-columns:62px 1fr 34px;align-items:center;gap:10px;font-size:13px;font-variant-numeric:tabular-nums}
+.row .lab{color:var(--muted);font-family:var(--mono);font-size:12px}
+.track{height:12px;background:color-mix(in srgb,var(--rule) 55%,transparent);border-radius:3px;overflow:hidden}
+.fill{height:100%;background:var(--bar);border-radius:3px}
+.row.hi .fill{background:var(--bar-hi)}
+.row .n{text-align:right}
+.row .note{grid-column:2/4;font-size:12px;color:var(--muted);margin-top:-3px}
+.scen{display:grid;gap:18px}
+.scen article{display:grid;gap:4px;padding-left:14px;border-left:2px solid var(--rule)}
+.scen h3{margin:0;font-size:17px}
+.scen .done{font-size:13.5px;color:var(--muted)}
+.scen .done b{color:var(--fg);font-weight:600}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+th,td{text-align:left;padding:8px 10px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+.k{color:var(--keep);font-weight:600;white-space:nowrap}
+.c{color:var(--cut);font-weight:600;white-space:nowrap}
+.q{display:grid;gap:8px;padding:0;margin:0;list-style:none}
+.q li{max-width:65ch}
+code{font-family:var(--mono);font-size:.9em}
+footer{font-size:12.5px;color:var(--muted);border-top:1px solid var(--rule);padding-top:14px}
+</style>
+
+<div class="sheet">
+<header>
+  <div class="eyebrow">WINDOWSHADE 2 · 一页定义 · 定稿 2026-11-06 · 内部决定第 100、105–108 条</div>
+  <h1>窗口挡住你时，让它让开，回来时不用找。</h1>
+  <p class="thesis">WindowShade 2 先把一件事做到最好：在一块笔记本屏幕上开着很多窗口的人，把挡路的窗口让开，过一会儿在原处把它拿回来。刘海是这件事的入口，也顺带告诉你正在发生的事、认出回到 Mac 前的你。CarPlay 和指挥模式不算进 WS2。</p>
+</header>
+
+<section>
+  <h2>为什么要重新定义</h2>
+  <p>按 10-30 的旧定义（整合计划 18 步），WS2 已经做完 17 步，只剩第 18 步。可它还是「遥遥无期」，因为那条终点线是内部步骤，不是用户能感觉到的变化。用户这边的信号很清楚：</p>
+  <div class="facts">
+    <div class="fact"><b>3</b><span>历来全部 issue：双击误操作、要英文、要 Intel。没有一个关于灵动岛、电量、指挥或刷脸</span></div>
+    <div class="fact"><b>95</b><span>下载最多的一版 1.0.15：标题栏手势排窗 + 看一眼</span></div>
+    <div class="fact"><b>10 · 16</b><span>最近两版 1.0.19、1.0.20 的下载</span></div>
+    <div class="fact"><b>32 ★ · 80 人</b><span>星数；近 14 天访问仓库的人数</span></div>
+  </div>
+  <div class="chart" aria-label="各版下载量（GitHub Release 资产合计，含应用内更新和 Homebrew）">
+    <div class="row"><span class="lab">1.0.14</span><span class="track"><span class="fill" style="width:5.3%;display:block"></span></span><span class="n">5</span></div>
+    <div class="row hi"><span class="lab">1.0.15</span><span class="track"><span class="fill" style="width:100%;display:block"></span></span><span class="n">95</span><span class="note">09-24 · 甩窗口、左右梯子、看一眼不用展开</span></div>
+    <div class="row"><span class="lab">1.0.16</span><span class="track"><span class="fill" style="width:34.7%;display:block"></span></span><span class="n">33</span></div>
+    <div class="row"><span class="lab">1.0.17</span><span class="track"><span class="fill" style="width:13.7%;display:block"></span></span><span class="n">13</span></div>
+    <div class="row hi"><span class="lab">1.0.18</span><span class="track"><span class="fill" style="width:73.7%;display:block"></span></span><span class="n">70</span><span class="note">10-18 · 第一次出 DMG；刘海与实时活动默认打开</span></div>
+    <div class="row"><span class="lab">1.0.19</span><span class="track"><span class="fill" style="width:10.5%;display:block"></span></span><span class="n">10</span></div>
+    <div class="row"><span class="lab">1.0.20</span><span class="track"><span class="fill" style="width:16.8%;display:block"></span></span><span class="n">16</span></div>
+  </div>
+  <p class="muted">10-01 以来 617 个提交里，提交前缀是 window、fold、window-browser 的合计 25 个；release、probe、settings 合计 106 个。精力大多没落在用户碰得到的那件事上。</p>
+</section>
+
+<section>
+  <h2>给谁</h2>
+  <p><b>主要用一块 13–15 英寸 MacBook 屏、同时开着很多窗口的人</b>，尤其是从 Windows 或 iPad 转过来、习惯「窗口挡住就拖开、甩到半边」的人。先照顾中文用户（流量主要来自 B 站视频、aocr.org 和官网），英文同步。</p>
+  <p class="muted">不是给谁：要平铺式窗口管理（yabai、AeroSpace 那种自动排满）的人；想把刘海当小部件架的人。</p>
+</section>
+
+<section>
+  <h2>解哪个痛</h2>
+  <p>窗口挡住了要看的东西。关掉，回来要重新打开、重新找到刚才的位置；最小化，回来要先在 Dock 里认出它；切桌面，回来要记得它在哪张桌面。<b>每一种「让开」都要你回头找。</b>WindowShade 的回答从 1.0 起就是一句：<i>Roll it up. Keep its place.</i></p>
+</section>
+
+<section>
+  <h2>三个旗舰场景</h2>
+  <div class="scen">
+    <article>
+      <h3>1　收起，看一眼，放下</h3>
+      <p>双击标题栏，窗口卷成原处的一条；指针停在条上不展开就能看一眼；再双击放下来。这是别家都没有的那一件。</p>
+      <p class="done"><b>做到的标准：</b>新装的人不读说明，第一分钟里在首启引导中做成一次；双击不再误收起（issue #39 那类）；没有屏幕录制也照常用，只是没有实时画面；真机探针 fold、glance 每版全过。</p>
+    </article>
+    <article>
+      <h3>2　一甩就排好，一捏就撤回</h3>
+      <p>在标题栏上往左右滑或甩一下，窗口到半屏、三分之一或角落；捏合撤销刚才那一步。照 iPadOS 的手感，给从 iPad、Windows 来的人用他们已经会的动作。</p>
+      <p class="done"><b>做到的标准：</b>和 macOS 自带的平铺、Rectangle 这类工具不打架（装着它们时真机点过）；内外屏切换后照原样排回；整合计划第 13、14 步（代理跟手、收起动画）属于这里，留在 WS2。</p>
+    </article>
+    <article>
+      <h3>3　看不见的东西都在刘海里</h3>
+      <p>收起的、最小化的、在别的桌面上的窗口，长按刘海就排成一排，点一格回到原处。同一个刘海的两耳里，是正在播放、计时器这些实时活动，以及耳机、妙控外设的电量。窗口是主角，活动和电量用同一个宿主、同一套形状。</p>
+      <p class="done"><b>做到的标准：</b>没有刘海的外接屏用菜单栏胶囊，做法一样；那一排的说法统一「回到原处」「去」；两个活动同时在时照系统的规矩（主的占两耳、次的成一颗小圆）；电量未知时不显示 0%；第一分钟里也能碰到一次。</p>
+    </article>
+    <article>
+      <h3>另一条线　认出你</h3>
+      <p>唤醒、开盖时认出是你，第二道（手机或手表）也过了才解锁；只认出脸时锁屏上只露不私密的东西。这条线在 WS2 里，但不当旗舰对外主推，保持「实验」、默认关。</p>
+      <p class="done"><b>做到的标准：</b>人脸门槛标定过、误认率实测写进说明；失败一律交回系统照旧；Intel 版关闭（第 95 条）。</p>
+    </article>
+  </div>
+</section>
+
+<section>
+  <h2>不做清单：八条愿景线移出两条</h2>
+  <p class="muted">第 1 版提议砍五条，你定为只移出 CarPlay 和指挥模式（第 105 条），没有达到原提议「砍一半」，这里照实记下。「移出」指 WS2 期间不再投新工作、不出新稿；移出的线里已发出的功能改成默认关、收进设置的「更多」，自己改过开关的人不动（第 106 条）。</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>愿景线（direction.md）</th><th>在 WS2 里</th><th>怎么处理</th></tr></thead>
+    <tbody>
+      <tr><td>窗口</td><td class="k">保留</td><td>就是上面三个场景</td></tr>
+      <tr><td>性能与能效</td><td class="k">保留为门槛</td><td>不再单独立项；每版常驻耗电不高于 1.0.15</td></tr>
+      <tr><td>被看见</td><td class="k">缩成一件</td><td>官网首页、README、发布说明只讲这三个场景，用用户遇到的事来写</td></tr>
+      <tr><td>完整灵动岛</td><td class="k">保留</td><td>并进场景 3，和窗口共用刘海；整合计划第 18 步（触控 MacBook Pro 让位调研）留在这里</td></tr>
+      <tr><td>设备电量</td><td class="k">保留</td><td>并进场景 3，只做短暂提醒与大卡里的电量环（第 8 条）</td></tr>
+      <tr><td>身份认证与解锁（刷脸、声纹、代填）</td><td class="k">保留</td><td>「认出你」那条线，实验、默认关</td></tr>
+      <tr><td>CarPlay 接收</td><td class="c">移出</td><td>归 HomePlay 项目</td></tr>
+      <tr><td>指挥模式</td><td class="c">移出</td><td>81 条指挥验收清单不再是 WS2 门槛；编程会话卡、审批卡、指挥页默认关、收进「更多」；以后要做另立项</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>WS2 什么时候算完成</h2>
+  <p>取代 10-30 的「18 步全部合入 + 81 条清单」：<b>三个场景和「认出你」各自的标准都有真机证据，首启引导依次走过三个场景，官网首页和发布说明主讲这三件。</b>到那时发 <b>2.0</b>（第 108 条）。之后每一轮工作先写一句：它让哪个场景更好。写不出来的，不进 WS2。</p>
+</section>
+
+<section>
+  <h2>已定（2026-11-06 夜）</h2>
+  <ul class="q">
+    <li>105　灵动岛、设备电量、身份认证留在 WS2；CarPlay、指挥模式移出。</li>
+    <li>106　移出的线里已发出的功能：改默认关、收进设置的「更多」；自己改过开关的人不动。</li>
+    <li>107　「看不见的窗口」主推刘海那一排（外接屏用胶囊），窗口浏览不作旗舰。</li>
+    <li>108　WS2 达成时版本号叫 2.0。</li>
+  </ul>
+</section>
+
+<footer>依据：GitHub Release 下载数与 issue（2026-11-06 用 <code>gh</code> 读取）、仓库流量（近 14 天）、WindowShade-internal 的 north-star.md、direction.md「愿景的全貌」、INTEGRATION-PLAN-2026-10-29.md、AARON-DECISIONS-2026-10-29.md 第 22 条与第 100–104 条。下载数是 GitHub 资产计数，含应用内更新与 Homebrew，不等于人数。</footer>
+</div>
