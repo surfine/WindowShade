@@ -1,0 +1,30 @@
+<!-- @dsCard group="劉海" height=150 subtitle="緊湊兩耳 · 一顆最小小圓" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>NotchEars</title>
+<style>
+body{margin:0;background:var(--window-bg);font-family:var(--font-sf);}
+.bar{position:relative;height:34px;background:linear-gradient(var(--separator),var(--separator)) bottom/100% 1px no-repeat;}
+.menu{position:absolute;top:9px;font-size:13px;color:var(--label);}
+.isl{position:absolute;left:50%;top:0;transform:translateX(-50%);display:flex;align-items:stretch;height:34px;}
+.ear,.body{background:var(--notch-fill);}
+.ear{display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--notch-text);}
+.l{border-bottom-left-radius:10.7px;}
+.r{border-bottom-right-radius:10.7px;}
+.body{width:185px;}
+.sym{font-size:16px;line-height:16px}
+.cnt{font-family:var(--font-rounded);font-weight:600;font-size:13px;color:var(--notch-text-count);font-variant-numeric:tabular-nums}
+.min{position:absolute;top:0;width:34px;height:34px;border-radius:50%;background:var(--notch-fill);}
+.cap{margin:24px 16px 0;font-size:12px;color:var(--label-secondary)}
+</style></head><body>
+<div class="bar">
+  <span class="menu" style="left:16px"> Safari　文件　編輯</span>
+  <span class="menu" style="right:16px">週四 10:42</span>
+  <div class="isl" aria-label="收起了 3 扇窗口">
+    <div class="ear l"><span class="sym">▭</span></div>
+    <div class="body"></div>
+    <div class="ear r"><span class="cnt">3</span></div>
+  </div>
+  <div class="min" style="left:calc(50% + 140px)" aria-hidden="true"></div>
+</div>
+<p class="cap">兩耳緊貼劉海、等寬；右邊分出的小圓是第二件事。灰色帶是菜單欄。</p>
+</body></html>

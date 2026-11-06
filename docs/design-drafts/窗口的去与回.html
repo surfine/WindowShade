@@ -12,20 +12,20 @@
    画面里只用系统语义色：强调色 = controlAccentColor 近似，琥珀 = systemOrange，绿 = systemGreen，红 = systemRed。 */
 :root{
   --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --ink3:#6e6f76; --rule:rgba(0,0,0,.1);
-  --accent:#0058cc; --amber:#c76a00; --green:#1f8a3b; --red:#c4312a;
-  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.66); --menutext:#1b1b1d; --win:#ffffff; --winbar:#ececec; --wintext:#3a3a3c;
+  --sys-accent:#007aff; --accent:#0058cc; --amber:#c76a00; --green:#1f8a3b; --red:#c4312a;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:#f1f1f3; --menutext:#1b1b1d; --win:#ffffff; --winbar:#ececec; --wintext:#3a3a3c;
   --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
   --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
   --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
-  --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
-  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.66); --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7; color-scheme:dark}}
+  --sys-accent:#0a84ff; --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:#1c1c1e; --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
-  --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
-  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.66); --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7; color-scheme:dark}
+  --sys-accent:#0a84ff; --accent:#5a9cff; --amber:#ffa53d; --green:#4cc38a; --red:#ff7a70;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:#1c1c1e; --menutext:#f2f2f2; --win:#2a2a2d; --winbar:#38383b; --wintext:#e5e5e7; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
@@ -63,19 +63,19 @@ code,.mono{font-family:var(--f-mono);font-size:.88em}
 .view{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--rule);touch-action:none;user-select:none;-webkit-user-select:none}
 .canvas{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys)}
 .desk{position:absolute;inset:0;background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
-.menubar{position:absolute;left:0;right:0;top:0;height:22px;background:var(--menubar);display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:11px;color:var(--menutext);z-index:3}
-.notch{position:absolute;top:0;height:22px;background:#000;border-radius:0 0 8px 8px;z-index:4}
+.menubar{position:absolute;left:0;right:0;top:0;height:13px;background:var(--menubar);display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:8px;color:var(--menutext);z-index:3}
+.notch{position:absolute;top:0;height:13px;background:#000;border-radius:0 0 4px 4px;z-index:4}
 .dock{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);height:30px;padding:0 10px;border-radius:10px;background:color-mix(in srgb,var(--sheet) 60%,transparent);display:flex;gap:7px;align-items:center;z-index:3}
 .dock i{width:18px;height:18px;border-radius:5px;display:block}
-.win{position:absolute;background:var(--win);border-radius:9px;box-shadow:0 10px 26px rgba(0,0,0,.2);overflow:hidden;z-index:2}
+.win{position:absolute;background:var(--win);border-radius:13px;box-shadow:0 10px 26px rgba(0,0,0,.2);overflow:hidden;z-index:2}
 .win .bar{height:22px;background:var(--winbar);display:flex;align-items:center;gap:5px;padding:0 8px;font:600 10px/22px var(--f-sys);color:var(--wintext);cursor:grab}
 .win .bar i{width:8px;height:8px;border-radius:50%;display:block}
 .win .body{position:absolute;left:0;right:0;top:22px;bottom:0;padding:10px;font:11px/1.5 var(--f-sys);color:var(--wintext);opacity:.75}
 .win .body p{margin:0 0 4px}
-.ghost{position:absolute;border-radius:9px;border:1.5px dashed color-mix(in srgb,var(--ink) 35%,transparent);z-index:1}
-.target{position:absolute;border-radius:10px;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);z-index:1;pointer-events:none;opacity:0;transition:opacity .12s}
+.ghost{position:absolute;border-radius:13px;border:1.5px dashed color-mix(in srgb,var(--ink) 35%,transparent);z-index:1}
+.target{position:absolute;border-radius:13px;border:2px solid var(--sys-accent);background:color-mix(in srgb,var(--sys-accent) 10%,transparent);z-index:1;pointer-events:none;opacity:0;transition:opacity .12s}
 .hud{position:absolute;left:50%;top:34px;transform:translateX(-50%);width:200px;height:34px;border-radius:17px;background:color-mix(in srgb,var(--sheet) 82%,transparent);box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:5;opacity:0;transition:opacity .12s;font:600 11px/34px var(--f-sys);text-align:center;color:var(--ink)}
-.hud .fill{position:absolute;left:0;top:0;bottom:0;border-radius:17px;background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.hud .fill{position:absolute;left:0;top:0;bottom:0;border-radius:17px;background:color-mix(in srgb,var(--sys-accent) 22%,transparent)}
 .hud span{position:relative}
 .ctrl{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px}
 .ctrl .lab{font:500 11px var(--f-mono);color:var(--ink3);margin-right:2px}
@@ -125,7 +125,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">十 检讨 · 第 37 张 · 窗口的去与回</span><span class="ws-st">检讨稿 · 10-29 六问已定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/PW4sinizyKBD28HG6TA3H7">← WindowShade 的一天</a><a href="https://claude.ai/artifact/HXRqipsz4WmxG4VWFvzgNR">拍一下就藏好 →</a></nav>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">十 检讨 · 第 37 张 · 窗口的去与回</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/PW4sinizyKBD28HG6TA3H7">← WindowShade 的一天</a><a href="https://claude.ai/artifact/HXRqipsz4WmxG4VWFvzgNR">拍一下就藏好 →</a></nav>
 <div class="wrap">
 <header>
   <div class="eyebrow">WINDOWSHADE · 检讨稿 · 2026-10-29 · 只调研，不改代码</div>
@@ -279,7 +279,7 @@ class Spring{constructor(x){this.x=x;this.v=0;this.t=x;this.set('settle')}
   step(dt){const a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt}
   rest(){return Math.abs(this.x-this.t)<.3&&Math.abs(this.v)<4}}
 function fit(view,canvas,W,H){const f=()=>{const s=view.clientWidth/W;canvas.style.transform=`scale(${s})`;view.style.height=H*s+'px';view.dataset.s=s};f();new ResizeObserver(f).observe(view)}
-const W=640,H=400,MB=22,NW=110;
+const W=640,H=400,MB=13,NW=69;
 function deskHTML(){return `<div class="desk"></div><div class="menubar"><span>&#63743;&nbsp;&nbsp;<b>备忘录</b>&nbsp;&nbsp;文件&nbsp;&nbsp;编辑</span><span>周三 10:20</span></div>
  <div class="notch" style="left:${(W-NW)/2}px;width:${NW}px"></div>
  <div class="dock"><i style="background:#ffcc00"></i><i style="background:#34c759"></i><i style="background:#0a84ff"></i><i style="background:#ff375f"></i><i style="background:#8e8e93"></i></div>`}
@@ -290,7 +290,7 @@ const HOME={x:180,y:90,w:280,h:200};
 const DEST=[
  {k:'strip',name:'卷帘条',frame:{x:180,y:90,w:280,h:22},go:'双击标题栏、两指上推、菜单「收起窗口」',back:'展开窗口：双击卷帘条、两指下拉',row:true,same:'part',note:'同一条路（卷上去、放下来），但「收起窗口时的动画」默认关，还要屏幕录制；关着时是瞬间变成一条。'},
  {k:'thumb',name:'缩略图',frame:{x:300,y:180,w:120,h:86},go:'同「收起窗口」，设置里「收起后的样子」选缩略图',back:'点一下原地展开',row:true,same:'ok',note:'原地缩小、原地展开，空间一致。'},
- {k:'notch',name:'收进刘海',frame:{x:(W-36)/2,y:2,w:36,h:18},go:'甩一下标题栏朝刘海、落点小岛、菜单「收进刘海」、刘海上推 / 张开',back:'放回：点那一格、刘海下拉',row:true,same:'part',note:'飞进去、飞出来走同一条路；但飞行中接不住，总稿说的「没松手前改方向」只在松手前成立。'},
+ {k:'notch',name:'收进刘海',frame:{x:(W-36)/2,y:0,w:36,h:13},go:'甩一下标题栏朝刘海、落点小岛、菜单「收进刘海」、刘海上推 / 张开',back:'放回：点那一格、刘海下拉',row:true,same:'part',note:'飞进去、飞出来走同一条路；但飞行中接不住，总稿说的「没松手前改方向」只在松手前成立。'},
  {k:'slide',name:'侧拉',frame:{x:W-4,y:120,w:200,h:220},go:'拖到屏幕边停 0.25 秒、菜单「侧拉当前窗口」',back:'拉出侧拉的窗口（把手）、退出侧拉',row:true,same:'ok',note:'滑出去、滑回来，同一条路；收边时屏幕上只留 4 点，看不出是一扇窗。'},
  {k:'pip',name:'画中画',frame:{x:W-176,y:H-150,w:160,h:100},go:'拖到角落停 0.25 秒、菜单「画中画」',back:'回到原处',row:true,same:'ok',note:'缩到角落、按投影落角，回到原处走原路。'},
  {k:'scroll',name:'卷轴屏外',frame:{x:-270,y:60,w:280,h:300},go:'魔法平铺放不下时自动接成卷轴（隐式）',back:'两指左右滑、卷轴概览',row:false,same:'part',note:'走和回是同一条横向的路，但进入是隐式的，标题栏手势也随之改了意思，只剩 10 点边条。'},
@@ -348,7 +348,7 @@ function paintPx(){
 function rubber(x,lo,hi){const d=60;if(x<lo){const o=lo-x;return lo-(1-1/(o*.55/d+1))*d}if(x>hi){const o=x-hi;return hi+(1-1/(o*.55/d+1))*d}return x}
 function tf(k){return k==='home'?{...real,name:'原处'}:TARGETS[k]} // 'home' = 回到真窗口现在的位置（等于取消）
 function pick(px,py){ // 指针投影落点 → 终点
-  if(py<MB+26)return 'fill';
+  if(py<MB+35)return 'fill';
   if(px<W*.28)return 'left';if(px>W*.72)return 'right';return 'home'}
 function pointerPos(e){const s=+pv.dataset.s||1,b=pv.getBoundingClientRect();return{x:(e.clientX-b.left)/s,y:(e.clientY-b.top)/s}}
 pwin.querySelector('.bar').addEventListener('pointerdown',e=>{
@@ -427,7 +427,7 @@ function scr(title,zones){return `<figure><svg viewBox="0 0 ${SW} ${SH}" role="i
  <rect x="0" y="0" width="${SW}" height="${SH}" fill="var(--sheet)"/><rect x="0" y="0" width="${SW}" height="8" fill="color-mix(in srgb,var(--ink) 10%,transparent)"/>
  <rect x="${SW/2-18}" y="0" width="36" height="8" rx="2" fill="#000"/>${zones}</svg><figcaption>${title}</figcaption></figure>`}
 const z=(x,y,w,h,c,t)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" opacity=".28"/><text x="${x+w/2}" y="${y+h/2+3}" font-size="8" text-anchor="middle" fill="var(--ink)">${t}</text>`;
-const SYS='var(--ink3)',SL='var(--accent)',PIP='var(--green)',NO='var(--amber)';
+const SYS='var(--ink3)',SL='var(--sys-accent)',PIP='var(--green)',NO='var(--amber)';
 document.getElementById('screens').innerHTML=
  scr('标题栏拖动（现在）：贴边 3 点让给系统，侧拉带 8–80 点，角落 120×120 画中画，刘海下落点小岛',z(0,8,3,132,SYS,'')+z(3,40,26,60,SL,'侧拉')+z(SW-29,40,26,60,SL,'侧拉')+z(4,SH-44,40,40,PIP,'画')+z(SW-44,SH-44,40,40,PIP,'画')+z(SW/2-55,9,110,28,NO,'落点小岛'))+
  scr('窗口浏览卡片拖动（现在）：≤40 点 = 半屏，停一下 = 侧拉，顶边 = 铺满',z(0,8,14,132,SYS,'半')+z(SW-14,8,14,132,SYS,'半')+z(30,8,160,10,SL,'铺满'))+

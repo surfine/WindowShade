@@ -17,8 +17,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">一 基础 · 第 4 张 · 安静的刘海 动效样片</span><span class="ws-st ws-old">定稿 · 10-08</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA">← WindowShade 读到的</a><a href="https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac">一颗岛 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 3 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：M1 教学开口停 alert.hold 2.6 s</span> → <b>现在：</b>提醒停 alert.hold 2.6 s；卡住时的教学停 coach.hold 6.6 s（和本稿 M2 一致） <span class="src">（design-system §4.7）</span></li><li><span class="was">原来：十一根弹簧</span> → <b>现在：</b>design-system §4.6 是十根令牌，外加只给镜头用的 dolly <span class="src">（design-system §4.6）</span></li><li><span class="was">原来：M4 欢迎窗口，三步一口气</span> → <b>现在：</b>这是 1.0.17 以前的三步版；1.0.18 起见《首次打开 1.0.17 小样》 <span class="src">（《首次打开 1.0.17 小样》（Aaron 10-17 拍板））</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">一 基础 · 第 4 张 · 安静的刘海 动效样片</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA">← WindowShade 读到的</a><a href="https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac">一颗岛 →</a></nav>
 
 <title>安静的刘海 动效样片</title>
 <style>
@@ -189,7 +188,7 @@ kbd{font:500 12.5px var(--ui);border:1px solid var(--rule-strong);border-bottom-
 .scr .it1{font:600 21.9px var(--ui);fill:#fff;text-anchor:middle}
 .scr .it2{font:400 18.5px var(--ui);fill:rgba(255,255,255,.6);text-anchor:middle}
 .scr .icnt{font:600 21.9px ui-rounded,var(--ui);fill:rgba(255,255,255,.92);text-anchor:middle;dominant-baseline:central;font-variant-numeric:tabular-nums}
-.scr .slbl{font:400 17px var(--ui);fill:rgba(255,255,255,.6);text-anchor:middle}
+.scr .slbl{font:600 21.9px var(--ui);fill:rgba(255,255,255,.8);text-anchor:middle}
 .scr .onion{fill:none;stroke:var(--accent);stroke-width:1.6;opacity:.7}
 .scr .xl{font:500 18px var(--mono);fill:var(--hot)}
 .scr .xline{fill:none;stroke:var(--hot);stroke-width:2;stroke-dasharray:6 5}
@@ -351,16 +350,17 @@ footer p{margin:0}
       </div>
     </div>
     <aside class="mnotes">
-      <p class="why">第一帧和刘海的硬件轮廓完全重合。形状按 <code class="num">bloom</code> 长大，拓扑不变，只做路径插值；肩跟主体用同一个弹簧缩到 0。形状走到 40%（约 0.09 秒）时第一层内容才淡入，第二层再晚 0.2 秒。退场原路回去：内容先淡出，形状以 <code class="num">calm</code> 收回，不回弹，最后一帧又和硬件重合，然后不再画。教学开口是短暂提醒；用户主动打开的那一排是半岛展开（<code class="num">expand</code>），顶边贴传感器、无空白额头——见 <a href="一颗岛.html">一颗岛</a>。</p>
+      <p class="why">第一帧和刘海的硬件轮廓完全重合。形状按 <code class="num">bloom</code> 长大，拓扑不变，只做路径插值；肩一直画着（r 5.06 pt），宽过刘海的形状也不缩掉它。形状走到 40%（约 0.09 秒）时第一层内容才淡入，第二层再晚 0.2 秒。退场原路回去：内容先淡出，形状以 <code class="num">calm</code> 收回，不回弹，最后一帧又和硬件重合，然后不再画。教学开口是短暂提醒；用户长按 0.5 秒打开的那一排是半岛展开（<code class="num">expand</code>，指针停上去不展开），顶边贴传感器、无空白额头——见 <a href="一颗岛.html">一颗岛</a>。</p>
       <p>镜头先推，推稳了界面才动。一次只有一个主角。片子与产品互训：先形后字、收时先字后形、无事则静。</p>
       <p class="try"><b>试一下：</b>点刘海让它开口；长到一半再点一下，它从当前的位置和速度直接收回，不跳、不重来。打开“拆解”能看到每 1/30 秒的轮廓。</p>
       <dl class="spec">
         <dt>镜头</dt><dd><code>dolly</code> 1.6 / 1.0，只给镜头</dd>
         <dt>开口</dt><dd><code>bloom</code> 0.42 / 0.84，过冲 0.8%</dd>
         <dt>内容</dt><dd>形状 40% 进第一层，<code>+0.2 s</code> 第二层</dd>
-        <dt>停留</dt><dd><code>alert.hold</code> 2.6 s</dd>
+        <dt>停留</dt><dd>提醒停 <code>alert.hold</code> 2.6 s；卡住时的教学停 <code>coach.hold</code> 6.6 s（见 M2）</dd>
+        <dt>尺寸</dt><dd>提醒 408 × 84，教学 408 × 112，底角 24；外接屏胶囊展开宽 371</dd>
         <dt>退场</dt><dd>淡出 0.10 → 0.04 → <code>calm</code> 0.34 / 1.0</dd>
-        <dt>硬件</dt><dd>Air 15″，刘海 312×56 px，底角 r 18.2，肩 r 8.6，均为连续曲线</dd>
+        <dt>硬件</dt><dd>Air 15″，刘海 312×56 px（≈ 185 × 33.5 pt），底角 r 18.2，肩 r 8.6（≈ 5.06 pt），均为连续曲线</dd>
       </dl>
     </aside>
   </div>
@@ -368,7 +368,7 @@ footer p{margin:0}
 
 <!-- springs -->
 <section class="springs" id="springs" aria-labelledby="sph">
-  <div class="mhead"><span class="mno">M0</span><h2 id="sph">十一根弹簧</h2><p class="en">Named springs, not durations</p></div>
+  <div class="mhead"><span class="mno">M0</span><h2 id="sph">十根弹簧令牌，外加 dolly</h2><p class="en">Named springs, not durations</p></div>
   <p class="intro">每个动作只报两个数：response 和阻尼比 ζ。质量取 1，刚度 (2π/response)²，阻尼 4πζ/response。下面的曲线和数字都是本页的求解器现算的；点一下轨道，圆点用这根弹簧跑过去，途中再点就从当前速度掉头。</p>
   <div class="toks" id="toks"></div>
 </section>
@@ -419,12 +419,13 @@ footer p{margin:0}
     </div>
     <aside class="mnotes">
       <p class="why">松手时手指的速度原样交给 <code class="num">settle</code>（0.38 / 1.0，不回弹，终点是个口子）。截图最后一段钻到刘海下面，被硬件自己挡住。完全挡住的那一帧，刘海的宽和高各有一根 <code class="num">calm</code> 弹簧被踢一脚初速度，约 0.05 秒到峰，鼓出 14 pt 和 6 pt。</p>
-      <p>指针停 0.12 秒沿 <code class="num">expand</code> 长成<strong>半岛</strong>（展开下鼓；设计别名，界面仍叫展开 / 刘海那一排）：顶边贴传感器，不留空白额头；格子相对位置继承紧凑两耳。矮药丸与高内容两档，避开临界高度。点那一格，那张缩略图就在原地长回窗口，用 <code class="num">flyOut</code> 沿原路回去；那一排晚 0.04 秒才开始收。点的是哪张，出来的就是哪张。细则见 <a href="一颗岛.html">一颗岛</a>。</p>
-      <p class="try"><b>试一下：</b>拖住那扇窗往上甩。甩得不够快，它带着你松手时的速度滑回原处。收进去以后，指针停到刘海上会展开一排，点最右边那格放回。</p>
+      <p>长按刘海 0.5 秒沿 <code class="num">expand</code> 长成<strong>半岛</strong>（展开下鼓；设计别名，界面仍叫展开 / 刘海那一排），指针停上去不展开：顶边贴传感器，不留空白额头，两侧画肩；格子相对位置继承紧凑两耳。这一排 408 × 160（外接屏 371），格子 76 × 104、间距 8、圆角 14，放不下就左右滚动；指针停在格子上 0.12 秒才看一眼。点那一格，那张缩略图就在原地长回窗口，用 <code class="num">flyOut</code> 沿原路回去；那一排晚 0.04 秒才开始收。点的是哪张，出来的就是哪张。细则见 <a href="一颗岛.html">一颗岛</a>。</p>
+      <p class="try"><b>试一下：</b>拖住那扇窗往上甩。甩得不够快，它带着你松手时的速度滑回原处。收进去以后，长按刘海 0.5 秒会展开一排，点最右边那格放回；点刘海本体是回主屏幕。</p>
       <dl class="spec">
         <dt>飞入</dt><dd><code>settle</code>，初速度 = 松手速度</dd>
         <dt>鼓一下</dt><dd><code>calm</code> + 初速度 宽 +700 pt/s、高 +300 pt/s，峰值约 +14 / +6 pt</dd>
-        <dt>展开</dt><dd>停 0.12 s → <code>expand</code> 0.40 / 0.92；格子错开 40 ms</dd>
+        <dt>展开</dt><dd>长按 0.5 s → <code>expand</code> 0.40 / 0.92；格子错开 40 ms</dd>
+        <dt>看一眼</dt><dd>指针在格子上停 0.12 s（<code>dwell-peek</code>），刘海本体不悬停</dd>
         <dt>放回</dt><dd>从被点的那格起飞，<code>flyOut</code> 0.38 / 0.90；那一排 <code>+0.04 s</code> 收</dd>
         <dt>减少动态</dt><dd>原处淡出、目标处淡入，不鼓</dd>
       </dl>
@@ -441,7 +442,7 @@ footer p{margin:0}
       <div class="transport"></div>
     </div>
     <aside class="mnotes">
-      <p class="why">三步之间窗口不关、舞台不重建，只换里面的内容：旧内容淡出 0.10，新内容淡入 0.18 并上浮 6 pt。第 3 步不放舞台，舞台的高度以 <code class="num">calm</code> 收掉，窗口跟着变矮，整段只有这一处形变。</p>
+      <p class="why">这是 1.0.17 以前的三步版；1.0.18 起的欢迎窗口见 <a href="首次打开 1.0.17 小样.html">首次打开 1.0.17 小样</a>。三步之间窗口不关、舞台不重建，只换里面的内容：旧内容淡出 0.10，新内容淡入 0.18 并上浮 6 pt。第 3 步不放舞台，舞台的高度以 <code class="num">calm</code> 收掉，窗口跟着变矮，整段只有这一处形变。</p>
       <p>第 2 步选 Windows，左下角四颗键帽按位置原地换字：Ctrl、Fn、⊞、Alt 变成 fn、control、option、command，每颗错开 60 ms，最后 ⌘ 亮起。你原来按 Alt 的地方，现在是 ⌘。</p>
       <p class="try"><b>窗口里的按钮都能点：</b>继续、上一步、三个选项、授权行的“打开”。最后点“开始使用”，窗口淡出，刘海什么也不做。</p>
       <dl class="spec">
@@ -493,7 +494,7 @@ footer p{margin:0}
 
 <footer>
   <p>这是分镜和 B 版样片。卡住时开口上线并通过真机探针之前，片子、官网 §1–§3、README 动图都不对外发。</p>
-  <p>数值出自 design-system §3.2、§4.6 和 motion-direction §2.2。屏幕按 15 英寸 MacBook Air 的比例画：2880×1864 px，顶角连续曲线 r 34.1 px，底角直角；刘海 312×56 px，底角 r 18.2 px，肩 r 8.6 px。岛里的字用系统字体，不在 Mac 上时换成思源黑体。</p>
+  <p>数值出自 design-system §3.2、§4.6 和 motion-direction §2.2。屏幕按 15 英寸 MacBook Air 的比例画：2880×1864 px，顶角连续曲线 r 34.1 px，底角直角；刘海 312×56 px（≈ 185 × 33.5 pt），底角 r 18.2 px，肩 r 8.6 px。岛里的字用系统字体，不在 Mac 上时换成思源黑体。</p>
 </footer>
 </div>
 <div class="sr" id="say" aria-live="polite"></div>
@@ -594,7 +595,7 @@ const T_={
   doc:{zh:{t:'会议清单',l:['周四的会改到下午三点，','地点在三楼会议室。','要带：投影转接头、上周的数字。','会后把结论发给大家。'],sel:1},
        en:{t:'Meeting notes',l:['Thursday’s meeting moves to 3 pm,','in the third-floor room.','Bring: projector adapter, last week’s numbers.','Send the notes to everyone after.'],sel:1}},
   mail:{zh:{t:'新邮件',l:['收件人：','主题：会议改时间']},en:{t:'New Message',l:['To:','Subject: Meeting moved']}},
-  alert:{zh:['“周报”有变化','指针停上去就能找回来'],en:['“Weekly report” changed','Point at it to get it back']},
+  alert:{zh:['“周报”有变化','按住刘海就能找回来'],en:['“Weekly report” changed','Press and hold the notch to get it back']},
   slots:{zh:['邮件草稿','下载','会议清单'],en:['Draft','Downloads','Meeting notes']},
   notes:{
     quiet:{zh:'刚才那下就是 Mac 的做法，所以刘海没说话。',en:'That was already the Mac way, so the notch stayed quiet.'},
@@ -737,8 +738,8 @@ class StuckRig{
   echoDown(tl,t){const c=n=>this.c(tl,n);c('sink').set(t,REDUCED?0:1);c('fill').set(t,1);tl.mark(t,'⌘ 按下：同帧下沉','hot');}
   echoUp(tl,t){const c=n=>this.c(tl,n);c('sink').to(t,0,sp('calm'));c('fill').to(t,0,sp('calm'));this.close(tl,t+.15);}
   dims(tl,T){const v=n=>tl.v(this.p+n,T),P=v('isl');
-    if(this.cap){const a=v('cap'),w0=134.7*a,h0=47;return {cap:1,P,w:lerp(w0,673.6,P),h:lerp(h0,143.6,P),r:lerp(h0/2,40.4,P),op:clamp(v('cop'))};}
-    return {P,w:lerp(HW.nw,673.6,P),h:lerp(HW.nh,143.6,P),rb:lerp(HW.rb,40.4,P),rs:HW.rs*clamp(1-P),vis:Math.abs(P)>.0015};}
+    if(this.cap){const a=v('cap'),w0=134.7*a,h0=47;return {cap:1,P,w:lerp(w0,371*K,P),h:lerp(h0,this.o.alert?84*K:112*K,P),r:lerp(h0/2,40.4,P),op:clamp(v('cop'))};}
+    return {P,w:lerp(HW.nw,408*K,P),h:lerp(HW.nh,this.o.alert?84*K:112*K,P),rb:lerp(HW.rb,40.4,P),rs:HW.rs,vis:Math.abs(P)>.0015};}
   pathAt(tl,T){const d=this.dims(tl,T),cx=this.o.cx,top=this.o.top||0;
     return d.cap?rrC(cx-d.w/2,top,d.w,d.h,d.r):notchD(cx,d.w,d.h,d.rb,d.rs);}
   render(tl,T){
@@ -938,12 +939,13 @@ const M2={variant:'open',capsule:false,
 
 /* ================= M3 · tuck into the notch ================= */
 const ORG={x:1330,y:470},WW=520,WH=340,SEND=32/WH;
-const SLOT={x:HW.cx+215,y:149.5,s:.33};            /* the rightmost slot: where the tucked window's thumbnail sits */
+const CELLW=76*K,CELLH=104*K,CELLP=84*K,CELLY=42*K;   /* 格子 76×104、间距 8、圆角 14，顶在总高 160 的 42 处 */
+const SLOT={x:HW.cx+CELLP,y:CELLY+17+45.5,s:.18};            /* the rightmost slot: where the tucked window's thumbnail sits */
 const YMIN=HW.mb+WH/2;                              /* a dragged window's title bar stays below the menu bar */
 const M3={
   plots:[{f:(T,tl)=>1-(tl.v('fy',T)-28)/(ORG.y-28),cls:'c1',l:'位置 settle / flyOut'},{f:(T,tl)=>tl.v('bw',T)/24,cls:'c2',l:'鼓一下 calm + 初速度'},{f:(T,tl)=>tl.v('ex',T),cls:'c3',l:'展开 expand'}],
   dur(){return this.D||7;},poster(){return 0;},
-  mount(st){this.st=st;this.scr=new Screen(st,{windows:'mail',label:'一扇窗被往上甩进刘海，刘海鼓一下；指针停上去展开一排，点那一格，缩略图原地长回窗口。'});
+  mount(st){this.st=st;this.scr=new Screen(st,{windows:'mail',label:'一扇窗被往上甩进刘海，刘海鼓一下；长按刘海展开一排，点那一格，缩略图原地长回窗口。'});
     const s=this.scr,id=uid(),gid=uid();
     this.fg=S('g',null,s.fly);
     const cp=S('clipPath',{id},s.defs);this.cpath=S('path',null,cp);
@@ -956,17 +958,17 @@ const M3={
     const ic=S('g',{transform:'translate('+(HW.cx-HW.nw/2-EAR-34)+' 28)'},this.ear);
     S('rect',{x:0,y:-12,width:34,height:24,rx:5,fill:'none',stroke:'rgba(255,255,255,.9)','stroke-width':2.6},ic);S('path',{d:'M0 -4H34',stroke:'rgba(255,255,255,.9)','stroke-width':2.6},ic);
     this.cnt=S('text',{x:HW.cx+HW.nw/2+EAR+14,y:28,class:'icnt'},this.ear);
-    this.slots=[0,1,2].map(i=>{const g=S('g',null,this.cg),x=HW.cx+(i-1)*215;
-      S('rect',{x:x-100,y:84,width:200,height:131,rx:14,fill:'rgba(255,255,255,.1)'},g);
+    this.slots=[0,1,2].map(i=>{const g=S('g',null,this.cg),x=HW.cx+(i-1)*CELLP;
+      S('rect',{x:x-CELLW/2,y:CELLY,width:CELLW,height:CELLH,rx:14*K,fill:'rgba(255,255,255,.1)'},g);
       const mini=S('g',{transform:'translate('+x+' '+SLOT.y+') scale('+SLOT.s+')'},g);
-      const t=S('text',{x,y:246,class:'slbl'},g);return {g,t,mini};});
+      const t=S('text',{x,y:CELLY+CELLH-22,class:'slbl'},g);return {g,t,mini};});
     this.drawWin();
     this.cur=S('path',{class:'cur',d:'M0 0V40L10 31L17 47L24 44L17 29H30Z'},s.ov.parentNode);
     this.trail=S('g',null,s.svg);s.svg.insertBefore(this.trail,s.ov);
     this.hint=$('#m3hint');
     st.addEventListener('pointerdown',e=>this.down(e));st.addEventListener('pointermove',e=>this.move(e));
     st.addEventListener('pointerup',e=>this.upp(e));st.addEventListener('pointercancel',e=>this.upp(e));
-    st.addEventListener('pointerleave',()=>{if(this.P.live&&this.expanded&&!this.drag)this.P.act(t=>this.collapse(this.P.tl,t));});},
+    st.addEventListener('pointerleave',()=>{clearTimeout(this.lp);if(this.P.live&&this.expanded&&!this.drag)this.P.act(t=>this.collapse(this.P.tl,t));});},
   /* one drawing for the window and every thumbnail, all in tokens, so light/dark and language always match */
   winBody(g,i){const d=T_.doc[LANG];
     if(i===2){const f=this.scr.frame(g,-WW/2,-WH/2,WW,WH,d.t);d.l.slice(0,3).forEach((s,k)=>{const t=S('text',{x:-WW/2+30,y:-WH/2+100+k*40,class:'wtx'},f);t.textContent=s;});return;}
@@ -990,7 +992,7 @@ const M3={
   back(tl,t,vx,vy){
     if(REDUCED){tl.ch('fo').fade(t,0,.18);tl.ch('fx').set(t+.2,ORG.x);tl.ch('fy').set(t+.2,ORG.y);tl.ch('fo').fade(t+.2,1,.18);tl.mark(t,'不够快：原处淡出、原位淡入');return;}
     tl.ch('fx').to(t,ORG.x,SP.glide,vx);tl.ch('fy').to(t,ORG.y,SP.glide,vy);tl.mark(t,'不够快：带着速度滑回');},
-  expand(tl,t){tl.ch('ex').to(t,1,sp('expand'));tl.ch('ear').fade(t+.09,1,.18);[0,1,2].forEach(i=>tl.ch('s'+i).fade(t+.09+.04*i,1,.18));tl.mark(t,'停 0.12 s → expand');this.expanded=true;},
+  expand(tl,t){tl.ch('ex').to(t,1,sp('expand'));tl.ch('ear').fade(t+.09,1,.18);[0,1,2].forEach(i=>tl.ch('s'+i).fade(t+.09+.04*i,1,.18));tl.mark(t,'长按 0.5 s → expand');this.expanded=true;},
   collapse(tl,t){['ear','s0','s1','s2'].forEach(n=>tl.ch(n).fade(t,0,.10));tl.ch('ex').to(t+.04,0,sp('calm'));this.expanded=false;},
   /* put back: the thumbnail he clicked is the window that comes out. Same frame: window takes the slot's frame, thumbnail goes to 0.
      Then flyOut home; the row starts collapsing 0.04 s later. */
@@ -1008,17 +1010,17 @@ const M3={
     for(let k=1;k<=10;k++){const a=k/10;x+=vx*a/60;y=Math.max(YMIN,y+vy*a/60);t=1+k/60;tl.ch('fx').set(t,x);tl.ch('fy').set(t,y);tl.ch('cx').set(t,x+10);tl.ch('cy').set(t,y-150);}
     const tc=this.tuck(tl,t,vx,vy)||t+.3;c.fade(t+.25,0,.18);
     const ta=tc+1.7;c.fade(ta-.6,1,.18);tl.ch('cx').set(ta-.6,1620);tl.ch('cy').set(ta-.6,230);this.cursor(tl,ta-.55,HW.cx+40,22);
-    this.expand(tl,ta+.12);this.cursor(tl,ta+.7,SLOT.x,150);
-    const tf=ta+1.45;this.flyOut(tl,tf);c.fade(tf+.5,0,.18);this.D=tf+1.3;
+    this.expand(tl,ta+.5);this.cursor(tl,ta+1.1,SLOT.x,150);
+    const tf=ta+1.85;this.flyOut(tl,tf);c.fade(tf+.5,0,.18);this.D=tf+1.3;
   },
   render(T,tl){const s=this.scr;s.measure();s.crop(1440);
     const fx=tl.v('fx',T),fy=tl.v('fy',T),fs=Math.max(.01,tl.v('fs',T)),fo=clamp(tl.v('fo',T));
     const layer=tl.dv('fz',T,0)?this.flyTop:s.fly;if(this.fg.parentNode!==layer)layer.appendChild(this.fg);
     this.fg.setAttribute('transform','translate('+r2(fx)+' '+r2(fy)+') scale('+r2(fs*1000)/1000+')');this.fg.style.opacity=fo;
     const bw=tl.v('bw',T),bh=tl.v('bh',T),ex=tl.v('ex',T);
-    const w=lerp(HW.nw+bw,700,ex),h=lerp(HW.nh+bh,295,ex),vis=Math.abs(bw)>.05||Math.abs(bh)>.05||Math.abs(ex)>.002;
+    const w=lerp(HW.nw+bw,408*K,ex),h=lerp(HW.nh+bh,160*K,ex),vis=Math.abs(bw)>.05||Math.abs(bh)>.05||Math.abs(ex)>.002;
     this.body.style.display=this.cg.style.display=this.stk.style.display=vis?'':'none';
-    if(vis){const D=notchD(HW.cx,w,h,lerp(HW.rb,47.2,ex),HW.rs*clamp(1-ex));this.body.setAttribute('d',D);this.cpath.setAttribute('d',D);this.stk.setAttribute('d',D);
+    if(vis){const D=notchD(HW.cx,w,h,lerp(HW.rb,28*K,ex),HW.rs);this.body.setAttribute('d',D);this.cpath.setAttribute('d',D);this.stk.setAttribute('d',D);
       this.stk.style.opacity=r2(clamp(Math.max(Math.abs(ex)*6,Math.abs(bh)/(3*K))));
       this.ear.style.opacity=clamp(tl.v('ear',T));this.cnt.textContent=tl.dv('cnt',T,2);
       const lbl=T_.slots[LANG];this.slots.forEach((o,i)=>{o.g.style.opacity=clamp(tl.v('s'+i,T));o.t.textContent=lbl[i];});
@@ -1033,7 +1035,9 @@ const M3={
   /* live pointer */
   down(e){const P=this.P,p=this.scr.toLocal(e),tl=P.tl,T=P.t;
     const fx=tl.v('fx',T),fy=tl.v('fy',T),fs=tl.v('fs',T);
-    if(P.live&&this.expanded&&p.y>84&&p.y<216&&Math.abs(p.x-SLOT.x)<100){P.act(t=>this.flyOut(P.tl,t));return;}
+    if(P.live&&this.expanded&&p.y>CELLY&&p.y<CELLY+CELLH&&Math.abs(p.x-SLOT.x)<CELLW/2){P.act(t=>this.flyOut(P.tl,t));return;}
+    /* 长按刘海本体 0.5 秒展开那一排；指针停上去不展开 */
+    if(P.live&&this.tucked&&!this.expanded&&Math.abs(p.x-HW.cx)<HW.nw/2&&p.y<HW.nh+10){clearTimeout(this.lp);this.lp=setTimeout(()=>P.act((t,tl3)=>this.expand(tl3,t)),500);return;}
     if(fs>.9&&Math.abs(p.x-fx)<WW/2&&Math.abs(p.y-fy)<WH/2&&!this.tucked){
       e.preventDefault();this.st.setPointerCapture(e.pointerId);
       P.act((t,tl2)=>{const x=tl2.v('fx',t),y=tl2.v('fy',t);tl2.cut(t);tl2.ch('fx').set(t,x);tl2.ch('fy').set(t,y);this.drag={dx:p.x-x,dy:p.y-y,s:[[performance.now(),x,y]]};});
@@ -1042,11 +1046,10 @@ const M3={
     if(this.drag){const t=P.now(),x=p.x-this.drag.dx,y=Math.max(YMIN,p.y-this.drag.dy);P.tl.ch('fx').set(t,x);P.tl.ch('fy').set(t,y);
       const s=this.drag.s;s.push([performance.now(),x,y]);while(s.length>2&&s[s.length-1][0]-s[0][0]>90)s.shift();P.gdirty=true;return;}
     const over=Math.abs(p.x-HW.cx)<(this.expanded?350:200)&&p.y<(this.expanded?300:90);
-    if(this.tucked&&!this.expanded&&over&&!this.pending){this.pending=true;P.act((t,tl)=>{this.expand(tl,t+.12);});this.pending=false;}
-    else if(this.expanded&&!over)P.act((t,tl)=>{tl.cut(t);this.collapse(tl,t);});},
+    if(this.expanded&&!over)P.act((t,tl)=>{tl.cut(t);this.collapse(tl,t);});},
   /* release: the real finger velocity goes to the spring untouched; the threshold only picks the destination.
      A finger that stopped moving (last sample older than 50 ms) releases at zero velocity. */
-  upp(e){const P=this.P;if(!this.drag)return;const s=this.drag.s,a=s[0],b=s[s.length-1];
+  upp(e){const P=this.P;clearTimeout(this.lp);if(!this.drag)return;const s=this.drag.s,a=s[0],b=s[s.length-1];
     let vx=0,vy=0;if(s.length>1&&performance.now()-b[0]<=50){const dt=Math.max(.016,(b[0]-a[0])/1000);vx=(b[1]-a[1])/dt;vy=(b[2]-a[2])/dt;}
     this.drag=null;P.hold=false;
     P.act((t,tl)=>{if(vy<-700||b[2]<=YMIN+40)this.tuck(tl,t,vx,vy);else this.back(tl,t,vx,vy);});}
@@ -1261,7 +1264,7 @@ PLAYERS.forEach(p=>io.observe(p.stage));
 const ro=new ResizeObserver(()=>redraw());PLAYERS.forEach(p=>ro.observe(p.stage));
 
 /* ---------- spring cards ---------- */
-const TOK=[['calm','所有退场、悬停、换状态、键帽弹回、鼓一下'],['settle','截图飞进刘海（带速度）、缩略图'],['expand','他来找刘海，展开一排'],['bloom','开口：卡住时的提示、有变化时提醒'],['catch','落点小岛（带拖动速度）'],['glide','窗口滑行（带速度）；键帽穿过刘海'],['flyOut','从刘海放回'],['pull','两指下拉，松手'],['pop','只给小元素：授权勾、键位换字'],['reduced','减少动态效果时替换以上全部'],['dolly','只给镜头：推镜']];
+const TOK=[['calm','所有退场、悬停、换状态、键帽弹回、鼓一下'],['settle','截图飞进刘海（带速度）、缩略图'],['expand','他长按刘海，展开一排'],['bloom','开口：卡住时的提示、有变化时提醒'],['catch','落点小岛（带拖动速度）'],['glide','窗口滑行（带速度）；键帽穿过刘海'],['flyOut','从刘海放回'],['pull','两指下拉，松手'],['pop','只给小元素：授权勾、键位换字'],['reduced','减少动态效果时替换以上全部'],['dolly','只给镜头：推镜']];
 function metrics(s){let mx=0,t40=null,ts=0;const dt=1/2000,T=s[0]*6;for(let t=0;t<=T;t+=dt){const x=1+solve(-1,0,s,t)[0];if(x>mx)mx=x;if(t40===null&&x>=.4)t40=t;if(Math.abs(1-x)>.001)ts=t;}return {os:Math.max(0,(mx-1)*100),t40,ts};}
 const toks=$('#toks');
 TOK.forEach(([n,u])=>{const s=SP[n],m=metrics(s),card=H('div','tok'+(n==='dolly'?' new':''),toks);
@@ -1314,7 +1317,7 @@ function macroStr(k){
   const lines=(a,b)=>'<text x="1440" y="94.5" font-size="21.9" font-weight="600" fill="#fff" text-anchor="middle" class="sb-t">'+a+'</text><text x="1440" y="120.5" font-size="18.5" fill="rgba(255,255,255,.6)" text-anchor="middle" class="sb-t">'+b+'</text>';
   if(k==='open'||k==='echo'||k==='trash'){
     const old=k==='trash'?['⌫']:['⌃','C'],mac=k==='trash'?['⌘','⌫']:['⌘','C'];
-    isl='<path d="'+notchD(1440,673.6,143.6,40.4,0)+'" fill="#000"/>'+'<g opacity=".45">'+grp(1440-172.8-groupW(old),old,.6)+'</g>'+grp(1612.8,mac,1,k==='echo'?.28:.14,k==='echo'?2.5:0)+
+    isl='<path d="'+notchD(1440,408*K,112*K,40.4,8.6)+'" fill="#000"/>'+'<g opacity=".45">'+grp(1440-172.8-groupW(old),old,.6)+'</g>'+grp(1612.8,mac,1,k==='echo'?.28:.14,k==='echo'?2.5:0)+
       (k==='trash'?lines('移到废纸篓按 ⌘⌫','废纸篓就是回收站'):lines('Mac 上拷贝按 ⌘C','常用快捷键把 ⌃ 换成 ⌘'));
     if(k==='echo')extra='<circle cx="'+(1612.8+groupW(mac)/2)+'" cy="28" r="70" fill="none" stroke="#90A2FF" stroke-width="3" stroke-dasharray="8 7"/>';
   }else if(k==='tuck'){

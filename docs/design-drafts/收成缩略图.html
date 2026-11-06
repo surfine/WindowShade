@@ -17,8 +17,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">三 窗口 · 第 14 张 · 收成缩略图</span><span class="ws-st ws-old">定稿 · 10-08</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j">← 文件架</a><a href="https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT">为什么不用最小化 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 1 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：排整齐就用现成的 ⌃⌘0</span> → <b>现在：</b>新装默认不占 ⌃⌘：排整齐用菜单里的「整理缩略图」，要快捷键自己录；老用户保留正在用的 <span class="src">（direction.md「12 个 ⌃⌘ 默认快捷键：全部默认不占」）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">三 窗口 · 第 14 张 · 收成缩略图</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j">← 文件架</a><a href="https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT">为什么不用最小化 →</a></nav>
 
 <title>收成缩略图</title>
 <style>
@@ -209,17 +208,18 @@ button.bar:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent)}
 .island .cr .d{width:calc(var(--pt)*6);height:calc(var(--pt)*6);border-radius:50%;background:var(--accent)}
 .island.compact .cl,.island.compact .cr{opacity:1}
 .island .cl svg{width:calc(var(--pt)*20);height:calc(var(--pt)*20);display:block}
-.island .al{position:absolute;top:calc(var(--pt)*33.5);left:50%;transform:translateX(-50%);width:calc(var(--pt)*400);height:calc(var(--pt)*52);opacity:0;transition:opacity .18s;pointer-events:none}
+.island .al{position:absolute;top:calc(var(--pt)*33.5);left:50%;transform:translateX(-50%);width:calc(var(--pt)*408);height:calc(var(--pt)*50.5);opacity:0;transition:opacity .18s;pointer-events:none}
 .island.alerting .al{opacity:1}
-.island .al .ai{position:absolute;left:calc(var(--pt)*14);top:calc(var(--pt)*11);width:calc(var(--pt)*30);height:calc(var(--pt)*30)}
+.island .al .ai{position:absolute;left:calc(var(--pt)*14);top:calc(var(--pt)*10.25);width:calc(var(--pt)*30);height:calc(var(--pt)*30)}
 .island .al .ai svg{width:100%;height:100%;display:block}
 .island .al .at{position:absolute;left:calc(var(--pt)*54);right:calc(var(--pt)*14);top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;gap:calc(var(--pt)*1);text-align:left;min-width:0}
 .island .al b{font:600 max(7px,calc(var(--pt)*13))/1.2 var(--sans);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .island .al small{font:400 max(6.5px,calc(var(--pt)*11))/1.2 var(--sans);color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.island .row{position:absolute;top:0;left:50%;transform:translateX(-50%);height:calc(var(--pt)*175.5);opacity:0;transition:opacity .18s}
+.island .row{position:absolute;top:0;left:50%;transform:translateX(-50%);height:calc(var(--pt)*160);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;opacity:0;transition:opacity .18s}
+.island .row::-webkit-scrollbar{display:none}
 .island.expanded .row{opacity:1}
 .tile{position:absolute;padding:0;border:0;background:none;color:inherit;cursor:pointer;font:inherit}
-.tile .card{position:absolute;left:0;right:0;top:0;height:calc(var(--pt)*100);border-radius:calc(var(--pt)*14);background:#242424}
+.tile .card{position:absolute;left:0;right:0;top:0;height:calc(var(--pt)*84);border-radius:calc(var(--pt)*14);background:#242424}
 .tile:hover .card{background:#383838}
 .tile:focus-visible{outline:none}
 .tile:focus-visible .card{background:#383838;box-shadow:inset 0 0 0 2px var(--accent)}
@@ -258,9 +258,9 @@ td.a,th.a{background:var(--col-a)}
     <div class="verdict">
       <span class="mark" aria-hidden="true">A</span>
       <p><strong>推荐 A：收起后，窗口在原处缩成一张缩略图。</strong></p>
-      <p>不用学新动作：还是双击标题栏收起，只在设置“收起后的样子”里多一项“缩略图”。WindowMizer 的看得见、半透明、排整齐、浮在最前，A 都有，排整齐就用现成的 <kbd>⌃⌘0</kbd>；它没有的原处实时画面、原地展开，A 也有。平时只是一张图，不取画面。B 不单做，C 已经有了。</p>
+      <p>不用学新动作：还是双击标题栏收起，只在设置“收起后的样子”里多一项“缩略图”。WindowMizer 的看得见、半透明、排整齐、浮在最前，A 都有，排整齐用菜单里的“整理缩略图”（新装默认不占 ⌃⌘，要快捷键自己录）；它没有的原处实时画面、原地展开，A 也有。平时只是一张图，不取画面。B 不单做，C 已经有了。</p>
     </div>
-    <p class="how">试法：双击窗口的标题栏收起，A、B 留下一张缩略图，C 收进刘海（App 里是朝刘海甩一下标题栏）；指针停在缩略图上（C 先停在刘海上），看一眼；点一下，展开。每块屏上终端已经收起，它一直在编译：停上去看，进度走到了哪；编译完那一下，C 的刘海会展开说一声，A、B 只亮一个点。每块屏下面的“实时画面”平时是关的，只在你停着看的那一会儿开。手机上点一下看一眼，再点一下展开。</p>
+    <p class="how">试法：双击窗口的标题栏收起，A、B 留下一张缩略图，C 收进刘海（App 里是朝刘海甩一下标题栏）；指针停在缩略图上（C 先在刘海上长按 0.5 秒展开那一排，再把指针停在格子上 0.12 秒），看一眼；点一下，展开。每块屏上终端已经收起，它一直在编译：停上去看，进度走到了哪；编译完那一下，C 的刘海会展开说一声，A、B 只亮一个点。每块屏下面的“实时画面”平时是关的，只在你停着看的那一会儿开。手机上点一下看一眼，再点一下展开。</p>
   </header>
 
   <section class="variants" id="variants" aria-label="三种做法">
@@ -274,7 +274,7 @@ td.a,th.a{background:var(--col-a)}
       <div class="bezel"><div class="desk" role="group" data-desk="A" aria-label="A 的小屏"></div></div>
       <div class="controls">
         <button class="btn" type="button" data-act="collapse">收起一扇窗口</button>
-        <button class="btn" type="button" data-act="arrange">整理缩略图<kbd>⌃⌘0</kbd></button>
+        <button class="btn" type="button" data-act="arrange">整理缩略图</button>
         <label class="op"><span>缩略图半透明</span><input type="range" id="op-a" min="0" max="70" step="5" value="30"><output for="op-a">30%</output></label>
         <span class="live" aria-live="polite"><i></i><span>实时画面：关</span></span>
         <button class="btn quiet" type="button" data-act="reset">重来</button>
@@ -282,9 +282,9 @@ td.a,th.a{background:var(--col-a)}
       <dl class="notes">
         <div><dt>是什么</dt><dd>收起窗口时不留卷帘条，窗口在原处缩成一张缩略图，左上角对着原来的位置，盖在别的窗口上面。刘海那一排里也有它，和卷帘条一样。</dd></div>
         <div><dt>停上去</dt><dd>0.22 秒后缩略图长回原来大小：先是收起时的画面，实时画面一到就换上；移开就缩回去。点一下，原地展开。</dd></div>
-        <div><dt>比它强在</dt><dd>不用在屏幕边找是哪一张，它就在那扇窗原来的位置；停上去是原大小的实时画面。要排整齐，按 ⌃⌘0。</dd></div>
+        <div><dt>比它强在</dt><dd>不用在屏幕边找是哪一张，它就在那扇窗原来的位置；停上去是原大小的实时画面。要排整齐，用菜单里的“整理缩略图”，要快捷键自己录。</dd></div>
         <div><dt>耗电</dt><dd>平时不取画面，只有你停着看的那一扇取，移开就停。</dd></div>
-        <div><dt>代价</dt><dd>要学的只有设置里多出的一项。缩略图会挡住下面窗口的一角，靠半透明和 ⌃⌘0 让开。</dd></div>
+        <div><dt>代价</dt><dd>要学的只有设置里多出的一项。缩略图会挡住下面窗口的一角，靠半透明和“整理缩略图”让开。</dd></div>
         <div class="end"><dt>结论</dt><dd>推荐，做成“收起后的样子”的第三项。Aaron 9 月 29 日选了 A（见 direction.md）；三个住处怎么收成一项，见总稿“下一程”。</dd></div>
       </dl>
     </article>
@@ -314,7 +314,7 @@ td.a,th.a{background:var(--col-a)}
         <div><dt>比它强在</dt><dd>同样一排，停上去看的是原处、原大小的实时画面，不是一个窗口名；回来就回原处，不用另设。</dd></div>
         <div><dt>耗电</dt><dd>和 A 一样。</dd></div>
         <div><dt>代价</dt><dd>多了一个要认的地方：屏幕边一排、Dock、刘海一排，放的是同一类东西。从 Windows 来的人会把它当任务栏用，这是顺着旧习惯，不是教他 Mac 的做法。</dd></div>
-        <div class="end"><dt>结论</dt><dd>不单做。A 按 ⌃⌘0 排出来的就是这一排。</dd></div>
+        <div class="end"><dt>结论</dt><dd>不单做。A 里“整理缩略图”排出来的就是这一排。</dd></div>
       </dl>
     </article>
 
@@ -334,7 +334,7 @@ td.a,th.a{background:var(--col-a)}
       </div>
       <dl class="notes">
         <div><dt>是什么</dt><dd>窗口缩小飞进刘海，刘海两边长出 App 图标和个数。</dd></div>
-        <div><dt>停上去</dt><dd>停在刘海上 0.12 秒，展开一排缩略图；停在一格上 0.2 秒，在原处看一眼实时画面；点一下，飞回原处。</dd></div>
+        <div><dt>停上去</dt><dd>长按刘海 0.5 秒，展开一排缩略图；展开后指针停在一格上 0.12 秒，才在原处看一眼实时画面；点一下，飞回原处。</dd></div>
         <div><dt>比它强在</dt><dd>桌面上什么都不留，不挡东西，也用不着调半透明；刘海一处找回所有收起的窗口。</dd></div>
         <div><dt>耗电</dt><dd>平时不取画面，看一眼时只取那一扇。</dd></div>
         <div><dt>代价</dt><dd>要学的是朝刘海甩一下标题栏。平时看不到每扇窗的样子，追不上 WindowMizer “一眼看全”的那一点；一排最多 8 格。</dd></div>
@@ -352,10 +352,10 @@ td.a,th.a{background:var(--col-a)}
         <tbody>
           <tr><th scope="row">收起后在哪</th><td>屏幕边一排，哪条边可选</td><td class="a">原来的位置</td><td>屏幕边一排</td><td>刘海里，桌面上不留</td></tr>
           <tr><th scope="row">平时的画面</th><td>官网没说是实时的</td><td class="a">收起时的画面</td><td>收起时的画面</td><td>看不到；刘海两边是 App 图标和个数</td></tr>
-          <tr><th scope="row">指针停上去</th><td>可选：1.5 秒后显示窗口名</td><td class="a">0.22 秒后长回原大小，给实时画面</td><td>0.22 秒后在原处看一眼实时画面</td><td>刘海 0.12 秒展开一排，停一格 0.2 秒在原处看一眼</td></tr>
+          <tr><th scope="row">指针停上去</th><td>可选：1.5 秒后显示窗口名</td><td class="a">0.22 秒后长回原大小，给实时画面</td><td>0.22 秒后在原处看一眼实时画面</td><td>长按刘海 0.5 秒展开一排，展开后停一格 0.12 秒在原处看一眼</td></tr>
           <tr><th scope="row">点一下</th><td>单击恢复是选项（截图里没勾）；可选回到最初的位置</td><td class="a">原地展开</td><td>飞回原处</td><td>飞回原处</td></tr>
           <tr><th scope="row">半透明</th><td>可调</td><td class="a">可调，指针停上去就不透明</td><td>同 A</td><td>用不着</td></tr>
-          <tr><th scope="row">排整齐</th><td>自动排成网格</td><td class="a">按 ⌃⌘0 排到屏幕边，再按放回</td><td>自动</td><td>刘海里一排，最多 8 格</td></tr>
+          <tr><th scope="row">排整齐</th><td>自动排成网格</td><td class="a">菜单“整理缩略图”排到屏幕边，再用“恢复缩略图原位”放回</td><td>自动</td><td>刘海里一排，最多 8 格</td></tr>
           <tr><th scope="row">标题变了</th><td>官网没写</td><td class="a">右上角一个点，不开口</td><td>右上角一个点</td><td>刘海展开 2.6 秒说新标题，之后留一个点（设置里能关）</td></tr>
           <tr><th scope="row">要学的新东西</th><td>另一个动作</td><td class="a">没有；设置里多一项</td><td>多认一个地方</td><td>朝刘海甩一下（已有）</td></tr>
           <tr><th scope="row">平时取画面</th><td>官网没说</td><td class="a">不取</td><td>不取</td><td>不取</td></tr>
@@ -374,7 +374,7 @@ td.a,th.a{background:var(--col-a)}
           <tr><th scope="row">收起后留在屏幕上的那张小画面</th><td><b>缩略图</b></td><td>小窗（画中画已经不用这个词）、小图、占位窗口、迷你窗口、thumbnail</td></tr>
           <tr><th scope="row">收成它的动作</th><td>还是 <b>收起窗口 / 展开窗口</b>；留下的那张叫 <b>缩略图</b></td><td>收成缩略图、缩小、原地最小化</td></tr>
           <tr><th scope="row">在设置里选它</th><td><b>收起后的样子：跟原来一样 / 统一标题栏 / 缩略图</b></td><td>缩略图模式</td></tr>
-          <tr><th scope="row">⌃⌘0 的菜单项</th><td><b>整理缩略图 / 恢复缩略图原位</b>（和“整理卷帘条”一样，随屏幕上留的是什么变）。设置里这一行现在只写了选“统一标题栏”时改为专注当前 App，要补上选“缩略图”时它做什么：把缩略图排到屏幕边，再按放回原位。</td><td>排列、对齐、网格</td></tr>
+          <tr><th scope="row">“整理缩略图”菜单项</th><td><b>整理缩略图 / 恢复缩略图原位</b>（和“整理卷帘条”一样，随屏幕上留的是什么变）。设置里这一行现在只写了选“统一标题栏”时改为专注当前 App，要补上选“缩略图”时它做什么：把缩略图排到屏幕边，再按放回原位。</td><td>排列、对齐、网格</td></tr>
           <tr><th scope="row">调它透不透</th><td>行名随“收起后的样子”变：选缩略图时叫 <b>缩略图半透明</b>，否则仍叫 <b>卷帘条半透明</b>；这一行改成能拖的滑块</td><td>不透明度、opacity</td></tr>
         </tbody>
       </table>
@@ -392,7 +392,7 @@ td.a,th.a{background:var(--col-a)}
       <li>更新记录：6.0.6 改进缩略图网格和大小滑块；6.0.5 加回“单击恢复”；5.0.6 缩略图可以浮在最前。<a href="https://windowmizer.com/wm-releasenotes/">windowmizer.com/wm-releasenotes</a></li>
       <li>我们这边：docs/glance.md、docs/notch.md、docs/pip.md、docs/direction.md、docs/copy-guide.md。<small>WindowMizer 各页读取于 2026-09-29，没有下载试用。</small></li>
     </ul>
-    <p class="foot">小屏上的刘海按 Notch.swift 的点数等比画：刘海 185 × 33.5，两边各长 34，展开一排外框圆角 28、格子 124 宽、间距 8、圆角 14、画面圆角 8，弹簧 0.4 / 0.08 展开、0.34 / 0 收回；提醒外框 400 × 85.5、圆角 24，弹簧 0.42 / 0.16，停 2.6 秒；窗口飞进刘海 0.38 / 0、圆角缩到 13，飞回 0.38 / 0.1；收进时刘海鼓一下，宽 14、高 6，共 0.42 秒。看一眼的时机取自 GlanceIntent.swift（停 0.22 秒、离开留 0.16 秒）和 GlancePanel.swift（卷下 0.18 秒、卷上 0.14 秒）。终端和信息里的字比等比画得大，编译进度那一行最大；打开“减少动态效果”时，这里和 App 一样不飞、不鼓，只淡入淡出。</p>
+    <p class="foot">小屏上的刘海按 Notch.swift 的点数等比画：刘海 185 × 33.5，两边各长 34，展开一排外框 408 × 160、圆角 28，格子 76 × 104、间距 8、圆角 14、画面圆角 8，放不下左右滚动，弹簧 expand 展开、calm 收回；提醒外框 408 × 84、圆角 24，弹簧 bloom，停 2.6 秒；窗口飞进刘海用 settle、圆角缩到 13，飞回 flyOut；收进时刘海鼓一下，宽 14、高 6，共 0.42 秒。看一眼的时机取自 GlanceIntent.swift（停 0.22 秒、离开留 0.16 秒）和 GlancePanel.swift（卷下 0.18 秒、卷上 0.14 秒）。终端和信息里的字比等比画得大，编译进度那一行最大；打开“减少动态效果”时，这里和 App 一样不飞、不鼓，只淡入淡出。</p>
   </section>
 </div>
 
@@ -625,8 +625,15 @@ td.a,th.a{background:var(--col-a)}
       });
       g.addEventListener("click", () => { if (this.g && this.g.mode === "grow") this.restore(this.g.w, null); });
       const isl = this.isl;
-      isl.addEventListener("pointerenter", ev => { if (ev.pointerType !== "touch") this.notchIn(); });
-      isl.addEventListener("pointerleave", ev => { if (ev.pointerType === "touch") return; this.nSuppress = false; this.notchOut(); });
+      isl.addEventListener("pointerenter", ev => { if (ev.pointerType !== "touch") this.notchIn(false); });
+      /* 指针：长按 0.5 秒展开那一排（光是停上去只出提示）；键盘焦点另走 notchIn() */
+      isl.addEventListener("pointerdown", ev => {
+        if (ev.pointerType === "touch") return;
+        clearTimeout(this.timers.press);
+        this.timers.press = setTimeout(() => { if (!this.nSuppress) this.expandNotch(); }, 500);
+      });
+      ["pointerup", "pointercancel"].forEach(t => isl.addEventListener(t, () => clearTimeout(this.timers.press)));
+      isl.addEventListener("pointerleave", ev => { if (ev.pointerType === "touch") return; clearTimeout(this.timers.press); this.nSuppress = false; this.notchOut(); });
       isl.addEventListener("focusin", () => this.notchIn());
       isl.addEventListener("focusout", ev => { if (!isl.contains(ev.relatedTarget)) { this.nSuppress = false; this.notchOut(); } });
       isl.addEventListener("click", ev => {
@@ -858,7 +865,7 @@ td.a,th.a{background:var(--col-a)}
       clearTimeout(this.timers.leave);
       clearTimeout(this.timers.dwell);
       if (w.state !== "thumb" || (this.g && this.g.w === w)) return;
-      this.timers.dwell = setTimeout(() => this.openGlance(w, this.glanceMode(src), src === "tile"), src === "tile" ? 200 : 220);
+      this.timers.dwell = setTimeout(() => this.openGlance(w, this.glanceMode(src), src === "tile"), src === "tile" ? 120 : 220);
     }
     glanceMode(src) { return this.v === "A" && !this.arranged && src === "thumb" ? "grow" : "roll"; }
     /* 触屏：不等停留，点一下就看一眼 */
@@ -951,12 +958,13 @@ td.a,th.a{background:var(--col-a)}
     islandRect() {
       const n = this.items().length;
       if (this.nExpanded && n) {
-        const W = Math.max(NOTCH.w + 120, Math.min(n, 8) * 132 + 20), H = NOTCH.h + 142;
+        /* 展开那一排：408 × 160、圆角 28；放不下的格子在里面左右滚动 */
+        const W = 408, H = 160;
         return { x: NOTCH.x + NOTCH.w / 2 - W / 2, y: 0, w: W, h: H, r: 28, keyed: true };
       }
       if (this.alertW) {
-        /* NotchPanel 的提醒：宽 max(刘海 + 200, 400)，高比刘海多 52，圆角 24，边线 1 点白 14% */
-        const W = Math.max(NOTCH.w + 200, 400), H = NOTCH.h + 52;
+        /* 提醒：408 × 84，圆角 24，边线 1 点白 14% */
+        const W = 408, H = 84;
         return { x: NOTCH.x + NOTCH.w / 2 - W / 2, y: 0, w: W, h: H, r: 24, keyed: true };
       }
       if (this.v === "C" && n) {
@@ -980,11 +988,11 @@ td.a,th.a{background:var(--col-a)}
       this.isl.classList.toggle("compact", this.v === "C" && n > 0 && !this.nExpanded && !al);
       this.isl.classList.toggle("expanded", this.nExpanded && n > 0);
     }
-    notchIn() {
+    notchIn(expand = true) {
       if (this.nSuppress || !this.items().length) return;
       clearTimeout(this.timers.notch);
       if (this.v === "C" && !this.nExpanded && !this.hint && !this.alertW) { this.hint = true; this.applyIsland(SP.collapse()); }
-      this.timers.notch = setTimeout(() => this.expandNotch(), 120);
+      if (expand) this.timers.notch = setTimeout(() => this.expandNotch(), 120);   /* 只有键盘焦点走这条；指针要长按 */
     }
     notchOut() {
       clearTimeout(this.timers.notch);
@@ -1038,22 +1046,24 @@ td.a,th.a{background:var(--col-a)}
     buildTiles() {
       clearTimeout(this.timers.rowClear);
       const list = this.items().slice(0, 8), n = list.length;
-      const W = Math.max(NOTCH.w + 120, n * 132 + 20), total = n * 132 - 8, x0 = (W - total) / 2;
+      /* 格 76 × 104、间距 8；一排 408 宽，左右各留 16，放不下就左右滚动 */
+      const W = 408, STEP = 84, total = n * STEP - 8, x0 = total <= W - 32 ? (W - total) / 2 : 16;
       this.row.style.width = P(W);
       this.row.innerHTML = "";
+      this.row.scrollLeft = 0;
       const t = this.now();
       list.forEach((w, i) => {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "tile";
         b.dataset.id = w.id;
-        const tx = x0 + i * 132;
-        place(b, { x: tx, y: 41.5, w: 124, h: 120 });
-        const s = Math.min(112 / w.frame.w, 88 / w.frame.h), pw = w.frame.w * s, ph = w.frame.h * s;
-        const pr = { x: (124 - pw) / 2, y: (100 - ph) / 2 };
+        const tx = x0 + i * STEP;
+        place(b, { x: tx, y: 41.5, w: 76, h: 104 });
+        const s = Math.min(64 / w.frame.w, 68 / w.frame.h), pw = w.frame.w * s, ph = w.frame.h * s;
+        const pr = { x: (76 - pw) / 2, y: (84 - ph) / 2 };
         b.innerHTML = `<span class="card"><span class="tpic" style="left:${P(pr.x)};top:${P(pr.y)};width:${P(pw)};height:${P(ph)}">${picHTML(w, w.tc, s)}</span>${this.v === "C" ? "" : `<span class="bdg">${SVG.thumbBadge}</span>`}<span class="tdot"${this.changed(w) ? "" : " hidden"}></span></span><span class="lab">${ICON[w.app]}<span>${esc(titleOf(w.app, t))}</span></span>`;
         b.setAttribute("aria-label", `${this.v === "C" ? "放回" : "展开窗口"}：${APPS[w.app].name}`);
-        const picRect = () => { const ir = this.islandRect(); return { x: ir.x + tx + pr.x, y: 41.5 + pr.y, w: pw, h: ph }; };
+        const picRect = () => { const ir = this.islandRect(); return { x: ir.x + tx + pr.x - this.row.scrollLeft / this.px(), y: 41.5 + pr.y, w: pw, h: ph }; };
         b.addEventListener("pointerenter", ev => { if (ev.pointerType !== "touch") this.hoverIn(w, "tile"); });
         b.addEventListener("pointerleave", ev => { if (ev.pointerType !== "touch") this.hoverOut(w, "tile"); });
         b.addEventListener("focus", () => { if (b.matches(":focus-visible")) this.hoverIn(w, "tile"); });
@@ -1065,6 +1075,7 @@ td.a,th.a{background:var(--col-a)}
         });
         this.row.appendChild(b);
       });
+      if (x0 + total + 16 > W) { const sp = document.createElement("i"); sp.setAttribute("aria-hidden", "true"); place(sp, { x: x0 + total + 15, y: 0, w: 1, h: 1 }); this.row.appendChild(sp); }
     }
 
     changed(w) { return w.state === "thumb" && titleOf(w.app, this.now()) !== w.seen; }

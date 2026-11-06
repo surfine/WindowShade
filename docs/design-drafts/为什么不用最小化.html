@@ -17,15 +17,14 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">三 窗口 · 第 15 张 · 为什么不用最小化</span><span class="ws-st ws-old">定稿 · 10-08</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N">← 收成缩略图</a><a href="https://claude.ai/artifact/SGBdwfP5ZFr7NDMzPJ7Yvs">卷轴 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 4 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：1.0.16 build 16 已装进日常用的那一版，未发布；版本仍是 1.0.15</span> → <b>现在：</b>1.0.16 已于 2026-10-13 发布，1.0.17 于 2026-10-17 发布；网格、魔法平铺、卷轴、晃一晃都在 1.0.16 里 <span class="src">（releases/v1.0.16.md、v1.0.17.md）</span></li><li><span class="was">原来：公证：不做 / 仍不公证</span> → <b>现在：</b>1.0.17 起已通过 Apple 公证；Intel 版仍不做 <span class="src">（releases/v1.0.17.md）</span></li><li><span class="was">原来：macOS 14 以上</span> → <b>现在：</b>1.0.17 起要 macOS 15 以上；还在 macOS 14 的人继续用 1.0.16 <span class="src">（releases/v1.0.17.md）</span></li><li><span class="was">原来：⌃⌘↓ 变大一级 / ⌃⌘↑ 变小一级等当作现成键位</span> → <b>现在：</b>新装默认不占 ⌃⌘，要的人自己录或换上 Rectangle 那套；老用户保留正在用的 <span class="src">（direction.md）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">三 窗口 · 第 15 张 · 为什么不用最小化</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N">← 收成缩略图</a><a href="https://claude.ai/artifact/SGBdwfP5ZFr7NDMzPJ7Yvs">卷轴 →</a></nav>
 
 <title>为什么不用最小化</title>
 <style>
 :root{
   --bg:#f6f7f9;--ink:#1d1f23;--muted:#61656e;--faint:#8b9099;--line:#dfe2e7;--hair:rgba(20,26,38,.1);
   --surface:#fff;--soft:#eceef2;--paper:#f2efe9;--paper-line:#e2ddd3;
-  --accent:#245eea;--accent-soft:#e9effc;--accent-text:#214884;
+  --sys-accent:#007aff;--accent:#245eea;--accent-soft:#e9effc;--accent-text:#214884;
   --good:#17804a;--good-soft:#e3f3ea;--warn:#a2610b;--warn-soft:#fbefdc;--bad:#b42f2a;--bad-soft:#fbe5e3;
   --win:#fff;--win-bar:#f3f3f5;--win-ink:#24262b;--win-muted:#70747c;--win-line:rgba(0,0,0,.09);
   --wall:radial-gradient(120% 90% at 0% 0%,#c9dbff 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#f1d9ee 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#ffe3c9 0%,transparent 62%),#e7eaf3;
@@ -39,7 +38,7 @@
   color-scheme:dark;
   --bg:#111317;--ink:#eef0f3;--muted:#a3a9b4;--faint:#7c828d;--line:#2a2e36;--hair:rgba(255,255,255,.1);
   --surface:#1b1e24;--soft:#16191e;--paper:#1a1a1e;--paper-line:#2c2c33;
-  --accent:#7ea4ff;--accent-soft:#1d2a44;--accent-text:#cfdcf7;
+  --sys-accent:#0a84ff;--accent:#7ea4ff;--accent-soft:#1d2a44;--accent-text:#cfdcf7;
   --good:#5fd08f;--good-soft:#153624;--warn:#f0b35a;--warn-soft:#3a2a12;--bad:#ff8a80;--bad-soft:#3d1a18;
   --win:#26282d;--win-bar:#2d2f35;--win-ink:#eceef2;--win-muted:#a0a5ae;--win-line:rgba(255,255,255,.08);
   --wall:radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a4d 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a24 0%,transparent 62%),#1a1d26;
@@ -49,7 +48,7 @@
   color-scheme:dark;
   --bg:#111317;--ink:#eef0f3;--muted:#a3a9b4;--faint:#7c828d;--line:#2a2e36;--hair:rgba(255,255,255,.1);
   --surface:#1b1e24;--soft:#16191e;--paper:#1a1a1e;--paper-line:#2c2c33;
-  --accent:#7ea4ff;--accent-soft:#1d2a44;--accent-text:#cfdcf7;
+  --sys-accent:#0a84ff;--accent:#7ea4ff;--accent-soft:#1d2a44;--accent-text:#cfdcf7;
   --good:#5fd08f;--good-soft:#153624;--warn:#f0b35a;--warn-soft:#3a2a12;--bad:#ff8a80;--bad-soft:#3d1a18;
   --win:#26282d;--win-bar:#2d2f35;--win-ink:#eceef2;--win-muted:#a0a5ae;--win-line:rgba(255,255,255,.08);
   --wall:radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a4d 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a24 0%,transparent 62%),#1a1d26;
@@ -81,9 +80,9 @@ header.hero{padding-top:64px;display:grid;gap:22px}
 /* demo */
 .demo{margin-top:34px;display:grid;gap:14px}
 .desk{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:14px;background:var(--wall);overflow:hidden;box-shadow:0 0 0 .5px var(--hair);container-type:inline-size;user-select:none;-webkit-user-select:none}
-.menubar{position:absolute;inset:0 0 auto;height:3.2cqw;min-height:16px;background:rgba(255,255,255,.45);backdrop-filter:blur(8px);display:flex;align-items:center;gap:2.2cqw;padding-inline:2cqw;font-size:max(9px,1.35cqw);color:#1d1f23;font-weight:600}
-:root[data-theme="dark"] .menubar{background:rgba(20,22,28,.5);color:#eef0f3}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .menubar{background:rgba(20,22,28,.5);color:#eef0f3}}
+.menubar{position:absolute;inset:0 0 auto;height:3.2cqw;min-height:16px;background:#e8e8ea;display:flex;align-items:center;gap:2.2cqw;padding-inline:2cqw;font-size:max(9px,1.35cqw);color:#1d1f23;font-weight:600}
+:root[data-theme="dark"] .menubar{background:#2a2c32;color:#eef0f3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .menubar{background:#2a2c32;color:#eef0f3}}
 .menubar span{font-weight:400;opacity:.8}
 .w{position:absolute;background:var(--win);border-radius:1.4cqw;box-shadow:var(--shadow);overflow:hidden;color:var(--win-ink)}
 .bar{height:3.6cqw;min-height:18px;background:var(--win-bar);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;border-bottom:1px solid var(--win-line);font-size:max(9px,1.3cqw);font-weight:600;color:var(--win-muted);white-space:nowrap}
@@ -93,7 +92,7 @@ header.hero{padding-top:64px;display:grid;gap:22px}
 .lamps i:nth-child(2){background:#efbb50}.lamps i:nth-child(3){background:#7cca4a}
 .editor{left:6%;top:13%;width:62%;height:78%}
 .code{padding:1.6cqw 2cqw;font:max(8px,1.25cqw)/1.75 var(--mono);color:var(--win-muted);white-space:pre}
-.code b{color:var(--accent);font-weight:500}.code em{color:#b35c1e;font-style:normal}
+.code b{color:var(--sys-accent);font-weight:500}.code em{color:#b35c1e;font-style:normal}
 .side{left:57%;top:20%;width:38%;height:62%}
 .strip{position:absolute;left:57%;top:20%;width:38%;height:3.6cqw;min-height:18px;border-radius:1.2cqw;background:var(--win-bar);box-shadow:var(--shadow);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:max(9px,1.3cqw);font-weight:600;color:var(--win-muted);cursor:default;z-index:3;border:0;font-family:inherit;white-space:nowrap}
 .strip .t{flex:1;text-align:center;margin-right:3cqw;overflow:hidden;text-overflow:ellipsis}
@@ -107,8 +106,8 @@ header.hero{padding-top:64px;display:grid;gap:22px}
 .log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .log .ok{color:var(--good)}.log .hl{color:var(--win-ink)}
 .prog{height:.6cqw;min-height:4px;background:var(--soft);border-radius:99px;margin:1cqw 0 .4cqw;overflow:hidden}
-.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s linear}
-.hud{position:absolute;right:2%;bottom:3.5%;font-size:max(9px,1.2cqw);background:rgba(20,22,28,.72);color:#fff;border-radius:99px;padding:.5cqw 1.4cqw;opacity:0;transition:opacity .2s;z-index:4}
+.prog i{display:block;height:100%;background:var(--sys-accent);width:0;transition:width .5s linear}
+.hud{position:absolute;right:2%;bottom:3.5%;font-size:max(9px,1.2cqw);background:#25272c;color:#fff;border-radius:99px;padding:.5cqw 1.4cqw;opacity:0;transition:opacity .2s;z-index:4}
 .desk.open .hud{opacity:1}
 .demo-caption{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13px;color:var(--muted)}
 .demo-caption kbd{font:600 12px var(--sans);background:var(--surface);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;color:var(--ink)}
@@ -226,7 +225,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
 
 <div class="wrap">
   <header class="hero">
-    <div class="meta"><span><b>WindowShade</b> 1.0.15（9 月 26 日重新发布）· 1.0.16 build 16 已装进 Aaron 日常用的那一版，未发布</span><span>2026-10-03 修订（第 20 版）</span><span>写给 Aaron，也写给 Marvin 和 Newlearner</span></div>
+    <div class="meta"><span><b>WindowShade</b> 1.0.15（9 月 26 日重新发布）· 1.0.16 已于 10 月 13 日发布，1.0.17 于 10 月 17 日发布</span><span>2026-10-03 修订（第 20 版）</span><span>写给 Aaron，也写给 Marvin 和 Newlearner</span></div>
     <h1>为什么不用最小化</h1>
     <p class="lede">Marvin 在 7 月试完 WindowShade 后留下这个问题。1.0.15 给出了答案：看一眼、带到每张桌面、在标题栏上滑一下。这一页写清楚两类人要什么：用触控板、一张桌面一个 App 的 Marvin，和用鼠标、快捷键排窗的 Newlearner；再写 WindowShade 现在做到哪一步，周围的窗口工具各管什么，以及还差什么。</p>
     <p class="lede"><b>10 月 3 日（第 20 版）。</b>答案说成一句话：<b>你看不见的每一扇窗，都在刘海里。</b>收起的、侧拉的、最小化的、隐藏的，以及别的桌面上的，都排在刘海那一排里；停在一格上，它就在自己的位置、按自己的大小出现，移开就走；只有点它，你才过去。这是 Marvin 那一问最后缺的一块：他一张桌面一个 App，要看另一张桌面上的东西，现在不用先按 ⌃⌘G，停在刘海那一格就行。代码已经提交，build 16 装进了 Aaron 日常用的那一版；9 月 30 日到 10 月 1 日的签名构建上 28 套真机探针全过，但“别的桌面”“每一格都能看一眼”这两步是 10 月 2–3 日做的，还要在 build 16 上重跑，也还没请 Marvin 试。同一时间还有几条线在走：完整灵动岛的实时活动、设备电量、CarPlay 接收、遥控器指挥与语音编程、身份认证与真正解锁。它们是 Aaron 定下的目标，和窗口共用同一个刘海，下面“下一步”里写了各自的进度。</p>
@@ -497,12 +496,12 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
       <p>基础功能谁都有，照搬就是 copycat。区别不在多一个动作，而在这些动作在 WindowShade 里是同一件事的不同入口。</p>
     </div>
     <div class="spec">
-      <div class="card"><h3>上下左右都是梯子，不是一排按钮</h3><ul><li>左右：朝一边接着推，½ → ⅔ → ⅓，再推移到那边的屏幕。顺序和 Rectangle 连按一样，换过来不用重学。</li><li>甩一下标题栏（iPadOS 26 的做法）也走这些梯子：往上收起、往下铺满、往角落占一角。</li><li>⌃⌘↓ 变大一级：卷帘条 → 原来大小 → 铺满屏幕。</li><li>⌃⌘↑ 变小一级：铺满 → 回到原来大小 → 收起。</li><li>方向和在标题栏上滑一样。别家的 ↑ 是最大化；WindowShade 的 ↑ 是让开，因为它的底色就是让开。</li><li>刚收起一扇，焦点跑到别的窗口上，紧接着按 ⌃⌘↓，回来的是刚收起的那扇。</li><li>键盘也能拐弯：⌃⌘← 之后马上 ⌃⌘↓ 是左下角，和手势“左右走满再往下拐”一样，不多记一个快捷键。</li><li>网格（本地）也是这架梯子：窗口已经在上半或下半一行时，左右推就在这一行里走——左下角 → 左下三分之二 → 左下六分之一，六分之一再往里一格一格走。六分之一再拐一下是九分之一，上下三行一格一格走。不另起网格模式。</li><li>两指张开（本地）是魔法平铺：这扇当主角，别的窗口按各自要的地方排在旁边；只有它一扇时就是铺满。捏合整批放回。</li></ul></div>
+      <div class="card"><h3>上下左右都是梯子，不是一排按钮</h3><ul><li>左右：朝一边接着推，½ → ⅔ → ⅓，再推移到那边的屏幕。顺序和 Rectangle 连按一样，换过来不用重学。</li><li>甩一下标题栏（iPadOS 26 的做法）也走这些梯子：往上收起、往下铺满、往角落占一角。</li><li>（新装默认不占 ⌃⌘，下面的 ⌃⌘ 键位要的人自己录，或换上 Rectangle 那套；老用户保留正在用的。）</li><li>⌃⌘↓ 变大一级：卷帘条 → 原来大小 → 铺满屏幕。</li><li>⌃⌘↑ 变小一级：铺满 → 回到原来大小 → 收起。</li><li>方向和在标题栏上滑一样。别家的 ↑ 是最大化；WindowShade 的 ↑ 是让开，因为它的底色就是让开。</li><li>刚收起一扇，焦点跑到别的窗口上，紧接着按 ⌃⌘↓，回来的是刚收起的那扇。</li><li>键盘也能拐弯：⌃⌘← 之后马上 ⌃⌘↓ 是左下角，和手势“左右走满再往下拐”一样，不多记一个快捷键。</li><li>网格（本地）也是这架梯子：窗口已经在上半或下半一行时，左右推就在这一行里走——左下角 → 左下三分之二 → 左下六分之一，六分之一再往里一格一格走。六分之一再拐一下是九分之一，上下三行一格一格走。不另起网格模式。</li><li>两指张开（本地）是魔法平铺：这扇当主角，别的窗口按各自要的地方排在旁边；只有它一扇时就是铺满。捏合整批放回。</li></ul></div>
       <div class="card"><h3>借成熟桌面的老说法</h3><ul><li>双击标题栏收起：KDE、老 Mac OS 的卷帘。</li><li>拖着标题栏晃一晃，别的窗口让开：Windows 7 起的 Aero Shake（本地）。</li><li>拖到屏幕边吸附：Windows 的 Aero Snap，macOS 15 起系统自带，交给系统。</li><li>点一下刘海回主屏幕，两下多任务：iPad 的主屏幕按钮（本地）。</li><li>原则：一个动作只有一个意思，不为一件小事加一个新手势；能借的说法就借，不让人重学。</li></ul></div>
       <div class="card"><h3>一套动作，三个入口，一本账</h3><ul><li>键盘、标题栏手势、窗口浏览用同一组动作名：左半屏、右半屏、铺满屏幕、撤销上次排布。</li><li>按一下键，浮窗照样出现，和音量提示同一个样子，说清做了什么。</li><li>不管用哪种方式排的，捏合或 ⌃⌘↑ 都能撤回；换了显示器，都会排回去。</li></ul></div>
       <div class="card"><h3>给触控板和 Magic Mouse 的三个惊喜</h3><ul><li>拐个弯占一角：左右滑走满，再往上或往下拐，半屏变成那一侧的上角、下角。走满之前的上下偏移仍算收起、铺满，不会半路变角。</li><li>走到头再推一次换屏：已经在左三分之一还往左推，窗口过到左边那块屏幕、贴着交界的那一半；左边没有屏幕，就回到左半屏重新开始。</li><li>用力按卷帘条看一眼：按着就看，松手就收，和系统用力点按预览文件同一个习惯。只认自己卷帘条上的深按。</li></ul></div>
       <div class="card"><h3>“留下位置”延伸到摆放</h3><ul><li>收起不让窗口离开原处；排布也一样：每一次都能回到排之前的样子。</li><li>人手改过尺寸的窗口，换屏后不去动它，那是人的新安排。</li><li>做不了的时候（没有可撤销的排布），浮窗说一句，不假装做了。</li></ul></div>
-      <div class="card"><h3>不做的，和不做的理由</h3><ul><li>拖到边缘吸附：系统从 macOS 15 起就有，再做一套只会两边打架。</li><li>一直管着窗口的自动平铺：AeroSpace 做得好，这两类人都用不上。网格和中间三分之一原来也在这一条里，后来改成要做，本地已做（3×2、3×3）；“一下排好”做成魔法平铺，排一次就放手。</li><li>捏合关闭、下滑最小化：撤不回来，或者让窗口离开原处，和“留下位置”相反。</li><li>公证、Intel 版：不做。公证要开发者账号；Intel 手上没有真机能测，出了问题比不支持更伤。应用内更新不需要公证，9 月 28 日夜里改成要做（见第 8 步）。</li></ul></div>
+      <div class="card"><h3>不做的，和不做的理由</h3><ul><li>拖到边缘吸附：系统从 macOS 15 起就有，再做一套只会两边打架。</li><li>一直管着窗口的自动平铺：AeroSpace 做得好，这两类人都用不上。网格和中间三分之一原来也在这一条里，后来改成要做，本地已做（3×2、3×3）；“一下排好”做成魔法平铺，排一次就放手。</li><li>捏合关闭、下滑最小化：撤不回来，或者让窗口离开原处，和“留下位置”相反。</li><li>公证、Intel 版：写这一稿时都不做。1.0.17 起已通过 Apple 公证；Intel 版仍不做，手上没有真机能测，出了问题比不支持更伤。应用内更新 9 月 28 日夜里改成要做（见第 8 步）。</li></ul></div>
     </div>
     <div class="note"><b>说法也要分开。</b>别叫自己“窗口管理工具”。那是 Rectangle 们的词，一说出口就被拿去逐项比功能。WindowShade 的说法是“收起窗口，留下位置”：先讲让开和看一眼，排窗放在后面，讲成“排错了也能撤回”。B站 视频标题里的“你的下一款窗口管理工具”，建议改成从让开讲起的说法，比如“Mac 丢了 25 年的功能，我把它做回来了”。</div>
   </section>
@@ -521,7 +520,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
           <tr data-v="lead"><td>价格</td><td>$25，3 台；14 天试用；要联网激活</td><td>免费，MIT 开源</td><td><span class="pill lead">领先</span></td></tr>
           <tr data-v="lead"><td>权限</td><td>三项：辅助功能、自动化、屏幕录制</td><td>两项：辅助功能、屏幕录制</td><td><span class="pill lead">领先</span></td></tr>
           <tr data-v="lead"><td>系统设置</td><td>必须把系统的“双击标题栏”改成“无操作”</td><td>不用改。双击收起，三击照旧执行系统原来的缩放或最小化</td><td><span class="pill lead">领先</span></td></tr>
-          <tr data-v="lead"><td>系统要求</td><td>macOS 15.3 以上，Apple 芯片</td><td>macOS 14 以上，Apple 芯片</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>系统要求</td><td>macOS 15.3 以上，Apple 芯片</td><td>1.0.17 起 macOS 15 以上，Apple 芯片（还在 macOS 14 的继续用 1.0.16）</td><td><span class="pill lead">领先</span></td></tr>
           <tr data-v="tie"><td>收起的做法</td><td>真窗口最小化进 Dock，原处留占位条</td><td>只有一扇窗就隐藏整个 App，否则最小化；原处留卷帘条</td><td><span class="pill tie">持平</span></td></tr>
           <tr data-v="tie"><td>卷帘条外观</td><td>经典细条 / 动态标题条，可按应用设置，可调透明度</td><td>跟原来一样 / 统一标题栏</td><td><span class="pill tie">持平</span></td></tr>
           <tr data-v="tie"><td>音效与快捷键</td><td>每个动作可设音效和全局快捷键</td><td>收起、展开有音效；六组快捷键，可改键</td><td><span class="pill tie">持平</span></td></tr>
@@ -533,7 +532,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
           <tr data-v="lead"><td>手势</td><td>没有，只认双击，还要先改系统设置</td><td>在标题栏上两指往上推收起、往下拉铺满、左右走梯子，张开铺满、捏合撤销，轻点两下切换，甩一下；窗口跟着手指走；鼠标滚轮也能用</td><td><span class="pill lead">领先</span><span class="next">1.0.15 已发布；Magic Mouse 还没在真机上验证</span></td></tr>
           <tr data-v="lead"><td>缩略图占位</td><td>可以收成缩略图，排成网格、浮在最前</td><td>1.0.16：设置里“收起后的样子”选缩略图，原处缩成小图，透明度是滑块；停上去给实时画面，标题变了亮一个点；⌃⌘0 排到屏幕下边一排</td><td><span class="pill lead">领先</span><span class="next">多了实时画面；签名构建上 thumbnail 13 项全过</span></td></tr>
           <tr data-v="lead"><td>占位条上的快捷键</td><td>在占位条上按 ⌘N、隐藏、退出，会转给原 App</td><td>卷帘条上按 ⌘N、⌘H、⌘M、⌘W、⌘Q 都转给背后的 App 或窗口；⌘Q 先把窗口放下来再退出，要问“是否保存”时对话框看得见</td><td><span class="pill lead">领先</span><span class="next">9 月 26 日已发布。原来按 ⌘Q 会退出 WindowShade 自己，⌘H 会把卷帘条一起藏起来</span></td></tr>
-          <tr data-v="tie"><td>安装与更新</td><td>已签名，Sparkle 自动更新</td><td>1.0.16：菜单里“检查更新…”，基于 Sparkle；更新不丢授权，新版起不来自动换回上一版，从“下载”里打开时先问要不要放进“应用程序”。仍不公证</td><td><span class="pill tie">持平</span><span class="next">隔离环境 13 项全过；一次真实的下载安装还没走过</span></td></tr>
+          <tr data-v="tie"><td>安装与更新</td><td>已签名，Sparkle 自动更新</td><td>1.0.16：菜单里“检查更新…”，基于 Sparkle；更新不丢授权，新版起不来自动换回上一版，从“下载”里打开时先问要不要放进“应用程序”。1.0.17 起已通过 Apple 公证</td><td><span class="pill tie">持平</span><span class="next">隔离环境 13 项全过；一次真实的下载安装还没走过</span></td></tr>
           <tr data-v="goal"><td>收纳的去处</td><td>只有原处的占位条，真窗口进 Dock</td><td>原处的卷帘条；1.0.16 还能收进刘海，刘海里一排列出所有看不见的窗口：收着的、侧拉的、带到每张桌面的、最小化的、隐藏的、别的桌面上的，每一格都能看一眼；点一下刘海回到主屏幕</td><td><span class="pill goal">主攻</span><span class="next">已装进 Aaron 的日常版，未发布</span></td></tr>
           <tr data-v="skip"><td>桌面图标隐藏、Finder 窗口堆叠</td><td>有</td><td>没有</td><td><span class="pill skip">不跟</span><span class="next">跟窗口收起无关</span></td></tr>
         </tbody>
@@ -690,10 +689,10 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
       <div class="phase"><span class="k">第 3 步</span><div><b>标题栏手势（1.0.15，为两类人）</b><p>往上推收起，往下拉铺满，左右半屏，张开铺满、捏合撤销，轻点两下切换；卷帘条上往下拉展开。滑动时有一块照 macOS 27 音量提示做的小浮窗，告诉你松手会做什么。滚轮三格算一次，Magic Mouse 单指也能用。真触控板上已确认：半屏、铺满、还原、捏合撤销、收起、展开、轻点两下、Safari 标签让出左右。</p></div><span class="pill lead">已发布</span></div>
       <div class="phase"><span class="k">第 4 步</span><div><b>窗口本体跟手</b><p>窗口跟着手指收起、展开，松手才真的收起或展开；往回拉，窗口退回原样，真窗口没被碰过。真机探针：走到门槛时卷了 69%，回拉无痕；手指一落到标题栏就开始准备，收起约 140 毫秒、展开约 100 毫秒就能跟手。真触控板上已试过跟手与回拉。9 月 25 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
       <div class="phase"><span class="k">第 5 步</span><div><b>换屏后窗口排回去（为 Newlearner）</b><p>内屏、外屏切换后，把排过的窗口按原来的排法（铺满、半屏、四角）排到它现在所在的屏幕上。不管是用键盘、手势还是窗口浏览排的都算。只处理被系统挪过或缩小过的窗口，人手改过尺寸的不动；撤销仍然可用。只在显示器本身变了（接上、拔下、分辨率、排列）时才排：实测接着 Studio Display 的 Mac，外接屏菜单栏时隐时现，每隔几秒就发一次“屏幕参数变了”，那时去排，铺满的窗口会跟着上下跳。探针用模拟换屏验证过，真插拔显示器还没测。9 月 26 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
-      <div class="phase"><span class="k">第 6 步</span><div><b>键盘排布，和手势同一架梯子（为 Newlearner）</b><p>⌃⌘↓ 变大一级，⌃⌘↑ 变小一级，⌃⌘←→ 占半屏；按一下，浮窗说明做了什么。窗口浏览里排过的窗口也记进同一本账：捏合或 ⌃⌘↑ 能撤回，换屏后排回去。四个快捷键都能在设置里改或关掉。真机探针：左半屏 → 铺满 → 撤回铺满 → 收起 → 立刻放回原处，五步全过。顺带修掉两个旧问题：窗口刚展开的一秒内排布，会被“摆回原位”的校正弹回去；把高窗口缩到屏幕下半部时，高度会被截成错的。9 月 26 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 6 步</span><div><b>键盘排布，和手势同一架梯子（为 Newlearner）</b><p>⌃⌘↓ 变大一级，⌃⌘↑ 变小一级，⌃⌘←→ 占半屏；按一下，浮窗说明做了什么。窗口浏览里排过的窗口也记进同一本账：捏合或 ⌃⌘↑ 能撤回，换屏后排回去。四个快捷键都能在设置里改或关掉；新装默认不占 ⌃⌘，要的人自己录，老用户保留正在用的。真机探针：左半屏 → 铺满 → 撤回铺满 → 收起 → 立刻放回原处，五步全过。顺带修掉两个旧问题：窗口刚展开的一秒内排布，会被“摆回原位”的校正弹回去；把高窗口缩到屏幕下半部时，高度会被截成错的。9 月 26 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
       <div class="phase"><span class="k">第 6.5 步</span><div><b>手势更完备，但不误触</b><p>拐弯占角、左右梯子走到头再推一次换屏（键盘 ⌃⌘←→ 同样适用）、Force Touch 用力按卷帘条看一眼。拐弯要先走满一次才生效，所以不改变已有手势的判定。前两个有单元测试和真机探针（往左走满再往下拐，窗口落在左下角；左边没有屏幕时回到左半屏）；用力按只能在真触控板上验证。拐弯还加了一道防误触：从走满那一刻重新计量，之后要以上下为主，手指划长了带出的弧线不算拐弯。9 月 26 日随 1.0.15 重新发布，甩一下标题栏也在这一次。</p></div><span class="pill lead">已发布</span></div>
       <div class="phase"><span class="k">第 7 步</span><div><b>打磨特色，而不是加功能</b><p>本地已做：在卷帘条上往下拉一点，看一眼的卡片跟着手指卷下来，窗口还收着；没拉满就松手，停在看一眼，指针移开收回；拉满松手才展开，画面留到窗口回到原处再撤。被隐藏的 App 要等卡片整张盖住原处，才在下面临时显示它拿实时画面，所以拉着的时候先给收起时的画面。9 月 28 日凌晨在签名构建上的探针 3 项全过：慢慢拉一点、停住松手，卡片留着、窗口还收着；指针移开卡片收回；一口气拉满松手，路上看得到卡片，松手就展开。快速的一小下算甩，直接展开。 全屏 App 的桌面：带到每张桌面的卷帘条、侧拉把手、刘海都设了在全屏桌面显示，还没实测（要切到全屏桌面）。（卷帘条上的 ⌘N、⌘H、⌘Q 转给原 App 已在 9 月 26 日重新发布的 1.0.15 里做完。）</p></div><span class="pill goal">本地</span></div>
-      <div class="phase"><span class="k">第 8 步</span><div><b>公证与自动更新</b><p>公证要开发者账号，照旧不做。应用内更新不需要公证，9 月 28 日夜里改成要做，本地已做：借 Sparkle 下载安装，自己补三件事——装之前核对签名、授权不会丢；新版起不来自动换回上一版；不在“应用程序”里时先帮他放进去。隔离环境里 13 项全过；一次真实的下载安装、线上的更新清单还没有。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 8 步</span><div><b>公证与自动更新</b><p>公证当时照旧不做（1.0.17 起已通过 Apple 公证）。应用内更新 9 月 28 日夜里改成要做，当时本地已做：借 Sparkle 下载安装，自己补三件事——装之前核对签名、授权不会丢；新版起不来自动换回上一版；不在“应用程序”里时先帮他放进去。隔离环境里 13 项全过；一次真实的下载安装、线上的更新清单还没有。</p></div><span class="pill goal">本地</span></div>
       <div class="phase"><span class="k">第 9 步</span><div><b>网格</b><p>本地已做，不另起网格模式、不加新手势。3×2：窗口已经在上半或下半一行（四角）时，左右推就在这一行里走同一架梯子——四角 → 三分之二 → 六分之一；六分之一再往里一格一格走到中间、另一边，走到头再推就到相邻屏幕的同一行。整高的三分之一也一格一格走，多了中间三分之一。3×3：六分之一左右走一格再往上或往下拐，就在这一列里按三行走（上面一行往上拐是上面的九分之一，往下一格一格走到中间、下面，再往下回到下面那一行）；只有三分之一宽的格子会变成九分之一，别的拐弯仍然占四角，单纯上下滑仍是收起、铺满。键盘同一个规则，换屏排回、撤销对每一格照常。为此改了一处已发布的手感：左三分之一再往右推，原来跳到右半屏，现在走到中间三分之一（和 Rectangle 连按“下一个三分之一”一致）。9 月 28 日凌晨在签名构建上的探针全过：键盘从左半屏拐到左下角，再走到左下三分之二、左下六分之一、中下六分之一；接着右移一格往下拐是右下九分之一，左移一格往上拐是正中九分之一。</p></div><span class="pill goal">本地</span></div>
       <div class="phase"><span class="k">第 10 步</span><div><b>暂时取消全部置顶</b><p>本地已做：菜单里“暂时取消全部置顶”一下让开所有置顶的窗口，画面停掉、录屏标识跟着消失，置顶本身还在；菜单项变成“恢复全部置顶”，再点一下按原来的前后顺序放回；暂停期间关掉的窗口，恢复时直接结束那个置顶，不“复活”。可以在设置里录一个快捷键，默认不占。9 月 28 日凌晨在签名构建上的探针 3 项全过。</p></div><span class="pill goal">本地</span></div>
       <div class="phase"><span class="k">第 11 步</span><div><b>做不到时说一声</b><p>本地已做：排布前先问窗口能不能改大小，不能就按原尺寸放在目标区域正中，浮窗说“这个窗口不能改大小，放在了正中”；甩一下时替身也不先拉伸再跳回。能改大小但有最小、最大尺寸、没长到要的大小时，同样放在正中并说“不能再小了 / 不能再大了”。9 月 28 日凌晨在签名构建上的探针通过：临时 App 那扇改不了大小的小窗口排到左半屏，尺寸不变、落在正中，浮窗说了这句话。 计算器、系统设置没测（探针只动临时 App）。</p></div><span class="pill goal">本地</span></div>

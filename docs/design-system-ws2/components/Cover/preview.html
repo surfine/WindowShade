@@ -1,0 +1,48 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>WindowShade 2</title>
+<style>
+html,body{margin:0;height:100%}
+body{background:var(--window-bg);color:var(--label);font-family:var(--font-sf);overflow:hidden}
+.cover{position:relative;height:288px;overflow:hidden}
+.art{position:absolute;top:0;left:480px;width:480px;height:288px}
+.art svg{display:block;width:480px;height:288px}
+.hw{fill:var(--notch-fill)}
+.acc{fill:var(--accent)}
+.strip{fill:var(--label-tertiary)}
+.cell{fill:var(--notch-cell-hover)}
+.words{position:absolute;left:28px;bottom:28px;max-width:440px}
+.name{margin:0;font-size:84px;line-height:.95;font-weight:700;letter-spacing:-.02em;color:var(--label)}
+.tag{margin:12px 0 0 2px;font-size:14px;line-height:20px;color:var(--label-secondary)}
+</style>
+</head>
+<body>
+<div class="cover">
+<div class="art" aria-hidden="true">
+<svg viewBox="0 0 480 288" width="480" height="288">
+<!--
+  blocks      notch-fill: the expanded row 408→ cropped 360×160 flush to the top edge (radius-island-expanded 28 bottom corners), ears on its top band; accent: one landing slot 1.5px-stroke shape; label-tertiary: three shade strips (radius-window top corners)
+  arrangement one black slab hanging from the top edge like the island, satellites below it as rolled-up windows
+  pattern     rolled strips: "Roll it up. Keep its place." — strips at a 30px pitch, top corners radius-window 13, bottom straight
+  scales      island 28, cells 14 (28−14 concentric), strips radius-window 13, gaps cell-pitch fraction 8
+-->
+<path class="hw" d="M40 0 H400 V132 Q400 160 372 160 H68 Q40 160 40 132 Z"/>
+<rect class="cell" x="66" y="56" width="76" height="80" rx="14"/>
+<rect class="cell" x="150" y="56" width="76" height="80" rx="14"/>
+<rect class="cell" x="234" y="56" width="76" height="80" rx="14"/>
+<rect class="cell" x="318" y="56" width="58" height="80" rx="14"/>
+<path class="strip" d="M60 196 Q60 183 73 183 H247 Q260 183 260 196 V209 H60 Z"/>
+<path class="strip" d="M120 230 Q120 217 133 217 H307 Q320 217 320 230 V243 H120 Z"/>
+<path class="acc" d="M300 196 Q300 183 313 183 H427 Q440 183 440 196 V209 H300 Z"/>
+</svg>
+</div>
+<div class="words">
+<h1 class="name">WindowShade 2</h1>
+<p class="tag">窗口擋住你時讓它讓開，回來時不用找。</p>
+</div>
+</div>
+</body>
+</html>

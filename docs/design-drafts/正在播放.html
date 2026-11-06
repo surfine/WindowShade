@@ -78,7 +78,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 .art .ph svg{width:46%;height:46%}
 .wave{position:absolute;height:14px;display:flex;align-items:center;gap:1.6px;z-index:2}
 .wave i{display:block;width:2px;border-radius:1px;background:#fff}
-.adot{position:absolute;width:6px;height:6px;border-radius:50%;background:#30d158;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);z-index:3;opacity:0}
+.adot{position:absolute;width:8px;height:8px;border-radius:50%;background:#0a84ff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);z-index:3;opacity:0}
 
 /* 换歌一瞥 */
 .peekline{position:absolute;left:14px;right:14px;top:39px;height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;font-size:13px;font-weight:600}
@@ -101,17 +101,17 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 /* 大卡 */
 .ctitle{position:absolute;left:82px;right:14px;top:37px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cartist{position:absolute;left:82px;right:14px;top:55px;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .18s}
-.scrub{position:absolute;left:14px;right:14px;top:80px;height:20px;cursor:pointer;touch-action:none}
+.scrub{position:absolute;left:14px;right:14px;top:76px;height:20px;cursor:pointer;touch-action:none}
 .scrub .track{position:absolute;left:0;right:0;top:50%;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden}
 .scrub .fill{position:absolute;left:0;top:0;bottom:0;width:0}
 .scrub.noseek{cursor:default}
-.times{position:absolute;left:14px;right:14px;top:100px;display:flex;justify-content:space-between;font:500 11px/1 var(--mono);color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
-.livepill{position:absolute;left:14px;top:84px;font-size:11px;font-weight:650;padding:1px 7px;border-radius:7px;background:rgba(255,255,255,.16)}
-.sub{position:absolute;left:0;right:0;top:114px;height:44px;opacity:0;pointer-events:none}
+.times{position:absolute;left:14px;right:14px;top:94px;display:flex;justify-content:space-between;font:500 11px/1 var(--mono);color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
+.livepill{position:absolute;left:14px;top:80px;font-size:11px;font-weight:650;padding:1px 7px;border-radius:7px;background:rgba(255,255,255,.16)}
+.sub{position:absolute;left:0;right:0;top:106px;height:40px;opacity:0;pointer-events:none}
 .sub.live{pointer-events:auto}
-.cbtn{position:absolute;top:6px;width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cbtn{position:absolute;top:4px;width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .cbtn:hover{background:rgba(255,255,255,.1)}
-.cbtn.big{top:2px;width:40px;height:40px;border-radius:20px}
+.cbtn.big{top:0;width:40px;height:40px;border-radius:20px}
 .cbtn svg{width:18px;height:18px}
 .cbtn.big svg{width:24px;height:24px}
 .cbtn.off{opacity:.3;pointer-events:none}
@@ -182,8 +182,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 10 张 · 正在播放</span><span class="ws-st ws-old">定稿 · 10-09</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Y1xC2moskAEa2bjHNk2JKb">← 实时活动晋级</a><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">音量与亮度 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 3 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：WindowShade 今天：独立的 210 × 36 音量胶囊</span> → <b>现在：</b>已撤：两耳各 76、高同刘海（LV3 已落） <span class="src">（design-grammar 对照账 283）</span></li><li><span class="was">原来：右耳旁边一个 6 点的语气色圆点</span> → <b>现在：</b>右下 8 点（右 10、下 8） <span class="src">（design-grammar 对照账 258（C01））</span></li><li><span class="was">原来：11-04（bab193b0）：有刘海的屏不画常驻岛，有内容才从刘海下沿垂下一颗胶囊；两耳、电量闪、小圆、封面耳在刘海屏上都不出现</span> → <b>现在：</b>11-05 Aaron 推翻 11-04，回到刘海两耳（.sides）；整颗岛的样子见《两耳的岛》（11-05 已定，全部按推荐，第 83 条） <span class="src">（AARON-DECISIONS 11-05 第 82 条）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 10 张 · 正在播放</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Y1xC2moskAEa2bjHNk2JKb">← 实时活动晋级</a><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">音量与亮度 →</a></nav>
 <div class="wrap">
   <h1>正在播放</h1>
   <p class="lede">这一张证明：音乐可以像 iPhone 的灵动岛一样长在刘海上——左耳是封面，右耳是跟着声音跳的波形，点一下长成大卡；而且不多占一点菜单栏，不画假波形，读不到的就不画。数字取 MacBook Air 15 英寸：刘海 185 × 33.5，舞台按 1 点 = 1 像素画屏幕顶部中间那一段。</p>
@@ -308,8 +307,8 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
   <p class="lede">层次照《一颗岛》和总稿：放行 &gt; 正在做的手势 &gt; 你主动打开的 &gt; 短暂提醒 &gt; 持续活动 &gt; 什么都没有。紧凑是第 5 层，换歌一瞥是音乐自己的第 4 层，大卡是第 3 层。</p>
   <div class="grid2">
     <div class="card"><h3>紧凑：什么时候出现</h3><ul>
-      <li>系统说有东西在放，<span class="token">settle</span>（0.38 / ζ 1.0）从刘海长出两耳。耳宽沿用 34：主体 26.6 加肩 7.4，不多占菜单栏（design-system §5.1 S1）。</li>
-      <li>左耳封面边长 = round(0.6 × 刘海高)，这台是 <b>20</b>；圆角 5（边长的 1/4，连续曲线）；上下各 6.75，在主体里水平居中。菜单栏挤，耳宽被压到 30 以下时边长 = 主体 − 6；不到 14 就退回音符符号（今天的样子）。</li>
+      <li>系统说有东西在放，<span class="token">settle</span>（0.38 / ζ 1.0）从刘海长出两耳。耳高 = 刘海高 33.5，耳宽按内容、每耳最多 52.33：封面这一边主体 2 + 20 + 6.75 = 28.75，加肩 7.74 = 36.49，两耳等宽、紧贴刘海；肩跟着挪到新的外沿，不多占菜单栏（S1）。</li>
+      <li>左耳封面边长 = round(0.6 × 刘海高)，这台是 <b>20</b>；圆角 5（边长的 1/4，连续曲线）；上下各 6.75，右边离刘海 2、外侧留 6.75。菜单栏挤，耳宽被压到 30 以下时边长 = 主体 − 6；不到 14 就退回音符符号（今天的样子）。</li>
       <li>右耳波形 5 根：宽 2、间距 1.6、最高 14、最低 2.4（一个圆点），上下居中，颜色是填充色。</li>
       <li>比音乐优先的持续活动在（会话 95、录音 90、传输 80、专注 70、路线 60 &gt; 音乐 40）：音乐让出紧凑，退到那一排里。</li>
     </ul></div>
@@ -326,9 +325,9 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
       <li>封面 0.18 秒交叉淡化，不翻转。暂停后接着放同一首、那一排或大卡开着、全屏、锁屏、广告：都不一瞥。</li>
     </ul></div>
     <div class="card"><h3>长成大卡</h3><ul>
-      <li>点左耳或右耳，或在那一排里点“正在播放”那一格：<span class="token">expand</span>（0.40 / ζ 0.92）长成 <b>420 × 175.5</b>（刘海 + 142，和那一排一样高），底角 28，不画肩（S3）。</li>
+      <li>点左耳或右耳，或在那一排里点“正在播放”那一格：<span class="token">expand</span>（0.40 / ζ 0.92）长成<b>大卡</b>：大卡例外，不受 160 限制，宽按内容（示意 420），刘海下方内容高 118（有控制行；只有一句话的“已退出”那种是 72），底角 28，画肩（跟着卡的外沿）。</li>
       <li>形状走到四成内容才淡入（0.18）；封面用同一根弹簧从左耳长到 <b>56 × 56</b>，圆角 14（= 28 − 14）。暂停时封面缩到 0.9。波形留在右耳原处不动。</li>
-      <li>点刘海本身不变：一下回到主屏幕，两下调度中心，三下这个 App 的所有窗口；悬停刘海本身 0.12 秒开那一排。耳朵只认点，不认悬停。</li>
+      <li>点刘海本身不变：一下回到主屏幕，两下调度中心，三下这个 App 的所有窗口；长按刘海本身 0.5 秒开那一排（指针停上去不展开）。耳朵只认点，不认悬停。</li>
       <li>收回：点卡外、Esc、两指上推、指针离开 1.5 秒（拖进度条、调音量、开着设备列表时不算）。<span class="token">calm</span> 回到紧凑。</li>
       <li>那一排的“正在播放”格右下留一个 24 的播放 / 暂停键：今天点格子就是播放 / 暂停，这一下不能少。</li>
     </ul></div>
@@ -349,7 +348,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
       <tr><th>这时候</th><th>又来了</th><th>结果</th></tr>
       <tr><td>紧凑（第 5 层）</td><td>配件连上、电量低（第 4 层）</td><td>提醒照常 <span class="token">bloom</span> 开口 2.6 秒，收回后回到音乐的紧凑，不重播一瞥。</td></tr>
       <tr><td>换歌一瞥（第 4 层）</td><td>别的提醒</td><td>先到先占；后来的那条排在后面，一瞥收回后再开口。</td></tr>
-      <tr><td>大卡（第 3 层）</td><td>配件连上（第 4 层）</td><td>不开口，变成右耳旁边一个 6 点的语气色圆点，读屏念出那一句。卡收回时这个点就消耗掉，不回来补说。</td></tr>
+      <tr><td>大卡（第 3 层）</td><td>配件连上（第 4 层）</td><td>不开口，变成卡片右下一个 8 点的强调色圆点（右 10、下 8），读屏念出那一句。卡收回时这个点就消耗掉，不回来补说。</td></tr>
       <tr><td>大卡</td><td>拖标题栏到刘海（第 2 层）</td><td>大卡挂起，落点小岛占位；放手后大卡原样回来，不重播进场。</td></tr>
       <tr><td>大卡</td><td>刷脸、Touch ID、助手审批（第 1 层）</td><td>同上，挂起；审批结束后回来。</td></tr>
       <tr><td>拖进度条中</td><td>任何提醒</td><td>手离开前什么都不进来，提醒变点。</td></tr>
@@ -363,7 +362,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
     <tr><td>紧凑左耳</td><td>封面，边长 = 收起高 − 12（32 高时 20），圆角 4，右下叠徽章</td><td>封面，暂停时变淡</td><td>音符符号 + 歌名</td><td class="ours">封面 20（0.6 × 刘海高），圆角 5，不叠徽章</td></tr>
     <tr><td>紧凑右耳</td><td>默认是<b class="no">假波形</b>：4 根，每 0.3 秒随机高度；真波形默认关</td><td>真实波形（音频采集，自称 CPU 0–1%），采不到时有模拟波形</td><td>进度环</td><td class="ours">真实波形 5 根；没权限就静止点；<b>不画假的</b></td></tr>
     <tr><td>换歌</td><td>预览默认关；浮条 1.5 秒或中间拉到 380 宽 3 秒；封面 3D 翻转 0.45 秒</td><td>Quick Peek，可滑动切歌</td><td>没有</td><td class="ours">往下鼓 30、宽不变，停 1.8 秒起；封面交叉淡化 0.18</td></tr>
-    <tr><td>展开</td><td>悬停 0.3 秒或点击；640 × 200，圆角上 19 下 24；弹簧 0.42 / 1.0</td><td>悬停、点击、下滑</td><td>那一排里的一格，点 = 播放 / 暂停</td><td class="ours">点耳朵或那一格长成 420 × 175.5 大卡，<span class="token">expand</span>；格上留播放键</td></tr>
+    <tr><td>展开</td><td>悬停 0.3 秒或点击；640 × 200，圆角上 19 下 24；弹簧 0.42 / 1.0</td><td>悬停、点击、下滑</td><td>那一排里的一格，点 = 播放 / 暂停</td><td class="ours">点耳朵或那一格长成大卡（宽按内容，刘海下方 118，底角 28），<span class="token">expand</span>；格上留播放键</td></tr>
     <tr><td>进度条</td><td>可拖，8 → 14 高；已播 / 总长</td><td>可拖，颜色有最低亮度和对比度</td><td>只有进度环；剩余时间写好没接</td><td class="ours">4 → 8 高，按下即跳，已播 / 剩余</td></tr>
     <tr><td>控制</td><td>5 个槽：随机、上一首、播放、下一首、重复</td><td>加了随机、重复、红心、播放速度</td><td>上一首、播放、下一首</td><td class="ours">上一首、播放、下一首、输出设备</td></tr>
     <tr><td>输出设备</td><td>240 宽的弹出框：音量 + 设备列表</td><td>设备图标按型号区分</td><td>没有</td><td class="ours">卡里往下长出“播放到”列表</td></tr>
@@ -396,7 +395,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
     <tr><td>全屏</td><td>不出</td><td>打不开（刘海两侧是黑的，没有地方点）</td><td>全屏时菜单栏收起，不打扰看片；换歌也不一瞥</td></tr>
     <tr><td>锁屏、睡眠、切换用户</td><td>清掉</td><td>清掉</td><td>解锁后只按现在的事实画，不补播锁屏前的一瞥</td></tr>
     <tr><td>减少动态效果</td><td>形状直接切，内容 0.25 秒淡；波形变成静止的填充色点</td><td>同；封面不长大，原地淡出、目标处淡入</td><td>design-system §4.9</td></tr>
-    <tr><td>大卡开着来了提醒</td><td>—</td><td>右耳旁一个 6 点的圆点 + 读屏，不开口</td><td>第 3 层 &gt; 第 4 层，提醒被消耗</td></tr>
+    <tr><td>大卡开着来了提醒</td><td>—</td><td>卡片右下一个 8 点的强调色圆点（右 10、下 8）+ 读屏，不开口</td><td>第 3 层 &gt; 第 4 层，提醒被消耗</td></tr>
     <tr><td>菜单栏挤（耳宽 &lt; 30）</td><td>封面 = 主体 − 6；&lt; 14 退回音符</td><td>不受影响</td><td>不为封面多占菜单栏</td></tr>
     <tr><td>外接屏、没有刘海</td><td>胶囊（S4），内容同</td><td>从胶囊长出，同一张卡</td><td>形状从硬件来；没有刘海就用胶囊</td></tr>
     <tr><td>系统静音、音量 0</td><td>静止点</td><td>喇叭画成静音</td><td>采集到的是播放器的声音，静音时它还在“响”，但你听不见</td></tr>
@@ -442,9 +441,9 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
   <p class="lede">路径都在 <code>prototype/</code> 下。顺序：NP-1 → NP-2 → NP-4 → NP-3、NP-5 → NP-6。NP-6 要等 Aaron 定权限在哪问。</p>
   <div class="wp">
     <div class="card"><h3><span class="id">NP-1</span>封面与取色</h3><p>改 <code>App/NowPlayingStream.swift</code>（换曲时 <code>get</code> 一次封面）、<code>Core/NowPlayingStreamParser.swift</code>（只在 get 路径放宽到 4 MB）；新建 <code>Core/ArtworkPalette.swift</code>（纯函数）和 <code>App/NowPlayingArtwork.swift</code>（解码、缩到 128、只留一张）；改 <code>tools/privacy/registry.json</code> 的 <code>music</code>。</p><p><b>验收</b>：<code>tests/ArtworkPaletteTests.swift</code> 里同一张图结果不变、灰图回到白 0.92、字色对纯黑 ≥ 7:1；<code>rg</code> 查不到封面写盘；推送流仍带 <code>--no-artwork</code>。</p></div>
-    <div class="card"><h3><span class="id">NP-2</span>紧凑两耳：封面 + 静止点</h3><p>改 <code>App/NotchActivityView.swift</code>（左耳封面、右耳 5 根）、<code>App/Notch.swift</code>（耳宽 34 = 26.6 + 肩 7.4）。这一包只画静止点，不接音频。</p><p><b>验收</b>：本机 33.5 刘海上封面 20、耳宽仍 34；耳宽压到 26 时退回音符；暂停 / 在放两种样子截图对上这张稿；<code>NotchShapeProbe</code> 量到第一帧和最后一帧与硬件轮廓重合。</p></div>
+    <div class="card"><h3><span class="id">NP-2</span>紧凑两耳：封面 + 静止点</h3><p>改 <code>App/NotchActivityView.swift</code>（左耳封面、右耳 5 根）、<code>App/Notch.swift</code>（耳宽按内容，每耳最多 52.33；这一包封面边 28.75 + 肩 7.74）。这一包只画静止点，不接音频。</p><p><b>验收</b>：本机 33.5 刘海上封面 20、耳宽仍 34；耳宽压到 26 时退回音符；暂停 / 在放两种样子截图对上这张稿；<code>NotchShapeProbe</code> 量到第一帧和最后一帧与硬件轮廓重合。</p></div>
     <div class="card"><h3><span class="id">NP-3</span>换歌一瞥</h3><p>改 <code>App/Notch.swift</code>（高 63.5 的那一档）、<code>Core/NotchAlerts.swift</code>（用 announce.hold 计时，原地换字）。</p><p><b>验收</b>：<code>tests/NotchActivityTests.swift</code> 里 1.5 秒内连按 5 次下一首只开一次口；那一排、大卡、全屏、广告、暂停后接着放都不一瞥。</p></div>
-    <div class="card"><h3><span class="id">NP-4</span>大卡</h3><p>新建 <code>App/NowPlayingCard.swift</code>；改 <code>App/Notch.swift</code>（420 × 175.5，第 3 层，耳朵只认点）、<code>Core/NotchRow.swift</code>（格子动作改成长成大卡，格上留播放键）、<code>Core/NotchActivities.swift</code>（加跳转动作）。</p><p><b>验收</b>：<code>tests/NotchRowMergeTests.swift</code>：点格子 = 大卡、点播放键 = 播放 / 暂停；从紧凑和从那一排长出的是同一张卡；Esc、点外、离开 1.5 秒都收回，拖动时不收；进度松手才跳，不让跳的播放器条不加粗；点刘海本身仍是一下两下三下。</p></div>
+    <div class="card"><h3><span class="id">NP-4</span>大卡</h3><p>新建 <code>App/NowPlayingCard.swift</code>；改 <code>App/Notch.swift</code>（宽按内容、刘海下方 118、底角 28、画肩，第 3 层，耳朵只认点）、<code>Core/NotchRow.swift</code>（格子动作改成长成大卡，格上留播放键）、<code>Core/NotchActivities.swift</code>（加跳转动作）。</p><p><b>验收</b>：<code>tests/NotchRowMergeTests.swift</code>：点格子 = 大卡、点播放键 = 播放 / 暂停；从紧凑和从那一排长出的是同一张卡；Esc、点外、离开 1.5 秒都收回，拖动时不收；进度松手才跳，不让跳的播放器条不加粗；点刘海本身仍是一下两下三下。</p></div>
     <div class="card"><h3><span class="id">NP-5</span>卡里的音量与输出设备</h3><p>改 <code>App/NotchLevelObserver.swift</code>、<code>Core/NotchLevelGate.swift</code>（卡开着时音量键交给卡）；新建 <code>App/AudioOutputRoutes.swift</code>（复用 <code>NotchActivitySources.swift</code> 里的设备缓存，列出、切换默认输出）；登记 <code>audio-outputs</code>。</p><p><b>验收</b>：<code>tests/NotchLevelGateTests.swift</code>：卡开着按键不出独立胶囊；列表和系统“声音”设置一致；选 AirPods 后系统输出真的换了；列表开着时不自动收回。</p></div>
     <div class="card"><h3><span class="id">NP-6</span>真实波形</h3><p>新建 <code>App/AudioLevelTap.swift</code>（进程 tap + 私有聚合设备）、<code>Core/AudioLevelBands.swift</code>（纯函数：5 频带、dB 映射、起落）；<code>Info.plist</code> 加 <code>NSAudioCaptureUsageDescription</code>；登记 <code>music-levels</code>，同步 <code>App/WS2PrivacyData.swift</code>。</p><p><b>验收</b>：<code>tests/AudioLevelBandsTests.swift</code> 用正弦和静音喂出预期电平；没权限时进程里一个 tap 都没有；暂停 3 秒内拆掉；CPU 30 秒平均 ≤ 1%；AirPods 捏一下暂停实测通过。</p></div>
     <div class="card"><h3><span class="id">NP-7</span>边缘与减少动态效果</h3><p>改 <code>App/Notch.swift</code>、<code>App/NotchSpaceGate.swift</code>：全屏、锁屏、播放器退出、大卡里来提醒变点、减少动态效果。</p><p><b>验收</b>：边缘情况表逐行一条测试或一次本机截图；VoiceOver 念“歌名，正在播放”“歌名，已暂停”，提醒变点时也念出来。</p></div>
@@ -452,7 +451,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 
   <h2>待 Aaron 定</h2>
   <div class="card"><ul>
-    <li><b>1. 怎么进大卡。</b>推荐：点耳朵直接长成大卡；刘海本身还是一下、两下、三下和悬停开那一排；那一排里点格子也长成大卡，格上留播放 / 暂停键。备选：耳朵不能点，只能从那一排进（少一种点法，但多一步）。</li>
+    <li><b>1. 怎么进大卡。</b>推荐：点耳朵直接长成大卡；刘海本身还是一下、两下、三下，长按 0.5 秒开那一排；那一排里点格子也长成大卡，格上留播放 / 暂停键。备选：耳朵不能点，只能从那一排进（少一种点法，但多一步）。</li>
     <li><b>2. 系统音频录制在哪问。</b>推荐：设置里“跟着声音跳”，默认关，打开时系统才弹窗；大卡里点那排静止的点，直接带到这一行。不在欢迎窗口问（那里已经问日历，三步不加第四步）。</li>
   </ul></div>
 </div>
@@ -463,10 +462,12 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 var $=function(id){return document.getElementById(id)};
 /* ---------- 令牌 ---------- */
 var TOK={calm:{r:.34,z:1},settle:{r:.38,z:1},expand:{r:.40,z:.92},bloom:{r:.42,z:.84},pop:{r:.30,z:.75}};
-var HW={w:185,h:33.5,rb:10.71,e:7.4};
-var CX=490, EAR=34, BODY=EAR-HW.e; // 26.6
+var HW={w:185,h:33.5,rb:10.71,e:7.74};
 var ART_S=Math.round(0.6*HW.h); // 20
 var WAVE_W=5*2+4*1.6; // 16.4
+/* 耳宽按内容（《两耳的岛》）：主体 = 2 + 内容宽 + (刘海高 − 内容高) / 2，两耳取大的；每耳（主体 + 肩）最多 52.33 */
+var CX=490, BODY=Math.min(52.33-HW.e,Math.max(26,2+ART_S+(HW.h-ART_S)/2,2+WAVE_W+(HW.h-14)/2)), EAR=BODY+HW.e; // 28.75 / 36.49
+var CARD_W=420; // 示意：大卡宽按内容（歌名、歌手越长越宽），不受 160 限制
 
 /* ---------- 曲目（虚构）与封面 ---------- */
 var TRACKS=[
@@ -575,31 +576,31 @@ function geom(){
   switch(st){
     case 'compact':return{W:HW.w+2*BODY,H:HW.h,r:HW.rb,e:HW.e,k:0};
     case 'peek':return{W:HW.w+2*BODY,H:HW.h+30,r:24,e:HW.e,k:0};
-    case 'row':return{W:571,H:HW.h+142,r:28,e:0,k:0};
-    case 'card':return{W:420,H:S.listOpen?84+DEVS.length*34+22+14:HW.h+142,r:28,e:0,k:reduced()?1:1};
-    case 'alert':return{W:400,H:HW.h+52,r:24,e:0,k:0};
-    case 'quit':return{W:420,H:HW.h+142,r:28,e:0,k:1};
+    case 'row':return{W:571,H:HW.h+142,r:28,e:HW.e,k:0};
+    case 'card':return{W:CARD_W,H:S.listOpen?84+DEVS.length*34+22+14:HW.h+118,r:28,e:HW.e,k:reduced()?1:1};
+    case 'alert':return{W:408,H:84,r:24,e:HW.e,k:0};
+    case 'quit':return{W:CARD_W,H:HW.h+72,r:28,e:HW.e,k:1};
     default:return{W:HW.w,H:HW.h,r:HW.rb,e:HW.e,k:0};
   }
 }
 var CAP={
-  compact:['紧凑：左耳封面，右耳波形','settle','两耳宽各 34（主体 26.6 + 肩 7.4），不多占菜单栏。封面 20 × 20，圆角 5。波形 5 根，最高 14。点任一只耳朵长成大卡；点刘海本身仍是回到主屏幕。'],
+  compact:['紧凑：左耳封面，右耳波形','settle','耳高 33.5，耳宽按内容（这一件主体 28.75 + 肩 7.74 = 36.49，上限 52.33），不多占菜单栏。封面 20 × 20，圆角 5。波形 5 根，最高 14。点任一只耳朵长成大卡；点刘海本身仍是回到主屏幕。'],
   paused:['暂停：封面变淡，根变成静止的点','calm','封面透明度 0.5，根成白 0.45 的圆点。暂停满 10 分钟，紧凑收回，那一排里留一格“已暂停”。'],
   noperm:['没有录音权限：静止的封面色点','calm','没有“系统音频录制”就不画会动的东西。5 个点主色、副色交替；封面不暗，和暂停分得开。'],
   peek:['换歌一瞥：往下鼓 30，宽度不变','bloom','只多占刘海下面，不多占菜单栏。停 1.8 秒 + 每字 0.05 秒，最长 4.5 秒，再 calm 收回。封面 0.18 秒交叉淡化。'],
   row:['那一排：左段收着的窗口，竖线，右段正在进行的','expand','两耳留在原处，格子绕着排。点“正在播放”那一格长成大卡；格子右下那个圆键仍是播放 / 暂停。'],
-  card:['大卡：像长按灵动岛','expand','420 × 175.5，底角 28。封面从左耳长到 56；歌手名用字色。进度条可以拖：按下变粗，松手才跳。点卡外、Esc 收回。'],
+  card:['大卡：像长按灵动岛','expand','大卡例外：宽按内容（示意 420），刘海下方 118，底角 28，画肩。封面从左耳长到 56；歌手名用字色。进度条可以拖：按下变粗，松手才跳。点卡外、Esc 收回。'],
   vol:['音量键：控制行换成音量条','pop','松键 1.2 秒后换回。键盘上下方向键可以模拟。系统自己的音量提示藏掉；压不住就两个都留。'],
   list:['播放到：卡往下长出设备列表','expand','只列系统声音输出里能选的设备。选完 0.3 秒收回列表。选 AirPods 后看右耳：Spotify 在蓝牙上不录，变成静止点。'],
-  alertdot:['大卡开着来了提醒：变成一个点','calm','第 3 层（你打开的）高于第 4 层（短暂提醒）。不开口，右耳旁一个 6 点的圆点，读屏念出来；收回大卡时这个点消耗掉。'],
-  alert:['紧凑时来了提醒：照常开口','bloom','提醒 400 × 85.5，停 2.6 秒，收回后回到音乐的紧凑，不重播换歌一瞥。'],
+  alertdot:['大卡开着来了提醒：变成一个点','calm','第 3 层（你打开的）高于第 4 层（短暂提醒）。不开口，卡片右下一个 8 点的强调色圆点（右 10、下 8），读屏念出来；收回大卡时这个点消耗掉。'],
+  alert:['紧凑时来了提醒：照常开口','bloom','提醒 408 × 84，底角 24，画肩，停 2.6 秒，收回后回到音乐的紧凑，不重播换歌一瞥。'],
   noart:['没有封面：占位，不去网上搜','settle','白 0.14 的圆角方块加音符。颜色回到白 0.92。'],
   live:['直播：没有时长就不画进度','expand','进度条换成“直播”，只写已播多久，不能拖。'],
   quit:['播放器退出','calm','大卡里说一句“Spotify 已退出”，2.6 秒后收回到刘海。紧凑时直接收回，不说话。'],
   lock:['锁屏：什么都不画','calm','锁屏、睡眠、切换用户时清掉。解锁后按现在的事实画，不补播一瞥。点“重来”解锁。'],
   full:['全屏：不出','calm','菜单栏收起，刘海两侧是黑的。换歌也不一瞥；音量键照《音量与亮度》：全屏里两耳照样出现。点“重来”退出全屏。'],
   rest:['什么都没有：和实体刘海重合','calm','岛不画。'],
-  tap:['点刘海本身：回到主屏幕（不变）','calm','刘海本身的一下、两下、三下和悬停开那一排都保持原样；只有两侧的耳朵是这件活动的。']
+  tap:['点刘海本身：回到主屏幕（不变）','calm','刘海本身的一下、两下、三下和长按 0.5 秒开那一排都保持原样；只有两侧的耳朵是这件活动的。']
 };
 var capKey='compact';
 function cap(key,sr){capKey=key;var c=CAP[key];$('capT').textContent=c[0];$('capP').textContent=c[2];$('capTok').textContent=reduced()?'reduced':c[1];if(sr!==undefined)$('sr').textContent=sr;}
@@ -740,7 +741,7 @@ function frame(now){
   if(['compact','peek','row'].indexOf(st)>=0&&['compact','peek','row'].indexOf(S._prev||'')>=0)aw=showArt?1:0;
   artOp+=aw>artOp?Math.min(aw-artOp,inR*dt):-Math.min(artOp-aw,outR*dt);
   var k=Math.max(0,Math.min(1.05,G.k.x));
-  var earL=(W-HW.w)/2-BODY+(BODY-ART_S)/2, earT=(HW.h-ART_S)/2;
+  var earL=(W-HW.w)/2-2-ART_S, earT=(HW.h-ART_S)/2;
   var size=ART_S+(56-ART_S)*k, ax=earL+(14-earL)*k, ay=earT+(14-earT)*k, ar=5+(14-5)*k;
   if(st==='card'&&!S.playing){var sh=size*.1;size*=.9;ax+=sh/2;ay+=sh/2;}
   if(reduced()&&st==='card'){size=S.playing?56:50.4;ax=S.playing?14:16.8;ay=ax;ar=14;}
@@ -748,7 +749,7 @@ function frame(now){
   var dim=(!S.playing&&k<.5)?.5:1;art.style.opacity=(artOp*dim).toFixed(3);
   // 波形
   var wv=$('wave'),mode=waveMode();
-  wv.style.left=((W+HW.w)/2+(BODY-WAVE_W)/2)+'px';wv.style.top=((HW.h-14)/2)+'px';
+  wv.style.left=((W+HW.w)/2+2)+'px';wv.style.top=((HW.h-14)/2)+'px';
   var wW=showArt&&st!=='quit'?1:0;waveOp+=wW>waveOp?Math.min(wW-waveOp,inR*dt):-Math.min(waveOp-wW,outR*dt);wv.style.opacity=waveOp.toFixed(3);
   lvAcc+=dt;
   if(lvAcc>=1/30){lvAcc=0;var tgt=mode==='live'?demoLevels(t):[0,0,0,0,0];
@@ -759,7 +760,7 @@ function frame(now){
     b.style.height=hgt+'px';b.style.borderRadius=hgt<=2.6?'50%':'1px';
     b.style.width=hgt<=2.6?'2.4px':'2px';
     b.style.background=mode==='paused'?'rgba(255,255,255,.45)':css(mode==='dots'&&j%2===1?P.fill2:P.fill);}
-  var ad=$('adot');ad.style.left=((W+HW.w)/2+BODY+4)+'px';ad.style.top=(HW.h/2-3)+'px';ad.style.opacity=(S.alertDot&&st==='card')?1:0;
+  var ad=$('adot');ad.style.left=(W-18)+'px';ad.style.top=(H-16)+'px';ad.style.opacity=(S.alertDot&&st==='card')?1:0;
   // 文字
   var tr=S.track;
   $('peekline').innerHTML=esc(tr.t)+(tr.a?'<em style="color:'+css(P.text)+'">'+esc(tr.a)+'</em>':'');
@@ -874,9 +875,10 @@ $('stage').addEventListener('click',function(ev){
     if(S.alertDot){/* 留着 */}
   }
 });
-/* 悬停刘海本身 0.12 秒开那一排；离开 0.5 秒收（只对悬停打开的那一排） */
+/* 长按刘海本身 0.5 秒开那一排（指针停上去不展开）；离开 0.5 秒收（只对长按打开的那一排） */
 var hoverT=0,leaveT=0;
-$('notchhit').addEventListener('pointerenter',function(e){if(e.pointerType!=='mouse')return;clearTimeout(leaveT);hoverT=setTimeout(function(){if(['compact','rest'].indexOf(S.state)>=0&&!S.locked&&!S.full){S.rowByHover=true;setState('row','expand');cap('row','')}},120)});
+$('notchhit').addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse')return;clearTimeout(leaveT);hoverT=setTimeout(function(){if(['compact','rest'].indexOf(S.state)>=0&&!S.locked&&!S.full){S.rowByHover=true;setState('row','expand');cap('row','')}},500)});
+$('notchhit').addEventListener('pointerup',function(){clearTimeout(hoverT)});
 $('notchhit').addEventListener('pointerleave',function(){clearTimeout(hoverT)});
 $('island').addEventListener('pointerenter',function(){clearTimeout(leaveT)});
 $('island').addEventListener('pointerleave',function(){if(S.state==='row'&&S.rowByHover){leaveT=setTimeout(function(){if(S.state==='row')closeAll()},500)}});

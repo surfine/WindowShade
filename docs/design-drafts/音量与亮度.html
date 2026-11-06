@@ -88,12 +88,12 @@ td small{color:var(--faint)}
 .pane h4{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--win-ink-2)}
 .scard{background:var(--win-card);border-radius:10px;box-shadow:0 0 0 .5px var(--win-line)}
 .srow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px}
-.sym{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:#5E8BE8}
+.sym{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:#007aff}
 .sym svg{width:15px;height:15px}
 .sn{font-size:13px;font-weight:500;line-height:1.35}
 .ss{font-size:11.5px;color:var(--win-ink-2);line-height:1.4}
 .info{width:16px;height:16px;border-radius:50%;border:1.3px solid var(--win-ink-2);color:var(--win-ink-2);font-size:10px;display:inline-grid;place-items:center;margin-left:5px;font-weight:600;vertical-align:1px}
-.tg{width:30px;height:18px;border-radius:9px;background:#34C759;position:relative;flex:none;display:inline-block;vertical-align:middle}
+.tg{width:30px;height:18px;border-radius:9px;background:#28cd41;position:relative;flex:none;display:inline-block;vertical-align:middle}
 .tg::after{content:"";position:absolute;top:2px;left:14px;width:14px;height:14px;border-radius:50%;background:#fff}
 .tg.offsw{background:rgba(120,120,128,.32)} .tg.offsw::after{left:2px}
 .sbtn{font-size:12px;padding:2px 9px;border-radius:6px;background:var(--win-bg);box-shadow:inset 0 0 0 .5px var(--win-line);margin-right:8px;color:var(--win-ink)}
@@ -121,8 +121,7 @@ svg text{font-family:var(--sans)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 11 张 · 音量与亮度</span><span class="ws-st ws-old">定稿 · 10-09</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp">← 正在播放</a><a href="https://claude.ai/artifact/JnUmLbVvSb9igvSxs4QSYp">日历、电量与计时器 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 2 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：WindowShade 今天：210 × 36 胶囊；全屏里不出</span> → <b>现在：</b>两耳各 76 已落（LV3）；原生全屏里面板真的看得见才出，已落 <span class="src">（design-grammar 对照账 283「实现对照」）</span></li><li><span class="was">原来：待定：右耳写不写百分比；条用白色还是强调色</span> → <b>现在：</b>已定：只画条，不写数；条白色 <span class="src">（design-grammar 对照账 283（Aaron 10-09））</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 11 张 · 音量与亮度</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp">← 正在播放</a><a href="https://claude.ai/artifact/JnUmLbVvSb9igvSxs4QSYp">日历、电量与计时器 →</a></nav>
 
 <div class="wrap">
   <h1>音量与亮度</h1>
@@ -213,9 +212,9 @@ svg text{font-family:var(--sans)}
   <p class="sub">数字取 MacBook Air 15 英寸：刘海 185 × 33.5，底角 10.71。弹簧只用已有令牌（response 秒 / 阻尼比 ζ）。</p>
   <div class="grid2">
     <div class="card"><h3>形状：两耳，不往下鼓</h3><ul>
-      <li>每只耳朵 <b>76</b>，总宽 185 + 2 × 76 = <b>337</b>；高 = 刘海高 <b>33.5</b>，不往下鼓，没有额头。底角 <span class="token">island.hug</span> 10.71。</li>
+      <li>每只耳朵宽按内容：条这一边主体 8 + 32 + 14 = <b>54</b>，加肩 7.74 = <b>61.74</b>，不超过 <b>62.33</b>（音量、亮度是《两耳的岛》点名的例外：普通耳上限 52.33，这两只允许到 HIG 最宽一档 62.33；放不下就把条缩短）；主体总宽 185 + 2 × 54 = <b>293</b>（连肩 308.5）；高 = 刘海高 <b>33.5</b>，不往下鼓，没有额头。底角 <span class="token">island.hug</span> 10.71。</li>
       <li>两耳对称，像灵动岛：右耳要放条，左耳跟着一样宽。</li>
-      <li>比 34 宽，按令牌 §5.1 S3 不画肩，顶角直角；肩在长出的前 24 点里收到 0，同一根弹簧。</li>
+      <li>比刘海宽也画肩（照《两耳的岛》）：肩 r 5.06、延伸 7.74，跟着耳朵的外沿走，长出和收回时一直在，同一根弹簧；点击穿透，肩不占新的菜单栏空位（S1、S2）。</li>
       <li>两耳只在按键后亮 1.2 秒，点击穿透，菜单栏照常能点。</li>
       <li>长出 <span class="token">pop</span> 0.30 / 0.75；收回 <span class="token">calm</span> 0.34 / 1.0。</li>
     </ul></div>
@@ -226,10 +225,10 @@ svg text{font-family:var(--sans)}
       <li>亮度：&lt; 50% <code>sun.min.fill</code>，否则 <code>sun.max.fill</code>。键盘灯：0 熄灭、&lt; 50% <code>light.min</code>、否则 <code>light.max</code>。符号名都在这台 Mac 上核对过。</li>
     </ul></div>
     <div class="card"><h3>右耳：一根条，不写数</h3><ul>
-      <li>条长 <b>54</b>、高 <b>6</b>，胶囊；离刘海 8，离外沿 14。轨道白 0.22（增强对比度 0.45），填充白 1.0。</li>
+      <li>条长 <b>32</b>、高 <b>6</b>，胶囊；离刘海 8，离外沿 14（耳朵窄了，条就缩短，不让耳朵超过 62.33）。轨道白 0.22（增强对比度 0.45），填充白 1.0。</li>
       <li>不写百分比：系统的提示和灵动岛都不写；细调时数字是 23.4% 这种，读起来比条难。读屏念数。</li>
       <li>条的变化用 <span class="token">pop</span>，按住时一格接一格，连成一条扫动。</li>
-      <li>步长照系统：一下 <b>1/16</b>（6.25%，条上 3.4 点）；按着 ⌥⇧ 是 <b>1/64</b>（0.84 点）。</li>
+      <li>步长照系统：一下 <b>1/16</b>（6.25%，条上 2 点）；按着 ⌥⇧ 是 <b>1/64</b>（0.5 点）。</li>
     </ul></div>
     <div class="card"><h3>到头了再按：拉长再弹回</h3><ul>
       <li>100% 再按 +：条往外沿拉长；0% 再按 −：往刘海那侧拉长。数值不变、不再写。</li>
@@ -248,7 +247,7 @@ svg text{font-family:var(--sans)}
       <li><b>放行</b>（刷脸解锁、等你批准）在上：不拦键，系统的提示出来。</li>
       <li><b>你打开的</b>不被换页：正在播放大卡里，控制那一排换成滑条；那一排展开时，上沿两耳换成符号和条，形状不动。1.2 秒后换回，不重播进场。</li>
       <li><b>短暂提醒</b>正在说：变成一个点并消耗掉，不回来补说。</li>
-      <li><b>持续活动</b>（正在播放、番茄钟的紧凑两耳）：耳朵从 34 长到 76、换内容，收回后原样回来。</li>
+      <li><b>持续活动</b>（正在播放、番茄钟的紧凑两耳）：耳朵从紧凑的宽长到 61.74（主体 54 + 肩）、换内容，收回后原样回来。</li>
     </ul></div>
   </div>
   <div class="card"><h3>只认按键，不认数值</h3>
@@ -292,7 +291,7 @@ svg text{font-family:var(--sans)}
       <tr><td>什么时候出</td><td>任何来源改了都出（Core Audio 监听）；亮度看 1.5 秒内有没有按</td><td>只认用户输入；个性化、自适应音量不出</td><td>按键后 0.6 秒内的变化才出</td><td>同今天，只认按键</td></tr>
       <tr><td>0% / 100% 再按</td><td>出；刘海里没有回弹（竖条样式才有）</td><td>出，过冲回弹（已强制开）</td><td>出，不回弹</td><td>出，条拉长最多 8 点再 <span class="token">pop</span> 弹回</td></tr>
       <tr><td>按住</td><td>一格格连成扫动</td><td>未写</td><td>出，1.2 秒收</td><td>一直开着，最后一下后 1.2 秒收</td></tr>
-      <tr><td>样子</td><td>两翼各 92；左图标加字，右 5 点条加百分比</td><td>刘海两侧；标签、百分比可选</td><td>210 × 36 胶囊；右耳 3.5 点细条加百分比</td><td>两耳各 76、高同刘海；左符号，右 54 × 6 条</td></tr>
+      <tr><td>样子</td><td>两翼各 92；左图标加字，右 5 点条加百分比</td><td>刘海两侧；标签、百分比可选</td><td>210 × 36 胶囊；右耳 3.5 点细条加百分比</td><td>两耳各 61.74（主体 54 + 肩 7.74，例外上限 62.33）、高同刘海；左符号，右 32 × 6 条</td></tr>
       <tr><td>符号</td><td>三档声波；蓝牙耳机换设备图标</td><td>设备符号很多</td><td>喇叭不变</td><td>四档；AirPods、耳机换设备；静音一律斜线喇叭</td></tr>
       <tr><td>颜色</td><td>按电平变色</td><td>分贝样式变橙、发光</td><td>强调色</td><td>白（见待定）</td></tr>
       <tr><td>百分比</td><td>开</td><td>可选</td><td>有</td><td>不写，读屏念</td></tr>
@@ -330,9 +329,9 @@ svg text{font-family:var(--sans)}
       <tr><td>系统“调音量时播放反馈”开着</td><td>我们拦了键，系统就不响；由我们放系统自己的那一声，最快 80 毫秒一次。</td></tr>
       <tr><td>Air 15 键盘上没有键盘灯键</td><td>这台 Mac 上不会出；只有带键盘灯键的键盘按了才出。控制中心里调键盘灯不出（不是按键）。</td></tr>
       <tr><td>多块屏</td><td>音量出在指针所在那块屏；那块屏没刘海就用胶囊（S4，不画假刘海）。亮度出在被调的那块，也就是内建屏。</td></tr>
-      <tr><td>刘海旁边的菜单栏空位不够 76</td><td>两耳照样长，盖住的菜单只盖 1.2 秒，点击穿透。空位只决定紧凑两耳（34），不决定这里。</td></tr>
+      <tr><td>刘海旁边的菜单栏空位不够 61.74</td><td>两耳照样长，盖住的菜单只盖 1.2 秒，点击穿透。空位只决定紧凑两耳（按内容的宽），不决定这里。</td></tr>
       <tr><td>提醒正在说</td><td>变成一个点，消耗掉。</td></tr>
-      <tr><td>番茄钟正在紧凑两耳</td><td>和正在播放一样：耳朵长到 76、换内容，收回后原样回来，不重播“开始了”。</td></tr>
+      <tr><td>番茄钟正在紧凑两耳</td><td>和正在播放一样：耳朵长到 61.74、换内容，收回后原样回来，不重播“开始了”。</td></tr>
       <tr><td>正在拖窗口到落点小岛、两指下拉刘海</td><td>不拦，系统出提示；交互层里先来的手势不让。</td></tr>
       <tr><td>安全输入（密码框有焦点）时</td><td>系统按键事件还收不收得到，真机核对；收不到就等于不拦，系统照常。</td></tr>
       <tr><td>VoiceOver</td><td>最后一下之后 0.5 秒念一次：“音量 45%”“静音”“亮度 70%”“键盘灯 40%”，不逐格念。</td></tr>
@@ -395,7 +394,7 @@ svg text{font-family:var(--sans)}
       <tr><td><code>Core/NotchLevelStep.swift</code>（新）</td><td>1/16、1/64、落格、夹到 0–1、到头次数、橡皮筋拉长量、符号分档。</td></tr>
       <tr><td><code>App/NotchLevelObserver.swift</code></td><td>能拦时换成主动的 <code>CGEvent</code> 监听（只订阅系统按键）；拦不了退回现在的全局旁听；超时立刻重开；回调只查缓存，不碰 Core Audio。</td></tr>
       <tr><td><code>App/NotchLevelControl.swift</code>（新）</td><td>写音量与静音（复用 <code>App/WS2RemoteEffects.swift</code> 已有的写入）、写内建屏亮度、写键盘灯；读回核对；失败时带记号补发原键；放反馈声。</td></tr>
-      <tr><td><code>App/Notch.swift</code></td><td><code>presentLevel</code> 换成两耳 337 × 33.5；收回时间收进 <code>Motion.Hold.level</code> 1.2；拉长弹簧；读屏 0.5 秒后念一次；全屏可见性检查；探针加宽度、符号档、拉长量。</td></tr>
+      <tr><td><code>App/Notch.swift</code></td><td><code>presentLevel</code> 换成两耳 293 × 33.5（主体，连肩 308.5，每耳不超过 62.33，音量、亮度的例外）；收回时间收进 <code>Motion.Hold.level</code> 1.2；拉长弹簧；读屏 0.5 秒后念一次；全屏可见性检查；探针加宽度、符号档、拉长量。</td></tr>
       <tr><td><code>App/NotchActivityView.swift</code></td><td>两耳的符号与条；大卡控制那一排 ⇄ 滑条的内容替换。</td></tr>
       <tr><td><code>Core/NotchRow.swift</code></td><td>那一排展开时，上沿两耳的内容替换成符号和条，格子不动。</td></tr>
       <tr><td><code>App/NowPlayingStream.swift</code></td><td>不改数据源；大卡要的输出设备名和型号从 <code>NotchLevelControl</code> 拿。</td></tr>
@@ -407,15 +406,15 @@ svg text{font-family:var(--sans)}
   <div class="wp">
     <div><b>LV1</b>判定表和步长（纯逻辑）<p>写 <code>NotchLevelSuppression</code> 与 <code>NotchLevelStep</code>，扩 <code>NotchLevelGate</code>。验收：测试覆盖上面判定表 15 行、1/16 与 1/64、落格、0 和 100 再按、符号分档；不碰 AppKit。</p></div>
     <div><b>LV2</b>拦键与写回<p>主动监听、写入、读回、补发、超时重开、反馈声、核对过的版本表。验收（真机 macOS 27）：内建扬声器连按 20 次，系统提示 0 次；HDMI 输出时系统提示照常、键有效；按住时 <code>kill -9</code> 进程，下一下就是系统提示；按住 5 秒不掉键。</p></div>
-    <div><b>LV3</b>两耳的画面<p><code>Notch.swift</code> 与 <code>NotchActivityView.swift</code>：337 × 33.5、符号四档、条、拉长、1.2 秒、读屏一次、全屏里出。验收：对着这张稿截图；减少动态效果、增强对比度各一张；探针读出宽度、符号档、拉长量。</p></div>
+    <div><b>LV3</b>两耳的画面<p><code>Notch.swift</code> 与 <code>NotchActivityView.swift</code>：293 × 33.5（连肩 308.5）、符号四档、条、拉长、1.2 秒、读屏一次、全屏里出。验收：对着这张稿截图；减少动态效果、增强对比度各一张；探针读出宽度、符号档、拉长量。</p></div>
     <div><b>LV4</b>大卡和那一排<p>大卡控制那一排换滑条、那一排展开时上沿换两耳。依赖正在播放大卡的包。验收：大卡开着按音量，控制那一排变滑条，1.2 秒换回，卡片不重播进场；滑条能拖。</p></div>
     <div><b>LV5</b>设置、允许、登记<p>一行三种副标题、“允许…”那一路、隐私登记 <code>level-keys</code> 与扫描词。验收：隐私检查脚本通过；文案过 copy-guide；撤销辅助功能后 1 秒内退回两个都在。</p></div>
   </div>
 
-  <h2>待 Aaron 定</h2>
+  <h2>已定（Aaron 10-09）</h2>
   <div class="card"><ol>
-    <li><b>右耳写不写百分比。</b>推荐<b>不写</b>：系统提示和灵动岛都只画条，细调时的 23.4% 比条难读；读屏照样念数。写的话右耳要再宽 30，两耳变 106。</li>
-    <li><b>条用白色还是强调色。</b>推荐<b>白色</b>：音量亮度是系统的数，不是一件活动，像系统一样黑底白条；颜色留给活动的语气点。现状（C01）是强调色，定白就把 C01 那一条改掉。</li>
+    <li><b>右耳写不写百分比。</b>已定<b>不写</b>：系统提示和灵动岛都只画条，细调时的 23.4% 比条难读；读屏照样念数。写的话右耳要再宽约 30，超过每耳上限 62.33，放不下。</li>
+    <li><b>条用白色还是强调色。</b>已定<b>白色</b>：音量亮度是系统的数，不是一件活动，像系统一样黑底白条；颜色留给活动的语气点。
   </ol></div>
 
   <footer>示意机型 MacBook Air 15 英寸，刘海 185 × 33.5。稿只画画面，不是源码。图标都是这页手画的简图，SF Symbols 名写在规则里。Atoll（GPL）只借做法与数字，Alcove 只看公开更新说明。2026-10-09。</footer>
@@ -426,13 +425,13 @@ svg text{font-family:var(--sans)}
   'use strict';
   /* ---------- 令牌 ---------- */
   var TOK = { calm:[0.34,1.0], pop:[0.30,0.75], expand:[0.40,0.92], bloom:[0.42,0.84], settle:[0.38,1.0] };
-  var HW = { w:185, h:33.5, rb:10.71, e:7.4 };
+  var HW = { w:185, h:33.5, rb:10.71, e:7.74 };
   var CX = 380, VBW = 760, VBH = 260;
-  var EAR = 76, HUDW = HW.w + 2*EAR;            // 337
-  var BAR = { len:54, h:6, gap:8, inset:14 };
+  var BAR = { len:32, h:6, gap:8, inset:14 };
+  var EAR = BAR.gap + BAR.len + BAR.inset, HUDW = HW.w + 2*EAR;   // 耳朵主体 54（+ 肩 7.74 = 61.74，不超过 62.33，音量、亮度的例外）；主体总宽 293
   var HOLD = 1.2, REPEAT_DELAY = 375, REPEAT_EVERY = 90, OV_MAX = 8, RB_C = 0.55;
   var BASE = {
-    none:{W:HW.w,H:HW.h,R:HW.rb}, music:{W:HW.w+68,H:HW.h,R:HW.rb}, fullscreen:{W:HW.w,H:HW.h,R:HW.rb},
+    none:{W:HW.w,H:HW.h,R:HW.rb}, music:{W:HW.w+57.5,H:HW.h,R:HW.rb}, fullscreen:{W:HW.w,H:HW.h,R:HW.rb},
     card:{W:440,H:190,R:28}, row:{W:560,H:175.5,R:28}, auth:{W:300,H:84,R:22},
     locked:{W:HW.w,H:HW.h,R:HW.rb}, mc:{W:HW.w,H:HW.h,R:HW.rb}
   };
@@ -473,7 +472,7 @@ svg text{font-family:var(--sans)}
   }
 
   /* ---------- 形状：主体 + 肩（照 宽形状画肩） ---------- */
-  function shoulderFor(W){ return W <= HW.w + 68 + 0.01 ? HW.e : HW.e*clamp(1-(W-(HW.w+68))/24,0,1); }
+  function shoulderFor(W){ return HW.e; }   /* 比刘海宽也画肩，一直在 */
   function shapePath(cx,W,H,rb,e){
     var x0=cx-W/2, x1=cx+W/2, k=0.5523, kb=0.64, d='';
     rb = Math.min(rb, H/2, W/2);
@@ -709,7 +708,7 @@ svg text{font-family:var(--sans)}
     if(c === 'music'){
       o += '<g transform="translate('+(nL-24)+' 16.75)" fill="#fff"><path d="M3 5.5 V-6 L11 -8 V3.5" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="1.5" cy="5.5" r="2.3"/><circle cx="9.5" cy="3.5" r="2.3"/></g>';
       o += '<circle cx="'+(nR+17)+'" cy="16.75" r="6.5" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2.2"/>';
-      o += '<path d="'+arc(nR+17,16.75,6.5,0.42)+'" fill="none" stroke="#30d158" stroke-width="2.2" stroke-linecap="round"/>';
+      o += '<path d="'+arc(nR+17,16.75,6.5,0.42)+'" fill="none" stroke="#32d74b" stroke-width="2.2" stroke-linecap="round"/>';
     } else if(c === 'auth'){
       o += '<g transform="translate('+(x0+22)+' 16.75)" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M-6 -2 V-6 H-2 M2 -6 H6 V-2 M6 2 V6 H2 M-2 6 H-6 V2"/></g>';
       o += '<text x="'+CX+'" y="'+(HW.h+28)+'" font-size="13" font-weight="600" text-anchor="middle" fill="#fff">刷脸解锁</text>';

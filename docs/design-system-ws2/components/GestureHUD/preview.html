@@ -1,0 +1,15 @@
+<!-- @dsCard group="標題欄排窗" height=130 subtitle="跟手中 · 越過門檻" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>GestureHUD</title>
+<style>
+body{margin:0;padding:12px 16px;font-family:var(--font-sf);background:var(--window-bg);display:flex;gap:20px;flex-wrap:wrap}
+.hud{width:290px;max-width:100%;height:63px;border-radius:24px;box-sizing:border-box;padding:0 18px;display:flex;align-items:center;gap:12px;background:var(--window-bg);border:0.5px solid var(--separator);box-shadow:0 6px 20px rgba(0,0,0,.18);color:var(--label)}
+.track{flex:1;height:4px;border-radius:2px;background:var(--separator);position:relative;overflow:hidden}
+.fill{position:absolute;inset:0 auto 0 0;background:var(--label-secondary);border-radius:3px}
+.sym{font-size:18px;line-height:1;width:22px;text-align:center}
+.lab{font-size:13px;font-weight:600;color:var(--label-secondary)}
+.done .fill{background:var(--accent)} .done .end{color:var(--accent);transform:scale(1.12)}
+</style></head><body>
+<div class="hud" aria-label="向左甩，到左半屏"><span class="sym">▭</span><div class="track"><div class="fill" style="width:55%"></div></div><span class="sym end">◧</span><span class="lab">左半屏</span></div>
+<div class="hud done" aria-label="松手到左半屏"><span class="sym">▭</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="sym end">◧</span><span class="lab">左半屏</span></div>
+</body></html>

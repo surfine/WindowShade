@@ -17,8 +17,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 7 张 · 卡住时刘海开口</span><span class="ws-st ws-old">定稿 · 10-08</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR">← 照系统的岛</a><a href="https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph">宽形状画肩 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 1 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：待定：要不要改成「这条不再说」</span> → <b>现在：</b>已定：小叉只关这一次，下次再卡住还会说；想不再听到，到设置「之前常用」改 <span class="src">（design-grammar 对照账（Aaron 10-09））</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 7 张 · 卡住时刘海开口</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR">← 照系统的岛</a><a href="https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph">宽形状画肩 →</a></nav>
 
 <title>卡住时刘海开口</title>
 <style>
@@ -27,6 +26,7 @@
   --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.09); --line2:rgba(0,0,0,.14);
   --ink:#1d1d1f; --muted:#5f6068; --faint:#66676e;
   --accent:#0058cc; --accent-ink:#0058cc; --accent-soft:rgba(10,108,255,.12); --on-accent:#fff;
+  --sys-accent:#007aff; --sys-green:#28cd41; --sys-orange:#ff9500; --sys-red:#ff3b30;
   --ok:#0e6436; --ok-soft:rgba(23,134,74,.12); --warn:#a35200; --warn-soft:rgba(214,120,0,.14);
   --chip:#f1f2f5; --chip-hover:#e6e8ed; --kbd:#fff; --kbd-edge:rgba(0,0,0,.18);
   --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),radial-gradient(110% 80% at 70% 105%,#6fb7e8 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
@@ -42,6 +42,7 @@
   --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
   --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
   --accent:#3d8bff; --accent-ink:#5a9cff; --accent-soft:rgba(61,139,255,.18); --on-accent:#fff;
+  --sys-accent:#0a84ff; --sys-green:#32d74b; --sys-orange:#ff9f0a; --sys-red:#ff453a;
   --ok:#4cc38a; --ok-soft:rgba(76,195,138,.16); --warn:#ffb35c; --warn-soft:rgba(255,160,60,.16);
   --chip:#26272c; --chip-hover:#303137; --kbd:#34353b; --kbd-edge:rgba(255,255,255,.14);
   --wall:radial-gradient(90% 70% at 12% 8%,#23457e 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#3b2f78 0%,transparent 60%),radial-gradient(110% 80% at 70% 105%,#0f4a6e 0%,transparent 60%),linear-gradient(160deg,#10192e,#0b1222);
@@ -55,6 +56,7 @@
   --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
   --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
   --accent:#3d8bff; --accent-ink:#5a9cff; --accent-soft:rgba(61,139,255,.18); --on-accent:#fff;
+  --sys-accent:#0a84ff; --sys-green:#32d74b; --sys-orange:#ff9f0a; --sys-red:#ff453a;
   --ok:#4cc38a; --ok-soft:rgba(76,195,138,.16); --warn:#ffb35c; --warn-soft:rgba(255,160,60,.16);
   --chip:#26272c; --chip-hover:#303137; --kbd:#34353b; --kbd-edge:rgba(255,255,255,.14);
   --wall:radial-gradient(90% 70% at 12% 8%,#23457e 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#3b2f78 0%,transparent 60%),radial-gradient(110% 80% at 70% 105%,#0f4a6e 0%,transparent 60%),linear-gradient(160deg,#10192e,#0b1222);
@@ -92,13 +94,13 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 
 /* ── 迷你 Mac ───────────────────────────── */
 .stagewrap{container-type:inline-size;width:100%}
-.desk{--u:min(1px,calc(100cqw / 520));position:relative;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line2),0 18px 40px -24px rgba(0,0,0,.5);font-family:var(--sans);user-select:none;-webkit-user-select:none;outline:none;touch-action:manipulation}
+.desk{--u:min(1px,calc(100cqw / 520));position:relative;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line2),0 18px 40px -24px rgba(0,0,0,.5);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif;user-select:none;-webkit-user-select:none;outline:none;touch-action:manipulation}
 .desk:focus-visible{box-shadow:0 0 0 2px var(--accent),0 18px 40px -24px rgba(0,0,0,.5)}
 .keyhint{position:absolute;right:calc(10*var(--u));bottom:calc(84*var(--u));z-index:30;font-size:calc(11*var(--u));padding:calc(3*var(--u)) calc(8*var(--u));border-radius:99px;background:rgba(0,0,0,.55);color:#fff;pointer-events:none;opacity:.9;transition:opacity .2s}
 .desk:focus .keyhint{opacity:0}
 .desk.pc:focus .keyhint{opacity:.9}
 @media (pointer:coarse){.keyhint{display:none}}
-.menubar{position:absolute;inset:0 0 auto;height:calc(32*var(--u));display:flex;align-items:center;justify-content:space-between;padding-inline:calc(14*var(--u));font-size:calc(13*var(--u));color:var(--menu-ink);z-index:12;transition:transform .3s}
+.menubar{position:absolute;inset:0 0 auto;height:calc(34*var(--u));display:flex;align-items:center;justify-content:space-between;padding-inline:calc(14*var(--u));font-size:calc(13*var(--u));color:var(--menu-ink);z-index:12;transition:transform .3s}
 .menubar .l,.menubar .r{display:flex;align-items:center;gap:calc(15*var(--u));white-space:nowrap;min-width:0}
 .menubar .l{overflow:hidden;max-width:calc(50% - 100*var(--u));flex-wrap:wrap;height:calc(18*var(--u));row-gap:calc(20*var(--u))}
 #menus{display:contents}
@@ -109,17 +111,21 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .menubar .ime{font-size:calc(11*var(--u));font-weight:600;border:calc(1.2*var(--u)) solid currentColor;border-radius:calc(4*var(--u));padding:0 calc(3*var(--u));line-height:1.35}
 .menubar svg{width:calc(16*var(--u));height:calc(16*var(--u));display:block}
 @container (max-width:470px){.menubar .opt,.menubar .date{display:none}}
-.notch{position:absolute;top:0;left:50%;width:calc(185*var(--u));height:calc(32*var(--u));transform:translateX(-50%);background:#000;border-radius:0 0 calc(10*var(--u)) calc(10*var(--u));z-index:20;cursor:pointer;border:0;padding:0}
-.notch::before,.notch::after{content:"";position:absolute;top:0;width:calc(7*var(--u));height:calc(7*var(--u))}
-.notch::before{left:calc(-7*var(--u));background:radial-gradient(circle at 0 100%,transparent calc(7*var(--u)),#000 calc(7.3*var(--u)))}
-.notch::after{right:calc(-7*var(--u));background:radial-gradient(circle at 100% 100%,transparent calc(7*var(--u)),#000 calc(7.3*var(--u)))}
+.notch{position:absolute;top:0;left:50%;width:calc(185*var(--u));height:calc(33.5*var(--u));transform:translateX(-50%);background:#000;border-radius:0 0 calc(10.7*var(--u)) calc(10.7*var(--u));z-index:20;cursor:pointer;border:0;padding:0}
+.notch::before,.notch::after,.ish{content:"";position:absolute;top:0;width:calc(7.4*var(--u));height:calc(5.06*var(--u))}
+.notch::before{left:calc(-7.4*var(--u));background:radial-gradient(ellipse calc(7.4*var(--u)) calc(5.06*var(--u)) at 0 100%,transparent 97%,#000 100%)}
+.notch::after{right:calc(-7.4*var(--u));background:radial-gradient(ellipse calc(7.4*var(--u)) calc(5.06*var(--u)) at 100% 100%,transparent 97%,#000 100%)}
+/* 宽过刘海的岛（提醒、教学）也画肩：r 5.06，延伸 7.4；跟着岛的弹簧走，点击穿透 */
+.ish{z-index:39;visibility:hidden;pointer-events:none;transition:left var(--spring-dur,.5s) var(--spring-ease,ease)}
+.ish.l{background:radial-gradient(ellipse calc(7.4*var(--u)) calc(5.06*var(--u)) at 0 100%,transparent 97%,#000 100%)}
+.ish.r{background:radial-gradient(ellipse calc(7.4*var(--u)) calc(5.06*var(--u)) at 100% 100%,transparent 97%,#000 100%)}
 
 /* 刘海里那一块岛：尺寸、圆角、描边照 Notch.swift */
-.island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:calc(185*var(--u));height:calc(32*var(--u));background:#000;border-radius:0 0 calc(10*var(--u)) calc(10*var(--u));overflow:hidden;z-index:40;visibility:hidden;color:#fff;
-  transition-property:width,height,border-radius;transition-duration:var(--spring-dur,.5s);transition-timing-function:var(--spring-ease,cubic-bezier(.3,1.2,.4,1))}
+.island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:calc(185*var(--u));height:calc(33.5*var(--u));background:#000;border-radius:0 0 calc(10.7*var(--u)) calc(10.7*var(--u));overflow:hidden;z-index:40;visibility:hidden;color:#fff;
+  transition-property:width,height,border-radius;transition-duration:var(--spring-dur,.5s);transition-timing-function:var(--spring-ease,ease)}
 .island.on{visibility:visible}
 .island .keyline{position:absolute;inset:calc(-2*var(--u)) 0 0 0;border-radius:inherit;border:calc(var(--bw,1)*var(--u)) solid var(--bc,rgba(255,255,255,.14));pointer-events:none;z-index:3}
-.island .content{position:absolute;left:0;right:0;top:calc(32*var(--u));bottom:0;opacity:0;transition:opacity .1s linear}
+.island .content{position:absolute;left:0;right:0;top:calc(33.5*var(--u));bottom:0;opacity:0;transition:opacity .1s linear}
 .island .content.in{opacity:1;transition-duration:.18s}
 .island .hit{position:absolute;inset:0;border:0;background:none;cursor:pointer;z-index:4;border-radius:inherit}
 .island .hit:focus-visible{outline:2px solid #fff;outline-offset:-4px}
@@ -128,7 +134,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .island .x svg{width:calc(8*var(--u));height:calc(8*var(--u))}
 .island .x:hover{background:rgba(255,255,255,.28);color:#fff}
 .teach{position:absolute;inset:0}
-.demo{position:absolute;left:calc(14*var(--u));top:50%;margin-top:calc(-30*var(--u));width:calc(100*var(--u));height:calc(60*var(--u));border-radius:calc(8*var(--u));background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.16);overflow:hidden}
+.demo{position:absolute;left:calc(14*var(--u));top:50%;margin-top:calc(-30*var(--u));width:calc(100*var(--u));height:calc(60*var(--u));border-radius:calc(10*var(--u));background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.16);overflow:hidden}
 .demo *{position:absolute}
 .teach .txt{position:absolute;left:calc(126*var(--u));right:calc(14*var(--u));top:50%;transform:translateY(-50%)}
 .teach .t{font-size:calc(13*var(--u));font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -141,13 +147,13 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 
 /* 刘海里的小演示（NotchDemoView 100×60，一轮 2.2 秒，演三遍停下） */
 .demo .cap{height:calc(15*var(--u));min-width:calc(15*var(--u));padding:0 calc(3*var(--u));border-radius:calc(3.5*var(--u));background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.28);font:600 calc(9.5*var(--u))/calc(15*var(--u)) var(--sans);text-align:center;color:#fff;white-space:nowrap}
-.demo .cap.new{background:var(--sys-accent,#0a84ff);box-shadow:none}
+.demo .cap.new{background:var(--sys-accent);box-shadow:none}
 .demo .row{display:flex;gap:calc(2*var(--u));left:0;right:0;justify-content:center;position:absolute}
 .demo .row>*{position:static}
 .demo .old{top:calc(9*var(--u))}
 .demo .nw{top:calc(36*var(--u))}
 .demo .arrow{left:calc(46*var(--u));top:calc(25*var(--u));width:calc(8*var(--u));height:calc(10*var(--u));color:rgba(255,255,255,.7);font:600 calc(9*var(--u))/1 var(--sans)}
-.demo .strike{left:30%;right:30%;top:calc(16*var(--u));height:calc(1.5*var(--u));background:#ff6961;transform-origin:0 50%;transform:scaleX(0)}
+.demo .strike{left:30%;right:30%;top:calc(16*var(--u));height:calc(1.5*var(--u));background:var(--sys-red);transform-origin:0 50%;transform:scaleX(0)}
 .run .old{animation:dOld 2.2s var(--ws-settle) 3 forwards}
 .run .strike{animation:dStrike 2.2s var(--ws-settle) 3 forwards}
 .run .nw,.run .arrow{animation:dNew 2.2s var(--ws-settle) 3 forwards}
@@ -155,7 +161,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 @keyframes dStrike{0%,30%{transform:scaleX(0)}45%,100%{transform:scaleX(1)}}
 @keyframes dNew{0%,40%{opacity:0;transform:translateY(calc(3*var(--u)))}58%,100%{opacity:1;transform:none}}
 .demo .mn{left:calc(36*var(--u));top:0;width:calc(28*var(--u));height:calc(7*var(--u));background:#000;box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.5);border-radius:calc(3*var(--u))}
-.demo .fg{width:calc(8*var(--u));height:calc(8*var(--u));margin:calc(-4*var(--u)) 0 0 calc(-4*var(--u));border-radius:50%;background:var(--sys-accent,#0a84ff);box-shadow:inset 0 0 0 calc(1.5*var(--u)) #fff;opacity:0}
+.demo .fg{width:calc(8*var(--u));height:calc(8*var(--u));margin:calc(-4*var(--u)) 0 0 calc(-4*var(--u));border-radius:50%;background:var(--sys-accent);box-shadow:inset 0 0 0 calc(1.5*var(--u)) #fff;opacity:0}
 .demo .ico{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:calc(3.5*var(--u));opacity:0}
 .demo .mw{background:rgba(255,255,255,.92);border-radius:calc(3*var(--u));overflow:hidden}
 .demo .mw::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(6*var(--u));background:#9e9e9e}
@@ -190,9 +196,9 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .win.front .lights button:nth-child(1){background:#ff5f57}.win.front .lights button:nth-child(2){background:#febc2e}.win.front .lights button:nth-child(3){background:#28c840;cursor:pointer}
 .win .body{flex:1;min-height:0;position:relative;overflow:hidden}
 .win.shaded{height:calc(30*var(--u))!important}
-.win.fill{left:calc(6*var(--u))!important;top:calc(38*var(--u))!important;width:calc(100% - 12*var(--u))!important;height:calc(100% - 38*var(--u) - 74*var(--u))!important}
-.win.lhalf{left:calc(6*var(--u))!important;top:calc(38*var(--u))!important;width:calc(50% - 9*var(--u))!important;height:calc(100% - 38*var(--u) - 74*var(--u))!important}
-.win.full{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border-top:calc(32*var(--u)) solid #000;z-index:13!important}
+.win.fill{left:calc(6*var(--u))!important;top:calc(40*var(--u))!important;width:calc(100% - 12*var(--u))!important;height:calc(100% - 40*var(--u) - 74*var(--u))!important}
+.win.lhalf{left:calc(6*var(--u))!important;top:calc(40*var(--u))!important;width:calc(50% - 9*var(--u))!important;height:calc(100% - 40*var(--u) - 74*var(--u))!important}
+.win.full{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border-top:calc(33.5*var(--u)) solid #000;z-index:13!important}
 .win.gone{opacity:0;transform:scale(.9);pointer-events:none}
 .win.hidden{opacity:0;transform:scale(.96);pointer-events:none}
 .desk.showdesk .win{transform:translate(var(--dx,-80%),var(--dy,-10%))}
@@ -318,7 +324,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 <div class="wrap">
 <header>
   <h1>卡住时刘海开口</h1>
-  <p class="lede">从 Windows、iPad 换过来的人，按了旧习惯、Mac 上没反应时，刘海才说一句 Mac 上怎么做。点一下提示，刘海替你做那一下，这条以后不再说。右上角的小叉只关掉这一次。</p>
+  <p class="lede">从 Windows、iPad 换过来的人，按了旧习惯、Mac 上没反应时，刘海才说一句 Mac 上怎么做。点一下提示，刘海替你做那一下，这条以后不再说。右上角的小叉只关掉这一次，下次再卡住还会说；想不再听到，到设置「之前常用」改。</p>
 </header>
 <div class="grid">
 <main>
@@ -339,6 +345,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
         <span class="date">9月29日 周二 15:41</span></div>
     </div>
     <button type="button" class="notch" id="notch" aria-label="刘海：点一下回到主屏幕"></button>
+    <i class="ish l" id="ishL" aria-hidden="true"></i><i class="ish r" id="ishR" aria-hidden="true"></i>
     <div class="island" id="island" aria-hidden="true">
       <div class="keyline"></div>
       <div class="content" id="icontent"></div>
@@ -396,7 +403,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
       <dt>次数</dt><dd>同一条最多说 3 次</dd>
       <dt>间隔</dt><dd>任意两条之间隔 5 分钟，小样压成 10 秒 · <span class="cool" id="cool">现在可以说</span></dd>
       <dt>会了</dt><dd>自己按过 Mac 那一下，或点过提示，这条不再说</dd>
-      <dt>小叉</dt><dd>只关掉这一次，这条还会再说。待定：要不要改成“这条不再说”</dd>
+      <dt>小叉</dt><dd>只关掉这一次，下次再卡住还会说；想不再听到，到设置「之前常用」改（已定）</dd>
     </dl>
     <p style="margin:10px 0 0"><button type="button" class="reset" id="reset">从头再来</button></p>
   </section>
@@ -488,21 +495,24 @@ function applySpring(el, response, bounce) {
   if (reduced()) { response = 0.25; bounce = 0; }
   const s = spring(response, bounce);
   el.style.setProperty("--spring-dur", s.dur.toFixed(3) + "s");
-  el.style.setProperty("--spring-ease", LINEAR_OK ? s.ease : (bounce > 0 ? "cubic-bezier(.3,1.25,.45,1)" : "cubic-bezier(.25,1,.5,1)"));
+  el.style.setProperty("--spring-ease", LINEAR_OK ? s.ease : "ease"); /* 不支持 linear() 的旧浏览器：示意用 ease，产品用 bloom / calm 弹簧 */
+  for (const sh of [ishL, ishR]) { sh.style.setProperty("--spring-dur", s.dur.toFixed(3) + "s"); sh.style.setProperty("--spring-ease", LINEAR_OK ? s.ease : "ease"); }
   return s.dur * 1000;
 }
+const ishL = $("#ishL"), ishR = $("#ishR");
 const island = $("#island"), icontent = $("#icontent"), ihit = $("#ihit"), ix = $("#ix");
 let alertTimer = 0, hideTimer = 0, current = null;
-const NOTCH = { w: 185, h: 32, r: 10 };
+const NOTCH = { w: 185, h: 33.5, r: 10.7 };
 /* 岛的外框按像素算好再设：calc 里带容器单位时，有的浏览器不给补间。 */
-let box = [185, 32, 10];
+let box = [185, 33.5, 10.7];
 function setBox(w, h, r) {
   box = [w, h, r];
   const u = $("#notch").getBoundingClientRect().width / 185 || 1;
   island.style.width = (w * u).toFixed(2) + "px"; island.style.height = (h * u).toFixed(2) + "px";
   island.style.borderRadius = `0 0 ${(r * u).toFixed(2)}px ${(r * u).toFixed(2)}px`;
+  ishL.style.left = `calc(50% - ${((w / 2 + 7.4) * u).toFixed(2)}px)`; ishR.style.left = `calc(50% + ${((w / 2) * u).toFixed(2)}px)`;
 }
-new ResizeObserver(() => { island.style.transition = "none"; setBox(...box); void island.offsetWidth; island.style.transition = ""; }).observe($("#desk"));
+new ResizeObserver(() => { island.style.transition = "none"; ishL.style.transition = ishR.style.transition = "none"; setBox(...box); void island.offsetWidth; island.style.transition = ""; ishL.style.transition = ishR.style.transition = ""; }).observe($("#desk"));
 function caps(list, nw) { return list.map(k => `<span class="cap${nw ? " new" : ""}">${esc(k)}</span>`).join(""); }
 function demoHTML(d) {
   if (d.type === "keys") return `<div class="demo run"><div class="row old">${caps(d.old)}</div><div class="strike"></div><div class="arrow">↓</div><div class="row nw">${caps(d.nw, true)}</div></div>`;
@@ -515,23 +525,24 @@ function demoHTML(d) {
   return `<div class="demo run d-menu"><i class="mb"></i><i class="mi" style="left:calc(6*var(--u))"></i><i class="mi" style="left:calc(22*var(--u))"></i><i class="mi" style="left:calc(38*var(--u))"></i><i class="dd"></i><i class="fg"></i></div>`;
 }
 const TONE = {
-  tip: { c: "rgba(10,132,255,.8)", w: 1.5, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><path fill="#0a84ff" d="M9.2 5.6c1.3-.7 2.8-.2 3.5 1.1l3.3 6.1.5-.3c1-.5 2.2-.2 2.8.7l.4-.2c1-.5 2.2-.2 2.8.8l.3-.1c1.1-.5 2.4 0 2.9 1.1l1.4 3c1.6 3.5.2 7.6-3.2 9.4l-1.1.6c-3 1.6-6.7.9-8.9-1.7l-5.1-6c-.7-.8-.5-2 .4-2.6.8-.5 1.9-.4 2.6.3l1.6 1.7-4.7-8.7c-.7-1.3-.2-2.8 1-3.4z"/></svg>` },
-  done: { c: "rgba(255,255,255,.14)", w: 1, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="#30d158"/><path d="M9.5 15.5l3.8 3.8 7.4-8" stroke="#000" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-  problem: { c: "rgba(255,159,10,.75)", w: 1.5, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M13.2 5.2c.8-1.4 2.8-1.4 3.6 0l10 17.4c.8 1.4-.2 3.1-1.8 3.1H5c-1.6 0-2.6-1.7-1.8-3.1z" fill="#ff9f0a"/><path d="M15 11v6.5" stroke="#000" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="21.6" r="1.6"/></svg>` },
+  tip: { c: "color-mix(in srgb, var(--sys-accent) 80%, transparent)", w: 1.5, svg: `<svg viewBox="0 0 30 30" aria-hidden="true" style="color:var(--sys-accent)"><path fill="currentColor" d="M9.2 5.6c1.3-.7 2.8-.2 3.5 1.1l3.3 6.1.5-.3c1-.5 2.2-.2 2.8.7l.4-.2c1-.5 2.2-.2 2.8.8l.3-.1c1.1-.5 2.4 0 2.9 1.1l1.4 3c1.6 3.5.2 7.6-3.2 9.4l-1.1.6c-3 1.6-6.7.9-8.9-1.7l-5.1-6c-.7-.8-.5-2 .4-2.6.8-.5 1.9-.4 2.6.3l1.6 1.7-4.7-8.7c-.7-1.3-.2-2.8 1-3.4z"/></svg>` },
+  done: { c: "rgba(255,255,255,.14)", w: 1, svg: `<svg viewBox="0 0 30 30" aria-hidden="true" style="color:var(--sys-green)"><circle cx="15" cy="15" r="12" fill="currentColor"/><path d="M9.5 15.5l3.8 3.8 7.4-8" stroke="#000" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  problem: { c: "color-mix(in srgb, var(--sys-orange) 75%, transparent)", w: 1.5, svg: `<svg viewBox="0 0 30 30" aria-hidden="true" style="color:var(--sys-orange)"><path d="M13.2 5.2c.8-1.4 2.8-1.4 3.6 0l10 17.4c.8 1.4-.2 3.1-1.8 3.1H5c-1.6 0-2.6-1.7-1.8-3.1z" fill="currentColor"/><path d="M15 11v6.5" stroke="#000" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="21.6" r="1.6"/></svg>` },
   info: { c: "rgba(255,255,255,.14)", w: 1, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="#fff"/><circle cx="15" cy="9.6" r="1.8"/><path d="M15 13.6v8" stroke="#000" stroke-width="2.8" stroke-linecap="round"/></svg>` },
 };
-/* 教：宽 max(刘海+300, 500)，高 刘海+84，圆角 24，强调色描边 1.5，停 6.6 秒。
-   说：宽 max(刘海+200, 400)，高 刘海+52，停 min(4.5, 1.8+字数×0.05) 秒。 */
+/* 教：408 × 112（刘海 33.5 + 内容 78.5），圆角 24，强调色描边 1.5，停 coach.hold 6.6 秒。
+   说（提醒）：408 × 84，圆角 24，停 min(4.5, 1.8+字数×0.05) 秒（alert.hold 2.6 秒是不带字的短提醒）。
+   宽过刘海，两侧画肩。 */
 function openIsland(kind, o) {
   clearTimeout(alertTimer); clearTimeout(hideTimer);
   const teach = kind === "teach";
-  const w = teach ? Math.max(NOTCH.w + 300, 500) : Math.max(NOTCH.w + 200, 400);
-  const h = NOTCH.h + (teach ? 84 : 52);
+  const w = 408;
+  const h = teach ? 112 : 84;
   const tone = TONE[o.tone || "tip"];
   island.style.setProperty("--bc", tone.c); island.style.setProperty("--bw", tone.w);
   if (!island.classList.contains("on")) {
     island.style.transition = "none"; setBox(NOTCH.w, NOTCH.h, NOTCH.r);
-    island.classList.add("on"); void island.offsetWidth; island.style.transition = "";
+    island.classList.add("on"); ishL.style.visibility = ishR.style.visibility = "visible"; void island.offsetWidth; island.style.transition = "";
   }
   applySpring(island, 0.42, 0.16);
   setBox(w, h, 24);
@@ -558,7 +569,7 @@ function closeIsland(why) {
   island.setAttribute("aria-hidden", "true");
   ihit.tabIndex = -1; ix.tabIndex = -1; ix.classList.remove("show");
   if (document.activeElement === ihit || document.activeElement === ix) $("#desk").focus({ preventScroll: true });
-  hideTimer = setTimeout(() => { island.classList.remove("on"); icontent.innerHTML = ""; }, ms);
+  hideTimer = setTimeout(() => { island.classList.remove("on"); ishL.style.visibility = ishR.style.visibility = ""; icontent.innerHTML = ""; }, ms);
   if (why === "click" && o.onClick) o.onClick();
   if (why === "x" && o.onClose) o.onClose();
 }

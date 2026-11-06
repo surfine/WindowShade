@@ -85,11 +85,10 @@ tr:last-child td{border-bottom:0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 12 张 · 日历、电量与计时器</span><span class="ws-st ws-old">定稿 · 10-09</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">← 音量与亮度</a><a href="https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j">文件架 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 5 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：日程授权在欢迎窗口第三步问一次</span> → <b>现在：</b>等刘海第一次要说「快开会」时再问；拒绝了就什么都不出 <span class="src">（《首次打开 1.0.17 小样》（Aaron 10-17 拍板））</span></li><li><span class="was">原来：右上角亮一个点</span> → <b>现在：</b>被挡住的提醒留下的点：右下 8 点（右 10、下 8），强调色，读屏念一次 <span class="src">（design-grammar 对照账 258（C01））</span></li><li><span class="was">原来：两件持续活动时两只耳朵各放一件</span> → <b>现在：</b>第一件占两耳，第二件在右边挂一颗最小形，第三件只在那一排里；两指横扫切换 <span class="src">（design-grammar「左右耳是同一件活动的两半」）</span></li><li><span class="was">原来：归「问过你才读的」</span> → <b>现在：</b>隐私页的组名是「你同意后才读的」 <span class="src">（privacy-page.md）</span></li><li><span class="was">原来：11-04（bab193b0）：有刘海的屏不画常驻岛，有内容才从刘海下沿垂下一颗胶囊；两耳、电量闪、小圆、封面耳在刘海屏上都不出现</span> → <b>现在：</b>11-05 Aaron 推翻 11-04，回到刘海两耳（.sides）；整颗岛的样子见《两耳的岛》（11-05 已定，全部按推荐，第 83 条） <span class="src">（AARON-DECISIONS 11-05 第 82 条）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 12 张 · 日历、电量与计时器</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">← 音量与亮度</a><a href="https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j">文件架 →</a></nav>
 <div class="wrap">
   <h1>日历、电量与计时器</h1>
-  <p class="lede">三件小事放进同一颗岛：开会前 5 分钟开始倒数，插上电源时闪一下，还有你自己开的计时器。左耳显示是谁，右耳显示数字，句子写在下面；谁让谁，按六层和权重定。这张稿要证明：不加窗口，不进菜单，这三件事也能只在该出现的时候出现，其余时候刘海和硬件重合。机型按 Air 15 英寸：刘海 185 × 33.5，耳宽 34。</p>
+  <p class="lede">三件小事放进同一颗岛：开会前 5 分钟开始倒数，插上电源时闪一下，还有你自己开的计时器。左耳显示是谁，右耳显示数字，句子写在下面；谁让谁，按六层和权重定。这张稿要证明：不加窗口，不进菜单，这三件事也能只在该出现的时候出现，其余时候刘海和硬件重合。机型按 Air 15 英寸：刘海 185 × 33.5，耳高 33.5、耳宽按内容（每耳最多 52.33）。</p>
 
   <div class="ctl">
     <span class="lab">日程</span>
@@ -109,6 +108,7 @@ tr:last-child td{border-bottom:0}
       <button type="button" data-do="low10">10%</button>
       <button type="button" data-do="low5">5%</button>
       <button type="button" data-do="lpm" id="lpmBtn" aria-pressed="false">低电量模式</button>
+      <button type="button" data-do="unk" id="unkBtn" aria-pressed="false">电量读不到</button>
     </div>
     <span class="lab">设备</span>
     <div class="btns">
@@ -161,10 +161,10 @@ tr:last-child td{border-bottom:0}
       <h3>日程：只在快开会时出现</h3>
       <ul>
         <li><b>出现</b>：开始前 5 分钟（设置里可选 1 / 5 / 10 / 15，默认 5，取 Atoll 的默认值）。<b>全天、已拒绝、已取消</b>的日程都不出现。</li>
-        <li><b>紧凑</b>：左耳是日历颜色的环（剩余时间 ÷ 5 分钟，越来越空），右耳写“4 分”，最后一分钟写“0:42”。耳宽 34，放不下“马上开始”四个字，这四个字写进最后 10 秒的句子里。</li>
-        <li><b>最后 10 秒</b>：用 <span class="token">bloom</span> 鼓成提醒（400 × 85.5，圆角 24），主句是日程标题，次句写“马上开始 · 地点”，有会议链接时右边有“加入”。一直留到开始那一刻，至少 2.6 秒，然后用 <span class="token">calm</span> 收回。同一个日程只鼓一次。</li>
+        <li><b>紧凑</b>：左耳是日历颜色的环（剩余时间 ÷ 5 分钟，越来越空），右耳写“4 分”，最后一分钟写“0:42”。耳高 33.5，耳宽按内容（主体 2 + 28 + 7.75 = 37.75，加肩 7.74 = 45.49，每耳最多 52.33、主体 44.59），放不下“马上开始”四个字，这四个字写进最后 10 秒的句子里。</li>
+        <li><b>最后 10 秒</b>：用 <span class="token">bloom</span> 鼓成提醒（408 × 84，圆角 24，画肩），主句是日程标题，次句写“马上开始 · 地点”，有会议链接时右边有“加入”。一直留到开始那一刻，至少 2.6 秒，然后用 <span class="token">calm</span> 收回。同一个日程只鼓一次。</li>
         <li><b>开始后</b>：没有链接就收掉。有链接再留 5 分钟：左耳是满环，右耳是绿色摄像机，点开能“加入”。点了“加入”或日程结束就收。</li>
-        <li><b>展开</b>：点耳朵直接长成大卡（Aaron 2026-10-09 定，和《正在播放》一致）；在刘海那一排里点日程那一格也长成大卡（440 × 175.5，圆角 28，<span class="token">expand</span>）：标题、时间、地点、大号倒数、“还有 1 个”、加入。</li>
+        <li><b>展开</b>：点耳朵直接长成大卡（Aaron 2026-10-09 定，和《正在播放》一致）；在刘海那一排里点日程那一格也长成大卡（大卡例外：宽按内容，示意 420；刘海下方高 118，底角 28，画肩，<span class="token">expand</span>）：标题、时间、地点、大号倒数、“还有 1 个”、加入。</li>
         <li><b>加入</b>：只认会议链接（Zoom、Teams、Meet、Webex、腾讯会议、飞书、FaceTime），在日程的链接、地点、备注里找。已装会议 App 的交给 App 打开，否则用浏览器。找不到链接就不画按钮，不去猜。</li>
         <li><b>读多少</b>：EventKit 只查从现在起 24 小时内的日程。日历有改动（EKEventStoreChanged）时重查；下一个“该出现”的时刻挂一个一次性定时器，不按秒轮询。只有刘海看得见时才每秒重画倒数。</li>
       </ul>
@@ -173,18 +173,19 @@ tr:last-child td{border-bottom:0}
       <h3>电量：事件来了才说，插上那一下最短</h3>
       <ul>
         <li><b>来源</b>：<code>IOPSNotificationCreateRunLoopSource</code>（插拔、电量变化时系统推送）加 <code>NSProcessInfoPowerStateDidChange</code>（低电量模式），去掉现在 120 秒一次的轮询。只认内置电池，UPS 不算。</li>
-        <li><b>插上</b>：只在紧凑大小里闪一下（253 × 33.5，不往下鼓）。左耳闪电，右耳“82%”。颜色：高于 20% 绿，20% 及以下红，开着低电量模式时黄。用 <span class="token">settle</span> 长出，停 2.6 秒，用 <span class="token">calm</span> 收回。30 秒内再插上不再闪。</li>
+        <li><b>插上</b>：只在紧凑大小里闪一下（按新耳宽：主体 185 + 2 × 37.75 = 260.5 × 33.5，连肩 276.0，不往下鼓）。左耳闪电，右耳“82%”。电量读不到时右耳不写数，不写 0%。颜色：高于 20% 绿，20% 及以下红，开着低电量模式时黄。用 <span class="token">settle</span> 长出，停 2.6 秒，用 <span class="token">calm</span> 收回。30 秒内再插上不再闪。</li>
         <li><b>拔掉</b>：不出声。菜单栏的电池图标已经变了，顺利时刘海不说话。拔掉时电量已在 20% 以下，直接说低电量那一句。</li>
         <li><b>充满</b>：系统报告已充满（IsCharged）时闪一次，同一次插电只闪一次。左耳满格电池，右耳“100%”。优化充电停在 80% 不算充满，不出声。</li>
         <li><b>低电量 20 / 10 / 5%</b>：沿用现有规则，同一次放电每一档只提醒一次。外观和设备提醒一样：左耳红色电池，右耳“10%”，主句“这台 Mac 电量低”，次句“还剩 10%，记得充电”。用 <span class="token">bloom</span>，停 2.6 秒。</li>
         <li><b>低电量模式打开</b>：在紧凑大小里闪一下，左耳黄色电池，右耳黄色百分比，读屏念“低电量模式已打开”。关掉时不出声。若和低电量同时发生，只出低电量那一句，次句改成“已打开低电量模式”。</li>
+        <li><b>电量读不到</b>：电量未知时不显示 0%：插上那一下只闪闪电，右耳不写数；低电量那一组不出；连上的设备写“电量暂时读不到”。</li>
         <li><b>台式 Mac</b>：没有内置电池，这一组都不出现，设置里也不显示这一行。</li>
       </ul>
     </div>
     <div class="card">
       <h3>设备连上：和电量用同一种样子</h3>
       <ul>
-        <li><b>样子</b>：提醒 400 × 85.5。左耳放设备符号，右耳写电量，20% 及以下用红色。主句“AirPods Pro 已连接”；次句“左耳 80% · 右耳 78% · 充电盒 45%”，只写读到的部分，一样都没读到就写“电量暂时读不到”，不写 0%。</li>
+        <li><b>样子</b>：提醒 408 × 84。左耳放设备符号，右耳写电量，20% 及以下用红色。主句“AirPods Pro 已连接”；次句“左耳 80% · 右耳 78% · 充电盒 45%”，只写读到的部分，一样都没读到就写“电量暂时读不到”，不写 0%。</li>
         <li><b>等电量</b>：最多等 1.8 秒，读到就和句子一起出现；超时就先出句子，之后读到也不补播。“已连接”超过 10 秒再说就没有意义了（沿用 <code>DeviceBatteryController</code>）。</li>
         <li><b>和今天比</b>：文字不变，只把图标放进左耳、电量放进右耳，不再留空的“额头”。几台一起连上，仍写“3 个设备已连接”。</li>
       </ul>
@@ -193,7 +194,7 @@ tr:last-child td{border-bottom:0}
       <h3>计时器：你开的，只倒数一次</h3>
       <ul>
         <li><b>名字</b>：计时器，和番茄钟分开。番茄钟分专注、休息两段，计时器只倒数一次。</li>
-        <li><b>从哪开</b>：① 按 ⌃⌥T，刘海长成选分钟（交互样子，400 × 117.5，圆角 24）：可选 1 / 3 / 5 / 10 / 15 / 30，或用 ↑ ↓ 调，回车开始，Esc 取消。② 启动台负一屏的计时器卡，和番茄钟卡放在同一排。③ 以后：iPhone 上的遥控器、快捷指令和聚焦搜索里说“计时 10 分钟”。<b>不进菜单，也不进刘海那一排</b>（那一排只放正在进行的事）。</li>
+        <li><b>从哪开</b>：① 按 ⌃⌥T，刘海长成选分钟（交互样子，408 × 112，圆角 24）：可选 1 / 3 / 5 / 10 / 15 / 30，或用 ↑ ↓ 调，回车开始，Esc 取消。② 启动台负一屏的计时器卡，和番茄钟卡放在同一排。③ 以后：iPhone 上的遥控器、快捷指令和聚焦搜索里说“计时 10 分钟”。<b>不进菜单，也不进刘海那一排</b>（那一排只放正在进行的事）。</li>
         <li><b>进行中</b>：左耳是橙色的环（剩余时间 ÷ 总时长），右耳写“9 分”。权重 75。</li>
         <li><b>暂停</b>：环和数字都降到 0.5 透明度，环中间画两道竖线。在大卡或负一屏卡上暂停。</li>
         <li><b>最后 60 秒</b>：只把右耳换成秒（“0:42”），不闪、不变色、不鼓。</li>
@@ -232,7 +233,7 @@ tr:last-child td{border-bottom:0}
       </tbody>
     </table></div>
   </div>
-  <p class="note">同时有两件持续活动时，两只耳朵各放一件的最小样子（左耳是权重高的那件），第三件只在刘海那一排里看得见，或用两指横扫切换。短暂提醒撞上第 1–3 层时，只在右上角亮一个点，然后作废，之后不补播（design-grammar「协调共生」）。电量那一下用紧凑的大小，它仍属于短暂提醒，不是第六种样子。</p>
+  <p class="note">同时有两件持续活动时，权重高的那件占两耳，第二件在右耳外分出一颗小圆（直径 33.5，和耳朵同高，离耳 6），第三件只在刘海那一排里看得见；两指横扫切换。短暂提醒撞上第 1–3 层时，只在右下留一个 8 点的强调色点（右 10、下 8），读屏念一次，然后作废，之后不补播（design-grammar「协调共生」）。电量那一下用紧凑的大小，它仍属于短暂提醒，不是第六种样子。</p>
 
   <h2>对照：Atoll、Alcove、今天、要做的</h2>
   <div class="tbl"><table>
@@ -242,7 +243,7 @@ tr:last-child td{border-bottom:0}
       <tr><td><b>最后几秒</b></td><td>最后 5 秒弹出一下，图标换成带感叹号的日历</td><td>不清楚</td><td>—</td><td>最后 10 秒鼓一次，句子里写“马上开始”，加入按钮也在这里</td></tr>
       <tr><td><b>加入</b></td><td>展开日历卡上有</td><td>有，优先交给原生 App</td><td>—</td><td>只认会议链接，优先交给 App；没找到链接就不画按钮</td></tr>
       <tr><td><b>日历的家</b></td><td>展开首页常驻日历卡，还有月历</td><td>展开后是月历网格</td><td>—</td><td><span class="no">不取</span>：展开以一页为主，日历只在快开会时才算一件事</td></tr>
-      <tr><td><b>授权</b></td><td>完全访问日程和提醒事项</td><td>有授权引导；没授权就隐藏</td><td>—</td><td>只要日程的完全访问，不要提醒事项。欢迎窗口第三步问一次；拒绝了就什么都不出</td></tr>
+      <tr><td><b>授权</b></td><td>完全访问日程和提醒事项</td><td>有授权引导；没授权就隐藏</td><td>—</td><td>只要日程的完全访问，不要提醒事项。等刘海第一次要说“快开会”时再问；拒绝了就什么都不出</td></tr>
       <tr><td><b>电量来源</b></td><td>IOPS 系统推送 + 低电量模式通知</td><td>不公开</td><td>每 120 秒读一次</td><td>换成 IOPS 系统推送 + 低电量模式通知</td></tr>
       <tr><td><b>插上</b></td><td>“Charging”加电池条，3 秒</td><td>第三方报道说会动画展开（未证实）</td><td>没有</td><td>紧凑大小里闪 2.6 秒：闪电加百分比</td></tr>
       <tr><td><b>拔掉</b></td><td>不出</td><td>不清楚</td><td>不出</td><td>不出（低于 20% 时走低电量）</td></tr>
@@ -271,9 +272,9 @@ tr:last-child td{border-bottom:0}
       <tr><td><b>离开始不到 5 分钟才建的日程</b></td><td>建好就出现，从剩下的时间开始倒数。</td></tr>
       <tr><td><b>授权被收回</b></td><td>正在显示的日程收掉。设置里那一行写“没有权限”，点一下去系统设置。不在刘海里追问。</td></tr>
       <tr><td><b>计时器跨过睡眠</b></td><td>用包含睡眠时间的连续时钟算，不受手动改时间影响。合盖期间到了时间，醒来只显示超时，不补响，也不补鼓。到点时只是锁屏没睡，就照常响，解锁后显示超时。</td></tr>
-      <tr><td><b>计时器和番茄钟同时在走</b></td><td>两只耳朵各放一件的最小样子：左耳计时器（75），右耳番茄钟（70）。同一时间只能有一个计时器；再按 ⌃⌥T 时，先显示正在走的那个，可以结束它。</td></tr>
+      <tr><td><b>计时器和番茄钟同时在走</b></td><td>计时器（75）占两耳，番茄钟（70）在右耳外分出一颗小圆。同一时间只能有一个计时器；再按 ⌃⌥T 时，先显示正在走的那个，可以结束它。</td></tr>
       <tr><td><b>插电时正有别的提醒</b></td><td>插电那一下不出（最低一类，撞上就不出）。低电量和设备连上会排队，等前一个的 2.6 秒停留结束再出。</td></tr>
-      <tr><td><b>插电时你正打开着刘海</b></td><td>只在右上角亮一个点，2.6 秒后消失，不打断你。</td></tr>
+      <tr><td><b>插电时你正打开着刘海</b></td><td>只在右下留一个 8 点的强调色点（右 10、下 8），2.6 秒后消失，不打断你。</td></tr>
       <tr><td><b>线头松，反复插拔</b></td><td>30 秒内只闪一次。</td></tr>
       <tr><td><b>台式 Mac</b></td><td>IOPS 里没有内置电池：电量这一组全部不出，设置里不显示。外接 UPS 不算。</td></tr>
       <tr><td><b>全屏、调度中心</b></td><td>沿用现状，刘海不出。提醒作废；计时器到时间仍会响。</td></tr>
@@ -286,23 +287,23 @@ tr:last-child td{border-bottom:0}
   <div class="tbl"><table>
     <thead><tr><th>读什么</th><th>什么时候读</th><th>默认</th><th>去哪里</th><th>登记（tools/privacy/registry.json）</th></tr></thead>
     <tbody>
-      <tr><td><b>日程</b>：开始和结束时间、标题、地点、链接、备注（只在里面找会议链接）、你的回复状态、日历颜色</td><td>启动时（已授权的话）、日历改动时、到每个日程开始前 5 分钟时；只查未来 24 小时</td><td>关，欢迎窗口第三步点“允许”后才开</td><td>只在内存里，不存，不外发；备注读完就扔</td><td><b>新增一行 <code>calendar</code></b>：sensitive，status planned，归“问过你才读的”；扫描词加 <code>EKEventStore</code>、<code>requestFullAccessToEvents</code></td></tr>
+      <tr><td><b>日程</b>：开始和结束时间、标题、地点、链接、备注（只在里面找会议链接）、你的回复状态、日历颜色</td><td>启动时（已授权的话）、日历改动时、到每个日程开始前 5 分钟时；只查未来 24 小时</td><td>关，等刘海第一次要说“快开会”、你点“允许”后才开</td><td>只在内存里，不存，不外发；备注读完就扔</td><td><b>新增一行 <code>calendar</code></b>：sensitive，status planned，归“你同意后才读的”；扫描词加 <code>EKEventStore</code>、<code>requestFullAccessToEvents</code></td></tr>
       <tr><td><b>这台 Mac 的电量</b>：百分比、有没有插电、是否已充满、低电量模式</td><td>系统推送电源变化时；不再定时读</td><td>开（不用问）</td><td>只在内存里；低电量提醒过的档位记在本机设置（现状）</td><td><b>改 <code>battery</code> 这一行</b>：activation 改成“电源变化时”，reads 加“这台 Mac”；扫描词加 <code>IOPSNotificationCreateRunLoopSource</code>、<code>isLowPowerModeEnabled</code></td></tr>
       <tr><td><b>计时器</b>：不读别的东西；记住上次选的分钟</td><td>你开计时器时</td><td>—</td><td>本机设置</td><td><b>改 <code>settings</code> 这一行</b>，补上“上次的计时分钟数”</td></tr>
       <tr><td><b>配件电量</b></td><td>沿用现状</td><td>开</td><td>沿用现状</td><td>不改</td></tr>
     </tbody>
   </table></div>
-  <p class="note">欢迎窗口在另一个包里做，是三步。这里只占第三步里的一行（符号 <code>calendar</code>，写“快开会时提醒你”，按钮“允许”），点了才调用 <code>requestFullAccessToEvents</code>。不在启动时问，也不在刘海里问。《WindowShade 读到的》那一页加一行“日程”。</p>
+  <p class="note">日程授权不放进欢迎窗口，也不在启动时问：等刘海第一次要说“快开会”时再问一次（符号 <code>calendar</code>，写“快开会时提醒你”，按钮“允许”），点了才调用 <code>requestFullAccessToEvents</code>；拒绝了就什么都不出，也不再追问。《WindowShade 读到的》那一页加一行“日程”。</p>
 
   <h2>实现落点与工作包</h2>
   <div class="tbl"><table>
     <thead><tr><th>包</th><th>标题</th><th>一句话</th><th>改哪里</th><th>验收</th></tr></thead>
     <tbody>
-      <tr><td><b>ACT-W</b></td><td>两个新权重</td><td>加 <code>.calendar</code> 85、<code>.timer</code> 75；两件同时在时，两只耳朵各放一个最小样子</td><td><code>Core/NotchActivities.swift</code>、<code>App/NotchActivityView.swift</code>、<code>Core/NotchRow.swift</code>、<code>tests/SessionActivityTests.swift</code></td><td>权重表测试通过；日程加音乐时左耳是日程环、右耳是音符；刘海那一排右段最多 3 格</td></tr>
+      <tr><td><b>ACT-W</b></td><td>两个新权重</td><td>加 <code>.calendar</code> 85、<code>.timer</code> 75；两件同时在时，第一件占两耳，第二件在右耳外一颗小圆，第三件只在那一排</td><td><code>Core/NotchActivities.swift</code>、<code>App/NotchActivityView.swift</code>、<code>Core/NotchRow.swift</code>、<code>tests/SessionActivityTests.swift</code></td><td>权重表测试通过；日程加音乐时左耳是日程环、右耳是音符；刘海那一排右段最多 3 格</td></tr>
       <tr><td><b>CAL-1</b></td><td>日程的纯逻辑</td><td>选哪个日程、处在哪个阶段（倒数 / 最后 10 秒 / 已开始可加入 / 结束），过滤全天和已拒绝，识别会议链接</td><td>新建 <code>Core/CalendarActivity.swift</code> 和测试</td><td>挨着的会、全天、已拒绝、已取消、24 小时外、开始后 5 分钟这几种情况都有测试；不碰 EventKit 也能跑</td></tr>
       <tr><td><b>CAL-2</b></td><td>日程来源</td><td>EventKit 只读 24 小时内的日程，日历改动时重查，用一次性定时器等到下一个时刻</td><td>新建 <code>App/CalendarSource.swift</code>；<code>App/NotchActivitySources.swift</code> 接上</td><td>空闲时 CPU 唤醒次数和今天一样（没有每秒的定时器）；没授权时不建 <code>EKEventStore</code></td></tr>
       <tr><td><b>CAL-3</b></td><td>日程的样子</td><td>紧凑的环加分钟、最后 10 秒鼓一下、大卡、加入</td><td><code>App/NotchActivityView.swift</code>、<code>App/Notch.swift</code></td><td>和本稿逐帧对得上；共享屏幕时句子里没有标题；减少动态效果时不鼓</td></tr>
-      <tr><td><b>CAL-4</b></td><td>授权与登记</td><td>欢迎窗口第三步里的一行、设置里的一行、隐私登记</td><td><code>App/Welcome.swift</code>（等欢迎窗口那个包合入后再做）、<code>tools/privacy/registry.json</code></td><td><code>check-registry.py</code> 通过；拒绝后没有任何日程相关的界面，也不再追问</td></tr>
+      <tr><td><b>CAL-4</b></td><td>授权与登记</td><td>第一次要说“快开会”时问一次的那一行、设置里的一行、隐私登记</td><td><code>App/NotchActivitySources.swift</code>、<code>tools/privacy/registry.json</code></td><td><code>check-registry.py</code> 通过；拒绝后没有任何日程相关的界面，也不再追问</td></tr>
       <tr><td><b>PWR-1</b></td><td>电源改成推送</td><td>用 IOPS 系统推送和低电量模式通知替换 120 秒轮询</td><td><code>App/MacBatterySource.swift</code>、<code>Core/DeviceBattery.swift</code></td><td>插拔后 1 秒内收到读数；空闲 10 分钟里电池读取次数为 0；台式 Mac 不建来源</td></tr>
       <tr><td><b>PWR-2</b></td><td>电量那一下</td><td>插上、充满、低电量模式在紧凑大小里闪一下；低电量换成新外观；30 秒防抖</td><td><code>App/DeviceBatteryController.swift</code>、<code>App/DeviceBatteryCopy.swift</code>、<code>App/Notch.swift</code></td><td>拔掉不出声；充满同一次插电只闪一次；撞上别的提醒就不出；颜色之外还有不同的符号</td></tr>
       <tr><td><b>DEV-1</b></td><td>设备提醒换外观</td><td>符号放进左耳、电量放进右耳，AirPods 分左耳 / 右耳 / 充电盒</td><td><code>App/DeviceBatteryCopy.swift</code>、<code>App/AirPodsBatterySource.swift</code>、<code>App/NotchActivityView.swift</code></td><td>文字和今天一样；只读到一侧时只写一侧；超过 1.8 秒没读到就先出句子</td></tr>
@@ -310,7 +311,7 @@ tr:last-child td{border-bottom:0}
       <tr><td><b>TMR-2</b></td><td>计时器的样子和入口</td><td>⌃⌥T 选分钟、紧凑、大卡、时间到、超时、响一声；启动台负一屏加一张卡</td><td>新建 <code>App/CountdownTimerHost.swift</code>；<code>App/NotchActivityView.swift</code>、<code>App/LaunchpadActivities.swift</code></td><td>菜单项数量不变（仍是 9 项）；键盘就能开始和结束；系统静音时不响</td></tr>
     </tbody>
   </table></div>
-  <p class="note">顺序：先做 ACT-W 和 PWR-1（不改画面，风险最低），再做 CAL-1 与 TMR-1 两个纯逻辑包（可以并行），最后做三个画面包。CAL-4 等欢迎窗口那个包合入后再做。词汇表要补三项，由主模型改 copy-guide：<b>日程</b>（不叫会议、事件、日历提醒），<b>加入</b>（不叫入会、参会），<b>计时器</b>（只指这一种；番茄钟仍不叫计时器）。另外要记进对照账：计时器的橙色和 <code>problem</code> 用的是同一种系统橙，但一个是环、一个是边线，形状不同。</p>
+  <p class="note">顺序：先做 ACT-W 和 PWR-1（不改画面，风险最低），再做 CAL-1 与 TMR-1 两个纯逻辑包（可以并行），最后做三个画面包。词汇表要补三项，由主模型改 copy-guide：<b>日程</b>（不叫会议、事件、日历提醒），<b>加入</b>（不叫入会、参会），<b>计时器</b>（只指这一种；番茄钟仍不叫计时器）。另外要记进对照账：计时器的橙色和 <code>problem</code> 用的是同一种系统橙，但一个是环、一个是边线，形状不同。</p>
 
   <h2>待 Aaron 定</h2>
   <div class="card"><ul>
@@ -324,13 +325,15 @@ tr:last-child td{border-bottom:0}
   var $=function(id){return document.getElementById(id)};
   var sv=$('sv'), reducedBox=$('reduced'), chimeBox=$('chime');
   /* 硬件：Air 15 英寸，单位 pt */
-  var HW={w:185,h:33.5,rb:10.71,e:7.4}, CX=380, VW=760, VH=214;
-  var NL=CX-HW.w/2, NR=CX+HW.w/2, EAR=34, EY=HW.h/2;
+  var HW={w:185,h:33.5,rb:10.71,e:7.74}, CX=380, VW=760, VH=214;
+  var NL=CX-HW.w/2, NR=CX+HW.w/2, EY=HW.h/2;
+  /* 耳宽按内容（《两耳的岛》）：主体 = 2 + 内容宽 + 外侧留白；这张稿里最宽的是右耳 28 宽的文字 → 2 + 28 + 7.75 = 37.75；再加肩 7.74 = 45.49，每耳最多 52.33（主体 44.59） */
+  var EARB=37.75, EARW=EARB+HW.e, LX=NL-2-9, RX=NR+2+14, MINI=33.5, MINI_GAP=6;
   var LEAD=300, BLOOM=10, JOIN=300, OVER=600, HOLD=2.6, DONE_HOLD=10, DEBOUNCE=30;
-  var COL={green:'#30d158',yellow:'#ffd60a',red:'#ff453a',orange:'#ff9f0a',amber:'#ffb340',purple:'#bf5af2',blue:'#0a84ff'};
+  var COL={green:'#32d74b',yellow:'#ffd60a',red:'#ff453a',orange:'#ff9f0a',amber:'#ffb340',purple:'#bf5af2',blue:'#0a84ff'};
   /* 弹簧令牌（response 秒 / 阻尼比 ζ），照 design-system §4.6 */
   var TOK={calm:{r:.34,z:1},settle:{r:.38,z:1},expand:{r:.40,z:.92},bloom:{r:.42,z:.84},pop:{r:.30,z:.75},reduced:{r:.25,z:1}};
-  var GEO={none:{W:185,H:33.5,r:10.71},compact:{W:185+2*EAR,H:33.5,r:10.71},alert:{W:400,H:85.5,r:24},picker:{W:400,H:117.5,r:24},card:{W:440,H:175.5,r:28}};
+  var GEO={none:{W:185,H:33.5,r:10.71},compact:{W:185+2*EARB,H:33.5,r:10.71},alert:{W:408,H:84,r:24},picker:{W:408,H:112,r:24},card:{W:420,H:33.5+118,r:28}}; /* 大卡例外：宽按内容（示意 420），刘海下方 118（只有一句话时 72），底角 28 */
   var T0=14*3600+50*60;
   var S, sh={W:185,H:33.5,r:10.71,vW:0,vH:0,vr:0}, curKey='none', from={W:185,H:33.5}, fade=1, lastTs=0, curTok='calm';
   var actx=null;
@@ -389,7 +392,7 @@ tr:last-child td{border-bottom:0}
   function raise(a){
     var nm=ALERT_NAME[a.kind];
     if(S.locked||S.asleep){ say('锁着屏：'+nm+'这一下作废，解锁后也不补。'); return; }
-    if(S.open){ S.dot=rt()+HOLD; say('你正打开着刘海：'+nm+'只在右上角亮一个点，然后作废，不打断你。'); return; }
+    if(S.open){ S.dot=rt()+HOLD; say('你正打开着刘海：'+nm+'只在右下留一个 8 点的强调色点（右 10、下 8），然后作废，不打断你。'); return; }
     if(!a.untilReal) a.untilReal=rt()+(a.hold||HOLD);
     var cur=S.alert;
     if(!cur){ show(a); return; }
@@ -466,7 +469,7 @@ tr:last-child td{border-bottom:0}
       return {key:'a:'+a.kind,geo:GEO.alert,tok:'bloom',layer:'短暂提醒 · '+ALERT_NAME[a.kind],draw:function(){return drawAlert(a)}};
     }
     if(acts.length===1){ var k=acts[0]; return {key:'c1:'+k.kind+phaseKey(k),geo:GEO.compact,tok:'calm',layer:'持续活动 · '+actLabel(k),draw:function(){return drawCompact1(k)}}; }
-    if(acts.length>1) return {key:'c2:'+acts.map(function(a){return a.kind}).join(),geo:GEO.compact,tok:'calm',layer:'持续活动 · '+acts.map(actLabel).join(' > ')+'，两耳各放一件',draw:function(){return drawCompact2(acts)}};
+    if(acts.length>1) return {key:'c2:'+acts.map(function(a){return a.kind}).join(),geo:GEO.compact,tok:'calm',layer:'持续活动 · '+acts.map(actLabel).join(' > ')+'，第一件占两耳，第二件小圆',mini:acts[1],draw:function(){return drawCompact2(acts)}};
     return {key:'none',geo:GEO.none,tok:'calm',layer:'什么都没有 · 和硬件重合',draw:function(){return ''}};
   }
   function phaseKey(a){
@@ -541,7 +544,7 @@ tr:last-child td{border-bottom:0}
     return '';
   }
   function drawCompact1(a){
-    var lx=NL-16, rx=NR+16, o='';
+    var lx=LX, rx=RX, o='';
     if(a.kind==='cal'){
       var e=a.ev, rem=calRem(e);
       if(rem>0){ o+=ring(lx,EY,8.5,rem/LEAD,e.color)+G('cal',lx,EY,.52,'#fff'); o+=T(rx,EY+4.3,earText(rem),{size:12,anchor:'middle'}); }
@@ -554,12 +557,12 @@ tr:last-child td{border-bottom:0}
     else if(a.kind==='session'){ o+=G('term',lx,EY,1,'#fff'); o+=T(rx,EY+4.3,'等你',{size:11.5,anchor:'middle',fill:COL.amber}); }
     return o;
   }
-  function drawCompact2(acts){ return minimal(acts[0],NL-16)+minimal(acts[1],NR+16); }
+  function drawCompact2(acts){ return drawCompact1(acts[0]); }   /* 第一件占两耳；第二件的小圆在 render 里画在耳朵外面 */
   function drawMoment(a){
-    var b=S.bat, lx=NL-16, rx=NR+16, c=batColor(), sc=reducedBox.checked?1:(.82+.18*fade), o='';
+    var b=S.bat, lx=LX, rx=RX, c=batColor(), sc=reducedBox.checked?1:(.82+.18*fade), o='';
     var g = a.kind==='plug' ? G('bolt',lx,EY,1.05*sc,c) : battery(lx,EY,a.kind==='full'?1:b.pct/100,a.kind==='full'?COL.green:c,sc);
     o+=g;
-    o+=T(rx,EY+4.3,(a.kind==='full'?100:b.pct)+'%',{size:11.5,anchor:'middle',fill:a.kind==='full'?COL.green:c});
+    if(!(b.unk&&a.kind!=='full')) o+=T(rx,EY+4.3,(a.kind==='full'?100:b.pct)+'%',{size:11.5,anchor:'middle',fill:a.kind==='full'?COL.green:c});   /* 电量未知不写 0% */
     return o;
   }
   function drawAlert(a){
@@ -568,11 +571,11 @@ tr:last-child td{border-bottom:0}
       o+=battery(lx,EY,b.pct/100,COL.red); o+=T(rx,EY+4.3,b.pct+'%',{anchor:'end',fill:COL.red});
       o+=T(x0+14,ty,'这台 Mac 电量低',{size:13}); o+=T(x0+14,dy,b.lpm?'已打开低电量模式':'还剩 '+b.pct+'%，记得充电',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
     }else if(a.kind==='pods'){
-      o+=G('pods',lx,EY,1,'#fff'); o+=T(rx,EY+4.3,'78%',{anchor:'end',fill:COL.green});
-      o+=T(x0+14,ty,'AirPods Pro 已连接',{size:13}); o+=T(x0+14,dy,'左耳 80% · 右耳 78% · 充电盒 45%',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      o+=G('pods',lx,EY,1,'#fff'); if(!b.unk) o+=T(rx,EY+4.3,'78%',{anchor:'end',fill:COL.green});
+      o+=T(x0+14,ty,'AirPods Pro 已连接',{size:13}); o+=T(x0+14,dy,b.unk?'电量暂时读不到':'左耳 80% · 右耳 78% · 充电盒 45%',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
     }else if(a.kind==='mouse'){
-      o+=G('mouse',lx,EY,1,'#fff'); o+=T(rx,EY+4.3,'82%',{anchor:'end',fill:COL.green});
-      o+=T(x0+14,ty,'妙控鼠标已连接',{size:13}); o+=T(x0+14,dy,'电量 82%',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      o+=G('mouse',lx,EY,1,'#fff'); if(!b.unk) o+=T(rx,EY+4.3,'82%',{anchor:'end',fill:COL.green});
+      o+=T(x0+14,ty,'妙控鼠标已连接',{size:13}); o+=T(x0+14,dy,b.unk?'电量暂时读不到':'电量 82%',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
     }else if(a.kind==='cal'){
       var e=a.ev, rem=calRem(e);
       o+=ring(lx,EY,8.5,Math.max(0,rem)/LEAD,e.color)+G('cal',lx,EY,.52,'#fff'); o+=T(rx,EY+4.3,rem>0?earText(rem):'0:00',{anchor:'end'});
@@ -593,7 +596,7 @@ tr:last-child td{border-bottom:0}
     o+=T(x1-14,EY+4.3,S.pick+' 分',{anchor:'end'});
     o+=T(x0+14,33.5+14+11,'计时器',{size:13});
     o+=T(x1-14,33.5+14+11,'↑ ↓ 调，回车开始',{size:11,w:400,anchor:'end',fill:'rgba(255,255,255,.6)'});
-    var presets=[1,3,5,10,15,30], y=117.5-14-26, x=x0+14;
+    var presets=[1,3,5,10,15,30], y=GEO.picker.H-14-26, x=x0+14;
     presets.forEach(function(m){
       var on=m===S.pick, w=m>=10?44:38;
       o+='<g data-act="pick:'+m+'" style="cursor:pointer"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="26" rx="13" fill="'+(on?'#fff':'rgba(255,255,255,.14)')+'"/>'+T(x+w/2,y+17.5,m+' 分',{size:12,anchor:'middle',fill:on?'#000':'#fff'})+'</g>';
@@ -655,8 +658,8 @@ tr:last-child td{border-bottom:0}
     var W=GEO.card.W, H=GEO.card.H, x0=CX-W/2, x1=CX+W/2, o='', done=tm.state==='done', op=tm.state==='paused'?.5:1;
     o+=G('timer',x0+24,EY,1,COL.orange);
     o+=T(x1-14,EY+4.3,done?overText(S.t-tm.doneAt):earText(timerRem()),{anchor:'end',fill:done?COL.orange:'#fff',op:op});
-    var cy=33.5+14+44, cx=x0+14+34;
-    o+=ring(cx,cy,30,done?1:timerRem()/tm.dur,COL.orange,5,op);
+    var cy=33.5+14+40, cx=x0+14+34;
+    o+=ring(cx,cy,27,done?1:timerRem()/tm.dur,COL.orange,5,op);
     o+=T(x0+86,cy-22,done?'时间到':(tm.state==='paused'?'已暂停':'计时器 · '+tm.min+' 分钟'),{size:11,w:400,fill:'rgba(255,255,255,.6)'});
     o+=T(x0+84,cy+16,done?overText(S.t-tm.doneAt):bigText(timerRem()),{size:36,w:500,fill:done?COL.orange:'#fff',op:op});
     if(done){ o+=btn(x1-14-84-8-60,cy-13,60,'结束','tEnd'); o+=btn(x1-14-84,cy-13,84,'再来一个','tAgain',COL.orange); }
@@ -679,7 +682,7 @@ tr:last-child td{border-bottom:0}
   }
 
   function render(v){
-    var e=HW.e*clamp(1-(sh.H-HW.h)/8,0,1);
+    var e=HW.e;   /* 比刘海宽也画肩，一直在 */
     var path=shape(CX,sh.W,sh.H,sh.r,e);
     var o='<defs><linearGradient id="cover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a59"/><stop offset="1" stop-color="#6d3bd1"/></linearGradient><clipPath id="cp"><path d="'+path+'"/></clipPath></defs>';
     if(S.locked){
@@ -692,7 +695,8 @@ tr:last-child td{border-bottom:0}
     if(!S.locked){
       o+='<path d="'+path+'" fill="#000" data-act="island" style="cursor:pointer"/>';
       o+='<g clip-path="url(#cp)" data-act="island" opacity="'+fade.toFixed(3)+'">'+v.draw()+'</g>';
-      if(rt()<S.dot){ var x1=CX+sh.W/2; o+='<circle cx="'+(x1-12)+'" cy="'+(HW.h+6)+'" r="3.5" fill="'+COL.yellow+'"/>'; }
+      if(v.mini){ var mx=NR+EARW+MINI_GAP+MINI/2; o+='<circle cx="'+mx+'" cy="'+(MINI/2)+'" r="'+(MINI/2)+'" fill="#000" data-act="island" style="cursor:pointer" opacity="'+fade.toFixed(3)+'"/><g opacity="'+fade.toFixed(3)+'">'+minimal(v.mini,mx)+'<\/g>'; }
+      if(rt()<S.dot){ var x1=CX+sh.W/2; o+='<circle cx="'+(x1-10-4)+'" cy="'+(sh.H-8-4)+'" r="4" fill="'+COL.blue+'"/>'; }   /* 右下 8 点：右 10、下 8，强调色 */
     }
     sv.innerHTML=o;
   }
@@ -722,7 +726,7 @@ tr:last-child td{border-bottom:0}
     $('layer').textContent=v.layer;
     $('tok').textContent=curTok;
     $('clk').textContent=hms(S.t)+(S.speed>1?'（'+S.speed+'×）':'');
-    $('batt').textContent=S.desktop?'没有电池':(S.bat.pct+'%'+(S.bat.plugged?' · 插着电':'')+(S.bat.lpm?' · 低电量模式':''));
+    $('batt').textContent=S.desktop?'没有电池':((S.bat.unk?'读不到':S.bat.pct+'%')+(S.bat.plugged?' · 插着电':'')+(S.bat.lpm?' · 低电量模式':''));
     requestAnimationFrame(frame);
   }
 
@@ -744,7 +748,8 @@ tr:last-child td{border-bottom:0}
   /* ---------- 动作 ---------- */
   function noBattery(){ say('台式 Mac 没有电池：电量这一组都不出现，设置里也不显示这一行。'); }
   function lowCheck(){
-    var b=S.bat, band=[5,10,20].filter(function(x){return b.pct<=x})[0];
+    var b=S.bat; if(b.unk) return;
+    var band=[5,10,20].filter(function(x){return b.pct<=x})[0];
     if(!band) return;
     if(b.fired[band]){ say('这一档这次放电已经提醒过，不再说。'); return; }
     [20,10,5].forEach(function(x){ if(x>=band) b.fired[x]=true; });
@@ -767,14 +772,15 @@ tr:last-child td{border-bottom:0}
     calAllDay:function(){ S.events.push({id:ID++,title:'国庆调休',start:S.t-3600,end:S.t+36000,allDay:true,loc:'',color:COL.blue}); say('全天日程：不会变成实时活动，刘海不变。'); },
     calSkip:function(){ var n=nextCalStart(); if(!n){ say('没有快开始的日程。先点上面的“5 分钟后开会”。'); return; } S.t=Math.max(S.t,n.start-15); say('开始前 15 秒：右耳换成秒，再过 5 秒鼓一次。'); },
     plug:function(){ if(S.desktop) return noBattery(); var b=S.bat; if(b.plugged){ say('已经插着电了。'); return; } b.plugged=true; b.fired={};
-      if(S.t-b.lastPlug<DEBOUNCE){ say('30 秒内又插上：不再闪一次。'); return; } b.lastPlug=S.t; raise({kind:'plug',rank:1}); if(S.alert&&S.alert.kind==='plug') say('插上：紧凑大小里闪 2.6 秒，左耳闪电，右耳 '+b.pct+'%（颜色看电量和低电量模式）。'); },
+      if(S.t-b.lastPlug<DEBOUNCE){ say('30 秒内又插上：不再闪一次。'); return; } b.lastPlug=S.t; raise({kind:'plug',rank:1}); if(S.alert&&S.alert.kind==='plug') say(b.unk?'插上：紧凑大小里闪 2.6 秒，左耳闪电，电量读不到，右耳不写数（不写 0%）。':'插上：紧凑大小里闪 2.6 秒，左耳闪电，右耳 '+b.pct+'%（颜色看电量和低电量模式）。'); },
     unplug:function(){ if(S.desktop) return noBattery(); var b=S.bat; if(!b.plugged){ say('本来就没插电。'); return; } b.plugged=false; say('拔掉：不出声。菜单栏的电池图标已经变了。'); lowCheck(); },
     full:function(){ if(S.desktop) return noBattery(); var b=S.bat; b.plugged=true; b.fired={}; if(b.pct===100){ say('这次插电已经充满过：不再闪。'); return; } b.pct=100; raise({kind:'full',rank:1}); if(S.alert&&S.alert.kind==='full') say('充满：闪一次。优化充电停在 80% 不算充满。'); },
     low20:function(){ low(20); }, low10:function(){ low(10); }, low5:function(){ low(5); },
+    unk:function(){ if(S.desktop) return noBattery(); S.bat.unk=!S.bat.unk; syncPressed(); say(S.bat.unk?'电量读不到：不写 0%。插上只闪闪电；低电量不出；连上的设备写“电量暂时读不到”。':'读得到电量了。'); },
     lpm:function(){ if(S.desktop) return noBattery(); var b=S.bat; b.lpm=!b.lpm; syncPressed(); if(b.lpm){ raise({kind:'lpm',rank:1}); if(S.alert&&S.alert.kind==='lpm') say('低电量模式打开：黄色的那一下；读屏念“低电量模式已打开”。'); } else say('关掉低电量模式：不出声。'); },
     pods:function(){ raise({kind:'pods',rank:2}); if(S.alert&&S.alert.kind==='pods') say('AirPods：左耳符号，右耳取左右两只里较低的电量，次句分左耳、右耳、充电盒。'); },
     mouse:function(){ raise({kind:'mouse',rank:2}); if(S.alert&&S.alert.kind==='mouse') say('妙控鼠标：文字和今天一样，只是符号进左耳、电量进右耳。'); },
-    picker:function(){ if(S.locked){ say('锁着屏，先解锁。'); return; } S.open='picker'; S.pick=S.lastMin; say('⌃⌥T：刘海长成选分钟（交互，400 × 117.5，圆角 24）。点胶囊或用 ↑ ↓，回车或“开始”。'); },
+    picker:function(){ if(S.locked){ say('锁着屏，先解锁。'); return; } S.open='picker'; S.pick=S.lastMin; say('⌃⌥T：刘海长成选分钟（交互，408 × 112，圆角 24）。点胶囊或用 ↑ ↓，回车或“开始”。'); },
     start10:function(){ startTimer(10); },
     pause:function(){ var tm=S.timer; if(!tm||tm.state==='done'){ say('没有正在走的计时器。'); return; }
       if(tm.state==='running'){ tm.left=tm.deadline-S.t; tm.state='paused'; say('暂停：环和数字降到 0.5，环中间两道竖线。'); }
@@ -782,7 +788,7 @@ tr:last-child td{border-bottom:0}
     last60:function(){ var tm=S.timer; if(!tm||tm.state!=='running'){ say('先开一个计时器。'); return; } tm.deadline=S.t+60; say('最后 60 秒：右耳只换成秒，不闪、不变色、不鼓。'); },
     ring:function(){ var tm=S.timer; if(!tm||tm.state!=='running'){ say('先开一个计时器。'); return; } tm.deadline=S.t+0.4; },
     endTimer:function(){ if(!S.timer){ say('没有计时器。'); return; } S.timer=null; if(S.alert&&S.alert.kind==='timerDone') S.alert=null; say('计时器结束，耳朵收回。'); },
-    music:function(){ S.music=!S.music; syncPressed(); say(S.music?'音乐在放（40）：比日程和计时器都低。两件同时在时，两只耳朵各放一件。':'音乐停了。'); },
+    music:function(){ S.music=!S.music; syncPressed(); say(S.music?'音乐在放（40）：比日程和计时器都低。两件同时在时，第一件占两耳，第二件在右耳外一颗小圆。':'音乐停了。'); },
     session:function(){ S.session=!S.session; syncPressed(); say(S.session?'编程会话在等你（95）：比日程（85）高，占左耳。':'编程会话不等了。'); },
     openRow:function(){ if(S.locked){ say('锁着屏，先解锁。'); return; } S.open='row'; S.alert=null; say('刘海那一排：左段是收着的窗口，竖线，右段是正在进行的。点日程或计时器那一格会长成大卡。'); },
     lock:function(){ S.locked=!S.locked; if(S.locked){ S.open=null; S.alert=null; S.queue=[]; } syncPressed(); say(S.locked?'锁屏：刘海不画。这期间的提醒都作废，解锁后不补。计时器到时间仍会响。':'解锁：直接显示现在还在进行的事，不重播开场。'); },
@@ -796,6 +802,7 @@ tr:last-child td{border-bottom:0}
 
   function syncPressed(){
     $('lpmBtn').setAttribute('aria-pressed',!!(S&&S.bat.lpm));
+    $('unkBtn').setAttribute('aria-pressed',!!(S&&S.bat.unk));
     $('musicBtn').setAttribute('aria-pressed',!!(S&&S.music));
     $('sessionBtn').setAttribute('aria-pressed',!!(S&&S.session));
     $('lockBtn').setAttribute('aria-pressed',!!(S&&S.locked));
@@ -817,7 +824,7 @@ tr:last-child td{border-bottom:0}
     }
     var m=act.split(':');
     if(m[0]==='cell'){
-      if(m[1]==='cal'){ S.open='card:cal'; say('点日程那一格：长成大卡（440 × 175.5，圆角 28）。'); }
+      if(m[1]==='cal'){ S.open='card:cal'; say('点日程那一格：长成大卡（宽按内容，刘海下方 118，圆角 28）。'); }
       else if(m[1]==='timer'){ S.open='card:timer'; say('点计时器那一格：长成大卡，可暂停、结束。'); }
       else if(m[1]==='music') say('点正在播放那一格会长成正在播放的大卡，见《正在播放加大》那张稿。');
       else say('编程会话的卡见指挥模式那张稿。');

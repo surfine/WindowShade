@@ -1,5 +1,7 @@
 # WindowShade 设计文法
 
+> **2026-11-06 起归档**（AARON-DECISIONS 第 111 条）：准入、拒绝和翻案规矩已并进 [WindowShade 2 设计系统](https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr) 的原则（源文件 [design-system-ws2/](design-system-ws2/README.md)）。这里不再更新。
+
 2026-10-05。十五份画面稿已经在说同一件事。这份文件只规定怎么往下加：新表面先答完准入，再决定改哪一层。数值仍以 [design-system.md](design-system.md)（2026-09-29）为准，画面仍以 [design-drafts/](design-drafts/) 为准，七条线和仲裁顺序仍以 [blueprint.md](blueprint.md) 为准。这里不重抄测量表，也不另定一根弹簧。
 
 文中的「岛」「肩」「硬件层」是给开发看的内部叫法，不进界面。「下巴」只在说明里用。界面对外的名字以 [copy-guide.md](copy-guide.md) 为准。

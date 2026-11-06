@@ -16,6 +16,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent / "docs" / "design-drafts"
 TOTAL = "WindowShade 设计系统.html"
+# 2026-11-06 起设计系统的唯一入口（AARON-DECISIONS 第 111 条）；旧总稿作废，导航顶头改指这里。
+SYSTEM_URL = "https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"
 
 STYLE = """<style id="ws-spine">
 .ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
@@ -48,7 +50,7 @@ def nav_html(i, items, total_url):
     where = "总稿" if it["file"] == TOTAL else f'{it["group"]} · 第 {i} 张'
     old = " ws-old" if it.get("errata") else ""
     parts = [
-        f'<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="{total_url}"><b>WindowShade 设计系统</b></a>',
+        f'<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="{SYSTEM_URL}"><b>WindowShade 2 设计系统</b></a>',
         f'<span class="ws-n">{esc(where)} · {esc(it["title"])}</span>',
         f'<span class="ws-st{old}">{esc(it["status"])}</span><span class="ws-sp"></span>',
     ]

@@ -168,3 +168,11 @@ Aaron 原话：「我不是说了要回应这个 issues 吗，至少可以维护
 | 108 | WS2 达成时的版本号 | **2.0** |
 
 一页定义：`docs/ws2-definition.html`，https://claude.ai/artifact/6ZZ8P6mffipEg8wboSQXjM（定稿）。
+
+## 2026-11-06 夜：设计系统（第 102 条，[WindowShade 2 设计系统](https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr)，源文件 `docs/design-system-ws2/`）
+
+| # | 问 | 定 |
+| --- | --- | --- |
+| 109 | 卷帘条的颜色（现按 App 图标色相着色的 12 个自制灰阶 `classicPalette`） | **改成系统语义色**，跟系统标题栏一样；已发外观会变，发布说明要写 |
+| 110 | 首启引导怎么排三个场景 | **三页各做成一件**：① 双击收起＋停在条上看一眼 ② 标题栏一甩到半屏＋捏合撤回 ③ 长按刘海拿回；辅助功能在 ① 做成后才问，不算页码 |
+| 111 | 新设计系统和旧文件 | **它是唯一入口**；`design-system.md` 降为「硬件几何与验收」附录，`design-grammar.md` 归档 |

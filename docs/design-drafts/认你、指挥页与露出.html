@@ -58,7 +58,11 @@ button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* 画面：统一用 pt 画、按容器缩放 */
 .view{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--rule)}
 .canvas{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys)}
-.notch{position:absolute;top:0;background:#000;border-radius:0 0 10px 10px;transition:all .34s cubic-bezier(.3,.9,.3,1)}
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:.56s}   /* calm 0.34 / 1.0、settle 0.38 / 1.0 采样成 linear()；位移不用 cubic-bezier */
+.notch{position:absolute;top:0;background:#000;border-radius:0 0 10.7px 10.7px;transition:all var(--ws-calm-t) var(--ws-calm)}
+@media (prefers-reduced-motion:reduce){.notch{transition:none}}
+@keyframes fadein{from{opacity:0}}
+.ear svg{animation:fadein .18s ease-out}
 .ear{position:absolute;color:#fff}
 .t13{font-size:13px;font-weight:600;line-height:16px;color:#fff}
 .t11{font-size:11px;line-height:14px;color:rgba(255,255,255,.6)}
@@ -158,7 +162,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">六 看与指挥（WS2） · 第 31 张 · 认你、指挥页与露出</span><span class="ws-st ws-old">稿 · 10-29 等 Aaron 定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm">← 刘海里的编程会话</a><a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">对标 Atoll、Alcove 与 niri →</a></nav>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">六 看与指挥（WS2） · 第 31 张 · 认你、指挥页与露出</span><span class="ws-st ws-old">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/KBuJctNta3kr1ZaDTnowAm">← 刘海里的编程会话</a><a href="https://claude.ai/artifact/Wk9yzDHA3YFFccYmZUXikC">对标 Atoll、Alcove 与 niri →</a></nav>
 <aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 3 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：经得起考验：没登录、没安装时的说法（提议）</span> → <b>现在：</b>已定第 47 条，照提议 <span class="src">（AARON-DECISIONS 10-31）</span></li><li><span class="was">原来：经得起考验：不取额度 80% 提醒（提议）</span> → <b>现在：</b>已定第 48 条：不取 <span class="src">（AARON-DECISIONS 10-31）</span></li><li><span class="was">原来：第 37 条：真 Claude 只此一次</span> → <b>现在：</b>第 51 条：10-31 那次登录过期，不算用掉；Aaron 重新登录后再跑一次 <span class="src">（AARON-DECISIONS 10-31）</span></li></ol></details></aside>
 <div class="wrap">
 
@@ -190,8 +194,8 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
       <h3>规则</h3>
       <ul class="rules">
         <li><b>长在刘海里，不另开窗。</b>今天的工程样式是一块 320×60 的独立浮窗（<code>FaceScanStatusController</code>，<code>.floating</code>），违反 face-unlock 硬要求第 1 条。换成刘海宿主里的一个活动。</li>
-        <li><b>左耳一圈在转，右耳两枚点：脸、手机。</b>点从空心变实心，哪一样还差一眼就看得出；差的那一样用虚线琥珀圈，不只靠颜色。</li>
-        <li><b>只用耳朵和一道下巴。</b>需要一句话时（没认出、口罩、3 次），刘海往下长 26 pt 写一行，停在时钟上方，不碰头像和密码框。</li>
+        <li><b>左耳一圈在转，右耳两枚点：脸、手机。</b>两耳高度等于劉海（33.5），宽按内容，每耳不超过 52.33，紧贴劉海；点上不写字，左边是脸、右边是手机或手表，位置固定，名字在读屏标签里。点从空心变实心，哪一样还差一眼就看得出；差的那一样用虚线琥珀圈，不只靠颜色。</li>
+        <li><b>只用耳朵和一道下巴。</b>需要一句话时（没认出、口罩、3 次），刘海往下长 26 pt 写一行（33.5 + 26），停在时钟上方，不碰头像和密码框。</li>
         <li><b>结果不由动画决定。</b>对勾只在真的认出之后出现；脸和手机或手表都对，才在系统密码框里代填（D11 已解冻，Aaron 10-29）。分数在门槛附近时念一句随机短语补一道（声纹，只加不减）。系统没确认解锁，桌面不展开。</li>
         <li><b>一天几十次，不加戏。</b>耳朵用 <span class="mono">calm</span> 长出、<span class="mono">settle</span> 收回，不回弹；对勾是淡入，不用 <span class="mono">pop</span>。</li>
         <li><b>补光圈和刘海共存。</b>补光贴屏幕四边亮一圈，顶边那一段在菜单栏位置变弱，刘海保持纯黑。亮起用淡入，不用弹簧（亮度没有动量）。</li>
@@ -204,7 +208,7 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 <!-- ② 指挥页 -->
 <section id="conductor">
   <div class="sec-head"><span class="n">②</span><h2>指挥页</h2>
-    <p>走进那一排里的一个会话就是指挥模式。画进 10-19 定案：语音在这台 Mac 上识别、Claude 先只读、遥控器的播放键和返回键落到这一页。指挥页是刘海展开的一页，不是新窗口。</p></div>
+    <p>指挥模式已移出 WS2（第 105 条），这一段只存档。走进那一排里的一个会话就是指挥模式。画进 10-19 定案：语音在这台 Mac 上识别、Claude 先只读、遥控器的播放键和返回键落到这一页。指挥页是刘海展开的一页，不是新窗口。</p></div>
   <div class="two">
     <div>
       <div class="view" id="condView"></div>
@@ -298,7 +302,8 @@ footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-si
 
 <script>
 (()=>{
-const NW=156;
+const NW=156;   // ② 指挥页（已移出 WS2，存档）仍按 156×28 的旧画法
+const NWS=185,NHS=33.5;   // ① 认你：本机 Air 15″ 1710 模式的劉海 185×33.5，底角 10.7
 function fit(view,canvas,W,H){const f=()=>{const s=view.clientWidth/W;canvas.style.transform=`scale(${s})`;view.style.height=H*s+'px'};f();new ResizeObserver(f).observe(view)}
 
 // ① 锁屏
@@ -317,23 +322,25 @@ lv.innerHTML=`<div class="canvas" style="width:${LW}px;height:${LH}px">
 </div>`;
 const lc=lv.firstElementChild;fit(lv,lc,LW,LH);
 const nL=lc.querySelector('#lnotch'),eL=lc.querySelector('#learL'),eR=lc.querySelector('#learR'),ch=lc.querySelector('#lchin');
-const dot=(cls,t)=>`<span class="fdot ${cls}"><i></i>${t}</span>`;
+const dot=(cls,t)=>`<span class="fdot ${cls}" role="img" aria-label="${t}" title="${t}"><i></i></span>`;
 const CHK='<svg width="16" height="16" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="9" fill="#fff"/><path d="M5 9.3l2.6 2.5L13 6.4" stroke="#000" stroke-width="2" fill="none" stroke-linecap="round"/></svg>';
 const TID='<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M5 9a7 7 0 0 1 14 0"/><path d="M8 11.5a4 4 0 0 1 8 0c0 3-1 6-2.5 8"/><path d="M12 11v2c0 3-1 5-2.5 7"/><path d="M4.5 13c0 2 .3 3.5 1 5"/></g></svg>';
 const L={
-  scan:{l:'<div class="ringspin"></div>',r:dot('','脸')+' '+dot('','手机或手表'),chin:'',cap:'<b>正在认你</b>：开盖、唤醒、或在锁屏上按空格时出现。两枚点都空着。'},
-  phone:{l:'<div class="ringspin"></div>',r:dot('ok','脸')+' '+dot('miss','手机或手表'),chin:'',cap:'<b>差手机或手表</b>：脸对了，随身设备还没对上。那一枚是虚线琥珀圈，不只换颜色。'},
-  ok:{l:CHK,r:dot('ok','脸')+' '+dot('ok','手机或手表'),chin:'认出了',cap:'<b>认出了</b>：两样都对才打勾，随后在系统密码框里代填（D11 已于 10-29 解冻）；系统确认解锁后桌面才从刘海展开。'},
-  no:{l:TID,r:dot('miss','脸')+' '+dot('ok','手机或手表'),chin:'没认出，用 Touch ID 或密码',cap:'<b>没认出</b>：交回系统。左耳换成 Touch ID 符号，告诉你手该放哪。'},
+  scan:{l:'<div class="ringspin"></div>',r:dot('','脸')+dot('','手机或手表'),chin:'',cap:'<b>正在认你</b>：开盖、唤醒、或在锁屏上按空格时出现。两枚点都空着。'},
+  phone:{l:'<div class="ringspin"></div>',r:dot('ok','脸')+dot('miss','手机或手表'),chin:'',cap:'<b>差手机或手表</b>：脸对了，随身设备还没对上。那一枚是虚线琥珀圈，不只换颜色。'},
+  ok:{l:CHK,r:dot('ok','脸')+dot('ok','手机或手表'),chin:'认出了',cap:'<b>认出了</b>：两样都对才打勾，随后在系统密码框里代填（D11 已于 10-29 解冻）；系统确认解锁后桌面才从刘海展开。'},
+  no:{l:TID,r:dot('miss','脸')+dot('ok','手机或手表'),chin:'没认出，用 Touch ID 或密码',cap:'<b>没认出</b>：交回系统。左耳换成 Touch ID 符号，告诉你手该放哪。'},
   mask:{l:TID,r:'',chin:'戴着口罩，用 Touch ID',cap:'<b>戴着口罩</b>：直接说出路，不先转一圈让人干等。'},
   three:{l:TID,r:'',chin:'这次锁屏请用 Touch ID 或密码',cap:'<b>3 次了</b>：这次锁屏不再认，下次锁屏重新开始。'}};
-function lock(k){const s=L[k];const chinOn=!!s.chin;const wR=s.r?96:30,wL=30;
-  const H=chinOn?54:28;const w=chinOn?Math.max(NW+wL+wR,300):NW+wL+wR;
-  const left=chinOn?lcx-w/2:lcx-NW/2-wL;
-  Object.assign(nL.style,{left:left+'px',width:w+'px',height:H+'px',borderRadius:chinOn?'0 0 18px 18px':'0 0 10px 10px'});
-  eL.innerHTML=s.l;Object.assign(eL.style,{left:(lcx-NW/2-24)+'px',top:'6px'});
-  eR.innerHTML=s.r;Object.assign(eR.style,{left:(lcx+NW/2+8)+'px',top:'7px',display:'flex',gap:'8px'});
-  ch.innerHTML=s.chin?`<span class="t13" style="font-size:12.5px">${s.chin}</span>`:'';Object.assign(ch.style,{left:left+'px',width:w+'px',top:'33px'});
+function lock(k){const s=L[k];const chinOn=!!s.chin;const wL=36,wR=s.r?44:36;   // 两耳：高 = 劉海高，宽按内容（每耳 ≤ 52.33）
+  const H=chinOn?NHS+26:NHS;const w=chinOn?Math.max(NWS+wL+wR,300):NWS+wL+wR;
+  const left=chinOn?lcx-w/2:lcx-NWS/2-wL;
+  const grow=w*H>=(parseFloat(nL.style.width)||0)*(parseFloat(nL.style.height)||0);   // 长出 calm，收回 settle
+  nL.style.transition=`all var(--ws-${grow?'calm':'settle'}-t) var(--ws-${grow?'calm':'settle'})`;
+  Object.assign(nL.style,{left:left+'px',width:w+'px',height:H+'px',borderRadius:chinOn?'0 0 18px 18px':'0 0 10.7px 10.7px'});
+  eL.innerHTML=s.l;Object.assign(eL.style,{left:(lcx-NWS/2-wL+(wL-16)/2)+'px',top:((NHS-16)/2)+'px'});
+  eR.innerHTML=s.r;Object.assign(eR.style,{left:(lcx+NWS/2+(wR-26)/2)+'px',top:((NHS-9)/2)+'px',display:'flex',gap:'8px'});
+  ch.innerHTML=s.chin?`<span class="t13" style="font-size:12.5px">${s.chin}</span>`:'';Object.assign(ch.style,{left:left+'px',width:w+'px',top:(NHS+5)+'px'});
   document.getElementById('lockCap').innerHTML=s.cap;
   document.querySelectorAll('[data-k]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k?'true':'false'));}
 document.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>lock(b.dataset.k)));

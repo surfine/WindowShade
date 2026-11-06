@@ -1,5 +1,7 @@
 # WindowShade 设计系统
 
+> **2026-11-06 起降为附录**（AARON-DECISIONS 第 111 条）：设计系统的唯一入口是 [WindowShade 2 设计系统](https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr)（源文件 [design-system-ws2/](design-system-ws2/README.md)）。这里只作「硬件几何与验收」的参考：§3 机型表与 DisplayShape、§5.1 肩的 S1–S2、§7 验收。其余数值、原则、组件以新系统为准；两边对不上的账在新系统的「矛盾清单」。
+
 > 2026-09-29 定稿，尚未实现。这份文件规定四件事：界面怎么贴合硬件，各个表面取哪些数值，各个表面怎么动，
 > 怎样才算做到了 Apple 的水准。产品方向以 [direction.md](direction.md) 为准；参加 Swift Student Challenge 是“入戏”用的品味标准，
 > 见 [ssc.md](ssc.md)。面向用户的文字一律按 [copy-guide.md](copy-guide.md) 写。

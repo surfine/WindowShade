@@ -13,7 +13,7 @@
 :root{
   color-scheme:light;
   --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
-  --accent:#0058cc; --ok:#0e6436; --play:#30d158; --tone:#0a84ff;
+  --accent:#0058cc; --ok:#0e6436; --play:#28cd41; --tone:#007aff;
   --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
   --menu:#101114; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,monospace;
@@ -21,13 +21,13 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   color-scheme:dark;
   --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
-  --accent:#5a9cff; --ok:#4cc38a; --play:#30d158; --tone:#5ac8fa;
+  --accent:#5a9cff; --ok:#4cc38a; --play:#32d74b; --tone:#0a84ff;
   --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
-  --accent:#5a9cff; --ok:#4cc38a; --play:#30d158; --tone:#5ac8fa;
+  --accent:#5a9cff; --ok:#4cc38a; --play:#32d74b; --tone:#0a84ff;
   --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
 }
 *{box-sizing:border-box}
@@ -40,26 +40,41 @@ button{font:inherit;color:inherit;background:var(--panel);border:0;border-radius
 button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
 .sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .stage{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);cursor:pointer}
-.menu{position:absolute;inset:0 0 auto;height:28px;display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--menu);pointer-events:none}
-.sensor{position:absolute;left:50%;top:0;width:120px;height:28px;transform:translateX(-50%);background:#050505;border-radius:0 0 12px 12px;z-index:2;pointer-events:none}
-.island{position:absolute;left:50%;top:0;background:#000;color:#fff;display:flex;align-items:stretch;justify-content:space-between;overflow:hidden;transform:translateX(-50%);z-index:3;pointer-events:none;border-radius:0 0 18px 18px}
-.island.pill{border-radius:18px;top:4px}
-.island.short{border-radius:0 0 22px 22px}
-.ears{display:flex;width:100%;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;min-height:28px}
-.ear{font-size:12px;font-weight:600;white-space:nowrap;opacity:0;transition:opacity .01s linear}
-.ear b{font-weight:650}
-.peninsula{display:none;flex-direction:column;width:100%;padding:30px 16px 14px;gap:10px;box-sizing:border-box}
+.menu{position:absolute;inset:0 0 auto;height:34px;display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--menu);pointer-events:none}
+.sensor{position:absolute;left:50%;top:0;width:185px;height:33.5px;transform:translateX(-50%);background:#000;border-radius:0 0 10.7px 10.7px;z-index:2;pointer-events:none}
+.island{position:absolute;left:50%;top:0;background:#000;color:#fff;overflow:hidden;transform:translateX(-50%);z-index:3;pointer-events:none;border-radius:0 0 10.7px 10.7px;--e:32px}
+.shd{position:absolute;top:0;width:7.74px;height:5.06px;z-index:3;pointer-events:none;background:radial-gradient(ellipse 7.74px 5.06px at 0 100%,transparent 97%,#000 100%)}
+.shd.r{background:radial-gradient(ellipse 7.74px 5.06px at 100% 100%,transparent 97%,#000 100%)}
+.ear{position:absolute;top:0;height:33.5px;width:var(--e);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;white-space:nowrap;transition:opacity .01s linear}
+.ear.l{right:calc(50% + 92.5px)}
+.ear.r{left:calc(50% + 92.5px)}
+.ear b{font-weight:600}
+.cover{width:24px;height:24px;border-radius:6px;background:linear-gradient(160deg,#ff9f0a,#ff453a);display:flex;align-items:center;justify-content:center}
+.wave{display:flex;gap:3px;align-items:center;height:16px}
+.wave i{display:block;width:3px;height:100%;border-radius:2px;background:#fff;animation:wv 1.1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:-.3s}.wave i:nth-child(3){animation-delay:-.6s}.wave i:nth-child(4){animation-delay:-.15s}
+@keyframes wv{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.rm .wave i{animation:none;transform:scaleY(.6)}
+.vbar{display:block;width:54px;height:6px;border-radius:3px;background:rgba(255,255,255,.25);overflow:hidden}
+.vbar>i{display:block;height:100%;width:40%;background:#fff;border-radius:3px}
+.peninsula{display:none;position:absolute;left:0;right:0;top:33.5px;flex-direction:column;padding:4px 18px 12px;gap:8px;box-sizing:border-box}
 .peninsula.on{display:flex}
-.who{font-size:13px;font-weight:650;letter-spacing:-.01em;opacity:0}
+.who{font-size:13px;font-weight:600;letter-spacing:-.01em;line-height:20px;opacity:0}
 .meta{display:flex;align-items:center;justify-content:space-between;gap:12px;opacity:0}
 .progress{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
 .progress>i{display:block;height:100%;width:40%;background:var(--play);border-radius:2px}
-.num{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;min-width:2.5ch;text-align:right}
-.ctrls{display:flex;gap:18px;justify-content:center;opacity:0;font-size:15px}
+.num{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;min-width:2.5ch;text-align:right}
+.ctrls{display:none;gap:18px;justify-content:center;opacity:0;font-size:15px}
+.ctrls.on{display:flex}
 .ctrls span{opacity:.85}
-.dot{position:absolute;width:8px;height:8px;border-radius:50%;right:10px;bottom:8px;background:var(--tone);opacity:0;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.35)}
-.dot.arc::before{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid transparent;border-top-color:var(--play);transform:rotate(-40deg)}
-.alert-banner{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;border-radius:0 0 20px 20px;padding:30px 18px 12px;font-size:12px;font-weight:600;opacity:0;z-index:4;pointer-events:none;white-space:nowrap}
+.alertc{display:none;position:absolute;left:0;right:0;top:33.5px;padding:2px 18px 0;text-align:center;opacity:0}
+.alertc.on{display:block}
+.alertc .at{font-size:13px;font-weight:600;line-height:20px}
+.alertc .as{font-size:12px;line-height:16px;color:rgba(255,255,255,.6)}
+.splitdot{position:absolute;top:0;width:33.5px;height:33.5px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;z-index:3;pointer-events:none}
+.splitdot svg{position:absolute;inset:0}
+.rm .ear,.rm .who,.rm .meta,.rm .ctrls,.rm .alertc,.rm .splitdot{transition:opacity .18s ease}
+.rm .off{transition-duration:.10s}
 .card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
 .card h2{font-size:13px;margin:0 0 6px}
 .card p{margin:0;color:var(--muted);font-size:14px}
@@ -82,29 +97,27 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 5 张 · 一颗岛</span><span class="ws-st ws-old">定稿 · 10-08</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6">← 安静的刘海 动效样片</a><a href="https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR">照系统的岛 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 4 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：紧凑两耳窄（26 至 34）、最小形 36 × 28、展开靠悬停、半岛高 72 / 118 / 142</span> → <b>现在：</b>照 MacBook Pro 系统灵动岛的范式：紧凑每耳 52.33 × 36.67、最小圆 36.67、展开不超过 408 × 160（暂定，iOS 尺寸）；指针停上去不再展开，点或长按；点耳朵打开 App；Mac 上的实际尺寸 11 月 6 日后真机量 <span class="src">（AARON-DECISIONS-2026-10-29 第 28 至 32 条；《照系统的岛》）</span></li><li><span class="was">原来：音量连按：数字跟手滚动，形状鼓成 210×36 胶囊</span> → <b>现在：</b>两耳各 76、不往下鼓；左耳符号随电平换，右耳 54×6 白条，不写数；最后一下 1.2 秒后 calm 收回 <span class="src">（《音量与亮度》；design-grammar 对照账 283（LV3，Aaron 定））</span></li><li><span class="was">原来：提醒画成 260 × 72；半岛 72 / 118 当总高</span> → <b>现在：</b>提醒 = 宽 max(刘海 + 200, 400)、高 刘海 + 52；半岛 72 / 118 是刘海下方的内容高，总高再加刘海 <span class="src">（design-system §5.1；design-grammar 对照账 280）</span></li><li><span class="was">原来：音乐紧凑：左耳是谁，右耳是进度 40%</span> → <b>现在：</b>音乐紧凑是左耳封面、右耳真实波形（没权限画静止取色点）；进度只在大卡里。40% 示例换成下载 / 拷贝 <span class="src">（《正在播放》《实时活动晋级》）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 5 张 · 一颗岛</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6">← 安静的刘海 动效样片</a><a href="https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR">照系统的岛 →</a></nav>
 
 <div class="wrap">
   <h1>一颗岛</h1>
-  <p class="lede">对 Alcove 与 WWDC23 10194 / HIG Live Activities 的那一张画面。贴硬件的是<strong>岛</strong>（紧凑两耳、最小点）；往下鼓出的是<strong>半岛</strong>（展开）——「半岛」只是设计别名，界面仍叫展开、刘海那一排。弹簧只用已有令牌；不画假刘海；界面不叫灵动岛。内容贴传感器、无空白额头；紧凑与半岛相对位置连续。</p>
+  <p class="lede">对 Alcove 与 WWDC23 10194 / HIG Live Activities 的那一张画面。贴硬件的是<strong>岛</strong>（紧凑两耳、最小圆）；往下鼓出的是<strong>半岛</strong>（展开）——「半岛」只是设计别名，界面仍叫展开、刘海那一排。弹簧只用已有令牌；不画假刘海；界面不叫灵动岛。内容贴传感器、无空白额头；紧凑与半岛相对位置连续。尺寸照系统值：刘海 185 × 33.5（底角 10.7），耳高 = 刘海高、宽按内容，大卡底角 28，宽过刘海的形状都画肩；点耳朵开 App、点刘海回主屏幕、长按 0.5 秒展开，指针停上去不展开。</p>
   <div class="row" role="group" aria-label="看哪一段">
     <button type="button" data-scene="ears" aria-pressed="true">紧凑两耳</button>
     <button type="button" data-scene="peninsula">半岛展开</button>
-    <button type="button" data-scene="minimal">最小点</button>
+    <button type="button" data-scene="minimal">最小圆</button>
     <button type="button" data-scene="alert">提醒再回去</button>
     <button type="button" data-scene="replace">内容替换</button>
     <button type="button" data-scene="numeric">数字过渡</button>
     <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
   </div>
-  <div class="stage" id="stage" role="button" tabindex="0" aria-label="点一下切换本段交互">
+  <div class="stage" id="stage" role="button" tabindex="0" aria-label="点、按住或用空格操作本段交互">
     <div class="menu">音乐</div>
     <div class="sensor" aria-hidden="true"></div>
+    <div class="shd" id="shL" aria-hidden="true"></div><div class="shd r" id="shR" aria-hidden="true"></div>
     <div class="island" id="island">
-      <div class="ears" id="earsRow">
-        <span class="ear" id="lead">September</span>
-        <span class="ear" id="trail"><b>40%</b></span>
-      </div>
+      <div class="ear l" id="lead"></div>
+      <div class="ear r" id="trail"></div>
       <div class="peninsula" id="peninsula">
         <div class="who" id="who">September</div>
         <div class="meta">
@@ -113,18 +126,21 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
         </div>
         <div class="ctrls" id="ctrls"><span>⏮</span><span>⏸</span><span>⏭</span></div>
       </div>
-      <i class="dot" id="dot"></i>
+      <div class="alertc" id="alertc"><div class="at">妙控鼠标已连接</div><div class="as">电量 82%</div></div>
     </div>
-    <div class="alert-banner" id="alertBanner">妙控鼠标已连接</div>
+    <div class="splitdot" id="splitdot" aria-hidden="true"><svg viewBox="0 0 33.5 33.5"><circle cx="16.75" cy="16.75" r="14" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle cx="16.75" cy="16.75" r="14" fill="none" stroke="var(--play)" stroke-width="2" stroke-linecap="round" pathLength="100" stroke-dasharray="40 100" transform="rotate(-90 16.75 16.75)"/></svg><svg width="16" height="16" viewBox="0 0 24 24" style="position:static" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></svg></div>
   </div>
   <div class="card">
     <h2 id="title">紧凑就是活动本身</h2>
-    <p id="copy">左耳是谁，右耳是进度。内容贴着传感器区，尽量窄。点舞台沿 expand 长成半岛；再点沿 calm 收回。收着的窗口只留带信息的最小点。</p>
+    <p id="copy">左耳是封面，右耳是波形。内容贴着传感器区，尽量窄。长按刘海 0.5 秒沿 expand 长成半岛；再点沿 calm 收回。第二件事只留一颗带信息的最小圆。</p>
     <p class="note">这一下的弹簧：<span class="token" id="token">expand</span></p>
-    <p class="hint" id="hint">点舞台切换展开 / 收回。</p>
+    <p class="hint" id="hint">点耳朵、点刘海，或按住刘海 0.5 秒。</p>
   </div>
 </div>
 <script>
+// 尺寸都是 pt，1 pt 画 1 px；舞台模拟本机 Air 15″ 的 1710 模式：刘海 185 × 33.5，底角 10.7，菜单栏 34
+const NOTCH_W = 185, NOTCH_H = 33.5, R_HW = 10.7, SH_W = 7.74, GAP_SPLIT = 6;
+const EAR = { music: 32, download: 37, volume: 54 }; // 耳宽（主体）按内容，两耳等宽；主体上限 44.59，加肩 7.74 每耳 52.33（音量、亮度是例外：主体 54，连肩 61.74，不超过 62.33）
 const tokens = {
   calm: { response: 0.34, zeta: 1 },
   expand: { response: 0.40, zeta: 0.92 },
@@ -132,8 +148,8 @@ const tokens = {
   pop: { response: 0.30, zeta: 0.75 },
   reduced: { response: 0.25, zeta: 1 }
 };
+const stage = document.getElementById('stage');
 const island = document.getElementById('island');
-const earsRow = document.getElementById('earsRow');
 const peninsula = document.getElementById('peninsula');
 const lead = document.getElementById('lead');
 const trail = document.getElementById('trail');
@@ -141,8 +157,10 @@ const who = document.getElementById('who');
 const pct = document.getElementById('pct');
 const bar = document.getElementById('bar');
 const ctrls = document.getElementById('ctrls');
-const dot = document.getElementById('dot');
-const alertBanner = document.getElementById('alertBanner');
+const alertc = document.getElementById('alertc');
+const splitdot = document.getElementById('splitdot');
+const shL = document.getElementById('shL');
+const shR = document.getElementById('shR');
 const title = document.getElementById('title');
 const copy = document.getElementById('copy');
 const tokenEl = document.getElementById('token');
@@ -151,54 +169,56 @@ const reducedBox = document.getElementById('reduced');
 
 let scene = 'ears';
 let open = false;
+let splitOn = false;
 let level = 0.4;
 let levelHold = 0;
 let alertT = 0;
 let track = 0;
 let replaceFlash = 0;
 let contentIn = 0;
-let shape = { w: 168, h: 28, v: 0, hv: 0 };
+let shape = { w: NOTCH_W + 2 * EAR.music, h: NOTCH_H, e: EAR.music, wv: 0, hv: 0, ev: 0 };
+let sp = { x: 0, v: 0 };
 let last = performance.now();
 
-const tracks = [
-  { title: 'September', artist: 'Earth, Wind & Fire', progress: 0.4 },
-  { title: 'Night Drive', artist: 'Local Demo', progress: 0.18 }
+const activities = [
+  { kind: 'music', title: 'September', artist: 'Earth, Wind & Fire', progress: 0.4 },
+  { kind: 'download', title: 'report.zip', artist: '下载', progress: 0.4 }
 ];
 
 const scenes = {
   ears: {
     title: '紧凑就是活动本身',
-    copy: '左耳是谁，右耳是进度。内容贴着传感器区，尽量窄，不留空额头。点舞台沿 expand 长成半岛；再点沿 calm 收回。',
+    copy: '左耳是封面，右耳是真实波形（没权限就画静止的取色点），进度只在大卡里。耳高 = 刘海高 33.5，宽按内容，两耳紧贴刘海，外上角画肩。点耳朵打开音乐，点刘海本体回到主屏幕；长按 0.5 秒沿 expand 长成大卡，指针停上去不展开；再点沿 calm 收回。',
     token: 'expand',
-    hint: '点舞台切换展开 / 收回。'
+    hint: '点耳朵、点刘海，或按住刘海 0.5 秒（键盘：Return 同点，空格同长按）。'
   },
   peninsula: {
     title: '半岛：展开往下鼓',
-    copy: '从紧凑长成下鼓。曲名仍在左、进度仍在右，控件在下方——相对位置继承两耳。顶边贴住传感器，禁止空白额头。矮药丸与高内容两档，避开临界高度。',
+    copy: '从紧凑长成下鼓：封面和波形仍在原处，不搬家，往下多出曲名、进度和控件。顶边贴住刘海，没有空白额头；刘海下方的内容高是 72 或 118，总高再加刘海 33.5，宽按内容（这里示意 300 / 360），底角 28，两侧画肩。大卡不受 160 限制；展开那一排（408 × 160）里的格子，指针停 0.12 秒才看一眼。',
     token: 'expand',
-    hint: '点舞台展开或收回半岛。'
+    hint: '点舞台收回；收回后按住刘海 0.5 秒再展开。'
   },
   minimal: {
-    title: '最小点仍有信息',
-    copy: '多个持续活动时退到旁边：不是空 logo，而是语气色加一点进度弧。读屏仍念正在进行的那一件。',
-    token: 'calm',
-    hint: '点舞台在最小点与紧凑之间切换。'
+    title: '最小圆：分开 / 合并',
+    copy: '多个持续活动时，第二件从右耳外分出一颗小圆（bloom）：直径 = 耳高，离右耳 6，不是空 logo，里面是真实进度的弧。点小圆打开它的 App；再点把它合并回去（calm）。读屏仍念正在进行的那一件。',
+    token: 'bloom',
+    hint: '点舞台分开 / 合并小圆。'
   },
   alert: {
     title: '提醒变半岛，再回媒体',
-    copy: '配件连上：bloom 鼓成短暂提醒半岛，停 alert.hold（2.6 秒）后收回，回到原来的媒体紧凑，不洗曲目。不另开浮窗。',
+    copy: '配件连上：bloom 把岛长成 408 × 84、底角 24 的提醒，耳朵里的封面和波形不动，停 alert.hold（2.6 秒）后收回，回到原来的媒体紧凑，不洗曲目。不另开浮窗。',
     token: 'bloom',
     hint: '点舞台触发一次提醒；等它自己回去，或再点打断。'
   },
   replace: {
     title: '内容替换，形状不重置',
-    copy: '切歌时字与进度条做 content replace（淡化换位），岛的外框继续 morph，不整岛重启、不清空状态。',
+    copy: '换一件活动（音乐 → 下载）时，耳里的符号和字做 content replace（淡化换位），耳宽按新内容变，岛的外框继续 morph，不整岛重启、不清空状态。下载这种有数字的事才把百分比放进右耳。',
     token: 'calm',
-    hint: '点舞台切到下一首。'
+    hint: '点舞台切到下一件活动。'
   },
   numeric: {
     title: '数字过渡',
-    copy: '音量连按：数字跟手滚动，形状鼓在同一颗岛上；松手后沿 calm 收回。减少动态效果时只淡数值，形状跳切。看的是按键，不是数值：按了才开口，到顶、到底也开口（借 Atoll / Alcove）；个性化音量、App 自己改了音量不开口；锁屏时让系统自己的提示显示。系统按键这一路要先做隐私登记。',
+    copy: '音量连按：两耳各 62.33、不往下鼓；左耳符号随电平换，右耳 54 × 6 白条，不写数；最后一下 1.2 秒后沿 calm 收回。减少动态效果时只交叉淡化。看的是按键，不是数值：按了才开口，到顶、到底也开口（借 Atoll / Alcove）；个性化音量、App 自己改了音量不开口；锁屏时让系统自己的提示显示。系统按键这一路要先做隐私登记。',
     token: 'pop',
     hint: '按 ↑ / ↓ 调音量。'
   }
@@ -214,8 +234,51 @@ function springTo(current, velocity, target, name, dt) {
   return [current, velocity];
 }
 
-function currentTrack() {
-  return tracks[track % tracks.length];
+function currentActivity() {
+  return activities[track % activities.length];
+}
+
+function kindNow() {
+  if (scene === 'numeric' && levelHold > 0) return 'volume';
+  if (scene === 'replace') return currentActivity().kind;
+  return 'music';
+}
+
+function speaker(l) {
+  const arcs = l <= 0 ? '' : (l < 0.34 ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/>' :
+    (l < 0.67 ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18 7a7 7 0 0 1 0 10"/>' :
+      '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18 7a7 7 0 0 1 0 10"/><path d="M20.5 4.5a10.5 10.5 0 0 1 0 15"/>'));
+  return '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l4.5-3.5v12L7 14.5H4z" fill="#fff"/>' + arcs + '<\/g><\/svg>';
+}
+
+let earKey = '';
+let vfill = null;
+function setEars(kind) {
+  if (earKey === kind) return;
+  earKey = kind;
+  vfill = null;
+  if (kind === 'music') {
+    lead.innerHTML = '<span class="cover"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M9 4v11.3A3.5 3.5 0 1 0 11 18.5V8h6V4z"/><\/svg><\/span>';
+    trail.innerHTML = '<span class="wave"><i><\/i><i><\/i><i><\/i><i><\/i><\/span>';
+  } else if (kind === 'download') {
+    lead.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="var(--tone)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/><\/g><\/svg>';
+    trail.innerHTML = '<b>40%<\/b>';
+  } else {
+    lead.innerHTML = '<span id="spk"><\/span>';
+    trail.innerHTML = '<span class="vbar"><i id="vfill"><\/i><\/span>';
+    vfill = document.getElementById('vfill');
+  }
+}
+
+function fade(el, v) {
+  el.style.opacity = v;
+  el.classList.toggle('off', v === 0);
+}
+
+function say(t) {
+  hint.textContent = t;
+  clearTimeout(say.t);
+  say.t = setTimeout(() => { hint.textContent = scenes[scene].hint; }, 2200);
 }
 
 function applySceneChrome() {
@@ -228,111 +291,87 @@ function applySceneChrome() {
 
 function render() {
   const reduced = reducedBox.checked;
-  const t = currentTrack();
-  const peninsulaOn = (scene === 'ears' || scene === 'peninsula') && open && shape.h > 56;
-  const alertOn = scene === 'alert' && alertT > 0;
-  const minimalOn = scene === 'minimal' && !open;
-  const levelOn = scene === 'numeric' && levelHold > 0;
+  const kind = kindNow();
+  const cardOn = (scene === 'ears' || scene === 'peninsula') && open && shape.h > NOTCH_H + 22;
+  const alertOn = scene === 'alert' && alertT > 0 && shape.h > NOTCH_H + 8;
 
-  island.classList.toggle('pill', scene === 'numeric' || (scene === 'replace' && !open));
-  island.classList.toggle('short', peninsulaOn && shape.h < 100);
+  const rt = scene === 'alert' ? 24 : 28;
+  const r = R_HW + (rt - R_HW) * Math.min(1, Math.max(0, (shape.h - NOTCH_H) / 30));
+  island.style.width = shape.w + 'px';
+  island.style.height = shape.h + 'px';
+  island.style.borderRadius = '0 0 ' + r + 'px ' + r + 'px';
+  island.style.setProperty('--e', shape.e + 'px');
+  shL.style.left = 'calc(50% - ' + (shape.w / 2 + SH_W) + 'px)';
+  shR.style.left = 'calc(50% + ' + (shape.w / 2) + 'px)';
 
-  island.style.width = Math.max(28, shape.w) + 'px';
-  island.style.height = Math.max(22, shape.h) + 'px';
-
-  const showEars = !peninsulaOn && !alertOn && !minimalOn;
-  earsRow.style.display = showEars ? 'flex' : 'none';
-  peninsula.classList.toggle('on', peninsulaOn);
-  peninsula.style.display = peninsulaOn ? 'flex' : 'none';
-
-  const earOpacity = reduced ? (showEars ? 1 : 0) : contentIn;
-  lead.style.opacity = trail.style.opacity = earOpacity;
-  who.style.opacity = peninsulaOn ? earOpacity : 0;
-  ctrls.style.opacity = peninsulaOn ? earOpacity * 0.95 : 0;
-  document.querySelector('.meta').style.opacity = peninsulaOn ? earOpacity : 0;
-
-  if (scene === 'numeric' && levelOn) {
-    lead.textContent = '音量';
-    trail.innerHTML = '<b>' + Math.round(level * 100) + '</b>';
-  } else if (scene === 'replace') {
-    const flash = replaceFlash > 0 ? Math.max(0.25, 1 - replaceFlash * 2) : 1;
-    lead.style.opacity = trail.style.opacity = earOpacity * flash;
-    lead.textContent = t.title;
-    trail.innerHTML = '<b>' + Math.round(t.progress * 100) + '%</b>';
-  } else {
-    lead.textContent = open && scene === 'ears' ? t.title + ' · ' + t.artist : t.title;
-    trail.innerHTML = open && scene === 'ears' ? '正在播放' : '<b>' + Math.round(t.progress * 100) + '%</b>';
+  setEars(kind);
+  const flash = scene === 'replace' && replaceFlash > 0 ? Math.max(0.25, 1 - replaceFlash * 2) : 1;
+  fade(lead, flash);
+  fade(trail, flash);
+  if (kind === 'volume') {
+    document.getElementById('spk').innerHTML = speaker(level);
+    if (vfill) vfill.style.width = Math.round(level * 100) + '%';
   }
 
-  who.textContent = t.title + ' · ' + t.artist;
-  pct.textContent = Math.round((scene === 'numeric' ? level : t.progress) * 100) + '%';
-  bar.style.width = Math.round((scene === 'numeric' ? level : t.progress) * 100) + '%';
-  bar.style.background = scene === 'numeric' ? 'var(--tone)' : 'var(--play)';
+  const inV = reduced ? 1 : contentIn;
+  peninsula.classList.toggle('on', cardOn);
+  ctrls.classList.toggle('on', cardOn && shape.h > NOTCH_H + 90);
+  alertc.classList.toggle('on', alertOn);
+  fade(who, cardOn ? inV : 0);
+  document.querySelector('.meta').style.opacity = cardOn ? inV : 0;
+  fade(ctrls, cardOn ? inV * 0.95 : 0);
+  fade(alertc, alertOn ? inV : 0);
 
-  if (minimalOn) {
-    dot.style.opacity = 1;
-    dot.classList.add('arc');
-    dot.style.right = '50%';
-    dot.style.bottom = '50%';
-    dot.style.transform = 'translate(50%, 50%)';
-  } else if (scene === 'ears' || scene === 'peninsula' || scene === 'replace') {
-    dot.style.opacity = 0.9;
-    dot.classList.remove('arc');
-    dot.style.right = '10px';
-    dot.style.bottom = '8px';
-    dot.style.transform = 'none';
-  } else {
-    dot.style.opacity = 0;
-    dot.classList.remove('arc');
-  }
+  who.textContent = activities[0].title + ' · ' + activities[0].artist;
+  pct.textContent = Math.round(activities[0].progress * 100) + '%';
+  bar.style.width = Math.round(activities[0].progress * 100) + '%';
 
-  alertBanner.style.opacity = alertOn ? (reduced ? 1 : Math.min(1, alertT / 0.2)) : 0;
-  alertBanner.style.width = alertOn ? Math.max(220, shape.w) + 'px' : '0px';
-  alertBanner.style.height = alertOn ? Math.max(64, shape.h) + 'px' : '0px';
-  island.style.opacity = alertOn ? 0.15 : 1;
+  const sd = Math.min(1, Math.max(0, sp.x));
+  const sx = shape.w / 2 + GAP_SPLIT - (reduced ? 0 : (1 - sd) * (NOTCH_H + GAP_SPLIT));
+  splitdot.style.left = 'calc(50% + ' + sx + 'px)';
+  splitdot.style.transform = reduced ? 'none' : 'scale(' + (0.7 + 0.3 * Math.min(1.1, sd)) + ')';
+  fade(splitdot, splitOn ? (reduced ? 1 : Math.min(1, sd * 2.5)) : (reduced ? 0 : Math.min(1, sd * 2.5)));
 }
 
 function targets() {
-  const tallPeninsula = { w: 420, h: 118 }; // 高内容档，避开临界
-  const shortPeninsula = { w: 300, h: 72 };  // 矮药丸档
+  const e = EAR[kindNow()];
+  const compact = { w: NOTCH_W + 2 * e, h: NOTCH_H, e, spring: 'calm' };
+  const tallCard = { w: 360, h: NOTCH_H + 118 };  // 内容高 118 档，宽按内容（示意）
+  const shortCard = { w: 300, h: NOTCH_H + 72 };  // 内容高 72 档，避开临界高度
   if (scene === 'ears') {
-    return open ? { w: tallPeninsula.w, h: tallPeninsula.h, spring: 'expand' }
-                : { w: 168, h: 28, spring: 'calm' };
+    return open ? { w: tallCard.w, h: tallCard.h, e, spring: 'expand' } : compact;
   }
   if (scene === 'peninsula') {
-    return open ? { w: shortPeninsula.w, h: shortPeninsula.h, spring: 'expand' }
-                : { w: 168, h: 28, spring: 'calm' };
-  }
-  if (scene === 'minimal') {
-    return open ? { w: 168, h: 28, spring: 'calm' } : { w: 36, h: 28, spring: 'calm' };
+    return open ? { w: shortCard.w, h: shortCard.h, e, spring: 'expand' } : compact;
   }
   if (scene === 'alert') {
-    return alertT > 0 ? { w: 260, h: 72, spring: 'bloom' } : { w: 168, h: 28, spring: 'calm' };
-  }
-  if (scene === 'replace') {
-    return { w: 188, h: 28, spring: 'calm' };
+    return alertT > 0 ? { w: 408, h: 84, e, spring: 'bloom' } : compact;
   }
   if (scene === 'numeric') {
-    return levelHold > 0 ? { w: 210, h: 36, spring: 'pop' } : { w: 168, h: 28, spring: 'calm' };
+    return levelHold > 0 ? { ...compact, spring: 'pop' } : compact;
   }
-  return { w: 168, h: 28, spring: 'calm' };
+  return compact;
 }
 
 function frame(now) {
   const dt = Math.min(0.032, (now - last) / 1000);
   last = now;
   const reduced = reducedBox.checked;
-  const { w: targetW, h: targetH, spring } = targets();
+  const t = targets();
 
   if (reduced) {
-    shape.w = targetW; shape.h = targetH; shape.v = 0; shape.hv = 0;
+    shape.w = t.w; shape.h = t.h; shape.e = t.e; shape.wv = shape.hv = shape.ev = 0;
+    sp.x = splitOn ? 1 : 0; sp.v = 0;
   } else {
-    [shape.w, shape.v] = springTo(shape.w, shape.v, targetW, spring, dt);
-    [shape.h, shape.hv] = springTo(shape.h, shape.hv, targetH, spring, dt);
+    [shape.w, shape.wv] = springTo(shape.w, shape.wv, t.w, t.spring, dt);
+    [shape.h, shape.hv] = springTo(shape.h, shape.hv, t.h, t.spring, dt);
+    [shape.e, shape.ev] = springTo(shape.e, shape.ev, t.e, t.spring, dt);
+    [sp.x, sp.v] = springTo(sp.x, sp.v, splitOn ? 1 : 0, splitOn ? 'bloom' : 'calm', dt);
   }
 
-  const growing = targetH > 40 || targetW > 200;
-  const progress = growing ? Math.min(1, Math.max(0, (shape.h - 28) / Math.max(1, targetH - 28))) : 1;
+  // 形状走到四成，内容才淡入
+  const growing = t.h > NOTCH_H + 2;
+  const progress = growing ? Math.min(1, Math.max(0, (shape.h - NOTCH_H) / Math.max(1, t.h - NOTCH_H))) : 1;
   const contentTarget = growing ? (progress >= 0.4 ? 1 : 0) : 1;
   const wantContent = reduced ? 1 : contentTarget;
   contentIn += (wantContent - contentIn) * Math.min(1, dt / 0.16);
@@ -347,6 +386,7 @@ function frame(now) {
   if (scene === 'ears' || scene === 'peninsula') {
     tokenEl.textContent = reduced ? 'reduced' : (open ? 'expand' : 'calm');
   }
+  if (scene === 'minimal') tokenEl.textContent = reduced ? 'reduced' : (splitOn ? 'bloom' : 'calm');
   if (scene === 'numeric' && levelHold > 0) tokenEl.textContent = reduced ? 'reduced' : 'pop';
 
   render();
@@ -356,21 +396,52 @@ function frame(now) {
 function setScene(name) {
   scene = name;
   open = name === 'peninsula';
+  splitOn = name === 'minimal';
+  sp.x = splitOn ? 1 : 0; sp.v = 0;
   alertT = 0;
   levelHold = 0;
   replaceFlash = 0;
-  if (name === 'minimal') open = false;
-  if (name === 'alert') open = false;
+  track = 0;
   document.querySelectorAll('[data-scene]').forEach(btn => {
     btn.setAttribute('aria-pressed', btn.dataset.scene === name ? 'true' : 'false');
   });
   applySceneChrome();
 }
 
+// 点哪里：刘海本体 / 左耳 / 右耳（只有紧凑时分三块；指针停上去不展开）
+function zoneAt(e) {
+  const r = stage.getBoundingClientRect();
+  const x = e.clientX - r.left - r.width / 2;
+  const y = e.clientY - r.top;
+  if (y > shape.h || Math.abs(x) > shape.w / 2) return 'none';
+  if (Math.abs(x) <= NOTCH_W / 2) return 'body';
+  return x < 0 ? 'earL' : 'earR';
+}
+function gestureScene() { return scene === 'ears' || scene === 'peninsula'; }
+function tap(zone) {
+  if (open) { open = false; return; }
+  if (zone === 'body') say('点刘海本体：回到主屏幕。长按 0.5 秒才展开。');
+  else if (zone === 'earL' || zone === 'earR') say('点耳朵：打开音乐 App。');
+}
+function longPress() {
+  open = !open;
+}
+
+let pressT = null, pressFired = false, pressZone = 'none';
+stage.addEventListener('pointerdown', e => {
+  if (!gestureScene()) return;
+  pressFired = false;
+  pressZone = zoneAt(e);
+  clearTimeout(pressT);
+  if (!open && pressZone !== 'none') pressT = setTimeout(() => { pressFired = true; longPress(); }, 500);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => stage.addEventListener(ev, () => clearTimeout(pressT)));
+
 function onActivate() {
   if (scene === 'numeric') return;
+  if (scene === 'minimal') { splitOn = !splitOn; return; }
   if (scene === 'replace') {
-    track = (track + 1) % tracks.length;
+    track = (track + 1) % activities.length;
     replaceFlash = 0.45;
     return;
   }
@@ -379,15 +450,27 @@ function onActivate() {
     alertT = 2.6;
     return;
   }
-  open = !open;
 }
 
 document.querySelectorAll('[data-scene]').forEach(button => {
   button.addEventListener('click', () => setScene(button.dataset.scene));
 });
-document.getElementById('stage').addEventListener('click', onActivate);
-document.getElementById('stage').addEventListener('keydown', e => {
-  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); }
+stage.addEventListener('click', e => {
+  if (gestureScene()) {
+    if (pressFired) { pressFired = false; return; }
+    tap(zoneAt(e));
+    return;
+  }
+  onActivate();
+});
+stage.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  if (gestureScene()) {
+    if (e.key === ' ') longPress(); else tap('body');
+    return;
+  }
+  onActivate();
 });
 window.addEventListener('keydown', event => {
   if (scene !== 'numeric') return;
@@ -397,7 +480,7 @@ window.addEventListener('keydown', event => {
     levelHold = 1.2;
   }
 });
-reducedBox.addEventListener('change', applySceneChrome);
+reducedBox.addEventListener('change', () => { stage.classList.toggle('rm', reducedBox.checked); applySceneChrome(); });
 applySceneChrome();
 requestAnimationFrame(frame);
 </script>

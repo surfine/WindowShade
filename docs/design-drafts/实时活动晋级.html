@@ -89,7 +89,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 .veil span{position:relative;top:40px}
 .ear{position:absolute;top:0;height:33.5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
 .dim{opacity:.5}
-.mini{position:absolute;width:36px;height:28px;display:flex;align-items:center;justify-content:center}
+.mini{position:absolute;width:33.5px;height:33.5px;display:flex;align-items:center;justify-content:center}
 .chindot{position:absolute;width:6px;height:6px;border-radius:3px}
 .flank{position:absolute;top:0;height:33.5px;display:flex;align-items:center;font-size:12.5px;white-space:nowrap;overflow:hidden}
 .flank .q{font-weight:650}
@@ -128,7 +128,7 @@ svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events
 .spin{animation:spin 1s linear infinite;transform-origin:50% 50%}
 @keyframes spin{to{transform:rotate(360deg)}}
 .reduced .spin{animation:none}
-.alertdot{position:absolute;width:6px;height:6px;border-radius:3px;background:#ff9f0a;box-shadow:0 0 0 1.5px #000}
+.alertdot{position:absolute;width:8px;height:8px;border-radius:4px;background:#0a84ff;box-shadow:0 0 0 1.5px #000}
 
 /* 读数 */
 .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px;margin-top:10px;font-size:13px;color:var(--muted)}
@@ -168,8 +168,7 @@ svg.fig text{font-family:var(--sans)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 9 张 · 实时活动晋级</span><span class="ws-st ws-old">定稿 · 10-09</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph">← 宽形状画肩</a><a href="https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp">正在播放 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 6 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：编程会话大卡：拒绝 · 批准 · 打开会话</span> → <b>现在：</b>允许一次 · 去看看（高风险：用 Touch ID 允许）；没有拒绝 <span class="src">（agents-in-notch.md；《刘海里的编程会话》）</span></li><li><span class="was">原来：等你只算普通提醒更新；做完：「会话做完了」</span> → <b>现在：</b>等你：右耳琥珀点亮 0.6 秒，随即长成审批卡（带提示音）；完成：「项目名 · 完成」，副句「改了 N 个文件」，停 4 秒 <span class="src">（agents-in-notch.md；《刘海里的编程会话》）</span></li><li><span class="was">原来：点刘海本体 = 展开那一排；点刘海后直接打字</span> → <b>现在：</b>指针停在刘海上（或按快捷键）展开那一排，展开后可以直接打字；点刘海一下仍是回到主屏幕；点耳朵 = 那一件的大卡 <span class="src">（copy-guide「点刘海一下 / 两下 / 三下」；《正在播放》）</span></li><li><span class="was">原来：右耳旁亮一个 6 点的点</span> → <b>现在：</b>被挡住的提醒留下的点：右下 8 点（右 10、下 8），强调色 <span class="src">（design-grammar 对照账 258（C01））</span></li><li><span class="was">原来：待定 #2：先出那一排再点那一格</span> → <b>现在：</b>已定：点耳朵直接长成大卡；在那一排里点那一格也长成大卡 <span class="src">（《日历、电量与计时器》（Aaron 10-09））</span></li><li><span class="was">原来：耳机 / 配件：连着时常驻，右耳电量环 + 80%</span> → <b>现在：</b>只在连上、电量低时短暂提醒；电量环只在大卡里；用耳机听歌时由「正在播放」负责 <span class="src">（AARON-DECISIONS-2026-10-29；device-battery.md）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 9 张 · 实时活动晋级</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph">← 宽形状画肩</a><a href="https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp">正在播放 →</a></nav>
 <div class="wrap">
   <h1>实时活动晋级</h1>
   <p class="lede">这张稿要证明一件事：刘海上的“正在进行的事”可以整体升一级，每件都有同一套样子、同一个生命周期，排在同一张权重表里，而且刘海长耳朵之前会先看一眼菜单栏有没有地方，从不挡你要点的图标。Bartender、Ice 这些菜单栏工具只拿来对照，我们不做菜单栏管理器。数字取 MacBook Air 15 英寸：刘海 185 × 33.5。舞台按 1 点 = 1 像素画，只把屏幕宽度缩成 980 点。</p>
@@ -249,10 +248,10 @@ svg.fig text{font-family:var(--sans)}
   <div class="tbl"><table>
     <thead><tr><th>档</th><th>两边空位（取窄的那边）</th><th>刘海长什么</th><th>别的活动</th></tr></thead>
     <tbody>
-      <tr><td>宽裕 <span class="chip ok">34</span></td><td>≥ 34 点</td><td class="us">两耳各 34：主体 26.6 + 肩 7.4（<span class="token">NotchIsland.compactSide</span>），整个 253 宽</td><td>右边再空 76 点挂一颗最小形，118 点挂两颗（36 × 28，间隔 6）</td></tr>
-      <tr><td>偏挤 <span class="chip warn">26–33</span></td><td>26 ≤ 空位 &lt; 34</td><td class="us">耳朵收窄到量到的宽度，不画肩；右耳换短写法（“4 分”→“4”，百分比 → 环）</td><td>最小形放得下才挂，放不下只进那一排</td></tr>
-      <tr><td>挤 <span class="chip bad">下巴</span></td><td>&lt; 26 点，或系统的 » 在</td><td class="us">不长耳朵。刘海往下垂 8 点（下巴），里面一件一个 6 点的点，最多 3 个，颜色是那件的语气色</td><td>全在那一排里</td></tr>
-      <tr><td>让开 <span class="chip mute">无</span></td><td>全屏、调度中心、锁屏</td><td class="us">不画、不量、不悬停（<span class="token">NotchSpaceGate</span>）</td><td>回来后按现在的事实画，不补播</td></tr>
+      <tr><td>宽裕 <span class="chip ok">按内容</span></td><td>≥ 耳朵要的宽（主体 + 肩 7.74）</td><td class="us">耳高 33.5，两耳等宽、宽按内容：主体 = 2 + 内容宽 + 外侧留白（最窄 26），加肩 7.74，每耳最多 52.33（主体 44.59；<span class="token">NotchIsland.compactSide</span> 改成按内容给）；这几种内容在 35.5 至 47.5 之间</td><td>耳朵外面再空 39.5 点挂一颗最小形（小圆，直径 33.5 = 耳高，离耳 6），79 点挂两颗</td></tr>
+      <tr><td>偏挤 <span class="chip warn">33.74 起</span></td><td>33.74（主体 26 + 肩 7.74）≤ 空位 &lt; 耳朵要的宽</td><td class="us">耳朵收窄到量到的宽度，肩照画；右耳换短写法（“4 分”→“4”，百分比 → 环）</td><td>最小形放得下才挂，放不下只进那一排</td></tr>
+      <tr><td>挤 <span class="chip bad">下巴</span></td><td>&lt; 33.74 点，或系统的 » 在</td><td class="us">不长耳朵。刘海往下垂 8 点（下巴），里面一件一个 6 点的点，最多 3 个，颜色是那件的语气色</td><td>全在那一排里</td></tr>
+      <tr><td>让开 <span class="chip mute">无</span></td><td>全屏、调度中心、锁屏</td><td class="us">不画、不量、不响应长按（<span class="token">NotchSpaceGate</span>）</td><td>回来后按现在的事实画，不补播</td></tr>
     </tbody>
   </table></div>
   <div class="grid2" style="margin-top:12px">
@@ -281,23 +280,22 @@ svg.fig text{font-family:var(--sans)}
     <h3>macOS 27 自己的 » 和“刘海下方”模式，都当正常状态</h3>
     <ul>
       <li><b>» 收着</b>：图标太多时，系统在状态图标那一段靠刘海的一端放一个 »。它也是“菜单栏项”，右边空位只剩约 6 点，所以直接落到下巴。</li>
-      <li><b>» 点开</b>：被藏的图标排到刘海左边，左边也满了，仍在下巴。<b>» 在的时候，悬停不展开那一排，只有点刘海才展开</b>：你此刻多半正要去点那些刚露出来的图标。</li>
+      <li><b>» 点开</b>：被藏的图标排到刘海左边，左边也满了，仍在下巴。<b>» 在的时候，长按刘海不展开那一排</b>：你此刻多半正要去点那些刚露出来的图标。</li>
       <li>» 开合有没有辅助功能通知，要在真机上查（LA-0）。查不到就在下一个事件补量，耳朵本来就不在，不会盖住什么。</li>
       <li><b>刘海下方模式</b>：系统把顶上一条涂黑，安全区报 0，辅助区没有。我们照公开接口当作没有刘海的屏：菜单栏正中一颗 80 宽的胶囊，两边各要 39 点，不够就挂到菜单栏下面 72 × 12。不画假刘海。</li>
     </ul>
   </div>
 
-  <h2>二 · 悬停和点击不误触</h2>
+  <h2>二 · 长按和点击不误触</h2>
   <div class="grid2">
     <div class="card">
       <h3>热区只有刘海这一块</h3>
       <ul>
         <li>热区 = 刘海（185 × 33.5）加上此刻长出来的耳朵、最小形、下巴。菜单栏别的地方不算。</li>
-        <li>停在热区里，连续 <span class="token">notchDwell</span> 0.12 秒移动不到 8 点，才展开那一排（<span class="token">expand</span>）。慢慢滑过去也不算停。</li>
-        <li>进来那一下速度超过 600 点/秒，算横扫：不给“这里能展开”的提示。停下来以后照常算停留。</li>
-        <li>提示只往下长 3 点（<span class="token">calm</span>），不往两边长：两边是量过的，不能借着提示越界。</li>
-        <li>那一排里，停在一格上 <span class="token">tileDwell</span> 0.20 秒才看一眼；从一格划到另一格不闪。</li>
-        <li>指针离开悬停打开的那一排，立刻 <span class="token">calm</span> 收回（今天的规矩，不改）。</li>
+        <li><b>按住</b>热区 <span class="token">longPress</span> 0.5 秒、移动不到 8 点，才展开那一排（<span class="token">expand</span>）。指针停上去、慢慢滑过去都不展开，也没有任何提示（刘海本体不悬停展开）。</li>
+        <li>点刘海本体 = 回到主屏幕；点耳朵 = 打开那件事的 App 或大卡。</li>
+        <li>展开以后，指针停在一格上 <span class="token">tileDwell</span> 0.12 秒才“看一眼”；从一格划到另一格不闪。</li>
+        <li>那一排收起：Esc、点卡片以外、再点刘海。指针移开不收。</li>
       </ul>
     </div>
     <div class="card">
@@ -309,7 +307,7 @@ svg.fig text{font-family:var(--sans)}
         <li>岛长到一动不动的指针下面：指针不动就不算停上来（今天已有）。</li>
         <li>调度中心、全屏、锁屏：让开，热区一起消失。全屏时指针顶到屏幕上沿让菜单栏滑下来，也不展开。</li>
         <li>外接屏和刘海下方模式：胶囊空着时不画，也没有热区。</li>
-        <li>点刘海本体 = 展开那一排；点耳朵 = 那一件的大卡（和《正在播放》一致）。</li>
+        <li>长按刘海本体 = 展开那一排；点耳朵 = 那一件的大卡（和《正在播放》一致）。</li>
       </ul>
     </div>
   </div>
@@ -325,7 +323,7 @@ svg.fig text{font-family:var(--sans)}
       <ul>
         <li><b>开始</b>：<span class="token">settle</span> 从刘海长出两耳。开始后 1.5 秒内就结束的（很快的拷贝、秒下完的文件）不出现，免得一闪。</li>
         <li><b>更新</b>：原地换字，数字逐位滚过去，形状不动；宽度变了才用 <span class="token">settle</span>。</li>
-        <li><b>提醒更新</b>：<span class="token">bloom</span> 鼓成提醒，宽 max(刘海 + 200, 400)、高 85.5、圆角 24，停 2.6 秒，淡入 0.18、淡出 0.10，<span class="token">calm</span> 回到紧凑。撞上第 1–3 层就只在右耳旁亮一个 6 点的点，读屏念一次，然后作废。要盖住系统自己的菜单栏图标时也不鼓，同样只亮点（今天已有）。</li>
+        <li><b>提醒更新</b>：<span class="token">bloom</span> 鼓成提醒，408 × 84（外接屏 371）、圆角 24、画肩，停 2.6 秒，淡入 0.18、淡出 0.10，<span class="token">calm</span> 回到紧凑。撞上第 1–3 层就只在被挡住那件的右下留一个 8 点的强调色点（右 10、下 8），读屏念一次，然后作废。要盖住系统自己的菜单栏图标时也不鼓，同样只亮点（今天已有）。</li>
         <li><b>过期</b>：来源过了自己的过期时间还没消息，内容降到 0.5 透明度，右耳写“—”，读屏念“可能已停”。不猜、不补数。</li>
         <li><b>结束</b>：最后的样子留在耳朵上，按收场方式走：默认 4 秒；立即；或到点（最长 5 分钟，日程有会议链接时用）。那一排里留到你看过一次，或 15 分钟。</li>
       </ul>
@@ -336,7 +334,7 @@ svg.fig text{font-family:var(--sans)}
         <li>排序键依次是：新鲜（过期的沉到所有新鲜的后面）＞ 种类权重 ＞ 来源给的相关度 0–4 ＞ 最近更新。</li>
         <li>相关度只在同一种类里分先后（两个会话，在等你的那个 +4），不能让音乐跨过下载。</li>
         <li>权重：会话 95、录音 90、日程 85、下载 / 拷贝 / 隔空投送 80、计时器 75、番茄钟 70、路线 60、音乐 40、遥控器 30、耳机 20、文件架个数 10。CarPlay 100 走自己的全屏，不进这张表。</li>
-        <li>第一件上耳朵，第二、第三件是最小形，放不下就只在那一排。文件架不当最小形，不算右段的 3 件。</li>
+        <li>第一件占两耳，第二件在右耳外分出一颗小圆（直径 33.5，和耳朵同高），第三件只在那一排里；放不下就只在那一排。文件架不当最小形，不算右段的 3 件。</li>
         <li>你两指横扫选中的那件留在耳朵上，直到它结束。</li>
       </ul>
     </div>
@@ -346,14 +344,14 @@ svg.fig text{font-family:var(--sans)}
   <div class="tbl wide"><table>
     <thead><tr><th>活动</th><th>权重</th><th>左耳</th><th>右耳</th><th>最小</th><th>那一排的一格</th><th>大卡：左</th><th>大卡：右</th><th>大卡：中</th><th>大卡：下</th></tr></thead>
     <tbody>
-      <tr><td>编程会话</td><td>95</td><td>会话符号</td><td>转圈 / 琥珀“等你” / ✓ / “剩 p%”</td><td>琥珀点（等你）或弧（在跑）</td><td>项目名 + 现在一步</td><td>符号 + 项目名</td><td>用了多久</td><td>“要改 3 个文件”</td><td>拒绝 · 批准 · 打开会话</td></tr>
+      <tr><td>编程会话</td><td>95</td><td>会话符号</td><td>转圈 / 琥珀点（等你）/ ✓ / “剩 p%”</td><td>琥珀点（等你）或弧（在跑）</td><td>项目名 + 现在一步</td><td>符号 + 项目名</td><td>用了多久</td><td>“要改 3 个文件”</td><td>允许一次 · 去看看（高风险：用 Touch ID 允许）；没有拒绝</td></tr>
       <tr><td>日程</td><td>85</td><td>环（剩余 ÷ 5 分钟）</td><td>“4 分”；开始后绿摄像机</td><td>日历色的弧</td><td>会名 + 几点</td><td>日历色条 + 会名</td><td>15:00</td><td>“4 分钟后开始”</td><td>加入（只认会议链接）+ 还有几个</td></tr>
       <tr><td>计时器</td><td>75</td><td>橙环</td><td>“9 分”，最后 60 秒“0:42”</td><td>橙弧</td><td>剩多少 + 总长</td><td>环</td><td>9:12</td><td>“10 分钟计时器”</td><td>暂停 · 结束</td></tr>
       <tr><td>番茄钟</td><td>70</td><td>环 + 专注 / 休息的颜色</td><td>“18 分”</td><td>弧</td><td>专注 · 第几轮</td><td>环</td><td>18 分</td><td>“专注 · 第 2 轮”</td><td>跳过 · 结束</td></tr>
       <tr><td>下载 / 拷贝</td><td>80</td><td>下载或拷贝符号</td><td>“42%”或“3/7”；不知道总量画不定弧</td><td>进度弧</td><td>文件名 + 进度</td><td>符号</td><td>还剩多久（来源给了才写）</td><td>文件名</td><td>进度条 · 在访达中显示</td></tr>
       <tr><td>隔空投送</td><td>80</td><td>隔空投送符号</td><td>“68%”</td><td>进度弧</td><td>发给谁 + 进度</td><td>符号</td><td>68%</td><td>“发给 Aaron 的 iPhone”</td><td>进度条 · 取消</td></tr>
       <tr><td>正在播放</td><td>40</td><td>封面 18 × 18</td><td>有权限画波形；没权限画静止取色点</td><td>封面小圆</td><td>封面 + 歌名 + 播放键</td><td>封面 56</td><td>输出设备键</td><td>歌名 · 歌手</td><td>进度条 · 上一首 · 播放 · 下一首</td></tr>
-      <tr><td>耳机 / 配件</td><td>20</td><td>耳机符号</td><td>电量环 + “80%”</td><td>电量弧</td><td>名字 + 电量</td><td>符号 + 名字</td><td>80%</td><td>“左 80% · 右 78%”</td><td>充电盒电量</td></tr>
+      <tr><td>耳机 / 配件</td><td>20</td><td colspan="3">不上耳朵：只在连上、电量低时短暂提醒</td><td>名字 + 电量</td><td>符号 + 名字</td><td>电量环 + 80%（电量环只在大卡里）</td><td>“左 80% · 右 78%”</td><td>充电盒电量</td></tr>
       <tr><td>文件架</td><td>10</td><td>托盘符号</td><td>个数“6”</td><td>不当最小形</td><td>右段最后一格：三张叠起来的缩略图</td><td colspan="4">点开是文件架卡（见《文件架》），不套四个区</td></tr>
     </tbody>
   </table></div>
@@ -362,7 +360,7 @@ svg.fig text{font-family:var(--sans)}
   <div class="tbl mid"><table>
     <thead><tr><th>活动</th><th>开始</th><th>更新</th><th>提醒更新（鼓）</th><th>过期：何时 · 样子</th><th>结束：留什么 · 怎么走</th></tr></thead>
     <tbody>
-      <tr><td>编程会话</td><td>钩子报“在跑”</td><td>转圈 → “等你” → ✓，原地换</td><td>等你批准：“会话在等你”；做完：“会话做完了”</td><td>在跑却 120 秒没消息 · 0.5，右耳“—”</td><td>✓ 留 4 秒（默认）；那一排留到看过</td></tr>
+      <tr><td>编程会话</td><td>钩子报“在跑”</td><td>转圈 → “等你” → ✓，原地换</td><td>等你：右耳琥珀点亮 0.6 秒，随即长成审批卡（带提示音）；做完：“项目名 · 完成”，副句“改了 N 个文件”，停 4 秒</td><td>在跑却 120 秒没消息 · 0.5，右耳“—”</td><td>✓ 留 4 秒（默认）；那一排留到看过</td></tr>
       <tr><td>日程</td><td>开会前 5 分钟</td><td>每分钟换数，环每 10 秒走一格（没有每秒的定时器）</td><td>最后 10 秒：“马上开始”+ 加入</td><td>不会过期；取消授权就立即结束</td><td>没链接：开始即走（立即）；有链接：再留 5 分钟或点了加入（到点）</td></tr>
       <tr><td>计时器</td><td>⌃⌥T 选好分钟</td><td>每分钟，最后 60 秒按秒</td><td>时间到：“时间到”，停 10 秒，响一声</td><td>不会过期（本机时钟）</td><td>超时 10 分钟自己走；点结束立即</td></tr>
       <tr><td>番茄钟</td><td>开始专注</td><td>每分钟</td><td>专注 ⇄ 休息换段时</td><td>不会过期</td><td>一轮做完 ✓ 留 4 秒</td></tr>
@@ -384,7 +382,7 @@ svg.fig text{font-family:var(--sans)}
         <li>只找自己的：收着的窗口（标题、App 名）和正在进行的事（标题、种类名）。拼音首字母也算，“zh”能找到“周会”。</li>
         <li>不找别的 App 的菜单栏图标、不找菜单、不找文件。</li>
         <li>对不上的格子离开，剩下的 <span class="token">settle</span> 并拢，焦点落在第一格；一格也没有时写“没有匹配的”，那一排不窄于两格。</li>
-        <li><b>悬停打开的那一排不接键盘</b>：你在别的 App 里打字，不会被刘海吃掉。</li>
+        <li><b>长按打开的那一排，展开后可以直接打字</b>（也可以用快捷键打开）；还没展开时，打的字归前台 App。</li>
       </ul>
     </div>
     <div class="card">
@@ -414,10 +412,10 @@ svg.fig text{font-family:var(--sans)}
   <h2>六 · 在刘海上比 Top Shelf 和 Lounge 好在哪</h2>
   <p class="lede">Bartender Pro 的 Top Shelf（2026-05）已经把刘海做成可展开的面板，也跟 Claude Code、Codex 的进度；Lounge 有“做完了 / 等你批准”的提示。我们不跟它们比小组件多，比下面四件。它们的资料大多来自评测，没装来试。</p>
   <div class="grid2">
-    <div class="card"><h3>两耳的写法</h3><p>平时不是一块面板，是活动本身：左耳是谁，右耳是数，各 34 点，不多占菜单栏。九种活动同一套样子，同一个生命周期，用户只学一次。</p></div>
+    <div class="card"><h3>两耳的写法</h3><p>平时不是一块面板，是活动本身：左耳是谁，右耳是数，耳高 33.5、宽按内容（每耳最多 52.33），不多占菜单栏。九种活动同一套样子，同一个生命周期，用户只学一次。</p></div>
     <div class="card"><h3>一套仲裁</h3><p>放行 &gt; 手势 &gt; 你打开的 &gt; 短暂提醒 &gt; 持续活动 &gt; 什么都没有，加一张权重表。会话、日程、音乐、下载在同一个协调器里排；撞上的提醒变成一个点，不回来补说。窗口收进刘海也在同一排里，Top Shelf 没有这一层。</p></div>
     <div class="card"><h3>隐私页</h3><p>只要辅助功能，读的只是刘海两边那一段“哪里空着”，每一处读取都登记在 <span class="token">tools/privacy/registry.json</span>，用户在《WindowShade 读到的》里看得见。Bartender 6 要屏幕录制（7 起不要了），Lounge 也只要辅助功能；我们多做的是把每一处读取逐项摆出来。不收集使用数据。</p></div>
-    <div class="card"><h3>省电</h3><p>只在事件来时量，一次最多 22 次询问，空闲 0 次；悬停靠系统的进出事件，不轮询指针。Atoll 的悬停检测按 50 / 100 / 1000 毫秒三档轮询。会话“等你批准”能在大卡下区直接批，也能交给 iPhone 上的遥控器。</p></div>
+    <div class="card"><h3>省电</h3><p>只在事件来时量，一次最多 22 次询问，空闲 0 次；长按靠系统的按下与抬起事件，不轮询指针。Atoll 的悬停检测按 50 / 100 / 1000 毫秒三档轮询。会话“等你批准”能在大卡下区直接批，也能交给 iPhone 上的遥控器。</p></div>
   </div>
 
   <h2>对照</h2>
@@ -426,10 +424,10 @@ svg.fig text{font-family:var(--sans)}
     <thead><tr><th>项</th><th>Bartender 6 / Top Shelf</th><th>Ice / Thaw</th><th>Hidden Bar 等</th><th>NotchNook / Boring Notch</th><th>Atoll</th><th>Alcove</th><th>WindowShade 今天</th><th>WindowShade 要做的</th></tr></thead>
     <tbody>
       <tr><td>长耳朵前量空位</td><td>它管整条菜单栏，知道每个图标在哪</td><td>同为管理器，知道图标位置</td><td>Hidden Bar 不量，用撑宽的分隔项把图标挤出去</td><td>没见到量；尺寸按刘海算</td><td>没见到量；宽 = 屏宽 − 两个辅助区 + 4</td><td>不公开</td><td>每边 6 个点问辅助功能，量到 34 点（最小形开着时 138）</td><td class="us">碰到第一项就读它的帧，精确到 1 点；一次最多 22 次询问</td></tr>
-      <tr><td>菜单栏挤的时候</td><td>被挡的图标挪进 Bartender Bar，或和显示的互换</td><td>Ice Bar / Thaw Bar 第二条栏</td><td>折叠；Lounge 悬停刘海弹出被藏图标</td><td>不让</td><td>不让</td><td>—</td><td>34 → 26 → 下巴；但活动的紧凑按每边 54 画（见实现落点）</td><td class="us">34 → 26 → 下巴的点 → 只在那一排；收立刻，长要复核</td></tr>
-      <tr><td>macOS 27 的 »</td><td>Bartender 7 测试中</td><td>Ice 在 27 上不能用；Thaw 恢复了系统的 »</td><td>Hidden Bar 换了原生引擎</td><td>—</td><td>—</td><td>—</td><td>当成普通的“占着”</td><td class="us">认出来；在时悬停不展开；可选替你按一次</td></tr>
-      <tr><td>悬停</td><td>指针移向刘海就展开；在 Studio Display 上和悬停菜单栏混淆</td><td>Ice 悬停默认关；Thaw 离开 1 秒后收</td><td>Barbee 悬停显示会干扰滚动</td><td>NotchNook 悬停略展开、点再展开；Boring Notch 悬停展开</td><td>默认停 0.3 秒；离开 100 毫秒防抖</td><td>悬停展开，时长可调</td><td>停 0.12 秒；进来先往外长一点</td><td class="us">停 0.12 秒且 8 点内；横扫不提示；提示只往下长</td></tr>
-      <tr><td>滚动、调度中心、全屏</td><td>调度中心、多桌面表现差（评测）</td><td>Thaw 有锁死全部触发的模式</td><td>—</td><td>Boring Notch 2.7 修了屏幕上沿的指针问题</td><td>全屏放视频时藏</td><td>全屏、调度中心时藏</td><td>全屏、调度中心让开</td><td class="us">同；滚轮从不算停留；» 在时只认点击</td></tr>
+      <tr><td>菜单栏挤的时候</td><td>被挡的图标挪进 Bartender Bar，或和显示的互换</td><td>Ice Bar / Thaw Bar 第二条栏</td><td>折叠；Lounge 悬停刘海弹出被藏图标</td><td>不让</td><td>不让</td><td>—</td><td>34 → 26 → 下巴；但活动的紧凑按每边 54 画（见实现落点）</td><td class="us">按内容 → 33.74 → 下巴的点 → 只在那一排；收立刻，长要复核</td></tr>
+      <tr><td>macOS 27 的 »</td><td>Bartender 7 测试中</td><td>Ice 在 27 上不能用；Thaw 恢复了系统的 »</td><td>Hidden Bar 换了原生引擎</td><td>—</td><td>—</td><td>—</td><td>当成普通的“占着”</td><td class="us">认出来；在时长按不展开；可选替你按一次</td></tr>
+      <tr><td>悬停</td><td>指针移向刘海就展开；在 Studio Display 上和悬停菜单栏混淆</td><td>Ice 悬停默认关；Thaw 离开 1 秒后收</td><td>Barbee 悬停显示会干扰滚动</td><td>NotchNook 悬停略展开、点再展开；Boring Notch 悬停展开</td><td>默认停 0.3 秒；离开 100 毫秒防抖</td><td>悬停展开，时长可调</td><td>停 0.12 秒；进来先往外长一点</td><td class="us">不悬停展开：按住 0.5 秒且 8 点内才展开；没有提示；展开后停在格子上 0.12 秒才看一眼</td></tr>
+      <tr><td>滚动、调度中心、全屏</td><td>调度中心、多桌面表现差（评测）</td><td>Thaw 有锁死全部触发的模式</td><td>—</td><td>Boring Notch 2.7 修了屏幕上沿的指针问题</td><td>全屏放视频时藏</td><td>全屏、调度中心时藏</td><td>全屏、调度中心让开</td><td class="us">同；滚轮从不算按住；» 在时只认点击</td></tr>
       <tr><td>一件活动的样子</td><td>面板 + 进度条式的活动</td><td>—</td><td>—</td><td>以展开面板为主</td><td>收起时左右翼 + 展开里的标签页</td><td>紧凑、展开，多件并存</td><td>两耳 + 最小形 + 那一排</td><td class="us">左右耳、最小、一格、大卡四个区、提醒，九种活动同一套</td></tr>
       <tr><td>几件同时在</td><td>—</td><td>—</td><td>—</td><td>—</td><td>固定顺序：计时器 &gt; 日程 &gt; 录屏 &gt; 专注 &gt; 大写锁定 &gt; 扩展 &gt; 货架</td><td>可循环：下滑、中键、边缘滑</td><td>权重表 + 两指横扫</td><td class="us">新鲜 &gt; 权重 &gt; 同类相关度 &gt; 最近更新</td></tr>
       <tr><td>过期和结束</td><td>—</td><td>—</td><td>—</td><td>—</td><td>日程开始即结束</td><td>—</td><td>会话有“做完了”；别的直接消失</td><td class="us">过期变暗 0.5；结束留 4 秒；那一排留到看过</td></tr>
@@ -448,7 +446,7 @@ svg.fig text{font-family:var(--sans)}
       <li><b class="no">不用私有框架读写菜单栏</b>：系统一升级就坏，macOS 27 那一次几乎全军覆没。</li>
       <li><b class="no">不写 NSStatusItemSpacing / NSStatusItemSelectionPadding</b>：那是改用户的系统设置。用户自己改过，我们照样量对。</li>
       <li><b class="no">不重画别人的图标</b>，不盖遮罩窗口遮图标，不往壁纸上涂黑。</li>
-      <li><b class="no">不在悬停时拦截滚轮</b>，不在调度中心、全屏、共享屏幕时弹出。</li>
+      <li><b class="no">不在长按时拦截滚轮</b>，不在调度中心、全屏、共享屏幕时弹出。</li>
       <li><b class="no">不把二手的测试版行为写进界面</b>：» 和刘海下方模式以本机真机为准。</li>
       <li><b class="no">不收集使用数据</b>。</li>
     </ul>
@@ -460,11 +458,11 @@ svg.fig text{font-family:var(--sans)}
     <tbody>
       <tr><td>Studio Display、外接屏</td><td>没有刘海：菜单栏正中一颗 80 宽的胶囊，两侧各要 39 点；不够就挂到菜单栏下面 72 × 12。空着时不画、没有热区</td><td>不画假刘海；Top Shelf 在这里把悬停菜单栏和悬停面板搞混</td></tr>
       <tr><td>刘海下方模式</td><td>安全区报 0、辅助区没有：当作没有刘海的屏，走胶囊</td><td>公开接口说了算</td></tr>
-      <tr><td>调度中心</td><td>不画、不量、不悬停；关掉后按现在的事实画，不补播</td><td><span class="token">NotchSpaceGate</span> 今天已有</td></tr>
+      <tr><td>调度中心</td><td>不画、不量、不响应长按；关掉后按现在的事实画，不补播</td><td><span class="token">NotchSpaceGate</span> 今天已有</td></tr>
       <tr><td>全屏</td><td>同上；菜单栏滑下来时也不展开</td><td>看片时不打扰</td></tr>
       <tr><td>合盖接外接屏</td><td>活动跟去外接屏的胶囊；开盖时屏幕参数变了，在刘海上重量一次</td><td>屏幕变了是事件</td></tr>
-      <tr><td>» 收着</td><td>右边当满 → 下巴；悬停不展开那一排，点才展开；那一排里可选一个 »</td><td>不挡你要点的图标</td></tr>
-      <tr><td>» 点开</td><td>左边也满 → 仍在下巴；不因悬停打开那一排</td><td>刚露出来的图标就在刘海左边</td></tr>
+      <tr><td>» 收着</td><td>右边当满 → 下巴；长按不展开那一排；那一排里可选一个 »</td><td>不挡你要点的图标</td></tr>
+      <tr><td>» 点开</td><td>左边也满 → 仍在下巴；不因长按打开那一排</td><td>刚露出来的图标就在刘海左边</td></tr>
       <tr><td>App 菜单跨过刘海</td><td>两边都 &lt; 26 → 下巴的点；第二、第三件只在那一排</td><td>菜单比我们要紧</td></tr>
       <tr><td>自动隐藏菜单栏</td><td>量菜单栏出来时的样子（辅助功能仍报得出位置，LA-0 核实）；核实不了就按占着算</td><td>菜单栏滑下来时耳朵不能已经压在图标上</td></tr>
       <tr><td>用户改过图标间距</td><td>照样量帧</td><td>不认默认值</td></tr>
@@ -503,12 +501,12 @@ svg.fig text{font-family:var(--sans)}
     <tbody>
       <tr><td>App/NotchWatch.swift</td><td><span class="token">MenuBarRoom</span>：每 12 点探一次，碰到第一项读帧；事件清单；每个事件一次 0.6 秒复核；认 »。今天的 20 秒缓存和 <span class="token">MenuBarCoverRetry</span> 照旧。</td></tr>
       <tr><td>Core/NotchRoomPolicy.swift（新）</td><td>纯规则：收立刻、长要等（+4 点、0.6 秒复核）、指针在菜单栏上只收不长；空位 → 档位 → 耳宽、肩、最小形个数。不碰系统，测试直接用。</td></tr>
-      <tr><td>App/Notch.swift</td><td><span class="token">sideWidth</span> 改由上面的规则给；活动紧凑那一支今天按 <span class="token">max(sideWidth, 54)</span> 画，而空位只要求 ≥ 26，菜单栏项落在 26 到 54 点之间时会被盖住（读源码得出，待真机核实）：改成按画出来的宽度验空位。<span class="token">compactSlots</span> 跟着耳宽走。<span class="token">hover(_:)</span> 加 8 点停留、600 点/秒横扫、提示只往下长、» 在时只认点击。</td></tr>
-      <tr><td>Core/DisplayShape.swift</td><td><span class="token">NotchIsland.compactSide</span> 不改约定；加 26 / 33 / 34 的测试。刘海下方模式走胶囊，进 <span class="token">tests/DisplayShapeTests.swift</span> 的一个场景。</td></tr>
+      <tr><td>App/Notch.swift</td><td><span class="token">sideWidth</span> 改由上面的规则给；活动紧凑那一支今天按 <span class="token">max(sideWidth, 54)</span> 画，而空位只要求 ≥ 26，菜单栏项落在 26 到 54 点之间时会被盖住（读源码得出，待真机核实）：改成按画出来的宽度验空位。<span class="token">compactSlots</span> 跟着耳宽走。<span class="token">hover(_:)</span> 改成按住 0.5 秒（8 点内）才展开，指针停上去不展开、没有提示；» 在时只认点击。</td></tr>
+      <tr><td>Core/DisplayShape.swift</td><td><span class="token">NotchIsland.compactSide</span> 不改约定；加 26 / 33 / 34 的测试，另加按内容定宽（上限 52.33）的测试。刘海下方模式走胶囊，进 <span class="token">tests/DisplayShapeTests.swift</span> 的一个场景。</td></tr>
       <tr><td>Core/NotchActivities.swift</td><td>加 <span class="token">.calendar</span> 85、<span class="token">.timer</span> 75、<span class="token">.shelf</span> 10（和《日历、电量与计时器》的 ACT-W 同一处，不另加）；活动加相关度 0–4、过期时间、收场方式（默认 4 秒 / 立即 / 到点 ≤ 300 秒）、最后的样子；排序键改成新鲜 &gt; 权重 &gt; 相关度 &gt; 更新时间。<span class="token">NotchMinimalPresentation.islandExtent</span> 从 54 改成耳宽，放一颗要 76、两颗要 118。</td></tr>
       <tr><td>App/NotchActivityView.swift</td><td>按四个区画大卡；过期 0.5 + 右耳“—”；结束时留最后的样子。</td></tr>
       <tr><td>Core/NotchRow.swift</td><td>按筛选结果排格子，不窄于两格；刘海左边那段放筛选的字，右边那段放 » 入口。<span class="token">ongoingLimit</span> 3 不变。</td></tr>
-      <tr><td>App/NotchFocusController.swift、Core/FocusNavigator.swift</td><td>加筛选的字；拼音首字母用系统的汉字转拼音；焦点落第一个匹配；Esc 两步；悬停打开时不接键盘。</td></tr>
+      <tr><td>App/NotchFocusController.swift、Core/FocusNavigator.swift</td><td>加筛选的字；拼音首字母用系统的汉字转拼音；焦点落第一个匹配；Esc 两步；展开后接键盘。</td></tr>
       <tr><td>App/NotchSpaceGate.swift</td><td>不改判断；量空位照它的写法：只听通知，每次通知只补一次延后复核。</td></tr>
       <tr><td>tools/privacy/registry.json、App/WS2PrivacyData.swift</td><td>新读取登记；《WindowShade 读到的》加一行。</td></tr>
     </tbody>
@@ -520,12 +518,12 @@ svg.fig text{font-family:var(--sans)}
     <tbody>
       <tr><td>LA-0</td><td>真机先查</td><td>在这台 macOS 27.0 上记下 » 收着、点开、刘海下方模式、自动隐藏菜单栏时辅助功能报什么；核实“54 点盖图标”。</td><td>一张读数表 + 截图；» 的角色和可用属性写清；有没有开合通知写清。决定 LA-8 做不做。</td></tr>
       <tr><td>LA-1</td><td>量准空位</td><td>碰到第一项就读帧，每 12 点探一次，只在事件时量，每次一次 0.6 秒复核。</td><td>空闲 10 分钟日志里 0 次量；换前台、开关 App 各触发 ≤ 2 次；读数和截图里的图标边差 ≤ 1 点。</td></tr>
-      <tr><td>LA-2</td><td>耳宽按画的验</td><td>活动紧凑不再按 54 画；最小形放一颗要 76、两颗要 118。</td><td>测试：30 点处有图标时耳朵 ≤ 30，从不画 54；舞台截图和本稿逐档对得上。</td></tr>
+      <tr><td>LA-2</td><td>耳宽按画的验</td><td>活动紧凑不再按 54 画；最小形（小圆 33.5）放一颗要 耳宽 + 39.5、两颗要 耳宽 + 79。</td><td>测试：30 点处有图标时耳朵 ≤ 30，从不画 54；舞台截图和本稿逐档对得上。</td></tr>
       <tr><td>LA-3</td><td>拥挤阶梯与迟滞</td><td>新的纯规则文件：收立刻、长要等、指针在菜单栏上只收不长；» 与刘海下方模式当正常状态。</td><td>规则测试覆盖四档和来回拖；来回拖 20 次，2 秒内最多长一次；刘海下方模式走胶囊的测试通过。</td></tr>
-      <tr><td>LA-4</td><td>悬停不误触</td><td>8 点停留、600 点/秒横扫、提示只往下长、滚轮不算、» 在时只认点击。</td><td>探针脚本：800 点/秒横扫 20 次 0 次展开；停住 0.12–0.20 秒内展开；滚轮 50 次 0 次展开。</td></tr>
+      <tr><td>LA-4</td><td>长按不误触</td><td>按住 0.5 秒、8 点内才展开；指针停上去不展开、没有提示；滚轮不算；» 在时只认点击。</td><td>探针脚本：停在刘海上 5 秒 0 次展开；按住 0.5 秒内展开；800 点/秒横扫 20 次 0 次展开；滚轮 50 次 0 次展开。</td></tr>
       <tr><td>LA-5</td><td>一件活动的样子</td><td>九种活动都填齐左耳、右耳、最小、一格、大卡四个区。</td><td>每种一张截图对本稿的表；VoiceOver 念出的句子逐种列出。</td></tr>
       <tr><td>LA-6</td><td>生命周期与相关度</td><td>过期、收场方式、1.5 秒门槛、新排序键；依赖 ACT-W 的两个新权重。</td><td>排序测试：过期的会话排在新鲜的音乐后面；1 秒的拷贝不出现；结束留 4 秒、那一排留到看过。</td></tr>
-      <tr><td>LA-7</td><td>那一排里打字</td><td>点开或快捷键打开时接键盘筛选，拼音首字母，Esc 两步。</td><td>匹配测试（含“zh”→“周会”）；悬停打开时在备忘录里打字一个字都不丢。</td></tr>
+      <tr><td>LA-7</td><td>那一排里打字</td><td>点开或快捷键打开时接键盘筛选，拼音首字母，Esc 两步。</td><td>匹配测试（含“zh”→“周会”）；还没展开时在备忘录里打字一个字都不丢。</td></tr>
       <tr><td>LA-8</td><td>替你按 »（实验）</td><td>只在 » 在而且收着时放一个入口，按了交给系统；没有 » 不放。</td><td>真机按 10 次成功 10 次；系统没有 » 时入口从不出现；按失败后这次运行不再出现。LA-0 说不行就砍。</td></tr>
       <tr><td>LA-9</td><td>隐私登记</td><td>新读取进 registry，《WindowShade 读到的》加一行。</td><td>隐私扫描通过；页面上能看到这一行。</td></tr>
     </tbody>
@@ -534,8 +532,8 @@ svg.fig text{font-family:var(--sans)}
   <h2>待 Aaron 定</h2>
   <div class="card">
     <ol>
-      <li><b>两件同时在时，耳朵怎么分？</b>《日历、电量与计时器》写的是两只耳朵各放一件的最小样子；设计文法和今天的代码是两耳都给第一件，第二件挂在右边当最小形。<br><b>推荐</b>：照文法。耳朵是一件事的两半，读起来不打架；空位不够时两种写法都退到下巴，差别只在宽裕的时候。定了以后改那张稿。</li>
-      <li><b>点耳朵，先出那一排还是直接大卡？</b>《正在播放》写点耳朵直接长成大卡；《日历、电量与计时器》写先出那一排再点那一格。<br><b>推荐</b>：点耳朵直接大卡，点刘海本体或悬停出那一排。耳朵已经是“这一件”，再绕一步是多余的。</li>
+      <li><b>两件同时在时，耳朵怎么分？</b>《日历、电量与计时器》写的是两只耳朵各放一件的最小样子；设计文法和今天的代码是两耳都给第一件，第二件挂在右边当最小形。<br><b>已定</b>：照文法，第一件占两耳，第二件在右耳外一颗小圆，第三件只在那一排里；两指横扫切换。耳朵是一件事的两半，读起来不打架；空位不够时两种写法都退到下巴，差别只在宽裕的时候。定了以后改那张稿。</li>
+      <li><b>点耳朵，先出那一排还是直接大卡？</b>《正在播放》写点耳朵直接长成大卡；《日历、电量与计时器》写先出那一排再点那一格。<br><b>已定</b>：点耳朵直接长成大卡；在那一排里点那一格也长成大卡；长按刘海本体出那一排。耳朵已经是“这一件”，再绕一步是多余的。</li>
       <li><b>那一排里的 » 入口做不做？</b><br><b>推荐</b>：先做 LA-0 真机核实；能稳定按到才做成实验开关、默认关。按不到就砍，不找别的办法。</li>
     </ol>
   </div>
@@ -547,10 +545,12 @@ svg.fig text{font-family:var(--sans)}
 var $=function(id){return document.getElementById(id)};
 /* 弹簧令牌：response 秒 / 阻尼比 ζ（design-system §4.6） */
 var TOK={calm:{r:.34,z:1,n:'calm'},settle:{r:.38,z:1,n:'settle'},bloom:{r:.42,z:.84,n:'bloom'},expand:{r:.40,z:.92,n:'expand'},pop:{r:.30,z:.75,n:'pop'}};
-var HOLD={notchDwell:.12,tileDwell:.20,alert:2.6,linger:4};
-var N={w:185,h:33.5,rb:10.71,e:7.4};
+var HOLD={longPress:.5,tileDwell:.12,alert:2.6,linger:4};
+var N={w:185,h:33.5,rb:10.71,e:7.74};
 var CX=490,NL=CX-N.w/2,NR=CX+N.w/2;
-var EAR=34,EAR_MIN=26,MARGIN=4,RECHECK=.6,SWEEP=600,STILL=8,MINI_W=36,MINI_GAP=6;
+var EAR_MAX=52.33,EAR_MIN=26,MARGIN=4,RECHECK=.6,SWEEP=600,STILL=8,MINI_W=33.5,MINI_GAP=6; /* 最小形 = 和耳朵同高的小圆；耳宽按内容，主体最窄 26，每耳（主体 + 肩）最多 52.33，即主体最宽 44.59 */
+var RW={session:14,calendar:24,timer:28,focus:24,download:30,airdrop:30,music:16.4,device:30,shelf:10}; /* 右耳内容宽（示意） */
+function earNeed(c){var rw=c?RW[c.kind]||24:24; return Math.min(EAR_MAX,Math.max(EAR_MIN,2+Math.max(18,rw)+(N.h-18)/2)+N.e);} /* 主体 = 2 + 内容宽 + 外侧留白，再加肩 */
 var WEIGHT={session:95,recording:90,calendar:85,download:80,airdrop:80,timer:75,focus:70,route:60,music:40,remote:30,device:20,shelf:10};
 var KINDS=['session','calendar','timer','focus','download','airdrop','music','device','shelf'];
 var NAME={session:'编程会话',calendar:'日程',timer:'计时器',focus:'番茄钟',download:'下载',airdrop:'隔空投送',music:'正在播放',device:'耳机',shelf:'文件架'};
@@ -678,8 +678,9 @@ function fit(){
     return side>=39?{mode:'pill',ear:40,body:40,sh:false,level:'宽裕'}:{mode:'chin',level:'挤'};
   }
   if(S.lastRaw&&S.lastRaw.ovf) return {mode:'chin',level:'挤',why:'» 在'};
-  if(side>=EAR) return {mode:'ears',ear:EAR,body:EAR-N.e,sh:true,level:'宽裕'};
-  if(side>=EAR_MIN){var ew=Math.floor(side);return {mode:'ears',ear:ew,body:ew,sh:false,level:'偏挤'};}
+  var need=earNeed(compactAct());
+  if(side>=need) return {mode:'ears',ear:need,body:need-N.e,sh:true,level:'宽裕'};
+  if(side>=EAR_MIN+N.e){var ew=Math.floor(side);return {mode:'ears',ear:ew,body:ew-N.e,sh:true,level:'偏挤'};}
   return {mode:'chin',level:'挤'};
 }
 function miniFits(ear,want){
@@ -715,10 +716,10 @@ function compactAct(){
   if(!r.length) return null;
   var sel=r.filter(function(a){return a.id===S.selected;})[0];
   if(sel) return sel;
-  var non=r.filter(function(a){return a.kind!=='shelf';});
-  return non[0]||r[0];
+  var non=r.filter(function(a){return a.kind!=='shelf'&&a.kind!=='device';});
+  return non[0]||r.filter(function(a){return a.kind==='shelf';})[0]||null;
 }
-function others(c){return ranked().filter(function(a){return a!==c && a.kind!=='shelf' && !a.ended;});}
+function others(c){return ranked().filter(function(a){return a!==c && a.kind!=='shelf' && a.kind!=='device' && !a.ended;});}
 function startAct(kind){
   var a=mk(kind); var wasEmpty=!compactAct();
   S.acts.push(a);
@@ -733,7 +734,7 @@ function endAct(a,policy){
   if(policy==='now'){a.gone=true;log('立即结束：'+NAME[a.kind]);}
   else{
     a.ended=now(); a.endPolicy='default';
-    if(a.kind==='session'){a.step='done';queueAlert(a,'会话做完了','windowshade');}
+    if(a.kind==='session'){a.step='done';queueAlert(a,'windowshade · 完成','改了 3 个文件',4);}
     if(a.kind==='download'){a.p=1;queueAlert(a,'下载好了',a.title);}
     if(a.kind==='airdrop'){a.p=1;queueAlert(a,'已送达',a.title);}
     log('结束：'+NAME[a.kind]+'，最后的样子留 4 秒');
@@ -787,7 +788,7 @@ function isStale(a){return a.phase==='stale';}
 function ears(a,short){
   var L='',T='',col=TONE[a.kind],st=isStale(a);
   switch(a.kind){
-    case 'session': L=G('term',18); T=a.step==='done'?G('check',16):(a.step==='waiting'?'<span style="color:#ff9f0a">'+(short?'●':'等你')+'</span>':spinner('#fff',15)); break;
+    case 'session': L=G('term',18); T=a.step==='done'?G('check',16):(a.step==='waiting'?'<i style="display:block;width:10px;height:10px;border-radius:5px;background:#ff9f0a"></i>':spinner('#fff',15)); break;
     case 'calendar':
       if(a.left<=0){L=ring(1,col,18);T=G('cam',16,'#30d158');}
       else{L=ring(a.left/300,col,18);T=short?String(Math.ceil(a.left/60)):mins(a.left);} break;
@@ -828,7 +829,7 @@ function tileHTML(a){
 }
 
 /* ---------- 几何目标 ---------- */
-var P={W:{x:185,v:0},H:{x:33.5,v:0},rb:{x:10.71,v:0},e:{x:7.4,v:0},top:{x:0,v:0}},tok=TOK.calm,allCorners=false,visible=true;
+var P={W:{x:185,v:0},H:{x:33.5,v:0},rb:{x:10.71,v:0},e:{x:7.74,v:0},top:{x:0,v:0}},tok=TOK.calm,allCorners=false,visible=true;
 function setTarget(g,t){
   tok=t||tok; allCorners=!!g.all; visible=g.vis!==false;
   ['W','H','rb','e','top'].forEach(function(k){P[k].t=g[k];});
@@ -850,21 +851,21 @@ function rowWidth(c){
 function proxyShown(){return $('proxyOn').checked && S.lastRaw && S.lastRaw.ovf && !S.ovfOpen && !virtualMode();}
 function computeTarget(){
   var virt=virtualMode(), top=mbTop(), yield_=S.env.mission||S.env.full;
-  var hw={W:185,H:33.5,rb:10.71,e:7.4,top:0,vis:!virt};
+  var hw={W:185,H:33.5,rb:10.71,e:7.74,top:0,vis:!virt};
   if(yield_) return {g:hw,t:TOK.calm,mode:'yield'};
   var c=compactAct(), fitv=fit();
   if(S.ui==='row'){
     var cells=rowCells();
-    return {g:{W:rowWidth(cells),H:175.5,rb:28,e:0,top:top,all:virt},t:TOK.expand,mode:'row'};
+    return {g:{W:rowWidth(cells),H:175.5,rb:28,e:virt?0:N.e,top:top,all:virt},t:TOK.expand,mode:'row'};
   }
   if(S.ui==='card'){
     var a=S.acts.filter(function(x){return x.id===S.cardId;})[0];
     var W=a&&a.kind==='calendar'?440:420;
-    return {g:{W:W,H:175.5,rb:28,e:0,top:top,all:virt},t:TOK.expand,mode:'card'};
+    return {g:{W:W,H:175.5,rb:28,e:virt?0:N.e,top:top,all:virt},t:TOK.expand,mode:'card'};
   }
   if(S.ui==='alert'&&S.alert){
-    if(S.alert.peek && fitv.mode==='ears') return {g:{W:185+2*fitv.ear,H:63.5,rb:24,e:fitv.sh?N.e:0,top:0},t:TOK.bloom,mode:'peek'};
-    return {g:{W:400,H:85.5,rb:24,e:0,top:top,all:virt},t:TOK.bloom,mode:'alert'};
+    if(S.alert.peek && fitv.mode==='ears') return {g:{W:185+2*fitv.body,H:63.5,rb:24,e:N.e,top:0},t:TOK.bloom,mode:'peek'};
+    return {g:{W:virt?371:408,H:84,rb:24,e:virt?0:N.e,top:top,all:virt},t:TOK.bloom,mode:'alert'};
   }
   if(!c) return {g:hw,t:TOK.calm,mode:'none'};
   if(virt){
@@ -873,7 +874,7 @@ function computeTarget(){
   }
   if(fitv.mode==='ears'){
     var hintH=(S.hint&&!reduced)?3:0;
-    return {g:{W:185+2*fitv.body,H:33.5+hintH,rb:10.71,e:fitv.sh?N.e:0,top:0},t:S.hint?TOK.calm:TOK.settle,mode:'ears'};
+    return {g:{W:185+2*fitv.body,H:33.5+hintH,rb:10.71,e:N.e,top:0},t:S.hint?TOK.calm:TOK.settle,mode:'ears'};
   }
   if(fitv.mode==='chin') return {g:{W:185,H:41.5+((S.hint&&!reduced)?3:0),rb:10.71,e:N.e,top:0},t:TOK.settle,mode:'chin'};
   return {g:hw,t:TOK.calm,mode:'none'};
@@ -914,7 +915,7 @@ function drawMenubar(){
   /* 探针：从刘海边每 12 点往外，碰到第一项就停 */
   var pr='';
   if($('probesOn').checked && !S.env.mission && !S.env.full){
-    var Ledge=virt?CX:NL,Redge=virt?CX:NR,reach=EAR+MINI_GAP+2*MINI_W+MINI_GAP;
+    var Ledge=virt?CX:NL,Redge=virt?CX:NR,reach=EAR_MAX+MINI_GAP+2*MINI_W+MINI_GAP;
     [['L',-1,Ledge],['R',1,Redge]].forEach(function(s){
       var room=lay[s[0]];
       for(var o=3;o<=reach;o+=12){
@@ -941,7 +942,7 @@ function drawContent(m){
     var o=others(c), k=$('probesOn')?miniFits(fitv.ear,o.length):0;
     for(var i=0;i<k;i++){
       var mx=NR+fitv.ear+MINI_GAP+i*(MINI_W+MINI_GAP);
-      h+='<div class="mini" style="left:'+mx+'px;top:'+((33.5-28)/2)+'px">'+miniHTML(o[i])+'</div>';
+      h+='<div class="mini" style="left:'+mx+'px;top:0">'+miniHTML(o[i])+'</div>';
     }
     key+='|m'+k;
   }else if(m.mode==='chin'&&c){
@@ -983,14 +984,14 @@ function drawContent(m){
     var a=S.acts.filter(function(q){return q.id===S.cardId;})[0];
     if(a){ h+=cardHTML(a,top); key+='|'+a.id; }
   }else if(m.mode==='alert'&&S.alert){
-    var al=S.alert, ax0=CX-200, sym=ears(al.act,false);
+    var al=S.alert, ax0=CX-204, aw=virt?371:408, sym=ears(al.act,false);
     h+='<div class="ear" style="left:'+(ax0+14)+'px;width:'+(NL-ax0-22)+'px;top:'+top+'px;justify-content:flex-start">'+sym.L+'</div>';
-    h+='<div class="ear" style="left:'+(NR+8)+'px;width:'+(ax0+400-NR-22)+'px;top:'+top+'px;justify-content:flex-end">'+sym.T+'</div>';
-    h+='<div class="reg" style="left:'+(ax0+16)+'px;right:'+(980-ax0-400+16)+'px;top:'+(top+38)+'px;height:36px;display:block"><div style="font-size:13px;font-weight:650">'+al.title+'</div><small>'+al.sub+'</small></div>';
-    if(al.btn) h+='<div style="position:absolute;right:'+(980-ax0-400+16)+'px;top:'+(top+44)+'px;display:flex;gap:6px">'+al.btn.map(function(b,i){return '<span class="pbtn'+(i?' go':'')+'" data-alertbtn="'+i+'">'+b+'</span>'}).join('')+'</div>';
+    h+='<div class="ear" style="left:'+(NR+8)+'px;width:'+(ax0+aw-NR-22)+'px;top:'+top+'px;justify-content:flex-end">'+sym.T+'</div>';
+    h+='<div class="reg" style="left:'+(ax0+16)+'px;right:'+(980-ax0-aw+16)+'px;top:'+(top+38)+'px;height:36px;display:block"><div style="font-size:13px;font-weight:650">'+al.title+'</div><small>'+al.sub+'</small></div>';
+    if(al.btn) h+='<div style="position:absolute;right:'+(980-ax0-aw+16)+'px;top:'+(top+44)+'px;display:flex;gap:6px">'+al.btn.map(function(b,i){return '<span class="pbtn'+(i?' go':'')+'" data-alertbtn="'+i+'">'+b+'</span>'}).join('')+'</div>';
     key+='|'+al.title;
   }else if(m.mode==='peek'&&S.alert){
-    var bw=185+2*fitv.ear;
+    var bw=185+2*fitv.body;
     h+='<div class="ear" style="left:'+(NL-fitv.body)+'px;width:'+fitv.body+'px">'+cover(18)+'</div><div class="ear" style="left:'+NR+'px;width:'+fitv.body+'px">'+dots(TONE.music)+'</div>';
     h+='<div style="position:absolute;left:'+(CX-bw/2+12)+'px;width:'+(bw-24)+'px;top:39px;text-align:center;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+S.alert.title+'<span style="font-size:11px;font-weight:500;margin-left:6px;color:#ffcf8a">'+S.alert.sub+'</span></div>';
     key+='|'+S.alert.title;
@@ -998,8 +999,8 @@ function drawContent(m){
   /* 第 4 层撞上 1–3 层：一个点 */
   var ex='';
   if(S.dot && S.dot.until>now()){
-    var dx = (m.mode==='row'||m.mode==='card')?(CX+P.W.x/2-14):(NR+(fitv.ear||0)+4);
-    ex+='<span class="alertdot" style="left:'+dx+'px;top:'+(top+6)+'px;background:'+TONE[S.dot.kind]+'"></span>';
+    var dx = CX+P.W.x/2-10-8, dy = top+P.H.x-8-8;   /* 右下 8 点：右 10、下 8，强调色 */
+    ex+='<span class="alertdot" style="left:'+dx+'px;top:'+dy+'px"></span>';
   } else S.dot=null;
   /* 看一眼 */
   if(m.mode==='row' && S.peek){
@@ -1025,14 +1026,14 @@ function cardHTML(a,top){
   function box(k,inner,extra){var r=R[k];return '<div class="reg" style="left:'+r[0]+'px;top:'+r[1]+'px;width:'+r[2]+'px;height:'+r[3]+'px;'+(extra||'')+'">'+inner+'</div>';}
   var L='',T='',C='',B='';
   switch(a.kind){
-    case 'session': L=G('term',20)+'<span style="font-size:12px">windowshade</span>'; T='<b>12 分</b>'; C=a.step==='waiting'?'要改 3 个文件':(a.step==='done'?'做完了':'第 4 步：跑测试'); B=a.step==='waiting'?'<span class="pbtn" data-cardbtn="deny">拒绝</span><span class="pbtn go" data-cardbtn="ok">批准</span><span style="flex:1"></span><small>打开会话</small>':'<small>最近一步：改了 Notch.swift</small><span style="flex:1"></span><span class="pbtn">打开会话</span>'; break;
+    case 'session': L=G('term',20)+'<span style="font-size:12px">windowshade</span>'; T='<b>12 分</b>'; C=a.step==='waiting'?'要改 3 个文件':(a.step==='done'?'做完了':'第 4 步：跑测试'); B=a.step==='waiting'?'<span class="pbtn go" data-cardbtn="ok">允许一次</span><span class="pbtn" data-cardbtn="look">去看看</span><span style="flex:1"></span><small>高风险：用 Touch ID 允许</small>':'<small>最近一步：改了 Notch.swift</small><span style="flex:1"></span><span class="pbtn">打开会话</span>'; break;
     case 'calendar': L='<i style="width:4px;height:36px;border-radius:2px;background:'+TONE.calendar+'"></i><span>周会</span>'; T='<b>15:00</b>'; C=a.left>0?Math.ceil(a.left/60)+' 分钟后开始':'已经开始'; B='<span class="pbtn go">加入</span><span style="flex:1"></span><small>还有 1 个：设计评审 · 16:00</small>'; break;
     case 'timer': L=ring(a.left/a.total,TONE.timer,34,3); T='<b style="font-variant-numeric:tabular-nums">'+mmss(Math.abs(a.left))+'</b>'; C='10 分钟计时器'; B='<span class="pbtn">'+(a.paused?'继续':'暂停')+'</span><span class="pbtn">结束</span>'; break;
     case 'focus': L=ring(a.left/a.total,TONE.focus,34,3); T='<b>'+mins(a.left)+'</b>'; C='专注 · 第 2 轮'; B='<span class="pbtn">跳过</span><span class="pbtn">结束</span>'; break;
     case 'download': L=G('down',26); T='<small>还剩 2 分</small>'; C=a.title; B='<span class="bar"><i style="width:'+(a.p*100)+'%"></i></span><span class="pbtn">在访达中显示</span>'; break;
     case 'airdrop': L=G('air',26); T='<b>'+Math.round(a.p*100)+'%</b>'; C=a.title; B='<span class="bar"><i style="width:'+(a.p*100)+'%"></i></span><span class="pbtn">取消</span>'; break;
     case 'music': L=cover(52); T=G('spk',20); C=a.song+' <small>· '+a.artist+'</small>'; B='<span class="bar"><i style="width:'+(a.p*100)+'%"></i></span>'+G('prev',18)+G('play',20)+G('next',18); break;
-    case 'device': L=G('head',24)+'<span>耳机</span>'; T='<b>'+a.bat+'%</b>'; C='左 80% · 右 78%'; B='<small>充电盒 60%</small>'; break;
+    case 'device': L=G('head',24)+'<span>耳机</span>'; T=ring(a.bat/100,'#32d74b',22,3)+'<b>'+a.bat+'%</b>'; C='左 80% · 右 78%'; B='<small>充电盒 60%</small>'; break;
     case 'shelf': L=G('tray',22)+'<span>文件架</span>'; T='<b>'+a.count+'</b>'; C='点一格看大图预览'; B='<small>文件架卡见《文件架》，不套四个区</small>'; break;
   }
   var dim=isStale(a)?'opacity:.5;':'';
@@ -1056,7 +1057,7 @@ function drawShape(){
   var m=S.lastMode;
   if(m==='ears'){
     var c=compactAct(),fitv=fit(),k=c?miniFits(fitv.ear,others(c).length):0;
-    for(var i=0;i<k;i++){var mx=NR+fitv.ear+MINI_GAP+i*(MINI_W+MINI_GAP);h+='<rect x="'+mx+'" y="'+((33.5-28)/2)+'" width="36" height="28" rx="14" fill="#000"/>';}
+    for(var i=0;i<k;i++){var mx=NR+fitv.ear+MINI_GAP+i*(MINI_W+MINI_GAP);h+='<rect x="'+mx+'" y="0" width="33.5" height="33.5" rx="16.75" fill="#000"/>';}
   }
   svg.innerHTML=h;
 }
@@ -1070,8 +1071,8 @@ function frame(ts){
   if(S.pendT && ts>=S.pendT) recheck();
   /* 停留 → 展开 */
   var p=S.ptr;
-  if(p.in && S.ui==='rest' && !S.env.mission && !S.env.full && hoverAllowed()){
-    if(t-p.still>=HOLD.notchDwell){openRow('hover');}
+  if(p.pressAt && S.ui==='rest' && !S.env.mission && !S.env.full && hoverAllowed()){
+    if(t-p.pressAt>=HOLD.longPress){p.pressAt=0;p.long=true;openRow('press');}
   }
   /* 提醒到点 */
   if(S.alert && t>=S.alert.until){
@@ -1127,7 +1128,7 @@ function readouts(m){
   var fv=fit(), use='—', chip='';
   if(S.env.mission||S.env.full){use='让开';chip='<span class="chip mute">让开</span>';}
   else if(!compactAct()) {use='什么都不长（和刘海重合）';}
-  else if(fv.mode==='ears'){use='两耳各 '+fv.ear+(fv.sh?'（主体 26.6 + 肩 7.4）':'（不画肩）');chip='<span class="chip '+(fv.level==='宽裕'?'ok':'warn')+'">'+fv.level+'</span>';}
+  else if(fv.mode==='ears'){use='两耳各 '+f1(fv.ear)+'（主体 '+f1(fv.body)+' + 肩 7.74）';chip='<span class="chip '+(fv.level==='宽裕'?'ok':'warn')+'">'+fv.level+'</span>';}
   else if(fv.mode==='chin'){use='下巴的点'+(fv.why?'（'+fv.why+'）':'');chip='<span class="chip bad">挤</span>';}
   else if(fv.mode==='pill'){use='菜单栏正中的胶囊 80 宽';chip='<span class="chip ok">宽裕</span>';}
   if(virtualMode()&&fv.mode==='chin'&&compactAct()) use='挂到菜单栏下面 72 × 12';
@@ -1142,7 +1143,7 @@ function readouts(m){
 function ptrText(){
   var p=S.ptr;
   if(!p.onStage) return '不在舞台上';
-  if(p.in) return '在热区里'+(p.sweep?'（横扫进来，'+Math.round(p.speed)+' 点/秒，不提示）':'')+(hoverAllowed()?'':'；» 在，只认点击');
+  if(p.in) return '在热区里（停着不展开，按住 0.5 秒才展开）'+(hoverAllowed()?'':'；» 在，只认点击');
   if(ptrInBand()) return '在菜单栏上（只收不长）';
   return '在桌面上';
 }
@@ -1156,7 +1157,7 @@ function hotRect(){
   var x0=CX-P.W.x/2-Math.max(0,P.e.x), y0=P.top.x, w=P.W.x+2*Math.max(0,P.e.x), h=P.H.x;
   if(virtualMode() && (S.lastMode==='none')) return null;
   var r=[{x:x0,y:y0,w:w,h:h}];
-  if(S.lastMode==='ears'){var c=compactAct(),fv=fit(),k=c?miniFits(fv.ear,others(c).length):0; if(k) r.push({x:NR+fv.ear+MINI_GAP,y:2.75,w:k*MINI_W+(k-1)*MINI_GAP,h:28});}
+  if(S.lastMode==='ears'){var c=compactAct(),fv=fit(),k=c?miniFits(fv.ear,others(c).length):0; if(k) r.push({x:NR+fv.ear+MINI_GAP,y:0,w:k*MINI_W+(k-1)*MINI_GAP,h:33.5});}
   return r;
 }
 function inHot(p){var r=hotRect();if(!r)return false;return r.some(function(b){return p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y-1&&p.y<=b.y+b.h;});}
@@ -1169,23 +1170,23 @@ outer.addEventListener('mousemove',function(e){
   q.in=inHot(p);
   if(q.in&&!was){
     q.sweep=q.speed>SWEEP; q.ax=p.x;q.ay=p.y;q.still=t;
-    if(!q.sweep && S.ui==='rest' && compactAct() && hoverAllowed()){S.hint=true;}
     if(S.focus!=null) dirty=true;
   }else if(q.in){
-    if(Math.hypot(p.x-q.ax,p.y-q.ay)>STILL){q.ax=p.x;q.ay=p.y;q.still=t;}
+    if(Math.hypot(p.x-q.ax,p.y-q.ay)>STILL){q.ax=p.x;q.ay=p.y;q.still=t;q.pressAt=0;}
   }else if(was){
     S.hint=false;
-    if(S.ui==='row'&&S.rowBy==='hover'){closeAll('指针离开');}
   }
   if(wasBand&&!ptrInBand()&&S.blocked){S.blocked=false;recheck();}
-  /* 看一眼：停在窗口格上 0.20 秒 */
+  /* 看一眼：停在窗口格上 0.12 秒 */
   var el=e.target.closest&&e.target.closest('[data-tile]'), id=el?el.getAttribute('data-tile'):null;
   if(id!==tileOver){tileOver=id;clearTimeout(tileTimer);if(S.peek){S.peek=null;dirty=true;}
     if(id&&id.charAt(0)==='w'){tileTimer=setTimeout(function(){S.peek=id;dirty=true;},HOLD.tileDwell*1000);}}
   $('ptrRead').textContent=ptrText();
   dirty=true;
 });
-outer.addEventListener('mouseleave',function(){var q=S.ptr;q.onStage=false;if(q.in){q.in=false;S.hint=false;if(S.ui==='row'&&S.rowBy==='hover')closeAll('指针离开');}clearTimeout(tileTimer);S.peek=null;if(S.blocked){S.blocked=false;recheck();}$('ptrRead').textContent=ptrText();dirty=true;});
+outer.addEventListener('mouseleave',function(){var q=S.ptr;q.onStage=false;if(q.in){q.in=false;S.hint=false;}q.pressAt=0;clearTimeout(tileTimer);S.peek=null;if(S.blocked){S.blocked=false;recheck();}$('ptrRead').textContent=ptrText();dirty=true;});
+outer.addEventListener('mousedown',function(e){var p=toStage(e),q=S.ptr;q.long=false;if(S.ui==='rest'&&inHot(p)&&!S.env.mission&&!S.env.full&&hoverAllowed()){q.pressAt=now();q.ax=p.x;q.ay=p.y;}});
+outer.addEventListener('mouseup',function(){S.ptr.pressAt=0;});
 outer.addEventListener('wheel',function(e){
   var p=toStage(e);
   if(inHot(p)||S.ui!=='rest'){e.preventDefault();$('ptrRead').textContent='滚轮：不算停留，也不展开';}
@@ -1193,10 +1194,11 @@ outer.addEventListener('wheel',function(e){
 outer.addEventListener('click',function(e){
   var p=toStage(e);
   if(S.env.mission||S.env.full) return;
+  if(S.ptr.long){S.ptr.long=false;return;}
   var pb=e.target.closest&&e.target.closest('[data-proxy]');
   if(pb){pressOverflow();return;}
   var cb=e.target.closest&&e.target.closest('[data-cardbtn]');
-  if(cb){var a=S.acts.filter(function(x){return x.id===S.cardId})[0];if(a&&a.kind==='session'){a.step='running';a.rel=1;log(cb.dataset.cardbtn==='ok'?'批准了：会话接着跑':'拒绝了');dirty=true;}return;}
+  if(cb){var a=S.acts.filter(function(x){return x.id===S.cardId})[0];if(a&&a.kind==='session'){if(cb.dataset.cardbtn==='ok'){a.step='running';a.rel=1;log('允许一次：会话接着跑');}else{log('去看看：打开会话');}dirty=true;}return;}
   var ab=e.target.closest&&e.target.closest('[data-alertbtn]');
   if(ab&&S.alert){var al=S.alert;S.alert=null;S.ui='rest';if(al.act.kind==='timer'){endAct(al.act,'now');}log('点了“'+ab.textContent+'”');dirty=true;return;}
   var te=e.target.closest&&e.target.closest('[data-tile]');
@@ -1206,7 +1208,7 @@ outer.addEventListener('click',function(e){
     var c=compactAct(),fv=fit();
     var onEar=c&&S.lastMode==='ears'&&((p.x<NL&&p.x>=NL-fv.ear)||(p.x>NR&&p.x<=NR+fv.ear));
     if(onEar){openCard(c.id,'点耳朵');}
-    else{openRow('click');}
+    else{log('点刘海本体 → 回到主屏幕（这张稿不演示）');}
     outer.focus();
     return;
   }
@@ -1219,7 +1221,7 @@ function openRow(by){
   var wait=all.findIndex(function(z){return z.type==='act'&&z.o.kind==='session'&&z.o.step==='waiting';});
   S.focus=wait>=0?wait:0;
   all.forEach(function(z){if(z.type==='act'&&z.o.ended)z.o.seen=true;});
-  log((by==='hover'?'停够 0.12 秒':'点了刘海')+' → 展开那一排（expand）'+(by==='hover'?'，不接键盘':''));
+  log((by==='press'?'按住 0.5 秒':'快捷键')+' → 展开那一排（expand），展开后可以直接打字');
   dirty=true;
 }
 function openCard(id,why){S.ui='card';S.cardId=id;S.hint=false;log(why+' → 大卡（expand）');dirty=true;}
@@ -1243,7 +1245,6 @@ function pressOverflow(){
 /* ---------- 键盘 ---------- */
 outer.addEventListener('keydown',function(e){
   if(S.ui!=='row'&&S.ui!=='card') return;
-  if(S.rowBy==='hover'&&S.ui==='row'){ if(e.key.length===1){log('悬停打开的那一排不接键盘：这个字还给前台 App');} return; }
   var cells=rowCells(),all=cells.w.concat(cells.on),n=all.length+(proxyShown()?1:0);
   if(e.key==='Escape'){e.preventDefault();if(S.query){S.query='';S.focus=0;log('Esc：先清字');}else if(S.ui==='card'&&S.rowBy){S.ui='row';log('Esc：回到那一排');}else closeAll('Esc');dirty=true;return;}
   if(S.ui==='card') return;
@@ -1292,7 +1293,7 @@ function picked(){var id=$('pick').value;return S.acts.filter(function(a){return
     }
     if(op==='alert'){
       var M={session:['会话在等你','windowshade · 改 3 个文件'],calendar:['马上开始','周会 · 15:00'],timer:['时间到','10 分钟计时器'],focus:['该休息了','专注了 25 分钟'],download:['下载好了',a.title],airdrop:['已送达',a.title],music:['Golden Hour','示例歌手'],device:['耳机电量低','还剩 10%，记得充电'],shelf:['文件架','这一件没有提醒']}[a.kind];
-      if(a.kind==='session'){a.step='waiting';a.rel=4;}
+      if(a.kind==='session'){a.step='waiting';a.rel=4;log('等你：右耳琥珀点亮 0.6 秒，随即长成审批卡（带提示音）');dirty=true;setTimeout(function(){if(S.ui==='rest'&&a.step==='waiting')openCard(a.id,'审批卡');},600);return;}
       if(a.kind==='music'){a.song=M[0];a.artist=M[1];}
       if(a.kind==='shelf'){log('文件架没有提醒更新');return;}
       queueAlert(a,M[0],M[1],a.kind==='timer'?10:(a.kind==='music'?Math.min(4.5,1.8+.05*(M[0].length+M[1].length)):HOLD.alert),a.kind==='calendar'?['加入']:(a.kind==='timer'?['结束','再来一个']:null));
@@ -1337,7 +1338,7 @@ $('later').addEventListener('click',function(){
     if(k==='external'&&S.env.external){S.env.below=false;document.querySelector('[data-env="below"]').setAttribute('aria-pressed','false');}
     if(k==='below'||k==='external'){S.ovfOpen=false;$('ovfBtn').setAttribute('aria-pressed','false');S.room={L:null,R:null};S.ui='rest';measure('屏幕参数变了');}
     var v=$('veil');v.className='veil'+(S.env.mission?' mc':(S.env.full?' fs':''));
-    $('veilText').textContent=S.env.mission?'调度中心：刘海让开，不画、不量、不悬停':(S.env.full?'全屏：菜单栏收起，刘海让开':'');
+    $('veilText').textContent=S.env.mission?'调度中心：刘海让开，不画、不量、不响应长按':(S.env.full?'全屏：菜单栏收起，刘海让开':'');
     if(k==='mission'||k==='full'){ if(S.env[k]){S.ui='rest';S.alert=null;log((k==='mission'?'调度中心':'全屏')+' → 让开');} else measure((k==='mission'?'调度中心关了':'退出全屏')+'，按现在的事实画'); }
     drawMenubar(); dirty=true;
   });
@@ -1366,28 +1367,28 @@ function anatomy(){
   function lab(x,y,t,c,a){return '<text x="'+x+'" y="'+y+'" font-size="12" fill="'+(c||mut)+'" text-anchor="'+(a||'middle')+'">'+t+'</text>';}
   var k=.5;
   /* 1 紧凑 */
-  var cx=100; s+='<path d="'+shapePath(cx,(185+2*26.6)*k,33.5*k,5.4,3.7,30)+'" fill="#000"/>';
-  s+='<circle cx="'+(cx-(185/2+13.3)*k)+'" cy="'+(30+8.4)+'" r="5" fill="none" stroke="#ff9f0a" stroke-width="1.6"/><text x="'+(cx+(185/2+13.3)*k)+'" y="'+(30+12)+'" font-size="8" fill="#fff" text-anchor="middle" font-weight="700">9分</text>';
-  s+=hwl(cx,30)+lab(cx-60,80,'左耳：是谁')+lab(cx+60,80,'右耳：是数')+lab(cx,104,'紧凑 · 各 34 点',ink);
+  var cx=100; s+='<path d="'+shapePath(cx,(185+2*28.75)*k,33.5*k,5.4,3.7,30)+'" fill="#000"/>';
+  s+='<circle cx="'+(cx-(185/2+14.4)*k)+'" cy="'+(30+8.4)+'" r="5" fill="none" stroke="#ff9f0a" stroke-width="1.6"/><text x="'+(cx+(185/2+14.4)*k)+'" y="'+(30+12)+'" font-size="8" fill="#fff" text-anchor="middle" font-weight="700">9分</text>';
+  s+=hwl(cx,30)+lab(cx-60,80,'左耳：是谁')+lab(cx+60,80,'右耳：是数')+lab(cx,104,'紧凑 · 耳高 33.5，宽按内容',ink);
   /* 2 最小 */
-  cx=290; s+='<path d="'+shapePath(cx,(185+2*26.6)*k,33.5*k,5.4,3.7,30)+'" fill="#000"/><rect x="'+(cx+(185/2+34+6)*k)+'" y="'+(30+1.4)+'" width="18" height="14" rx="7" fill="#000"/><circle cx="'+(cx+(185/2+34+6+18)*k)+'" cy="'+(30+8.4)+'" r="3" fill="#0a84ff"/>';
+  cx=290; s+='<path d="'+shapePath(cx,(185+2*28.75)*k,33.5*k,5.4,3.7,30)+'" fill="#000"/><rect x="'+(cx+(185/2+36.15+6)*k)+'" y="30" width="'+(33.5*k)+'" height="'+(33.5*k)+'" rx="'+(33.5*k/2)+'" fill="#000"/><circle cx="'+(cx+(185/2+36.15+6)*k+33.5*k/2)+'" cy="'+(30+33.5*k/2)+'" r="3" fill="#0a84ff"/>';
   s+='<path d="'+shapePath(cx,185*k,41.5*k,5.4,3.7,120)+'" fill="#000"/>'+[0,1,2].map(function(i){return '<circle cx="'+(cx-6+i*6)+'" cy="'+(120+18.6)+'" r="1.6" fill="'+['#ff9f0a','#0a84ff','#e8785c'][i]+'"/>'}).join('');
-  s+=hwl(cx,30)+hwl(cx,120)+lab(cx,80,'最小：挂在右边 36 × 28')+lab(cx,104,'最小',ink)+lab(cx,166,'挤的时候：下巴里的点');
+  s+=hwl(cx,30)+hwl(cx,120)+lab(cx,80,'最小：右边一颗小圆 33.5')+lab(cx,104,'最小',ink)+lab(cx,166,'挤的时候：下巴里的点');
   /* 3 一格 */
   cx=470; s+='<rect x="'+(cx-31)+'" y="30" width="62" height="60" rx="7" fill="#000"/><circle cx="'+(cx-18)+'" cy="44" r="6" fill="none" stroke="#ff9f0a" stroke-width="1.6"/><text x="'+(cx+20)+'" y="48" font-size="9" fill="#fff" text-anchor="end" font-weight="700">9 分</text><text x="'+(cx-24)+'" y="78" font-size="7" fill="#fff">计时器</text>';
   s+=lab(cx,104,'那一排的一格',ink)+lab(cx,122,'124 宽，圆角 14');
   /* 4 大卡 */
   cx=680; var W=420*k,H=175.5*k,x0=cx-W/2,y0=20;
-  s+='<path d="'+shapePath(cx,W,H,14,0,y0)+'" fill="#000"/>'+notch(cx,y0).replace('fill="#000"','fill="#222"');
+  s+='<path d="'+shapePath(cx,W,H,14,3.7,y0)+'" fill="#000"/>'+notch(cx,y0).replace('fill="#000"','fill="#222"');
   var fl=(W-185*k)/2;
   [['左',x0+7,y0+4,fl-11,30.7],['右',cx+185*k/2+4,y0+4,fl-11,30.7],['中',cx-185*k/2,y0+19.7,185*k,15],['下',x0+7,y0+38.7,W-14,42]].forEach(function(r){
     s+='<rect x="'+r[1]+'" y="'+r[2]+'" width="'+r[3]+'" height="'+r[4]+'" rx="4" fill="none" stroke="rgba(255,255,255,.6)" stroke-dasharray="3 2"/><text x="'+(r[1]+r[3]/2)+'" y="'+(r[2]+r[4]/2+4)+'" font-size="10" fill="#fff" text-anchor="middle">'+r[0]+'</text>';
   });
   s+=lab(cx,y0+H+22,'大卡 420 × 175.5，四个区',ink)+lab(cx,y0+H+40,'左右贴着刘海两边，中在刘海下，下占满宽');
   /* 5 提醒 */
-  cx=905; W=400*.42; H=85.5*.42;
-  s+='<path d="'+shapePath(cx,W,H,10,0,30)+'" fill="#000"/><text x="'+(cx-W/2+8)+'" y="'+(30+28)+'" font-size="8" fill="#fff" font-weight="700">会话在等你</text>';
-  s+=hwl(cx,30)+lab(cx,104,'提醒更新：鼓',ink)+lab(cx,122,'400 × 85.5，停 2.6 秒');
+  cx=905; W=408*.42; H=84*.42;
+  s+='<path d="'+shapePath(cx,W,H,10,3.7,30)+'" fill="#000"/><text x="'+(cx-W/2+8)+'" y="'+(30+28)+'" font-size="8" fill="#fff" font-weight="700">会话在等你</text>';
+  s+=hwl(cx,30)+lab(cx,104,'提醒更新：鼓',ink)+lab(cx,122,'408 × 84，停 2.6 秒');
   /* 生命周期条 */
   var ly=212, steps=[['开始','settle'],['更新','原地换字'],['提醒更新','bloom · 2.6 秒'],['过期','0.5 · 右耳“—”'],['结束','留 4 秒 → calm']];
   s+='<line x1="40" y1="'+ly+'" x2="960" y2="'+ly+'" stroke="var(--line)" stroke-width="2"/>';

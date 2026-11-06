@@ -54,10 +54,12 @@ code{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
 .layer{position:absolute;inset:0;opacity:0;transition:opacity .10s ease;pointer-events:none;color:#fff}
 .layer.on{opacity:1;transition:opacity .18s ease;pointer-events:auto}
 .abs{position:absolute}
-.mincirc{position:absolute;top:0;width:36.67px;height:36.67px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;
+.mincirc{position:absolute;top:0;width:28px;height:28px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;
   will-change:left,transform,opacity;opacity:0}
+.shd{position:absolute;top:0;width:7.4px;height:5.06px;pointer-events:none;background:radial-gradient(ellipse 7.4px 5.06px at 0 100%,transparent 97%,#000 100%)}
+.shd.r{background:radial-gradient(ellipse 7.4px 5.06px at 100% 100%,transparent 97%,#000 100%)}
 .hz{position:absolute;cursor:pointer;border-radius:0 0 12px 12px;outline:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.hz:focus-visible,.mincirc:focus-visible{outline:2px solid #fff;outline-offset:-3px;box-shadow:0 0 0 2px var(--accent)}
+.hz:focus-visible,.mincirc:focus-visible{outline:2px solid #fff;outline-offset:-3px;box-shadow:0 0 0 2px #0a84ff}
 .hz.flash{background:rgba(255,255,255,.14)}
 .cover{width:26px;height:26px;border-radius:6px;background:#d9622b;display:flex;align-items:center;justify-content:center}
 .wave{display:flex;gap:3px;align-items:center;height:18px}
@@ -67,7 +69,7 @@ code{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
 .reduced .wave i{animation:none;transform:scaleY(.6)}
 .rs{position:absolute;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;touch-action:pan-x;overscroll-behavior-x:contain}
 .rs::-webkit-scrollbar{display:none}
-.rs .c{position:relative;flex:none;width:124px;height:104px;border-radius:14px;background:rgba(255,255,255,.09);padding:10px 11px;color:#fff;
+.rs .c{position:relative;flex:none;width:76px;height:104px;border-radius:14px;background:rgba(255,255,255,.09);padding:10px 11px;color:#fff;
   display:flex;flex-direction:column;outline:none;overflow:hidden;text-align:left;cursor:pointer;transition:background .18s;-webkit-user-select:none;user-select:none}
 .rs .c:hover{background:rgba(255,255,255,.15)}
 .rs .c:focus-visible{box-shadow:0 0 0 2px #fff}
@@ -145,14 +147,14 @@ footer p{margin:.3em 0}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
 :root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
 </style>
-<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">二 刘海 · 第 6 张 · 照系统的岛</span><span class="ws-st ws-old">稿 · 10-30 等真机</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac">← 一颗岛</a><a href="https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ">卡住时刘海开口 →</a></nav>
-<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 5 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：经得起考验：按机型让位（提议）</span> → <b>现在：</b>已定第 38 条：只有带触控屏的 PROLED MacBook Pro 让位；型号名单 11 月 6 日后填 <span class="src">（AARON-DECISIONS 10-31）</span></li><li><span class="was">原来：经得起考验：视频通话时只亮点或紧凑（提议）</span> → <b>现在：</b>已定第 40 条，照提议 <span class="src">（AARON-DECISIONS 10-31）</span></li><li><span class="was">原来：经得起考验：岛只在有刘海的屏，拔屏时收进菜单栏图标（提议）</span> → <b>现在：</b>已定第 41 至 43 条：活动跟着当前显示器，没有刘海的屏画菜单栏正中一颗胶囊；新 MacBook Pro 的外接屏也画 <span class="src">（AARON-DECISIONS 10-31）</span></li><li><span class="was">原来：经得起考验：系统已显示的不重复（提议）</span> → <b>现在：</b>已定第 39 条，照提议；没有 API，等真机 <span class="src">（AARON-DECISIONS 10-31）</span></li><li><span class="was">原来：11-04（bab193b0）：有刘海的屏不画常驻岛，有内容才从刘海下沿垂下一颗胶囊；两耳、电量闪、小圆、封面耳在刘海屏上都不出现</span> → <b>现在：</b>11-05 Aaron 推翻 11-04，回到刘海两耳（.sides）；整颗岛的样子见《两耳的岛》（11-05 已定，全部按推荐，第 83 条） <span class="src">（AARON-DECISIONS 11-05 第 82 条）</span></li></ol></details></aside>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 6 张 · 照系统的岛</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac">← 一颗岛</a><a href="https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ">卡住时刘海开口 →</a></nav>
 <div class="wrap">
 
 <header>
   <h1>照系统的岛</h1>
   <p class="lede">在没有系统灵动岛的刘海 Mac 上，我们自己的岛照 MacBook Pro（PROLED XDR）系统岛的同一套做法：三种形态，两个活动同时在时分成两块，点耳朵打开它的 App，指针停在刘海上不再展开。</p>
-  <p class="lede">Apple 对 macOS 只写了“沿用 iOS 的尺寸”，Mac 上的实际尺寸、圆角和动效没有公布。本稿的尺寸一律标「暂定，iOS 尺寸」，11 月 6 日后真机量过再改。有系统岛的机型照 Aaron 10-29 第 18 条让位，不在这张稿里。</p>
+  <p class="lede">Apple 对 macOS 只写了“沿用 iOS 的尺寸”，Mac 上的实际尺寸、圆角和动效没有公布。本稿的尺寸一律标「暂定，iOS 尺寸」，11 月 6 日后真机量过再改。只有带触控屏的 PROLED MacBook Pro 有系统灵动岛，在它上面我们让位（第 38 条，由第 18 条收窄），不在这张稿里。</p>
+  <p class="lede">刘海屏上的岛现在按《两耳的岛》画（11-05 第 82、83 条，推翻了 11-04 的“不画常驻岛、从刘海下沿垂下胶囊”）：耳高 = 刘海高（本机 1710 模式 33.5），宽按内容、每耳上限 52.33，两耳紧贴刘海，外上角画肩。本稿正文里 iOS 的 52.33 × 36.67 和 36.67 的圆，只剩两处参照：一是带触控屏的 MacBook Pro 上系统岛自己的样子（我们让位），二是外接屏菜单栏正中那颗胶囊（画在菜单栏条内、纯黑，第 41 至 43 条；展开宽 371）。</p>
   <p class="lede">这是 2026-10-30 的设计稿，依据 AARON-DECISIONS-2026-10-29 第 28 至 32 条。</p>
 </header>
 
@@ -163,19 +165,19 @@ footer p{margin:.3em 0}
   <div class="tbl" style="margin-top:20px"><table style="min-width:900px">
     <thead><tr><th>形态</th><th>系统的值（iOS，暂定）</th><th>这张稿画的</th><th>今天的代码</th></tr></thead>
     <tbody>
-      <tr><td>紧凑，每侧</td><td class="num">宽 52.33 至 62.33，高 36.67</td><td class="num">宽 52.33，高 36.67，总宽 260.67</td><td>宽 26 至 34，高 = 刘海 28</td></tr>
-      <tr><td>最小</td><td class="num">宽 36.67 至 45，高 36.67</td><td class="num">直径 36.67 的圆，离右耳 6</td><td>36 × 28，离右耳 6</td></tr>
+      <tr><td>紧凑，每侧</td><td class="num">宽 52.33 至 62.33，高 36.67</td><td class="num">高 = 刘海高（模拟 28，本机 33.5），宽按内容、每耳上限 52.33，外上角画肩；这里画每耳 29，总宽 214</td><td>宽 26 至 34，高 = 刘海 28</td></tr>
+      <tr><td>最小</td><td class="num">宽 36.67 至 45，高 36.67</td><td class="num">直径 = 耳高的圆（模拟 28，本机 33.5），离右耳 6</td><td>36 × 28，离右耳 6</td></tr>
       <tr><td>展开，提醒</td><td class="num">宽 371 至 408，高 84 至 160</td><td class="num">408 × 84</td><td>400 × 100；教学 500 × 100</td></tr>
-      <tr><td>展开，那一排</td><td class="num">同上</td><td class="num">408 × 160，约 3 格，左右滚动</td><td>宽 156 + 120 起，最宽屏宽 − 44；高 170</td></tr>
+      <tr><td>展开，那一排</td><td class="num">同上</td><td class="num">408 × 160，格子 76 × 104、间距 8、圆角 14，约 4 格半，左右滚动</td><td>宽 156 + 120 起，最宽屏宽 − 44；高 170</td></tr>
       <tr><td>圆角</td><td>未公布</td><td>紧凑 = 高的一半；展开沿用 24 和 28</td><td>提醒 24，展开 28</td></tr>
-      <tr><td>和摄像头开口的关系</td><td>未公布</td><td>顶边贴屏幕顶，刘海两侧伸出</td><td>同左；肩只在悬停、下拉、紧凑上画</td></tr>
+      <tr><td>和摄像头开口的关系</td><td>未公布</td><td>顶边贴屏幕顶，刘海两侧伸出</td><td>同左；紧凑、展开、提醒、落点都在外上角画肩（照《两耳的岛》），不占新的菜单栏空位、点击穿透</td></tr>
     </tbody></table></div>
-  <p style="color:var(--ink2);max-width:70ch;margin-top:12px">高度按“从屏幕顶边量起的总高”画，这一点也是假设，列在真机要量的事里。今天的提醒高度是 100，不是规格写的 80，原因见对照账第 6 行。</p>
+  <p style="color:var(--ink2);max-width:70ch;margin-top:12px">“系统的值”一列是 iOS 的数，在这里只作参照：触控 MacBook Pro 上系统岛的样子，和外接屏胶囊；刘海屏上的紧凑与最小形照《两耳的岛》，不取 36.67。高度按“从屏幕顶边量起的总高”画，这一点也是假设，列在真机要量的事里。今天的提醒高度是 100，不是规格写的 80，原因见对照账第 6 行。</p>
 </section>
 
 <section id="sim">
   <div class="sec-head"><h2>刘海模拟器</h2>
-    <p>模拟的是 MacBook Air 15″，1440×932 模式，刘海 156×28 pt。按下面的步骤走，或者直接在刘海上点、长按、停指针。动画没走完也能点下一步，位置和速度接着走。舞台不画肩。</p></div>
+    <p>模拟的是 MacBook Air 15″，1440×932 模式，刘海 156×28 pt（这是 1440 模式；本机默认 1710 模式是 185 × 33.5，耳高随刘海高）。按下面的步骤走，或者直接在刘海上点、长按、停指针。动画没走完也能点下一步，位置和速度接着走。岛的外上角画肩（r 5.06；本机 1710 模式延伸 7.74，这里 1440 模式按已有比例画 7.4）。</p></div>
   <div class="stage-wrap" id="mainWrap"></div>
   <div class="controls" role="group" aria-label="步骤">
     <div class="grp"><span class="lab">步骤</span>
@@ -211,15 +213,15 @@ footer p{margin:.3em 0}
       <tr><td>静止</td><td>不画</td><td class="num">刘海 156 × 28</td><td>不变。</td></tr>
       <tr><td>悬停提示</td><td>没有对应的形态</td><td>无</td><td>指针停上来不再展开。每侧长出 5 点的提示去不去，等真机看系统岛有没有悬停反馈。</td></tr>
       <tr><td>下巴</td><td>紧凑放不下时的退路</td><td class="num">刘海宽，下 +8</td><td>先不动。系统没写菜单栏空位不够怎么办，列入真机要量的事。</td></tr>
-      <tr><td>紧凑两耳</td><td>紧凑</td><td class="num">每耳 52.33 × 36.67，总宽 260.67</td><td>耳宽从 34 到 52.33，高从 28 到 36.67，底角跟着高。要空出的菜单栏变多，见「还没定的」第 5 行。</td></tr>
-      <tr><td>第二个活动（最小形）</td><td>最小</td><td class="num">直径 36.67 的圆</td><td>从 36 × 28 改成正圆。点它从“和紧凑那件互换”改成打开它的 App（暂定，见「还没定的」第 1 行）。</td></tr>
-      <tr><td>音量、亮度两耳</td><td>紧凑</td><td class="num">每耳不超过 62.33</td><td>今天每耳 76，超出上限，要窄 13.67。</td></tr>
+      <tr><td>紧凑两耳</td><td>紧凑</td><td class="num">耳高 = 刘海高，宽按内容、每耳上限 52.33</td><td>耳宽从固定 34 改成按内容，上限 52.33；耳高不变，仍等于刘海高，底角同刘海。要空出的菜单栏随内容变，见「还没定的」第 5 行。</td></tr>
+      <tr><td>第二个活动（最小形）</td><td>最小</td><td class="num">直径 = 耳高的圆</td><td>从 36 × 28 改成和耳朵同高的正圆。点它从“和紧凑那件互换”改成打开它的 App（暂定，见「还没定的」第 1 行）。</td></tr>
+      <tr><td>音量、亮度两耳</td><td>紧凑</td><td class="num">每耳不超过 62.33（例外：HIG 最宽一档；普通耳上限 52.33）</td><td>今天每耳 76，超出上限，要收到 62.33 以内。</td></tr>
       <tr><td>换歌一瞥</td><td>未定</td><td>无</td><td>今天是两耳宽、下鼓到 63.5。系统怎么处理换歌没公布，见「还没定的」第 2 行。</td></tr>
       <tr><td>两指下拉</td><td>手势保留，落点是展开</td><td class="num">高度上限 160</td><td>松手落在展开那一排，高度不超过 160。</td></tr>
-      <tr><td>落点小岛（拖窗口、文件到刘海）</td><td>展开，提醒级</td><td class="num">371 × 84</td><td>宽从 340 到 371（iOS 展开的下限）。内容分左、右、中、下。</td></tr>
+      <tr><td>落点小岛（拖窗口、文件到刘海）</td><td>展开，提醒级</td><td class="num">340 × 84</td><td>不变：仍是 340 × 84（代码 NotchPanel 与设计系统 DropIsland 都是 340 × 84）。内容分左、右、中、下。</td></tr>
       <tr><td>提醒</td><td>展开</td><td class="num">408 × 84，内容多时到 160</td><td>宽 400 到 408，高 100 到 84。内容分四块：左图标，右状态，中主句，下副句。84 过不了今天的半岛高度档，见「还没定的」第 4 行。</td></tr>
       <tr><td>教学</td><td>展开</td><td class="num">408 × 112，上限 160</td><td>宽从 500 收到 408，文字重排。</td></tr>
-      <tr><td>展开那一排</td><td>展开</td><td class="num">408 × 160</td><td>宽不再随屏幕变宽，高从 170 到 160。格子 124 × 114 改 124 × 104，一屏约 3 格，其余左右滚动。</td></tr>
+      <tr><td>展开那一排</td><td>展开</td><td class="num">408 × 160</td><td>宽不再随屏幕变宽，高从 170 到 160。格子 124 × 114 改 76 × 104（间距 8、圆角 14），一屏约 4 格半，其余左右滚动。</td></tr>
     </tbody></table></div>
 </section>
 
@@ -269,7 +271,7 @@ footer p{margin:.3em 0}
     <li><b>换歌一瞥。</b>今天换歌时岛下鼓到 63.5（App/Notch.swift:4232 起），这个高度在系统的三种形态里都没有位置。去掉，还是用提醒的展开形态，等真机看系统怎么处理。</li>
     <li><b>展开后怎么收。</b>今天指针移开就收（App/Notch.swift:1076）。展开改成长按之后，指针一滑出就收会很容易误收。系统怎么收没公布。稿里暂用 Esc、点别处、再点刘海，指针移开不收。</li>
     <li><b>提醒的高度 84。</b>今天提醒的内容高度被抬到 72（Core/DisplayShape.swift:545 的半岛高度档，避开 WWDC23 10194 说的临界高度），所以总高是 100。要画 84，就要绕过这一档或重新定档。</li>
-    <li><b>菜单栏空位。</b>今天只量刘海两侧各 34 pt（App/Notch.swift:3362），最小形再多量到 138。紧凑耳变宽后，一个活动要空出 52.33，加小圆共约 95，会盖住更多菜单栏图标。要不要在放不下时退回下巴，和下巴自己的位置，都等真机。</li>
+    <li><b>菜单栏空位。</b>今天只量刘海两侧各 34 pt（App/Notch.swift:3362），最小形再多量到 138。紧凑耳按内容定宽后，一个活动最多要空出 52.33，加小圆（间距 6 + 33.5）共约 92，会盖住更多菜单栏图标。要不要在放不下时退回下巴，和下巴自己的位置，都等真机。</li>
   </ol>
 </section>
 
@@ -309,16 +311,16 @@ footer p{margin:.3em 0}
 
 <section id="test1031">
   <div class="sec-head"><h2>经得起考验：10-31 对标后要改的</h2>
-    <p>2026-10-31 又做了一次竞品调研，挑出会让这张稿出错的情况。「改成」一栏是提议，等 Aaron 定；没定之前正文照旧。来源和读取日期在 docs/competitive-2026-10-31.md，总表在《经得起考验》。</p></div>
+    <p>2026-10-31 又做了一次竞品调研，挑出会让这张稿出错的情况。「改成」一栏里的机型、视频通话、系统已显示、换显示器这四件已在 10-31 定了（第 38 至 43 条）；其余仍是提议，没定之前正文照旧。来源和读取日期在 docs/competitive-2026-10-31.md，总表在《经得起考验》。</p></div>
   <div class="tbl"><table style="min-width:900px">
     <thead><tr><th>情况</th><th>谁栽过、谁说的</th><th>这张稿原来</th><th>改成</th></tr></thead>
     <tbody>
-      <tr><td>按机型判断要不要让位</td><td>Apple 只把灵动岛和 PROLED XDR 的 MacBook Pro 14/16 绑在一起，没说旧机型会有（新闻稿 10-28）</td><td>写了「有系统岛的机型让位」，没写怎么判断</td><td>按机型判断：有触控屏的 PROLED MacBook Pro 才让位。旧刘海机装了 macOS 27 照常画我们的岛</td></tr>
-      <tr><td>iPhone 的实时活动会自己出现在 Mac 上</td><td>WWDC26 223：iPhone 的实时活动会出现在 macOS 菜单栏</td><td>没提</td><td>系统已经显示同一件事（同一首歌、同一个计时器）时，耳朵里不再重复显示。11 月 6 日后在旧刘海机上看它落在哪</td></tr>
-      <tr><td>视频通话时不自己展开</td><td>NotchDodo：摄像头在用时不打开</td><td>只有提醒挡道的规则</td><td>摄像头在用时只亮点或紧凑，不长成提醒、不展开那一排；你点了照样开</td></tr>
-      <tr><td>换显示器后不留在别的屏上</td><td>Atoll #877：双屏时计时器控件留在内建屏菜单栏；NotchNook：外接屏设置重启后丢</td><td>只画在有刘海的屏上</td><td>写明：岛只在有刘海的那块屏。合盖或拔掉内建屏时，活动收进菜单栏图标，不跑到外接屏</td></tr>
+      <tr><td>按机型判断要不要让位</td><td>Apple 只把灵动岛和 PROLED XDR 的 MacBook Pro 14/16 绑在一起，没说旧机型会有（新闻稿 10-28）</td><td>写了「有系统岛的机型让位」，没写怎么判断</td><td>已定（第 38 条）：只有带触控屏的 PROLED MacBook Pro 才让位，型号名单 11 月 6 日后填。旧刘海机装了 macOS 27 照常画我们的岛</td></tr>
+      <tr><td>iPhone 的实时活动会自己出现在 Mac 上</td><td>WWDC26 223：iPhone 的实时活动会出现在 macOS 菜单栏</td><td>没提</td><td>已定（第 39 条，照提议）：系统已经显示同一件事（同一首歌、同一个计时器）时，耳朵里不再重复显示。没有 API，11 月 6 日后在旧刘海机上看它落在哪</td></tr>
+      <tr><td>视频通话时不自己展开</td><td>NotchDodo：摄像头在用时不打开</td><td>只有提醒挡道的规则</td><td>已定（第 40 条）：摄像头在用时只亮点或紧凑，不长成提醒、不展开那一排；你点了照样开</td></tr>
+      <tr><td>换显示器后不留在别的屏上</td><td>Atoll #877：双屏时计时器控件留在内建屏菜单栏；NotchNook：外接屏设置重启后丢</td><td>只画在有刘海的屏上</td><td>已定（第 41 至 43 条）：活动跟着当前显示器；没有刘海的屏（外接屏、合盖只用外接屏）画菜单栏正中一颗胶囊，画在菜单栏条内、纯黑；新 MacBook Pro 接外接屏时外接屏也画，内建屏让位</td></tr>
       <tr><td>展开后不随指针挪动</td><td>Atoll #898：展开后悬停会位移</td><td>已经拿掉悬停展开</td><td>加一条验收：展开以后指针进出，外框一点不动</td></tr>
-      <tr><td>耳朵别吃掉菜单栏</td><td>NotchNook 用户：激活时太宽</td><td>每耳 52.33，比今天的 34 宽</td><td>两边空位不够 52.33 时按量到的宽度收窄（今天的规则保留）；真机量过再定上限</td></tr>
+      <tr><td>耳朵别吃掉菜单栏</td><td>NotchNook 用户：激活时太宽</td><td>每耳 52.33，比今天的 34 宽</td><td>耳宽按内容定，上限 52.33；两边空位不够时按量到的宽度收窄，窄过 26 退回下巴（今天的规则保留）</td></tr>
       <tr><td>系统自己的五种小提醒</td><td>macOS 27 里找到的药丸形素材：AirPods 连上、专注模式、降噪、低电量、切换音频（MacRumors、9to5Mac，泄露，未证实）</td><td>设备电量、专注、音量各有各的画法</td><td>真机上逐个对照，对应的提醒照系统的形状和停留时间画；没对上之前不改</td></tr>
       <tr><td>真机要多量三件</td><td>这三件 Apple 都没公布</td><td>量尺寸、圆角、动效</td><td>再加：岛和菜单栏的关系、全屏时还在不在、接外接屏时外接屏上有没有</td></tr>
     </tbody></table></div>
@@ -332,12 +334,12 @@ footer p{margin:.3em 0}
     <tbody>
       <tr><td class="num">1</td><td>悬停展开</td><td>指针停在刘海上不再展开</td><td><code>App/Notch.swift:1059-1075</code> <code>hoverChanged</code> 进来就 <code>panel.expand</code>（<code>:1074</code>）。<code>:3933-3969</code> <code>hover(_:)</code> 先让岛往外长一点（<code>hinting</code>），停 <code>Motion.Hold.notchDwell</code> 后调 <code>onHoverChanged?(true)</code>。停留 0.12 秒在 <code>Core/Contracts.swift:345</code>。防误触策略 <code>Core/NotchHoverPolicy.swift:18</code>，开关在 <code>:175-177</code>。</td><td>去掉展开分支和停留计时。<code>hinting</code> 去留等真机。防误触策略只服务悬停展开，可以随之去掉。<code>:1071</code> 的“第一次停上来就教”也挂在悬停上，要换触发。</td></tr>
       <tr><td class="num">2</td><td>展开那一排的入口</td><td>点本体回主屏幕，长按展开那一排，悬停不展开</td><td><code>App/Notch.swift:3263-3280</code> <code>pressed(_:)</code>，点一下走 <code>onPress</code>，回主屏幕。<code>:5466-5480</code> 按住 0.5 秒起 <code>onLongPress</code>，<code>:499-509</code> 有活动就展开那一排，没有就打开启动台“今天”。<code>:5520</code> 松手发 <code>onPress</code>。</td><td>去掉悬停这一条路（见第 1 行）；长按已经会展开，不用加。要补的是键盘入口（空格），和第 33 条：只要那一排有东西（收起的窗口也算）就展开，什么都没有时才打开启动台“今天”。启动台“今天”另给入口，入口待定。</td></tr>
-      <tr><td class="num">3</td><td>那一排的尺寸与滚动</td><td>宽 408，高 160，格子 124 × 104，约 3 格，横向滚动</td><td><code>App/Notch.swift:4222-4227</code>：宽 <code>min(屏宽 − 44, max(刘海 + 120, rowIslandWidth))</code>，下鼓 <code>142</code>。<code>:4075-4079</code> <code>rowIslandWidth</code>。<code>:6120-6128</code> 格子 y 14、高 <code>cellsHeight</code>。<code>Core/NotchRow.swift:32-52</code> 格宽 124、边距 14、屏宽预留 44、窗口上限 8。<code>:97-117</code> <code>capacity</code> 与 <code>fit</code> 按屏宽裁格。整条里没有滚动视图。</td><td>岛宽固定 408，高 160。<code>fit</code> 不再按宽裁格，改成全部排出、放不下就滚。加滚动视图、右边缘淡出、键盘走格子时滚进视口。</td></tr>
-      <tr><td class="num">4</td><td>第二个活动分出小圆</td><td>优先的占两耳，第二个在右边分出直径 36.67 的圆</td><td>已有：<code>Core/NotchActivities.swift:1326</code> <code>layout</code>（Aaron 10-09 定）、<code>:1355</code> 尺寸 36 × 28、<code>:1361</code> 间距 6、<code>:1363</code> 最多 2 颗、<code>:1370</code> <code>islandExtent</code> 54。<code>App/Notch.swift:4098-4110</code> 摆位。<code>:7084</code> <code>select()</code> 是互换。</td><td>尺寸改正圆 36.67，<code>islandExtent</code> 跟着耳宽变。点按从互换改成打开 App（暂定）。分出时的弹簧用 <code>bloom</code>，减少动态效果时原处淡入。</td></tr>
+      <tr><td class="num">3</td><td>那一排的尺寸与滚动</td><td>宽 408，高 160，格子 76 × 104、间距 8、圆角 14，约 4 格半，横向滚动</td><td><code>App/Notch.swift:4222-4227</code>：宽 <code>min(屏宽 − 44, max(刘海 + 120, rowIslandWidth))</code>，下鼓 <code>142</code>。<code>:4075-4079</code> <code>rowIslandWidth</code>。<code>:6120-6128</code> 格子 y 14、高 <code>cellsHeight</code>。<code>Core/NotchRow.swift:32-52</code> 格宽 124、边距 14、屏宽预留 44、窗口上限 8。<code>:97-117</code> <code>capacity</code> 与 <code>fit</code> 按屏宽裁格。整条里没有滚动视图。</td><td>岛宽固定 408，高 160。<code>fit</code> 不再按宽裁格，改成全部排出、放不下就滚。加滚动视图、右边缘淡出、键盘走格子时滚进视口。</td></tr>
+      <tr><td class="num">4</td><td>第二个活动分出小圆</td><td>优先的占两耳，第二个在右边分出直径 = 耳高的圆</td><td>已有：<code>Core/NotchActivities.swift:1326</code> <code>layout</code>（Aaron 10-09 定）、<code>:1355</code> 尺寸 36 × 28、<code>:1361</code> 间距 6、<code>:1363</code> 最多 2 颗、<code>:1370</code> <code>islandExtent</code> 54。<code>App/Notch.swift:4098-4110</code> 摆位。<code>:7084</code> <code>select()</code> 是互换。</td><td>尺寸改成和耳朵同高的正圆，<code>islandExtent</code> 跟着耳宽变。点按从互换改成打开 App（暂定）。分出时的弹簧用 <code>bloom</code>，减少动态效果时原处淡入。</td></tr>
       <tr><td class="num">5</td><td>点耳朵打开 App</td><td>点哪一侧耳朵，打开那个活动的 App</td><td><code>App/Notch.swift:5466-5520</code>：<code>mouseDown</code> 与 <code>mouseUp</code> 不分点在耳朵还是刘海本体，一律 <code>onPress</code>，最后到 <code>pressed(_:)</code>（<code>:3263</code>）回主屏幕。只有最小形有自己的命中（<code>:5467-5470</code>）。</td><td>按点击位置分三块：左耳、右耳、本体。耳朵走活动自己的“打开”动作；本体不变。</td></tr>
       <tr><td class="num">6</td><td>提醒的尺寸</td><td>408 × 84，内容多时到 160</td><td><code>App/Notch.swift:3377-3379</code> <code>alertWidth</code> 400，教学 500。<code>:4243-4245</code> 高 = 刘海 + <code>peninsulaContentHeight(52 或 84)</code>，函数在 <code>Core/DisplayShape.swift:545-551</code>，小于 72 的一律抬到 72，所以今天总高 100。design-system §5.1 写“刘海 + 52”，与代码不一致，以代码为准。</td><td>宽改 408。高 84 要绕过高度档（<code>peninsulaShort = 72</code>）或重新定档。<code>alertCoverSpans</code>（<code>:3382</code>）按新宽盖菜单栏。</td></tr>
-      <tr><td class="num">7</td><td>紧凑耳宽与量空位</td><td>每耳 52.33，高 36.67</td><td><code>App/Notch.swift:3362-3363</code> <code>sideWidth</code> 34、<code>narrowestSide</code> 26。<code>:3371-3373</code> 量空位：开了最小形多量到 <code>measuredReach</code> 138，没开量 34。</td><td>耳宽与高改 52.33、36.67。量空位改成“耳宽 + 间距 + 小圆”。放不下时退下巴的门槛要重算。</td></tr>
-      <tr><td class="num">8</td><td>音量、亮度的耳</td><td>每耳不超过 62.33</td><td><code>Core/NotchLevelEars.swift:13</code> <code>earWidth = 76</code>，<code>:26</code> 总宽 = 刘海 + 152。</td><td>耳宽改 62.33，或不按紧凑画。等 Aaron 选。</td></tr>
+      <tr><td class="num">7</td><td>紧凑耳宽与量空位</td><td>耳高 = 刘海高，宽按内容、每耳上限 52.33</td><td><code>App/Notch.swift:3362-3363</code> <code>sideWidth</code> 34、<code>narrowestSide</code> 26。<code>:3371-3373</code> 量空位：开了最小形多量到 <code>measuredReach</code> 138，没开量 34。</td><td>耳高取刘海高，耳宽按内容（上限 52.33）。量空位改成“耳宽 + 间距 + 小圆”。放不下时退下巴的门槛要重算。</td></tr>
+      <tr><td class="num">8</td><td>音量、亮度的耳</td><td>每耳不超过 62.33（音量、亮度的例外）</td><td><code>Core/NotchLevelEars.swift:13</code> <code>earWidth = 76</code>，<code>:26</code> 总宽 = 刘海 + 152。</td><td>耳宽上限 62.33（系统值，音量、亮度的例外），今天的 76 要收窄。</td></tr>
     </tbody></table></div>
   <p style="color:var(--ink2);max-width:72ch;margin-top:12px">看一眼本身不改：<code>App/Notch.swift:1869</code> <code>showPeek</code> 照旧，仍由指针停在格子上触发（第 32 条）。触控和键盘的触发要新加。</p>
 </section>
@@ -346,7 +348,7 @@ footer p{margin:.3em 0}
   <div class="sec-head"><h2>对《离开期间》的影响</h2>
     <p>《离开期间》画的那一排是刘海 + 142，宽可到屏宽 − 44。压进 408 × 160 以后，同一份内容只剩约 3 格可见。那张稿不在这里改，下面是它之后要改的地方。</p></div>
   <ol class="rules">
-    <li>模拟器：展开那一排的高度从刘海 + 142 改成总高 160，宽固定 408，不再随格子数变宽。格子 124 × 114 改 124 × 104。</li>
+    <li>模拟器：展开那一排的高度从刘海 + 142 改成总高 160，宽固定 408，不再随格子数变宽。格子 124 × 114 改 76 × 104（间距 8、圆角 14）。</li>
     <li>一屏放不下：四个离开期间格子加竖线共 521 点，视口只有 380。第一屏约 3 格，其余靠左右滚动。</li>
     <li>“放不下时，先裁普通格子，再裁离开期间的格子”这条规则不再需要。改成离开期间在最前，普通格子排在后面，滚过去看。</li>
     <li>「还有 N 件」窄格为什么存在，要重新说。上限四是为了放得下；能滚动以后，上限和窄格是否保留，等 Aaron 定。</li>
@@ -359,7 +361,7 @@ footer p{margin:.3em 0}
 </section>
 
 <footer>
-  <p>依据：AARON-DECISIONS-2026-10-29 第 18 条（有系统岛的机型让位）和第 28 至 32 条（照系统的范式；那一排压进展开上限；两个活动；点耳朵；拿掉悬停）。第 29 条取代第 9 条里的“那一排 +142”。</p>
+  <p>依据：AARON-DECISIONS-2026-10-29 第 18 条（有系统岛的机型让位；10-31 第 38 条收窄为带触控屏的 PROLED MacBook Pro）和第 28 至 32 条（照系统的范式；那一排压进展开上限；两个活动；点耳朵；拿掉悬停）。第 29 条取代第 9 条里的“那一排 +142”。</p>
   <p>Apple 公布的部分：Mac 开发 API 用 iPhone 的呈现集，即紧凑前后、最小、展开的前、后、中、下四块（<a href="https://developer.apple.com/videos/play/tech-talks/111467/">Tech Talk 111467</a>，只看到代码和章节，没有逐字稿）。HIG 写 macOS “使用 iOS 的尺寸”：紧凑每侧 52.33 至 62.33 宽、36.67 高，最小 36.67 至 45 宽、36.67 高，展开 371 至 408 宽、84 至 160 高，提醒用展开呈现，动画最多 2 秒（<a href="https://developer.apple.com/design/human-interface-guidelines/live-activities">HIG Live Activities</a>）。2026-10-28 新闻稿写岛是聚光灯、实时活动和 Siri AI 的家，能点按，例如接受 AirDrop、暂停歌曲（<a href="https://www.apple.com/newsroom/2026/10/apple-unveils-groundbreaking-macbook-pro-with-proled-xdr-display/">Newsroom</a>）。</p>
   <p>没有采用的两句：“blend in seamlessly into the top edge”和“在岛上滑动会唤起 Siri”，research 笔记里标着未核实。Mac 的尺寸、圆角、与摄像头的关系、悬停、紧凑上的点与按、展开怎么收、第二个活动的排法、键盘与读屏、减少动态效果、动效时长，都没有公布。</p>
   <p>画面是示意，App 名和文件名是例子。弹簧照 WWDC23 10158 换算：stiffness = (2π/response)²，damping = 4πζ/response，每帧按 1/240 s 子步积分。</p>
@@ -369,7 +371,7 @@ footer p{margin:.3em 0}
 <script>
 (()=>{
 const TOK={calm:[.34,1],settle:[.38,1],expand:[.40,.92],bloom:[.42,.84],reduced:[.25,1]};
-const NW=156,NH=28,EAR=52.33,EH=36.67,MIN=36.67,MGAP=6,XW=408,AH=84,RH=160,W=1120,H=372,CX=W/2;
+const NW=156,NH=28,EAR=29,EH=NH,MIN=NH,MGAP=6,SW=7.4,XW=408,AH=84,RH=160,W=1120,H=372,CX=W/2;
 class Spring{constructor(x){this.x=x;this.v=0;this.t=x;this.tok(TOK.calm)}
   tok(p){this.k=(2*Math.PI/p[0])**2;this.c=4*Math.PI*p[1]/p[0]}
   step(dt){const a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt}}
@@ -391,20 +393,23 @@ function fitBox(wall,box,bw,bh){
   const music=(x,y)=>`<div class="abs" style="left:${x}px;top:${y}px"><div class="cover"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M9 4v11.3A3.5 3.5 0 1 0 11 18.5V8h6V4z"/></svg></div></div>`;
   const wave=(x,y)=>`<div class="abs wave" style="left:${x}px;top:${y}px"><i></i><i></i><i></i><i></i></div>`;
   const defs=[
-    {t:'紧凑',cap:'音乐占两耳：左耳封面，右耳波形。每耳 52.33 × 36.67。',w:300,h:84,
+    {t:'紧凑',cap:'音乐占两耳：左耳封面，右耳波形。耳高 = 刘海高，宽按内容（这里 29），两耳紧贴刘海，外上角画肩。',w:300,h:84,
      html:(()=>{const L=20,T=0,iw=NW+2*EAR;return `<div class="nt" style="left:${L+EAR}px;top:0;width:${NW}px;height:${NH}px"></div>
-       <div class="isl" style="left:${L}px;top:0;width:${iw}px;height:${EH}px;border-radius:0 0 ${EH/2}px ${EH/2}px"></div>
+       <div class="isl" style="left:${L}px;top:0;width:${iw}px;height:${EH}px;border-radius:0 0 9px 9px"></div>
+       <div class="shd" style="left:${L-SW}px"><\/div><div class="shd r" style="left:${L+iw}px"><\/div>
        ${music(L+EAR/2-13,EH/2-13)}${wave(L+EAR+NW+EAR/2-9,EH/2-9)}
-       <div class="dim" style="left:${L}px;top:${EH+8}px">每耳 52.33</div>
-       <div class="dim" style="left:${L+iw-70}px;top:${EH+28}px">高 36.67</div>`})()},
-    {t:'最小',cap:'第二个活动分出的小圆，直径 36.67，离右耳 6。',w:320,h:84,
-     html:(()=>{const L=20,iw=NW+2*EAR;return `<div class="isl" style="left:${L}px;top:0;width:${iw}px;height:${EH}px;border-radius:0 0 ${EH/2}px ${EH/2}px"></div>
+       <div class="dim" style="left:${L}px;top:${EH+8}px">每耳 29（按内容）</div>
+       <div class="dim" style="left:${L+iw-70}px;top:${EH+28}px">高 = 刘海 28</div>`})()},
+    {t:'最小',cap:'第二个活动分出的小圆，直径 = 耳高（这里 28，本机 33.5），离右耳 6。',w:320,h:84,
+     html:(()=>{const L=20,iw=NW+2*EAR;return `<div class="isl" style="left:${L}px;top:0;width:${iw}px;height:${EH}px;border-radius:0 0 9px 9px"></div>
+       <div class="shd" style="left:${L-SW}px"><\/div><div class="shd r" style="left:${L+iw}px"><\/div>
        ${music(L+EAR/2-13,EH/2-13)}${wave(L+EAR+NW+EAR/2-9,EH/2-9)}
        <div class="isl" style="left:${L+iw+MGAP}px;top:0;width:${MIN}px;height:${MIN}px;border-radius:50%"></div>
        <svg class="abs" style="left:${L+iw+MGAP+MIN/2-9}px;top:${MIN/2-9}px" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></svg>
-       <div class="dim" style="left:${L+iw+MGAP-6}px;top:${MIN+8}px">直径 36.67</div>`})()},
-    {t:'展开',cap:'左、右两块在刘海两侧，中间一块在刘海下，下面一整块。408 × 160 是上限。',w:448,h:206,
+       <div class="dim" style="left:${L+iw+MGAP-6}px;top:${MIN+8}px">直径 = 耳高 28</div>`})()},
+    {t:'展开',cap:'左、右两块在刘海两侧，中间一块在刘海下，下面一整块。408 × 160 是上限，外上角画肩。',w:448,h:206,
      html:(()=>{const L=20,iw=XW,sx=(XW-NW)/2;return `<div class="isl" style="left:${L}px;top:0;width:${iw}px;height:${RH}px;border-radius:0 0 28px 28px"></div>
+       <div class="shd" style="left:${L-SW}px"><\/div><div class="shd r" style="left:${L+iw}px"><\/div>
        <div class="nt" style="left:${L+sx}px;top:0;width:${NW}px;height:${NH}px"></div>
        <div class="reg" style="left:${L+8}px;top:4px;width:${sx-16}px;height:${NH-8}px"></div><div class="tag" style="left:${L+16}px;top:9px">左</div>
        <div class="reg" style="left:${L+sx+NW+8}px;top:4px;width:${sx-16}px;height:${NH-8}px"></div><div class="tag" style="left:${L+sx+NW+16}px;top:9px">右</div>
@@ -426,7 +431,8 @@ const APPS=[['Safari','S'],['终端','>_'],['备忘录','备'],['预览','预'],
 /* ---------- 舞台 ---------- */
 const host=$('mainWrap');
 const dl=`<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></svg>`;
-const ringSvg=`<svg class="abs" style="left:0;top:0" width="36.67" height="36.67" viewBox="0 0 36.67 36.67" aria-hidden="true"><circle cx="18.33" cy="18.33" r="15.5" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle cx="18.33" cy="18.33" r="15.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-dasharray="58 100" transform="rotate(-90 18.33 18.33)"/></svg>`;
+const RC=MIN/2,RR=(MIN*.42).toFixed(2);
+const ringSvg=`<svg class="abs" style="left:0;top:0" width="${MIN}" height="${MIN}" viewBox="0 0 ${MIN} ${MIN}" aria-hidden="true"><circle cx="${RC}" cy="${RC}" r="${RR}" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle cx="${RC}" cy="${RC}" r="${RR}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" pathLength="100" stroke-dasharray="58 100" transform="rotate(-90 ${RC} ${RC})"/></svg>`;
 host.innerHTML=`<div class="stage" id="stg" style="width:${W}px;height:${H}px">
   <div class="menubar"><div class="l"><span>&#63743;</span><b>访达</b><span>文件</span><span>编辑</span><span>显示</span></div>
     <div class="r"><span>Wi‑Fi</span><span>周五 10月30日 14:32</span></div></div>
@@ -444,12 +450,14 @@ host.innerHTML=`<div class="stage" id="stg" style="width:${W}px;height:${H}px">
     </div>
     <div class="layer" data-l="row"><div class="rs" id="rs" style="left:${CX-XW/2+14}px;top:42px;width:${XW-28}px;height:104px" role="group" aria-label="窗口"></div></div>
   </div></div>
+  <div class="shd" id="shL"><\/div><div class="shd r" id="shR"><\/div>
   <div class="hz" id="hzL" role="button" tabindex="0" aria-label="音乐，正在播放，打开"></div>
   <div class="hz" id="hzB" role="button" tabindex="0" aria-label="刘海"></div>
   <div class="hz" id="hzR" role="button" tabindex="0" aria-label="音乐，正在播放，打开"></div>
   <div class="peek" id="peek" aria-hidden="true"><div class="bar" id="pBar">终端</div><pre id="pPre"></pre></div>
   <div class="toast" id="toast" role="status"></div>
 </div>`;
+const shL=$('shL'),shR=$('shR');
 const root=host.firstElementChild,isl=$('isl'),ink=$('ink'),circ=$('circ'),rs=$('rs'),peekEl=$('peek'),toast=$('toast');
 const hz={L:$('hzL'),B:$('hzB'),R:$('hzR')};
 const layers={};root.querySelectorAll('.layer').forEach(l=>layers[l.dataset.l]=l);
@@ -469,8 +477,8 @@ const cellEls=[...rs.children];
 const sp={L:new Spring(0),R:new Spring(0),H:new Spring(NH),r:new Spring(9),cs:new Spring(0)};
 const GEO={
   rest:{L:0,R:0,H:NH,r:9,cs:0},
-  compact:{L:EAR,R:EAR,H:EH,r:EH/2,cs:0},
-  split:{L:EAR,R:EAR,H:EH,r:EH/2,cs:1},
+  compact:{L:EAR,R:EAR,H:EH,r:9,cs:0},
+  split:{L:EAR,R:EAR,H:EH,r:9,cs:1},
   alert:{L:(XW-NW)/2,R:(XW-NW)/2,H:AH,r:24,cs:0},
   row:{L:(XW-NW)/2,R:(XW-NW)/2,H:RH,r:28,cs:0}};
 const NAMES={rest:'静止',compact:'紧凑',split:'紧凑加小圆',alert:'提醒（展开）',row:'展开那一排'};
@@ -512,11 +520,11 @@ function hits(){
 /* ---------- 步骤 ---------- */
 const STEPS=[
   ['rest','<b>静止</b>。岛就是刘海，不画。指针停上去也不展开（第 32 条）。'],
-  ['compact','<b>紧凑</b>。音乐占两耳：左耳封面，右耳波形。每耳 52.33 × 36.67（暂定，iOS 尺寸）。'],
-  ['split','<b>第二个活动来了</b>。下载是第二个，不占耳朵，在右边分出一颗直径 36.67 的小圆。优先的那个音乐仍占两耳（第 30 条）。'],
+  ['compact','<b>紧凑</b>。音乐占两耳：左耳封面，右耳波形。耳高 = 刘海高，宽按内容（这里 29），每耳上限 52.33，外上角画肩。'],
+  ['split','<b>第二个活动来了</b>。下载是第二个，不占耳朵，在右边分出一颗和耳朵同高的小圆。优先的那个音乐仍占两耳（第 30 条）。'],
   ['alert','<b>提醒</b>。用展开形态，408 × 84（暂定）。左图标，右状态，中主句，下副句。小圆收回，提醒过后再分出来。'],
-  ['row','<b>展开那一排</b>。压进展开上限 408 × 160（暂定）。约 3 格可见，右边缘淡出，往右滚能看到其余。'],
-  ['row','<b>看一眼</b>。指针停在格子上就看一眼（第 32 条保留的悬停）。触控或键盘用长按或空格。'],
+  ['row','<b>展开那一排</b>。压进展开上限 408 × 160（暂定）。约 4 格半可见，右边缘淡出，往右滚能看到其余。'],
+  ['row','<b>看一眼</b>。指针在格子上停 0.12 秒就看一眼（第 32 条保留的悬停）。触控或键盘用长按或空格。'],
   ['back','<b>收起</b>。回到收起前的样子，下载的小圆再分出来。']];
 function goStep(i,fromAuto){
   if(!fromAuto)stopPlay();
@@ -550,7 +558,7 @@ function expandRow(how){
   if(S.phase==='row')return;
   setPhase('row',true);S.step=4;
   document.querySelectorAll('[data-step]').forEach(b=>b.classList.toggle('cur',+b.dataset.step===4));
-  say(`<b>${how}，展开那一排</b>。约 3 格可见，往右滚看其余。`);}
+  say(`<b>${how}，展开那一排</b>。约 4 格半可见，往右滚看其余。`);}
 function bodyClick(){
   if(S.phase==='alert'){showToast('打开 系统设置 的蓝牙页');say('<b>点提醒</b>。做提醒自己的事：打开蓝牙设置（暂定，和今天一样）。');return}
   showToast('回到主屏幕');say('<b>点刘海本体</b>：回到主屏幕（第 31 条）。展开那一排用长按（0.5 秒）。');}
@@ -595,11 +603,12 @@ function peekCell(c){
   peekEl.style.left=Math.max(16,Math.min(W-256,cx-120))+'px';peekEl.style.top=(RH+12)+'px';
   c.classList.add('held');S.peek={el:c};
   peekEl.classList.add('on');peekEl.setAttribute('aria-hidden','false');
-  say(`<b>看一眼 ${name}</b>。${S.touch?'长按触发，松手收回。':'指针停在格子上触发，移开收回。'}触控和键盘用长按或空格（第 32 条）。`);}
+  say(`<b>看一眼 ${name}</b>。${S.touch?'长按触发，松手收回。':'指针在格子上停 0.12 秒触发，移开收回。'}触控和键盘用长按或空格（第 32 条）。`);}
 let cLp=null,cFired=false;
 cellEls.forEach(c=>{
-  c.addEventListener('pointerenter',e=>{if(e.pointerType==='touch'||S.touch)return;peekCell(c)});
-  c.addEventListener('pointerleave',e=>{if(e.pointerType==='touch'||S.touch)return;if(S.peek&&S.peek.el===c)hidePeek()});
+  let dw=null;
+  c.addEventListener('pointerenter',e=>{if(e.pointerType==='touch'||S.touch)return;clearTimeout(dw);dw=setTimeout(()=>peekCell(c),120)});
+  c.addEventListener('pointerleave',e=>{clearTimeout(dw);if(e.pointerType==='touch'||S.touch)return;if(S.peek&&S.peek.el===c)hidePeek()});
   c.addEventListener('pointerdown',e=>{
     cFired=false;clearTimeout(cLp);
     if(e.pointerType==='touch'||S.touch)cLp=setTimeout(()=>{cFired=true;peekCell(c)},500);});
@@ -638,7 +647,7 @@ root.addEventListener('click',e=>{
 /* ---------- 条件 ---------- */
 function toggle(id,fn){const b=$(id);b.addEventListener('click',()=>{const on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);fn(on)})}
 toggle('tReduced',on=>{S.reduced=on;root.classList.toggle('reduced',on);say(on?'<b>减少动态效果</b>。全部换成 <code>reduced</code> 0.25 / 1.0，不带速度。小圆原处淡入，不移动。看一眼只淡入。':'动效已恢复。')});
-toggle('tTouch',on=>{S.touch=on;hidePeek();say(on?'<b>触控，没有悬停</b>。刘海上长按展开；格子上长按看一眼，松手收回；键盘用空格。':'指针模式：格子上停住就看一眼。')});
+toggle('tTouch',on=>{S.touch=on;hidePeek();say(on?'<b>触控，没有悬停</b>。刘海上长按展开；格子上长按看一眼，松手收回；键盘用空格。':'指针模式：格子上停 0.12 秒就看一眼。')});
 $('tTouch').setAttribute('aria-pressed',S.touch);
 $('tTheme').addEventListener('click',e=>{const b=e.currentTarget,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',on);
   const el=document.documentElement,dark=matchMedia('(prefers-color-scheme:dark)').matches;
@@ -651,6 +660,7 @@ function render(){
   const left=CX-NW/2-L,w=NW+L+R;
   Object.assign(isl.style,{left:left+'px',width:w+'px',height:Math.max(NH,Hh)+'px',borderRadius:`0 0 ${r}px ${r}px`});
   ink.style.left=-left+'px';
+  shL.style.left=(left-SW)+'px';shR.style.left=(left+w)+'px';
   const right=CX+NW/2+R;
   if(S.reduced){circ.style.left=(right+MGAP)+'px';circ.style.opacity=Math.max(0,Math.min(1,cs));circ.style.transform='none'}
   else{circ.style.left=(right+MGAP-(1-cs)*(MIN+MGAP))+'px';circ.style.opacity=Math.max(0,Math.min(1,cs*2.5));circ.style.transform=`scale(${.7+.3*Math.min(1.1,Math.max(0,cs))})`}

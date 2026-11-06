@@ -1,0 +1,31 @@
+<!-- @dsCard group="劉海" height=250 subtitle="展開那一排 · 408 寬上限" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>NotchRow</title>
+<style>
+body{margin:0;background:var(--window-bg);font-family:var(--font-sf);}
+.stage{position:relative;height:230px;}
+.isl{position:absolute;left:50%;top:0;transform:translateX(-50%);width:408px;height:160px;background:var(--notch-fill);border-radius:0 0 28px 28px;box-sizing:border-box;padding:0 14px 14px;}
+.top{display:flex;justify-content:space-between;align-items:center;height:34px;color:var(--notch-text);}
+.top .cnt{font-family:var(--font-rounded);font-weight:600;font-size:13px;color:var(--notch-text-count);font-variant-numeric:tabular-nums}
+.notch{position:absolute;left:50%;top:0;transform:translateX(-50%);width:185px;height:34px;border-radius:0 0 10.7px 10.7px;outline:1px dashed var(--notch-stroke);}
+.cells{display:flex;gap:8px;margin-top:6px;overflow:hidden}
+.cell{flex:0 0 76px;height:104px;box-sizing:border-box;padding:6px;border-radius:14px;background:var(--notch-cell);display:flex;flex-direction:column;gap:6px;align-items:center}
+.cell:first-child{background:var(--notch-cell-hover)}
+.thumb{width:64px;height:68px;border-radius:8px;background:#3a3f47;}
+.thumb.b{background:#5b6b5a}.thumb.c{background:#6a5a48}.thumb.d{background:#47516b}
+.name{font-size:11px;line-height:14px;font-weight:500;color:var(--notch-text-secondary);white-space:nowrap}
+.go{color:var(--notch-text)}
+</style></head><body>
+<div class="stage">
+ <div class="isl" role="list" aria-label="劉海那一排">
+  <div class="notch" aria-hidden="true"></div>
+  <div class="top"><span>▭</span><span class="cnt">4</span></div>
+  <div class="cells">
+   <div class="cell" role="listitem" aria-label="回到原處 Safari"><div class="thumb"></div><span class="name">Safari</span></div>
+   <div class="cell" role="listitem" aria-label="回到原處 備忘錄"><div class="thumb b"></div><span class="name">備忘錄</span></div>
+   <div class="cell" role="listitem" aria-label="回到原處 預覽"><div class="thumb c"></div><span class="name">預覽</span></div>
+   <div class="cell" role="listitem" aria-label="去 桌面 2 的 終端"><div class="thumb d"></div><span class="name go">去 · 終端</span></div>
+  </div>
+ </div>
+</div>
+</body></html>
