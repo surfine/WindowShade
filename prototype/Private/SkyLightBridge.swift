@@ -212,6 +212,12 @@ final class PrivateSLSWindowMover: Sendable {
     @discardableResult
     func setAlpha(id: CGWindowID, alpha: Float) -> Bool {
         guard let mainConnectionID, let setWindowAlpha else { return false }
-        return setWindowAlpha(mainConnectionID(), UInt32(id), alpha) == 0
+        let ok = setWindowAlpha(mainConnectionID(), UInt32(id), alpha) == 0
+        // 改透明度 SkyLight 不发任何窗口事件（11-06 实测），WindowStateHub 看不见：收起 / 放回走到头（全透明或全不透明）时
+        // 说一声，让盯着它的卷轴条、分屏把手当轮就重查，而不是等 1 秒看门狗。渐变中间的帧不说，免得每帧一次查询。
+        if ok, alpha <= 0.01 || alpha >= 0.99 {
+            NotificationCenter.default.post(name: .windowShadeAlphaChanged, object: nil, userInfo: ["id": id])
+        }
+        return ok
     }
 }

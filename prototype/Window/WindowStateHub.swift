@@ -90,7 +90,8 @@ struct WindowHubBatch: Sendable {
     }
     var changes: [Item] = []
     var spaceEvents: [WindowSpaceEvent] = []
-    /// 叠放次序变了的被盯窗口（808）。单纯换次序时事实比对看不出来，所以次序本身不进 changes、不发给 watch，
+    /// 叠放次序变了的被盯窗口（808），以及我们自己改了透明度、没人盯的窗口（noteExternalChange）。
+    /// 单纯换次序时事实比对看不出来，所以次序本身不进 changes、不发给 watch，
     /// 只给 observeAnyChange（SplitView：同一 App 把别的窗口提到缝上方时要重认）。808 也报层级变化，
     /// 所以被盯的窗口照样重查，层级真变了会作为 .restyled 进 changes。
     var reordered: [CGWindowID] = []
@@ -172,6 +173,7 @@ final class WindowStateHub {
     private var dirty: Set<CGWindowID> = []
     private var pendingSpaceEvents: [WindowSpaceEvent] = []
     private var pendingReorders: Set<CGWindowID> = []
+    private var alphaObserver: NSObjectProtocol?
     private var flushScheduled = false
     private var sourceStarted = false
     private var sourceFailed = false
@@ -205,6 +207,24 @@ final class WindowStateHub {
         self.nextTurn = nextTurn
         self.clock = clock
         self.log = log
+        alphaObserver = NotificationCenter.default.addObserver(forName: .windowShadeAlphaChanged, object: nil,
+                                                               queue: .main) { [weak self] note in
+            guard let id = note.userInfo?["id"] as? CGWindowID else { return }
+            MainActor.assumeIsolated { self?.noteExternalChange(id) }
+        }
+    }
+
+    /// 我们自己做了 SkyLight 不报的改动（改透明度）：被盯的这扇下一轮重查（事实比对会给出 .restyled）；
+    /// 没人盯它但有 observeAnyChange 时，按“外框没变的变化”放进 batch.reordered（分屏不盯全透明的窗，放回时靠这个重认）。
+    func noteExternalChange(_ id: CGWindowID) {
+        if tokensByWindow[id] != nil {
+            dirty.insert(id)
+        } else if !anyChangeObservers.isEmpty {
+            pendingReorders.insert(id)
+        } else {
+            return
+        }
+        scheduleFlush()
     }
 
     // MARK: 订阅
@@ -228,6 +248,12 @@ final class WindowStateHub {
             queryCount += 1
             facts[id] = describe([id]).lazy.compactMap { WindowFact.parse($0, at: now) }.first { $0.id == id }
             if facts[id] == nil { dirty.insert(id); scheduleFlush() }
+        } else if facts[id]?.exists == false {
+            // 别的订阅已经看见它没了：之后不会再有变化，新订阅不补一次 .gone 就永远等不到（PiP 在截图准备期间源窗口被关）。
+            nextTurn { [weak self] in
+                guard let self, let sub = self.subscriptions[token], self.facts[id]?.exists == false else { return }
+                sub.handler(.gone, nil)
+            }
         }
         reconcile()
         return WindowWatch { [weak self] in self?.unwatch(token) }

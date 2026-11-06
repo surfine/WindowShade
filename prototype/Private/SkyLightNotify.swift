@@ -174,3 +174,9 @@ final class SkyLightWindowNotifier: WindowEventSource {
         }
     }
 }
+
+/// 改透明度 SkyLight 不发事件：我们自己改了就用这条通知告诉 WindowStateHub（发送方见 SkyLightBridge.setAlpha）。
+extension Notification.Name {
+    /// PrivateSLSWindowMover.setAlpha 把某扇窗改成全透明或全不透明；userInfo["id"] 是 CGWindowID。
+    static let windowShadeAlphaChanged = Notification.Name("WindowShade.windowAlphaChanged")
+}

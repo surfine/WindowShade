@@ -88,6 +88,8 @@ func wlog(_ s: String) {}
         heartbeat()
         eventCadence()
         ownPolling()
+        lateWatcherOfGoneWindow()
+        externalAlphaChange()
         spaceMembership()
         anyChange()
         reentrancy()
@@ -267,6 +269,45 @@ func wlog(_ s: String) {}
         let carry = rig.hub.watch(2, fallbackInterval: 1.5) { _, _ in }
         expect(rig.liveTimer?.interval == 1.5, "1.5 秒的订阅（Carry）：看门狗 1.5 秒，不慢于改动前")
         _ = (reconcile, carry)
+    }
+
+    @MainActor static func lateWatcherOfGoneWindow() {
+        let rig = Rig()
+        rig.set(3)
+        var first: [WindowChange] = []
+        let a = rig.hub.watch(3) { c, _ in first.append(c) }
+        rig.rows[3] = nil
+        rig.source.send(.hidden(3)); rig.runTurns()
+        expect(first == [.gone], "先来的订阅收到 gone")
+        var late: [WindowChange] = []
+        let b = rig.hub.watch(3) { c, _ in late.append(c) }
+        expect(late.isEmpty, "不在订阅调用里同步回调")
+        rig.runTurns()
+        expect(late == [.gone], "窗口已被认定没了之后才来的订阅，下一轮也收到 gone（PiP 准备期间源窗口被关）")
+        rig.runTurns(); rig.tick(advance: 1)
+        expect(late == [.gone], "只补一次")
+        _ = (a, b)
+    }
+
+    @MainActor static func externalAlphaChange() {
+        let rig = Rig()
+        rig.set(1); rig.set(9)
+        var seen: [WindowChange] = []
+        let w = rig.hub.watch(1) { c, _ in seen.append(c) }
+        var batches: [WindowHubBatch] = []
+        let any = rig.hub.observeAnyChange { batches.append($0) }
+        rig.set(1, alpha: 0)
+        NotificationCenter.default.post(name: .windowShadeAlphaChanged, object: nil, userInfo: ["id": CGWindowID(1)])
+        RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        rig.runTurns()
+        expect(seen == [.restyled], "我们自己把被盯的窗改成全透明：当轮重查，给出 restyled（SkyLight 不报透明度）")
+        rig.hub.noteExternalChange(9); rig.runTurns()
+        expect(batches.last?.reordered == [9], "没人盯的窗改了透明度：给 observeAnyChange 的 batch（分屏放回全透明的窗时要重认）")
+        any.cancel()
+        let before = batches.count
+        rig.hub.noteExternalChange(9); rig.runTurns()
+        expect(batches.count == before, "没人要时不排查询")
+        _ = w
     }
 
     @MainActor static func ownPolling() {
