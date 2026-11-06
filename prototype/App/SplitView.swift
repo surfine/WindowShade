@@ -274,7 +274,7 @@ final class SplitViewController {
         guard !eventRefreshQueued else { return }
         eventRefreshQueued = true
         let delay = SplitScan.eventRefreshDelay(sinceLast: ProcessInfo.processInfo.systemUptime - lastEventRefreshAt)
-        MainTimer.fire(after: delay, tolerance: 0) { [weak self] in
+        MainTimer.fire(after: delay, tolerance: 0, commonModes: true) { [weak self] in
             guard let self else { return }
             self.eventRefreshQueued = false
             self.lastEventRefreshAt = ProcessInfo.processInfo.systemUptime

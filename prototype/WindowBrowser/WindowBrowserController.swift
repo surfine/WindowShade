@@ -1389,7 +1389,7 @@ final class WindowBrowserController: NSObject {
         livenessPending[key] = due
         // 附近已经排了一次的（面板刚开时整批订阅）合成一次：到点时顺带处理 0.06s 内到期的。
         if livenessPending.contains(where: { $0.key != key && abs($0.value - due) < 0.05 }) { return }
-        MainTimer.fire(after: max(0.001, delay), tolerance: delay > 0 ? 0.06 : 0) { [weak self] in
+        MainTimer.fire(after: max(0.001, delay), tolerance: delay > 0 ? 0.06 : 0, commonModes: true) { [weak self] in
             self?.runDueLivenessChecks()
         }
     }
