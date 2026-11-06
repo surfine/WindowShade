@@ -16,6 +16,10 @@
 | `release-gate.sh` 默认联网取上一版 | 离线 | 不传 `--previous` 时调用 `gh release download` | 2026-11-02 | 离线门禁显式传 `--previous <zip>`；`local-gate.sh release` 已强制 | 2026-11-02 | `scripts/release-gate.sh` |
 | `--restore-guard`：另一扇收起的窗被带回来 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --restore-guard` → `FAIL restore-guard: the other window came back (still folded=true visible=true)` | 2026-11-06 | 11-05 改动前的 3cb3ba32 同样失败，不是本轮回归；待单独查「叫回前台后 App 把窗都摆出来」这条路 | 2026-11-06 | `--restore-guard` |
 | `--notch`：收进刘海 5 秒内没离屏 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --notch` → `verdict: FAIL timeout: tucked away after 5.0 s` | 2026-11-06 | 3cb3ba32 同样失败，不是本轮回归；前两项（甩向刘海、落点小岛）通过 | 2026-11-06 | `--notch` |
+| `--split`：左右半屏后中间没出把手 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --split` → `FAIL split: two windows filling the screen side by side get a bar in the middle (seams=0 at -1)`，`verdict: FAIL timeout: snapped to a third after 3.0 s` | 2026-11-06 | 37b24c3d 之上只加 --hold 探针的构建同样失败，逐行相同，不是 WindowStateHub 的回归；疑为探针 `refresh()` 后立刻读缝（扫描是异步的），待单独查 | 2026-11-06 | `--split` |
+| `--pip`：收尾时两扇窗 4 秒内没都回来 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --pip` → 前 8 项 PASS，`verdict: FAIL timeout: both back after 4.0 s` | 2026-11-06 | 改动前构建同样失败，不是本轮回归 | 2026-11-06 | `--pip` |
+| `--slide-over-desktops`：临时窗挪不到另一张桌面 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --slide-over-desktops` → `verdict: FAIL timeout: window on another desktop after 6.0 s` | 2026-11-06 | 改动前构建同样失败；同一台机器 `--slide-over-spaces --other-space` 能挪过去，差别待查 | 2026-11-06 | `--slide-over-desktops` |
+| 默认看一眼流程：看一眼时真窗口冒出来 | 本机 M5（macOS 27），签名 stage 构建 | 不带专项参数跑 `tests/run-glance-probe.sh`（11-06 之前 `--slide-over-border` 没接进调度，也会落到这里）→ `verdict: FAIL real window came back during glance` | 2026-11-06 | 改动前构建同样失败，不是本轮回归 | 2026-11-06 | 默认流程 |
 
 ## 登记模板
 

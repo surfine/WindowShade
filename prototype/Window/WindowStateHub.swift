@@ -149,6 +149,8 @@ final class WindowStateHub {
         let windowID: CGWindowID
         let fallbackInterval: TimeInterval
         let heartbeat: Bool
+        /// false：订阅方自己有定时巡检（Reconcile 的 5 秒），hub 不为它跑看门狗，只送事件。
+        let needsWatchdog: Bool
         let handler: @MainActor (WindowChange, WindowFact?) -> Void
         var lastHeartbeat: CFAbsoluteTime
     }
@@ -209,15 +211,17 @@ final class WindowStateHub {
 
     /// 盯一扇窗。`fallbackInterval`：退回纯看门狗时这扇窗需要的轮询间隔（改动前的轮询间隔）。
     /// `heartbeat`：定时回调 `.heartbeat`（事件模式按 max(1 秒, fallbackInterval)；退回模式按 fallbackInterval）。
+    /// `ownPolling`：订阅方自己还留着定时巡检（Reconcile），hub 不为它起看门狗，免得两只 5 秒钟各醒一次。
     /// 订阅当下做一次单窗口基线查询；之后只分发相对基线的真实变化。窗口当下就查不到时，下一次查询分发 `.gone`。
     func watch(_ id: CGWindowID, fallbackInterval: TimeInterval = WindowStateHub.watchdogInterval,
-               heartbeat: Bool = false,
+               heartbeat: Bool = false, ownPolling: Bool = false,
                onChange: @escaping @MainActor (WindowChange, WindowFact?) -> Void) -> WindowWatch {
         nextToken += 1
         let token = nextToken
         let now = clock()
         subscriptions[token] = Subscription(windowID: id, fallbackInterval: max(0.05, fallbackInterval),
-                                            heartbeat: heartbeat, handler: onChange, lastHeartbeat: now)
+                                            heartbeat: heartbeat, needsWatchdog: !ownPolling,
+                                            handler: onChange, lastHeartbeat: now)
         let isNewWindow = tokensByWindow[id] == nil
         tokensByWindow[id, default: []].append(token)
         if isNewWindow, facts[id] == nil {
@@ -472,18 +476,19 @@ final class WindowStateHub {
     }
 
     private func syncWatchdog(ids: [CGWindowID]) {
-        guard !ids.isEmpty else {
+        let polled = subscriptions.values.filter(\.needsWatchdog)
+        guard !ids.isEmpty, !polled.isEmpty else {
             watchdog?.cancel()
             watchdog = nil
             return
         }
         let period: TimeInterval
         if mode == .fallback {
-            let fastest = subscriptions.values.map(\.fallbackInterval).min() ?? Self.watchdogInterval
+            let fastest = polled.map(\.fallbackInterval).min() ?? Self.watchdogInterval
             period = min(Self.watchdogInterval, fastest)
         } else {
-            // 事件模式：最快 1 秒，但不比最快的订阅原来的轮询更勤（只剩 5 秒的 Reconcile 时 5 秒一拍）。
-            period = subscriptions.values.map { Self.eventSpacing($0.fallbackInterval) }.min() ?? Self.watchdogInterval
+            // 事件模式：最快 1 秒，但不比最快的订阅原来的轮询更勤。
+            period = polled.map { Self.eventSpacing($0.fallbackInterval) }.min() ?? Self.watchdogInterval
         }
         if watchdog != nil, abs(period - watchdogPeriod) < 0.0001 { return }
         watchdog?.cancel()

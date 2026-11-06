@@ -30,7 +30,7 @@ extension AppDelegate {
                 reconcileWatches[id] = nil
             }
             for id in shaded.keys where reconcileWatches[id] == nil {
-                reconcileWatches[id] = WindowStateHub.shared.watch(id, fallbackInterval: shadedWindowReconcileInterval) {
+                reconcileWatches[id] = WindowStateHub.shared.watch(id, fallbackInterval: shadedWindowReconcileInterval, ownPolling: true) {
                     [weak self] change, _ in
                     self?.shadedSourceChanged(id, change: change)
                 }

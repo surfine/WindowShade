@@ -87,6 +87,7 @@ func wlog(_ s: String) {}
         fallback()
         heartbeat()
         eventCadence()
+        ownPolling()
         spaceMembership()
         anyChange()
         reentrancy()
@@ -266,6 +267,21 @@ func wlog(_ s: String) {}
         let carry = rig.hub.watch(2, fallbackInterval: 1.5) { _, _ in }
         expect(rig.liveTimer?.interval == 1.5, "1.5 秒的订阅（Carry）：看门狗 1.5 秒，不慢于改动前")
         _ = (reconcile, carry)
+    }
+
+    @MainActor static func ownPolling() {
+        let rig = Rig()
+        rig.set(1); rig.set(2)
+        var seen: [WindowChange] = []
+        let own = rig.hub.watch(1, fallbackInterval: 5, ownPolling: true) { c, _ in seen.append(c) }
+        expect(rig.hub.mode == .events && rig.liveTimer == nil, "只有自带巡检的订阅（Reconcile）：不起看门狗，免得和它自己的 5 秒钟各醒一次")
+        rig.set(1, x: 40); rig.source.send(.moved(1)); rig.runTurns()
+        expect(seen == [.moved(CGRect(x: 40, y: 20, width: 300, height: 200))], "事件照常送到")
+        var other: WindowWatch? = rig.hub.watch(2, fallbackInterval: 0.5) { _, _ in }
+        expect(rig.liveTimer?.interval == 1, "再来一个普通订阅：看门狗按它起（1 秒）")
+        other = nil
+        expect(other == nil && rig.liveTimer == nil, "普通订阅走了，看门狗跟着停")
+        _ = own
     }
 
     @MainActor static func spaceMembership() {
