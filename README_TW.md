@@ -47,7 +47,8 @@
 
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下載最新的 DMG，開啟後把 `WindowShade.app` 拖進“應用程式”，再開啟它，按提示給權限。（ZIP 是同一個 App，應用程式內更新用的就是它。）它住在選單列裡，不佔 Dock 位置。
 
-- **要 macOS 15 以上、Apple Silicon。** 沒有 Intel 版。
+- **要 macOS 15 以上。** 主力是 Apple Silicon 版。
+- **Intel Mac（實驗，1.0.21 起）。** Releases 裡另有一個檔名以 `-intel.zip` 結尾的 ZIP。它沒有在真實的 Intel Mac 上試過，只在 Rosetta 下做過冒煙測試，難免有毛病。刷臉解鎖、聲紋和合蓋桌面效果在 Intel 上是關的，設定裡也不顯示；置頂預覽、畫中畫和其餘功能照常。Intel 版從自己的更新清單取更新，不會收到 Apple Silicon 的包，Apple Silicon 的 Mac 也不會收到 Intel 的包。遇到問題，請[提一個 issue](https://github.com/surfine/WindowShade/issues/new)。
 - **1.0.20 下載包（十進位）：** ZIP 22.19 MB；第一次安裝也可以下 DMG（23.25 MB）。
 - **已通過 Apple 公證。** 第一次開啟時系統會自己檢查，不用再手動放行。
 - **從 1.0.16 及以前升級：** 這一版要手動下載一次，裝好後在“系統設定 → 隱私權與安全性”裡重新開啟輔助使用（開過螢幕錄製的，也重新開啟）。之後就能在選單裡更新。

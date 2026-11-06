@@ -47,7 +47,8 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 
 Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releases/latest), open it, drag `WindowShade.app` onto Applications, then open it and follow the permission prompts. (The ZIP is the same app and is what in-app updates use.) It lives in the menu bar and stays out of your Dock.
 
-- **Needs macOS 15 or later and Apple Silicon.** There’s no Intel build.
+- **Needs macOS 15 or later.** Apple Silicon is the main build.
+- **Intel Macs (experimental, from 1.0.21).** Releases also has a separate ZIP whose name ends in `-intel.zip`. It has not been tried on a real Intel Mac, only in a Rosetta smoke test, so expect rough edges. Face unlock, voiceprint and the lid-close desktop effect are off and hidden on Intel; pinned previews, Picture in Picture and everything else work the same. The Intel build updates from its own feed, so it is never offered the Apple Silicon ZIP, and Apple Silicon Macs are never offered the Intel one. If something goes wrong, please [open an issue](https://github.com/surfine/WindowShade/issues/new).
 - **1.0.20 download (decimal MB):** 22.19 MB ZIP, or a 23.25 MB DMG for a first install.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
