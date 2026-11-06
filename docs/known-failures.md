@@ -20,6 +20,7 @@
 | `--pip`：收尾时两扇窗 4 秒内没都回来 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --pip` → 前 8 项 PASS，`verdict: FAIL timeout: both back after 4.0 s` | 2026-11-06 | 改动前构建同样失败，不是本轮回归 | 2026-11-06 | `--pip` |
 | `--slide-over-desktops`：临时窗挪不到另一张桌面 | 本机 M5（macOS 27），签名 stage 构建 | `bash tests/run-glance-probe.sh --slide-over-desktops` → `verdict: FAIL timeout: window on another desktop after 6.0 s` | 2026-11-06 | 改动前构建同样失败；同一台机器 `--slide-over-spaces --other-space` 能挪过去，差别待查 | 2026-11-06 | `--slide-over-desktops` |
 | 默认看一眼流程：看一眼时真窗口冒出来 | 本机 M5（macOS 27），签名 stage 构建 | 不带专项参数跑 `tests/run-glance-probe.sh`（11-06 之前 `--slide-over-border` 没接进调度，也会落到这里）→ `verdict: FAIL real window came back during glance` | 2026-11-06 | 改动前构建同样失败，不是本轮回归 | 2026-11-06 | 默认流程 |
+| 蓝牙在场：连着时不再每 5 秒送探针回执 | 任意构建（11-06 起） | `WS2BluetoothPresenceSource` 改成通知驱动后，只在连上那一次送 `readStarted/readSucceeded`；5 秒保底只读 `isConnected()` | 2026-11-06 | 眼下无影响：`PresenceLock` 里靠探针回执续上 `cancelCountdown` 的分支只在 `cameraEnabled` 打开时才走，这个开关目前没有入口。将来打开相机在场（或“回来自动解锁”的 RSSI 判定）时，要在那段时间重新周期送探针 / RSSI | 2026-11-06 | `run-presence-bluetooth-source-tests.sh` |
 
 ## 登记模板
 
