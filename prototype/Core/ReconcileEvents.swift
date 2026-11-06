@@ -35,4 +35,9 @@ enum ReconcileEventPolicy {
     /// 事件触发的轮次读不到窗口尺寸时，不计入“连续几轮查不到”：那个计数只认定时巡检的节奏，
     /// 否则事件会把原本约 10 秒的孤儿确认压成两三秒。
     static func countsTowardMissing(reason: String) -> Bool { reason != "event" }
+
+    /// 同上，但这个 App 有一轮定时巡检撞上了正在读的事件轮次（巡检那轮因此没另起读取）：这次读数替巡检算一轮。
+    static func countsTowardMissing(reason: String, scheduledPassPending: Bool) -> Bool {
+        countsTowardMissing(reason: reason) || scheduledPassPending
+    }
 }

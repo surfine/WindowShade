@@ -192,6 +192,9 @@ extension AppDelegate {
             return
         }
 
+        if ReconcileEventPolicy.countsTowardMissing(reason: reason) {
+            reconcileScheduledPIDs.formUnion(shaded.values.map(\.pid))
+        }
         pumpReconcileAXReads(reason: reason, refreshWanted: true)
     }
 
@@ -296,11 +299,14 @@ extension AppDelegate {
         guard MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else { return }
         // Observe screen membership at application time, not before a possibly slow AX batch.
         let onScreenIDs = currentOnScreenWindowIDs()
+        // 这批是哪个 App 的：巡检要过它，这次读数就按巡检算，并且只算一次。
+        let scheduled = Set(snapshots.compactMap { shaded[$0.id]?.pid }).intersection(reconcileScheduledPIDs)
+        reconcileScheduledPIDs.subtract(scheduled)
         for snapshot in snapshots {
             guard foldCallbackIsCurrent(snapshot.stamp), let state = shaded[snapshot.id] else { continue }
             guard let size = snapshot.size, size.width.isFinite, size.height.isFinite,
                   size.width > 0, size.height > 0 else {
-                guard ReconcileEventPolicy.countsTowardMissing(reason: reason) else { continue }
+                guard ReconcileEventPolicy.countsTowardMissing(reason: reason, scheduledPassPending: scheduled.contains(state.pid)) else { continue }
                 if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state),
                    foldCallbackIsCurrent(snapshot.stamp) {
                     forceCleanup(snapshot.id)

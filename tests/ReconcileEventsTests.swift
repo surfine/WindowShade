@@ -28,6 +28,9 @@ struct ReconcileEventsTests {
 
         check(!ReconcileEventPolicy.countsTowardMissing(reason: "event"), "event rounds do not count toward orphan")
         check(ReconcileEventPolicy.countsTowardMissing(reason: "timer"), "timer rounds count")
+        check(ReconcileEventPolicy.countsTowardMissing(reason: "event", scheduledPassPending: true),
+              "an event read that a timer pass collided with counts for that timer pass (orphan confirmation is not pushed back 5 s)")
+        check(!ReconcileEventPolicy.countsTowardMissing(reason: "event", scheduledPassPending: false), "an ordinary event read still does not count")
 
         if failures == 0 { print("ReconcileEventsTests: all passed") } else { exit(1) }
     }

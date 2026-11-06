@@ -182,6 +182,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 5 秒定时巡检原样保留（见 Reconcile.swift）。
     var reconcileWatches: [CGWindowID: WindowWatch] = [:]
     var reconcileEventQueued = false
+    /// 定时巡检想读、但当时正有事件轮次在读的 App：它们那次读完的结果按巡检算（计入“连续几轮查不到”），
+    /// 不然巡检撞上事件轮次就白白少数一轮，孤儿确认每撞一次晚 5 秒（11-06 审查）。
+    var reconcileScheduledPIDs: Set<pid_t> = []
     var lastEventReconcileAt: TimeInterval = 0
     var axReadGate = AXReadGate<pid_t, [WS2FoldCallbackStamp]>()
     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
