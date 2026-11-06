@@ -536,6 +536,8 @@ enum WS2PrivacyValues {
         if UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey) {
             snapshot.features.insert(WS2PrivacyCopy.faceUnlockFeature)
         }
+        // Intel 版不带刷脸解锁：偏好里存着“开”也不列那几行（face-identity、voiceprint 等）。
+        if !PlatformSupport.faceUnlock { snapshot.features.remove(WS2PrivacyCopy.faceUnlockFeature) }
         // WindowShade 2 那几行（appears_with: ws2-preview）：预览旗标打开，或其中会读东西的开关已经开着，才列出来。
         if WS2Preview.shows(previewOn: WS2Preview.isOn, alreadyOn: WS2Preview.live.readsSomething) {
             snapshot.features.insert(WS2Preview.privacyFeature)

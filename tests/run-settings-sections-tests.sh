@@ -5,6 +5,6 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/settings-sections-tests
 swiftc -O -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   -module-cache-path "$(pwd)/.build/module-cache" \
-  prototype/App/SettingsSections.swift prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FeatureCatalog.swift \
+  prototype/App/SettingsSections.swift prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FeatureCatalog.swift prototype/Core/PlatformSupport.swift \
   tests/SettingsSectionsTests.swift -o .build/settings-sections-tests/run
 .build/settings-sections-tests/run

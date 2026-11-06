@@ -210,7 +210,7 @@ extension AppDelegate {
             subtitle: WSL10n.setting("settings.features.sub", zh: "核心功能始终开启。下面的功能可以整块开关，关掉后对应的菜单、快捷键和后台工作一起停。"),
             symbolName: "checklist"))
         let rows = FeatureCatalog.all.enumerated().map { index, feature in
-            makeUnifiedToggleRow(name: feature.title, subtitle: feature.subtitle,
+            makeUnifiedToggleRow(name: feature.title, subtitle: feature.shownSubtitle(),
                                  isOn: FeatureCatalog.isEnabled(feature.module),
                                  tag: index, action: #selector(prefToggleFeature(_:)))
         }
@@ -438,6 +438,8 @@ extension AppDelegate {
     func makeExperimentalSettingsCard() -> NSView {
         // 代填登录密码（D11）跟刷脸解锁同一个开关：开关关着、预览旗标也没开时这一行不出现。
         let autofillRows: [NSView] = showsFaceAutofillRow ? [makeFaceAutofillRow()] : []
+        // Intel 版不带刷脸解锁：这一行（和下面的代填密码、声纹）整个不建。
+        let faceRows: [NSView] = PlatformSupport.faceUnlock ? [makeFaceExperimentRow()] : []
         return makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
                 name: WSL10n.setting("settings.experiments.livePreview.name", zh: "普通窗口实时预览"),
@@ -462,8 +464,7 @@ extension AppDelegate {
                                  subtitle: WSL10n.setting("settings.shade.originGuess.sub", zh: "按出别的系统的习惯时问一次"),
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:)),
                                  explainer: ExplainerRow.Advanced.originGuess),
-            makeFaceExperimentRow(),
-        ] + autofillRows + [
+        ] + faceRows + autofillRows + [
             makePresenceLockRow(),
             makePresenceDeviceRow(),
             NotificationReloadHost(name: PrivateAppList.didChange) { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },

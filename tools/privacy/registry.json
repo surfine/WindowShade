@@ -7499,7 +7499,7 @@
       "path": "prototype/Effects/LockOverlayController.swift",
       "line": 6,
       "symbol": "UserDefaults",
-      "source": "var enabled: Bool { UserDefaults.standard.bool(forKey: Self.defaultsKey) }",
+      "source": "var enabled: Bool { PlatformSupport.lidEffect && UserDefaults.standard.bool(forKey: Self.defaultsKey) }",
       "signal": "settings"
     },
     {

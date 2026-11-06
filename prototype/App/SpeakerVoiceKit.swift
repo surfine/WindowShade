@@ -37,7 +37,11 @@ final class LazySpeakerVerifier: SpeakerVerifier, @unchecked Sendable {
 @MainActor final class SpeakerVoiceKit {
     static let shared = SpeakerVoiceKit()
 
-    static var modelURL: URL? { Bundle.main.url(forResource: "SpeakerEmbedding", withExtension: "mlmodelc") }
+    /// Intel 版不带声纹（PlatformSupport）：没有模型就是“不可用”，验证器失败即关，不加载模型、不开麦克风。
+    static var modelURL: URL? {
+        guard PlatformSupport.voiceprint else { return nil }
+        return Bundle.main.url(forResource: "SpeakerEmbedding", withExtension: "mlmodelc")
+    }
     static var isModelBundled: Bool { modelURL != nil }
 
     let store = VoiceprintKeychainStore()

@@ -47,6 +47,8 @@ import Cocoa
     static func setEnabled(_ on: Bool) -> Bool {
         let defaults = UserDefaults.standard
         if on {
+            // Intel 版不带刷脸解锁（PlatformSupport）：开不了，也不写键。
+            guard PlatformSupport.faceUnlock else { return false }
             defaults.set(true, forKey: enabledKey)
             startIfEnabled()
             guard shared != nil else {
@@ -119,6 +121,9 @@ import Cocoa
     }
 
     static func startIfEnabled() {
+        // Intel 版不带刷脸解锁：不建实验、不开相机、不读钥匙串；偏好里已存的“开”不读也不删。
+        // 录脸、认你指示、补光圈、代填密码和声纹都挂在这个实验上，这里不起它们就都不会起。
+        guard PlatformSupport.faceUnlock else { return }
         guard FeatureCatalog.isEnabled(.securityExtras) else { return }
         let defaults = UserDefaults.standard
         guard shared == nil, defaults.bool(forKey: enabledKey) else { return }

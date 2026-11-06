@@ -8,6 +8,8 @@
 #   ./build.sh --release  和 --stage 同样的发布前检查，但构建到 .build/release/、用 Developer ID 证书签并带 Apple 时间戳；
 #                         发布包从这里打，再用 scripts/notarize.sh 公证（见 docs/DEVELOPMENT.md 的发布流程）
 #   ./build.sh --local-parallel  本地全模块优化，使用四个后端线程；发布仍用 --stage
+#   WINDOWSHADE_ARCH=x86_64 ./build.sh <上面任一种>  出 Intel 实验版：SUFeedURL 指向 appcast-intel.xml，
+#                         --stage/--release 产物在 .build/duo-validation-intel/ 和 .build/release-intel/
 #
 # 应用内更新（docs/update.md）：主程序链接 prototype/Vendor/Sparkle.framework（2.10.0，已删 XPCServices），
 # 包里另有 Contents/Helpers/WindowShadeUpdateGuard.app（看护，源码在 Watchdog/）。嵌套代码从里往外逐个签，
@@ -36,9 +38,14 @@ SWIFT_LANGUAGE_FLAGS=(-swift-version 6 -strict-concurrency=complete -warnings-as
 if [ "$release" = "1" ]; then OPTIMIZATION_FLAGS+=(-g); fi
 if [ "${1:-}" = "--local-parallel" ]; then OPTIMIZATION_FLAGS+=(-num-threads 4); fi
 APP="WindowShade.app"
-STAGE_DIR="$(cd .. && pwd)/.build/duo-validation"
+# 目标架构：默认本机架构；WINDOWSHADE_ARCH=x86_64 出 Intel 实验版（从 1.0.21 起另发一个 zip，见 docs/DEVELOPMENT.md「Intel 实验版」）。
+ARCH="${WINDOWSHADE_ARCH:-$(uname -m)}"
+# Intel 的 --stage/--release 产物放在带 -intel 的目录，不覆盖同一台机器上刚出的 arm64 包。
+ARCH_DIR_SUFFIX=""
+if [ "$ARCH" = "x86_64" ]; then ARCH_DIR_SUFFIX="-intel"; fi
+STAGE_DIR="$(cd .. && pwd)/.build/duo-validation${ARCH_DIR_SUFFIX}"
 # 发布构建放在单独的目录：Developer ID 签出来的 DR 和开发证书不同，放进 duo-validation 会让探针丢掉本机已给的授权。
-if [ "$release" = "1" ]; then STAGE_DIR="$(cd .. && pwd)/.build/release"; fi
+if [ "$release" = "1" ]; then STAGE_DIR="$(cd .. && pwd)/.build/release${ARCH_DIR_SUFFIX}"; fi
 if [ "$stage_only" = "1" ]; then
   APP="$STAGE_DIR/WindowShade.app"
 fi
@@ -47,7 +54,9 @@ TMP_BIN="windowshade"
 if [ "$stage_only" = "1" ]; then TMP_BIN="$STAGE_DIR/windowshade"; fi
 MODULE_CACHE="$(cd .. && pwd)/.build/module-cache"
 # 更新清单地址与 EdDSA 公钥：只由 --stage 写进发布包；公钥必须和仓库 Info.plist 里的一致。
+# Sparkle 的 hardwareRequirements 只认 arm64，所以 Intel 版另用一份清单：arm64 清单和它的条目不动，Intel 版永远读不到 arm64 的 zip。
 FEED_URL="https://windowshade.aaronlau.me/appcast.xml"
+if [ "$ARCH" = "x86_64" ]; then FEED_URL="https://windowshade.aaronlau.me/appcast-intel.xml"; fi
 EXPECTED_ED_KEY="D/MZytH+oxawqKQsskoXBdwbvoPentrqfaj7Tj2pnkw="
 SPARKLE_FRAMEWORK="$(pwd)/Vendor/Sparkle.framework"
 # macOS 自带 bash 3.2：`set -u` 下展开空数组会直接致命，而且有 EXIT trap 时还会以 0 退出，
@@ -134,7 +143,6 @@ GLASS_DEFINE=""
 if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h" ]; then
   GLASS_DEFINE="-DWINDOWSHADE_SDK_HAS_GLASS"
 fi
-ARCH="${WINDOWSHADE_ARCH:-$(uname -m)}"
 # Compile one coherent source snapshot. Edits made while a long optimized build runs
 # cannot invalidate Swift inputs or mix newer shaders into the signed bundle.
 mkdir -p "$(cd .. && pwd)/.build"
@@ -177,7 +185,9 @@ xcrun xcstringstool compile Resources/Localizable.xcstrings -o "$WORK/Localizati
 # 包里没有模型时验证器永远报用不了（失败即关），麦克风不开，行为跟没有这个功能一样。
 SPEAKER_MODEL_DIR="${WINDOWSHADE_SPEAKER_MODEL_DIR:-$(cd .. && pwd)/../WindowShade-models/speaker}"
 SPEAKER_MODEL_COMPILED=""
-if [ -d "$SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage" ]; then
+if [ "$ARCH" = "x86_64" ]; then
+  echo "==> 说话人模型：Intel 版不带声纹（Core/PlatformSupport.swift），不编、不放进包"
+elif [ -d "$SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage" ]; then
   echo "==> 说话人模型：编译 $SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage"
   mkdir -p "$WORK/SpeakerModel"
   xcrun coremlcompiler compile "$SPEAKER_MODEL_DIR/SpeakerEmbedding.mlpackage" "$WORK/SpeakerModel" >/dev/null || exit 1

@@ -77,6 +77,8 @@ final class DuoController: NSObject {
   let windowEffects = WindowFoldEffects()
   let lockOverlay = LockOverlayController()
   var desktopActive: Bool { desktop != nil || startTask != nil }
+  /// 合盖桌面效果要不要跑：用户开了，并且这个构建带它。Intel 版不带（PlatformSupport），存着的“开”不读也不删。
+  var desktopWanted: Bool { PlatformSupport.lidEffect && settings.desktopEnabled }
   var allowsAnimation: Bool {
     allowsAnimationIgnoringLock && EffectEnvironment.allowsDisplay
   }
@@ -93,7 +95,7 @@ final class DuoController: NSObject {
     windowEffects.owner = owner
     windowEffects.controller = self
     // 效果开着才在启动 4 秒后预热共享的 GPU 对象，避免第一次收起时主线程卡一下；没开效果的不多建 Metal 设备。
-    if settings.desktopEnabled || settings.windowsEnabled { FoldGPU.shared.scheduleWarmUp() }
+    if desktopWanted || settings.windowsEnabled { FoldGPU.shared.scheduleWarmUp() }
     sensor.onStatus = { [weak self] status in
       self?.sensorPhase = Self.phase(of: status)
       self?.sensorStatus = status.message
@@ -108,7 +110,7 @@ final class DuoController: NSObject {
     }
     sensor.onQueueReading = { [feed] reading, token in feed.ingest(reading, token: token) }
     // 内建屏熄 / 亮就是「盖子真的合上过 / 打开了」（docs/lid-effect.md）。系统重排显示器结束时回调，在主线程上。
-    if !displayCallbackRegistered {
+    if !displayCallbackRegistered, PlatformSupport.lidEffect {
       displayCallbackRegistered = true
       CGDisplayRegisterReconfigurationCallback(Self.displayReconfigured, Unmanaged.passUnretained(self).toOpaque())
     }
@@ -167,7 +169,7 @@ final class DuoController: NSObject {
         })
     }
     settingsChanged()
-    lockOverlay.start()
+    if PlatformSupport.lidEffect { lockOverlay.start() }
   }
 
   private func observe(
@@ -201,7 +203,7 @@ final class DuoController: NSObject {
   }
 
   private func displayDidLight(started: Bool) {
-    guard started, settings.desktopEnabled, allowsAnimation else { return }
+    guard started, desktopWanted, allowsAnimation else { return }
     dismissed = false
     guard desktop == nil, startTask == nil else { return }
     if !showClosedStill() { prepareDesktop(startProgress: 1) }
@@ -211,7 +213,7 @@ final class DuoController: NSObject {
   /// 其它情况什么都不做、返回 false，调用方直接做它自己的事。会话要先用 ScreenCaptureKit 起来，
   /// 起得慢时调用方不等它；锁了屏、或会话迟到，晚到的会话会自己放弃。
   func foldOnce() -> Bool {
-    guard !isDesignPreview, settings.desktopEnabled, allowsAnimation, !desktopActive,
+    guard !isDesignPreview, desktopWanted, allowsAnimation, !desktopActive,
       !EffectSecurityBoundary.isLocked
     else { return false }
     dismissed = false
@@ -236,7 +238,7 @@ final class DuoController: NSObject {
       return
     }
     if persistsSettings { settings.save() }
-    if !settings.desktopEnabled || !allowsAnimation { stopDesktop() }
+    if !desktopWanted || !allowsAnimation { stopDesktop() }
     if !settings.windowsEnabled || !allowsAnimation { windowEffects.cancelAll() }
     // 锁屏时只有「锁屏效果」还需要传感器；别的时候一律停掉。
     // 注意这里必须看**当前**锁屏状态，不能只看 `suspended`：应用在已经锁屏的状态下启动时，
@@ -246,7 +248,7 @@ final class DuoController: NSObject {
     let lockOverlayNeedsSensors = lockOverlay.enabled && lockedScreen
       && !EffectEnvironment.asleep && EffectEnvironment.displayAwake
     let normalSensors = !suspended && !lockedScreen
-      && ((!pausedByUser && settings.desktopEnabled) || settingsWindow != nil)
+      && ((!pausedByUser && desktopWanted) || settingsWindow != nil)
     if lockOverlayNeedsSensors || normalSensors {
       sensor.start()
     } else {
@@ -274,7 +276,7 @@ final class DuoController: NSObject {
     }
     lockOverlay.receive(progress: reading.progress)
     settingsWindow?.refreshStatus()
-    guard settings.desktopEnabled else { return }
+    guard desktopWanted else { return }
     guard reading.phase == .following else {
       // 回到静止：这次开合结束，留帧作废、撤掉的效果下次可以再起；会话由 tickDesktop 收到 0 后收掉。
       dismissed = false
@@ -329,7 +331,7 @@ final class DuoController: NSObject {
   }
 
   private func prepareDesktop(startProgress: Double) {
-    guard allowsAnimation, settings.desktopEnabled else { return }
+    guard allowsAnimation, desktopWanted else { return }
     let token = epoch.advance()
     startTask = Task { @MainActor [weak self] in
       guard let self else { return }

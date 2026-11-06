@@ -458,7 +458,7 @@ extension AppDelegate {
 
   func makeMenuState() -> MenuState {
     MenuState(
-      hingeAngleText: duoController.settings.desktopEnabled ? duoAngleMenuTitle() : nil,
+      hingeAngleText: duoController.desktopWanted ? duoAngleMenuTitle() : nil,
       canArrangeShades: shaded.values.contains { $0.overlay != nil },
       foldedWindows: sortedShadedEntries(),
       pinnedPreviews: pinnedPreviewController.menuEntries(),

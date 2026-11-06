@@ -4,7 +4,8 @@ import Cocoa
 @MainActor
 final class LockOverlayController {
     private static let defaultsKey = "lockOverlay.enabled"
-    var enabled: Bool { UserDefaults.standard.bool(forKey: Self.defaultsKey) }
+    /// Intel 版不带锁屏开合效果（PlatformSupport）：存着的“开”不读也不删。
+    var enabled: Bool { PlatformSupport.lidEffect && UserDefaults.standard.bool(forKey: Self.defaultsKey) }
     private var lifecycle = LockOverlayLifecycle()
     private var sessions: [LockOverlaySession] = []
     private var bridge: LockSpaceBridge?
@@ -40,6 +41,7 @@ final class LockOverlayController {
         reschedule()
     }
     func setEnabled(_ value: Bool) {
+        guard PlatformSupport.lidEffect else { return }
         UserDefaults.standard.set(value, forKey: Self.defaultsKey)
         retreat()
         reschedule()

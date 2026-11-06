@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/face-pipeline-tests/module-cache
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   -module-cache-path .build/face-pipeline-tests/module-cache \
-  prototype/Core/GazeAttention.swift prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FeatureCatalog.swift prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift \
+  prototype/Core/GazeAttention.swift prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FeatureCatalog.swift prototype/Core/PlatformSupport.swift prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift \
   tests/FaceObservationPipelineTests.swift \
   -framework AVFoundation -framework Vision -framework CoreVideo \
   -o .build/face-pipeline-tests/pipeline

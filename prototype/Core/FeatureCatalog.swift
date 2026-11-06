@@ -20,6 +20,8 @@ struct FeatureDefinition: Sendable {
     struct Subfeature: Sendable {
         let key: String
         let defaultWhenUnset: Bool
+        /// 这一项依赖的平台能力；这个构建不带它时，这一项不列、不参与迁移判断（偏好里存的值不读也不删）。
+        var requires: PlatformSupport.Feature? = nil
     }
 
     let module: FeatureModule
@@ -30,6 +32,20 @@ struct FeatureDefinition: Sendable {
     let defaultOnForFreshInstall: Bool
     /// 升级迁移时用来判断“这个模块现在是否至少有一项开着”。
     let subfeatures: [Subfeature]
+    /// 有子项因平台不带而不列时，模块副标题改用这一句（它不再提那几项）。arm64 上永远不用。
+    var subtitleWithoutUnavailable: SettingsText? = nil
+
+    /// 这个构建里真的存在的子项。arm64 上就是 subfeatures 全部。
+    func availableSubfeatures(intelBuild: Bool = PlatformSupport.isIntelBuild) -> [Subfeature] {
+        subfeatures.filter { sub in sub.requires.map { PlatformSupport.isAvailable($0, intelBuild: intelBuild) } ?? true }
+    }
+
+    /// 设置 → 功能里这个模块显示的副标题。
+    func shownSubtitle(intelBuild: Bool = PlatformSupport.isIntelBuild) -> SettingsText {
+        guard let alternative = subtitleWithoutUnavailable,
+              availableSubfeatures(intelBuild: intelBuild).count < subfeatures.count else { return subtitle }
+        return alternative
+    }
 }
 
 enum FeatureCatalog {
@@ -88,10 +104,11 @@ enum FeatureCatalog {
             subtitle: WSL10n.setting("settings.features.security.sub", zh: "刷脸、离开就锁、有人在看时收起私人窗口。"),
             defaultOnForFreshInstall: false,
             subfeatures: [
-                .init(key: "FaceScan.experiment.enabled", defaultWhenUnset: false),
+                .init(key: "FaceScan.experiment.enabled", defaultWhenUnset: false, requires: .faceUnlock),
                 .init(key: "Presence.lock.enabled", defaultWhenUnset: false),
                 .init(key: "Privacy.bystanderCover.enabled", defaultWhenUnset: false),
-            ]),
+            ],
+            subtitleWithoutUnavailable: WSL10n.setting("settings.features.security.subIntel", zh: "离开就锁、有人在看时收起私人窗口。")),
         FeatureDefinition(
             module: .companion,
             masterKey: "Companion.enabled",
@@ -111,10 +128,11 @@ enum FeatureCatalog {
             subtitle: WSL10n.setting("settings.features.effects.sub", zh: "合盖、收起窗口和锁屏时的动画。"),
             defaultOnForFreshInstall: false,
             subfeatures: [
-                .init(key: "duo.v2.desktop", defaultWhenUnset: false),
+                .init(key: "duo.v2.desktop", defaultWhenUnset: false, requires: .lidEffect),
                 .init(key: "duo.v2.windows", defaultWhenUnset: true),
-                .init(key: "lockOverlay.enabled", defaultWhenUnset: false),
-            ]),
+                .init(key: "lockOverlay.enabled", defaultWhenUnset: false, requires: .lidEffect),
+            ],
+            subtitleWithoutUnavailable: WSL10n.setting("settings.features.effects.subIntel", zh: "收起和展开窗口时的动画。")),
     ]
 
     static func definition(_ module: FeatureModule) -> FeatureDefinition {

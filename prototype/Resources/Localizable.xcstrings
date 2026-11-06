@@ -10627,6 +10627,29 @@
         }
       }
     },
+    "duo.status.summaryNoLid": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Set the window rolling-up animation.%@%@%@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置窗口收起动画。%@%@%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "設定視窗收起動畫。%@%@%@"
+          }
+        }
+      }
+    },
     "effect.inspector.fold": {
       "extractionState": "manual",
       "localizations": {
@@ -72343,6 +72366,29 @@
         }
       }
     },
+    "settings.features.security.subIntel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock on leave, and cover private windows when watched."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "离开就锁、有人在看时收起私人窗口。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "離開就鎖、有人在看時收起私人視窗。"
+          }
+        }
+      }
+    },
     "settings.features.companion.name": {
       "extractionState": "manual",
       "localizations": {
@@ -72431,6 +72477,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "合蓋、收起視窗和鎖定時的動畫。"
+          }
+        }
+      }
+    },
+    "settings.features.effects.subIntel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Animations for folding and unfolding windows."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起和展开窗口时的动画。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起和展開視窗時的動畫。"
           }
         }
       }

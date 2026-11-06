@@ -98,8 +98,11 @@ struct WS2PrivacySnapshot {
 
 enum WS2PrivacyVisibility {
     /// planned 的行默认不显示；写了 appearsWith 的，对应功能打开后才出现。
-    static func visibleRows(_ rows: [WS2PrivacyRow], enabledFeatures: Set<String>) -> [WS2PrivacyRow] {
+    /// Intel 版不带合盖桌面效果：绑在“桌面开合”开关上的行（合盖角度、倾斜）不列。
+    static func visibleRows(_ rows: [WS2PrivacyRow], enabledFeatures: Set<String>,
+                            intelBuild: Bool = PlatformSupport.isIntelBuild) -> [WS2PrivacyRow] {
         rows.filter { row in
+            if row.switchID == "desktop", !PlatformSupport.isAvailable(.lidEffect, intelBuild: intelBuild) { return false }
             if let feature = row.appearsWith { return enabledFeatures.contains(feature) }
             return row.status != "planned"
         }

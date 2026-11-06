@@ -23,7 +23,8 @@ enum InstallFeatureDefaults {
             } else if definition.subfeatures.isEmpty {
                 enabled = true
             } else {
-                enabled = definition.subfeatures.contains { subfeature in
+                // 这个构建不带的子项（Intel 上的刷脸、合盖效果）不参与：偏好里存的值不读。
+                enabled = definition.availableSubfeatures().contains { subfeature in
                     if let value = defaults.object(forKey: subfeature.key) as? Bool { return value }
                     return subfeature.defaultWhenUnset
                 }

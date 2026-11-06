@@ -66,6 +66,8 @@ final class LidAngleSource: @unchecked Sendable {
   func accepts(_ token: UInt64) -> Bool { current(token) }
 
   func start() {
+    // Intel 版不带合盖效果（PlatformSupport）：传感器从不启动，不论谁来叫。
+    guard PlatformSupport.lidEffect else { return }
     let token: UInt64? = lock.withLock {
       guard !wanted else { return nil }
       wanted = true

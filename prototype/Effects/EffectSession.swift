@@ -213,13 +213,14 @@ struct DuoSettings {
   static let prefix = "duo.v2."
   static func load(_ defaults: UserDefaults = .standard) -> DuoSettings {
     DuoSettings(
-      desktopEnabled: defaults.bool(forKey: prefix + "desktop"),
+      // Intel 版不带合盖桌面效果：存着的“开”读成关，save 也不写这个键（不删、不覆盖）。
+      desktopEnabled: PlatformSupport.lidEffect && defaults.bool(forKey: prefix + "desktop"),
       // 第 19 条：收起动画默认开。只改默认——没存过（新装、从没碰过）→ 开；明确关过（存着 false）→ 仍关。
       windowsEnabled: FoldAnimationDefault.resolve(stored: defaults.object(forKey: prefix + "windows")),
       preset: DuoPreset(rawValue: defaults.string(forKey: prefix + "preset") ?? "") ?? .shade)
   }
   func save(_ defaults: UserDefaults = .standard) {
-    defaults.set(desktopEnabled, forKey: Self.prefix + "desktop")
+    if PlatformSupport.lidEffect { defaults.set(desktopEnabled, forKey: Self.prefix + "desktop") }
     defaults.set(windowsEnabled, forKey: Self.prefix + "windows")
     defaults.set(preset.rawValue, forKey: Self.prefix + "preset")
   }

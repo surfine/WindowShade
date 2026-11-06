@@ -64,6 +64,12 @@ struct PrivacyPaneTests {
     for row in withFace where faceRows.contains(row.id) {
       precondition(row.status == "planned", "这几行在登记表里仍是 planned，出现时值固定「还没读」")
     }
+    // Intel 版不带合盖桌面效果：绑在“桌面开合”开关上的行（合盖角度、倾斜）不列；arm64 一行不少。
+    let lidRows: Set<String> = ["hinge", "tilt"]
+    precondition(rows.filter { $0.switchID == "desktop" }.map(\.id).sorted() == ["hinge", "tilt"], "桌面开合开关绑着哪几行")
+    let onIntel = WS2PrivacyVisibility.visibleRows(rows, enabledFeatures: [], intelBuild: true)
+    precondition(Set(hidden.map(\.id)).subtracting(onIntel.map(\.id)) == lidRows, "Intel 上只少合盖这两行")
+    precondition(WS2PrivacyVisibility.visibleRows(rows, enabledFeatures: [], intelBuild: false).map(\.id) == hidden.map(\.id))
     let other = WS2PrivacyVisibility.visibleRows(rows, enabledFeatures: ["不存在的功能"])
     precondition(other.map(\.id) == hidden.map(\.id), "别的功能名不会让它们出现")
 

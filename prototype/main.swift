@@ -8,6 +8,12 @@ UpdateLaunch.recordLaunch()
 CrashReporting.startAtLaunch()
 CrashReporting.crashForProbeIfRequested()
 
+// Intel 版不带刷脸解锁和合盖效果（Core/PlatformSupport.swift）：要起它们的探针开关直接拒绝。
+if let flag = PlatformSupport.unsupportedFlag(in: CommandLine.arguments) {
+    print("\(flag)：这个构建不带这项功能（Intel 版）")
+    exit(64)
+}
+
 // 界面语言（第27批）：跟随系统或用户在设置里的选择；只在启动时读这一次，切换由设置里的语言行即时生效。
 InterfaceLanguagePreference.applyAtLaunch()
 

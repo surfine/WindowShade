@@ -101,5 +101,10 @@ enum UpdateLinks {
     /// “反馈问题”打开 GitHub Issues 的新建页，不附带任何数据。
     static let newIssue = URL(string: "https://github.com/surfine/WindowShade/issues/new")!
     /// 官网连不上时，下次改查 GitHub Release 附件里的同一份清单（清单签了名，放哪里都一样）。
+    /// Intel 版有自己的清单（appcast-intel.xml）：主清单和回退清单都不能让它读到 arm64 的那份。
+    #if arch(x86_64)
+    static let fallbackFeed = "https://github.com/surfine/WindowShade/releases/latest/download/appcast-intel.xml"
+    #else
     static let fallbackFeed = "https://github.com/surfine/WindowShade/releases/latest/download/appcast.xml"
+    #endif
 }

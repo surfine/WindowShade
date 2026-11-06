@@ -10,7 +10,8 @@ extension AppDelegate {
 
     /// 这一行要不要出现（实验卡片组装时问）。
     var showsFaceAutofillRow: Bool {
-        WS2Exposure.showsRow(.autofillVoiceprint, previewOn: WS2Preview.isOn,
+        guard PlatformSupport.faceUnlock else { return false }
+        return WS2Exposure.showsRow(.autofillVoiceprint, previewOn: WS2Preview.isOn,
                              pageAlreadyShown: UserDefaults.standard.bool(forKey: FaceScanExperiment.enabledKey),
                              moved: WS2Exposure.moved())
     }

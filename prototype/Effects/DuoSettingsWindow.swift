@@ -834,16 +834,20 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
     let automaticSection = makeSectionLabel(WSL10n.text("settings.effects.group.effects", zh: "效果"))
     stack.addSpaced(automaticSection, spacing: 6)
-    let automatic = makeSettingsCard([
+    // Intel 版不带合盖效果（PlatformSupport）：桌面开合和锁屏开合效果两行不建，只剩窗口动画和暂停。
+    let desktopRows: [NSView] = PlatformSupport.lidEffect ? [
       makeToggleRow(name: WSL10n.setting("settings.effects.desktop.name", zh: "桌面开合"), subtitle: WSL10n.setting("settings.effects.desktop.sub", zh: "合上或打开盖子时，桌面跟着动一下。"),                    control: desktop, action: #selector(changed),
-                    explainer: ExplainerRow.Effects.desktop),
-      makeToggleRow(name: WSL10n.setting("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.setting("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
-                    control: windows, action: #selector(changed),
-                    explainer: ExplainerRow.Effects.windows),
+                    explainer: ExplainerRow.Effects.desktop)] : []
+    let lockOverlayRows: [NSView] = PlatformSupport.lidEffect ? [
       makeToggleRow(name: WSL10n.setting("settings.effects.lockOverlay.name", zh: "锁屏开合效果"),
                     subtitle: WSL10n.setting("settings.effects.lockOverlay.sub", zh: "锁屏时开合盖子，锁屏画面跟着动。"),
                     symbol: "arrow.2.squarepath", control: lockOverlay, action: #selector(lockOverlayChanged),
-                    explainer: ExplainerRow.Effects.lockScreen),
+                    explainer: ExplainerRow.Effects.lockScreen)] : []
+    let automatic = makeSettingsCard(desktopRows + [
+      makeToggleRow(name: WSL10n.setting("settings.effects.windows.name", zh: "收起窗口时的动画"), subtitle: WSL10n.setting("settings.effects.windows.sub", zh: "收起或展开窗口时播放动画。"),
+                    control: windows, action: #selector(changed),
+                    explainer: ExplainerRow.Effects.windows),
+    ] + lockOverlayRows + [
       makeActionRow(name: WSL10n.setting("settings.effects.pause.name", zh: "暂停效果"), subtitle: WSL10n.setting("settings.effects.pause.sub", zh: "所有效果先停一停，开关保持原样。"), button: pause,
                     explainer: ExplainerRow.Effects.pause),
     ])
@@ -1328,6 +1332,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? WSL10n.text("duo.status.reduceMotion", zh: " · 减少动态效果已暂停动画") : ""
     let paused = controller.pausedByUser ? WSL10n.text("duo.status.paused", zh: " · 效果已暂停") : ""
+    // Intel 版没有合盖传感器：状态行不提盖子和传感器读数。
+    if !PlatformSupport.lidEffect {
+      status.stringValue = captureMessage
+        ?? WSL10n.text("duo.status.summaryNoLid", zh: "设置窗口收起动画。%@%@%@", permission, reduced, paused)
+      return
+    }
     status.stringValue = captureMessage
       ?? WSL10n.text("duo.status.summary", zh: "设置合盖桌面效果与窗口收起动画。%@ · 当前 %@%@%@%@",                     controller.sensorStatus, reading, permission, reduced, paused)
   }
