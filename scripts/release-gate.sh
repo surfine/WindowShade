@@ -3,7 +3,11 @@
 # 用法：
 #   scripts/release-gate.sh <新版 zip> [--previous <上一版 zip 或 .app>] [--appcast <清单>] [--cert-change <Team ID>] [--dmg <首次安装 dmg>]
 #   --previous 不给时用 gh 下载最新 release 的 zip（要联网、要 gh 已登录）。
-#   --appcast 默认 site/public/appcast.xml；清单里要已经有这一版的条目（先写好清单再过关，再上传）。
+#   --appcast 默认 arm64 包用 site/public/appcast.xml，Intel 包用 site/public/appcast-intel.xml；清单里要已经有这一版的条目（先写好清单再过关，再上传）。
+#   两个 zip：WindowShade-v<版本>.zip（arm64）和 WindowShade-v<版本>-intel.zip（Intel 实验版，从 1.0.21 起），各过一遍这个脚本。
+#   按文件名认架构（-intel.zip 是 Intel），再核 lipo -archs 和文件名一致；第 7 步按各自的清单核：
+#   arm64 清单的条目 hardwareRequirements 是 arm64、包是 arm64；Intel 清单的条目没有 hardwareRequirements、包是 x86_64。
+#   Intel 包的上一版：优先取 release 里上一个 -intel.zip；第一次发 Intel 版时没有，就退回 arm64 的上一版（DR 与架构无关，第 9 步照样能读状态）。
 #   --cert-change <Team ID>：换证书的那一版（docs/update.md）。第 3 步不比「DR 与上一版逐字相同」，改核
 #   「Developer ID 签名、Team 是这个」；清单那一项还要是 informationalUpdate。
 #   --dmg <路径>：另检查首次安装用的 DMG（第 12 项）：已签名公证并钉票据、挂载后恰好一个 .app 加一个指向 /Applications 的链接、
@@ -12,7 +16,7 @@
 # 只读：不改清单、不上传、不碰日常运行的 App；会短暂运行新旧两版的 --self-check（无界面、约 1 秒）。
 set -euo pipefail
 cd "$(dirname "$0")/.."
-ZIP=""; PREV=""; APPCAST="site/public/appcast.xml"; CERT_TEAM=""; DMG=""
+ZIP=""; PREV=""; APPCAST=""; CERT_TEAM=""; DMG=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --previous) PREV="$2"; shift 2 ;;
@@ -24,7 +28,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ -f "$ZIP" ] || { echo "usage: release-gate.sh <新版 zip> [--previous …] [--appcast …] [--cert-change <Team>] [--dmg …]" >&2; exit 2; }
-EXPECTED_FEED="https://windowshade.aaronlau.me/appcast.xml"
+case "$(basename "$ZIP")" in
+  *-intel.zip)
+    KIND="x86_64"; EXPECTED_ARCHS="x86_64"; EXPECTED_HW=""
+    EXPECTED_FEED="https://windowshade.aaronlau.me/appcast-intel.xml"
+    [ -n "$APPCAST" ] || APPCAST="site/public/appcast-intel.xml" ;;
+  *)
+    KIND="arm64"; EXPECTED_ARCHS="arm64"; EXPECTED_HW="arm64"
+    EXPECTED_FEED="https://windowshade.aaronlau.me/appcast.xml"
+    [ -n "$APPCAST" ] || APPCAST="site/public/appcast.xml" ;;
+esac
 EXPECTED_ED_KEY="D/MZytH+oxawqKQsskoXBdwbvoPentrqfaj7Tj2pnkw="
 
 work=$(mktemp -d); trap 'rm -rf "$work"' EXIT
@@ -37,7 +50,15 @@ plist() { /usr/libexec/PlistBuddy -c "Print $2" "$1/Contents/Info.plist" 2>/dev/
 if [ -z "$PREV" ]; then
   tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
   gh release download "$tag" -p '*.zip' -D "$work/prev-dl" >/dev/null
-  PREV=$(ls "$work"/prev-dl/*.zip | grep -v sha256 | head -1)
+  if [ "$KIND" = "x86_64" ]; then
+    PREV=$(ls "$work"/prev-dl/*-intel.zip 2>/dev/null | head -1 || true)
+    if [ -z "$PREV" ]; then
+      echo "NOTE 1 ${tag} 里还没有 -intel.zip（第一次发 Intel 版）：上一版退回 arm64 的包"
+      PREV=$(ls "$work"/prev-dl/*.zip | grep -v -e sha256 -e -intel | head -1)
+    fi
+  else
+    PREV=$(ls "$work"/prev-dl/*.zip | grep -v -e sha256 -e -intel | head -1)
+  fi
 fi
 if [ -d "$PREV" ]; then PREV_APP="$PREV"; else
   mkdir -p "$work/prev"; ditto -x -k "$PREV" "$work/prev"; PREV_APP=$(ls -d "$work"/prev/*.app | head -1); fi
@@ -84,6 +105,7 @@ for it in root.iter('item'):
         print('|'.join([it.findtext('s:minimumSystemVersion', '', ns).strip(),
                         it.findtext('s:hardwareRequirements', '', ns).strip(),
                         (enc.get('length') if enc is not None else ''),
+                        ((enc.get('url') or '').rsplit('/', 1)[-1] if enc is not None else ''),
                         'informational' if it.find('s:informationalUpdate', ns) is not None else '']))
         break
 PY
@@ -91,13 +113,21 @@ PY
 if [ -z "$item" ]; then
   fail "6 清单 $APPCAST 里还没有 build $BUILD 的条目（先写好清单再过关）"
 else
-  IFS='|' read -r c_min c_hw c_len c_info <<< "$item"
+  IFS='|' read -r c_min c_hw c_len c_url c_info <<< "$item"
   norm() { python3 -c 'import sys; p=[int(x) for x in sys.argv[1].split(".")]; p+= [0]*(3-len(p)); print(".".join(map(str,p[:3])))' "$1"; }
   [ "$(norm "$(plist "$APP" LSMinimumSystemVersion)")" = "$(norm "$c_min")" ] \
     && pass "6 LSMinimumSystemVersion 与清单 minimumSystemVersion 一致（${c_min}）" \
     || fail "6 LSMinimumSystemVersion $(plist "$APP" LSMinimumSystemVersion) ≠ 清单 $c_min"
   archs=$(lipo -archs "$APP/Contents/MacOS/WindowShade")
-  [ "$archs" = "$c_hw" ] && pass "7 架构 $archs 与清单 hardwareRequirements 一致" || fail "7 架构 $archs ≠ 清单 $c_hw"
+  if [ "$archs" != "$EXPECTED_ARCHS" ]; then
+    fail "7 ${APPCAST} 是 ${KIND} 的清单，包（$(basename "$ZIP")）的架构应是 ${EXPECTED_ARCHS}，实际 ${archs}"
+  elif [ "$c_hw" != "$EXPECTED_HW" ]; then
+    fail "7 ${KIND} 清单条目的 hardwareRequirements 应是「${EXPECTED_HW:-空}」，实际「${c_hw:-空}」"
+  else
+    pass "7 架构 $archs 与 ${KIND} 清单一致（hardwareRequirements：${c_hw:-无}）"
+  fi
+  [ "$c_url" = "$(basename "$ZIP")" ] && pass "7a 清单条目指向的文件名就是这个 zip（$c_url）" \
+    || fail "7a 清单条目指向 ${c_url}，不是这个 zip（$(basename "$ZIP")）：两份清单不能指到对方的包"
   size=$(stat -f %z "$ZIP")
   [ "$size" = "$c_len" ] && pass "7b 清单里的包大小 $c_len 就是这个 zip" || fail "7b 清单里的包大小 $c_len ≠ zip ${size}（换包后要重签清单）"
   if [ -n "$CERT_TEAM" ]; then

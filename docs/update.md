@@ -128,7 +128,7 @@ macOS 26 起，App 退出后它起的后台任务还在跑时，系统可能弹�
 | 环节 | 谁做 | 怎么做 |
 | --- | --- | --- |
 | 按时检查 | Sparkle | `SUScheduledCheckInterval`，每天或每周；App 在哪里都照常检查，开发版不启动更新器 |
-| 清单 | Sparkle | `https://windowshade.aaronlau.me/appcast.xml`，清单本身签名（`SURequireSignedFeed`） |
+| 清单 | Sparkle | `https://windowshade.aaronlau.me/appcast.xml`，清单本身签名（`SURequireSignedFeed`）；Intel 实验版（1.0.21 起）读同目录的 `appcast-intel.xml`，规则相同 |
 | 选版本 | Sparkle + 我们 | Sparkle 按版本、系统、芯片、分批推送挑；定时检查时我们用 `bestValidUpdateInAppcast:forUpdater:` 去掉 `refused.json` 里的版本 |
 | 界面 | 我们 | 自己的 `SPUUserDriver`：菜单那一项和更新小窗 |
 | 能不能一键更新 | 我们 | 打开小窗时判断位置、写权限、卷、空间、别的用户、`refused.json`；不能就说原因，不回 `.install` |
@@ -429,7 +429,7 @@ Sparkle 调用 `showReadyToInstallAndRelaunch:`（或续装时进入上一节）
 
 | 键 | 值 | 为什么 |
 | --- | --- | --- |
-| `SUFeedURL` | `https://windowshade.aaronlau.me/appcast.xml` | 官网是 Cloudflare Pages 静态站；开发版不写，更新器就不启动 |
+| `SUFeedURL` | `https://windowshade.aaronlau.me/appcast.xml`（Intel 版 `…/appcast-intel.xml`，`build.sh` 按 `$ARCH` 写） | 官网是 Cloudflare Pages 静态站；开发版不写，更新器就不启动 |
 | `SUPublicEDKey` | `generate_keys` 生成的公钥 | EdDSA 必填 |
 | `SUVerifyUpdateBeforeExtraction` | YES | EdDSA 不过就不解开；DR 由我们的关来比 |
 | `SURequireSignedFeed` | YES | 清单被改也不认（2.9 起）；签法接入时照文档核对 |
@@ -559,7 +559,8 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
    4. `--self-check` 返回 0，输出里有这次的 build 号。
    5. `CFBundleVersion` 大于上一版。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（先补齐成三段再比：`14.0` 和 `14.0.0` 相等）。系统版本不够的话 App 根本打不开，我们的代码一行都跑不到。
-   7. `lipo -archs` 和清单里的 `hardwareRequirements` 一致：只发 arm64 时必须写上，否则 Intel Mac 会收到一个打不开的版本。
+   7. `lipo -archs` 和清单里的 `hardwareRequirements` 一致：arm64 清单必须写 `arm64`，否则 Intel Mac 会收到一个打不开的版本。
+      1.0.21 起 Intel 实验版另有 `appcast-intel.xml`：包是 `x86_64`、条目不写 `hardwareRequirements`（Sparkle 只认 `arm64`），两份清单互不指向对方的 zip。
    8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
    9. **上一版读得懂这一版的状态**：新版 `--self-check --write-sample-state <目录>` 写一份停车日志和偏好，上一版 `--self-check --read-state <目录>` 返回 0。
       第一个带更新器的版本起支持这两个参数。

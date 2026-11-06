@@ -1,6 +1,7 @@
 #!/bin/bash
 # 公证一个 Developer ID 签名的 WindowShade.app，把公证票据钉进包里，再用 Gatekeeper 核一遍。
 # 用法：scripts/notarize.sh [WindowShade.app 路径]（默认 .build/release/WindowShade.app，即 build.sh --release 的产物）
+# Intel 实验版：WINDOWSHADE_ARCH=x86_64 ./build.sh --release 的产物在 .build/release-intel/WindowShade.app，把它的路径当参数传进来。
 # 凭证：钥匙串里的 notarytool 配置（默认名 windowshade-notary，用 WINDOWSHADE_NOTARY_PROFILE 改）。
 #       由本人用 `xcrun notarytool store-credentials` 存一次；本脚本不读、不打印任何密码。
 # 成功：退出 0，包已钉票据，`spctl` 认它是 Notarized Developer ID。之后再从这个包打发布 zip。

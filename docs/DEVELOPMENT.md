@@ -380,17 +380,35 @@ cd prototype
    cd .. && bash scripts/make-dmg.sh   # 首次安装用：prototype/dist/WindowShade-v${VERSION}.dmg，已签名、公证、钉票据，并写 .sha256
    ```
 
+   **Intel 实验版（1.0.21 起，见下面「Intel 实验版」一节）另出一个 zip**，同样先 `--release` 再公证，产物在另一个目录，不覆盖 arm64 的：
+
+   ```sh
+   cd prototype
+   WINDOWSHADE_ARCH=x86_64 ./build.sh --check     # 发布关也会跑这一步
+   WINDOWSHADE_ARCH=x86_64 ./build.sh --release   # → ../.build/release-intel/WindowShade.app，SUFeedURL 指向 appcast-intel.xml
+   cd .. && bash scripts/notarize.sh .build/release-intel/WindowShade.app
+   cd prototype
+   ditto -c -k --sequesterRsrc --keepParent ../.build/release-intel/WindowShade.app "dist/WindowShade-v${VERSION}-intel.zip"
+   (cd dist && shasum -a 256 "WindowShade-v${VERSION}-intel.zip" > "WindowShade-v${VERSION}-intel.zip.sha256")
+   ```
+
+   Intel 版只发 zip，不做 DMG（`make-dmg.sh` 只认 arm64 的产物）。
+
    DMG 的图标排版存在 `assets/dmg/DS_Store`；没有它就只是没排版。换背景图（`assets/dmg/background*.png`）或图标位置后，
    在能开 Finder 的 Mac 上跑一次 `bash scripts/make-dmg.sh --capture-template` 重新取模板并提交。
 
-4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 已脚本化（支持 `--previous`、`--dmg`、`--cert-change`）；离线时显式传 `--previous <上一版 zip>`，或直接用 `scripts/local-gate.sh release --previous <zip>`。下面保留手工核对步骤，脚本失败时按它逐项查：
+4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 已脚本化（支持 `--previous`、`--dmg`、`--cert-change`）；离线时显式传 `--previous <上一版 zip>`，或直接用 `scripts/local-gate.sh release --previous <zip> [--previous-intel <-intel.zip>]`。
+   **两个 zip 各过一遍**：脚本按文件名认架构（`…-intel.zip` 是 Intel，其余是 arm64），Intel 默认读 `site/public/appcast-intel.xml`；`local-gate.sh release` 另外先跑 `WINDOWSHADE_ARCH=x86_64 ./build.sh --check`，再出两个 `--release` 构建，最后对两个 zip 各跑一次。
+   第一次发 Intel 版时 release 里还没有上一个 `-intel.zip`，脚本退回 arm64 的上一版（DR 与架构无关）。下面保留手工核对步骤，脚本失败时按它逐项查：
    1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
    2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
    3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
    4. `WindowShade.app/Contents/MacOS/WindowShade --self-check` 返回 0，输出里有这次的 build 号（`build=N`），1 秒左右返回。
    5. `CFBundleVersion` 大于上一版（`bash scripts/check-release-version.sh` PASS）。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。
-   7. `lipo -archs` 和清单的 `hardwareRequirements` 一致。
+   7. `lipo -archs` 和各自的清单对得上：arm64 zip ↔ `appcast.xml`，包是 `arm64`、条目 `hardwareRequirements` 是 `arm64`；
+      Intel zip ↔ `appcast-intel.xml`，包是 `x86_64`、条目**没有** `hardwareRequirements`。
+      7a. 清单条目 enclosure 指向的文件名就是这个 zip（两份清单不能指到对方的包）。
       7b. 清单 enclosure 的 length 等于 zip 的实际字节数。
       7c. 换证书的一版要在清单条目里标 `informationalUpdate`（docs/update.md）。
    8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
@@ -407,14 +425,22 @@ cd prototype
    git tag "v${VERSION}" && git push origin "v${VERSION}"
    gh release create "v${VERSION}" \
      "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" \
+     "dist/WindowShade-v${VERSION}-intel.zip" "dist/WindowShade-v${VERSION}-intel.zip.sha256" \
      "dist/WindowShade-v${VERSION}.dmg" "dist/WindowShade-v${VERSION}.dmg.sha256" \
      --title "WindowShade v${VERSION}" \
      --notes-file "../docs/releases/v${VERSION}.md"
    curl -L -o /tmp/ws-check.zip "https://github.com/surfine/WindowShade/releases/download/v${VERSION}/WindowShade-v${VERSION}.zip"
    shasum -a 256 /tmp/ws-check.zip; cat "dist/WindowShade-v${VERSION}.zip.sha256"
+   curl -L -o /tmp/ws-check-intel.zip "https://github.com/surfine/WindowShade/releases/download/v${VERSION}/WindowShade-v${VERSION}-intel.zip"
+   shasum -a 256 /tmp/ws-check-intel.zip; cat "dist/WindowShade-v${VERSION}-intel.zip.sha256"
    ```
 
-6. **清单**（`scripts/make-appcast.sh` 还没写，先手动）：`sign_update dist/WindowShade-v${VERSION}.zip` 得到 `sparkle:edSignature` 和
+6. **清单**（`scripts/make-appcast.sh` 还没写，先手动）。**两份清单**：arm64 的 `site/public/appcast.xml` 一条不动地照旧发（`hardwareRequirements` 仍是 `arm64`）；
+   Intel 的 `site/public/appcast-intel.xml` 是另一份文件，条目指向 `…-intel.zip`、**不写** `hardwareRequirements`（Sparkle 只认 `arm64`），
+   同样签名、同样部署，并把 `appcast-intel.xml` 也作为附件传到同一个 GitHub Release（App 在官网连不上时回退到
+   `releases/latest/download/appcast-intel.xml`，见 `UpdateLinks.fallbackFeed`）。第一次发 Intel 版时 `appcast-intel.xml` 还不存在，由这一步新建（`<channel>` 头照 `appcast.xml`，再整个签名）。
+   两份清单的 build 号共用一个序列（`check-release-version.sh` 取两份里最大的比）。
+   arm64：`sign_update dist/WindowShade-v${VERSION}.zip` 得到 `sparkle:edSignature` 和
    `length`，在 `site/public/appcast.xml` 加一条（保留最近三条，写法见 docs/update.md“发布流程”里的条目样子），改动说明取
    `docs/releases/v<版本>.md` 开头最多三行；再给整个清单签名，`npm run deploy`，最后 `curl` 一次线上的清单。
    先上传包、后发清单，反过来他会先看到新版本却下载不到。
@@ -423,8 +449,41 @@ cd prototype
 8. **分批推送**：条目带 `sparkle:phasedRolloutInterval` 86400。**撤回一版**：从清单删掉那一条再部署。
 9. **Homebrew**：在 [surfine/homebrew-tap](https://github.com/surfine/homebrew-tap) 的 `Casks/windowshade.rb` 改 `version` 和 `sha256`（取 `dist/WindowShade-v${VERSION}.zip.sha256`），
    `brew style` 与 `brew audit --cask --strict --online surfine/tap/windowshade` 通过后提交推送。
+   **1.0.21 起 cask 改成按架构分两块**（此处只记要怎么改，tap 仓库在发布当天才动）：`depends_on macos: :sequoia` 保留，`url` 和 `sha256` 各挪进 `on_arm` / `on_intel`：
 
-`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构（可用 `WINDOWSHADE_ARCH=x86_64` 交叉编译出 Intel 包——2026-11-04 已验证全绿，但发布仍是 arm64-only）；发布说明须标明实际架构。发布关第 7 步强制 `lipo -archs` 与 appcast 的 `sparkle:hardwareRequirements` 一致，架构不匹配的包发不出去。Apple Development 签名不等于公证，不宣称已经 notarized。
+   ```ruby
+   version "1.0.21"
+
+   on_arm do
+     sha256 "<dist/WindowShade-v1.0.21.zip.sha256 里的值>"
+     url "https://github.com/surfine/WindowShade/releases/download/v#{version}/WindowShade-v#{version}.zip"
+   end
+   on_intel do
+     sha256 "<dist/WindowShade-v1.0.21-intel.zip.sha256 里的值>"
+     url "https://github.com/surfine/WindowShade/releases/download/v#{version}/WindowShade-v#{version}-intel.zip"
+   end
+
+   depends_on macos: :sequoia
+   ```
+
+   `brew audit` 通过后，在一台 Intel Mac 或 `arch -x86_64 brew` 下各装一次核对取到的是对的 zip。`livecheck`、`auto_updates` 等其余字段不动。
+
+`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构，`WINDOWSHADE_ARCH=x86_64` 交叉编译出 Intel 包（2026-11-04 验证全绿；1.0.21 起作为实验版另发，见下一节）；发布说明须标明实际架构。发布关第 7 步强制 `lipo -archs` 与各自清单对得上（arm64 ↔ `hardwareRequirements` 是 `arm64`；Intel ↔ 不写），架构不匹配的包发不出去。Apple Development 签名不等于公证，不宣称已经 notarized。
+
+### Intel 实验版（1.0.21 起）
+
+- **形态**：另一个 zip（`WindowShade-v<版本>-intel.zip`），不做 universal；arm64 的 zip、清单和它的条目（含 `hardwareRequirements: arm64`）都不动。
+  Intel 版没有在真实的 Intel Mac 上测过，只做过 Rosetta 冒烟；README 三份照实写了这一点，并请用户出问题就提 issue。
+- **更新不串**：Sparkle 的 `hardwareRequirements` 只认 `arm64`，所以 Intel 版另用 `appcast-intel.xml`。`build.sh` 按 `$ARCH` 写 `SUFeedURL`
+  （x86_64 → `https://windowshade.aaronlau.me/appcast-intel.xml`，其余 → `appcast.xml`），官网连不上时的回退清单也按架构编译期分开（`UpdateLinks.fallbackFeed`）。
+  发布关第 7、8 步按架构各核一遍。
+- **Intel 上整块关掉、也不显示的三样**：刷脸解锁（含人脸识别、录脸与注视校准、补光圈、锁屏「认你」指示、代填登录密码）、声纹、
+  合盖桌面效果（含合盖角度传感器、桌面开合、锁屏开合效果）。其余（置顶预览、画中画等）照旧。
+  判断只有一处：`prototype/Core/PlatformSupport.swift`，用编译期 `#if arch(x86_64)`，所以 Intel 的包在 Rosetta 下跑在 Apple Silicon 上也照样关；
+  arm64 构建每个入口的行为不变。偏好里已存的“开”在 Intel 上不读、不删。新增依赖这三样的入口，先问 `PlatformSupport`，并在
+  `tests/PlatformSupportTests.swift` 里加一行。
+- **支持线**：主线每次发布都带一个 Intel zip，直到 2027-09。macOS 28 之前的最后一个 Intel 版成为 **LTS**，
+  只收崩溃和安全修复，维护到 2028-09。LTS 靠的就是独立的 `appcast-intel.xml`：到时候只冻结 Intel 清单，arm64 主线照常往前。
 
 ### 更新签名的密钥
 

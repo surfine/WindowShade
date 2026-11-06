@@ -6,7 +6,8 @@
 #   scripts/local-gate.sh unit [--jobs 4]       # 跑全部单元脚本，排除表见 tests/gate-excludes.tsv
 #   scripts/local-gate.sh appkit                # tests/run-appkit-tests.sh all
 #   scripts/local-gate.sh vm --host lume@<地址> # 虚拟机核心探针
-#   scripts/local-gate.sh release --previous <上一版 zip>
+#   scripts/local-gate.sh release --previous <上一版 zip> [--previous-intel <上一版 -intel.zip>]
+#                                               # x86_64 的 --check、两个架构的 --release 构建，再对 arm64 和 -intel 两个 zip 各过一遍发布关
 #   scripts/local-gate.sh all                   # check + unit + appkit
 #   scripts/local-gate.sh list                  # 只列出 unit 会跑什么、排除了什么
 #
@@ -27,6 +28,7 @@ test_timeout=300
 only=""
 host=""
 previous=""
+previous_intel=""
 list_only=0
 
 while [ $# -gt 0 ]; do
@@ -36,6 +38,7 @@ while [ $# -gt 0 ]; do
     --only) only="$2"; shift 2 ;;
     --host) host="$2"; shift 2 ;;
     --previous) previous="$2"; shift 2 ;;
+    --previous-intel) previous_intel="$2"; shift 2 ;;
     --list) list_only=1; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "未知参数：$1" >&2; exit 2 ;;
@@ -263,9 +266,16 @@ case "$profile" in
     if [ -z "$previous" ]; then say "需要 --previous <上一版 zip>（离线发布关）"; exit 2; fi
     if [ "$dirty" -ne 0 ]; then say "工作区不干净（$dirty 个文件），发布关拒绝继续"; exit 1; fi
     run_item check-release-version 120 bash scripts/check-release-version.sh
+    version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' prototype/Info.plist)"
+    # Intel 实验版（从 1.0.21 起另发一个 zip）：先过 x86_64 的编译链接检查，再各自出 Developer ID 包。
+    run_item build-check-x86_64 1800 bash -c 'cd prototype && WINDOWSHADE_ARCH=x86_64 ./build.sh --check'
     run_item build-release 3600 bash -c 'cd prototype && ./build.sh --release'
+    run_item build-release-intel 3600 bash -c 'cd prototype && WINDOWSHADE_ARCH=x86_64 ./build.sh --release'
+    # zip 由 docs/DEVELOPMENT.md 发布流程第 3 步从两个产物各打一个（公证之后）；这里只核它们。
     run_item release-gate 600 bash scripts/release-gate.sh --previous "$previous" \
-      "prototype/dist/WindowShade-v$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' prototype/Info.plist).zip"
+      "prototype/dist/WindowShade-v${version}.zip"
+    run_item release-gate-intel 600 bash scripts/release-gate.sh --previous "${previous_intel:-$previous}" \
+      "prototype/dist/WindowShade-v${version}-intel.zip"
     ;;
   all)
     run_item build-check 1800 bash -c 'cd prototype && ./build.sh --check'
