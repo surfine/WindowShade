@@ -27,7 +27,8 @@ extension GlanceProbe {
       let shift: CGFloat = round % 2 == 0 ? 120 : 0
       setAXPosition(element, CGPoint(x: original.minX + shift, y: original.minY))
       let target = start.minX + shift
-      if let t = await timeUntil(3) { (pins.panelFrameForProbe(id: wid).map { abs($0.minX - target) < 2 }) == true } {
+      let followed = await timeUntil(3, { pins.panelFrameForProbe(id: wid).map { abs($0.minX - target) < 2 } == true })
+      if let t = followed {
         follow.append(t)
       } else {
         print("FAIL pin-follow: panel did not follow move \(round) within 3 s")
@@ -42,10 +43,9 @@ extension GlanceProbe {
     guard AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &ref) == .success, let button = ref else {
       throw EffectError.unavailable("fixture window has no close button")
     }
-    let t0 = CACurrentMediaTime()
     AXUIElementPerformAction(button as! AXUIElement, kAXPressAction as CFString)
-    let goneAt = await timeUntil(3) { !onscreen(wid) }
-    let stoppedAt = await timeUntil(3) { !pins.isRunning(id: wid) }
+    let goneAt = await timeUntil(3, { !onscreen(wid) })
+    let stoppedAt = await timeUntil(3, { !pins.isRunning(id: wid) })
     if let stoppedAt, let goneAt {
       // stoppedAt 从 goneAt 之后才开始计：它就是“窗口离屏 → 置顶结束”的延迟。
       print("\(stoppedAt <= 0.25 ? "PASS" : "FAIL") pin-follow: closing the source ends the pin \(Int((stoppedAt * 1000).rounded())) ms after the window left the screen (window left \(Int((goneAt * 1000).rounded())) ms after the close press; old watchdog ≤ 200 ms)")
