@@ -24,19 +24,53 @@ WindowShade 自己的島／實時活動，**尺寸與動畫彈簧都要與 macOS
 
 驗證：`./build.sh --check` EXIT=0（編譯＋2700 鍵本地化＋隱私登記 759 點＋文案）；四組測試綠。
 
-## 三、還沒做（唯一缺口）
+## 三、還沒做（唯一缺口）——但原本的做法已被否證
 
-**每個轉場的彈簧參數**（damping / response）。系統用共用的
-`AnimationKit.SpringAnimationBehaviorSettings(dampingRatio:response:)`。
-已知 iOS 側量到 response **0.574** 與一組 damping（0.39／1.2／1.1／0.8／0.92／0.24／0.255／0.289），
-但**哪個 damping 對哪個轉場，Mac 側還沒配對出來**。現階段我們仍用自己的 `calm` 令牌。
+**每個轉場的彈簧參數**（damping / response）。原本假設 Mac 島會在 CampoUIInternal 裡呼叫
+`setDampingRatio:`／`setResponse:`。2026-11-09 的完整掃描否證了這個假設：
 
-### 建議做法（純 objdump，不需 Ghidra、不需真機）
+- CampoUIInternal 的 `__TEXT,__objc_methname` size = 0；selector 只在 dyld 共享池
+  （`setDampingRatio:` `0x1f481b6a0`、`setResponse:` `0x1f5389ca0`）。
+- 2,500 個 `__objc_selrefs` 沒有一筆指向它們；1,917 個 `_objc_msgSend$…` stub 也沒有。
+- 4,115 個 split 映像的 `adrp+add` 掃描 0 命中。
+- 二進位內沒有 iOS SpringBoard 的 0.574／0.39／1.2／1.1／0.92／0.24／0.255／0.289。
 
-1. 從 `__objc_methname` 取 `setDampingRatio:`、`setResponse:` 的字串位址；
-2. 掃 `__text`，找 `adrp x1, page` + `add x1, x1, #imm` 解出指向那兩個位址的呼叫點；
-3. 每個呼叫點往回找最近一次 `adrp + ldr dN` 的常數 →「selector = 值」配對；
-4. 把配對寫進 `Motion.notchSpring` 的單一出口，跑完整 build 與測試。
+島的底座動畫是 SwiftUI `Animation`：`SiriGlassBackdrop` 的 body 是
+`.animation(Animation?, body:)`，形狀（`drawnPlatterSize`、`pinsTopPlatterWidth/Height`）
+是 `AnimatableData`；`_windowAnimation` 由 Spotlight 的 `WindowSizingAnimation` 傳入。
+
+真正的 Mac 候選來源已寫在 `docs/reverse-engineering/mac-island-springs.md`：
+
+- `WindowManager.WindowSpringBehavior` 預設 `(damping 1.0, response 0.38)` 與
+  `(1.0, 0.30)`（`0x1d2aa5758`／`0x1d2aa5794`）；
+- SpotlightUIInternal 另有 `(0.4, 0.7)`／`(0.2, 0.7)`／`(0.2, 1.0)`／`(0.5, 1.0)`
+  四個已解出的 `Animation.spring` token。
+
+selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel` 自己就有
+明確的島彈簧，且已接進 `Motion.notchSpring`（見下）。
+
+**27.3 beta 已複核（2026-11-09）**：從 `SharedSupport.dmg` 的 AEA 資產解出
+`cryptex-system-arm64e`（RIDIFF10），用 `ipsw ota patch rsr --cryptex` 套成
+2.7 GB APFS 映像，拆出 27.3（26C5035r）的 dyld cache。結果：
+
+- 27.3 `CampoUIInternal` 仍然沒有 `setDampingRatio:`／`setResponse:` 參照
+  （2,537 個 selrefs、1,947 個 stub、全 4,142 映像掃描皆 0）。
+- 仍然沒有 AnimationKit 依賴；`SiriGlassBackdrop` 的 body 仍是
+  `.animation(Animation?, body:)`。
+- **但** `MacAssistantIslandSessionModel.swift` 有島自己的兩組彈簧：
+  `(response 0.408, damping 0.27)` 與 `(response 0.3571428536916519,
+  damping 0.7500006097576885；原 mass 2.0 / stiffness 619.0216 / damping 52.7788)`。
+- `#islandSizing`（`0x2653ee080`）的 jump table 已對到狀態，且由呼叫點的 log
+  字串直接證得：tag 0 `.siri(.listening)`、1 `.siri(.thinking)`、2 `.siri(.response)`、
+  3 `.siri(.transient)`、4 `.hidden`、5 `.prompt`；0／5 用 0.408／0.27，
+  1–3 用 0.3571／0.75，4 不跑尺寸動畫。
+- 已接進 `Motion.notchSpring`：`.interaction` → `islandPrompt`（0.408／0.27），
+  其餘形狀 → `islandSizing`（0.3571／0.75）；`.minimum` 因我們沒有另一個
+  window 動畫承接收合，仍用 `islandSizing`。
+
+產物在 `/Volumes/TiPlus 7100/tmp273/`（映像與 `split273/`），詳見
+`mac-island-springs.md` §7。selector 那條路已確認在 27.2／27.3 都不存在，
+不再追。
 
 ### 已經失敗的路（不要重複）
 
@@ -70,7 +104,10 @@ WindowShade 自己的島／實時活動，**尺寸與動畫彈簧都要與 macOS
 
 ## 六、完成判準
 
-1. `Motion.notchSpring` 的每個轉場數值都能指回 `CampoUIInternal` 的某個 `setDampingRatio:`／`setResponse:` 配對；
+1. `Motion.notchSpring` 的每個轉場數值都能指回**一個已證實的 Mac 二進位來源**
+   （檔案、位址、值）；若來源只到 `WindowManager`／`SpotlightUIInternal` 而不是
+   `CampoUIInternal` 的 selector，文件必須逐條寫清楚，不能假裝是 selector 配對；
 2. `IslandMetrics` 的尺寸與圓角全部由同一條模型推出，且以動畫量插值；
 3. `./build.sh --check` EXIT=0、四組測試綠；
-4. 文件更新：`docs/reverse-engineering/island-metrics.md` 與 `mac-island-platter.md`。
+4. 文件更新：`docs/reverse-engineering/island-metrics.md`、`mac-island-platter.md`
+   與 `mac-island-springs.md`。

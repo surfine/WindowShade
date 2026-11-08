@@ -74,4 +74,7 @@ pinsTopPlatterWidth, pinsTopPlatterHeight      ← 「貼頂」版的兩個獨�
 
 - 底座在執行時的确切值仍要真機量（因為它由視窗尺寸算出來）；但**要改的結構**已經明確，不必等真值。
 - `pinsTopPlatterWidth/Height` 的來源函式還沒定位（需要對 `__text` 做常量＋偏移的模式掃描，或讓 Ghidra 的 `-process` 跑完）。
+- 底座動畫的**彈簧來源**已另案處理：CampoUIInternal 沒有 `setDampingRatio:`／`setResponse:`，
+  形狀動畫是 SwiftUI `Animation`（外層傳入）。候選來源與完整掃描見
+  `docs/reverse-engineering/mac-island-springs.md`。
 - 本文所有結論都來自 27.2 正式版二進位；27.3 beta 的對應映像尚未拆（AppleArchive 索引層未解）。

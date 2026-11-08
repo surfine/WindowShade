@@ -121,6 +121,11 @@ bl   _objc_msgSend$setResponse:
 還沒逐個 behavior 對上名字（`setChildBehaviorSettingsNamePrefix:` 會給名字，但字串在 x2）。
 再看一輪就能把「哪個轉場用哪一組彈簧」釘死。
 
+**Mac 27.2 不適用（2026-11-09 補）**：同一組 0.574／0.39／1.2／1.1／0.92／0.24／0.255／0.289
+在 `CampoUIInternal` 裡完全不存在；這顆二進位也沒有任何 `setDampingRatio:`／`setResponse:` 呼叫。
+Mac 島的底座動畫是 SwiftUI `Animation`，由 Spotlight 的 `WindowSizingAnimation` 傳入。
+完整證據與真正的 Mac 候選來源見 `docs/reverse-engineering/mac-island-springs.md`。
+
 
 ## 7. macOS 27.2（PROLED 機型出貨版）的島本體
 
@@ -137,10 +142,18 @@ bl   _objc_msgSend$setResponse:
 | `SpotlightUIInternal` | 6 | Spotlight 在島上的入口（`IslandSearchResultsHostingView`） |
 | `libMobileGestalt` | 1 | `DeviceSupportsDynamicIsland` 這個能力鍵 |
 
-- 動效引擎是全系統共用的 **`AnimationKit`**：`SpringAnimationBehaviorSettings(dampingRatio:response:)`，
-  iOS 的 `setDampingRatio:`/`setResponse:` 也是同一組語意，所以 iPhone 上量到的彈簧值可以直接當 Mac 的起點。
+- ~~動效引擎是全系統共用的 **`AnimationKit`**：`SpringAnimationBehaviorSettings(dampingRatio:response:)`，
+  iOS 的 `setDampingRatio:`/`setResponse:` 也是同一組語意，所以 iPhone 上量到的彈簧值可以直接當 Mac 的起點。~~
+  **2026-11-09 否證**：CampoUIInternal 沒有 `AnimationKit` 依賴，也沒有任何
+  `setDampingRatio:`／`setResponse:` 呼叫；Mac 島的形狀動畫是 SwiftUI `Animation`
+  （外層 `WindowSizingAnimation` 傳入）。見 `mac-island-springs.md`。
 - 下一步（未完成）：把 `CampoUIInternal` 從 27.2 cache 抽出來，讀它的尺寸／彈簧常數。
   `ipsw dyld extract` 在 macOS cache 上會失敗（symbol remap），要用 `ipsw dyld split`（會花幾分鐘、輸出數 GB）。
+- **27.3 beta 已拆（2026-11-09 補）**：`SharedSupport.dmg` → AEA → `payloadv2` →
+  `ipsw ota patch rsr --cryptex` → 2.7 GB APFS → `ipsw dyld split`。
+  27.3 的 `CampoUIInternal` 仍然沒有 selector／AnimationKit，但多了
+  `MacAssistantIslandSessionModel` 自己的彈簧 token（`(0.408, 0.27)`、
+  `(≈0.3572, 0.75)`）。產物與細節見 `mac-island-springs.md` §7。
 
 
 ### 27.2 的島參數名（CampoUIInternal，Swift 反射欄位）
@@ -172,9 +185,10 @@ drawsGlassPlatter                 activityContentWidth
 | 本體高／圓角 | 36 ／ 18（＝高/2） | `IslandMetrics.inertHeight` |
 | 最小形 | 36×36 的圓（Apple `minimumMinimalSize`） | `IslandMetrics.minimalSize` |
 | 展開 | 230×64 | `IslandMetrics.expandedSize` |
-| 動效 | 保留現有 `calm` 令牌（0.34 等），只統一圓角推導 | 各 `Motion` 呼叫點 |
+| 動效（2026-11-09 更新） | 27.3 Mac 島的兩組：`interaction` 用 `islandPrompt`（0.408／0.27），其餘用 `islandSizing`（0.3571428536916519／0.7500006097576885）；`.minimum` 收合也用 `islandSizing` | `Motion.notchSpring`／`Core/FlickMotion.swift` |
 
-理由：前三項有 Mac／iOS 交叉證據且只影響幾何；第四項沒有 Mac 真機可對照，換彈簧等於盲調。
+理由：前三項有 Mac／iOS 交叉證據且只影響幾何；第四項已從 27.3 `MacAssistantIslandSessionModel`
+的 `#islandSizing` 分支取得精確值（見 `mac-island-springs.md` §7），不是盲調。
 
 ## 3. 還沒拿到的（誠實標註）
 
