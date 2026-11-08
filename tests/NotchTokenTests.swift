@@ -18,7 +18,7 @@ struct NotchTokenTests {
         let table: [(IslandMotionState, Motion.Spring, String)] = [
             (.listening, .islandPrompt, "islandPrompt"), (.prompt, .islandPrompt, "islandPrompt"),
             (.thinking, .islandSizing, "islandSizing"), (.response, .islandSizing, "islandSizing"),
-            (.transient, .islandSizing, "islandSizing"), (.hidden, .islandSizing, "islandSizing"),
+            (.transient, .islandSizing, "islandSizing"), (.hidden, .islandHidden, "islandHidden"),
         ]
         t.expect(table.count == IslandMotionState.allCases.count, "映射表覆盖每一种状态")
         for (state, token, name) in table {
@@ -30,6 +30,9 @@ struct NotchTokenTests {
         t.expect(Motion.Spring.islandSizing.response == 0.3571428536916519
                  && Motion.Spring.islandSizing.dampingRatio == 0.7500006097576885,
                  "islandSizing 0.3571428536916519 / 0.7500006097576885（27.3 Mac #islandSizing tag 1–3）")
+        t.expect(Motion.Spring.islandHidden.response == 0.3 && Motion.Spring.islandHidden.dampingRatio == 0.8
+                 && Motion.Spring.islandHidden.bounce == 0.2,
+                 "islandHidden 0.3 / bounce 0.2（27.3 WindowSizingAnimation.default）")
         t.expect(Motion.Spring.calm.response == 0.34 && Motion.Spring.calm.bounce == 0, "calm 0.34 / 不回弹")
         t.expect(Motion.Spring.settle.response == 0.38 && Motion.Spring.settle.bounce == 0, "settle 0.38 / 不回弹")
         t.expect(Motion.Spring.bloom.response == 0.42 && Motion.Spring.bloom.dampingRatio == 0.84, "bloom 0.42 / 0.84")

@@ -19,7 +19,7 @@
 | 27.3 島的 thinking／response／transient 彈簧 ≈0.3571／0.75 | 已接進 `islandSizing` | **proven** | 同上（mass 2.0 / stiffness 619.0216 / damping 52.7788） |
 | 六態 tag 0–5 → `.listening/.thinking/.response/.transient/.hidden/.prompt` | 已證，`IslandMotionState.systemTag` | **proven** | 呼叫點 log 字串，§7.4 |
 | `.hidden` 不跑島自己的尺寸動畫 | 已證（tag 4 直接 return） | **proven** | §7.4 |
-| `.hidden` 的收合由外層 window sizing 承接 | 型別鏈成立，具體彈簧未釘死 | **provisional** | §7.6 |
+| `.hidden` 的收合由外層 window sizing 承接 | 已釘死：`WindowSizingAnimation.default` → `AxisAnimation.default` → `Spring(0.3, bounce 0.2)` | **proven** | §7.6、`mac-island-types.md` |
 | 島的 `_windowAnimation` 是 `SpotlightUIShared.WindowSizingAnimation?` | `_symbolic` 相鄰可讀，未逐欄位解析 | **inferred** | §7.6 第 3 點 |
 | WindowManager `SpringBehavior` 預設 response 0.38／0.30、damping 1.0 | 已讀出 accessor | **proven（值）／未接（用途）** | §7.6 第 4 點 |
 | 無劉海膠囊展開 230×64 | WS2 設計值，不是 Mac 系統島值 | **provisional** | `island-metrics.md` §8 |
@@ -63,8 +63,9 @@
 | 合併 | `cd prototype && ./build.sh --check`（EXIT=0 才算過） |
 | 真機轉場 | `prototype/build.sh --stage` 後執行 `WindowShade --glance-probe --island-transition-probe`（需真劉海屏） |
 
-2026-11-09 05:31：`build.sh --check` EXIT=0（含活動令牌與轉場探針），上面十二個快速
-runner 全綠（C01 80、C02 79、C03 22、C04 31、C05 47 條斷言；StripNotchExchange 90 條）。
+2026-11-09 07:32：`build.sh --check` EXIT=0（含 `islandHidden`、PlatterBehavior、
+活動令牌與轉場探針），十三個快速 runner 全綠（C01 75、C02 61、C03 22、C04 31、
+C05 51、C06 10 條斷言；StripNotchExchange 90 條）。
 
 ## 4. 真機 backlog（依證據種類排序）
 

@@ -185,6 +185,12 @@ struct MotionSpring: Equatable {
     static let islandSizing = MotionSpring(response: 0.3571428536916519,
                                            dampingRatio: 0.7500006097576885,
                                            bounce: 0.2499993902423115)
+    /// 27.3 Mac 岛收合（`.hidden`）的窗口尺寸弹簧：`WindowSizingAnimation.default`
+    /// 的 `AxisAnimation.default`（0x22f9ef4bc）用 `Spring(duration: 0.3, bounce: 0.2)`
+    /// 构造两条轴动画（0x3FD3333333333333 = 0.3、0x3FC999999999999A = 0.2），
+    /// 再经 `Animation.spring(_:blendDuration:)`（stub 0x23006f150）转成 SwiftUI.Animation。
+    /// 等效 dampingRatio = 1 − bounce = 0.8。
+    static let islandHidden = MotionSpring(response: 0.3, dampingRatio: 0.8, bounce: 0.2)
 
     /// 临界阻尼角频率：约在 `response` 秒内落到目标 2% 内（与 `FoldSpring` 同口径）。
     var angularFrequency: Double { 5.83 / response }

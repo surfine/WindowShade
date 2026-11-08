@@ -254,14 +254,17 @@ base `+0x240` 是在 jump table 之前（`0x2653ee588`）設好的交易動畫�
 
 `Motion.notchSpring` 現在只用這兩組 27.3 Mac 值：
 
-| WindowShade 形狀 | 令牌 | 27.3 來源 |
+| WindowShade 狀態 | 令牌 | 27.3 來源 |
 |---|---|---|
-| `.interaction`（認證卡、畫手勢、錄音、倒數） | `islandPrompt` `(0.408, 0.27)` | `+0x248`，tag 0／5（listening／prompt） |
-| 其餘形狀（`.minimum`／`.compact`／`.chin`／`.capsuleCompact`／`.alert`／`.expanded`／`.meter`／`.drop`） | `islandSizing` `(0.3571428536916519, 0.7500006097576885)` | `+0x240`，tag 1–3（thinking／response／transient） |
+| `.listening`／`.prompt`（認證、畫手勢、錄音、等你的會話） | `islandPrompt` `(0.408, 0.27)` | `+0x248`，tag 0／5 |
+| `.thinking`／`.response`／`.transient` | `islandSizing` `(0.3571428536916519, 0.7500006097576885)` | `+0x240`，tag 1–3 |
+| `.hidden`（收合） | `islandHidden` `(0.3, 0.8, bounce 0.2)` | `WindowSizingAnimation.default` → `AxisAnimation.default`（§7.6） |
 | 減少動態效果 | `reducedNotch` | 不變 |
 
-`.minimum`（收合）在系統裡是 tag 4，**不跑尺寸動畫**；WindowShade 沒有另一個
-window 動畫承接收合，所以仍用 `islandSizing`，這是唯一一處不是直接照抄的映射。
+`.minimum`（收合）在系統裡是 tag 4，**不跑島自己的尺寸動畫**；收合由窗口尺寸的
+默認動畫承接，該默認值已在 27.3 釘死（§7.6），所以 WindowShade 用 `islandHidden`，
+不再借用 `islandSizing`。
+
 實時活動撐起緊湊兩耳時，活動自己也可以選：錄音與「等你」的編程會話用
 `islandPrompt`（tag 5 的 prompt 語義），其餘活動落回 `islandSizing`；
 見 `Core/NotchActivityMotion.swift` 與 `NotchController.motionState()`。
@@ -270,8 +273,23 @@ thinking/response/transient，寫在 `Motion.notchSpring` 的註解裡。
 
 ### 7.6 `.hidden` 的收合由誰承接（2026-11-09 追蹤結果）
 
-結論：**未證得**。`Motion.notchSpring` 的 `.hidden` 暫時保留 `islandSizing`；
-`islandHidden` 不落地，列為 residual unknown，等真機取樣再決定。
+結論：**已證得**。`WindowSizingAnimation.default` 的兩軸都用
+`Spring(duration: 0.3, bounce: 0.2)`；`islandHidden` 已落地，`.hidden` 不再借用
+`islandSizing`。
+
+證據鏈（全部在 27.3 映像內）：
+
+1. `#islandSizing`（`0x2653ee080`）在 tag 4（`.hidden`）直接 return，不跑島自己的
+   尺寸動畫；收合由外層 window sizing 承接。
+2. `SpotlightUIShared.WindowSizingAnimation.default` getter（`0x22f9efc10`）把
+   `AxisAnimation.default` 同時複製給 horizontal／vertical。
+3. `AxisAnimation.default` 的 lazy 初始化器（`0x22f9ef4bc`）用
+   `0x3FD3333333333333`（0.3）與 `0x3FC999999999999A`（0.2）構造
+   `SwiftUI.Spring.init(duration:bounce:)`（stub `0x23005c940`），再呼叫
+   `Animation.spring(_:blendDuration:)`（stub `0x23006f150`）。
+4. 因此 `.hidden` = response 0.3、dampingRatio 0.8（bounce 0.2）。
+
+早期「未證得」的記錄保留在下面，作否證過程：
 
 27.3 的二進位證據：
 
@@ -297,10 +315,7 @@ thinking/response/transient，寫在 `Motion.notchSpring` 的註解裡。
    `0x1d319dee8` 回 0.38、`0x1d319def4` 回 0.30）。這是島窗口鏈裡唯一的
    具體彈簧數值，但沒有釘死到 `.hidden`。
 
-因此：`.hidden` 的尺寸動畫在系統裡由外層 window sizing 承接（tag 4 直接
-return），WindowShade 沒有第二層 window 動畫，只能沿用 `islandSizing`。
-
-真機 backlog（PROLED MacBook Pro）：對 `MacAssistantIslandSessionModel` 的
-`.hidden` 轉場取樣；若收合明顯不彈（dampingRatio ≈ 1.0），才新增
-`islandHidden = (response 0.38, dampingRatio 1.0)` 並把 `.hidden` 指過去。
-在那之前不改程式，也不把 0.38／0.30 寫進測試當已證值。
+以上 1–4 是「為什麼不能直接用 WindowManager 0.38／0.30」的否證；
+`.hidden` 的真正來源在同一輪後續分析裡釘死：`WindowSizingAnimation.default`
+的軸動畫（§7.6 開頭）。因此 `.hidden` 用 `islandHidden`，WindowManager 的
+0.38／0.30 仍不進島的令牌表。

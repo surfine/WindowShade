@@ -31,7 +31,7 @@ struct IslandMotionStateTests {
 
         t.section("C02-02", "形状 → 状态：与 NotchController.motionShape() 的优先序一致")
         let table: [(Motion.NotchShape, IslandMotionState, Motion.Spring, String)] = [
-            (.minimum, .hidden, .islandSizing, "hidden"),
+            (.minimum, .hidden, .islandHidden, "hidden"),
             (.compact, .thinking, .islandSizing, "thinking"),
             (.chin, .thinking, .islandSizing, "thinking"),
             (.capsuleCompact, .thinking, .islandSizing, "thinking"),
@@ -50,9 +50,11 @@ struct IslandMotionStateTests {
         t.section("C02-03", "状态 → 弹簧：listening／prompt 用 islandPrompt，其余内容态用 islandSizing")
         t.expect(Motion.notchSpring(for: .listening, reduced: false) == .islandPrompt, "listening → islandPrompt")
         t.expect(Motion.notchSpring(for: .prompt, reduced: false) == .islandPrompt, "prompt → islandPrompt")
-        for state in [IslandMotionState.thinking, .response, .transient, .hidden] {
+        for state in [IslandMotionState.thinking, .response, .transient] {
             t.expect(Motion.notchSpring(for: state, reduced: false) == .islandSizing, "\(state) → islandSizing")
         }
+        t.expect(Motion.notchSpring(for: .hidden, reduced: false) == .islandHidden,
+                 "hidden → islandHidden（WindowSizingAnimation.default 0.3/bounce 0.2）")
         t.expect(Motion.notchSpring(for: .thinking, transition: .collapse, reduced: false) == .islandSizing,
                  "collapse 目前不改令牌")
 

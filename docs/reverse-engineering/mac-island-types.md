@@ -155,6 +155,8 @@ static defaultHeight: CGFloat
    `WindowSizingAnimation` 的呼叫點與其 `Animation.spring(...)` 參數。
 2. `drawnPlatterSize` 的來源公式：它在 `SiriGlassBackdrop` 是傳入值，
    上游由 session model 的內容尺寸算出（第 3 節的同一條路），沒有單一常量。
-3. `.hidden` 收合：`#islandSizing` tag 4 直接 return，收合由外層
-   `WindowAnimationCoordinator` 的 `_sizingH/VAnimation.collapse` 承接；
-   具體 Animation 值同上，尚未釘死。
+3. `.hidden` 收合：已釘死。`WindowSizingAnimation.default`（`0x22f9efc10`）
+   兩軸都用 `AxisAnimation.default`；後者的初始化器（`0x22f9ef4bc`）用
+   `Spring(duration: 0.3, bounce: 0.2)`（stub `0x23005c940`）經
+   `Animation.spring(_:blendDuration:)`（stub `0x23006f150`）建出動畫。
+   WindowShade 對應的令牌是 `islandHidden`（0.3／0.8）。

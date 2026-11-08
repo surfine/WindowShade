@@ -368,12 +368,15 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | 令牌 | response / ζ（bounce） | 何时用 | 来源 |
 |---|---|---|---|
 | `islandPrompt` | 0.408 / 0.27（0.73） | 岛的 listening／prompt（我们映射为 `.interaction`） | 27.3 `MacAssistantIslandSessionModel` global `0x274434248`，初始化 `0x2653edd94` |
-| `islandSizing` | 0.3571428536916519 / 0.7500006097576885（0.2499993902） | 岛的 thinking／response／transient；`.minimum` 收合暂用 | global `0x274434240`，mass 2.0 / stiffness 619.0216 / damping 52.7788 |
+| `islandSizing` | 0.3571428536916519 / 0.7500006097576885（0.2499993902） | 岛的 thinking／response／transient | global `0x274434240`，mass 2.0 / stiffness 619.0216 / damping 52.7788 |
+| `islandHidden` | 0.3 / 0.8（bounce 0.2） | 岛的 `.hidden` 收合 | 27.3 `WindowSizingAnimation.default` → `AxisAnimation.default`（0x22f9ef4bc）`Spring(duration: 0.3, bounce: 0.2)` |
 
 - 理由：这是系统岛自己的值；Aaron #28 定「照 MacBook Pro 系统灵动岛的同一套范式」，系统优先于本地 Mac bounce ≤0.2 的手感上限。
 - 边界：只给 `Motion.notchSpring` 使用；`expand`／`bloom`／`catch`／`pop` 等其他表面仍受 §4.6 约束。
 - 活动：录音和「等你」的编程会话（紧凑两耳时）用 `islandPrompt`；其余活动仍用 `islandSizing`，见 `Core/NotchActivityMotion.swift`。
-- `.hidden`：27.3 tag 4 不跑尺寸动画；Phase 3 追完 `WindowManager`／`WindowSizingAnimation` 链后仍未证得收合弹簧，WindowShade 暂用 `islandSizing`，等真机取样再定（见 `mac-island-springs.md` §7.6）。
+- `.hidden`：27.3 tag 4 不跑岛自己的尺寸动画；窗口尺寸的默认动画是
+  `WindowSizingAnimation.default` → `AxisAnimation.default` 的
+  `Spring(duration: 0.3, bounce: 0.2)`，已接成 `islandHidden`（见 `mac-island-springs.md` §7.6）。
 - 证据与 tag 表：`docs/reverse-engineering/mac-island-springs.md` §7。
 
 ### 4.7 时序

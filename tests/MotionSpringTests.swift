@@ -13,7 +13,7 @@ struct MotionSpringTests {
             ("calm", .calm), ("settle", .settle), ("expand", .expand), ("bloom", .bloom),
             ("catchDrop", .catchDrop), ("glide", .glide), ("flyOut", .flyOut), ("pull", .pull),
             ("pop", .pop), ("reducedNotch", .reducedNotch), ("reducedWindow", .reducedWindow),
-            ("islandPrompt", .islandPrompt), ("islandSizing", .islandSizing),
+            ("islandPrompt", .islandPrompt), ("islandSizing", .islandSizing), ("islandHidden", .islandHidden),
         ]
 
         t.section("C05-01", "令牌自洽：response > 0，dampingRatio = 1 − bounce（岛令牌的舍入也在容差内）")
@@ -28,6 +28,9 @@ struct MotionSpringTests {
         t.expect(S.islandPrompt.response == 0.408 && S.islandPrompt.dampingRatio == 0.27, "islandPrompt 0.408/0.27")
         t.expect(abs(S.islandSizing.response - 0.3571428536916519) < 1e-15, "islandSizing response")
         t.expect(abs(S.islandSizing.dampingRatio - 0.7500006097576885) < 1e-15, "islandSizing dampingRatio")
+        t.expect(S.islandHidden.response == 0.3 && S.islandHidden.dampingRatio == 0.8
+                 && S.islandHidden.bounce == 0.2,
+                 "islandHidden 0.3 / 0.8 / bounce 0.2")
 
         t.section("C05-03", "Motion.spring：keyPath 原样，duration = settlingDuration")
         let animation = Motion.spring(.islandSizing, keyPath: "bounds.size.width")

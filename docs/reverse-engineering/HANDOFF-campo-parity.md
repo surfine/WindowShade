@@ -87,13 +87,13 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 `mac-island-springs.md` §7。selector 那條路已確認在 27.2／27.3 都不存在，
 不再追。
 
-**`.hidden` 的收合（2026-11-09 追蹤結果）**：27.3 的 `#islandSizing` 在 tag 4
-直接 return，不跑島自己的尺寸動畫；收合由外層 window sizing 承接。
-`SpotlightUIShared.WindowSizingAnimation` 只存 `SwiftUI.Animation`（不是彈簧參數），
-而 27.3 的三個映像裡都掃不到 0.4／0.7 這組常數；WindowManager 的
-`WindowManagerSpringBehavior` 預設仍是 response 0.38／0.30、dampingRatio 1.0，
-但沒有釘死到島的 `.hidden`。因此 `.hidden` 暫時保留 `islandSizing`，
-`islandHidden` 不落地，等真機取樣（見 `mac-island-springs.md` §7.6）。
+**`.hidden` 的收合（2026-11-09 已釘死）**：27.3 的 `#islandSizing` 在 tag 4
+直接 return；收合由外層 window sizing 的默認動畫承接。`WindowSizingAnimation.default`
+（`0x22f9efc10`）兩軸都用 `AxisAnimation.default`，後者初始化器
+（`0x22f9ef4bc`）用 `Spring(duration: 0.3, bounce: 0.2)` 經
+`Animation.spring(_:blendDuration:)` 建出動畫。WindowShade 已落
+`islandHidden`（response 0.3／dampingRatio 0.8），`.hidden` 不再借用
+`islandSizing`；WindowManager 的 0.38／0.30 仍不用（見 §7.6）。
 
 **ActivityKit（2026-11-09）**：27.3 `CampoUIInternal` 直接連結
 `/System/Library/Frameworks/ActivityKit.framework`，並有
@@ -144,9 +144,9 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 1. `Motion.notchSpring` 的每個轉場數值都能指回**一個已證實的 Mac 二進位來源**
    （檔案、位址、值）；若來源只到 `WindowManager`／`SpotlightUIInternal` 而不是
    `CampoUIInternal` 的 selector，文件必須逐條寫清楚，不能假裝是 selector 配對。
-   目前 `.minimum`（hidden）仍是例外：27.3 tag 4 不跑尺寸動畫，收合承接未證
-   （Phase 3 已追完 `WindowManager` 鏈，見 §三末與 `mac-island-springs.md` §7.6），
-   暫用 `islandSizing`；真機取樣後再定。
+   `.minimum`（hidden）已不是例外：27.3 tag 4 不跑島自己的尺寸動畫，
+   收合由 `WindowSizingAnimation.default` 的 `Spring(0.3, bounce 0.2)` 承接，
+   已落成 `islandHidden`（見 §三末與 `mac-island-springs.md` §7.6）。
 2. `IslandMetrics` 的尺寸與圓角全部由同一條模型推出，且以動畫量插值。
    目前 36／18／36² 已收斂；230×64 只給無劉海膠囊（`capsuleExpandedSize`）；
    340×84／22 已收斂到 `dropIslandSize`，`StripNotchExchange`／`FileDragSensor`／

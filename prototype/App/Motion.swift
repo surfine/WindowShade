@@ -124,8 +124,9 @@ enum Motion {
         case .thinking, .response, .transient:
             return .islandSizing
         case .hidden:
-            // 27.3 tag 4 不跑尺寸动画；系统收合由谁承接还没证。Phase 3 追 WindowManager 链后再换。
-            return .islandSizing
+            // 27.3 tag 4 不跑岛自己的尺寸动画；收合由窗口尺寸的默认动画承接：
+            // WindowSizingAnimation.default → AxisAnimation.default → Spring(0.3, bounce 0.2)。
+            return .islandHidden
         }
     }
 }
