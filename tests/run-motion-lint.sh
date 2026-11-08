@@ -19,8 +19,16 @@ for file in prototype/App/Launchpad*.swift; do
   fi
 done
 
+# 岛与活动：弹簧只能从令牌来，不许在调用点写数字（C01/C03 的治理）。
+island_bad=$(grep -nE 'perceptualDuration:[[:space:]]*[0-9]|Spring\(response:[[:space:]]*[0-9]' \
+  prototype/App/Notch.swift prototype/App/NotchActivityView.swift || true)
+if [ -n "$island_bad" ]; then
+  echo "$island_bad"
+  status=1
+fi
+
 if [ "$status" -ne 0 ]; then
-  echo "motion lint 失败：位移请用 Motion.spring / springTo，只淡透明度的才写 // fade-only"
+  echo "motion lint 失败：位移请用 Motion.spring / springTo，只淡透明度的才写 // fade-only；岛的弹簧只能来自 Motion.notchSpring 令牌"
   exit 1
 fi
 echo "motion lint 通过"

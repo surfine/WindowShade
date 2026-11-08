@@ -398,6 +398,11 @@ final class GlanceProbe {
       finish(nil)
       return
     }
+    if CommandLine.arguments.contains("--island-transition-probe") {
+      try await exerciseIslandTransitions(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--notch-calibrate") {
       try await exerciseNotchCalibration(pid: process.processIdentifier)
       finish(nil)

@@ -166,6 +166,13 @@ if CommandLine.arguments.contains("--launchpad-census") {
     for app in AppCatalog.scan() { print("launchpad: \(app.path)") }
     exit(0)
 }
+if FrameRhythmProbe.isRequested {
+    // MO-07：帧节奏探针。异步跑完再退出；平时不加载、不起显示链接。
+    app.setActivationPolicy(.accessory)
+    Task { @MainActor in exit(await FrameRhythmProbe.run()) }
+    app.run()
+    exit(0)
+}
 if CommandLine.arguments.contains("--window-census") {
     // 规格 R20：只读普查本机每个 App 的辅助功能窗口，看窗口浏览的过滤收进了哪些「不像真窗口」的东西。
     // 每扇窗一行：App、角色／子角色、有没有标题（不打标题本身）、层、尺寸、关闭与全屏按钮、过滤结论。

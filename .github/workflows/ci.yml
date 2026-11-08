@@ -32,3 +32,14 @@ jobs:
       - name: build.sh --check
         working-directory: prototype
         run: ./build.sh --check
+
+      # 岛的快速回归：令牌、状态、几何、活动映射、形变接力。都在 build 之后跑，失败即红。
+      - name: island motion and geometry
+        run: |
+          bash tests/run-island-metrics-tests.sh
+          bash tests/run-notch-token-tests.sh
+          bash tests/run-motion-tokens-tests.sh
+          bash tests/run-island-motion-state-tests.sh
+          bash tests/run-notch-activity-motion-tests.sh
+          bash tests/run-island-transition-tests.sh
+          bash tests/run-motion-lint.sh

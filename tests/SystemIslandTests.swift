@@ -36,9 +36,12 @@ func runTests() {
 
     // 本机读数：MobileGestalt 必须答得上话（0 或 1）。答不上来（-1）说明 dlsym 出了问题，要红。
     check(S.raw == 0 || S.raw == 1, "本机 MobileGestalt 答得上话（raw=\(S.raw)）")
-    // 这台没有系统灵動岛（Mac17,4，27.0.1 实测 false）。
-    check(S.raw == 0, "本机不是岛机（raw=\(S.raw)）")
-    check(!S.present, "本机不让位")
+    // 读数与结论一致：0 不让位；1 让位（除非复核开关把结论改掉）。旧刘海机与 PROLED 机都能跑。
+    let override = UserDefaults.standard.string(forKey: S.Override.key)
+    check(S.present == (S.resolve(raw: S.raw, override: override) == .present),
+          "present 与 raw/开关一致（raw=\(S.raw)、override=\(override ?? "nil")）")
+    if S.raw == 0 { check(!S.present, "raw=0 不让位") }
+    if S.raw == 1, override == nil { check(S.present, "raw=1 且没有开关 → 让位") }
 
     if failures == 0 { print("PASS system-island") } else { print("FAILED \(failures)"); exit(1) }
 }
