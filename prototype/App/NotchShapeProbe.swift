@@ -16,6 +16,7 @@ import Cocoa
 
 extension GlanceProbe {
   func exerciseNotchShape(pid: pid_t) async throws {
+    print("INFO system-island: \(SystemIsland.answer.rawValue) (MGCopyAnswer DeviceSupportsDynamicIsland raw=\(SystemIsland.raw))")
     let shapes = DisplayShapes.shared
     for screen in NSScreen.screens {
       let shape = shapes.shape(for: screen)

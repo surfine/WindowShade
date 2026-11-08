@@ -341,11 +341,35 @@ final class NotchController {
         return NSRect(x: left.maxX, y: screen.frame.maxY - height, width: right.minX - left.maxX, height: height)
     }
 
+    struct Slot {
+        let rect: NSRect
+        let kind: SlotKind
+        var virtual: Bool { kind == .virtual }
+        var isSystemIsland: Bool { kind == .systemIsland }
+    }
+
+    /// 系统灵動岛只在内建屏上（PROLED XDR 触控 MacBook Pro）；外接屏照旧是我们的隐形刘海。
+    /// 判断来源见 Core/SystemIsland.swift：和系统自己用的是同一句 MGCopyAnswer。
+    static func systemIsland(on screen: NSScreen) -> Bool {
+        guard SystemIsland.present, let id = displayID(screen) else { return false }
+        return CGDisplayIsBuiltin(id) != 0
+    }
+
+    /// 这块屏顶部正中的那一段：真刘海、系统的岛，或者和菜单栏一样高的隐形刘海。
+    static func slot(on screen: NSScreen) -> Slot {
+        let menuBar = max(24, screen.frame.maxY - screen.visibleFrame.maxY)
+        let center = NSRect(x: screen.frame.midX - 95, y: screen.frame.maxY - menuBar, width: 190, height: menuBar)
+        let notch = notchRect(on: screen)
+        let kind = SystemIsland.slotKind(systemIsland: SystemIsland.present,
+                                         builtIn: displayID(screen).map { CGDisplayIsBuiltin($0) != 0 } ?? false,
+                                         hasNotch: notch != nil)
+        return Slot(rect: notch ?? center, kind: kind)
+    }
+
     /// 这块屏上的“刘海”：真刘海，或者顶部正中和菜单栏一样高的一段（隐形刘海）。
     static func slotRect(on screen: NSScreen) -> (rect: NSRect, virtual: Bool) {
-        if let notch = notchRect(on: screen) { return (notch, false) }
-        let menuBar = max(24, screen.frame.maxY - screen.visibleFrame.maxY)
-        return (NSRect(x: screen.frame.midX - 95, y: screen.frame.maxY - menuBar, width: 190, height: menuBar), true)
+        let slot = slot(on: screen)
+        return (slot.rect, slot.virtual)
     }
 
     static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
@@ -465,8 +489,15 @@ final class NotchController {
         for screen in NSScreen.screens where Self.isEnabled {
             guard let id = Self.displayID(screen) else { continue }
             alive.insert(id)
-            let slot = Self.slotRect(on: screen)
-            let panel = panels[id] ?? NotchPanel(notch: slot.rect, virtual: slot.virtual)
+            let slot = Self.slot(on: screen)
+            let panel: NotchPanel
+            if let existing = panels[id], existing.slotKind == slot.kind {
+                panel = existing
+            } else {
+                // 顶部这段换了主人（插拔屏、开关让位）：面板按新身份重造，别把旧几何带过去。
+                panels[id]?.close()
+                panel = NotchPanel(notch: slot.rect, kind: slot.kind)
+            }
             panels[id] = panel
             panel.yieldsToSystem = spaceGate.yielding.contains(id)
             panel.leases = leases
@@ -580,7 +611,11 @@ final class NotchController {
         for (display, panel) in panels {
             let screen = NSScreen.screens.first { Self.displayID($0) == display }
             let shape = screen.flatMap { DisplayShapes.shared.known(for: $0) }
-            if panel.isVirtual {
+            if panel.isSystemIsland {
+                // 系统灵動岛那片不归我们：不要曲线、不要胶囊，什么都不画。
+                panel.hardware = nil
+                panel.capsuleCorner = nil
+            } else if panel.isVirtual {
                 panel.hardware = nil
                 let top = shape?.topCorner ?? 0
                 panel.capsuleCorner = top > 0.5 ? top : nil
@@ -628,6 +663,7 @@ final class NotchController {
     func aims(from release: CGPoint, velocity: CGVector) -> Bool {
         guard Self.isEnabled, let screen = NSScreen.screens.first(where: { $0.frame.contains(release) }),
               velocity.dy > 0 else { return false }
+        guard !Self.systemIsland(on: screen) else { return false }
         let notch = Self.slotRect(on: screen).rect
         let t = (notch.minY - release.y) / velocity.dy
         guard t >= 0 else { return false }
@@ -643,6 +679,8 @@ final class NotchController {
     func dragMoved(to point: CGPoint, downAt: CGPoint? = nil) {
         // 系统里拖着文件（或标题栏上的文稿小图标）时，小岛是文件那一种；窗口那一种让位。
         if fileDragKind != nil { return }
+        // 这块屏顶部是系统的岛：我们没有落点，不垂小岛。
+        if let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }), Self.systemIsland(on: screen) { return }
         if let down = downAt, !MagicTiling.dropIslandVisible(travel: hypot(point.x - down.x, point.y - down.y)) {
             cancelDrag()
             return
@@ -1626,6 +1664,10 @@ final class NotchController {
         guard !isTucked(id), owner.shaded[id] == nil, !owner.slideOver.isSlideOver(id) else { return false }
         guard let pos = axPosition(focused), let size = axSize(focused),
               let screen = screenForAXWindow(pos: pos, size: size) ?? NSScreen.main else { return false }
+        if Self.systemIsland(on: screen) {
+            announce(WSL10n.text("notch.tuck.systemIsland", zh: "这台机器的顶部是系统的灵动岛，收不进去"), tone: .problem)
+            return false
+        }
         let windows = owner.gestures.arrangeableWindows(on: screen, focused: id)
         guard let match = windows.first(where: { $0.window.id == id }) else {
             announce(WSL10n.text("notch.tuck.refused", zh: "这个窗口收不进去"), tone: .problem)
@@ -1648,6 +1690,10 @@ final class NotchController {
         }
         let pointer = NSEvent.mouseLocation
         guard let target = screen ?? NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else { return 0 }
+        if Self.systemIsland(on: target) {
+            announce(WSL10n.text("notch.tuck.systemIsland", zh: "这台机器的顶部是系统的灵动岛，收不进去"), tone: .problem)
+            return 0
+        }
         let windows = owner.gestures.arrangeableWindows(on: target, focused: nil)
         for (window, element) in windows {
             tuck(element, id: window.id, pid: window.pid, landed: window.frame, home: window.frame, velocity: .zero)
@@ -2662,6 +2708,10 @@ final class NotchPanel: NSPanel {
     private var shoulderWindow: NotchShoulders?
     /// 没有刘海的屏上的隐形刘海：平时不露面，收着窗口、或者拖着标题栏靠近时才出来。
     let isVirtual: Bool
+    /// 这块屏顶部是系统的灵動岛：面板只为授权这类“必须我们出”的东西存在，岛本身一概不画。
+    let isSystemIsland: Bool
+    /// 顶部这一段归谁（换主人时控制器会重造面板）。
+    let slotKind: SlotKind
     var onHoverChanged: ((Bool) -> Void)?
     var onTileClicked: ((CGWindowID, NSRect?) -> Void)?
     /// 两指往下拉出最近那扇窗：带上拉出来的图标在屏幕上的位置。
@@ -2929,9 +2979,15 @@ final class NotchPanel: NSPanel {
         return DropChoice(rawValue: index) ?? .tuck
     }
 
-    init(notch: NSRect, virtual: Bool) {
+    convenience init(notch: NSRect, virtual: Bool) {
+        self.init(notch: notch, kind: virtual ? .virtual : .notch)
+    }
+
+    init(notch: NSRect, kind: SlotKind) {
         self.notch = notch
-        self.isVirtual = virtual
+        self.slotKind = kind
+        self.isVirtual = kind == .virtual
+        self.isSystemIsland = kind == .systemIsland
         canvas = NotchCanvasView(frame: NSRect(origin: .zero, size: notch.size))
         super.init(contentRect: notch, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         isOpaque = false
@@ -3168,7 +3224,7 @@ final class NotchPanel: NSPanel {
 
     /// 肩那层窗口跟着刘海和硬件形状走：盖住这块屏最上面一窄条；不知道形状、隐形刘海就不要它。
     private func refitShoulders() {
-        guard !isVirtual, let curves = hardware,
+        guard !isVirtual, !isSystemIsland, let curves = hardware,
               let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }) else {
             shoulderWindow?.orderOut(nil)
             shoulderWindow = nil
@@ -3240,6 +3296,11 @@ final class NotchPanel: NSPanel {
     }
 
     private func updateVisibility() {
+        // 系统灵動岛在的时候，顶部那段是它的：我们只留授权这一层，别的一律不露面。
+        if isSystemIsland, !isAuthenticating {
+            if isVisible { orderOut(nil) }
+            return
+        }
         if yieldsToSystem, !isAuthenticating, !levelYieldOpen {
             if isVisible { orderOut(nil) }
             return
@@ -4256,6 +4317,10 @@ final class NotchPanel: NSPanel {
         return NotchCanvasView.Spring(response: token.response, bounce: token.bounce)
     }
 
+    /// 动画期间容器的“地板”：只胀不缩。每帧都按“现在”重算容器等于每帧改一次窗口大小，
+    /// 画面会抖、内容也会跟着重排；停稳后由 settle 一次缩回岛的大小。
+    private var containerFloor = NSRect.null
+
     /// roomOnly：只是量到的空位变了（内容、状态都没变）：肩因此长出、收掉时淡入淡出，不跟着弹簧长（S5）。
     private func apply(animated: Bool, spring custom: NotchCanvasView.Spring? = nil, roomOnly: Bool = false) {
         // 岛按真实外框画（刘海高 33.5 点这种半点也照画），只有面板落在整点上（窗口只能落在整点上），岛在面板里按半点偏移放：
@@ -4314,6 +4379,12 @@ final class NotchPanel: NSPanel {
         let now = canvas.islandOnScreen(panelOrigin: frame.origin) ?? rect
         var reach = (animated ? target.hit.union(now) : target.hit).insetBy(dx: animated ? -16 : 0, dy: animated ? -16 : 0)
         reach.size.height = notch.maxY - reach.minY
+        if animated {
+            containerFloor = containerFloor.union(reach)
+            reach = containerFloor
+        } else {
+            containerFloor = .null
+        }
         let container = NSIntegralRectWithOptions(reach, .alignAllEdgesOutward)
         let (shoulders, snap) = shoulderMotion(to: target, from: now)
         canvas.setBare(false)
@@ -4334,6 +4405,7 @@ final class NotchPanel: NSPanel {
                      shoulders: shoulders, shoulderSnap: snap, shoulderFade: roomOnly) { [weak self] in
             // 停下来了：面板缩回岛的大小，旁边透明的地方不挡东西。
             guard let self, generation == self.settleGeneration, self.pulled == 0 || !animated else { return }
+            self.containerFloor = .null
             let settled = NSIntegralRectWithOptions(target.hit, .alignAllEdgesOutward)
             if self.frame != settled {
                 let delta = CGVector(dx: self.frame.minX - settled.minX, dy: self.frame.minY - settled.minY)

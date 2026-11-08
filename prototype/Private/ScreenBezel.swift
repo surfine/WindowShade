@@ -102,7 +102,7 @@ final class DisplayShapes {
 
     /// 要自动算的屏：只有公开接口报了刘海的（真刘海面板所在的那块）。隐形刘海不画曲线，算了也没人用。
     private static var notched: [NSScreen] {
-        NSScreen.screens.filter { NotchController.notchRect(on: $0) != nil }
+        NSScreen.screens.filter { NotchController.notchRect(on: $0) != nil && !NotchController.systemIsland(on: $0) }
     }
 
     /// 键盘、指针、触控板有一阵没动过了：这时卡一下主线程，不会压住正在做的双击、拖动。

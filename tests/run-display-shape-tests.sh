@@ -3,5 +3,5 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/display-shape-tests
-swiftc -O -parse-as-library prototype/Core/DisplayShape.swift tests/DisplayShapeTests.swift -o .build/display-shape-tests/shape
+swiftc -O -parse-as-library prototype/Core/IslandMetrics.swift prototype/Core/DisplayShape.swift tests/DisplayShapeTests.swift -o .build/display-shape-tests/shape
 .build/display-shape-tests/shape

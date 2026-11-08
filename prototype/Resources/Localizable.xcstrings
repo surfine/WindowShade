@@ -21598,6 +21598,29 @@
         }
       }
     },
+    "notch.tuck.systemIsland": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The top of this Mac is the system Dynamic Island — windows can't tuck in"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这台机器的顶部是系统的灵动岛，收不进去"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這台機器的頂部是系統的靈動島，收不進去"
+          }
+        }
+      }
+    },
     "notch.tuck.refused": {
       "extractionState": "manual",
       "localizations": {

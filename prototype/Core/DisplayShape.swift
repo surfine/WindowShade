@@ -561,8 +561,8 @@ enum NotchCapsule {
     nonisolated static let belowMenuBarKey = "Notch.capsuleBelowMenuBar"
     /// 胶囊和菜单栏下沿的间距（与认证态的 notch.minY - 8 一致）。
     static let menuBarGap: CGFloat = 8
-    static let minimalSize = CGSize(width: 26, height: 22)
-    static let expandedSize = CGSize(width: 230, height: 64)
+    static let minimalSize = IslandMetrics.minimalSize
+    static let expandedSize = IslandMetrics.expandedSize
 
     enum State: CaseIterable { case minimal, compact, alert, expanded, interaction }
 
@@ -577,7 +577,7 @@ enum NotchCapsule {
         }
     }
 
-    static func radius(height: CGFloat) -> CGFloat { max(1, height / 2) }
+    static func radius(height: CGFloat) -> CGFloat { IslandMetrics.radius(forHeight: height) }
 
     /// 胶囊外框（Cocoa 坐标，y 向上）。slot 是菜单栏正中的槽位。
     /// 关着：高度不超过菜单栏时垂直居中在条内，超过时顶边贴屏幕顶向下长；开着：顶边在菜单栏下沿以下 8 点向下长。横向永远以槽位中心为锚。

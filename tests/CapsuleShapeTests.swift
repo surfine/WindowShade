@@ -15,7 +15,7 @@ struct CapsuleShapeTests {
         func sz(_ s: NotchCapsule.State) -> CGSize { NotchCapsule.size(s, compact: compact, alert: alert, interaction: inter) }
 
         // 五态尺寸表
-        check(sz(.minimal) == CGSize(width: 26, height: 22), "minimal 26x22")
+        check(sz(.minimal) == IslandMetrics.minimalSize, "minimal 用岛的量法（本体高见方）")
         check(sz(.compact) == compact, "compact follows existing rule")
         check(sz(.alert) == alert, "alert follows existing tier")
         check(sz(.expanded) == CGSize(width: 230, height: 64), "expanded 230x64")
@@ -37,7 +37,11 @@ struct CapsuleShapeTests {
 
         // 开关关：条内。矮的垂直居中，高的顶边贴屏幕顶
         let minIn = NotchCapsule.frame(size: sz(.minimal), slot: slot, belowMenuBar: false)
-        check(abs(minIn.midY - slot.midY) < 0.0001, "minimal centered in bar")
+        if sz(.minimal).height <= slot.height {
+            check(abs(minIn.midY - slot.midY) < 0.0001, "minimal centered in bar")
+        } else {
+            check(minIn.maxY == slot.maxY, "minimal taller than bar sits flush with screen top")
+        }
         let expIn = NotchCapsule.frame(size: sz(.expanded), slot: slot, belowMenuBar: false)
         check(expIn.maxY == slot.maxY, "tall capsule top flush with screen top")
 

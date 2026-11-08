@@ -1333,7 +1333,7 @@ enum NotchMinimalPresentation {
     static func size(for placement: Placement) -> CGSize {
         switch placement {
         case .notched: return CGSize(width: 36, height: 28)
-        case .capsule: return CGSize(width: 26, height: 22)
+        case .capsule: return IslandMetrics.minimalSize
         }
     }
 

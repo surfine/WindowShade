@@ -1887,6 +1887,13 @@
  ],
  "sites": [
   {
+   "path": "prototype/Core/SystemIsland.swift",
+   "line": 44,
+   "symbol": "UserDefaults",
+   "source": "resolve(raw: raw, override: UserDefaults.standard.string(forKey: Override.key))",
+   "signal": "settings"
+  },
+  {
    "path": "prototype/App/AXLatencyBench.swift",
    "line": 31,
    "symbol": "AXUIElementCopyAttributeValue",
