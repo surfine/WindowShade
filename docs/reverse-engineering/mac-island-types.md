@@ -132,6 +132,23 @@ static defaultHeight: CGFloat
 島的尺寸仍走 `#islandSizing` 的內容計算。列在這裡是為了證明：
 「四尺寸 ＋ 動畫」就是固件的幾何模型，而不是單一寬高常數。
 
+各 preset 的實作（27.3）：
+
+| preset | 位址 | 讀到的常數 |
+|---|---|---|
+| `app` | `0x22f9f0fd0` | min `(400,400)`、max `(5000,5000)` |
+| `standard` | `0x22f9f0a5c` | min/max 由螢幕決定，寬在 `512`／`640` 之間二選一 |
+| `dynamic` | `0x22f9f114c` | 同 `standard` 的動態路徑 |
+| `campo` | `0x22f9f0e68` | 完全由螢幕／安全區算，沒有固定寬高 |
+| `gridBrowse` | `0x22f9f0e50` | `(844,520)` / `(844,5000)` |
+| `wideEntity` | `0x22f9f0c50` | `(640,410)` / `(640,5000)` |
+
+`ResultPlatterBehavior.sizingAnimation` 的 getter（`0x22f9f2764`）只是把已存好的
+`WindowSizingAnimation` 從 behavior 複製到新配置，不在這裡造 `Animation`。
+所以 `.hidden` 的 collapse 動畫值一定是在 **Campo 建立 behavior 的那一刻** 給的；
+下一步是追 `#islandSizing` 內 `ResultPlatterBehavior` 的建構點（`0x2653eed44`
+之後的 store），把 `animations` 欄位的來源釘死。
+
 ## 5. 仍未解
 
 1. `ResultPlatterBehavior.animations` 裡的具體 `Animation` 值：要找到建立
