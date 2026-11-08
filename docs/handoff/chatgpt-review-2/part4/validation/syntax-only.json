@@ -1,0 +1,173 @@
+{
+  "kind": "parse only; no macOS SDK",
+  "files": [
+    {
+      "file": "overlay/prototype/App/EventTap.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/FocusTimerCard.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/FocusTimerHost.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/GlobalShortcuts.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/InteractionCoordinator.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/LaunchpadToday.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/Notch.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/NotchActivityController.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/NotchActivityView.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/NotchAuthentication.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/Preferences.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2AgentSessionView.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2AppRuntime.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2CodexApprovalHost.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2ConductorView.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2FocusSettings.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2GameControllerBridge.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2IslandCoordinator.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/App/WS2SupplementPane.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/CodexWire.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/FocusTimer.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/NotchActivities.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/WS2ApprovalReview.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/WS2CompanionFrame.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/WS2DeviceInputGate.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Core/WS2FocusWindowOwnership.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "overlay/prototype/Support/WS2CompanionCrypto.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "file": "tests/MacCryptoTests.swift",
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

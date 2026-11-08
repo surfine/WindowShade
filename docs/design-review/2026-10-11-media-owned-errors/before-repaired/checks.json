@@ -1,0 +1,40 @@
+{
+  "cleanup" : {
+    "reaped" : true,
+    "temporaryRemoved" : true
+  },
+  "failure" : null,
+  "passed" : false,
+  "records" : [
+    {
+      "canChooseModel" : false,
+      "canSend" : false,
+      "mode" : "signed-out",
+      "passed" : true,
+      "status" : "需要登录 ChatGPT"
+    },
+    {
+      "canSend" : false,
+      "mode" : "config-rejected",
+      "notice" : "",
+      "passed" : false,
+      "reaped" : true,
+      "status" : "已断开"
+    },
+    {
+      "canSend" : false,
+      "mode" : "malformed-account",
+      "notice" : "没有把缺失状态当成成功。",
+      "passed" : false,
+      "reaped" : true,
+      "status" : "已断开"
+    },
+    {
+      "mode" : "manual-stop",
+      "passed" : true,
+      "reaped" : true,
+      "status" : "已断开"
+    }
+  ],
+  "synthetic" : true
+}

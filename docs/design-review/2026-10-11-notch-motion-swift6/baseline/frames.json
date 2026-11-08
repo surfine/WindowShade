@@ -1,0 +1,733 @@
+{
+  "callbacks" : [
+    {
+      "mainThread" : true,
+      "name" : "regular-initial",
+      "time" : 70111.723476416679
+    },
+    {
+      "mainThread" : true,
+      "name" : "regular-open",
+      "time" : 70112.539990416684
+    },
+    {
+      "mainThread" : true,
+      "name" : "regular-same-id",
+      "time" : 70112.758741916681
+    },
+    {
+      "mainThread" : true,
+      "name" : "regular-replace-id",
+      "time" : 70112.99324291668
+    },
+    {
+      "mainThread" : true,
+      "name" : "regular-reopen",
+      "time" : 70113.258477750016
+    },
+    {
+      "mainThread" : true,
+      "name" : "regular-close-final",
+      "time" : 70114.480663791677
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-initial",
+      "time" : 70114.714495875014
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-open",
+      "time" : 70114.958215875013
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-same-id",
+      "time" : 70115.177047250021
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-replace-id",
+      "time" : 70115.419496291681
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-close-interrupted",
+      "time" : 70115.661562708352
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-reopen",
+      "time" : 70115.673705291687
+    },
+    {
+      "mainThread" : true,
+      "name" : "reduced-close-final",
+      "time" : 70116.124721375018
+    }
+  ],
+  "counts" : {
+    "reduced-close-final" : 1,
+    "reduced-close-interrupted" : 1,
+    "reduced-initial" : 1,
+    "reduced-open" : 1,
+    "reduced-reopen" : 1,
+    "reduced-replace-id" : 1,
+    "reduced-same-id" : 1,
+    "regular-close-final" : 1,
+    "regular-initial" : 1,
+    "regular-open" : 1,
+    "regular-reopen" : 1,
+    "regular-replace-id" : 1,
+    "regular-same-id" : 1
+  },
+  "frames" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x0000000106b30510)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "name" : "regular-initial",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : false,
+      "stage" : "initial",
+      "tileIdentities" : [
+
+      ],
+      "tileIDs" : [
+
+      ],
+      "tileQuantities" : [
+
+      ],
+      "time" : 70111.93349562501,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "class" : "CASpringAnimation",
+          "duration" : 0.56160572076454451,
+          "key" : "morph.position"
+        },
+        {
+          "class" : "CASpringAnimation",
+          "duration" : 0.56160572076454451,
+          "key" : "morph.bounds.size"
+        },
+        {
+          "class" : "CASpringAnimation",
+          "duration" : 0.56160572076454451,
+          "key" : "morph.cornerRadius"
+        }
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2a00)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "regular-open-start",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : false,
+      "stage" : "open-start",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b5400)"
+      ],
+      "tileIDs" : [
+        900
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 2,
+          "total" : 9
+        }
+      ],
+      "time" : 70111.959635375009,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2a00)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "regular-open-settled",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : false,
+      "stage" : "open-settled",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b5400)"
+      ],
+      "tileIDs" : [
+        900
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 2,
+          "total" : 9
+        }
+      ],
+      "time" : 70112.756889041688,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2a00)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "regular-same-id",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : false,
+      "stage" : "same-id",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b5400)"
+      ],
+      "tileIDs" : [
+        900
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 2,
+          "total" : 9
+        }
+      ],
+      "time" : 70112.974167833352,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078239f2d80)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "regular-replace-id",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : false,
+      "stage" : "replace-id",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6400)"
+      ],
+      "tileIDs" : [
+        901
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 4,
+          "total" : 9
+        }
+      ],
+      "time" : 70113.212984500016,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078239f2d80)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "regular-close-before-interrupt",
+      "pendingExit" : true,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : false,
+      "stage" : "close-before-interrupt",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6400)"
+      ],
+      "tileIDs" : [
+        901
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 4,
+          "total" : 9
+        }
+      ],
+      "time" : 70113.228032291678,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2a00)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "regular-reopened",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : false,
+      "stage" : "reopened",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b5400)"
+      ],
+      "tileIDs" : [
+        901
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 4,
+          "total" : 9
+        }
+      ],
+      "time" : 70113.691229000018,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078239f0000)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "name" : "regular-closed",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : false,
+      "stage" : "closed",
+      "tileIdentities" : [
+
+      ],
+      "tileIDs" : [
+
+      ],
+      "tileQuantities" : [
+
+      ],
+      "time" : 70114.693923916682,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078239f3100)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "name" : "reduced-initial",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "initial",
+      "tileIdentities" : [
+
+      ],
+      "tileIDs" : [
+
+      ],
+      "tileQuantities" : [
+
+      ],
+      "time" : 70114.924535000013,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2d80)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "reduced-open-start",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "open-start",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6400)"
+      ],
+      "tileIDs" : [
+        900
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 2,
+          "total" : 9
+        }
+      ],
+      "time" : 70114.953436541677,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2d80)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "reduced-open-settled",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : true,
+      "stage" : "open-settled",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6400)"
+      ],
+      "tileIDs" : [
+        900
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 2,
+          "total" : 9
+        }
+      ],
+      "time" : 70115.175325000018,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d2d80)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "reduced-same-id",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : true,
+      "stage" : "same-id",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6400)"
+      ],
+      "tileIDs" : [
+        900
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 2,
+          "total" : 9
+        }
+      ],
+      "time" : 70115.402869958343,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078239f3100)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "reduced-replace-id",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : true,
+      "stage" : "replace-id",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6800)"
+      ],
+      "tileIDs" : [
+        901
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 4,
+          "total" : 9
+        }
+      ],
+      "time" : 70115.633226083344,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078238d3100)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "name" : "reduced-close-before-interrupt",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : true,
+      "stage" : "close-before-interrupt",
+      "tileIdentities" : [
+
+      ],
+      "tileIDs" : [
+
+      ],
+      "tileQuantities" : [
+
+      ],
+      "time" : 70115.655375875009,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x0000007823b06680)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "name" : "reduced-reopened",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 175.5,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 224.5
+      },
+      "reduced" : true,
+      "stage" : "reopened",
+      "tileIdentities" : [
+        "ObjectIdentifier(0x00000078220b6400)"
+      ],
+      "tileIDs" : [
+        901
+      ],
+      "tileQuantities" : [
+        {
+          "completed" : 4,
+          "total" : 9
+        }
+      ],
+      "time" : 70116.11037137502,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "currentIdentity" : "ObjectIdentifier(0x00000078239f3800)",
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "name" : "reduced-closed",
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "closed",
+      "tileIdentities" : [
+
+      ],
+      "tileIDs" : [
+
+      ],
+      "tileQuantities" : [
+
+      ],
+      "time" : 70116.340718666688,
+      "visible" : false
+    }
+  ],
+  "globalInputEvents" : 0,
+  "mainThread" : true,
+  "overrideRestoredTo" : null,
+  "productEntry" : false,
+  "realSources" : 0,
+  "status" : "completed_callbacks_static_cache_only",
+  "swiftLanguageVersion" : 6,
+  "windowActions" : 0
+}

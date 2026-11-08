@@ -1,0 +1,67 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-build-k0nmx1ed/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11637708600028418,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native",
+      "/tmp/ws2-build-k0nmx1ed/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2QuitBarrier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedLaunchController.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/TestSupport.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/NativeTests.swift",
+      "-o",
+      "/tmp/ws2-build-k0nmx1ed/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 7.026044755999919,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-build-k0nmx1ed/suite",
+      "/mnt/data/WindowShade2-round2-part7/fixtures/native-child.py",
+      "/opt/pyvenv/bin/python3",
+      "/mnt/data/WindowShade2-round2-part7/validation/native-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.2514490880002995,
+    "stdout": "PASS NATIVE01 direct child ignores TERM then owned group KILL [6]\nPASS NATIVE02 inherited descriptor descendant cannot delay direct exit [5]\nPASS NATIVE03 unrelated descriptors do not reach child [3]\nTOTAL 3 scenarios, 14 assertions\n",
+    "stderr": "DIAG exited=true termination=Optional(suite.WS2DuplexProcess.Termination(status: 0, wasSignalled: false)) stopped=true supervision=nil lines=[\"{\\\"parent\\\":1}\"] elapsed=0.12477139500015255\n"
+  }
+]

@@ -1,0 +1,23 @@
+test_absolute (__main__.EvidenceTests.test_absolute) ... ok
+test_boolean_exitcode (__main__.EvidenceTests.test_boolean_exitcode) ... ok
+test_complete_fixture (__main__.EvidenceTests.test_complete_fixture) ... ok
+test_duplicates (__main__.EvidenceTests.test_duplicates) ... ok
+test_empty (__main__.EvidenceTests.test_empty) ... ok
+test_environment (__main__.EvidenceTests.test_environment) ... ok
+test_failed (__main__.EvidenceTests.test_failed) ... ok
+test_hash_mismatch (__main__.EvidenceTests.test_hash_mismatch) ... ok
+test_missing_log (__main__.EvidenceTests.test_missing_log) ... ok
+test_missing_reviewer (__main__.EvidenceTests.test_missing_reviewer) ... ok
+test_missing_stage (__main__.EvidenceTests.test_missing_stage) ... ok
+test_nonzero (__main__.EvidenceTests.test_nonzero) ... ok
+test_path_escape (__main__.EvidenceTests.test_path_escape) ... ok
+test_symlink (__main__.EvidenceTests.test_symlink) ... ok
+test_tree_revision (__main__.EvidenceTests.test_tree_revision) ... ok
+test_unexecuted (__main__.EvidenceTests.test_unexecuted) ... ok
+test_wrong_global_revision (__main__.EvidenceTests.test_wrong_global_revision) ... ok
+test_wrong_stage_revision (__main__.EvidenceTests.test_wrong_stage_revision) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.007s
+
+OK

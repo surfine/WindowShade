@@ -1,0 +1,26 @@
+ok   the default language is Chinese
+ok   zh copy title is unchanged
+ok   zh join spacing is unchanged
+ok   zh control-family subtitle is unchanged
+ok   zh default search shortcut is unchanged
+ok   zh bound search shortcut is unchanged
+ok   zh no-notch hide-app subtitle is unchanged
+ok   zh press hint is unchanged
+ok   zh accessibility label joins with 。
+ok   zh silent line is unchanged
+ok   an unknown id has no line
+ok   english without a bundle falls back to Chinese
+ok   english copy title follows the draft example
+ok   english falls back to the English system name
+ok   english control-family subtitle
+ok   english keeps the Finder empty subtitle
+ok   english default search shortcut
+ok   english bound search shortcut
+ok   english hide-app subtitle takes the binding
+ok   english press hint names the key
+ok   english accessibility label joins with periods
+ok   english silent line
+ok   no English habit line still contains Chinese: []
+ok   every silent line has an English translation: []
+ok   switching back to Chinese restores the source text
+PASS: localization — zh unchanged by default, en translations complete

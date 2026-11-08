@@ -1,0 +1,18 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Welcome first-two-page baseline14 done;no product defect inferred or production changes;whole goal active.",
+    "evidence_freshness": "9 sources/59 evidence current;518 native and published consumer0;519 formal sources unchanged reuse ninth0.",
+    "edge_risk": "Actual NSWindow origin/clamp and layer cache z-order probes distinguish QA limitations from product failure;permission closure0,stored origin unchanged. Actual focus/material/z-order/motion not accepted."
+  },
+  "findings": [
+    "Incomplete-host images retained and excluded from visual acceptance. Proper production material host restores label/nav visibility.",
+    "M4 current three-step direction differs from old seven-page Welcome draft;record discrepancy rather than reverting behavior.",
+    "Capture ignores zPosition in actual minimal pixel probe. No production layers reordered for screenshots.",
+    "No additional pure tests or full optimized rebuild because no product changes and all source identities match."
+  ],
+  "updated": "2026-10-11"
+}

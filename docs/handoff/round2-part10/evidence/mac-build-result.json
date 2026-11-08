@@ -1,0 +1,82 @@
+{
+  "environment": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "sdk_build": "FAILED",
+  "signing": "NOT_RUN",
+  "application_launch": "NOT_RUN",
+  "candidate_unchanged": true,
+  "commands": [
+    {
+      "argv": [
+        "sw_vers"
+      ],
+      "cwd": null,
+      "exit_code": 0,
+      "elapsed_seconds": 0.00934220798080787,
+      "stdout": "00-stdout.txt",
+      "stderr": "00-stderr.txt"
+    },
+    {
+      "argv": [
+        "xcodebuild",
+        "-version"
+      ],
+      "cwd": null,
+      "exit_code": 0,
+      "elapsed_seconds": 0.21730074999504723,
+      "stdout": "01-stdout.txt",
+      "stderr": "01-stderr.txt"
+    },
+    {
+      "argv": [
+        "xcrun",
+        "--sdk",
+        "macosx",
+        "--show-sdk-version"
+      ],
+      "cwd": null,
+      "exit_code": 0,
+      "elapsed_seconds": 1.1486367089964915,
+      "stdout": "02-stdout.txt",
+      "stderr": "02-stderr.txt"
+    },
+    {
+      "argv": [
+        "xcrun",
+        "--find",
+        "swiftc"
+      ],
+      "cwd": null,
+      "exit_code": 0,
+      "elapsed_seconds": 0.0051980419957544655,
+      "stdout": "03-stdout.txt",
+      "stderr": "03-stderr.txt"
+    },
+    {
+      "argv": [
+        "swiftc",
+        "--version"
+      ],
+      "cwd": null,
+      "exit_code": 0,
+      "elapsed_seconds": 0.10735133400885388,
+      "stdout": "04-stdout.txt",
+      "stderr": "04-stderr.txt"
+    },
+    {
+      "argv": [
+        "bash",
+        "build.sh",
+        "--check"
+      ],
+      "cwd": "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-final-mac-3yctc6tf/candidate/prototype",
+      "exit_code": 1,
+      "elapsed_seconds": 24.153750416007824,
+      "stdout": "05-stdout.txt",
+      "stderr": "05-stderr.txt"
+    }
+  ],
+  "framework_version": "2.10.0",
+  "framework_binary_sha256": "a4b35bf38c12044686d0910dcb680560f1ff000061fbe19541c0b5e41c6c6008",
+  "exit_code": 1,
+  "reason": "SDK build result only; no runtime or release certification"
+}

@@ -1,0 +1,25 @@
+UTC 2026-10-03T05:35:24.781972+00:00
+COMMAND ['bash', '/mnt/data/ws2-part1-stage-validation/tests/run-remote-mode-tests.sh']
+EXIT 0
+CASE I1f-01 | 默认关闭 → 所有输入不产生系统动作
+ok   默认关闭
+CASE I1f-02 | 短按电视、中心、音量、电源 → 固定动作；电源只请求显示器睡眠
+ok   等待松手
+ok   电视短按启动台
+ok   中心是独立确认
+ok   不请求睡眠整机
+CASE I1f-03 | 电视半秒长按再 up → 只开刘海，不再启动台
+ok   半秒刘海
+ok   长按尾部消耗
+CASE I1f-04 | 播放长按切模式，同时另一键按住 → 两个旧 up 都不能进入新模式
+ok   切入指挥
+ok   不把旧 release 当提交
+CASE I1f-05 | 指挥模式新的完整按压 → 原样转交，长按切回的尾端不放行
+ok   原样交 D1
+ok   切回遥控
+ok   不能播放媒体
+CASE I1f-06 | 关闭、重复、取消 → 清输入且不补短按
+ok   取消无动作
+ok   取消后的 up 忽略
+ok   关闭撤销 D1 输入
+PASS I1f: 6 cases, 15 assertions, 0 failures

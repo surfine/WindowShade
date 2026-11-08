@@ -1,0 +1,30 @@
+{
+  "test_count": 25,
+  "passed": true,
+  "baseline": [
+    {
+      "input": "nan",
+      "exit_code": -4,
+      "stdout": "",
+      "trap_observed": true
+    },
+    {
+      "input": "over",
+      "exit_code": -4,
+      "stdout": "",
+      "trap_observed": true
+    },
+    {
+      "input": "bool",
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "trap_observed": false
+    },
+    {
+      "input": "fraction",
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "trap_observed": false
+    }
+  ]
+}

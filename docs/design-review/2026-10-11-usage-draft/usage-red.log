@@ -1,0 +1,1 @@
+tests/UsageReadingTests.swift:9: Precondition failed: 断言失败: 旧读数到期只预计，不许写马上恢复

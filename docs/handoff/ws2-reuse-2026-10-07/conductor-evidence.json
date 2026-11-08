@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-07",
+  "scope": "Production controller + existing Conductor page. Tests use synthetic stdio process only; no real account or assistant task.",
+  "flow": {
+    "command": "bash tests/run-conductor-owned-flow-tests.sh",
+    "chunk_id": "d155cf",
+    "wall_time_seconds": 1.0792e-05,
+    "exit_code": 0,
+    "original_token_count": 57,
+    "output": "PASS Conductor owned flow: real stdio, known session resume, draft adoption/send separation, stale target/config/IME/replay rejection, next-turn settings, start/steer/interrupt receipts, draft preservation and lock invalidation\n"
+  },
+  "legacyFlow": {
+    "command": ".build/conductor-regression/flow tests/part7/fixtures/fake-codex.py .build/conductor-regression/flow-results.json",
+    "chunk_id": "e59a92",
+    "wall_time_seconds": 7.292e-06,
+    "exit_code": 0,
+    "original_token_count": 258,
+    "output": "PASS FLOW01 local launch and actual stream completion [21]\nPASS FLOW02 resume only the locally associated project [8]\nPASS FLOW03 different project cannot reuse old thread [6]\nPASS FLOW04 actual login response and exact login ID [10]\nPASS FLOW05 interrupt RPC is not final completion [12]\nPASS FLOW06 elevation always declined by local entry [9]\nPASS FLOW07 failed turn is not successful completion [7]\nPASS FLOW08 mismatched version [7]\nPASS FLOW09 effective config mismatch [7]\nPASS FLOW10 duplicate raw JSON [7]\nPASS FLOW11 reject arbitrary auth URL [7]\nPASS FLOW12 unrelated login completion cannot authenticate [6]\nPASS FLOW13 project replacement invalidates submission [6]\nPASS FLOW14 actual lock invalidation and no automatic restart [6]\nPASS FLOW15 diagnostics are opt-in and clearable [7]\nPASS FLOW16 version-probe cancellation still awaits reaping [6]\nPASS FLOW17 version timeout does not invent a reap receipt [5]\nPASS FLOW18 login cancellation requires fresh account verification [8]\nTOTAL 18 scenarios, 145 assertions\n"
+  },
+  "pageSnapshots": {
+    "exit_code": 0,
+    "assertions": 16
+  },
+  "uiTypecheck": {
+    "exit_code": 0,
+    "flags": [
+      "-swift-version 6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors"
+    ],
+    "note": "Actual page, controller, input components; only lease protocol declarations extracted into temporary fixture. No UI launched."
+  },
+  "notRun": [
+    "native iPhone Remote input",
+    "real account/model request",
+    "human AppKit interaction",
+    "latency/energy",
+    "whole App build (parent integrates)"
+  ],
+  "sourceSHA256": {
+    "prototype/App/WS2OwnedLaunchController.swift": "b08c6f19934bd73cd371f8565cc10d34256f22c5ee0c3c24c33cd982deb9f83b",
+    "prototype/App/WS2ConductorPage.swift": "2ffee57933b31d5d3c9c93fc5afb23285850deb629d770850d7e1df937fbe65d",
+    "prototype/Core/CodexWire.swift": "082654e8bb446b86d3ab517e2f61e620cb1f01558d15f44e482abdfebc625e37",
+    "prototype/App/WS2OwnedCodexSession.swift": "b05f1a6d7aeafd72f5e8d5dea6cd8a460737d57cbf319b1c242b01a5f09d2ef8",
+    "prototype/Core/WS2OwnedProtocolHost.swift": "11defe55b4723986cdcd10cea154dfcc10f205dbb8d45eb1265c9dc84fe5b765",
+    "prototype/Core/ConductorPageSnapshot.swift": "725e4ca70bbd73696107a7f85d66e786b86bb693ec16885c0e5b74ab17e35b9f",
+    "prototype/Core/WS2OwnedScope.swift": "20102a3fbab321958f7dde9a24d69453f3a7d45d2f537fd5957a9a4df4a9d6f2",
+    "tests/ConductorOwnedFlowTests.swift": "caa04931f7cdfe45f277085952116ca8fa93a7549b834594b386a3536dcf419b",
+    "tests/fixtures/conductor-backend.py": "3cc79fb3045f3e62a6678c4bd718c017596f80b8f9bfc0bda800204bb5649afb",
+    "tests/run-conductor-owned-flow-tests.sh": "7aa7ea48306aa22b90baa8fc91c63b20c703002ef41ae5781797f46473ce1ea1"
+  },
+  "binarySHA256": {
+    ".build/conductor-owned-flow/conductor-owned-flow": "fe1361ccee8fe90d0a31c28a278e609a812d9e2443ae1ecc5e6410b58bb64b95",
+    ".build/conductor-regression/flow": "ef0692841b05b712fd5f34a9ac1dc8c1d9bb95c5455d5a9f280186cf3f0f601d"
+  }
+}

@@ -1,0 +1,275 @@
+<style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">五 身份与离开 · 第 26 张 · 番茄钟</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/BPmRiSF26X44bpUqFMAZjs">← 离开就锁</a><a href="https://claude.ai/artifact/9mbRLt1QGpsKLKip991Xe3">看与指挥 →</a></nav>
+
+<title>番茄钟</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 同一套纸面。主角是一块屏和它的刘海；下面是“符号优先”的前后对比 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#007aff;--accent-soft:#E1EEFF;--rest:#28cd41;--rest-soft:#E3F7E7;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+  --win-bg:#ECECEE;--win-card:#FFFFFF;--win-ink:#1D1D1F;--win-ink-2:#6E6E73;--win-line:rgba(0,0,0,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#0a84ff;--accent-soft:#0F2A4A;--rest:#32d74b;--rest-soft:#12301A;
+  --win-bg:#232326;--win-card:#2C2C2F;--win-ink:#F2F2F4;--win-ink-2:#A1A1A8;--win-line:rgba(255,255,255,.08);}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#0a84ff;--accent-soft:#0F2A4A;--rest:#32d74b;--rest-soft:#12301A;
+  --win-bg:#232326;--win-card:#2C2C2F;--win-ink:#F2F2F4;--win-ink-2:#A1A1A8;--win-line:rgba(255,255,255,.08);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1060px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,52px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:62ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,30px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:56px}
+p{max-width:66ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.6%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac);cursor:default}
+.wall{position:absolute;inset:0;background:radial-gradient(110% 80% at 12% 0%,#9FB5DE 0%,transparent 60%),radial-gradient(90% 80% at 100% 10%,#D3B2C9 0%,transparent 60%),radial-gradient(120% 90% at 55% 120%,#E9C29B 0%,transparent 60%),#6D7FA8}
+.screen{--pt:calc(100cqw / 1710);--sh:calc(7.74 * var(--pt));--g:#32d74b;--a:#0a84ff}
+.menubar{position:absolute;inset:0 0 auto;height:calc(34 * var(--pt));display:flex;align-items:center;gap:calc(18 * var(--pt));padding-inline:calc(18 * var(--pt));font-size:calc(13 * var(--pt));color:#fff;font-weight:600;background:rgba(20,24,36,.16)}
+.menubar span{font-weight:400;opacity:.85}.menubar .r{margin-left:auto;opacity:.9}
+.win{position:absolute;background:#fff;border-radius:calc(10 * var(--pt));box-shadow:0 calc(8 * var(--pt)) calc(24 * var(--pt)) rgba(0,0,0,.28);overflow:hidden;transform-origin:50% 0;transition:transform var(--ws-settle-t) var(--ws-settle),opacity 260ms ease-out}
+.win .bar{height:calc(28 * var(--pt));background:#F1F1F3;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;gap:calc(6 * var(--pt));padding-inline:calc(10 * var(--pt));font-size:calc(12 * var(--pt));color:#666;font-weight:600}
+.lamp{width:calc(10 * var(--pt));height:calc(10 * var(--pt));border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:calc(30 * var(--pt))}
+.lns{padding:calc(14 * var(--pt))}.lns i{display:block;height:calc(8 * var(--pt));border-radius:calc(3 * var(--pt));background:#E6E8EE;margin-bottom:calc(9 * var(--pt))}
+.win.tuck{opacity:0;transform:translate(var(--tx,0),-70%) scale(.08)}
+/* 刘海按真实比例画：185 × 33.5（屏宽的 10.8%，高宽比 0.18），底角 10.7，肩 7.74；硬件层纯黑 */
+.island{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;display:flex;align-items:center;justify-content:center;font-size:calc(13 * var(--pt));line-height:1.3;z-index:5;width:calc(185 * var(--pt));height:calc(33.5 * var(--pt));border-radius:0 0 calc(10.7 * var(--pt)) calc(10.7 * var(--pt));cursor:pointer;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC",sans-serif}
+.island::before,.island::after{content:"";position:absolute;top:0;width:var(--sh);height:var(--sh);pointer-events:none}
+.island::before{right:100%;background:radial-gradient(circle var(--sh) at 0 100%,transparent 97%,#000 100%)}
+.island::after{left:100%;background:radial-gradient(circle var(--sh) at 100% 100%,transparent 97%,#000 100%)}
+.ic{width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;gap:calc(12 * var(--pt));overflow:hidden;border-radius:inherit;transition:opacity 140ms ease-out}
+/* 紧凑两耳：耳高 33.5，耳宽按内容（这里主体 44 + 肩 7.74 = 51.74，每耳最多 52.33、主体最宽 44.59），内容贴着刘海；中间 185 是刘海本身 */
+.ic.ears{display:grid;grid-template-columns:1fr calc(185 * var(--pt)) 1fr;gap:0}
+.ic.ears>span{display:flex;align-items:center;padding-inline:calc(2 * var(--pt));white-space:nowrap}
+.ic.ears>span:first-child{justify-content:flex-end}.ic.ears>span:last-child{justify-content:flex-start}
+.ic.col{flex-direction:column;justify-content:center;align-items:center;padding:calc(39.5 * var(--pt)) calc(20 * var(--pt)) calc(10 * var(--pt));gap:calc(6 * var(--pt))}
+.ic.rowm{padding:calc(41.5 * var(--pt)) calc(14 * var(--pt)) calc(14.5 * var(--pt));gap:calc(8 * var(--pt));justify-content:center}
+.t1{font-weight:600}.t2{opacity:.65;font-size:calc(11 * var(--pt))}
+.big{font-size:calc(36 * var(--pt));font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+.num{font-variant-numeric:tabular-nums;font-weight:600}
+.ring{width:calc(18 * var(--pt));height:calc(18 * var(--pt));flex:none}
+.btns{display:flex;gap:calc(14 * var(--pt));margin-top:calc(2 * var(--pt))}
+.cb{width:calc(32 * var(--pt));height:calc(32 * var(--pt));border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center;border:0;color:#fff;cursor:pointer;padding:0}
+.cb svg{width:45%;height:45%}
+.cb:hover{background:rgba(255,255,255,.26)}
+.row{display:flex;gap:calc(8 * var(--pt));align-items:center}
+.tile{width:calc(76 * var(--pt));height:calc(104 * var(--pt));border-radius:calc(14 * var(--pt));background:#2a2a2e;flex:none}
+.tbtn{width:calc(76 * var(--pt));height:calc(104 * var(--pt));border-radius:calc(14 * var(--pt));background:#2a2a2e;display:flex;flex-direction:column;gap:calc(8 * var(--pt));align-items:center;justify-content:center;border:1.5px solid rgba(255,255,255,.25);cursor:pointer;padding:0;color:#fff;font:inherit;font-size:calc(11 * var(--pt))}
+.tbtn svg{width:calc(24 * var(--pt));height:calc(24 * var(--pt))}
+.breath{width:calc(76 * var(--pt));height:calc(76 * var(--pt));border-radius:50%;border:calc(3 * var(--pt)) solid var(--g);animation:br 5.5s ease-in-out infinite;display:grid;place-items:center}
+@keyframes br{0%,100%{transform:scale(.78);opacity:.55}50%{transform:scale(1);opacity:1}}
+.veil{position:absolute;inset:0;background:rgba(8,12,20,.0);transition:background 500ms ease;pointer-events:none;z-index:4}
+.veil.on{background:rgba(8,12,20,.28)}
+@media (prefers-reduced-motion:reduce){.win,.ic,.veil{transition:none}.breath{animation:none}}
+
+.side{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.ctl{background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 16px}
+.ctl h3{font-size:14px}
+.ctl p{margin:4px 0 0;font-size:13.5px;color:var(--ink-2)}
+.ctl .rowb{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.ctl button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.ctl button:active{transform:scale(.97)}
+.ctl button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.state{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.no{color:var(--ink-3);text-decoration:line-through}
+
+/* 设置：符号优先 */
+.ba{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.pane{background:var(--win-bg);border-radius:12px;padding:14px;font-family:var(--mac);color:var(--win-ink)}
+.pane h4{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--win-ink-2)}
+.card{background:var(--win-card);border-radius:10px;box-shadow:0 0 0 .5px var(--win-line)}
+.srow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px}
+.srow + .srow{border-top:1px solid var(--win-line)}
+.sym{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;color:#fff}
+.sym svg{width:15px;height:15px}
+.sn{font-size:13px;font-weight:500;line-height:1.35}
+.ss{font-size:11.5px;color:var(--win-ink-2);line-height:1.4}
+.sw{width:30px;height:18px;border-radius:9px;background:#28cd41;position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:14px;width:14px;height:14px;border-radius:50%;background:#fff}
+.info{width:16px;height:16px;border-radius:50%;border:1.3px solid var(--win-ink-2);color:var(--win-ink-2);font-size:10px;display:inline-grid;place-items:center;margin-left:4px;font-weight:600;vertical-align:1px}
+.mandate{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:22px 24px}
+.mandate ol{margin:10px 0 0;padding-left:1.5em;display:grid;gap:8px}
+.mandate li b{color:var(--ink)}.mandate li span{color:var(--ink-2)}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:84ch}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade · 设计稿 · 2026-10-03 · 番茄钟</p>
+  <h1>专注时聊天收起来，休息时桌面收起来</h1>
+  <p class="lede">番茄钟没有自己的窗口。<b>倒计时走在刘海两耳里，展开才占前景；专注时聊天收进刘海，休息时整个桌面收进刘海，碰一下就回来。</b>用的全是 WindowShade 已有的东西。设置只有两项。</p>
+</header>
+
+<div class="stage">
+  <div class="mac"><div class="screen" id="screen">
+    <div class="wall"></div>
+    <div class="menubar"><b>Xcode</b><span>文件</span><span>编辑</span><span>窗口</span><span class="r">周六 14:00</span></div>
+    <div class="win" id="wA" style="left:5%;top:15%;width:54%;height:64%;--tx:-10%"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">ContentView.swift</span></div><div class="lns"><i style="width:80%"></i><i style="width:62%"></i><i style="width:74%"></i><i style="width:50%"></i></div></div>
+    <div class="win" id="wB" style="left:47%;top:26%;width:36%;height:46%;--tx:0%"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">预览</span></div><div class="lns"><i style="width:66%"></i><i style="width:44%"></i></div></div>
+    <div class="win" id="wC" style="left:68%;top:50%;width:27%;height:38%;--tx:-60%"><div class="bar" style="background:#E9F6EC"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">微信</span></div><div class="lns"><i style="width:60%"></i><i style="width:38%"></i><i style="width:52%"></i></div></div>
+    <div class="veil" id="veil"></div>
+    <div class="island" id="island" role="button" tabindex="0" aria-label="刘海"><div class="ic" id="ic"></div></div>
+  </div></div>
+  <div class="side">
+    <div class="ctl"><h3>试一试</h3><p>长按刘海 0.5 秒展开那一排，点末尾的番茄钟开始。开始后计时只在两耳里走（左耳环，右耳分钟），长按刘海才展开占前景。专注用强调蓝，休息用系统绿并配杯子符号和“休息”两个字。时间快进了 20 倍：25 分钟只要 75 秒，休息 15 秒；点“跳到最后几秒”更快。休息时点一下屏幕，窗口回来。</p>
+      <div class="rowb"><button type="button" id="hover">长按刘海</button><button type="button" id="skip">跳到最后几秒</button><button type="button" id="speed" aria-pressed="true">快进 20×</button></div>
+      <p class="state" id="st">还没开始</p></div>
+    <div class="ctl"><h3>设置只有两项</h3><p>专注时长：25 分钟（休息 5）/ 50 分钟（休息 10）<br>专注时把聊天收进刘海：开</p>
+      <div class="rowb"><button type="button" id="d25" aria-pressed="true">25 分钟</button><button type="button" id="d50" aria-pressed="false">50 分钟</button><button type="button" id="chat" aria-pressed="true">聊天收进刘海</button></div></div>
+  </div>
+</div>
+
+<section>
+  <h2>从 Tomato Ritual 取什么</h2>
+  <p class="sub">它把“休息”做成仪式：多屏毛玻璃、呼吸光环、按 Esc 随时退出。我们取这份仪式感，但不另造幕布。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>它的做法</th><th>WindowShade</th></tr></thead>
+    <tbody>
+      <tr><td>多屏毛玻璃幕布 + 呼吸光环，Esc 退出</td><td><b>全部收进刘海</b>：桌面一下子空了，刘海里一圈呼吸的光；任意键或点一下，窗口原样回来</td></tr>
+      <tr><td>按截止时间计时，睡眠合盖不漂</td><td>照做</td></tr>
+      <tr><td>锁屏、离开自动暂停</td><td>专注暂停；休息照走</td></tr>
+      <tr><td>菜单栏、迷你 HUD、桌面小组件</td><td>刘海一处全包了</td></tr>
+      <tr><td>三个全局快捷键</td><td>一个：开始 / 暂停（默认空着）</td></tr>
+      <tr><td>白噪音、热力图、导出、任务名、长休息</td><td class="no">不做</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>全 App：一个符号能说清，就不写一句话</h2>
+  <p class="sub">现在设置里 71 条副标题，39 条超过 20 个字，19 条超过 30 个字；整个 App 只有 27 处用了 SF Symbols。改成：每行前面一个符号色块，名字说事，副标题最多一行，细节进 <code>ⓘ</code>。</p>
+  <div class="ba">
+    <div class="pane"><h4>现在</h4><div class="card">
+      <div class="srow"><span></span><div><div class="sn">按窗口切换</div><div class="ss">按住连按 Tab 一扇一扇地挑，松手切过去；收着的窗口也在里面。选 ⌘Tab 会换掉系统的 App 切换</div></div><span class="sw"></span></div>
+      <div class="srow"><span></span><div><div class="sn">画中画当前窗口</div><div class="ss">窗口缩成一张实时画面浮在屏幕角落，再按一次回到原处；把标题栏拖到屏幕角落停一下也行</div></div><span class="sw"></span></div>
+      <div class="srow"><span></span><div><div class="sn">分屏把手</div><div class="ss">两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉</div></div><span class="sw"></span></div>
+    </div></div>
+    <div class="pane"><h4>改后</h4><div class="card">
+      <div class="srow"><span class="sym" style="background:#5E8BE8"><svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.4"><rect x="1.5" y="3" width="9" height="7" rx="1.2"/><rect x="5.5" y="6" width="9" height="7" rx="1.2" fill="#5E8BE8"/></svg></span><div><div class="sn">按窗口切换<span class="info">i</span></div><div class="ss">⌥Tab 一扇一扇挑</div></div><span class="sw"></span></div>
+      <div class="srow"><span class="sym" style="background:#30B0C7"><svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><rect x="8" y="8" width="5" height="4" rx=".8" fill="#fff"/></svg></span><div><div class="sn">画中画<span class="info">i</span></div><div class="ss">窗口缩成实时画面</div></div><span class="sw"></span></div>
+      <div class="srow"><span class="sym" style="background:#8E8E93"><svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5"/><path d="M8 2.5v11"/></svg></span><div><div class="sn">分屏把手<span class="info">i</span></div><div class="ss">拖中间的竖条，两扇一起变</div></div><span class="sw"></span></div>
+    </div></div>
+  </div>
+  <p class="sub" style="margin-top:12px">符号对照表在 <code>docs/design-system.md</code> §4.11，70 个符号名都在这台 Mac 上核对过；规则写进了 <code>docs/copy-guide.md</code> 第 7 条。</p>
+</section>
+
+<section>
+  <div class="mandate">
+    <h2>写给接手的人</h2>
+    <ol>
+      <li><b>番茄钟不开窗口。</b><span>只用刘海、实时活动、收进刘海、全部收进刘海。</span></li>
+      <li><b>按截止时刻计时。</b><span>不累加 tick；紧凑态一分钟醒一次，进度环交给 Core Animation。</span></li>
+      <li><b>设置只有两项。</b><span>要加第三项，先说服 Aaron。</span></li>
+      <li><b>休息不锁人。</b><span>任意键、点一下、Esc 都让窗口回来，休息照走。</span></li>
+      <li><b>符号优先。</b><span>新界面每行一个 SF Symbol，副标题一行以内；不用 <code>faceid</code> 指刷脸解锁。</span></li>
+    </ol>
+    <p class="sub" style="margin:12px 0 0">规格：<code>docs/pomodoro.md</code>。</p>
+  </div>
+</section>
+
+<footer>依据：Aaron 2026-10-03 的要求；Tomato Ritual 官网与 V2EX 首发帖（只看做法，它是闭源的付费 App）；docs/notch.md、docs/live-activities.md、docs/face-unlock.md 的私人 App 名单；对 prototype/ 的检索。屏幕是示意。</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var island=$('island'),ic=$('ic'),veil=$('veil');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var I={timer:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="9" r="5.5"/><path d="M8 9V6M6.5 1.8h3"/></svg>',
+    pause:'<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3.5" y="2.5" width="3" height="11" rx=".8"/><rect x="9.5" y="2.5" width="3" height="11" rx=".8"/></svg>',
+    play:'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 2.5v11l9-5.5z"/></svg>',
+    fwd:'<svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3v10l7-5zM9 3v10l5-5z"/><rect x="13" y="3" width="1.6" height="10"/></svg>',
+    stop:'<svg viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg>',
+    cup:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M2.5 6h9v4a3 3 0 0 1-3 3h-3a3 3 0 0 1-3-3z"/><path d="M11.5 7h1a1.5 1.5 0 0 1 0 3h-1M1.5 14.5h12"/></svg>'};
+  var S={phase:'idle',dur:25,deadline:0,left:0,paused:false,count:2,chat:true,speed:20,expanded:false,away:false};
+  // 刘海形状
+  function spring(t,r,z){var w=2*Math.PI/r;if(z>=1)return 1-(1+w*t)*Math.exp(-w*t);var wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t))}
+  var GR='#32d74b',AC='#0a84ff';   /* 系统绿（休息）/ 强调蓝（专注），island 在纯黑上取深色外观的值；休息另配杯子符号和字 */
+  var cur={w:185,h:33.5,r:10.7},anim,key='',lp=0;
+  function shape(w,h,r,sr,sz){if(key===w+'/'+h)return;key=w+'/'+h;var f={w:cur.w,h:cur.h,r:cur.r},t0=performance.now();if(anim)anim.stop=true;var a={};anim=a;
+    function ap(p){cur={w:f.w+(w-f.w)*p,h:f.h+(h-f.h)*p,r:f.r+(r-f.r)*p};island.style.width='calc('+cur.w+' * var(--pt))';island.style.height='calc('+cur.h+' * var(--pt))';island.style.borderRadius='0 0 calc('+cur.r+' * var(--pt)) calc('+cur.r+' * var(--pt))'}
+    if(reduce){ap(1);return}(function k(){if(a.stop)return;var t=(performance.now()-t0)/1000;ap(spring(t,sr,sz));if(t<1.5)requestAnimationFrame(k);else ap(1)})()}
+  function now(){return performance.now()/1000*S.speed}
+  function total(){return (S.phase==='rest'?(S.dur===25?5:10):S.dur)*60}
+  function remain(){return S.paused?S.left:Math.max(0,S.deadline-now())}
+  function ring(color,frac,cup){var c=2*Math.PI*6.5;return '<svg class="ring" viewBox="0 0 16 16">'+(cup?'<g transform="translate(4.4 4.4) scale(.45)" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round"><path d="M2.5 6h9v4a3 3 0 0 1-3 3h-3a3 3 0 0 1-3-3z"/><path d="M11.5 7h1a1.5 1.5 0 0 1 0 3h-1M1.5 14.5h12"/><\/g>':'')+'<circle cx="8" cy="8" r="6.5" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="2.2"/><circle cx="8" cy="8" r="6.5" fill="none" stroke="'+color+'" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+(c*(1-frac))+'" transform="rotate(-90 8 8)"/></svg>'}
+  function fmt(s){s=Math.ceil(s);return s>60?Math.ceil(s/60)+' 分':Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+  function mmss(s){s=Math.ceil(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+  var alertUntil=0,alertHTML='';
+  function render(){var t=performance.now();
+    if(t<alertUntil){shape(408,84,24,.42,.84);ic.className='ic col';ic.innerHTML=alertHTML;return}   /* 提醒 408 × 84，圆角 24 */
+    if(S.phase==='idle'){if(S.expanded){shape(408,160,28,.40,.92);ic.className='ic rowm';ic.innerHTML='<div class="row"><span class="tile"></span><span class="tile"></span><span class="tile"></span></div><button class="tbtn" id="startBtn" aria-label="开始番茄钟">'+I.timer+'<span>番茄钟<\/span></button>'}else{shape(185,33.5,10.7,.38,1);ic.className='ic';ic.innerHTML=''}return}   /* 那一排 408 × 160，格子 76 × 104，圆角 28 */
+    var r=remain(),frac=1-r/total(),rest=S.phase==='rest',col=rest?GR:AC;
+    if(rest&&S.away){shape(300,151.5,28,.40,.92);ic.className='ic col';ic.innerHTML='<div class="breath"><span class="t1">'+fmt(r)+'</span></div><span class="t2">休息 · 看看远处 · 点一下回来</span>';return}   /* 大卡例外：宽按内容（示意 300），刘海下方 118，底角 28 */
+    if(S.expanded){shape(280,151.5,28,.40,.92);ic.className='ic col';ic.innerHTML='<span class="t2">'+(rest?'休息':'专注')+(S.paused?' · 已暂停':'')+' · 今天第 '+(S.count+1)+' 个</span><span class="big">'+mmss(r)+'</span><div class="btns"><button class="cb" data-a="pp" aria-label="'+(S.paused?'继续':'暂停')+'">'+(S.paused?I.play:I.pause)+'</button><button class="cb" data-a="skip" aria-label="跳过">'+I.fwd+'</button><button class="cb" data-a="stop" aria-label="结束">'+I.stop+'</button></div>';return}
+    shape(273,33.5,10.7,.38,1);ic.className='ic ears';ic.innerHTML='<span>'+ring(col,frac,rest)+'<\/span><i><\/i><span class="num">'+(S.paused?'暂停':fmt(r))+'</span>'}   /* 计时只在耳里走：左耳环（休息配杯子），右耳分钟；耳宽 44 + 肩 7.74 */
+  function say(h,ms){alertHTML=h;alertUntil=performance.now()+(reduce?Math.min(ms,1500):ms);key=''}
+  function tuck(ids,on){ids.forEach(function(id){$(id).classList.toggle('tuck',on)})}
+  function st(t){$('st').textContent=t}
+  function start(){S.phase='focus';S.paused=false;S.deadline=now()+S.dur*60;S.expanded=false;if(S.chat)tuck(['wC'],true);st('专注中'+(S.chat?' · 微信收进了刘海':''))}
+  function toRest(){S.count++;S.phase='rest';S.paused=false;S.deadline=now()+total();S.away=true;tuck(['wA','wB','wC'],true);veil.classList.add('on');say('<span class="row">'+'<span style="width:calc(16 * var(--pt));height:calc(16 * var(--pt));display:inline-block;color:'+GR+'">'+I.cup+'</span><span class="t1">休息 '+(S.dur===25?5:10)+' 分钟</span></span><span class="t2">专注完成 · 今天第 '+S.count+' 个</span>',2400);st('休息 · 桌面全部收进了刘海')}
+  function back(){if(S.phase==='rest'&&S.away){S.away=false;tuck(['wA','wB','wC'],false);veil.classList.remove('on');st('休息照走 · 窗口回来了');key=''}}
+  function endRest(){S.phase='idle';S.away=false;tuck(['wA','wB','wC'],false);veil.classList.remove('on');say('<span class="row"><span class="t1">休息好了</span><span class="t2">再来一个？</span><button class="cb" data-a="again" aria-label="再来一个" style="width:calc(22 * var(--pt));height:calc(22 * var(--pt))">'+I.play+'</button></span>',5000);st('休息结束')}
+  function stopAll(){S.phase='idle';S.paused=false;S.away=false;tuck(['wA','wB','wC'],false);veil.classList.remove('on');st('结束了');key=''}
+  /* 长按刘海 0.5 秒才展开（指针停上去不展开）；Esc 或点屏幕别处收起 */
+  island.addEventListener('pointerdown',function(e){if(e.target.closest('button'))return;clearTimeout(lp);lp=setTimeout(function(){S.expanded=true;S.lp=true;key=''},500)});
+  ['pointerup','pointerleave','pointercancel'].forEach(function(n){island.addEventListener(n,function(){clearTimeout(lp)})});
+  island.addEventListener('click',function(e){var b=e.target.closest('button');
+    if(S.lp){S.lp=false;return}
+    if(!b){if(S.phase==='rest'&&S.away)back();return}e.stopPropagation();
+    if(b.id==='startBtn')start();var a=b.dataset.a;
+    if(a==='pp'){if(S.paused){S.deadline=now()+S.left;S.paused=false}else{S.left=remain();S.paused=true}}
+    if(a==='skip'){if(S.phase==='focus')toRest();else if(S.phase==='rest')endRest()}
+    if(a==='stop')stopAll();
+    if(a==='again'){alertUntil=0;start()}key=''});
+  $('screen').addEventListener('click',function(e){if(!e.target.closest('#island')){back();if(S.expanded){S.expanded=false;key=''}}});
+  document.addEventListener('keydown',function(e){back();if(e.key==='Escape'&&S.expanded){S.expanded=false;key=''}});
+  $('hover').onclick=function(){S.expanded=!S.expanded;this.setAttribute('aria-pressed',S.expanded);key=''};
+  $('skip').onclick=function(){if(S.phase==='idle')start();S.paused=false;S.deadline=now()+4*S.speed;key=''};
+  $('speed').onclick=function(){var r=remain();S.speed=S.speed===20?1:20;S.deadline=now()+r;this.setAttribute('aria-pressed',S.speed===20)};
+  function setDur(d){if(S.phase!=='idle')return;S.dur=d;$('d25').setAttribute('aria-pressed',d===25);$('d50').setAttribute('aria-pressed',d===50)}
+  $('d25').onclick=function(){setDur(25)};$('d50').onclick=function(){setDur(50)};
+  $('chat').onclick=function(){S.chat=!S.chat;this.setAttribute('aria-pressed',S.chat)};
+  (function loop(){if(S.phase!=='idle'&&!S.paused&&remain()<=0){if(S.phase==='focus')toRest();else endRest()}render();setTimeout(loop,reduce?250:120)})();
+})();
+</script>

@@ -1,0 +1,20 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-composition-and-motion-baseline/validation.json",
+  "artifact_sha256": "71d16af0a800d8b7a0e24dee9ed3dd070ccc0a910df272b1b16a18c7154296d3",
+  "lenses": {
+    "task_contract": "bounded baselines delivered; no product changes promised in25, product repair requires next framed block",
+    "evidence_freshness": "31 source/49 evidence binding92b8bffa; actual12/30/180 records and source matches; separate English baseline0",
+    "edge_risk": "motion configuration direction failed, not hidden compositor success; unique privacy icon misaligns; rich exit remains uncovered"
+  },
+  "findings": [
+    "Do not promote structural consumer0 to animation/design pass: direction false and sole icon38 offset explicitly documented.",
+    "Actual Cocoa perturbation doubles with travel, allowing normalized velocity conversion design.",
+    "Page fixture contains mock grant buttons for all false permissions; this is stress, not real Page routing.",
+    "No signed app, real sources, actions, hardware, performance, VO or English completeness accepted.",
+    "Continue immediately with26 repair contract; whole goal stays active."
+  ]
+}

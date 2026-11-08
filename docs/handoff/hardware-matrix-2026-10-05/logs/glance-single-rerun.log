@@ -1,0 +1,12 @@
+^DINFO glance: accessibility=true screenRecording=true
+INFO glance: fold took 1787ms until the strip showed
+INFO glance: hide=hidden liveExpected=true strip=(160.0, 678.0, 640.0, 34.0)
+PASS glance: passing over the strip shows nothing
+PASS glance: shown 281ms after the pointer arrived, live picture at 683ms, card 640x418 hanging under the strip, window unhidden in place fully under cover (backdrop in the gap), frontmost app unchanged
+PASS glance: picture keeps updating (28 frames in 1s)
+PASS glance: moving from the strip onto the picture keeps it open
+PASS glance: closes 311ms after the pointer leaves; window put away again
+PASS glance: click on the strip shows it in 49ms
+PASS glance: click expands in place (window back in 31ms, no gap)
+PASS glance: suite (single window)
+EXIT:0

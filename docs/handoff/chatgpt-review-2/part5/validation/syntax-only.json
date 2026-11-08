@@ -1,0 +1,114 @@
+[
+  {
+    "path": "overlay/prototype/App/WS2CodexApprovalHost.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/App/WS2DeviceActionHost.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/App/WS2GameControllerBridge.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/App/WS2OwnedCodexSession.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Core/WS2BoundedOutbox.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Core/WS2FocusEffectPlan.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Core/WS2SemanticInputRouter.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2CompanionTCPTransport.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2DuplexProcess.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2FocusEffectExecutor.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2KeychainPeerStorage.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2PairSetupCrypto.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2PairSetupServer.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "overlay/prototype/Support/WS2PeerRepository.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "tests/MacPairCryptoTests.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  },
+  {
+    "path": "optional-srp/Sources/WS2SRPAdapter/WS2SRPAdapter.swift",
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "mac_sdk_loaded": false
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "fixtures": [
+    {
+      "method": "thread/start",
+      "schema": "ThreadStartParams.json",
+      "schemaSHA256": "792e2f32e37cece971bd616664ea2053741acbed4e9c92e9d1766427718f2ecd",
+      "status": "PASS"
+    },
+    {
+      "method": "turn/start",
+      "schema": "TurnStartParams.json",
+      "schemaSHA256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea",
+      "status": "PASS"
+    },
+    {
+      "method": "thread/resume",
+      "schema": "ThreadResumeParams.json",
+      "schemaSHA256": "8ac68582a81d60940b10b330be8546123f56bfe246b56f8a4f121da00f347cf2",
+      "status": "PASS"
+    },
+    {
+      "method": "model/list",
+      "schema": "ModelListParams.json",
+      "schemaSHA256": "de29a536c00a5b8f46f34dba417dabd93365305571a8ed200e33bea85db68b5a",
+      "status": "PASS"
+    }
+  ],
+  "boundary": "JSON shape only, no transport, permission or CLI semantics"
+}

@@ -1,0 +1,1402 @@
+{
+  "frames" : [
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "请选择模型"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "程度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : true,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "",
+      "height" : 454,
+      "image" : "light-before-launch.png",
+      "intersectsScreen" : false,
+      "isBusy" : false,
+      "model" : "",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "idle",
+      "status" : "尚未启动",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "light-ready.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "ready",
+      "status" : "可以发送",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "hidden" : true,
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "本次启用"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "使用此模型"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "返回会话"
+        }
+      ],
+      "contentHeight" : 196,
+      "contentWidth" : 720,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 230,
+      "image" : "light-ready-model-picker.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "ready",
+      "pickerModels" : [
+        "fixture-a",
+        "fixture-b"
+      ],
+      "pickerWidth" : 1440,
+      "status" : "可以发送",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 721
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "设计样件草稿 native-preview",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "light-draft.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "ready",
+      "status" : "可以发送",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "设计样件草稿 native-preview",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "light-running.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "助手已接收",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "running",
+      "status" : "助手正在运行",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "light-completed.png",
+      "interruptPhase" : "ready",
+      "interruptStatus" : "助手已停止",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "助手已接收",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "completed",
+      "status" : "助手已完成",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "medium"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : true,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "light-stopped.png",
+      "intersectsScreen" : false,
+      "isBusy" : false,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "stopped",
+      "reapsObserved" : 1,
+      "status" : "已断开，直属进程已终止",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "medium"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : true,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "dark-before-launch.png",
+      "intersectsScreen" : false,
+      "isBusy" : false,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "stopped",
+      "status" : "已断开，直属进程已终止",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "dark-ready.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "ready",
+      "status" : "可以发送",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "hidden" : true,
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "本次启用"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "使用此模型"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "返回会话"
+        }
+      ],
+      "contentHeight" : 196,
+      "contentWidth" : 720,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 230,
+      "image" : "dark-ready-model-picker.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "ready",
+      "pickerModels" : [
+        "fixture-a",
+        "fixture-b"
+      ],
+      "pickerWidth" : 1440,
+      "status" : "可以发送",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 721
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "设计样件草稿 native-preview",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "dark-draft.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "ready",
+      "status" : "可以发送",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "设计样件草稿 native-preview",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "dark-running.png",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "助手已接收",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "running",
+      "status" : "助手正在运行",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "medium"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "dark-completed.png",
+      "interruptPhase" : "ready",
+      "interruptStatus" : "助手已停止",
+      "intersectsScreen" : false,
+      "isBusy" : true,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "助手已接收",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "completed",
+      "status" : "助手已完成",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    },
+    {
+      "activeApplication" : false,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择项目…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "选择 Codex…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "仅本次保留诊断尾部"
+        },
+        {
+          "enabled" : false,
+          "hidden" : false,
+          "title" : "启动"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "登录 ChatGPT"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "取消登录"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "恢复上次会话"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "fixture-a"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "medium"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "选择模型…"
+        },
+        {
+          "enabled" : true,
+          "hidden" : true,
+          "title" : "指挥模式"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "发送"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "停止本轮"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "断开助手"
+        },
+        {
+          "enabled" : false,
+          "hidden" : true,
+          "title" : "退出登录"
+        },
+        {
+          "enabled" : true,
+          "hidden" : false,
+          "title" : "查看诊断"
+        }
+      ],
+      "contentHeight" : 420,
+      "contentWidth" : 620,
+      "draft" : "",
+      "effort" : "medium",
+      "height" : 454,
+      "image" : "dark-stopped.png",
+      "intersectsScreen" : false,
+      "isBusy" : false,
+      "model" : "fixture-a",
+      "noRealAssistant" : true,
+      "notice" : "",
+      "offscreenX" : -8000,
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "stopped",
+      "reapsObserved" : 1,
+      "status" : "已断开，直属进程已终止",
+      "synthetic" : true,
+      "visibleWindow" : true,
+      "width" : 621
+    }
+  ]
+}

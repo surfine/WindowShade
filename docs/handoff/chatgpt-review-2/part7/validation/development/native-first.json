@@ -1,0 +1,66 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-build-_v4kl3ku/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11885544699998718,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native",
+      "/tmp/ws2-build-_v4kl3ku/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedLaunchController.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/TestSupport.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/NativeTests.swift",
+      "-o",
+      "/tmp/ws2-build-_v4kl3ku/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 7.228665826999986,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-build-_v4kl3ku/suite",
+      "/mnt/data/WindowShade2-round2-part7/fixtures/native-child.py",
+      "/opt/pyvenv/bin/python3",
+      "/mnt/data/WindowShade2-round2-part7/validation/native-results.json"
+    ],
+    "exit_code": -4,
+    "elapsed_seconds": 2.078086082000027,
+    "stdout": "",
+    "stderr": "suite/TestSupport.swift:11: Fatal error: FAIL NATIVE02 inherited descriptor descendant cannot delay direct exit: direct exit before descendant's .9 second marker\n\n*** Signal 4: Backtracing from 0x7fdaaf0b6788... done ***\n\n*** Program crashed: Illegal instruction at 0x00007fdaaf0b6788 ***\n\nPlatform: x86_64 Linux (Debian GNU/Linux 13 (trixie))\n\nThread 0 \"suite\":\n\n  0      0x00007fdaad9b9687 <unknown> in libc.so.6\n  1 [ra] 0x00007fdaaeb1da39 _dispatch_sig_thread + 8 in libdispatch.so\n...\n\nThread 1:\n\n  0      0x00007fdaad9c49ee <unknown> in libc.so.6\n  1 [ra] 0x00007fdaaeb1ce02 _dispatch_mgr_invoke + 129 in libdispatch.so\n  2 [ra] 0x00007fdaaeb1cd6d _dispatch_mgr_thread + 108 in libdispatch.so\n  3 [ra] 0x00007fdaaeb1fee5 _dispatch_worker_thread + 436 in libdispatch.so\n  4 [ra] 0x00007fdaad9bcb7b <unknown> in libc.so.6\n...\n\nThread 2:\n\n  0  0x00007fdaad9c49ee <unknown> in libc.so.6\n...\n\nThread 3:\n\n  0  0x00007fdaad9c49ee <unknown> in libc.so.6\n...\n\nThread 4 crashed:\n\n  0                  0x00007fdaaf0b6788 _assertionFailure(_:_:file:line:flags:) + 264 in libswiftCore.so\n  1 [ra]             0x0000558492bf8850 TestLog.check(_:_:) + 799 in suite\n  2 [ra]             0x0000558492bfb08f static NativeTests.main() + 206 in suite\n  3 [async]          0x0000558492bfe270 static NativeTests.$main() in suite\n  4 [async] [system] 0x0000558492bfe430 async_MainTQ0_ in suite\n  5 [async] [thunk]  0x0000558492bfe4f0 thunk for @escaping @convention(thin) @async () -> () in suite\n  6 [async] [thunk]  0x0000558492bfe5f0 partial apply for thunk for @escaping @convention(thin) @async () -> () in suite\n  7 [async] [system] 0x00007fdaaeda45e0 completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*) in libswift_Concurrency.so\n...\n\nThread 5:\n\n  0  0x00007fdaad9c49ee <unknown> in libc.so.6\n...\n\nThread 6:\n\n  0  0x00007fdaad9c49ee <unknown> in libc.so.6\n...\n\n\nRegisters:\n\nrax 0x0000000200000003  8589934595\nrdx 0x0000000000000002  2\nrcx 0xfffffffe00000000  18446744065119617024\nrbx 0x0000000000000003  3\nrsi 0x00007fdaa0006d88  03 00 00 00 00 00 00 00 a0 00 00 00 00 00 00 80  ········ ·······\nrdi 0x0000000000000001  1\nrbp 0x00007fdaa9a828d0  00 2a a8 a9 da 7f 00 00 50 88 bf 92 84 55 00 00  ·*¨©Ú···P·¿··U··\nrsp 0x00007fdaa9a82860  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ················\n r8 0x0000000000000090  144\n r9 0x0000000000000078  120\nr10 0x0000000000000000  0\nr11 0x0000000000000000  0\nr12 0x00007fdaa9a83688  00 00 00 00 00 00 00 00 a0 7d 3e be 84 55 00 00  ········ }>¾·U··\nr13 0x00007fdaa9a829a8  78 00 00 00 00 00 00 f0 80 6d 00 a0 da 7f 00 00  x······ð·m· Ú···\nr14 0x00005584be3e8000  b0 7f 3e be 84 55 00 00 70 e2 bf 92 84 55 00 00  °·>¾·U··pâ¿··U··\nr15 0x00005584be3e7da0  20 79 dc ae da 7f 00 00 03 00 00 00 00 00 00 00   yÜ®Ú···········\nrip 0x00007fdaaf0b6788  0f 0b 48 8d 35 7f 0c fb ff 48 8d 55 a0 45 31 e4  ··H·5··ûÿH·U E1ä\n\nrflags 0x0000000000010206  PF\n\ncs 0x0033  fs 0x0000  gs 0x0000\n\n\nImages (15 omitted):\n\n0x0000558492b30000–0x0000558492bfe931 d9c89da0d92f199470ebff3d68562575b9ffaf26 suite                   /tmp/ws2-build-_v4kl3ku/suite\n0x00007fdaad92a000–0x00007fdaadab48fd c495b62edadd6c356265942ec1282d98058a7b41 libc.so.6               /usr/lib/x86_64-linux-gnu/libc.so.6\n0x00007fdaaeaeb000–0x00007fdaaeb33240 c6fa65ca766b6c0742ff462bbd97f5f9937651df libdispatch.so          /usr/local/swift/usr/lib/swift/linux/libdispatch.so\n0x00007fdaaed31000–0x00007fdaaedc1080 493a5257250e4963477b8a6d418481e8db54e2c4 libswift_Concurrency.so /usr/local/swift/usr/lib/swift/linux/libswift_Concurrency.so\n0x00007fdaaedd4000–0x00007fdaaf3851e8 fd1782c519b557fc55329e9a457a811e94945645 libswiftCore.so         /usr/local/swift/usr/lib/swift/linux/libswiftCore.so\n\nBacktrace took 0.03s\n\n"
+  }
+]

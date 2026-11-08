@@ -1,0 +1,65 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/Users/aaron/Documents/WindowShade/prototype/Native/WS2Child.c",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-fba7p0yo/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.24626341598923318,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-fba7p0yo/child.o",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/Contracts.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2QuitBarrier.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2StrictJSON.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedScope.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/AgentSessions.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2ProjectDirectory.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2VersionProbe.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedCodexSession.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedLaunchController.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part7/tests/TestSupport.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part7/tests/CoreTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-fba7p0yo/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 18.528913333982928,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-fba7p0yo/suite",
+      "/Users/aaron/Documents/WindowShade/tests/part7/validation/core-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.34178179199807346,
+    "stdout": "PASS JSON01 empty object [1]\nPASS JSON02 nested [1]\nPASS JSON03 duplicate [1]\nPASS JSON04 escaped duplicate [1]\nPASS JSON05 nested duplicate [1]\nPASS JSON06 surrogate pair [1]\nPASS JSON07 lone high surrogate [1]\nPASS JSON08 lone low surrogate [1]\nPASS JSON09 leading zero [1]\nPASS JSON10 fraction exponent [1]\nPASS JSON11 trailing data [1]\nPASS JSON12 trailing comma [1]\nPASS JSON13 invalid escape [1]\nPASS JSON14 raw control [1]\nPASS JSON15 unicode [1]\nPASS JSON16 incomplete exponent [1]\nPASS JSON17 deep [1]\nPASS JSON18 whitespace [1]\nPASS JSON19 size and node budgets [3]\nPASS URL01 browser scheme and exact host [8]\nPASS WIRE01 duplicate keys close before RPC interpretation [2]\nPASS QUIT01 both owners must settle [3]\nPASS QUIT02 updater alone cannot release child [3]\nPASS WIRE02 ambiguous result/error envelope [2]\nPASS QUIT03 veto and double begin [3]\nPASS PROFILE01 creates private state without overwriting changes [6]\nPASS PROFILE02 project configuration and linked state reject [3]\nTOTAL 27 scenarios, 51 assertions\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,1170 @@
+--- /dev/null
++++ b/docs/handoff/round2-part9/INTEGRATION.md
+@@ -0,0 +1,24 @@
++# 第九份：修复旧窗口路径，不再把未知当成功
++
++直接使用统一 v9 的 `candidate-repo/`。本份精确基线为 v8 的 1164 个文件，不是公开仓库当前 HEAD。已有更新的工作区按 `base-sources/`、`overlay/` 和 manifest 三方合并；不要覆盖用户改动，不要重复叠前八份。
++
++本份已经修复实际的 FoldCompletion、FoldTransaction、ShadeController、Reconcile 和 AX 回调路径，并修复 EffectFrameAwaiter 的严格 Swift 6 隔离问题。它没有新建平行窗口管理器，也没有把这些实际代码再留作下一份设计任务。先运行 README 的命令，再做完整 Mac 构建；不要降低 Swift 版本、屏蔽并发错误或删掉 Sparkle 来获得通过。
++
++## 本次已经定下并写入的行为
++
++收起结果分成 hidden、visible、unknown。缺失 AX 属性、类型不对、窗口身份不符或系统锁态未知，都不能报告隐藏成功。一般窗口不以离开当前 on-screen 列表作为隐藏证明。未知时不换另一种方法继续修改窗口，保留原恢复记录和人工恢复入口。
++
++完成通知绑定具体 transaction 和捕获的 waiter tokens，先从账中整批取出，再排队通知。通知真正执行前还要重查当前事务、启动与锁态代次、显示上下文和有效期。布尔 false 包含未知、过期、取消，绝不等于窗口没有被修改或已经恢复。
++
++后台巡检的结果随窗口、进程、事务、隐藏方法、boot、sessionEpoch、presentation 和采样时刻返回；旧结果不能清理新状态。AX observer 使用本次注册的单调 routeID，不能再拿 windowID 直接路由。通知只是核查提示，不直接兑换恢复或授权。
++
++首帧等待显式继承调用者隔离；读取到帧后还会重查取消、捕获代次和期限。不要给帧对象随意加 Sendable 或将所有调用硬搬到 MainActor。
++
++## 执行顺序
++
++1. 在统一候选运行新 regression/frame 和旧 duo、part8 input/fold/flow。每套分别留命令与输出。第七份和更早回归命令也在 README。
++2. Mac 上执行隔离的 `tests/run-mac-check.sh`。本轮 Linux 未取得 SDK，纯逻辑通过不能替代这个步骤。先修实际错误，再观察窗口。
++3. 按工单 02 验证原收起、手动恢复、连续重收、切换 Space、权限丢失和锁屏。unknown 时恢复入口必须仍在，不能为了界面干净直接删除 journal。
++4. 按工单 03 检验浏览器完成通知、首帧和慢窗口。原生 resize 不再通过嵌套 RunLoop 等待；较慢应用可能更常走已有 proxy fallback，需要真实对照。
++
++完整 T3 自动恢复、配对接收、原生允许审批和系统身份后端没有因此完成。剩余的实际代码与证据分列在 REMAINING。保留默认只读助手，不改批准策略，不启用自动窗口效果，不改版本、更新源或签名身份。
+--- /dev/null
++++ b/docs/handoff/round2-part9/privacy-signals.json
+@@ -0,0 +1,55 @@
++{
++  "part": 9,
++  "baseline": "round2-handoff-v8",
++  "new_network_destinations": [],
++  "new_permissions": [],
++  "new_persistent_user_data": [],
++  "changes": [
++    {
++      "signal": "AX geometry/minimized plus app/window observation",
++      "existing_source": true,
++      "use": "tri-state verification and reconcile; successful reads must match current context",
++      "retention": "existing runtime state only; existing recovery journal retained, not newly expanded"
++    },
++    {
++      "signal": "fold callback stamp",
++      "fields": [
++        "windowID",
++        "pid",
++        "transaction",
++        "hide",
++        "boot",
++        "sessionEpoch",
++        "presentation",
++        "capturedAt"
++      ],
++      "retention": "transient process memory",
++      "authorization": "none; does not consume or create grants"
++    },
++    {
++      "signal": "observer routeID and batchID",
++      "retention": "current observer/current reconcile batch",
++      "cleanup": "route removed before run-loop source; batch cleared at finish",
++      "limitation": "already issued AX call is not cancelled"
++    },
++    {
++      "signal": "diagnostic status messages",
++      "new_channel": false,
++      "use": "existing wlog/quiet notice; unknown outcome and stale callback rejection",
++      "retention": "existing project logging policy; no new exports or automatic model upload"
++    }
++  ],
++  "did_not_collect": [
++    "real window samples",
++    "gamepad input",
++    "camera",
++    "microphone",
++    "BLE",
++    "biometric templates",
++    "real CLI credentials"
++  ],
++  "notes": [
++    "Hash and transient UUID are not anonymization claims.",
++    "This delta must be reviewed with the prior signal registry."
++  ]
++}
+--- a/prototype/App/FoldCompletion.swift
++++ b/prototype/App/FoldCompletion.swift
+@@ -1,40 +1,38 @@
++#if canImport(Cocoa)
+ import Cocoa
++#else
++import Foundation
++#endif
+
+-// Shared by window-browser actions and titlebar gestures. Main-thread owned.
+-extension AppDelegate {
+-    // MARK: 折叠终态等待
+-
++// Shared by browser/gesture requests. Mutations are MainActor-owned. Test hosts
++// supply only the actual dictionaries below, not an AppKit implementation.
++@MainActor extension AppDelegate {
+     @discardableResult
+-    func registerFoldWaiter(id: CGWindowID,
+-                                         completion: @escaping (Bool) -> Void) -> UUID {
++    func registerFoldWaiter(id: CGWindowID, completion: @escaping (Bool) -> Void) -> UUID {
+         let token = UUID()
+         foldWaiters[id, default: [:]][token] = completion
+-        // 兜底：折叠事务异常中止且没有走到任何结算点时，避免等待闭包长期驻留。
+         DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
+             self?.settleFoldWaiter(id: id, token: token, success: false)
+         }
+         return token
+     }
+
+-    /// 只结算指定 token，避免同一窗口后来的一次折叠被旧超时误结算。
+-    func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {
+-        guard var waiters = foldWaiters[id],
+-              let completion = waiters.removeValue(forKey: token) else { return }
+-        if waiters.isEmpty {
+-            foldWaiters.removeValue(forKey: id)
+-        } else {
+-            foldWaiters[id] = waiters
++    /// Only the request's captured tokens may be bound to its newly installed state.
++    func bindFoldWaiters(id: CGWindowID, tokens: [UUID], transaction: UUID) {
++        for token in tokens where foldWaiters[id]?[token] != nil {
++            guard foldWaiterTransactions[token] == nil else { continue }
++            foldWaiterTransactions[token] = transaction
+         }
+-        completion(success)
+     }
+
+-    /// 折叠事务的终态结算点：立即验证成功、延迟验证成功、回滚失败与中止。
+-    /// 第一个到达的结算生效；之后的结算不会再次调用回调。
+-    func settleFoldWaiters(id: CGWindowID, success: Bool) {
+-        guard let waiters = foldWaiters.removeValue(forKey: id) else { return }
+-        for (_, completion) in waiters {
+-            completion(success)
+-        }
++    func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {
++        settleFoldWaiters(id: id, tokens: [token], success: success)
++    }
++
++    /// No window-ID-only success path: a completion must name the exact transaction.
++    func settleFoldWaiters(id: CGWindowID, transaction: UUID, success: Bool) {
++        let tokens = (foldWaiters[id] ?? [:]).keys.filter { foldWaiterTransactions[$0] == transaction }
++        settleFoldWaiters(id: id, tokens: tokens, success: success)
+     }
+
+     func cancelFoldWaiters(id: CGWindowID, tokens: [UUID]) {
+@@ -42,7 +40,26 @@
+     }
+
+     func settleFoldWaiters(id: CGWindowID, tokens: [UUID], success: Bool) {
+-        for token in tokens { settleFoldWaiter(id: id, token: token, success: success) }
++        guard var waiting = foldWaiters[id] else { return }
++        var callbacks: [(callback: (Bool) -> Void, stamp: WS2FoldCallbackStamp?)] = []
++        for token in tokens {
++            guard let callback = waiting.removeValue(forKey: token) else { continue }
++            let transaction = foldWaiterTransactions.removeValue(forKey: token)
++            let stamp = success ? transaction.flatMap { foldWaiterDeliveryStamp(id: id, transaction: $0) } : nil
++            callbacks.append((callback, stamp))
++        }
++        foldWaiters[id] = waiting.isEmpty ? nil : waiting
++        // Drain the entire captured batch before any client callback. Delivery is
++        // queued so a client cannot reenter a half-finished install or cleanup.
++        guard !callbacks.isEmpty else { return }
++        DispatchQueue.main.async { [weak self] in
++            for delivery in callbacks {
++                let fresh: Bool
++                if let stamp = delivery.stamp, let owner = self {
++                    fresh = owner.foldCallbackIsCurrent(stamp)
++                } else { fresh = false }
++                delivery.callback(success && fresh)
++            }
++        }
+     }
+-
+ }
+--- a/prototype/App/FoldTransaction.swift
++++ b/prototype/App/FoldTransaction.swift
+@@ -99,73 +99,46 @@
+         return false
+     }
+
+-    // 折叠事务：隐藏生效验证。reveal overlay 之前必须确认真实窗口确实不可见，
+-    // 否则会出现 proxy 与真实窗口同框。
++    // Compatibility Bool now reports only a positive observation, never an AX read failure.
+     func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,
+-                                id: CGWindowID, size: CGSize) -> Bool {
+-        switch hide {
+-        case .offscreen, .privateOffscreen:
+-            guard let p = axPosition(win) else { return true }   // 读不到几何按已隐藏处理
+-            return !windowIsVisible(pos: p, size: size)
+-        case .hidden:
+-            return runningApp(pid: pid)?.isHidden ?? true
+-        case .minimized:
+-            return axBoolAttribute(win, kAXMinimizedAttribute as String)
+-        case .privateAlpha:
+-            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: id) ?? 1
+-            return alpha <= 0.05
+-        case .none, .ownWindowOrderedOut, .quickLookClosed:
+-            return true
+-        }
+-    }
+-
+-    // 延迟验证链：+0.15s / +0.45s 重查隐藏是否生效；通过 → reveal overlay；
+-    // 两次失败 → 补救 minimize（焦点已交接，无级联副作用）；补救仍失败 → 回滚。
+-    // overlay 在验证通过前保持隐形，保证 proxy 与真实窗口永不同框。
++                       id: CGWindowID, size: CGSize) -> Bool {
++        observeFoldHide(hide, win: win, pid: pid, id: id) == .hidden
++    }
++
+     func scheduleFoldVerification(id: CGWindowID) {
+-        guard let transactionID = shaded[id]?.foldTransactionID else { return }
++        guard let installed = shaded[id] else { return }
++        let expected = foldCallbackStamp(id: id, state: installed)
+         FoldVerifier(
+-            schedule: { delay, action in
+-                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action)
++            schedule: { delay, action in DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action) },
++            isCurrent: { [weak self] in self?.foldCallbackIsCurrent(expected) == true },
++            observation: { [weak self] in
++                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return .unknown }
++                return self.observeFoldHide(state.hide, win: state.element, pid: state.pid, id: id)
+             },
+-            isCurrent: { [weak self] in
+-                guard let state = self?.shaded[id], state.foldTransactionID == transactionID else { return false }
+-                return state.foldTransactionID == transactionID && state.lifecycleStage == .folded
++            salvage: { [weak self] in
++                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id],
++                      state.hide == .minimized, windowID(of: state.element) == id else { return false }
++                var pid: pid_t = 0
++                guard AXUIElementGetPid(state.element, &pid) == .success, pid == state.pid,
++                      self.foldCallbackIsCurrent(expected) else { return false }
++                // Retry only the SAME strategy. Crossing from hidden/offscreen/alpha to
++                // minimized would need a restore record for both attempted mutations.
++                _ = setAXMinimized(state.element, true)
++                return true
+             },
+-            observe: { [weak self] in
+-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return false }
+-                return self.hideTookEffect(state.hide, win: state.element, pid: state.pid,
+-                                          id: id, size: state.originalSize)
++            salvagedObservation: { [weak self] in
++                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return .unknown }
++                return self.observeFoldHide(.minimized, win: state.element, pid: state.pid, id: id)
+             },
+-            minimize: { [weak self] in
+-                guard let state = self?.shaded[id], state.foldTransactionID == transactionID else { return }
+-                setAXMinimized(state.element, true)
+-            },
+-            observeMinimized: { [weak self] in
+-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return false }
+-                let hidden = self.hideTookEffect(.minimized, win: state.element, pid: state.pid,
+-                                                id: id, size: state.originalSize)
+-                if hidden, self.shaded[id]?.foldTransactionID == transactionID {
+-                    self.shaded[id]?.hide = .minimized
+-                    wlog("shade: hide salvaged via minimize id=\(id) app=\(state.appName)")
+-                }
+-                return hidden
+-            },
+-            // 隐藏或最小化生效后窗口立刻离开屏幕（实测整体隐藏约 13ms），而 isHidden /
+-            // kAXMinimized 的读回会滞后：WindowServer 说它已不在屏幕上，就可以亮出卷帘条。
+-            quickObserve: { [weak self] in
+-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID,
+-                      state.hide == .hidden || state.hide == .minimized else { return false }
+-                return cgWindowInfo(id) != nil && !windowIsOnScreenNow(id)
+-            },
+-            completion: { [weak self] success in
+-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return }
+-                if success {
+-                    wlog("shade: hide verified id=\(id) hide=\(state.hide)")
++            result: { [weak self] result in
++                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return }
++                switch result {
++                case .hidden:
+                     self.revealOverlayAfterVerification(id: id, state: state)
+-                } else {
+-                    wlog("shade: hide failed after salvage; rolling back id=\(id) app=\(state.appName)")
+-                    self.rollbackFoldTransaction(id: id, expectedTransaction: transactionID)
++                case .unknown:
++                    self.retainUnconfirmedFold(id: id, state: state)
++                case .visible:
++                    self.rollbackFoldTransaction(id: id, expectedTransaction: expected.transaction)
+                 }
+             }
+         ).start()
+@@ -174,14 +147,16 @@
+     func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {
+         guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
+         publishFoldObservation(id: id, state: state)
+-        guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
+-        guard let overlay = state.overlay else { return }
+-        if enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
++        guard shaded[id]?.foldTransactionID == state.foldTransactionID,
++              AuthorizationService.shared.lockState() == .unlocked else { return }
++        if let overlay = state.overlay,
++           enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
++            overlay.contentView?.toolTip = nil
+             revealPreparedOverlay(overlay)
+             duoController.windowEffects.didVerifyFold(id: id, state: state)
+         }
+-        // Visibility on the active Space is presentation, not hide completion.
+-        settleFoldWaiters(id: id, success: true)
++        // The exact transaction settles even when its proxy is on another Space.
++        settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: true)
+     }
+
+     // 回滚折叠事务：按已尝试的隐藏方式逐项逆操作（此前的回滚漏了这步，
+@@ -883,36 +858,58 @@
+
+     // 监听窗口被外部唤回：app 显示(⌘Tab 取消隐藏) / 取消最小化(点 Dock)。
+     // app activated 只说明应用拿到焦点，不代表真实窗口已经回到用户可见位置；不能据此展开。
+-    func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID) -> AXObserver? {
++    func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID, transaction: UUID) -> AXObserver? {
++        guard shaded[id]?.foldTransactionID == transaction, foldObserverSerial < UInt(Int.max) else { return nil }
+         var observer: AXObserver?
+         guard AXObserverCreate(pid, axWindowCallback, &observer) == .success, let obs = observer else { return nil }
++        foldObserverSerial += 1
++        let serial = foldObserverSerial
++        let route = WS2FoldObserverRoute(window: id, pid: pid, transaction: transaction)
++        foldObserverRoutes[serial] = route
+         let app = AXUIElementCreateApplication(pid)
+-        let refcon = UnsafeMutableRawPointer(bitPattern: Int(id))
+-        AXObserverAddNotification(obs, app, kAXApplicationShownNotification as CFString, refcon)
+-        AXObserverAddNotification(obs, win, kAXWindowDeminiaturizedNotification as CFString, refcon)
+-        AXObserverAddNotification(obs, win, kAXUIElementDestroyedNotification as CFString, refcon)
++        let refcon = UnsafeMutableRawPointer(bitPattern: serial)
++        let results = [
++            AXObserverAddNotification(obs, app, kAXApplicationShownNotification as CFString, refcon),
++            AXObserverAddNotification(obs, win, kAXWindowDeminiaturizedNotification as CFString, refcon),
++            AXObserverAddNotification(obs, win, kAXUIElementDestroyedNotification as CFString, refcon)
++        ]
++        guard results.contains(.success), shaded[id]?.foldTransactionID == transaction else {
++            foldObserverRoutes.removeValue(forKey: serial)
++            return nil
++        }
+         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .defaultMode)
+         return obs
+     }
+
+     func removeObserver(_ state: ShadeState) {
++        // Withdraw routes before removing a source. Old queued notifications remain harmless.
++        for (serial, route) in foldObserverRoutes where route.transaction == state.foldTransactionID {
++            foldObserverRoutes.removeValue(forKey: serial)
++        }
+         if let obs = state.observer {
+             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .defaultMode)
+         }
+     }
+
+-    func handleAXNotification(_ id: CGWindowID, _ notification: String) {
+-        guard let state = shaded[id] else { return }
++    func handleAXNotification(_ id: CGWindowID, _ notification: String, expected: WS2FoldCallbackStamp) {
++        guard foldCallbackIsCurrent(expected), let state = shaded[id] else { return }
+         if notification == (kAXUIElementDestroyedNotification as String) {
+             if state.hide == .quickLookClosed {
+                 wlog("quicklook: ignore expected destroyed notification id=\(id)")
+                 return
+             }
++            // A delayed destruction notification is a hint, not permission to act on
++            // a reused ID. Require a successful full-membership query with no result.
++            guard let windows = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
++                  windows.isEmpty, foldCallbackIsCurrent(expected) else { return }
+             forceCleanup(id)
+             return
+         }
+         if notification == (kAXWindowDeminiaturizedNotification as String) {
+             if state.hide == .minimized {
++                guard windowID(of: state.element) == id,
++                      axObservedBoolAttribute(state.element, kAXMinimizedAttribute as String) == false,
++                      foldCallbackIsCurrent(expected) else { return }
+                 if isFocusShelfMember(id: id) {
+                     revealFocusShelfMemberFromOutside(id: id, state: state, reason: "deminiaturized")
+                     return
+@@ -929,6 +926,8 @@
+                 return
+             }
+             if state.hide == .hidden {
++                guard let app = runningApp(pid: state.pid), !app.isTerminated, !app.isHidden,
++                      windowID(of: state.element) == id, foldCallbackIsCurrent(expected) else { return }
+                 if isFocusShelfMember(id: id) {
+                     revealFocusShelfMemberFromOutside(id: id, state: state, reason: "app-shown")
+                     return
+@@ -992,6 +991,7 @@
+         let visibleChanged = visibleFrames != lastVisibleFrames
+         lastDisplayLayout = layout
+         lastVisibleFrames = visibleFrames
++        if displaysChanged || visibleChanged { foldPresentationID = UUID() }
+         if displaysChanged {
+             wlog("screen: displays changed count=\(layout.screens.count)")
+             windowBrowserController?.screensDidChange()
+@@ -1026,6 +1026,7 @@
+     }
+
+     @objc func activeSpaceChanged(_ note: Notification) {
++        foldPresentationID = UUID()
+         MainThreadActivity.push("system: 切换桌面")
+         defer { MainThreadActivity.pop() }
+         restorePendingSourceSpacesIfNeeded(reason: "active-space-changed")
+--- a/prototype/App/Reconcile.swift
++++ b/prototype/App/Reconcile.swift
+@@ -43,17 +43,18 @@
+             return Date() >= state.ignoreAppRevealUntil
+         case .privateAlpha:
+             guard Date() >= state.ignoreAppRevealUntil else { return false }
+-            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
+-                ?? Float((cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1)
++            let sampledAlpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
++                ?? (cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber).map { $0.floatValue }
++            guard let alpha = sampledAlpha, alpha.isFinite, (0...1).contains(alpha) else { return false }
+             return alpha > 0.05
+         case .hidden:
+             guard Date() >= state.ignoreAppRevealUntil else { return false }
+             // 看一眼在画面下面临时取消隐藏：那不是用户唤回。
+             guard !MainActor.assumeIsolated({ glance.holdsReveal(state.sourceWindowID) }) else { return false }
+-            guard let app = runningApp(pid: state.pid) else { return true }
++            guard let app = runningApp(pid: state.pid), !app.isTerminated else { return false }
+             return !app.isHidden
+         case .minimized:
+-            // AX 快照读取在 reconcileAXWorkQueue；没有快照时保守地认为仍不可见，
++            // AX 快照读取在后台工作队列；没有快照时保守地认为仍不可见，
+             // 不能为了确认菜单/定时器状态回到主线程同步 IPC。
+             return sourceIsMinimized.map { !$0 } ?? false
+         case .ownWindowOrderedOut:
+@@ -80,17 +81,21 @@
+             }
+             return false
+         case .none:
+-            let shouldCleanup = count >= 3
+-            if shouldCleanup {
+-                wlog("reconcile: source invalid repeatedly id=\(id) app=\(state.appName) count=\(count)")
+-            }
+-            return shouldCleanup
++            // Repeated AX failure still does not prove that a live app's window closed.
++            if shouldLogReconcileInvalidCount(count) {
++                wlog("reconcile: native source unknown id=\(id) count=\(count); recovery retained")
++            }
++            return false
+         }
+     }
+     func reconcileShadedWindows(reason: String) {
+         guard !isReconcilingShadedWindows else { return }
+         isReconcilingShadedWindows = true
+
++        guard AuthorizationService.shared.lockState() == .unlocked else {
++            finishReconcileShadedWindows()
++            return
++        }
+         pruneShadeJournal(reason: "reconcile-\(reason)")
+
+         guard AXIsProcessTrusted() else {
+@@ -111,70 +116,65 @@
+             return
+         }
+
+-        let onScreenIDs = currentOnScreenWindowIDs()
+         let targets = shaded.map { id, state in
+             ReconcileAXTarget(id: id, pid: state.pid, element: state.element,
+-                              needsMinimizedState: state.hide == .minimized)
+-        }
+-        reconcileAXWorkQueue.async { [weak self] in
+-            let startedAt = CFAbsoluteTimeGetCurrent()
+-            // 按 app 分组：不同 app 的 AX IPC 互不阻塞，可以并行采集；同 app 的
+-            // 窗口串行读取，避免对忙 app 并发轰炸。忙 app 单次 2s 超时不再拖住
+-            // 其他 app 的快照（旧实现串行累加，3 个忙 app 就是 6s+）。
+-            let grouped = Dictionary(grouping: targets, by: { $0.pid })
+-            let group = DispatchGroup()
+-            let resultLock = NSLock()
+-            var snapshots: [ReconcileAXSnapshot] = []
+-            for pidTargets in grouped.values {
+-                group.enter()
+-                DispatchQueue.global(qos: .utility).async {
+-                    let local = pidTargets.map { target -> ReconcileAXSnapshot in
+-                        guard let size = axSize(target.element) else {
+-                            return ReconcileAXSnapshot(id: target.id, position: nil,
+-                                                       size: nil, isMinimized: nil)
+-                        }
+-                        return ReconcileAXSnapshot(id: target.id,
+-                                                   position: axPosition(target.element),
+-                                                   size: size,
+-                                                   isMinimized: target.needsMinimizedState
+-                                                       ? axBoolAttribute(target.element, kAXMinimizedAttribute as String)
+-                                                       : nil)
++                              needsMinimizedState: state.hide == .minimized,
++                              stamp: foldCallbackStamp(id: id, state: state))
++        }
++        let grouped = Dictionary(grouping: targets, by: { $0.pid })
++        guard !grouped.isEmpty else { finishReconcileShadedWindows(); return }
++        let batch = UUID()
++        reconcileBatchID = batch
++        reconcilePendingApplications = grouped.count
++        // Each app is sampled serially; independent apps may finish independently.
++        // No captured mutable array, group.wait, or caller-owned NSLock crosses queues.
++        for pidTargets in grouped.values {
++            DispatchQueue.global(qos: .utility).async { [weak self] in
++                let startedAt = ProcessInfo.processInfo.systemUptime
++                let snapshots = pidTargets.map { target -> ReconcileAXSnapshot in
++                    guard let size = axSize(target.element) else {
++                        return ReconcileAXSnapshot(stamp: target.stamp, position: nil, size: nil, isMinimized: nil)
+                     }
+-                    resultLock.lock()
+-                    snapshots.append(contentsOf: local)
+-                    resultLock.unlock()
+-                    group.leave()
+-                }
+-            }
+-            group.wait()
+-            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+-            DispatchQueue.main.async { [weak self] in
+-                self?.applyReconcileAXSnapshots(snapshots, onScreenIDs: onScreenIDs,
+-                                                reason: reason, elapsedMilliseconds: elapsedMilliseconds)
+-            }
+-        }
+-    }
+-    func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot], onScreenIDs: Set<CGWindowID>,
+-                                           reason: String, elapsedMilliseconds: Int) {
+-        defer { finishReconcileShadedWindows() }
++                    return ReconcileAXSnapshot(stamp: target.stamp, position: axPosition(target.element), size: size,
++                        isMinimized: target.needsMinimizedState
++                            ? axObservedBoolAttribute(target.element, kAXMinimizedAttribute as String) : nil)
++                }
++                let elapsed = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
++                DispatchQueue.main.async { [weak self] in
++                    guard let self, self.reconcileBatchID == batch else { return }
++                    self.applyReconcileAXSnapshots(snapshots, reason: reason, elapsedMilliseconds: elapsed)
++                    guard self.reconcileBatchID == batch else { return }
++                    self.reconcilePendingApplications -= 1
++                    if self.reconcilePendingApplications == 0 { self.finishReconcileShadedWindows() }
++                }
++            }
++        }
++    }
++    func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot],
++                                   reason: String, elapsedMilliseconds: Int) {
+         if elapsedMilliseconds >= 50 {
+             wlog("slow: reconcile-ax reason=\(reason) took \(elapsedMilliseconds)ms windows=\(snapshots.count)")
+         }
++        guard AuthorizationService.shared.lockState() == .unlocked else { return }
++        // Observe screen membership at application time, not before a possibly slow AX batch.
++        let onScreenIDs = currentOnScreenWindowIDs()
+         for snapshot in snapshots {
+-            // 异步 AX 读取期间用户可能已展开/关闭窗口，只按仍存在的当前 state 应用。
+-            guard let state = shaded[snapshot.id] else { continue }
+-            guard let size = snapshot.size else {
+-                if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state) {
++            guard foldCallbackIsCurrent(snapshot.stamp), let state = shaded[snapshot.id] else { continue }
++            guard let size = snapshot.size, size.width.isFinite, size.height.isFinite,
++                  size.width > 0, size.height > 0 else {
++                if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state),
++                   foldCallbackIsCurrent(snapshot.stamp) {
+                     forceCleanup(snapshot.id)
+                 }
+                 continue
+             }
+             reconcileInvalidCounts.removeValue(forKey: snapshot.id)
+
+-            if let pos = snapshot.position,
++            if let pos = snapshot.position, pos.x.isFinite, pos.y.isFinite,
+                sourceWindowLooksUserVisible(state: state, pos: pos, size: size,
+                                             onScreenWindowIDs: onScreenIDs,
+-                                            sourceIsMinimized: snapshot.isMinimized) {
++                                            sourceIsMinimized: snapshot.isMinimized),
++               foldCallbackIsCurrent(snapshot.stamp) {
+                 if isFocusShelfMember(id: snapshot.id) {
+                     revealFocusShelfMemberFromOutside(id: snapshot.id, state: state, reason: "reconcile-\(reason)")
+                     continue
+@@ -184,7 +184,7 @@
+                 continue
+             }
+
+-            guard let overlay = state.overlay else { continue }
++            guard foldCallbackIsCurrent(snapshot.stamp), let overlay = state.overlay else { continue }
+             if let overlayID = state.overlayID, !onScreenIDs.contains(overlayID) {
+                 continue
+             }
+@@ -193,7 +193,7 @@
+             if !framesAlmostEqual(oldFrame, newFrame) {
+                 overlay.setFrame(newFrame, display: true)
+                 applyOverlayPresentation(overlay, bringForward: false)
+-                if arrangedOverlayFrames[snapshot.id] == nil {
++                if foldCallbackIsCurrent(snapshot.stamp), arrangedOverlayFrames[snapshot.id] == nil {
+                     syncRestoreJournal(id: snapshot.id, fromOverlayFrame: newFrame)
+                 }
+                 wlog("reconcile: clamped overlay id=\(snapshot.id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
+@@ -201,6 +201,8 @@
+         }
+     }
+     func finishReconcileShadedWindows() {
++        reconcileBatchID = nil
++        reconcilePendingApplications = 0
+         isReconcilingShadedWindows = false
+         updateReconcileTimer()
+     }
+--- a/prototype/App/ShadeController.swift
++++ b/prototype/App/ShadeController.swift
+@@ -172,10 +172,27 @@
+                        preparedProfile: WindowChromeProfile? = nil,
+                        recordedPosition: CGPoint? = nil, evidence: WS2FoldEvidence.Ticket? = nil) {
+         let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
+-        func completeFold(success: Bool) {
+-            finishFoldEvidence(evidence, success: success)
+-            settleFoldWaiters(id: id, tokens: completionTokens, success: success)
+-        }
++        let admissionBoot = AuthorizationService.shared.ledger.bootID
++        let admissionEpoch = AuthorizationService.shared.ledger.sessionEpoch
++        let admissionPresentation = foldPresentationID
++        func admissionCurrent() -> Bool {
++            AuthorizationService.shared.lockState() == .unlocked &&
++            AuthorizationService.shared.ledger.bootID == admissionBoot &&
++            AuthorizationService.shared.ledger.sessionEpoch == admissionEpoch &&
++            foldPresentationID == admissionPresentation
++        }
++        func completeFold(success: Bool, transaction: UUID? = nil) {
++            if success {
++                guard let transaction, shaded[id]?.foldTransactionID == transaction else { return }
++                let ownedTokens = completionTokens.filter { foldWaiterTransactions[$0] == transaction }
++                finishFoldEvidence(evidence, success: true)
++                settleFoldWaiters(id: id, tokens: ownedTokens, success: true)
++            } else {
++                finishFoldEvidence(evidence, success: false)
++                settleFoldWaiters(id: id, tokens: completionTokens, success: false)
++            }
++        }
++        guard admissionCurrent() else { completeFold(success: false); return }
+         MainThreadActivity.push("fold: 折叠窗口")
+         defer { MainThreadActivity.pop() }
+         // 单窗口折叠不像专注会话那样有阶段汇总：这里记一个起点，安装阶段慢的时候补一行
+@@ -284,7 +301,7 @@
+         // 整体包住安装阶段：它与已知子项（隐藏窗口/建 overlay/落盘…）的差额
+         // 直接指出剩下的时间是在安装之内还是之外，比继续逐个猜要快。
+         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
+-            if let evidence, !mayCommitObservedFold(evidence) {
++            if !admissionCurrent() || evidence.map({ !mayCommitObservedFold($0) }) == true {
+                 shadeOperationIDs.remove(id); dismissOverlay(overlay)
+                 transitionOperationState(id: id, to: .failed, reason: "expired-fold-evidence")
+                 completeFold(success: false); return
+@@ -336,7 +353,7 @@
+             // 源码顺序断言守卫崩溃一致性，包装会让它认不出来。改成手工计时，
+             // 既保留分段数据，也不动那道守卫认的文本。
+             var finalPID: pid_t = 0
+-            if let evidence, AXUIElementGetPid(win, &finalPID) != .success || finalPID != evidence.pid || windowID(of: win) != id {
++            if AXUIElementGetPid(win, &finalPID) != .success || finalPID != pid || windowID(of: win) != id || !admissionCurrent() {
+                 dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "changed-before-hide")
+                 completeFold(success: false); return
+             }
+@@ -408,6 +425,7 @@
+                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
+                                    observer: observer)
+             shaded[id] = state
++            bindFoldWaiters(id: id, tokens: completionTokens, transaction: state.foldTransactionID)
+             if let evidence { _ = foldEvidence.bind(evidence, transaction: state.foldTransactionID) }
+             MainActor.assumeIsolated {
+                 // 收起一扇带到每张桌面的窗口：它不再需要别处的卷帘条。
+@@ -425,13 +443,13 @@
+                     guard let current = self.shaded[id], current.observer == nil,
+                           current.foldTransactionID == state.foldTransactionID, CFEqual(current.element, win) else { return }
+                     guard let registered = foldPhase("观察者注册", {
+-                        self.makeRevealObserver(pid: pid, win: win, id: id)
++                        self.makeRevealObserver(pid: pid, win: win, id: id, transaction: state.foldTransactionID)
+                     }) else { return }
+                     self.shaded[id]?.observer = registered
+                 }
+             }
+             foldPhase("Space 回归调度") { scheduleSourceSpaceReturnIfNeeded(id: id, state: state) }
+-            if hideVerifiedNow {
++            if hideVerifiedNow, shaded[id]?.foldTransactionID == state.foldTransactionID, admissionCurrent() {
+                 let spaceInvariantHeld = foldPhase("Space 不变量") {
+                     enforceOverlaySpaceInvariant(id: id, state: state, reason: "install")
+                 }
+@@ -440,10 +458,11 @@
+                     duoController.windowEffects.didVerifyFold(id: id, state: state)
+                 }
+                 // Hiding is committed even if the user switched away from its Space.
+-                completeFold(success: true)
++                completeFold(success: true, transaction: state.foldTransactionID)
+             } else {
+                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
+-                scheduleFoldVerification(id: id)
++                if admissionCurrent() { scheduleFoldVerification(id: id) }
++                else { settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: false) }
+             }
+             hoverPreviewSuppressedUntil[id] = Date().addingTimeInterval(0.7)
+             foldPhase("重回专注栈") { rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay) }
+@@ -463,6 +482,7 @@
+         func installInteractiveNativeCollapse(barH: CGFloat) -> Bool {
+             let targetH = min(max(barH, titleBarHeight), min(size.height, 300))
+             let target = CGSize(width: size.width, height: targetH)
++            guard admissionCurrent() else { return false }
+             if let evidence, !mayCommitObservedFold(evidence) || !foldEvidence.markMutation(evidence, at: ProcessInfo.processInfo.systemUptime) { return false }
+             let err = setAXSize(win, target)
+             guard err == .success else {
+@@ -470,7 +490,8 @@
+                 return false
+             }
+
+-            RunLoop.current.run(until: Date().addingTimeInterval(0.03))
++            // Do not pump a nested run loop inside a half-installed transaction.
++            // Delayed-size apps fall back to the existing proxy path instead of reentering shade.
+             guard let actual = axSize(win) else {
+                 setAXSize(win, size)
+                 setAXPosition(win, pos)
+@@ -487,7 +508,6 @@
+             }
+
+             setAXPosition(win, pos)
+-            let observer = makeRevealObserver(pid: pid, win: win, id: id)
+             clearShadeJournal(id: id)
+             shaded[id] = ShadeState(element: win, sourceWindowID: id,
+                                     originalPosition: recordedPosition ?? pos, originalSize: size,
+@@ -500,11 +520,15 @@
+                                     previewImage: nil,
+                                     quickLookReopenURL: nil,
+                                     ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
+-                                    observer: observer)
++                                    observer: nil)
++            if let installed = shaded[id] {
++                bindFoldWaiters(id: id, tokens: completionTokens, transaction: installed.foldTransactionID)
++                shaded[id]?.observer = makeRevealObserver(pid: pid, win: win, id: id, transaction: installed.foldTransactionID)
++            }
+             if let evidence, let installed = shaded[id] { _ = foldEvidence.bind(evidence, transaction: installed.foldTransactionID) }
+             wlog("    interactive native finalBarH=\(Int(targetH)) actualH=\(Int(actual.height))")
+             transitionOperationState(id: id, to: .folded, reason: "interactive-native")
+-            completeFold(success: true)
++            completeFold(success: true, transaction: shaded[id]?.foldTransactionID)
+             if options.rebuildMenuAfterInstall {
+                 rebuildMenu()
+             }
+--- /dev/null
++++ b/prototype/App/WS2FoldCallbackGuard.swift
+@@ -0,0 +1,100 @@
++import Cocoa
++import ApplicationServices
++
++extension AppDelegate {
++    func foldCallbackStamp(id: CGWindowID, state: ShadeState) -> WS2FoldCallbackStamp {
++        let ledger = AuthorizationService.shared.ledger
++        return WS2FoldCallbackStamp(window: id, pid: state.pid,
++            transaction: state.foldTransactionID, hide: state.hide.rawValue,
++            boot: ledger.bootID, sessionEpoch: ledger.sessionEpoch,
++            presentation: foldPresentationID, capturedAt: ProcessInfo.processInfo.systemUptime)
++    }
++
++    func foldWaiterDeliveryStamp(id: CGWindowID, transaction: UUID) -> WS2FoldCallbackStamp? {
++        guard let state = shaded[id], state.foldTransactionID == transaction,
++              state.lifecycleStage == .folded else { return nil }
++        return foldCallbackStamp(id: id, state: state)
++    }
++
++    /// Revalidate after each asynchronous/read boundary. This is a stale-result fence,
++    /// not a process-birth identity or proof that an external window mutation is atomic.
++    func foldCallbackIsCurrent(_ expected: WS2FoldCallbackStamp,
++                               maximumAge: TimeInterval = 2) -> Bool {
++        guard let state = shaded[expected.window], state.sourceWindowID == expected.window,
++              state.lifecycleStage == .folded else { return false }
++        let current = foldCallbackStamp(id: expected.window, state: state)
++        return expected.accepts(current: current, now: ProcessInfo.processInfo.systemUptime,
++            unlocked: AuthorizationService.shared.lockState() == .unlocked, maximumAge: maximumAge)
++    }
++
++    func observeFoldHide(_ hide: HideMethod, win: AXUIElement, pid: pid_t,
++                         id: CGWindowID) -> FoldVerifier.Observation {
++        guard AuthorizationService.shared.lockState() == .unlocked else { return .unknown }
++        if hide == .ownWindowOrderedOut {
++            guard pid == getpid(), let local = ownWindow(id: id) else { return .unknown }
++            return local.isVisible ? .visible : .hidden
++        }
++        // Intentional close has a separate positive enumeration check. Merely being
++        // absent from the on-screen list is never proof of closure or minimization.
++        if hide == .quickLookClosed {
++            guard let list = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]]
++            else { return .unknown }
++            return list.isEmpty ? .hidden : .unknown
++        }
++        guard hide != .none, let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated,
++              windowID(of: win) == id else { return .unknown }
++        var actualPID: pid_t = 0
++        guard AXUIElementGetPid(win, &actualPID) == .success, actualPID == pid else { return .unknown }
++        switch hide {
++        case .offscreen, .privateOffscreen:
++            guard let pos = axPosition(win), let size = axSize(win),
++                  pos.x.isFinite, pos.y.isFinite, size.width.isFinite, size.height.isFinite,
++                  size.width > 0, size.height > 0 else { return .unknown }
++            return windowIsVisible(pos: pos, size: size) ? .visible : .hidden
++        case .hidden: return app.isHidden ? .hidden : .visible
++        case .minimized:
++            guard let value = axObservedBoolAttribute(win, kAXMinimizedAttribute as String) else { return .unknown }
++            return value ? .hidden : .visible
++        case .privateAlpha:
++            guard let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: id),
++                  alpha.isFinite, (0...1).contains(alpha) else { return .unknown }
++            return alpha <= 0.05 ? .hidden : .visible
++        case .none, .ownWindowOrderedOut, .quickLookClosed: return .unknown
++        }
++    }
++
++    /// Preserve the existing recovery entry. Unknown is neither success nor permission
++    /// to run a second strategy. The proxy is a manual recovery affordance, not proof.
++    func retainUnconfirmedFold(id: CGWindowID, state: ShadeState) {
++        guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
++        settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: false)
++        publishFoldObservation(id: id, state: state)
++        guard shaded[id]?.foldTransactionID == state.foldTransactionID,
++              AuthorizationService.shared.lockState() == .unlocked else { return }
++        if let overlay = state.overlay,
++           enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-unconfirmed") {
++            overlay.contentView?.toolTip = "收起状态未确认，点击可尝试恢复窗口"
++            revealPreparedOverlay(overlay)
++        }
++        quietNotice("收起状态未确认，已保留恢复入口", log: "shade: observation unknown id=\(id); recovery retained")
++    }
++
++    /// AX observers are installed on CFRunLoopGetMain. The C callback verifies that
++    /// assumption; only Sendable route/stamp/string values cross the queued boundary.
++    func receiveFoldAXNotification(routeID: UInt, notification: String) {
++        guard let route = foldObserverRoutes[routeID], let state = shaded[route.window],
++              state.foldTransactionID == route.transaction, state.pid == route.pid else { return }
++        let stamp = foldCallbackStamp(id: route.window, state: state)
++        DispatchQueue.main.async { [weak self] in
++            guard let self, self.foldObserverRoutes[routeID] == route,
++                  self.foldCallbackIsCurrent(stamp) else { return }
++            self.handleAXNotification(route.window, notification, expected: stamp)
++        }
++    }
++}
++
++func axObservedBoolAttribute(_ win: AXUIElement, _ attribute: String) -> Bool? {
++    var raw: CFTypeRef?
++    guard AXUIElementCopyAttributeValue(win, attribute as CFString, &raw) == .success else { return nil }
++    return ws2ObservedBoolean(raw)
++}
+--- a/prototype/App/WS2FoldEvidenceAdapter.swift
++++ b/prototype/App/WS2FoldEvidenceAdapter.swift
+@@ -28,7 +28,7 @@
+         guard let event else{return}
+         let callback=foldEvidenceCallbacks[event.ticket.request]
+         if !foldEvidence.contains(event.ticket){foldEvidenceCallbacks[event.ticket.request]=nil;foldEvidenceMayCommit[event.ticket.request]=nil}
+-        callback?(event)
++        DispatchQueue.main.async { callback?(event) }
+     }
+     func mayCommitObservedFold(_ ticket:WS2FoldEvidence.Ticket)->Bool {
+         foldEvidence.mayStart(ticket,at:ProcessInfo.processInfo.systemUptime) &&
+@@ -57,28 +57,14 @@
+             }
+         }
+     }
+-    /// Missing AX values, a disappeared process, native resizing, or Quick Look reopening are not proof of hiding.
+-    func strictFoldObservation(id:CGWindowID,state:ShadeState)->WS2FoldEvidence.Observation{
+-        guard shaded[id]?.foldTransactionID==state.foldTransactionID,state.sourceWindowID==id,
+-              let app=NSRunningApplication(processIdentifier:state.pid),!app.isTerminated,
+-              windowID(of:state.element)==id else{return .unknown}
+-        var pid:pid_t=0
+-        guard AXUIElementGetPid(state.element,&pid) == .success,pid==state.pid else{return .unknown}
+-        switch state.hide {
+-        case .offscreen,.privateOffscreen:
+-            guard let pos=axPosition(state.element),let size=axSize(state.element),
+-                  pos.x.isFinite,pos.y.isFinite,size.width.isFinite,size.height.isFinite,size.width>0,size.height>0 else{return .unknown}
+-            return windowIsVisible(pos:pos,size:size) ? .stillVisible:.verifiedHidden
+-        case .hidden: return app.isHidden ? .verifiedHidden:.stillVisible
+-        case .minimized:
+-            var raw:CFTypeRef?
+-            guard AXUIElementCopyAttributeValue(state.element,kAXMinimizedAttribute as CFString,&raw) == .success,
+-                  let value=raw as? NSNumber,value.doubleValue==0 || value.doubleValue==1 else{return .unknown}
+-            return value.boolValue ? .verifiedHidden:.stillVisible
+-        case .privateAlpha:
+-            guard let value=PrivateSLSWindowMover.shared.windowAlpha(id:id),value.isFinite,(0...1).contains(value) else{return .unknown}
+-            return value<=0.05 ? .verifiedHidden:.stillVisible
+-        case .none,.ownWindowOrderedOut,.quickLookClosed: return .unknown
++    /// Native resizing/intentional close never become timer restoration ownership.
++    func strictFoldObservation(id: CGWindowID, state: ShadeState) -> WS2FoldEvidence.Observation {
++        guard shaded[id]?.foldTransactionID == state.foldTransactionID,
++              state.hide != .none, state.hide != .ownWindowOrderedOut, state.hide != .quickLookClosed else { return .unknown }
++        switch observeFoldHide(state.hide, win: state.element, pid: state.pid, id: id) {
++        case .hidden: return .verifiedHidden
++        case .visible: return .stillVisible
++        case .unknown: return .unknown
+         }
+     }
+     func cancelFoldEvidence(id:CGWindowID,transaction:UUID){
+--- a/prototype/Core/FoldVerifier.swift
++++ b/prototype/Core/FoldVerifier.swift
+@@ -1,77 +1,88 @@
+ import Foundation
+
+-/// Verifies one hide transaction, including its last-resort minimize attempt.
+-/// A replaced session must never rescue or roll back the newer session.
++/// Verification of one installed fold. Unknown readings never license a new mutation.
+ final class FoldVerifier {
++    enum Observation: Equatable, Sendable { case hidden, visible, unknown }
+     typealias Schedule = (TimeInterval, @escaping () -> Void) -> Void
+     private let schedule: Schedule
+     private let isCurrent: () -> Bool
+-    private let observe: () -> Bool
+-    private let minimize: () -> Void
+-    private let observeMinimized: () -> Bool
+-    private let completion: (Bool) -> Void
+-    /// 便宜的实时信号（WindowServer 说窗口已不在屏幕上）：两次正式检查之间每 30ms 看一次，
+-    /// 一旦成立就不必等到正式检查点。正式检查（observe，可能是对忙 App 的同步 IPC）次数不变。
+-    private let quickObserve: () -> Bool
++    private let observation: () -> Observation
++    private let salvage: () -> Bool
++    private let salvagedObservation: () -> Observation
++    private let quickObservation: (() -> Observation)?
++    private let result: (Observation) -> Void
+     private var started = false
+     private var finished = false
+     private static let quickInterval: TimeInterval = 0.03
+
+     init(schedule: @escaping Schedule, isCurrent: @escaping () -> Bool,
+-         observe: @escaping () -> Bool, minimize: @escaping () -> Void,
+-         observeMinimized: @escaping () -> Bool,
+-         quickObserve: @escaping () -> Bool = { false },
+-         completion: @escaping (Bool) -> Void) {
+-        self.schedule = schedule
+-        self.isCurrent = isCurrent
+-        self.observe = observe
+-        self.minimize = minimize
+-        self.observeMinimized = observeMinimized
+-        self.quickObserve = quickObserve
+-        self.completion = completion
++         observation: @escaping () -> Observation, salvage: @escaping () -> Bool,
++         salvagedObservation: @escaping () -> Observation,
++         quickObservation: (() -> Observation)? = nil,
++         result: @escaping (Observation) -> Void) {
++        self.schedule = schedule; self.isCurrent = isCurrent
++        self.observation = observation; self.salvage = salvage
++        self.salvagedObservation = salvagedObservation
++        self.quickObservation = quickObservation; self.result = result
++    }
++
++    // Compatibility for the existing standalone Bool clients/tests. Production uses
++    // the three-state initializer above and supplies no screen-absence shortcut.
++    convenience init(schedule: @escaping Schedule, isCurrent: @escaping () -> Bool,
++                     observe: @escaping () -> Bool, minimize: @escaping () -> Void,
++                     observeMinimized: @escaping () -> Bool,
++                     quickObserve: @escaping () -> Bool = { false },
++                     completion: @escaping (Bool) -> Void) {
++        self.init(schedule: schedule, isCurrent: isCurrent,
++                  observation: { observe() ? .hidden : .visible },
++                  salvage: { minimize(); return true },
++                  salvagedObservation: { observeMinimized() ? .hidden : .visible },
++                  quickObservation: { quickObserve() ? .hidden : .unknown },
++                  result: { completion($0 == .hidden) })
+     }
+
+     func start() {
+-        guard !started else { return }
+-        started = true
++        guard !started else { return }; started = true
+         pollQuickly(until: 0.15, elapsed: 0)
+         schedule(0.15) { self.check(attempt: 1) }
+     }
+
+-    /// 在下一个正式检查点之前，按 30ms 间隔看便宜信号。
+     private func pollQuickly(until deadline: TimeInterval, elapsed: TimeInterval) {
++        guard quickObservation != nil else { return }
+         let next = elapsed + Self.quickInterval
+         guard next < deadline - 0.001 else { return }
+         schedule(Self.quickInterval) {
+             guard !self.finished, self.isCurrent() else { return }
+-            if self.quickObserve() {
+-                self.finish(success: true)
+-                return
+-            }
++            if self.quickObservation?() == .hidden { self.finish(.hidden); return }
++            guard self.isCurrent() else { return }
+             self.pollQuickly(until: deadline, elapsed: next)
+         }
+     }
+
+     private func check(attempt: Int) {
+         guard !finished, isCurrent() else { return }
+-        if observe() {
+-            finish(success: true)
+-        } else if attempt == 1 {
++        let seen = observation()
++        guard !finished, isCurrent() else { return }
++        if seen == .hidden { finish(.hidden) }
++        else if attempt == 1 {
+             pollQuickly(until: 0.45, elapsed: 0)
+             schedule(0.45) { self.check(attempt: 2) }
+-        } else {
+-            guard isCurrent() else { return }
+-            minimize()
++        } else if seen == .unknown { finish(.unknown) }
++        else {
++            // The port must check identity and permission again before its physical write.
++            let attempted = salvage()
++            guard !finished, isCurrent() else { return }
++            guard attempted else { finish(.visible); return }
+             schedule(0.35) {
+                 guard !self.finished, self.isCurrent() else { return }
+-                self.finish(success: self.observeMinimized())
++                self.finish(self.salvagedObservation())
+             }
+         }
+     }
+
+-    private func finish(success: Bool) {
++    private func finish(_ value: Observation) {
+         guard !finished, isCurrent() else { return }
+         finished = true
+-        completion(success)
++        result(value)
+     }
+ }
+--- /dev/null
++++ b/prototype/Core/WS2FoldCallbackStamp.swift
+@@ -0,0 +1,39 @@
++import Foundation
++import CoreFoundation
++
++/// A transient callback identity, not an authorization grant or a durable restore receipt.
++struct WS2FoldCallbackStamp: Equatable, Sendable {
++    let window: UInt32
++    let pid: Int32
++    let transaction: UUID
++    let hide: String
++    let boot: UUID
++    let sessionEpoch: UInt64
++    let presentation: UUID
++    let capturedAt: TimeInterval
++
++    func accepts(current: Self, now: TimeInterval, unlocked: Bool,
++                 maximumAge: TimeInterval = 2) -> Bool {
++        guard unlocked, capturedAt.isFinite, current.capturedAt.isFinite, now.isFinite,
++              maximumAge.isFinite, maximumAge > 0, now >= capturedAt,
++              now - capturedAt < maximumAge, current.capturedAt <= now,
++              current.window == window, current.pid == pid,
++              current.transaction == transaction, current.hide == hide,
++              current.boot == boot, current.sessionEpoch == sessionEpoch,
++              current.presentation == presentation else { return false }
++        return true
++    }
++}
++
++/// Refcon contains only a never-reused integer. It is never dereferenced as an object.
++struct WS2FoldObserverRoute: Equatable, Sendable {
++    let window: UInt32
++    let pid: Int32
++    let transaction: UUID
++}
++
++/// AX boolean attributes must be real CFBooleans. Nil, numbers and strings are unknown.
++func ws2ObservedBoolean(_ raw: CFTypeRef?) -> Bool? {
++    guard let raw, CFGetTypeID(raw) == CFBooleanGetTypeID() else { return nil }
++    return CFEqual(raw, kCFBooleanTrue)
++}
+--- a/prototype/Effects/EffectFrameAwaiter.swift
++++ b/prototype/Effects/EffectFrameAwaiter.swift
+@@ -1,14 +1,30 @@
+ import Foundation
+
+ enum EffectFrameAwaiter<Value> {
++  /// Stay in the caller's isolation domain. The frame and closures need not be
++  /// Sendable merely to inspect caller-owned state across an asynchronous pause.
+   static func first(
+     timeout: TimeInterval, now: () -> TimeInterval, isCurrent: () -> Bool,
+-    latest: () -> Value?, pause: () async -> Void
++    latest: () -> Value?, pause: () async -> Void,
++    isolation: isolated (any Actor)? = #isolation
+   ) async -> Value? {
+-    let deadline = now() + max(0, timeout)
+-    while !Task.isCancelled, now() < deadline {
+-      guard isCurrent() else { return nil }
+-      if let value = latest() { return value }
++    let started = now()
++    guard timeout.isFinite, timeout > 0, started.isFinite else { return nil }
++    let deadline = started + timeout
++    guard deadline.isFinite, deadline > started else { return nil }
++    var lastTick = started
++    while !Task.isCancelled {
++      let tick = now()
++      guard tick.isFinite, tick >= lastTick, tick < deadline, isCurrent() else { return nil }
++      lastTick = tick
++      if let value = latest() {
++        // The getter can invalidate its source; an available frame is not by itself
++        // proof that it still belongs to this capture generation.
++        let checkedAt = now()
++        guard !Task.isCancelled, isCurrent(), checkedAt.isFinite,
++              checkedAt >= tick, checkedAt < deadline else { return nil }
++        return value
++      }
+       await pause()
+     }
+     return nil
+--- a/prototype/Window/AXHelpers.swift
++++ b/prototype/Window/AXHelpers.swift
+@@ -190,12 +190,13 @@
+     return .none
+ }
+
+-// 窗口被外部（⌘Tab / Dock）唤回或销毁时的回调：refcon 里编码了 CGWindowID
++// Refcon is a never-reused registration number, not a window ID or heap pointer.
+ let axWindowCallback: AXObserverCallback = { _, _, notification, refcon in
+-    guard let refcon = refcon else { return }
+-    let id = CGWindowID(Int(bitPattern: refcon))
++    guard let refcon, Thread.isMainThread else { return }
++    let routeID = UInt(bitPattern: refcon)
+     let note = notification as String
+-    DispatchQueue.main.async { appDelegate?.handleAXNotification(id, note) }
++    // The only installation site attaches this source to CFRunLoopGetMain.
++    MainActor.assumeIsolated { appDelegate?.receiveFoldAXNotification(routeID: routeID, notification: note) }
+ }
+
+ // 取窗口某个标准按钮（关闭/最小化/缩放）的屏幕坐标 frame
+--- a/prototype/WindowBrowser/WindowBrowserAppDelegate.swift
++++ b/prototype/WindowBrowser/WindowBrowserAppDelegate.swift
+@@ -96,7 +96,8 @@
+
+     /// 返回 token 表示折叠已经进入原有事务；返回 nil 表示窗口当前不处于可折叠的
+     /// 稳定状态（忙/已折叠/恢复中），调用方应回 busy 或已完成。completion 只在
+-    /// 原折叠事务的真实终态（验证成功或回滚）到达时调用一次。
++    /// 原事务结算后排队调用一次。true 还要求交付时事务/会话仍有效；false 也可能
++    /// 表示读取未知、请求过期或已被替代，不能据此认定窗口从未改变或已经恢复。
+     func windowBrowserBeginFold(key: WindowKey, element: AXUIElement,
+                                 completion: @escaping (Bool) -> Void) -> UUID? {
+         dispatchPrecondition(condition: .onQueue(.main))
+--- a/prototype/WindowShade.swift
++++ b/prototype/WindowShade.swift
+@@ -120,10 +120,12 @@
+         let pid: pid_t
+         let element: AXUIElement
+         let needsMinimizedState: Bool
+-    }
+-
+-    struct ReconcileAXSnapshot {
+-        let id: CGWindowID
++        let stamp: WS2FoldCallbackStamp
++    }
++
++    struct ReconcileAXSnapshot: Sendable {
++        let stamp: WS2FoldCallbackStamp
++        var id: CGWindowID { stamp.window }
+         let position: CGPoint?
+         let size: CGSize?
+         let isMinimized: Bool?
+@@ -171,7 +173,8 @@
+     private var tapSetupTimer: Timer?
+     var reconcileTimer: Timer?
+     var isReconcilingShadedWindows = false
+-    let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
++    var reconcileBatchID: UUID?
++    var reconcilePendingApplications = 0
+     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
+     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
+     // 本机的跨进程 SkyLight alpha 写入是否已被确认无效（SIP 限制）。
+@@ -205,6 +208,10 @@
+     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
+     // 到达时才完成；token 保证旧请求不会误结算新请求。
+     var foldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
++    var foldWaiterTransactions: [UUID: UUID] = [:]
++    var foldObserverSerial: UInt = 0
++    var foldObserverRoutes: [UInt: WS2FoldObserverRoute] = [:]
++    var foldPresentationID = UUID()
+     var foldEvidence = WS2FoldEvidence()
+     var foldEvidenceMayCommit: [UUID: () -> Bool] = [:]
+     var foldEvidenceCallbacks: [UUID: (WS2FoldEvidence.Event) -> Void] = [:]
+--- a/tests/duo-integration-check.py
++++ b/tests/duo-integration-check.py
+@@ -9,7 +9,8 @@
+ sync_finish = shade.split('if !handedToAsyncCapture {', 1)[1].split('guard let pos =', 1)[0]
+ assert 'success: true' not in sync_finish, 'Returning from shade does not prove hiding completed'
+ native = shade.split('func installInteractiveNativeCollapse', 1)[1].split('if mode == .interactiveNative', 1)[0]
+-assert 'completeFold(success: true)' in native, 'Verified native collapse must complete explicitly'
++assert 'completeFold(success: true, transaction:' in native, 'Verified native collapse must name its installed transaction'
++assert 'bindFoldWaiters(id: id, tokens: completionTokens, transaction:' in native, 'Native waiter binding must precede completion'
+ exit_code = (root / 'prototype/App/FoldExit.swift').read_text()
+ sync = exit_code.split('func unshadeReturningElement(', 1)[1].split('@discardableResult', 1)[0]
+ assert 'interceptRestore(' not in sync, 'Synchronous callers must never acquire async restore semantics'

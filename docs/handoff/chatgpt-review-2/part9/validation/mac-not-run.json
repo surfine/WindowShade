@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "bash",
+    "tests/run-mac-check.sh",
+    "candidate-repo"
+  ],
+  "exit_code": 78,
+  "stdout": "NOT RUN: requires macOS SDK and Metal tools\n",
+  "stderr": "",
+  "meaning": "NOT RUN, not pass",
+  "workspace_connection": "attempted once; connection failed; endpoint credentials intentionally omitted"
+}

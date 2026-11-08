@@ -1,0 +1,54 @@
+[
+  {
+    "method": "initialize",
+    "schema": "v1/InitializeParams.json",
+    "sha256": "6f0094be9a65242ec779a40794cbd4fdfa32fca1e45084a16adfb50501d33ea2",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "initialized",
+    "status": "PASS notification structural assertion; no payload schema"
+  },
+  {
+    "method": "model/list",
+    "schema": "v2/ModelListParams.json",
+    "sha256": "de29a536c00a5b8f46f34dba417dabd93365305571a8ed200e33bea85db68b5a",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "thread/start",
+    "schema": "v2/ThreadStartParams.json",
+    "sha256": "792e2f32e37cece971bd616664ea2053741acbed4e9c92e9d1766427718f2ecd",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "turn/start",
+    "schema": "v2/TurnStartParams.json",
+    "sha256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "turn/steer",
+    "schema": "v2/TurnSteerParams.json",
+    "sha256": "4a52eb76e7a717bb388484ccd7538737fca0df35481fc30a21e259f1bfe96e37",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "turn/interrupt",
+    "schema": "v2/TurnInterruptParams.json",
+    "sha256": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "approval-decline",
+    "schema": "CommandExecutionRequestApprovalResponse.json",
+    "sha256": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7",
+    "status": "PASS payload schema"
+  },
+  {
+    "method": "approval-decline",
+    "schema": "FileChangeRequestApprovalResponse.json",
+    "sha256": "b95b03ee6be674e25cee2e863cc135a28620e1070addd2f34685aadee27cde08",
+    "status": "PASS payload schema"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Two actual defects fixed;26 static production frames and existing flow/optimized gate. Whole seven-line goal remains active.",
+    "evidence_freshness": "13 current sources/123 evidence files match;optimized519/native518 current;actual published consumer0.",
+    "edge_risk": "Final reason survives reaper;stale/IME/receipt guards in original stdio pass;long ID no longer collapses sibling actions. Offscreen/alpha0 cannot prove real focus/login/output/hardware/motion."
+  },
+  "findings": [
+    "Original and repaired QA failures retained;first bounds-only consumer missed zero-width actions;actual red geometry and before PNG are preserved.",
+    "Second consumer 50pt threshold misclassified an icon-only button;main corrected by actual screenshot/layout, not enlarging product to fit a bad test.",
+    "Main owned product/design/acceptance;DeepSeek only pure existing palette checks;two actual runs corrected from falsely reported once.",
+    "Native default Swift5 and optimized Swift6 separate;no runtime-isolation claim. Welcome next-baseline in progress and not included in current accepted26."
+  ],
+  "updated": "2026-10-11"
+}

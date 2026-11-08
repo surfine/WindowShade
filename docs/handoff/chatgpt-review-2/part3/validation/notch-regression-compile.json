@@ -1,0 +1,16 @@
+{
+  "command": [
+    "swiftc",
+    "-swift-version",
+    "6",
+    "-strict-concurrency=complete",
+    "-warnings-as-errors",
+    "/mnt/data/ws2-r3-stage/prototype/Core/NotchActivities.swift",
+    "/mnt/data/ws2-r3-input/WindowShade2-review-round2/repo/tests/NotchActivityTests.swift",
+    "-o",
+    "/tmp/ws2-r3-validate-78o5fsui/notch-regression"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": ""
+}

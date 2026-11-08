@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-07",
+  "receiverSHA256": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4",
+  "files": {
+    "iphone-remote-device-handshake-ready.log": {
+      "sha256": "c42c24b67961de63c767ce9be176b0bea8a1dacc488a7a5c48a03bb4269faeac",
+      "source": ".build/ws2-reuse/iphone-remote-device-handshake-ready.log",
+      "bytes": 3484
+    },
+    "iphone-remote-device-opack.log": {
+      "sha256": "178055b8c2e33cac8691e64deab3a893828b8be7b48d07827e502c1b3eaa4eeb",
+      "source": ".build/ws2-reuse/iphone-remote-device-opack.log",
+      "bytes": 3624
+    },
+    "iphone-remote-device-full-session.log": {
+      "sha256": "261f508b9454907e2dd476edb7d8cd1a36b58ff27b5464632eb916161f780da5",
+      "source": ".build/ws2-reuse/iphone-remote-device-full-session.log",
+      "bytes": 4948
+    },
+    "iphone-remote-device-final.log": {
+      "sha256": "73e4caf33f9ae0f1f173b3a80ae7188d71d7b112e114e4cff43c3b1e0e1ed292",
+      "source": ".build/ws2-reuse/iphone-remote-device-final.log",
+      "bytes": 725
+    },
+    "iphone-remote-device-final-retry.log": {
+      "sha256": "5a1aabb4bef75cbcd6d4527dc4b44d435ef98a70c0bcb591087bc33e59febf2a",
+      "source": ".build/ws2-reuse/iphone-remote-device-final-retry.log",
+      "bytes": 1548
+    },
+    "remote-full-session-main.json": {
+      "sha256": "b6831266686df454015d9bc9fd2a9e464671ecc697404b133f7eb1b5a93b98c5",
+      "source": ".build/ws2-reuse/remote-full-session-main.json",
+      "bytes": 851
+    },
+    "remote-final-handshake.json": {
+      "sha256": "333ac2c717bd7eaa2393b922d62f594eff05c17fc9a25f70e5ea8bed10d2eec7",
+      "source": ".build/ws2-reuse/remote-final-handshake.json",
+      "bytes": 350
+    },
+    "remote-final-offline.log": {
+      "sha256": "5f556e797fbb6e2245cb4d73c82c3cf78b42f45a5203e9188c6e261f7435d3f6",
+      "source": ".build/ws2-reuse/remote-final-offline.log",
+      "bytes": 234
+    },
+    "channel-profile.log": {
+      "sha256": "b60ebf12d37a8474c3c3dd56aa2f8e049346273658e71de60c384a4b7f13571f",
+      "source": ".build/ws2-reuse/channel-profile.log",
+      "bytes": 1377
+    },
+    "remote-profile-build-source.json": {
+      "sha256": "39990e9c169cfd98851d7293f9188e1ab9575ae4ef265d78768771c9d922dabf",
+      "source": ".build/ws2-reuse/remote-profile-build-source.json",
+      "bytes": 45285
+    }
+  },
+  "notes": "Raw device event logs retain no PIN or packet payload. Binary/build caches and personal Bluetooth target selections are not included. Source hashes identify the final locally compiled snapshot; builds on another machine need not have identical binary hashes."
+}

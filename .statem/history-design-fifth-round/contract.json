@@ -1,0 +1,36 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-owned-hierarchy/validation.json:sha256:0dcb6892328dc1b3bc84a1f8c9da261c9f149488fa3c19e29cdfc108bee97fb3",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "render-native-surfaces.sh repaired OwnedPhasePreview.swift",
+      "exit_code": 0,
+      "result": "14 actual native phase frames;52 input/actual-panel checks;reaped/tempRemoved",
+      "log": "after/repaired.log"
+    },
+    {
+      "command": "check-owned-preview.py repaired",
+      "exit_code": 0,
+      "result": "actual phase/send/reply/label bounds/cleanup and current sources checked; rejects prior partial exit0",
+      "log": "accepted-check.log"
+    },
+    {
+      "command": "run-conductor-owned-flow-tests.sh",
+      "exit_code": 0,
+      "result": "existing actual stdio and stale/IME/receipts/reconnect assertions unchanged",
+      "log": "final-core.log"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "optimized Swift6 full app and existing localization/privacy/copy gates; flags unchanged",
+      "log": "build-check.log",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "real signed-app Swift6 runtime actor isolation; real notch/multiple display/animation quality; real assistant/login/input/VoiceOver; signed-out and error projections; long project labels/available height; live reply scroll following; oversize draft navigation feedback; media/file shelf and other original seven-line surfaces; whole goal remains active",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

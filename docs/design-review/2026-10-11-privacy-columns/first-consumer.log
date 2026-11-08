@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-privacy-column-draft.py", line 31, in <module>
+    b=field['frame'];assert field['font']==12 and field['wraps'] and field['maxLines']==0 and not field['editable'] and not field['selectable'],name
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: light-640-window-ax-plain

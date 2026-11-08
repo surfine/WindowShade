@@ -1,0 +1,7 @@
+{
+  "changed_after_runner_tests": [
+    "docs/releases/v1.0.16-ledger.md"
+  ],
+  "runtime_and_build_source_unchanged": true,
+  "tested_candidate_digest": "e1272ac9d11568274f7b96327397cc33939c037d48c565956e82c41bea1d1ac2"
+}

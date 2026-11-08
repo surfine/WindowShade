@@ -1,0 +1,610 @@
+[
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.2196078431372549,
+      0.23529411764705882
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-plug-zero.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-zero",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 15.907431244850159,
+    "tone" : "red",
+    "trailing" : "0%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.2196078431372549,
+      0.23529411764705882
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-plug-five.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-five",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 15.907431244850159,
+    "tone" : "red",
+    "trailing" : "5%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.2196078431372549,
+      0.23529411764705882
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-plug-twenty.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-twenty",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "red",
+    "trailing" : "20%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-plug-twenty-one.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-twenty-one",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "green",
+    "trailing" : "21%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-plug-eighty-two.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-eighty-two",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "green",
+    "trailing" : "82%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-plug-hundred.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-hundred",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 29.670427441596985,
+    "tone" : "green",
+    "trailing" : "100%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-full.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "full",
+    "symbol" : "battery.100",
+    "synthetic" : true,
+    "textWidth" : 29.670427441596985,
+    "tone" : "green",
+    "trailing" : "100%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.80000000000000004,
+      0
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "light-low-power.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "low-power",
+    "symbol" : "battery.25",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "yellow",
+    "trailing" : "82%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.2196078431372549,
+      0.23529411764705882
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-plug-zero.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-zero",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 15.907431244850159,
+    "tone" : "red",
+    "trailing" : "0%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.2196078431372549,
+      0.23529411764705882
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-plug-five.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-five",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 15.907431244850159,
+    "tone" : "red",
+    "trailing" : "5%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.2196078431372549,
+      0.23529411764705882
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-plug-twenty.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-twenty",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "red",
+    "trailing" : "20%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-plug-twenty-one.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-twenty-one",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "green",
+    "trailing" : "21%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-plug-eighty-two.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-eighty-two",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "green",
+    "trailing" : "82%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-plug-hundred.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "plug-hundred",
+    "symbol" : "bolt.fill",
+    "synthetic" : true,
+    "textWidth" : 29.670427441596985,
+    "tone" : "green",
+    "trailing" : "100%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      0.20392156862745098,
+      0.7803921568627451,
+      0.34901960784313724
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-full.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "full",
+    "symbol" : "battery.100",
+    "synthetic" : true,
+    "textWidth" : 29.670427441596985,
+    "tone" : "green",
+    "trailing" : "100%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "availableTextWidth" : 30,
+    "colorRGB" : [
+      1,
+      0.80000000000000004,
+      0
+    ],
+    "compactHeight" : 33.5,
+    "compactWidth" : 253,
+    "fontPointSize" : 10,
+    "height" : 34,
+    "image" : "dark-low-power.png",
+    "intersectsScreen" : false,
+    "leadingSlot" : [
+      0,
+      0,
+      34,
+      33.5
+    ],
+    "powerFlashAPIOrAXUsed" : false,
+    "realBatterySource" : false,
+    "state" : "low-power",
+    "symbol" : "battery.25",
+    "synthetic" : true,
+    "textWidth" : 22.788929343223572,
+    "tone" : "yellow",
+    "trailing" : "82%",
+    "trailingSlot" : [
+      219,
+      0,
+      34,
+      33.5
+    ],
+    "wholeRangeFontFits" : 101,
+    "width" : 253
+  }
+]

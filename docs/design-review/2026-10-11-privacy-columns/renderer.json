@@ -1,0 +1,8 @@
+{
+  "sha256": "eca78162e29ed44710a6e0a34de98aa56a1076490c17acd61c70588a51e9b172",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false,
+  "cocoaOnly": true
+}

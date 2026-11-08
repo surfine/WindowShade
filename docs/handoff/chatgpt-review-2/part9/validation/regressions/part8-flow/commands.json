@@ -1,0 +1,16 @@
+[
+  {
+    "argv": [
+      "/opt/pyvenv/bin/python3",
+      "/tmp/ws2-r9-regression-ecaqqo7a/part8/tests/run.py",
+      "--repo",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo",
+      "--suite",
+      "flow"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS IFLOW01 real pipe catalogue supplies selection rows [7]\nPASS IFLOW02 device chooses model without sending work [3]\nPASS IFLOW03 separate local send uses selected model [6]\nPASS IFLOW04 late release after local capability loss cannot change model [3]\nPASS IFLOW05 reconnect uses a new backend epoch [5]\nPASS IFLOW06 project replacement rejected by actual model selector [3]\nTOTAL 6 scenarios, 27 assertions\n",
+    "stderr": "",
+    "seconds": 9.419884821999858
+  }
+]

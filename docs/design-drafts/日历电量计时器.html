@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>日历、电量与计时器</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --bar:rgba(255,255,255,.34); --lock:rgba(10,16,30,.38);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --bar:rgba(0,0,0,.28); --lock:rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --bar:rgba(0,0,0,.28); --lock:rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:19px;margin:38px 0 8px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 6px}
+.lede{color:var(--muted);max-width:76ch;margin:0 0 18px}
+.ctl{display:grid;grid-template-columns:4.5em 1fr;gap:8px 10px;align-items:start;margin:0 0 12px}
+.ctl .lab{font-size:12px;color:var(--faint);padding-top:7px}
+.btns{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+button{font:inherit;font-size:13.5px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:5px 11px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.stage{position:relative;border-radius:12px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);touch-action:manipulation}
+.stage svg{display:block;width:100%;height:auto;user-select:none;-webkit-user-select:none}
+svg text{font-family:var(--sans)}
+.status{display:flex;flex-wrap:wrap;gap:4px 14px;margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+.status b{color:var(--ink);font-weight:600}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.say{margin:6px 0 0;font-size:13.5px;color:var(--ink);min-height:1.6em}
+.hint{margin:4px 0 0;font-size:12px;color:var(--faint)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}.ctl{grid-template-columns:1fr}.ctl .lab{padding-top:0}}
+.card{background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ul{margin:0;padding-left:18px}
+.card li+li{margin-top:5px}
+.card li b{color:var(--ink);font-weight:600}
+.tbl{overflow-x:auto;background:var(--panel);border-radius:14px;box-shadow:inset 0 0 0 .5px var(--line)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:.5px solid var(--line)}
+th{font-weight:600;color:var(--ink);font-size:12.5px;background:color-mix(in srgb,var(--panel) 80%,var(--line))}
+td{color:var(--muted)}
+td b{color:var(--ink);font-weight:600}
+tr:last-child td{border-bottom:0}
+.no{color:var(--bad);font-weight:600}
+.yes{color:var(--ok);font-weight:600}
+.note{margin-top:10px;font-size:12.5px;color:var(--faint)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1040px;margin:-12px auto 18px;padding:0 0 10px;font-size:12.5px;border-bottom:1px solid var(--line)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .sp{flex:1}
+</style>
+</head>
+<body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 12 张 · 日历、电量与计时器</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">← 音量与亮度</a><a href="https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j">文件架 →</a></nav>
+<div class="wrap">
+  <h1>日历、电量与计时器</h1>
+  <p class="lede">三件小事放进同一颗岛：开会前 5 分钟开始倒数，插上电源时闪一下，还有你自己开的计时器。左耳显示是谁，右耳显示数字，句子写在下面；谁让谁，按六层和权重定。这张稿要证明：不加窗口，不进菜单，这三件事也能只在该出现的时候出现，其余时候刘海和硬件重合。机型按 Air 15 英寸：刘海 185 × 33.5，耳高 33.5、耳宽按内容（每耳最多 52.33）。</p>
+
+  <div class="ctl">
+    <span class="lab">日程</span>
+    <div class="btns">
+      <button type="button" data-do="calLink">5 分钟后开会（有会议链接）</button>
+      <button type="button" data-do="calPlain">5 分钟后开会（没有链接）</button>
+      <button type="button" data-do="calOverlap">两个会挨着</button>
+      <button type="button" data-do="calAllDay">加一个全天日程</button>
+      <button type="button" data-do="calSkip">快进到开始前 15 秒</button>
+    </div>
+    <span class="lab">电量</span>
+    <div class="btns">
+      <button type="button" data-do="plug">插上电源</button>
+      <button type="button" data-do="unplug">拔掉电源</button>
+      <button type="button" data-do="full">充满</button>
+      <button type="button" data-do="low20">降到 20%</button>
+      <button type="button" data-do="low10">10%</button>
+      <button type="button" data-do="low5">5%</button>
+      <button type="button" data-do="lpm" id="lpmBtn" aria-pressed="false">低电量模式</button>
+      <button type="button" data-do="unk" id="unkBtn" aria-pressed="false">电量读不到</button>
+    </div>
+    <span class="lab">设备</span>
+    <div class="btns">
+      <button type="button" data-do="pods">AirPods Pro 连上</button>
+      <button type="button" data-do="mouse">妙控鼠标连上</button>
+    </div>
+    <span class="lab">计时器</span>
+    <div class="btns">
+      <button type="button" data-do="picker">按 ⌃⌥T 选分钟</button>
+      <button type="button" data-do="start10">直接开 10 分钟</button>
+      <button type="button" data-do="pause">暂停 / 继续</button>
+      <button type="button" data-do="last60">快进到最后 60 秒</button>
+      <button type="button" data-do="ring">快进到时间到</button>
+      <button type="button" data-do="endTimer">结束</button>
+    </div>
+    <span class="lab">同台</span>
+    <div class="btns">
+      <button type="button" data-do="music" id="musicBtn" aria-pressed="false">音乐在放（40）</button>
+      <button type="button" data-do="session" id="sessionBtn" aria-pressed="false">编程会话在等你（95）</button>
+      <button type="button" data-do="openRow">打开刘海那一排</button>
+    </div>
+    <span class="lab">环境</span>
+    <div class="btns">
+      <button type="button" data-do="lock" id="lockBtn" aria-pressed="false">锁屏</button>
+      <button type="button" data-do="sleep">合上盖子 3 分钟</button>
+      <button type="button" data-do="share" id="shareBtn" aria-pressed="false">正在共享屏幕</button>
+      <button type="button" data-do="perm" id="permBtn" aria-pressed="true">日历已授权</button>
+      <button type="button" data-do="desktop" id="deskBtn" aria-pressed="false">台式 Mac（没有电池）</button>
+    </div>
+    <span class="lab">看法</span>
+    <div class="btns">
+      <button type="button" data-speed="1" aria-pressed="true">1×</button>
+      <button type="button" data-speed="10" aria-pressed="false">10×</button>
+      <button type="button" data-speed="60" aria-pressed="false">60×</button>
+      <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+      <label class="sw"><input id="chime" type="checkbox" checked> 计时器到时间响一声</label>
+      <button type="button" data-do="reset">重来</button>
+    </div>
+  </div>
+
+  <div class="stage" id="stage"><svg id="sv" viewBox="0 0 760 214" role="img" aria-label="刘海模拟：菜单栏、刘海和从刘海长出来的岛"></svg></div>
+  <div class="status"><span>刘海此刻听：<b id="layer">什么都没有</b></span><span>弹簧：<span class="token" id="tok">calm</span></span><span>模拟时间 <b id="clk">14:50:00</b></span><span>这台 Mac：<b id="batt">62%</b></span></div>
+  <p class="say" id="say"></p>
+  <p class="hint">点耳朵：直接长成那一件的大卡（Aaron 2026-10-09 定）；在那一排里点日程或计时器那一格也长成大卡。点岛外面或按 Esc 收回。选分钟时可以用 ↑ ↓ 和回车。</p>
+  <p class="sr" aria-live="polite" id="live"></p>
+
+  <h2>规则</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>日程：只在快开会时出现</h3>
+      <ul>
+        <li><b>出现</b>：开始前 5 分钟（设置里可选 1 / 5 / 10 / 15，默认 5，取 Atoll 的默认值）。<b>全天、已拒绝、已取消</b>的日程都不出现。</li>
+        <li><b>紧凑</b>：左耳是日历颜色的环（剩余时间 ÷ 5 分钟，越来越空），右耳写“4 分”，最后一分钟写“0:42”。耳高 33.5，耳宽按内容（主体 2 + 28 + 7.75 = 37.75，加肩 7.74 = 45.49，每耳最多 52.33、主体 44.59），放不下“马上开始”四个字，这四个字写进最后 10 秒的句子里。</li>
+        <li><b>最后 10 秒</b>：用 <span class="token">bloom</span> 鼓成提醒（408 × 84，圆角 24，画肩），主句是日程标题，次句写“马上开始 · 地点”，有会议链接时右边有“加入”。一直留到开始那一刻，至少 2.6 秒，然后用 <span class="token">calm</span> 收回。同一个日程只鼓一次。</li>
+        <li><b>开始后</b>：没有链接就收掉。有链接再留 5 分钟：左耳是满环，右耳是绿色摄像机，点开能“加入”。点了“加入”或日程结束就收。</li>
+        <li><b>展开</b>：点耳朵直接长成大卡（Aaron 2026-10-09 定，和《正在播放》一致）；在刘海那一排里点日程那一格也长成大卡（大卡例外：宽按内容，示意 420；刘海下方高 118，底角 28，画肩，<span class="token">expand</span>）：标题、时间、地点、大号倒数、“还有 1 个”、加入。</li>
+        <li><b>加入</b>：只认会议链接（Zoom、Teams、Meet、Webex、腾讯会议、飞书、FaceTime），在日程的链接、地点、备注里找。已装会议 App 的交给 App 打开，否则用浏览器。找不到链接就不画按钮，不去猜。</li>
+        <li><b>读多少</b>：EventKit 只查从现在起 24 小时内的日程。日历有改动（EKEventStoreChanged）时重查；下一个“该出现”的时刻挂一个一次性定时器，不按秒轮询。只有刘海看得见时才每秒重画倒数。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>电量：事件来了才说，插上那一下最短</h3>
+      <ul>
+        <li><b>来源</b>：<code>IOPSNotificationCreateRunLoopSource</code>（插拔、电量变化时系统推送）加 <code>NSProcessInfoPowerStateDidChange</code>（低电量模式），去掉现在 120 秒一次的轮询。只认内置电池，UPS 不算。</li>
+        <li><b>插上</b>：只在紧凑大小里闪一下（按新耳宽：主体 185 + 2 × 37.75 = 260.5 × 33.5，连肩 276.0，不往下鼓）。左耳闪电，右耳“82%”。电量读不到时右耳不写数，不写 0%。颜色：高于 20% 绿，20% 及以下红，开着低电量模式时黄。用 <span class="token">settle</span> 长出，停 2.6 秒，用 <span class="token">calm</span> 收回。30 秒内再插上不再闪。</li>
+        <li><b>拔掉</b>：不出声。菜单栏的电池图标已经变了，顺利时刘海不说话。拔掉时电量已在 20% 以下，直接说低电量那一句。</li>
+        <li><b>充满</b>：系统报告已充满（IsCharged）时闪一次，同一次插电只闪一次。左耳满格电池，右耳“100%”。优化充电停在 80% 不算充满，不出声。</li>
+        <li><b>低电量 20 / 10 / 5%</b>：沿用现有规则，同一次放电每一档只提醒一次。外观和设备提醒一样：左耳红色电池，右耳“10%”，主句“这台 Mac 电量低”，次句“还剩 10%，记得充电”。用 <span class="token">bloom</span>，停 2.6 秒。</li>
+        <li><b>低电量模式打开</b>：在紧凑大小里闪一下，左耳黄色电池，右耳黄色百分比，读屏念“低电量模式已打开”。关掉时不出声。若和低电量同时发生，只出低电量那一句，次句改成“已打开低电量模式”。</li>
+        <li><b>电量读不到</b>：电量未知时不显示 0%：插上那一下只闪闪电，右耳不写数；低电量那一组不出；连上的设备写“电量暂时读不到”。</li>
+        <li><b>台式 Mac</b>：没有内置电池，这一组都不出现，设置里也不显示这一行。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>设备连上：和电量用同一种样子</h3>
+      <ul>
+        <li><b>样子</b>：提醒 408 × 84。左耳放设备符号，右耳写电量，20% 及以下用红色。主句“AirPods Pro 已连接”；次句“左耳 80% · 右耳 78% · 充电盒 45%”，只写读到的部分，一样都没读到就写“电量暂时读不到”，不写 0%。</li>
+        <li><b>等电量</b>：最多等 1.8 秒，读到就和句子一起出现；超时就先出句子，之后读到也不补播。“已连接”超过 10 秒再说就没有意义了（沿用 <code>DeviceBatteryController</code>）。</li>
+        <li><b>和今天比</b>：文字不变，只把图标放进左耳、电量放进右耳，不再留空的“额头”。几台一起连上，仍写“3 个设备已连接”。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>计时器：你开的，只倒数一次</h3>
+      <ul>
+        <li><b>名字</b>：计时器，和番茄钟分开。番茄钟分专注、休息两段，计时器只倒数一次。</li>
+        <li><b>从哪开</b>：① 按 ⌃⌥T，刘海长成选分钟（交互样子，408 × 112，圆角 24）：可选 1 / 3 / 5 / 10 / 15 / 30，或用 ↑ ↓ 调，回车开始，Esc 取消。② 启动台负一屏的计时器卡，和番茄钟卡放在同一排。③ 以后：iPhone 上的遥控器、快捷指令和聚焦搜索里说“计时 10 分钟”。<b>不进菜单，也不进刘海那一排</b>（那一排只放正在进行的事）。</li>
+        <li><b>进行中</b>：左耳是橙色的环（剩余时间 ÷ 总时长），右耳写“9 分”。权重 75。</li>
+        <li><b>暂停</b>：环和数字都降到 0.5 透明度，环中间画两道竖线。在大卡或负一屏卡上暂停。</li>
+        <li><b>最后 60 秒</b>：只把右耳换成秒（“0:42”），不闪、不变色、不鼓。</li>
+        <li><b>时间到</b>：用 <span class="token">bloom</span> 鼓成提醒，停 10 秒。主句“时间到”，次句“10 分钟计时器”，按钮“结束 / 再来一个”。响一次系统提示音，不循环。</li>
+        <li><b>超时</b>：收回紧凑，环是满的，右耳从“+0:42”变成“+3 分”。超时 10 分钟后自己结束。</li>
+        <li><b>声音</b>：时间到默认响，这是唯一默认会响的声音，设置里单独一个开关“计时器到时间响一声”。收起和展开的音效仍然默认关。音量跟随系统，系统静音时不响。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>谁让谁</h2>
+  <div class="grid2">
+    <div class="tbl"><table>
+      <thead><tr><th>层（上面先占）</th><th>这一张里的住户</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 放行</b></td><td>刷脸解锁、用 Touch ID 确认（这张稿里没有）</td></tr>
+        <tr><td><b>2 正在做的手势 / 交互</b></td><td>选分钟（⌃⌥T）</td></tr>
+        <tr><td><b>3 你打开的</b></td><td>刘海那一排，日程大卡、计时器大卡</td></tr>
+        <tr><td><b>4 短暂提醒</b></td><td>低电量 = 日程最后 10 秒 = 时间到 &gt; 设备连上 &gt; 插上 / 充满 / 低电量模式。级别相同的排队；最后一类撞上别的提醒就不出了</td></tr>
+        <tr><td><b>5 持续活动</b></td><td>日程倒数、计时器（按右表的权重排）</td></tr>
+        <tr><td><b>6 什么都没有</b></td><td>和硬件重合，不画</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl"><table>
+      <thead><tr><th>持续活动</th><th>权重</th><th>为什么放这里</th></tr></thead>
+      <tbody>
+        <tr><td>CarPlay</td><td>100</td><td>—</td></tr>
+        <tr><td>编程会话</td><td>95</td><td>它在等你，比开会更近</td></tr>
+        <tr><td>录音</td><td>90</td><td>—</td></tr>
+        <tr><td><b>日程（新）</b></td><td><b>85</b></td><td>只活 5 分钟，到点就过期；比下载、拷贝更急</td></tr>
+        <tr><td>进度：下载 / 拷贝 / 隔空投送</td><td>80</td><td>—</td></tr>
+        <tr><td><b>计时器（新）</b></td><td><b>75</b></td><td>你自己开的、有终点；比番茄钟更具体</td></tr>
+        <tr><td>番茄钟</td><td>70</td><td>—</td></tr>
+        <tr><td>路线 / 音乐 / 遥控器 / 耳机</td><td>60 / 40 / 30 / 20</td><td>—</td></tr>
+        <tr><td>电量</td><td>—</td><td>不是持续活动，只是短暂提醒</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+  <p class="note">同时有两件持续活动时，权重高的那件占两耳，第二件在右耳外分出一颗小圆（直径 33.5，和耳朵同高，离耳 6），第三件只在刘海那一排里看得见；两指横扫切换。短暂提醒撞上第 1–3 层时，只在右下留一个 8 点的强调色点（右 10、下 8），读屏念一次，然后作废，之后不补播（design-grammar「协调共生」）。电量那一下用紧凑的大小，它仍属于短暂提醒，不是第六种样子。</p>
+
+  <h2>对照：Atoll、Alcove、今天、要做的</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>项</th><th>Atoll 2.3.3</th><th>Alcove 1.7.9</th><th>WindowShade 今天</th><th>WindowShade 要做的</th></tr></thead>
+    <tbody>
+      <tr><td><b>日程活动</b></td><td>开始前 5 分钟，环形倒数，每秒刷新；开始就结束</td><td>会议倒数和进行中，可点加入</td><td>没有</td><td>开始前 5 分钟，环加分钟；有链接时开始后再留 5 分钟</td></tr>
+      <tr><td><b>最后几秒</b></td><td>最后 5 秒弹出一下，图标换成带感叹号的日历</td><td>不清楚</td><td>—</td><td>最后 10 秒鼓一次，句子里写“马上开始”，加入按钮也在这里</td></tr>
+      <tr><td><b>加入</b></td><td>展开日历卡上有</td><td>有，优先交给原生 App</td><td>—</td><td>只认会议链接，优先交给 App；没找到链接就不画按钮</td></tr>
+      <tr><td><b>日历的家</b></td><td>展开首页常驻日历卡，还有月历</td><td>展开后是月历网格</td><td>—</td><td><span class="no">不取</span>：展开以一页为主，日历只在快开会时才算一件事</td></tr>
+      <tr><td><b>授权</b></td><td>完全访问日程和提醒事项</td><td>有授权引导；没授权就隐藏</td><td>—</td><td>只要日程的完全访问，不要提醒事项。等刘海第一次要说“快开会”时再问；拒绝了就什么都不出</td></tr>
+      <tr><td><b>电量来源</b></td><td>IOPS 系统推送 + 低电量模式通知</td><td>不公开</td><td>每 120 秒读一次</td><td>换成 IOPS 系统推送 + 低电量模式通知</td></tr>
+      <tr><td><b>插上</b></td><td>“Charging”加电池条，3 秒</td><td>第三方报道说会动画展开（未证实）</td><td>没有</td><td>紧凑大小里闪 2.6 秒：闪电加百分比</td></tr>
+      <tr><td><b>拔掉</b></td><td>不出</td><td>不清楚</td><td>不出</td><td>不出（低于 20% 时走低电量）</td></tr>
+      <tr><td><b>充满</b></td><td>电池图标跳动，再换成 MagSafe 示意</td><td>充满后就不显示了</td><td>没有</td><td>紧凑大小里闪一次。<span class="no">不取</span>示意动画：那是装饰</td></tr>
+      <tr><td><b>低电量</b></td><td>20% 一档，默认响提示音</td><td>有文字和声音</td><td>20 / 10 / 5%，有句子</td><td>档位不变，外观和设备提醒统一。<span class="no">不取</span>提示音</td></tr>
+      <tr><td><b>低电量模式</b></td><td>开的时候也弹低电量</td><td>有通知</td><td>没有</td><td>开的时候闪一下（黄色），关的时候不出声</td></tr>
+      <tr><td><b>台式 Mac</b></td><td>按有没有电池决定</td><td>没有电池就关掉电池页</td><td>不读</td><td>这一组都不出现，设置里也不显示</td></tr>
+      <tr><td><b>耳机 / 配件</b></td><td>8 段 3D 视频图标，电量用圆环</td><td>3D 模型，低电量有声音</td><td>“名字已连接 · 电量 N%”</td><td>左耳符号、右耳电量，次句分左耳 / 右耳 / 充电盒。<span class="no">不取</span>3D 视频：受版权保护，也是装饰</td></tr>
+      <tr><td><b>计时器入口</b></td><td>展开里单独一个标签页，⌘⇧T</td><td>没有计时器</td><td>只有番茄钟</td><td>⌃⌥T 在刘海里选分钟，或用启动台负一屏的卡；不进菜单</td></tr>
+      <tr><td><b>计时器样子</b></td><td>右耳数字加进度条；绿 → 黄 → 红，超时闪红</td><td>—</td><td>番茄钟：环加“18 分”</td><td>和番茄钟同一种写法：环加“9 分”，最后一分钟显示秒。<span class="no">不取</span>变色和闪烁：只靠颜色表达，又平添焦虑</td></tr>
+      <tr><td><b>时间到的声音</b></td><td>循环响，直到你停下</td><td>—</td><td>番茄钟有提示音</td><td>只响一次系统提示音，默认开、能单独关。<span class="no">不取</span>循环响</td></tr>
+      <tr><td><b>系统时钟的计时器</b></td><td>读私有文件和日志，跟着系统时钟 App 的计时器走</td><td>—</td><td>—</td><td><span class="no">不取</span>：私有依赖太脆，系统一更新就会坏</td></tr>
+      <tr><td><b>锁屏小组件</b></td><td>日历、电池、计时器都有</td><td>电池、日历都有</td><td>—</td><td><span class="no">不取</span>：锁屏归系统</td></tr>
+      <tr><td><b>出发时间</b></td><td>—</td><td>要定位权限</td><td>—</td><td><span class="no">不取</span>：为一句话要定位，不值</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>边缘情况</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>情况</th><th>怎么做</th></tr></thead>
+    <tbody>
+      <tr><td><b>两个会挨着或重叠</b></td><td>紧凑只倒数最早开始、还没开始的那个；已经开始、能加入的那个排在后面。大卡里最多列 2 行，写“还有 1 个：周会 · 14:54”。每个日程各鼓一次。</td></tr>
+      <tr><td><b>锁屏时快开会</b></td><td>锁屏时刘海不画。最后 10 秒那一下作废，解锁后不补。解锁时还在 5 分钟之内，就直接出紧凑，不重播开场。</td></tr>
+      <tr><td><b>正在共享或录制屏幕</b></td><td>最后 10 秒那一下不写日程标题，只写“日程 · 马上开始”。紧凑本来就不显示标题。</td></tr>
+      <tr><td><b>日程改了、删了</b></td><td>EKEventStoreChanged 后重查；不在了就用 <span class="token">calm</span> 收掉，不说话。</td></tr>
+      <tr><td><b>离开始不到 5 分钟才建的日程</b></td><td>建好就出现，从剩下的时间开始倒数。</td></tr>
+      <tr><td><b>授权被收回</b></td><td>正在显示的日程收掉。设置里那一行写“没有权限”，点一下去系统设置。不在刘海里追问。</td></tr>
+      <tr><td><b>计时器跨过睡眠</b></td><td>用包含睡眠时间的连续时钟算，不受手动改时间影响。合盖期间到了时间，醒来只显示超时，不补响，也不补鼓。到点时只是锁屏没睡，就照常响，解锁后显示超时。</td></tr>
+      <tr><td><b>计时器和番茄钟同时在走</b></td><td>计时器（75）占两耳，番茄钟（70）在右耳外分出一颗小圆。同一时间只能有一个计时器；再按 ⌃⌥T 时，先显示正在走的那个，可以结束它。</td></tr>
+      <tr><td><b>插电时正有别的提醒</b></td><td>插电那一下不出（最低一类，撞上就不出）。低电量和设备连上会排队，等前一个的 2.6 秒停留结束再出。</td></tr>
+      <tr><td><b>插电时你正打开着刘海</b></td><td>只在右下留一个 8 点的强调色点（右 10、下 8），2.6 秒后消失，不打断你。</td></tr>
+      <tr><td><b>线头松，反复插拔</b></td><td>30 秒内只闪一次。</td></tr>
+      <tr><td><b>台式 Mac</b></td><td>IOPS 里没有内置电池：电量这一组全部不出，设置里不显示。外接 UPS 不算。</td></tr>
+      <tr><td><b>全屏、调度中心</b></td><td>沿用现状，刘海不出。提醒作废；计时器到时间仍会响。</td></tr>
+      <tr><td><b>减少动态效果</b></td><td>形状直接切过去，内容用 0.25 秒淡入淡出；不鼓，不带速度（<span class="token">reduced</span>）。</td></tr>
+      <tr><td><b>VoiceOver</b></td><td>每次提醒都念主句和次句；紧凑读作“日程，设计评审，4 分钟后开始”“计时器，还剩 9 分钟”。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>权限与隐私</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>读什么</th><th>什么时候读</th><th>默认</th><th>去哪里</th><th>登记（tools/privacy/registry.json）</th></tr></thead>
+    <tbody>
+      <tr><td><b>日程</b>：开始和结束时间、标题、地点、链接、备注（只在里面找会议链接）、你的回复状态、日历颜色</td><td>启动时（已授权的话）、日历改动时、到每个日程开始前 5 分钟时；只查未来 24 小时</td><td>关，等刘海第一次要说“快开会”、你点“允许”后才开</td><td>只在内存里，不存，不外发；备注读完就扔</td><td><b>新增一行 <code>calendar</code></b>：sensitive，status planned，归“你同意后才读的”；扫描词加 <code>EKEventStore</code>、<code>requestFullAccessToEvents</code></td></tr>
+      <tr><td><b>这台 Mac 的电量</b>：百分比、有没有插电、是否已充满、低电量模式</td><td>系统推送电源变化时；不再定时读</td><td>开（不用问）</td><td>只在内存里；低电量提醒过的档位记在本机设置（现状）</td><td><b>改 <code>battery</code> 这一行</b>：activation 改成“电源变化时”，reads 加“这台 Mac”；扫描词加 <code>IOPSNotificationCreateRunLoopSource</code>、<code>isLowPowerModeEnabled</code></td></tr>
+      <tr><td><b>计时器</b>：不读别的东西；记住上次选的分钟</td><td>你开计时器时</td><td>—</td><td>本机设置</td><td><b>改 <code>settings</code> 这一行</b>，补上“上次的计时分钟数”</td></tr>
+      <tr><td><b>配件电量</b></td><td>沿用现状</td><td>开</td><td>沿用现状</td><td>不改</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">日程授权不放进欢迎窗口，也不在启动时问：等刘海第一次要说“快开会”时再问一次（符号 <code>calendar</code>，写“快开会时提醒你”，按钮“允许”），点了才调用 <code>requestFullAccessToEvents</code>；拒绝了就什么都不出，也不再追问。《WindowShade 读到的》那一页加一行“日程”。</p>
+
+  <h2>实现落点与工作包</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>包</th><th>标题</th><th>一句话</th><th>改哪里</th><th>验收</th></tr></thead>
+    <tbody>
+      <tr><td><b>ACT-W</b></td><td>两个新权重</td><td>加 <code>.calendar</code> 85、<code>.timer</code> 75；两件同时在时，第一件占两耳，第二件在右耳外一颗小圆，第三件只在那一排</td><td><code>Core/NotchActivities.swift</code>、<code>App/NotchActivityView.swift</code>、<code>Core/NotchRow.swift</code>、<code>tests/SessionActivityTests.swift</code></td><td>权重表测试通过；日程加音乐时左耳是日程环、右耳是音符；刘海那一排右段最多 3 格</td></tr>
+      <tr><td><b>CAL-1</b></td><td>日程的纯逻辑</td><td>选哪个日程、处在哪个阶段（倒数 / 最后 10 秒 / 已开始可加入 / 结束），过滤全天和已拒绝，识别会议链接</td><td>新建 <code>Core/CalendarActivity.swift</code> 和测试</td><td>挨着的会、全天、已拒绝、已取消、24 小时外、开始后 5 分钟这几种情况都有测试；不碰 EventKit 也能跑</td></tr>
+      <tr><td><b>CAL-2</b></td><td>日程来源</td><td>EventKit 只读 24 小时内的日程，日历改动时重查，用一次性定时器等到下一个时刻</td><td>新建 <code>App/CalendarSource.swift</code>；<code>App/NotchActivitySources.swift</code> 接上</td><td>空闲时 CPU 唤醒次数和今天一样（没有每秒的定时器）；没授权时不建 <code>EKEventStore</code></td></tr>
+      <tr><td><b>CAL-3</b></td><td>日程的样子</td><td>紧凑的环加分钟、最后 10 秒鼓一下、大卡、加入</td><td><code>App/NotchActivityView.swift</code>、<code>App/Notch.swift</code></td><td>和本稿逐帧对得上；共享屏幕时句子里没有标题；减少动态效果时不鼓</td></tr>
+      <tr><td><b>CAL-4</b></td><td>授权与登记</td><td>第一次要说“快开会”时问一次的那一行、设置里的一行、隐私登记</td><td><code>App/NotchActivitySources.swift</code>、<code>tools/privacy/registry.json</code></td><td><code>check-registry.py</code> 通过；拒绝后没有任何日程相关的界面，也不再追问</td></tr>
+      <tr><td><b>PWR-1</b></td><td>电源改成推送</td><td>用 IOPS 系统推送和低电量模式通知替换 120 秒轮询</td><td><code>App/MacBatterySource.swift</code>、<code>Core/DeviceBattery.swift</code></td><td>插拔后 1 秒内收到读数；空闲 10 分钟里电池读取次数为 0；台式 Mac 不建来源</td></tr>
+      <tr><td><b>PWR-2</b></td><td>电量那一下</td><td>插上、充满、低电量模式在紧凑大小里闪一下；低电量换成新外观；30 秒防抖</td><td><code>App/DeviceBatteryController.swift</code>、<code>App/DeviceBatteryCopy.swift</code>、<code>App/Notch.swift</code></td><td>拔掉不出声；充满同一次插电只闪一次；撞上别的提醒就不出；颜色之外还有不同的符号</td></tr>
+      <tr><td><b>DEV-1</b></td><td>设备提醒换外观</td><td>符号放进左耳、电量放进右耳，AirPods 分左耳 / 右耳 / 充电盒</td><td><code>App/DeviceBatteryCopy.swift</code>、<code>App/AirPodsBatterySource.swift</code>、<code>App/NotchActivityView.swift</code></td><td>文字和今天一样；只读到一侧时只写一侧；超过 1.8 秒没读到就先出句子</td></tr>
+      <tr><td><b>TMR-1</b></td><td>计时器的纯逻辑</td><td>连续时钟上的截止时刻、暂停、时间到、超时 10 分钟后结束、跨睡眠</td><td>新建 <code>Core/CountdownTimer.swift</code> 和测试（参考 <code>Core/FocusTimer.swift</code> 的写法，但不在锁屏或睡眠时暂停）</td><td>合盖 3 分钟后醒来，剩余时间少了 3 分钟；超过 60 秒才发现时间到，就不响</td></tr>
+      <tr><td><b>TMR-2</b></td><td>计时器的样子和入口</td><td>⌃⌥T 选分钟、紧凑、大卡、时间到、超时、响一声；启动台负一屏加一张卡</td><td>新建 <code>App/CountdownTimerHost.swift</code>；<code>App/NotchActivityView.swift</code>、<code>App/LaunchpadActivities.swift</code></td><td>菜单项数量不变（仍是 9 项）；键盘就能开始和结束；系统静音时不响</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">顺序：先做 ACT-W 和 PWR-1（不改画面，风险最低），再做 CAL-1 与 TMR-1 两个纯逻辑包（可以并行），最后做三个画面包。词汇表要补三项，由主模型改 copy-guide：<b>日程</b>（不叫会议、事件、日历提醒），<b>加入</b>（不叫入会、参会），<b>计时器</b>（只指这一种；番茄钟仍不叫计时器）。另外要记进对照账：计时器的橙色和 <code>problem</code> 用的是同一种系统橙，但一个是环、一个是边线，形状不同。</p>
+
+  <h2>待 Aaron 定</h2>
+  <div class="card"><ul>
+    <li><b>计时器从哪开</b>：推荐用 ⌃⌥T 在刘海里选分钟，再加启动台负一屏的一张卡。两样都不占菜单，也不占刘海那一排。另一种做法是只做快捷指令和聚焦搜索，入口更隐蔽，但界面一样都不用加。</li>
+    <li><b>时间到默认响不响</b>：推荐默认响一次系统提示音。计时器到点不出声，你没在看屏幕时它就没用了。这是全产品唯一默认会响的声音，设置里有单独的开关；收起和展开的音效仍然默认关。</li>
+  </ul></div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var sv=$('sv'), reducedBox=$('reduced'), chimeBox=$('chime');
+  /* 硬件：Air 15 英寸，单位 pt */
+  var HW={w:185,h:33.5,rb:10.71,e:7.74}, CX=380, VW=760, VH=214;
+  var NL=CX-HW.w/2, NR=CX+HW.w/2, EY=HW.h/2;
+  /* 耳宽按内容（《两耳的岛》）：主体 = 2 + 内容宽 + 外侧留白；这张稿里最宽的是右耳 28 宽的文字 → 2 + 28 + 7.75 = 37.75；再加肩 7.74 = 45.49，每耳最多 52.33（主体 44.59） */
+  var EARB=37.75, EARW=EARB+HW.e, LX=NL-2-9, RX=NR+2+14, MINI=33.5, MINI_GAP=6;
+  var LEAD=300, BLOOM=10, JOIN=300, OVER=600, HOLD=2.6, DONE_HOLD=10, DEBOUNCE=30;
+  var COL={green:'#32d74b',yellow:'#ffd60a',red:'#ff453a',orange:'#ff9f0a',amber:'#ffb340',purple:'#bf5af2',blue:'#0a84ff'};
+  /* 弹簧令牌（response 秒 / 阻尼比 ζ），照 design-system §4.6 */
+  var TOK={calm:{r:.34,z:1},settle:{r:.38,z:1},expand:{r:.40,z:.92},bloom:{r:.42,z:.84},pop:{r:.30,z:.75},reduced:{r:.25,z:1}};
+  var GEO={none:{W:185,H:33.5,r:10.71},compact:{W:185+2*EARB,H:33.5,r:10.71},alert:{W:408,H:84,r:24},picker:{W:408,H:112,r:24},card:{W:420,H:33.5+118,r:28}}; /* 大卡例外：宽按内容（示意 420），刘海下方 118（只有一句话时 72），底角 28 */
+  var T0=14*3600+50*60;
+  var S, sh={W:185,H:33.5,r:10.71,vW:0,vH:0,vr:0}, curKey='none', from={W:185,H:33.5}, fade=1, lastTs=0, curTok='calm';
+  var actx=null;
+
+  function rt(){return performance.now()/1000}
+  function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+  function pad2(n){return (n<10?'0':'')+n}
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+  function trunc(s,n){s=String(s);return s.length>n?s.slice(0,n-1)+'…':s}
+  function hm(t){t=Math.floor(t);return Math.floor(t/3600)%24+':'+pad2(Math.floor(t/60)%60)}
+  function hms(t){t=Math.floor(t);return hm(t)+':'+pad2(t%60)}
+  function earText(rem){ if(rem>=60) return Math.ceil(rem/60)+' 分'; rem=Math.max(0,Math.ceil(rem)); return '0:'+pad2(rem); }
+  function bigText(rem){ rem=Math.max(0,Math.ceil(rem)); return Math.floor(rem/60)+':'+pad2(rem%60); }
+  function overText(s){ s=Math.max(0,Math.floor(s)); return s<60?'+0:'+pad2(s):'+'+Math.floor(s/60)+' 分'; }
+  function say(s){ $('say').textContent=s; }
+  function announce(s){ $('live').textContent=s; }
+
+  function reset(){
+    S={t:T0,speed:S?S.speed:1,locked:false,share:false,desktop:false,calPerm:true,events:[],timer:null,music:false,session:false,
+       bat:{pct:62,plugged:false,lpm:false,lastPlug:-1e9,fired:{}},alert:null,queue:[],open:null,pick:10,lastMin:10,dot:0,asleep:false};
+    syncPressed();
+    say('现在 14:50，什么都没有，刘海和硬件重合。从上面任意一个按钮开始。');
+  }
+
+  /* ---------- 日程 ---------- */
+  function calOK(e){return S.calPerm && !e.allDay && !e.declined && !e.joined}
+  function calCurrent(){
+    var t=S.t, up=null, live=null;
+    S.events.forEach(function(e){
+      if(!calOK(e)) return;
+      if(t>=e.start-LEAD && t<e.start){ if(!up||e.start<up.start) up=e; }
+      else if(e.link && t>=e.start && t<Math.min(e.start+JOIN,e.end)){ if(!live) live=e; }
+    });
+    return up||live;
+  }
+  function calOthers(cur){
+    var t=S.t;
+    return S.events.filter(function(e){ return e!==cur && calOK(e) && ((t>=e.start-LEAD && t<e.start) || (e.link && t>=e.start && t<Math.min(e.start+JOIN,e.end))); });
+  }
+
+  /* ---------- 持续活动 ---------- */
+  function persistent(){
+    var list=[], ce=calCurrent();
+    if(ce) list.push({kind:'cal',w:85,ev:ce});
+    if(S.timer) list.push({kind:'timer',w:75});
+    if(S.session) list.push({kind:'session',w:95});
+    if(S.music) list.push({kind:'music',w:40});
+    list.sort(function(a,b){return b.w-a.w});
+    return list.slice(0,3);
+  }
+  function actLabel(a){return ({cal:'日程',timer:'计时器',session:'编程会话',music:'音乐'})[a.kind]+'（'+a.w+'）'}
+
+  /* ---------- 提醒仲裁 ---------- */
+  var ALERT_NAME={cal:'日程最后 10 秒',timerDone:'时间到',low:'低电量',pods:'AirPods 连上',mouse:'妙控鼠标连上',plug:'插电那一下',full:'充满那一下',lpm:'低电量模式那一下'};
+  function expired(a){return rt()>=a.untilReal && (a.untilSim==null || S.t>=a.untilSim)}
+  function raise(a){
+    var nm=ALERT_NAME[a.kind];
+    if(S.locked||S.asleep){ say('锁着屏：'+nm+'这一下作废，解锁后也不补。'); return; }
+    if(S.open){ S.dot=rt()+HOLD; say('你正打开着刘海：'+nm+'只在右下留一个 8 点的强调色点（右 10、下 8），然后作废，不打断你。'); return; }
+    if(!a.untilReal) a.untilReal=rt()+(a.hold||HOLD);
+    var cur=S.alert;
+    if(!cur){ show(a); return; }
+    if(a.rank>cur.rank){ S.alert=null; show(a); say(nm+'更要紧，顶替了正在显示的'+ALERT_NAME[cur.kind]+'。'); return; }
+    if(a.rank>=2){ a.hold=a.hold||HOLD; S.queue.push(a); say(nm+'排在'+ALERT_NAME[cur.kind]+'后面，等它的 2.6 秒停留结束。'); return; }
+    say(nm+'撞上'+ALERT_NAME[cur.kind]+'：最低一类，直接不出。菜单栏的电池图标已经变了。');
+  }
+  function show(a){
+    S.alert=a;
+    var line=alertSentence(a);
+    if(line) announce(line);
+  }
+  function alertSentence(a){
+    var b=S.bat;
+    switch(a.kind){
+      case 'cal': return (S.share?'日程':a.ev.title)+'，马上开始';
+      case 'timerDone': return '时间到，'+(S.timer?S.timer.min:S.lastMin)+' 分钟计时器';
+      case 'low': return '这台 Mac 电量低，还剩 '+b.pct+'%，记得充电';
+      case 'pods': return 'AirPods Pro 已连接，左耳 80%，右耳 78%，充电盒 45%';
+      case 'mouse': return '妙控鼠标已连接，电量 82%';
+      case 'plug': return '这台 Mac 正在充电，电量 '+b.pct+'%';
+      case 'full': return '这台 Mac 已充满';
+      case 'lpm': return '低电量模式已打开，电量 '+b.pct+'%';
+    }
+  }
+
+  /* ---------- 每帧逻辑 ---------- */
+  function logic(){
+    var t=S.t;
+    S.events.forEach(function(e){
+      if(e.bloomed||!calOK(e)) return;
+      var rem=e.start-t;
+      if(rem<=BLOOM){
+        e.bloomed=true;
+        if(rem>-1) raise({kind:'cal',rank:3,ev:e,untilReal:rt()+HOLD,untilSim:e.start});
+      }
+    });
+    var tm=S.timer;
+    if(tm){
+      if(tm.state==='running' && t>=tm.deadline){
+        tm.state='done'; tm.doneAt=tm.deadline;
+        var late=t-tm.deadline;
+        if(S.asleep||late>60){ say('合盖期间到了时间：醒来只显示超时，不补响，也不补鼓。'); }
+        else{
+          chime();
+          if(S.locked) say('锁着屏时到了时间：照常响一声；解锁后显示超时。');
+          else{ raise({kind:'timerDone',rank:3,hold:DONE_HOLD}); say('时间到：鼓 10 秒，响一次系统提示音（不循环）。'); }
+          if(S.open==='card:timer') S.dot=0;
+        }
+      }
+      if(tm.state==='done' && t-tm.doneAt>=OVER){ S.timer=null; if(S.open==='card:timer') S.open=null; say('超时 10 分钟，计时器自己结束了。'); }
+    }
+    if(S.alert && expired(S.alert)){
+      S.alert=null;
+      if(S.queue.length){ var n=S.queue.shift(); n.untilReal=rt()+(n.hold||HOLD); show(n); }
+    }
+    if(S.alert && S.alert.kind==='timerDone' && !S.timer) S.alert=null;
+    if(S.open==='card:cal' && !calCurrent()) S.open=S.open && persistent().length?'row':null;
+    if(S.open==='card:timer' && !S.timer) S.open=persistent().length?'row':null;
+  }
+
+  /* ---------- 选哪个样子 ---------- */
+  function rowGeo(acts){ var n=2+acts.length; return {W:Math.max(400,28+n*124+(n-1)*8+(acts.length?9:0)),H:175.5,r:28}; }
+  function view(){
+    if(S.locked) return {key:'locked',geo:GEO.none,tok:'calm',layer:'锁着屏：刘海不画',draw:function(){return ''}};
+    var acts=persistent();
+    if(S.open==='picker') return {key:'picker',geo:GEO.picker,tok:'expand',layer:'交互 · 选分钟',draw:drawPicker};
+    if(S.open==='row'){ var g=rowGeo(acts); return {key:'row'+acts.map(function(a){return a.kind}).join(),geo:g,tok:'expand',layer:'你打开的 · 刘海那一排',draw:function(){return drawRow(g,acts)}}; }
+    if(S.open==='card:cal'){ var ev=calCurrent(); return {key:'card:cal',geo:GEO.card,tok:'expand',layer:'你打开的 · 日程大卡',draw:function(){return drawCalCard(ev)}}; }
+    if(S.open==='card:timer') return {key:'card:timer',geo:GEO.card,tok:'expand',layer:'你打开的 · 计时器大卡',draw:drawTimerCard};
+    if(S.alert){
+      var a=S.alert;
+      if(a.kind==='plug'||a.kind==='full'||a.kind==='lpm') return {key:'m:'+a.kind,geo:GEO.compact,tok:'settle',layer:'短暂提醒 · '+ALERT_NAME[a.kind]+'（紧凑大小，不下鼓）',draw:function(){return drawMoment(a)}};
+      return {key:'a:'+a.kind,geo:GEO.alert,tok:'bloom',layer:'短暂提醒 · '+ALERT_NAME[a.kind],draw:function(){return drawAlert(a)}};
+    }
+    if(acts.length===1){ var k=acts[0]; return {key:'c1:'+k.kind+phaseKey(k),geo:GEO.compact,tok:'calm',layer:'持续活动 · '+actLabel(k),draw:function(){return drawCompact1(k)}}; }
+    if(acts.length>1) return {key:'c2:'+acts.map(function(a){return a.kind}).join(),geo:GEO.compact,tok:'calm',layer:'持续活动 · '+acts.map(actLabel).join(' > ')+'，第一件占两耳，第二件小圆',mini:acts[1],draw:function(){return drawCompact2(acts)}};
+    return {key:'none',geo:GEO.none,tok:'calm',layer:'什么都没有 · 和硬件重合',draw:function(){return ''}};
+  }
+  function phaseKey(a){
+    if(a.kind==='cal') return a.ev.id+(S.t>=a.ev.start?'live':'up');
+    if(a.kind==='timer') return S.timer.state;
+    return '';
+  }
+
+  /* ---------- 画 ---------- */
+  function shape(cx,W,H,rb,e){
+    var x0=cx-W/2, x1=cx+W/2, k=0.5523, kb=0.64, d='';
+    rb=Math.min(rb,H/2,W/2);
+    d+='M'+(x0-e)+' -8 L'+(x0-e)+' 0 ';
+    if(e>0.02) d+='C'+(x0-e+k*e)+' 0 '+x0+' '+(e-k*e)+' '+x0+' '+e+' '; else d+='L'+x0+' 0 ';
+    d+='L'+x0+' '+(H-rb)+' C'+x0+' '+(H-rb+kb*rb)+' '+(x0+rb-kb*rb)+' '+H+' '+(x0+rb)+' '+H+' ';
+    d+='L'+(x1-rb)+' '+H+' C'+(x1-rb+kb*rb)+' '+H+' '+x1+' '+(H-rb+kb*rb)+' '+x1+' '+(H-rb)+' ';
+    if(e>0.02) d+='L'+x1+' '+e+' C'+x1+' '+(e-k*e)+' '+(x1+e-k*e)+' 0 '+(x1+e)+' 0 '; else d+='L'+x1+' 0 ';
+    d+='L'+(x1+e)+' -8 Z';
+    return d;
+  }
+  function ring(cx,cy,r,frac,color,w,op){
+    w=w||2.4; op=op==null?1:op; frac=clamp(frac,0,1);
+    var c=2*Math.PI*r;
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="'+w+'" opacity="'+op+'"/>'+
+      (frac>0.001?'<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="'+w+'" stroke-linecap="round" stroke-dasharray="'+(c*frac).toFixed(2)+' '+c.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')" opacity="'+op+'"/>':'');
+  }
+  function G(name,cx,cy,s,color,extra){
+    s=s||1; color=color||'#fff';
+    var o='<g transform="translate('+cx+' '+cy+') scale('+s+')"'+(extra||'')+'>';
+    switch(name){
+      case 'cal': o+='<rect x="-6" y="-5.6" width="12" height="11.6" rx="2.4" fill="none" stroke="'+color+'" stroke-width="1.5"/><rect x="-6" y="-5.6" width="12" height="3.6" rx="1.6" fill="'+color+'"/><rect x="-2.6" y="0.4" width="2" height="2" rx=".4" fill="'+color+'"/><rect x="0.8" y="0.4" width="2" height="2" rx=".4" fill="'+color+'"/>'; break;
+      case 'bolt': o+='<path d="M1.6 -7.2 L-4.6 1.2 H-0.4 L-1.6 7.2 L4.6 -1.2 H0.4 Z" fill="'+color+'"/>'; break;
+      case 'video': o+='<rect x="-7" y="-4.2" width="9.6" height="8.4" rx="2.2" fill="'+color+'"/><path d="M3.4 -1.4 L7.2 -3.8 V3.8 L3.4 1.4 Z" fill="'+color+'"/>'; break;
+      case 'timer': o+='<circle cx="0" cy="1" r="5.6" fill="none" stroke="'+color+'" stroke-width="1.5"/><rect x="-1.6" y="-7" width="3.2" height="1.8" rx=".8" fill="'+color+'"/><path d="M0 1 V-2.4" stroke="'+color+'" stroke-width="1.5" stroke-linecap="round"/>'; break;
+      case 'note': o+='<circle cx="-2" cy="4" r="2.6" fill="'+color+'"/><rect x="-0.2" y="-6.4" width="1.6" height="10.4" fill="'+color+'"/><path d="M-0.2 -6.4 L6 -7.8 V-5 L-0.2 -3.6 Z" fill="'+color+'"/>'; break;
+      case 'term': o+='<path d="M-6 -4 L-1.6 0 L-6 4" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M0.4 4.6 H6" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round"/>'; break;
+      case 'pods': o+='<circle cx="-3.6" cy="-3.4" r="2.8" fill="'+color+'"/><rect x="-4.1" y="-3.4" width="2" height="9.6" rx="1" fill="'+color+'"/><circle cx="3.6" cy="-3.4" r="2.8" fill="'+color+'"/><rect x="2.1" y="-3.4" width="2" height="9.6" rx="1" fill="'+color+'"/>'; break;
+      case 'mouse': o+='<rect x="-4" y="-7" width="8" height="14" rx="4" fill="none" stroke="'+color+'" stroke-width="1.5"/><path d="M0 -6.4 V-3" stroke="'+color+'" stroke-width="1.3"/>'; break;
+      case 'pause': o+='<rect x="-2.6" y="-3.2" width="1.8" height="6.4" rx=".6" fill="'+color+'"/><rect x="0.8" y="-3.2" width="1.8" height="6.4" rx=".6" fill="'+color+'"/>'; break;
+      case 'play': o+='<path d="M-2.4 -3.6 L3.6 0 L-2.4 3.6 Z" fill="'+color+'"/>'; break;
+      case 'x': o+='<path d="M-3 -3 L3 3 M3 -3 L-3 3" stroke="'+color+'" stroke-width="1.7" stroke-linecap="round"/>'; break;
+      case 'windows': o+='<rect x="-6.5" y="-5" width="9" height="7" rx="1.6" fill="none" stroke="'+color+'" stroke-width="1.4"/><rect x="-2.5" y="-1.6" width="9" height="7" rx="1.6" fill="#000" stroke="'+color+'" stroke-width="1.4"/>'; break;
+      case 'lock': o+='<rect x="-6" y="-1.5" width="12" height="9" rx="2" fill="'+color+'"/><path d="M-3.6 -1.5 V-4 a3.6 3.6 0 0 1 7.2 0 V-1.5" fill="none" stroke="'+color+'" stroke-width="1.6"/>'; break;
+    }
+    return o+'</g>';
+  }
+  function battery(cx,cy,level,color,s){
+    s=s||1;
+    return '<g transform="translate('+cx+' '+cy+') scale('+s+')"><rect x="-8" y="-4.4" width="14" height="8.8" rx="2.4" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.1"/><rect x="6.6" y="-1.7" width="1.6" height="3.4" rx=".7" fill="rgba(255,255,255,.75)"/><rect x="-6.6" y="-3" width="'+(11.2*clamp(level,0.06,1)).toFixed(2)+'" height="6" rx="1.3" fill="'+color+'"/></g>';
+  }
+  function batColor(){var b=S.bat; return b.lpm?COL.yellow:(b.pct<=20?COL.red:COL.green)}
+  function T(x,y,s,o){ o=o||{}; return '<text x="'+x+'" y="'+y+'" font-size="'+(o.size||12)+'" font-weight="'+(o.w||600)+'" fill="'+(o.fill||'#fff')+'"'+(o.anchor?' text-anchor="'+o.anchor+'"':'')+(o.op!=null?' opacity="'+o.op+'"':'')+' style="font-variant-numeric:tabular-nums">'+esc(s)+'</text>'; }
+  function btn(x,y,w,label,act,fill,glyph){
+    var h=26, o='<g data-act="'+act+'" style="cursor:pointer"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="13" fill="'+(fill||'rgba(255,255,255,.18)')+'"/>';
+    if(glyph){ o+=G(glyph,x+16,y+13,.85,'#fff'); o+=T(x+w/2+7,y+17.5,label,{size:12,w:600,anchor:'middle'}); }
+    else o+=T(x+w/2,y+17.5,label,{size:12,w:600,anchor:'middle'});
+    return o+'</g>';
+  }
+  function roundBtn(cx,cy,r,glyph,act,fill){
+    return '<g data-act="'+act+'" style="cursor:pointer"><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+fill+'"/>'+G(glyph,cx,cy,1.5,'#fff')+'</g>';
+  }
+
+  function timerRem(){ var tm=S.timer; if(!tm) return 0; return tm.state==='paused'?tm.left:Math.max(0,tm.deadline-S.t); }
+  function calRem(e){ return e.start-S.t; }
+
+  /* 一件活动的最小样子（耳朵里一个圆） */
+  function minimal(a,cx){
+    if(a.kind==='cal'){ var e=a.ev, rem=calRem(e); return rem>0? ring(cx,EY,8,rem/LEAD,e.color)+G('cal',cx,EY,.5,'#fff') : ring(cx,EY,8,1,e.color)+G('video',cx,EY,.55,COL.green); }
+    if(a.kind==='timer'){ var tm=S.timer, op=tm.state==='paused'?.5:1; return ring(cx,EY,8,tm.state==='done'?1:timerRem()/tm.dur,COL.orange,2.4,op)+(tm.state==='paused'?G('pause',cx,EY,.9,'#fff'):''); }
+    if(a.kind==='music') return G('note',cx,EY,.95,'#fff');
+    if(a.kind==='session') return '<circle cx="'+cx+'" cy="'+EY+'" r="5" fill="'+COL.amber+'"/>';
+    return '';
+  }
+  function drawCompact1(a){
+    var lx=LX, rx=RX, o='';
+    if(a.kind==='cal'){
+      var e=a.ev, rem=calRem(e);
+      if(rem>0){ o+=ring(lx,EY,8.5,rem/LEAD,e.color)+G('cal',lx,EY,.52,'#fff'); o+=T(rx,EY+4.3,earText(rem),{size:12,anchor:'middle'}); }
+      else{ o+=ring(lx,EY,8.5,1,e.color)+G('cal',lx,EY,.52,'#fff'); o+=G('video',rx,EY,.95,COL.green); }
+    }else if(a.kind==='timer'){
+      var tm=S.timer;
+      if(tm.state==='done'){ o+=ring(lx,EY,8.5,1,COL.orange); o+=T(rx,EY+4.3,overText(S.t-tm.doneAt),{size:11.5,anchor:'middle',fill:COL.orange}); }
+      else{ var op=tm.state==='paused'?.5:1; o+=ring(lx,EY,8.5,timerRem()/tm.dur,COL.orange,2.4,op)+(tm.state==='paused'?G('pause',lx,EY,.9,'#fff'):''); o+=T(rx,EY+4.3,earText(timerRem()),{size:12,anchor:'middle',op:op}); }
+    }else if(a.kind==='music'){ o+=G('note',lx,EY,1,'#fff'); o+=ring(rx,EY,7,.4,COL.green,2.2); }
+    else if(a.kind==='session'){ o+=G('term',lx,EY,1,'#fff'); o+=T(rx,EY+4.3,'等你',{size:11.5,anchor:'middle',fill:COL.amber}); }
+    return o;
+  }
+  function drawCompact2(acts){ return drawCompact1(acts[0]); }   /* 第一件占两耳；第二件的小圆在 render 里画在耳朵外面 */
+  function drawMoment(a){
+    var b=S.bat, lx=LX, rx=RX, c=batColor(), sc=reducedBox.checked?1:(.82+.18*fade), o='';
+    var g = a.kind==='plug' ? G('bolt',lx,EY,1.05*sc,c) : battery(lx,EY,a.kind==='full'?1:b.pct/100,a.kind==='full'?COL.green:c,sc);
+    o+=g;
+    if(!(b.unk&&a.kind!=='full')) o+=T(rx,EY+4.3,(a.kind==='full'?100:b.pct)+'%',{size:11.5,anchor:'middle',fill:a.kind==='full'?COL.green:c});   /* 电量未知不写 0% */
+    return o;
+  }
+  function drawAlert(a){
+    var W=GEO.alert.W, x0=CX-W/2, x1=CX+W/2, lx=x0+14+10, rx=x1-14, ty=33.5+14+11, dy=ty+16, o='', b=S.bat;
+    if(a.kind==='low'){
+      o+=battery(lx,EY,b.pct/100,COL.red); o+=T(rx,EY+4.3,b.pct+'%',{anchor:'end',fill:COL.red});
+      o+=T(x0+14,ty,'这台 Mac 电量低',{size:13}); o+=T(x0+14,dy,b.lpm?'已打开低电量模式':'还剩 '+b.pct+'%，记得充电',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    }else if(a.kind==='pods'){
+      o+=G('pods',lx,EY,1,'#fff'); if(!b.unk) o+=T(rx,EY+4.3,'78%',{anchor:'end',fill:COL.green});
+      o+=T(x0+14,ty,'AirPods Pro 已连接',{size:13}); o+=T(x0+14,dy,b.unk?'电量暂时读不到':'左耳 80% · 右耳 78% · 充电盒 45%',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    }else if(a.kind==='mouse'){
+      o+=G('mouse',lx,EY,1,'#fff'); if(!b.unk) o+=T(rx,EY+4.3,'82%',{anchor:'end',fill:COL.green});
+      o+=T(x0+14,ty,'妙控鼠标已连接',{size:13}); o+=T(x0+14,dy,b.unk?'电量暂时读不到':'电量 82%',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    }else if(a.kind==='cal'){
+      var e=a.ev, rem=calRem(e);
+      o+=ring(lx,EY,8.5,Math.max(0,rem)/LEAD,e.color)+G('cal',lx,EY,.52,'#fff'); o+=T(rx,EY+4.3,rem>0?earText(rem):'0:00',{anchor:'end'});
+      o+='<rect x="'+(x0+14)+'" y="'+(ty-11)+'" width="3" height="28" rx="1.5" fill="'+e.color+'"/>';
+      o+=T(x0+24,ty,S.share?'日程':trunc(e.title,14),{size:13}); o+=T(x0+24,dy,S.share?'马上开始':'马上开始 · '+e.loc,{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      if(e.link) o+=btn(x1-14-74,ty-13,74,'加入','join:'+e.id,COL.green,'video');
+    }else if(a.kind==='timerDone'){
+      var tm=S.timer;
+      o+=ring(lx,EY,8.5,1,COL.orange)+G('timer',lx,EY,.55,'#fff'); o+=T(rx,EY+4.3,tm?overText(S.t-tm.doneAt):'',{anchor:'end',fill:COL.orange,size:11.5});
+      o+=T(x0+14,ty,'时间到',{size:13}); o+=T(x0+14,dy,(tm?tm.min:S.lastMin)+' 分钟计时器',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      o+=btn(x1-14-76-8-52,ty-13,52,'结束','tEnd'); o+=btn(x1-14-76,ty-13,76,'再来一个','tAgain',COL.orange);
+    }
+    return o;
+  }
+  function drawPicker(){
+    var W=GEO.picker.W, x0=CX-W/2, x1=CX+W/2, o='';
+    o+=G('timer',x0+24,EY,1,COL.orange);
+    o+=T(x1-14,EY+4.3,S.pick+' 分',{anchor:'end'});
+    o+=T(x0+14,33.5+14+11,'计时器',{size:13});
+    o+=T(x1-14,33.5+14+11,'↑ ↓ 调，回车开始',{size:11,w:400,anchor:'end',fill:'rgba(255,255,255,.6)'});
+    var presets=[1,3,5,10,15,30], y=GEO.picker.H-14-26, x=x0+14;
+    presets.forEach(function(m){
+      var on=m===S.pick, w=m>=10?44:38;
+      o+='<g data-act="pick:'+m+'" style="cursor:pointer"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="26" rx="13" fill="'+(on?'#fff':'rgba(255,255,255,.14)')+'"/>'+T(x+w/2,y+17.5,m+' 分',{size:12,anchor:'middle',fill:on?'#000':'#fff'})+'</g>';
+      x+=w+6;
+    });
+    o+=btn(x1-14-64,y,64,'开始','tStart',COL.orange);
+    return o;
+  }
+  function drawRow(g,acts){
+    var x0=CX-g.W/2, x1=CX+g.W/2, y=33.5+14, h=g.H-y-14, o='', x=x0+14;
+    o+=G('windows',x0+24,EY,1,'#fff'); o+=T(x1-14,EY+4.3,'2',{anchor:'end',fill:'rgba(255,255,255,.92)'});
+    [['备忘录','#f5d76e','#fff8d6'],['访达','#7fb2ff','#e7efff']].forEach(function(wn){
+      o+='<rect x="'+x+'" y="'+y+'" width="124" height="'+h+'" rx="14" fill="rgba(255,255,255,.08)"/>';
+      o+='<rect x="'+(x+10)+'" y="'+(y+10)+'" width="104" height="'+(h-38)+'" rx="6" fill="'+wn[2]+'" opacity=".9"/><rect x="'+(x+10)+'" y="'+(y+10)+'" width="104" height="12" rx="6" fill="'+wn[1]+'"/>';
+      o+=T(x+12,y+h-12,wn[0],{size:11,w:500,fill:'rgba(255,255,255,.92)'});
+      x+=132;
+    });
+    if(acts.length){ o+='<line x1="'+(x-4+4)+'" y1="'+(y+8)+'" x2="'+(x-4+4)+'" y2="'+(y+h-8)+'" stroke="rgba(255,255,255,.22)" stroke-width="1"/>'; x+=9; }
+    acts.forEach(function(a){
+      o+='<g data-act="cell:'+a.kind+'" style="cursor:pointer"><rect x="'+x+'" y="'+y+'" width="124" height="'+h+'" rx="14" fill="rgba(255,255,255,.1)"/>';
+      var cx=x+24, cy=y+24;
+      if(a.kind==='cal'){ var e=a.ev, rem=calRem(e);
+        o+=ring(cx,cy,11,rem>0?rem/LEAD:1,e.color,3)+G('cal',cx,cy,.7,'#fff');
+        o+=T(x+124-12,cy+5,rem>0?earText(rem):'已开始',{size:13,anchor:'end'});
+        o+=T(x+12,y+h-28,trunc(e.title,7),{size:13}); o+=T(x+12,y+h-12,hm(e.start)+' 开始',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      }else if(a.kind==='timer'){ var tm=S.timer, op=tm.state==='paused'?.5:1;
+        o+=ring(cx,cy,11,tm.state==='done'?1:timerRem()/tm.dur,COL.orange,3,op)+(tm.state==='paused'?G('pause',cx,cy,1.1,'#fff'):G('timer',cx,cy,.7,'#fff'));
+        o+=T(x+124-12,cy+5,tm.state==='done'?overText(S.t-tm.doneAt):earText(timerRem()),{size:13,anchor:'end',fill:tm.state==='done'?COL.orange:'#fff'});
+        o+=T(x+12,y+h-28,'计时器',{size:13}); o+=T(x+12,y+h-12,tm.state==='paused'?'已暂停':tm.min+' 分钟',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      }else if(a.kind==='music'){
+        o+='<rect x="'+(x+12)+'" y="'+(y+12)+'" width="26" height="26" rx="6" fill="url(#cover)"/>'; o+=ring(x+124-22,cy,8,.4,COL.green,2.4);
+        o+=T(x+12,y+h-28,'September',{size:13}); o+=T(x+12,y+h-12,'Earth, Wind & Fire',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      }else if(a.kind==='session'){
+        o+=G('term',cx,cy,1.1,'#fff'); o+=T(x+124-12,cy+5,'等你',{size:13,anchor:'end',fill:COL.amber});
+        o+=T(x+12,y+h-28,'编程会话',{size:13}); o+=T(x+12,y+h-12,'要你确认一步',{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+      }
+      o+='</g>'; x+=132;
+    });
+    return o;
+  }
+  function drawCalCard(e){
+    if(!e) return '';
+    var W=GEO.card.W, H=GEO.card.H, x0=CX-W/2, x1=CX+W/2, lx=x0+14+10, rx=x1-14, rem=calRem(e), o='', y=33.5+14;
+    o+=ring(lx,EY,8.5,rem>0?rem/LEAD:1,e.color)+G('cal',lx,EY,.52,'#fff');
+    o+=rem>0?T(rx,EY+4.3,earText(rem),{anchor:'end'}):G('video',rx-8,EY,.95,COL.green);
+    o+='<rect x="'+(x0+14)+'" y="'+(y+2)+'" width="3" height="46" rx="1.5" fill="'+e.color+'"/>';
+    o+=T(x0+26,y+15,S.share?'日程':trunc(e.title,14),{size:13});
+    o+=T(x0+26,y+31,hm(e.start)+'–'+hm(e.end),{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    o+=T(x0+26,y+46,S.share?'':e.loc,{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    o+=T(rx,y+30,rem>0?bigText(rem):'已开始',{size:rem>0?30:22,w:600,anchor:'end',fill:rem>0?'#fff':COL.green});
+    o+=T(rx,y+46,rem>0?'后开始':'开始了 '+Math.floor(-rem/60)+' 分',{size:11,w:400,anchor:'end',fill:'rgba(255,255,255,.6)'});
+    var others=calOthers(e);
+    if(others.length) o+=T(x0+14,H-14-8,'还有 '+others.length+' 个：'+(S.share?'日程':trunc(others[0].title,8))+' · '+hm(others[0].start),{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    if(e.link) o+=btn(x1-14-84,H-14-26,84,'加入','join:'+e.id,COL.green,'video');
+    return o;
+  }
+  function drawTimerCard(){
+    var tm=S.timer; if(!tm) return '';
+    var W=GEO.card.W, H=GEO.card.H, x0=CX-W/2, x1=CX+W/2, o='', done=tm.state==='done', op=tm.state==='paused'?.5:1;
+    o+=G('timer',x0+24,EY,1,COL.orange);
+    o+=T(x1-14,EY+4.3,done?overText(S.t-tm.doneAt):earText(timerRem()),{anchor:'end',fill:done?COL.orange:'#fff',op:op});
+    var cy=33.5+14+40, cx=x0+14+34;
+    o+=ring(cx,cy,27,done?1:timerRem()/tm.dur,COL.orange,5,op);
+    o+=T(x0+86,cy-22,done?'时间到':(tm.state==='paused'?'已暂停':'计时器 · '+tm.min+' 分钟'),{size:11,w:400,fill:'rgba(255,255,255,.6)'});
+    o+=T(x0+84,cy+16,done?overText(S.t-tm.doneAt):bigText(timerRem()),{size:36,w:500,fill:done?COL.orange:'#fff',op:op});
+    if(done){ o+=btn(x1-14-84-8-60,cy-13,60,'结束','tEnd'); o+=btn(x1-14-84,cy-13,84,'再来一个','tAgain',COL.orange); }
+    else{ o+=roundBtn(x1-14-22-54,cy,22,tm.state==='paused'?'play':'pause','tPause','rgba(255,159,10,.32)'); o+=roundBtn(x1-14-22,cy,22,'x','tEnd','rgba(255,255,255,.18)'); }
+    o+=T(x0+14,H-14-6,'到时间响一次系统提示音 · 超时 10 分钟后自己结束',{size:11,w:400,fill:'rgba(255,255,255,.45)'});
+    return o;
+  }
+
+  function menuBar(){
+    var o='<rect x="0" y="0" width="'+VW+'" height="'+HW.h+'" fill="var(--bar)"/>';
+    var items=[['访达',700],['文件',400],['编辑',400],['显示',400],['前往',400],['窗口',400]], x=16;
+    items.forEach(function(it){ o+='<text x="'+x+'" y="21.5" font-size="12.5" font-weight="'+it[1]+'" fill="var(--menu)">'+it[0]+'</text>'; x+=it[0].length*12.5+16; });
+    var right=VW-16;
+    o+='<text x="'+right+'" y="21.5" font-size="12.5" text-anchor="end" fill="var(--menu)" style="font-variant-numeric:tabular-nums">10月9日 周五 '+hm(S.t)+'</text>';
+    if(!S.desktop){
+      var bx=right-148, b=S.bat;
+      o+='<g transform="translate('+bx+' 16.75)"><rect x="-11" y="-5.5" width="20" height="11" rx="3" fill="none" stroke="var(--menu)" stroke-width="1" opacity=".75"/><rect x="9.6" y="-2" width="1.6" height="4" rx=".7" fill="var(--menu)" opacity=".75"/><rect x="-9.5" y="-4" width="'+(17*b.pct/100).toFixed(1)+'" height="8" rx="1.6" fill="'+(b.lpm?'#e0b400':(b.pct<=20?'#e5352b':'var(--menu)'))+'"/>'+(b.plugged?'<path d="M1 -4.6 L-3 0.6 H-0.4 L-1 4.6 L3 -0.6 H0.4 Z" fill="var(--page)" stroke="var(--menu)" stroke-width=".5"/>':'')+'</g>';
+    }
+    return o;
+  }
+
+  function render(v){
+    var e=HW.e;   /* 比刘海宽也画肩，一直在 */
+    var path=shape(CX,sh.W,sh.H,sh.r,e);
+    var o='<defs><linearGradient id="cover" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a59"/><stop offset="1" stop-color="#6d3bd1"/></linearGradient><clipPath id="cp"><path d="'+path+'"/></clipPath></defs>';
+    if(S.locked){
+      o+='<rect x="0" y="0" width="'+VW+'" height="'+VH+'" fill="var(--lock)"/>';
+      o+=G('lock',CX,72,1.4,'#fff');
+      o+='<text x="'+CX+'" y="140" font-size="52" font-weight="600" text-anchor="middle" fill="#fff" style="font-variant-numeric:tabular-nums">'+hm(S.t)+'</text>';
+      o+='<text x="'+CX+'" y="164" font-size="13" text-anchor="middle" fill="rgba(255,255,255,.85)">10月9日 周五</text>';
+    }else o+=menuBar();
+    o+='<path d="'+shape(CX,HW.w,HW.h,HW.rb,HW.e)+'" fill="#000"/>';
+    if(!S.locked){
+      o+='<path d="'+path+'" fill="#000" data-act="island" style="cursor:pointer"/>';
+      o+='<g clip-path="url(#cp)" data-act="island" opacity="'+fade.toFixed(3)+'">'+v.draw()+'</g>';
+      if(v.mini){ var mx=NR+EARW+MINI_GAP+MINI/2; o+='<circle cx="'+mx+'" cy="'+(MINI/2)+'" r="'+(MINI/2)+'" fill="#000" data-act="island" style="cursor:pointer" opacity="'+fade.toFixed(3)+'"/><g opacity="'+fade.toFixed(3)+'">'+minimal(v.mini,mx)+'<\/g>'; }
+      if(rt()<S.dot){ var x1=CX+sh.W/2; o+='<circle cx="'+(x1-10-4)+'" cy="'+(sh.H-8-4)+'" r="4" fill="'+COL.blue+'"/>'; }   /* 右下 8 点：右 10、下 8，强调色 */
+    }
+    sv.innerHTML=o;
+  }
+
+  /* ---------- 弹簧 ---------- */
+  function spring(cur,vel,target,tk,dt){
+    var w=2*Math.PI/tk.r, k=w*w, c=2*tk.z*w;
+    var acc=k*(target-cur)-c*vel; vel+=acc*dt; cur+=vel*dt; return [cur,vel];
+  }
+  function frame(ts){
+    var dt=Math.min(0.032,(ts-lastTs)/1000||0.016); lastTs=ts;
+    S.t+=dt*S.speed;
+    logic();
+    var v=view(), red=reducedBox.checked;
+    if(v.key!==curKey){ curKey=v.key; from={W:sh.W,H:sh.H}; fade=0; curTok=red?'reduced':v.tok; }
+    var g=v.geo;
+    if(red){ sh.W=g.W; sh.H=g.H; sh.r=g.r; sh.vW=sh.vH=sh.vr=0; }
+    else{
+      var tk=TOK[v.tok], s;
+      s=spring(sh.W,sh.vW,g.W,tk,dt); sh.W=s[0]; sh.vW=s[1];
+      s=spring(sh.H,sh.vH,g.H,tk,dt); sh.H=s[0]; sh.vH=s[1];
+      s=spring(sh.r,sh.vr,g.r,tk,dt); sh.r=s[0]; sh.vr=s[1];
+    }
+    var span=Math.abs(from.W-g.W)+Math.abs(from.H-g.H), p=span<0.5?1:1-(Math.abs(sh.W-g.W)+Math.abs(sh.H-g.H))/span;
+    if(red||p>=0.4) fade=Math.min(1,fade+dt/(red?0.25:0.18));
+    render(v);
+    $('layer').textContent=v.layer;
+    $('tok').textContent=curTok;
+    $('clk').textContent=hms(S.t)+(S.speed>1?'（'+S.speed+'×）':'');
+    $('batt').textContent=S.desktop?'没有电池':((S.bat.unk?'读不到':S.bat.pct+'%')+(S.bat.plugged?' · 插着电':'')+(S.bat.lpm?' · 低电量模式':''));
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 声音：只在“计时器到时间”响一次，现合成，不用外部文件 ---------- */
+  function ensureAudio(){ try{ if(!actx){ var A=window.AudioContext||window.webkitAudioContext; if(A) actx=new A(); } if(actx&&actx.state==='suspended') actx.resume(); }catch(e){} }
+  function chime(){
+    if(!chimeBox.checked||!actx) return;
+    try{
+      var t=actx.currentTime;
+      [[880,0],[1318.5,0.16]].forEach(function(n){
+        var o=actx.createOscillator(), g=actx.createGain();
+        o.type='sine'; o.frequency.value=n[0];
+        g.gain.setValueAtTime(0,t+n[1]); g.gain.linearRampToValueAtTime(0.09,t+n[1]+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+n[1]+0.7);
+        o.connect(g); g.connect(actx.destination); o.start(t+n[1]); o.stop(t+n[1]+0.75);
+      });
+    }catch(e){}
+  }
+
+  /* ---------- 动作 ---------- */
+  function noBattery(){ say('台式 Mac 没有电池：电量这一组都不出现，设置里也不显示这一行。'); }
+  function lowCheck(){
+    var b=S.bat; if(b.unk) return;
+    var band=[5,10,20].filter(function(x){return b.pct<=x})[0];
+    if(!band) return;
+    if(b.fired[band]){ say('这一档这次放电已经提醒过，不再说。'); return; }
+    [20,10,5].forEach(function(x){ if(x>=band) b.fired[x]=true; });
+    raise({kind:'low',rank:3});
+    if(S.alert&&S.alert.kind==='low') say('低电量：bloom 鼓成提醒，左耳红色电池，右耳百分比，句子在下。和设备连上同一种样子。');
+  }
+  function startTimer(min){
+    S.timer={min:min,dur:min*60,deadline:S.t+min*60,state:'running'}; S.lastMin=min; S.open=null;
+    if(S.alert&&S.alert.kind==='timerDone') S.alert=null;
+    say('开始 '+min+' 分钟计时器：左耳橙色的环，右耳“'+min+' 分”。权重 75。');
+  }
+  function nextCalStart(){ var t=S.t, n=null; S.events.forEach(function(e){ if(calOK(e)&&e.start>t&&(!n||e.start<n.start)) n=e; }); return n; }
+  var ID=1;
+  function mkEvent(title,offset,link,loc,color){ return {id:ID++,title:title,start:S.t+offset,end:S.t+offset+1800,link:link,loc:loc,color:color}; }
+
+  var ACT={
+    calLink:function(){ S.events=[mkEvent('设计评审',LEAD,true,'3 楼小会议室',COL.purple)]; say(S.calPerm?'5 分钟后的设计评审：现在就出现。左耳是日历颜色的环，右耳“5 分”。':'没有日历权限：什么都不出现，也不追问。'); },
+    calPlain:function(){ S.events=[mkEvent('一对一',LEAD,false,'茶水间',COL.blue)]; say(S.calPerm?'没有会议链接的日程：倒数照常，最后 10 秒那一下没有“加入”，开始就收掉。':'没有日历权限：什么都不出现。'); },
+    calOverlap:function(){ S.events=[mkEvent('设计评审',180,true,'3 楼小会议室',COL.purple),mkEvent('周会',240,false,'大会议室',COL.blue)]; say('两个会挨着：紧凑只倒数最早的那个；点开大卡能看到“还有 1 个”。'); },
+    calAllDay:function(){ S.events.push({id:ID++,title:'国庆调休',start:S.t-3600,end:S.t+36000,allDay:true,loc:'',color:COL.blue}); say('全天日程：不会变成实时活动，刘海不变。'); },
+    calSkip:function(){ var n=nextCalStart(); if(!n){ say('没有快开始的日程。先点上面的“5 分钟后开会”。'); return; } S.t=Math.max(S.t,n.start-15); say('开始前 15 秒：右耳换成秒，再过 5 秒鼓一次。'); },
+    plug:function(){ if(S.desktop) return noBattery(); var b=S.bat; if(b.plugged){ say('已经插着电了。'); return; } b.plugged=true; b.fired={};
+      if(S.t-b.lastPlug<DEBOUNCE){ say('30 秒内又插上：不再闪一次。'); return; } b.lastPlug=S.t; raise({kind:'plug',rank:1}); if(S.alert&&S.alert.kind==='plug') say(b.unk?'插上：紧凑大小里闪 2.6 秒，左耳闪电，电量读不到，右耳不写数（不写 0%）。':'插上：紧凑大小里闪 2.6 秒，左耳闪电，右耳 '+b.pct+'%（颜色看电量和低电量模式）。'); },
+    unplug:function(){ if(S.desktop) return noBattery(); var b=S.bat; if(!b.plugged){ say('本来就没插电。'); return; } b.plugged=false; say('拔掉：不出声。菜单栏的电池图标已经变了。'); lowCheck(); },
+    full:function(){ if(S.desktop) return noBattery(); var b=S.bat; b.plugged=true; b.fired={}; if(b.pct===100){ say('这次插电已经充满过：不再闪。'); return; } b.pct=100; raise({kind:'full',rank:1}); if(S.alert&&S.alert.kind==='full') say('充满：闪一次。优化充电停在 80% 不算充满。'); },
+    low20:function(){ low(20); }, low10:function(){ low(10); }, low5:function(){ low(5); },
+    unk:function(){ if(S.desktop) return noBattery(); S.bat.unk=!S.bat.unk; syncPressed(); say(S.bat.unk?'电量读不到：不写 0%。插上只闪闪电；低电量不出；连上的设备写“电量暂时读不到”。':'读得到电量了。'); },
+    lpm:function(){ if(S.desktop) return noBattery(); var b=S.bat; b.lpm=!b.lpm; syncPressed(); if(b.lpm){ raise({kind:'lpm',rank:1}); if(S.alert&&S.alert.kind==='lpm') say('低电量模式打开：黄色的那一下；读屏念“低电量模式已打开”。'); } else say('关掉低电量模式：不出声。'); },
+    pods:function(){ raise({kind:'pods',rank:2}); if(S.alert&&S.alert.kind==='pods') say('AirPods：左耳符号，右耳取左右两只里较低的电量，次句分左耳、右耳、充电盒。'); },
+    mouse:function(){ raise({kind:'mouse',rank:2}); if(S.alert&&S.alert.kind==='mouse') say('妙控鼠标：文字和今天一样，只是符号进左耳、电量进右耳。'); },
+    picker:function(){ if(S.locked){ say('锁着屏，先解锁。'); return; } S.open='picker'; S.pick=S.lastMin; say('⌃⌥T：刘海长成选分钟（交互，408 × 112，圆角 24）。点胶囊或用 ↑ ↓，回车或“开始”。'); },
+    start10:function(){ startTimer(10); },
+    pause:function(){ var tm=S.timer; if(!tm||tm.state==='done'){ say('没有正在走的计时器。'); return; }
+      if(tm.state==='running'){ tm.left=tm.deadline-S.t; tm.state='paused'; say('暂停：环和数字降到 0.5，环中间两道竖线。'); }
+      else{ tm.deadline=S.t+tm.left; tm.state='running'; say('继续。'); } },
+    last60:function(){ var tm=S.timer; if(!tm||tm.state!=='running'){ say('先开一个计时器。'); return; } tm.deadline=S.t+60; say('最后 60 秒：右耳只换成秒，不闪、不变色、不鼓。'); },
+    ring:function(){ var tm=S.timer; if(!tm||tm.state!=='running'){ say('先开一个计时器。'); return; } tm.deadline=S.t+0.4; },
+    endTimer:function(){ if(!S.timer){ say('没有计时器。'); return; } S.timer=null; if(S.alert&&S.alert.kind==='timerDone') S.alert=null; say('计时器结束，耳朵收回。'); },
+    music:function(){ S.music=!S.music; syncPressed(); say(S.music?'音乐在放（40）：比日程和计时器都低。两件同时在时，第一件占两耳，第二件在右耳外一颗小圆。':'音乐停了。'); },
+    session:function(){ S.session=!S.session; syncPressed(); say(S.session?'编程会话在等你（95）：比日程（85）高，占左耳。':'编程会话不等了。'); },
+    openRow:function(){ if(S.locked){ say('锁着屏，先解锁。'); return; } S.open='row'; S.alert=null; say('刘海那一排：左段是收着的窗口，竖线，右段是正在进行的。点日程或计时器那一格会长成大卡。'); },
+    lock:function(){ S.locked=!S.locked; if(S.locked){ S.open=null; S.alert=null; S.queue=[]; } syncPressed(); say(S.locked?'锁屏：刘海不画。这期间的提醒都作废，解锁后不补。计时器到时间仍会响。':'解锁：直接显示现在还在进行的事，不重播开场。'); },
+    sleep:function(){ S.asleep=true; S.open=null; S.alert=null; S.queue=[]; var steps=180; while(steps-->0){ S.t+=1; logic(); } S.asleep=false; if(!S.timer||S.timer.state!=='done') say('合上盖子 3 分钟又打开：计时器按包含睡眠的时钟算，少了 3 分钟；错过的提醒不补。'); },
+    share:function(){ S.share=!S.share; syncPressed(); say(S.share?'正在共享屏幕：日程那一下和大卡里都不写标题。':'不共享屏幕了。'); },
+    perm:function(){ S.calPerm=!S.calPerm; syncPressed(); if(!S.calPerm&&S.open==='card:cal') S.open=null; say(S.calPerm?'日历已授权。':'收回日历权限：正在显示的日程收掉；设置里那一行写“没有权限”，刘海里不追问。'); },
+    desktop:function(){ S.desktop=!S.desktop; syncPressed(); say(S.desktop?'台式 Mac：没有电池，电量这一组全部不出现，菜单栏也没有电池图标。':'回到 MacBook。'); },
+    reset:function(){ reset(); }
+  };
+  function low(n){ if(S.desktop) return noBattery(); var b=S.bat; b.plugged=false; b.pct=n; lowCheck(); }
+
+  function syncPressed(){
+    $('lpmBtn').setAttribute('aria-pressed',!!(S&&S.bat.lpm));
+    $('unkBtn').setAttribute('aria-pressed',!!(S&&S.bat.unk));
+    $('musicBtn').setAttribute('aria-pressed',!!(S&&S.music));
+    $('sessionBtn').setAttribute('aria-pressed',!!(S&&S.session));
+    $('lockBtn').setAttribute('aria-pressed',!!(S&&S.locked));
+    $('shareBtn').setAttribute('aria-pressed',!!(S&&S.share));
+    $('permBtn').setAttribute('aria-pressed',!!(S&&S.calPerm));
+    $('permBtn').textContent=S&&S.calPerm?'日历已授权':'日历没授权';
+    $('deskBtn').setAttribute('aria-pressed',!!(S&&S.desktop));
+  }
+
+  /* 舞台里的点按：用 pointerdown，因为每帧都在重画 */
+  function islandAct(act){
+    if(act==='island'){
+      if(S.open==='picker') return;
+      if(S.open==='card:cal'||S.open==='card:timer'){ S.open='row'; return; }
+      if(S.open==='row') return;
+      if(S.alert){ S.alert=null; say('点一下提醒：提前收回。'); return; }
+      var top=persistent()[0]; if(top&&(top.kind==='cal'||top.kind==='timer')){ S.open='card:'+top.kind; say('点耳朵：直接长成'+(top.kind==='cal'?'日程':'计时器')+'的大卡（expand）。'); } else if(top){ S.open='row'; say('这一件的大卡在别的稿里；这里展开那一排。'); }
+      return;
+    }
+    var m=act.split(':');
+    if(m[0]==='cell'){
+      if(m[1]==='cal'){ S.open='card:cal'; say('点日程那一格：长成大卡（宽按内容，刘海下方 118，圆角 28）。'); }
+      else if(m[1]==='timer'){ S.open='card:timer'; say('点计时器那一格：长成大卡，可暂停、结束。'); }
+      else if(m[1]==='music') say('点正在播放那一格会长成正在播放的大卡，见《正在播放加大》那张稿。');
+      else say('编程会话的卡见指挥模式那张稿。');
+      return;
+    }
+    if(m[0]==='join'){ var id=+m[1]; S.events.forEach(function(e){ if(e.id===id) e.joined=true; }); S.alert=null; S.open=null; say('加入：把会议链接交给会议 App 打开，这件活动随即结束。'); return; }
+    if(m[0]==='pick'){ S.pick=+m[1]; return; }
+    if(act==='tStart'){ startTimer(S.pick); return; }
+    if(act==='tPause'){ ACT.pause(); return; }
+    if(act==='tEnd'){ ACT.endTimer(); S.open=null; return; }
+    if(act==='tAgain'){ startTimer(S.timer?S.timer.min:S.lastMin); return; }
+  }
+  sv.addEventListener('pointerdown',function(ev){
+    ensureAudio();
+    var el=ev.target.closest?ev.target.closest('[data-act]'):null;
+    if(el){ ev.preventDefault(); islandAct(el.getAttribute('data-act')); return; }
+    if(S.open){ S.open=null; say('点刘海外面：收回（calm）。'); }
+  });
+  document.querySelectorAll('[data-do]').forEach(function(b){
+    b.addEventListener('click',function(){ ensureAudio(); ACT[b.getAttribute('data-do')](); });
+  });
+  document.querySelectorAll('[data-speed]').forEach(function(b){
+    b.addEventListener('click',function(){
+      S.speed=+b.getAttribute('data-speed');
+      document.querySelectorAll('[data-speed]').forEach(function(x){ x.setAttribute('aria-pressed',x===b); });
+    });
+  });
+  window.addEventListener('keydown',function(ev){
+    if(ev.key==='Escape'&&S.open){ S.open=null; return; }
+    if(S.open!=='picker') return;
+    if(ev.key==='ArrowUp'){ ev.preventDefault(); S.pick=Math.min(120,S.pick+1); }
+    else if(ev.key==='ArrowDown'){ ev.preventDefault(); S.pick=Math.max(1,S.pick-1); }
+    else if(ev.key==='Enter'){ ev.preventDefault(); ensureAudio(); startTimer(S.pick); }
+  });
+  try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) reducedBox.checked=true; }catch(e){}
+  reset();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

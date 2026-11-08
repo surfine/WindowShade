@@ -1,0 +1,18 @@
+{
+  "compile_first_exit": 1,
+  "compile_fixed_exit": 0,
+  "first_native_session": 63243,
+  "first_native_exit": 0,
+  "final_compile_exit": 0,
+  "final_native_session": 26229,
+  "final_native_exit": 0,
+  "first_consumer_exit": 1,
+  "first_consumer_reason": "unnecessary assumption readonly means nonselectable; existing wrapping label allows selection",
+  "final_consumer_exit": 0,
+  "frames": 36,
+  "source_count": 2,
+  "optimized_reuse_session": 39527,
+  "optimized_reuse_exit": 0,
+  "optimized_count": 519,
+  "changed_inputs": []
+}

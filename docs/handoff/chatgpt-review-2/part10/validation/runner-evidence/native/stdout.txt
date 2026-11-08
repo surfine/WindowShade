@@ -1,0 +1,5 @@
+PASS NATIVE01 direct child ignores TERM then owned group KILL [6]
+PASS NATIVE02 inherited descriptor descendant cannot delay direct exit [5]
+PASS NATIVE03 unrelated descriptors do not reach child [3]
+TOTAL 3 scenarios, 14 assertions
+DIAG exited=true termination=Optional(suite.WS2DuplexProcess.Termination(status: 0, wasSignalled: false)) stopped=true supervision=nil lines=["{\"parent\":1}"] elapsed=0.10225163800009796

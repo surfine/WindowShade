@@ -1,0 +1,43 @@
+# WindowShade 宣传片
+
+60 秒，60 fps，两个版本：横版 3840 × 2160（4K），竖版 1080 × 1920。全片是动画，不是录屏；界面按官网插画的尺寸画（14 pt 信号灯、23 pt 间距、36 pt 标题栏、约 18 pt 圆角），手势的跟手比例（0.55）、提示浮窗（290 × 63 pt）和动作名称都照应用本身来。
+
+**改画面/重渲/审片之前先读 [`docs/PROMO-PLAYBOOK.md`](docs/PROMO-PLAYBOOK.md)**：渲染加速的实测数字、按帧验收的步骤、七个已踩过的根因案例（坐标双居中、Rise 裁切、刘海压入、双影、字幕穿过飞行路径等）。
+
+## 结构
+
+120 bpm，一小节 2 秒，每个镜头切在拍子上。1.0.18 版把 Multitask（开发版预告）换成 NotchDemo（已转正的刘海收纳）＋ Version1018（设置演示与默认打开）。画面和声音读同一份提示表 [`src/timeline.ts`](src/timeline.ts)：改一个时间点，打字声、音效、音乐段落跟着走。横竖两版共用时间表和动作，只是摆放不同（`useVertical()`）。
+
+| 小节 | 镜头 | 说的事 |
+| --- | --- | --- |
+| 0–2 | Opener | 窗口一多，桌面就满了。先别急着关。光标收成一点，拉长成卷帘条 |
+| 3–5 | Ways | 关掉、最小化、收起，只有收起不用回头找 |
+| 6–7 | DoubleClick | 双击标题栏收起，再双击原样回来 |
+| 8–9 | History | 1994、1997、2001、2026 四个年代的标题栏 |
+| 10–11 | Glance | 停在卷帘条上，看一眼 |
+| 12–17 | Gestures | 标题栏手势：收起、展开、铺满、半屏、往回拉取消、鼠标滚三格 |
+| 18–21 | NotchDemo | 收进刘海、变化提醒、点一下放回（1.0.18 起默认开） |
+| 22–25 | Version1018 | 设置里指到哪一行演哪一行；刘海、实时活动、文件架、Dock 预览默认打开 |
+| 26–27 | More | 置顶、带到每张桌面、窗口浏览 |
+| 28–29 | End | 图标、名字、官网地址 |
+
+## 命令
+
+```bash
+npm i
+npm run audio      # 由 scripts/audio.ts 合成 public/soundtrack.wav（音乐和音效都是代码生成的）
+npm run dev        # Remotion Studio 预览；Promo 是横版，PromoVertical 是竖版，每个镜头也单独注册在 Scenes 里
+node scripts/render.mjs out/windowshade-1.0.18-promo.mp4 2 Promo            # 横版 4K
+node scripts/render.mjs out/windowshade-1.0.18-vertical.mp4 1 PromoVertical # 竖版
+node scripts/stills.mjs <目录> 150 1300 2300                                   # 抽几帧看构图（COMP=PromoVertical 看竖版）
+```
+
+渲染按 480 帧一段进行，临时文件用完就删，最后无损拼接再配上音轨。
+
+渲染走 Chrome 的 ANGLE/Metal 后端（`chromiumOptions: { gl: "angle" }`）：同一段 4K（四张毛玻璃卡、120 帧）实测 63.7s → 18.7s，x264 参数与文件大小不变，整段 PSNR 51.8 dB / SSIM 0.9988。VideoToolbox 硬件编码反而更慢（43.9s）且体积翻倍，不采用。基准脚本见 `scripts/bench-gpu.mjs`。
+
+文案按 [`docs/copy-guide.md`](../docs/copy-guide.md) 写：动作叫“收起窗口 / 展开窗口”，收起后留下的那条叫“卷帘条”，手势动作名和应用里的提示浮窗一致。
+
+改画面时，收起、卷帘条、刘海以 [`docs/design-drafts/`](../docs/design-drafts/README.md) 为准，不沿用现在画出来的尺寸。刘海展开下鼓（设计别名「半岛」）对齐 [一颗岛](../docs/design-drafts/一颗岛.html)：贴传感器、无额头、矮/高两档避开临界高度；界面仍叫展开，不叫灵动岛。本轮只校正说明与对稿，不重写整条时间线。
+
+新增镜头标注开发版。官网当前视频链接仍指向已发布的旧片，本轮不替换视频平台上的内容。

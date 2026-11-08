@@ -1,0 +1,927 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>正在播放</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c; --warn:#8a5a00;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d; --warn:#f0b450;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d; --warn:#f0b450;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:19px;margin:40px 0 6px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 6px}
+.lede{color:var(--muted);max-width:76ch;margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:8px 8px;align-items:center;margin:0 0 10px}
+.row .lab{font-size:12px;color:var(--faint);min-width:4.5em}
+button{font:inherit;font-size:13.5px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:5px 11px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:focus-visible,input:focus-visible,.stage-outer:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card p,.card li{margin:0 0 6px;color:var(--muted);font-size:14px}
+.card ul{margin:0;padding-left:18px}
+.card p:last-child,.card li:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2 .card{margin-top:0}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.note{margin-top:8px;font-size:12.5px;color:var(--faint)}
+.demo-flag{display:inline-block;font-size:11.5px;font-weight:650;color:var(--warn);border:1px solid currentColor;border-radius:6px;padding:0 6px;margin-left:6px}
+b.no{color:var(--bad)} b.yes{color:var(--ok)}
+
+/* 舞台：按 1 pt = 1 px 画屏幕顶部中间的 980 × 300，窄屏整体缩放 */
+.stage-outer{position:relative;width:100%;aspect-ratio:980/300;border-radius:12px;overflow:hidden;box-shadow:0 0 0 .5px var(--line);background:var(--wall)}
+.stage{position:absolute;left:0;top:0;width:980px;height:300px;transform-origin:0 0;font-family:var(--sans);user-select:none;-webkit-user-select:none}
+.wallpaper{position:absolute;inset:0;background:var(--wall)}
+.menubar{position:absolute;left:0;right:0;top:0;height:33.5px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:13px;color:var(--menu);opacity:.86;pointer-events:none}
+.menubar .l span{margin-right:18px}
+.menubar .l span:first-child{font-weight:700}
+.menubar .r{display:flex;gap:14px;align-items:center}
+.menubar .r i{display:inline-block;width:15px;height:10px;border-radius:2.5px;box-shadow:inset 0 0 0 1.4px currentColor}
+.lockveil{position:absolute;inset:0;background:rgba(5,8,18,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:0;pointer-events:none;transition:opacity .25s}
+.lockveil .clock{position:absolute;left:0;right:0;top:90px;text-align:center;color:#fff;font-size:76px;font-weight:600;letter-spacing:-.02em}
+.lockveil .clock small{display:block;font-size:17px;font-weight:500;opacity:.8;letter-spacing:0}
+.fullveil{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .25s}
+.fullveil i{position:absolute;left:0;right:0;top:33.5px;bottom:0;background:radial-gradient(60% 80% at 30% 40%,#3a5a40,transparent 70%),radial-gradient(50% 70% at 75% 60%,#6b3f2a,transparent 70%),#151515}
+.fullveil span{position:absolute;left:24px;bottom:20px;color:rgba(255,255,255,.7);font-size:13px}
+svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events:none;overflow:visible}
+.island{position:absolute;top:0;overflow:hidden;color:#fff}
+.layer{position:absolute;inset:0;opacity:0;pointer-events:none}
+.layer.live{pointer-events:auto}
+.notchhit{position:absolute;top:0;height:33.5px;z-index:5}
+
+/* 封面与波形（单独的元素，在几种样子之间移动，不跟着内容层淡入淡出） */
+.art{position:absolute;overflow:hidden;background:rgba(255,255,255,.14);z-index:2}
+.art .a{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0}
+.art .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0}
+.art .ph svg{width:46%;height:46%}
+.wave{position:absolute;height:14px;display:flex;align-items:center;gap:1.6px;z-index:2}
+.wave i{display:block;width:2px;border-radius:1px;background:#fff}
+.adot{position:absolute;width:8px;height:8px;border-radius:50%;background:#0a84ff;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);z-index:3;opacity:0}
+
+/* 换歌一瞥 */
+.peekline{position:absolute;left:14px;right:14px;top:39px;height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;font-size:13px;font-weight:600}
+.peekline em{font-style:normal;font-size:11px;font-weight:500;margin-left:6px}
+
+/* 那一排 */
+.tile{position:absolute;top:41.5px;width:124px;height:120px;border-radius:14px;background:rgba(255,255,255,.08);overflow:hidden;cursor:pointer}
+.tile .thumb{position:absolute;left:8px;right:8px;top:8px;height:60px;border-radius:7px;background:#e9ebef;overflow:hidden}
+.tile .thumb i{position:absolute;left:0;right:0;top:0;height:11px;background:#d5d8de}
+.tile .thumb b{position:absolute;left:8px;right:22px;height:4px;border-radius:2px;background:#c3c7cf}
+.tile .cap{position:absolute;left:10px;right:10px;bottom:12px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .cap small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.6)}
+.tile.music .glyph{position:absolute;left:12px;top:12px;width:18px;height:18px}
+.tile.music .t{position:absolute;left:12px;right:12px;top:40px;font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tile.music .s{position:absolute;left:12px;right:40px;bottom:14px;font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile.music .pp{position:absolute;right:10px;bottom:10px;width:24px;height:24px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center}
+.tile.music .pp svg{width:11px;height:11px}
+.divider{position:absolute;top:49.5px;width:1px;height:104px;background:rgba(255,255,255,.18)}
+
+/* 大卡 */
+.ctitle{position:absolute;left:82px;right:14px;top:37px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cartist{position:absolute;left:82px;right:14px;top:55px;font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .18s}
+.scrub{position:absolute;left:14px;right:14px;top:76px;height:20px;cursor:pointer;touch-action:none}
+.scrub .track{position:absolute;left:0;right:0;top:50%;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden}
+.scrub .fill{position:absolute;left:0;top:0;bottom:0;width:0}
+.scrub.noseek{cursor:default}
+.times{position:absolute;left:14px;right:14px;top:94px;display:flex;justify-content:space-between;font:500 11px/1 var(--mono);color:rgba(255,255,255,.6);font-variant-numeric:tabular-nums}
+.livepill{position:absolute;left:14px;top:80px;font-size:11px;font-weight:650;padding:1px 7px;border-radius:7px;background:rgba(255,255,255,.16)}
+.sub{position:absolute;left:0;right:0;top:106px;height:40px;opacity:0;pointer-events:none}
+.sub.live{pointer-events:auto}
+.cbtn{position:absolute;top:4px;width:32px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cbtn:hover{background:rgba(255,255,255,.1)}
+.cbtn.big{top:0;width:40px;height:40px;border-radius:20px}
+.cbtn svg{width:18px;height:18px}
+.cbtn.big svg{width:24px;height:24px}
+.cbtn.off{opacity:.3;pointer-events:none}
+.vrow{position:absolute;left:14px;right:14px;top:12px;height:20px;display:flex;align-items:center;gap:10px}
+.vrow svg{width:20px;height:20px;flex:none}
+.vtrack{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.18);position:relative;overflow:hidden}
+.vtrack i{position:absolute;left:0;top:0;bottom:0;background:#fff;border-radius:3px}
+.vrow b{font:600 12px/1 var(--mono);min-width:3ch;text-align:right;font-variant-numeric:tabular-nums}
+.list{position:absolute;left:14px;right:14px;top:80px;opacity:0;pointer-events:none}
+.list.live{pointer-events:auto}
+.list h4{margin:0 0 2px;font-size:11px;font-weight:600;color:rgba(255,255,255,.6)}
+.dev{height:34px;display:flex;align-items:center;gap:10px;border-radius:9px;padding:0 8px;cursor:pointer;font-size:13px}
+.dev:hover{background:rgba(255,255,255,.08)}
+.dev svg{width:18px;height:18px;flex:none}
+.dev span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dev small{color:rgba(255,255,255,.6);font-size:11px}
+.dev .ck{width:16px;height:16px;opacity:0}
+.dev.on .ck{opacity:1}
+.msg{position:absolute;left:14px;right:14px;top:40px;text-align:center;font-size:13px;font-weight:600}
+.msg small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.6);margin-top:2px}
+#msgIco{position:absolute;left:14px;top:7px;width:20px;height:20px}
+#msgEar{right:14px}
+
+.cap-under{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin-top:10px}
+.cap-under h3{margin:0;font-size:15px}
+.cap-under p{margin:0;color:var(--muted);font-size:14px;flex-basis:100%}
+.sr{font-size:12.5px;color:var(--faint);flex-basis:100%}
+
+/* 取色面板 */
+.pal{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+@media (max-width:640px){.pal{grid-template-columns:1fr}}
+.pal canvas{width:192px;height:192px;image-rendering:pixelated;border-radius:10px;display:block;box-shadow:0 0 0 .5px var(--line)}
+.buckets{display:flex;align-items:flex-end;gap:3px;height:84px;margin:4px 0 10px;border-bottom:1px solid var(--line)}
+.buckets i{flex:1;border-radius:3px 3px 0 0;min-height:1px;position:relative}
+.buckets i.top{box-shadow:0 0 0 2px var(--ink)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);background:#000;border-radius:10px;padding:6px 10px}
+.chip b{width:14px;height:14px;border-radius:4px;display:inline-block}
+.chip span{color:#fff}
+.chip em{font-style:normal;color:rgba(255,255,255,.6);font-family:var(--mono);font-size:11px}
+
+/* 表 */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.tblwrap{overflow-x:auto;margin-top:8px;border-radius:12px;box-shadow:inset 0 0 0 .5px var(--line);background:var(--panel)}
+.tblwrap .tbl{margin:0;min-width:760px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:.5px solid var(--line)}
+.tbl th{font-size:12px;color:var(--faint);font-weight:600;background:transparent}
+.tbl td:first-child{font-weight:600;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.ours{color:var(--ink)}
+.tbl td{color:var(--muted)}
+.wp{display:grid;gap:10px;margin-top:8px}
+.wp .card{margin:0}
+.wp .id{font-family:var(--mono);font-size:12px;color:var(--accent);margin-right:6px}
+</style>
+</head>
+<body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 10 张 · 正在播放</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Y1xC2moskAEa2bjHNk2JKb">← 实时活动晋级</a><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">音量与亮度 →</a></nav>
+<div class="wrap">
+  <h1>正在播放</h1>
+  <p class="lede">这一张证明：音乐可以像 iPhone 的灵动岛一样长在刘海上——左耳是封面，右耳是跟着声音跳的波形，点一下长成大卡；而且不多占一点菜单栏，不画假波形，读不到的就不画。数字取 MacBook Air 15 英寸：刘海 185 × 33.5，舞台按 1 点 = 1 像素画屏幕顶部中间那一段。</p>
+
+  <div class="row" role="group" aria-label="紧凑">
+    <span class="lab">紧凑</span>
+    <button type="button" data-act="play">在放</button>
+    <button type="button" data-act="pause">暂停</button>
+    <button type="button" data-act="perm">没有录音权限</button>
+    <button type="button" data-act="next">换一首</button>
+  </div>
+  <div class="row" role="group" aria-label="长成大卡">
+    <span class="lab">长大</span>
+    <button type="button" data-act="row">那一排</button>
+    <button type="button" data-act="fromrow">在那一排点“正在播放”</button>
+    <button type="button" data-act="card">点耳朵长成大卡</button>
+    <button type="button" data-act="close">收回</button>
+  </div>
+  <div class="row" role="group" aria-label="大卡里">
+    <span class="lab">大卡里</span>
+    <button type="button" data-act="vol">按音量键</button>
+    <button type="button" data-act="list">输出设备</button>
+    <button type="button" data-act="alert">来一条提醒</button>
+  </div>
+  <div class="row" role="group" aria-label="边缘情况">
+    <span class="lab">边缘</span>
+    <button type="button" data-act="noart">没有封面</button>
+    <button type="button" data-act="live">直播</button>
+    <button type="button" data-act="quit">播放器退出</button>
+    <button type="button" data-act="lock">锁屏</button>
+    <button type="button" data-act="full">全屏</button>
+    <button type="button" data-act="reset">重来</button>
+  </div>
+  <div class="row">
+    <span class="lab">看法</span>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+    <label class="sw"><input id="ghost" type="checkbox"> 叠上硬件轮廓</label>
+    <button type="button" id="theme">外观：跟随系统</button>
+    <span class="demo-flag" title="产品只从系统音频录制拿到的真实电平画波形">波形是演示信号</span>
+  </div>
+
+  <div class="stage-outer" id="outer" tabindex="0" aria-label="刘海舞台。点刘海两侧的耳朵长成大卡，Esc 收回，大卡开着时按上下方向键模拟音量键。">
+    <div class="stage" id="stage">
+      <div class="wallpaper"></div>
+      <div class="menubar" id="menubar"><div class="l"><span>音乐</span><span>文件</span><span>编辑</span><span>歌曲</span><span>显示</span></div><div class="r"><i></i><span>10月9日 周五 21:30</span></div></div>
+      <div class="fullveil" id="fullveil"><i></i><span>全屏的视频：菜单栏收起，刘海两侧是黑的</span></div>
+      <div class="lockveil" id="lockveil"><div class="clock">21:30<small>10月9日 星期五</small></div></div>
+      <svg class="shape" id="shape" viewBox="0 0 980 300" aria-hidden="true"></svg>
+      <div class="island" id="island">
+        <div class="art" id="art"><div class="a" id="artA"></div><div class="a" id="artB"></div><div class="ph" id="artPh"><svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2" fill="rgba(255,255,255,.6)"/><circle cx="17" cy="16" r="2" fill="rgba(255,255,255,.6)"/></svg></div></div>
+        <div class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="adot" id="adot"></div>
+
+        <div class="layer" id="Lpeek"><div class="peekline" id="peekline"></div></div>
+
+        <div class="layer" id="Lrow">
+          <div class="tile" data-win="备忘录" style="left:14px"><div class="thumb"><i></i><b style="top:20px"></b><b style="top:30px;right:40px"></b><b style="top:40px"></b></div><div class="cap">备忘录<small>购物清单</small></div></div>
+          <div class="tile" data-win="访达" style="left:146px"><div class="thumb" style="background:#dfe6f0"><i></i><b style="top:22px;right:70px;height:22px;border-radius:4px;background:#9cb6d8"></b><b style="top:22px;left:62px;right:12px;height:22px;border-radius:4px;background:#b8c6d8"></b></div><div class="cap">访达<small>下载</small></div></div>
+          <div class="tile" data-win="预览" style="left:278px"><div class="thumb" style="background:#f2efe8"><i></i><b style="top:18px;left:20px;right:20px;height:44px;border-radius:2px;background:#d9d2c3"></b></div><div class="cap">预览<small>合同.pdf</small></div></div>
+          <div class="divider" style="left:418px"></div>
+          <div class="tile music" id="tileMusic" style="left:433px">
+            <svg class="glyph" id="tileGlyph" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2" fill="#fff"/><circle cx="17" cy="16" r="2" fill="#fff"/></svg>
+            <div class="t" id="tileT"></div><div class="s" id="tileS"></div>
+            <div class="pp" id="tilePP" role="button" aria-label="播放或暂停"></div>
+          </div>
+        </div>
+
+        <div class="layer" id="Lcard">
+          <div class="ctitle" id="ctitle"></div>
+          <div class="cartist" id="cartist"></div>
+          <div class="scrub" id="scrub" role="slider" aria-label="播放位置" tabindex="-1"><div class="track" id="strack"><div class="fill" id="sfill"></div></div></div>
+          <div class="livepill" id="livepill">直播</div>
+          <div class="times" id="times"><span id="tEl">0:00</span><span id="tRem">−0:00</span></div>
+          <div class="sub" id="Sctrl">
+            <div class="cbtn" id="bPrev" style="left:149px" role="button" aria-label="上一首"><svg viewBox="0 0 24 24" fill="#fff"><path d="M21 5.5v13L11.5 12zM12 5.5v13L2.5 12z"/></svg></div>
+            <div class="cbtn big" id="bPlay" style="left:190px" role="button" aria-label="播放或暂停"></div>
+            <div class="cbtn" id="bNext" style="left:239px" role="button" aria-label="下一首"><svg viewBox="0 0 24 24" fill="#fff"><path d="M3 5.5v13l9.5-6.5zM12 5.5v13l9.5-6.5z"/></svg></div>
+            <div class="cbtn" id="bOut" style="right:10px" role="button" aria-label="播放到"></div>
+          </div>
+          <div class="sub" id="Svol"><div class="vrow"><span id="vIcon"></span><div class="vtrack"><i id="vFill"></i></div><b id="vNum">50</b></div></div>
+          <div class="list" id="Slist"><h4>播放到</h4><div id="devs"></div></div>
+        </div>
+
+        <div class="layer" id="Lmsg"><svg class="ico" id="msgIco" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"></svg><div class="msg" id="msg"></div><div id="msgEar" style="position:absolute;top:9px;font:600 12px/16px var(--sans)"></div></div>
+      </div>
+      <div class="notchhit" id="notchhit" title="刘海本身"></div>
+    </div>
+  </div>
+
+  <div class="cap-under">
+    <h3 id="capT">紧凑：左耳封面，右耳波形</h3>
+    <span class="note">这一下的弹簧：<span class="token" id="capTok">settle</span></span>
+    <p id="capP"></p>
+    <div class="sr" id="sr" aria-live="polite"></div>
+  </div>
+
+  <h2>封面取色</h2>
+  <p class="lede">歌手名、进度条、波形都用封面里的颜色，但要在纯黑上读得清。上面换歌，这里跟着算——这一块是真的在算，不是摆出来的。</p>
+  <div class="card pal">
+    <div><canvas id="palCanvas" width="64" height="64" aria-label="缩到 64 × 64 的封面"></canvas><p class="note" id="palWhich"></p></div>
+    <div>
+      <h3>16 个色相桶（每桶 22.5°，高度 = 桶里像素的彩度之和）</h3>
+      <div class="buckets" id="buckets"></div>
+      <div class="chips" id="chips"></div>
+      <p class="note" id="palVerdict"></p>
+    </div>
+  </div>
+  <div class="card">
+    <h3>算法（产品照这个做，数字都在这里）</h3>
+    <ul>
+      <li>换曲时算一次，在后台线程做，结果按封面的哈希缓存一份；同一张封面不重算。目标耗时 ≤ 2 毫秒。</li>
+      <li>封面缩到 <b>64 × 64</b>（4096 个像素），转成 OKLCH。丢掉透明度 &lt; 0.5、明度 L &lt; 0.18 或 &gt; 0.96、彩度 C &lt; 0.035 的像素——太黑、太白、太灰的不投票。</li>
+      <li>剩下的按色相分 <b>16 桶</b>，每个像素投它的彩度 C。留下的像素不到全部的 <b>8%</b>，就当这张封面没有颜色，一律用白 0.92（和刘海上的主文字同色），不硬染。</li>
+      <li>票最多的桶是主色，取桶内按彩度加权的平均。副色是和主色差 ≥ 45°、票数 ≥ 主色 25% 的最高桶；没有就用主色提亮 0.1。</li>
+      <li><b>字色</b>（歌手名）：L 夹到 0.74–0.92，C 最多 0.14。<b>填充色</b>（进度、波形、音量条）：L 夹到 0.66–0.90，C 最多 0.17。超出 sRGB 时只降彩度，不改色相和明度。L ≥ 0.74 在纯黑上对比度约 9:1 以上，11 点字也够。</li>
+      <li>和 Atoll 的差别：它用 HSB、权重 饱和度² × 亮度、歌手名亮度至少 0.6；我们用 OKLCH 的明度下限，换不同色相时看起来一样亮，不会黄色刺眼、蓝色发暗。</li>
+      <li>换曲时颜色跟封面一起 0.18 秒过渡（<span class="token">fade</span> 入）。减少动态效果时直接换。</li>
+    </ul>
+  </div>
+
+  <h2>规则</h2>
+  <p class="lede">层次照《一颗岛》和总稿：放行 &gt; 正在做的手势 &gt; 你主动打开的 &gt; 短暂提醒 &gt; 持续活动 &gt; 什么都没有。紧凑是第 5 层，换歌一瞥是音乐自己的第 4 层，大卡是第 3 层。</p>
+  <div class="grid2">
+    <div class="card"><h3>紧凑：什么时候出现</h3><ul>
+      <li>系统说有东西在放，<span class="token">settle</span>（0.38 / ζ 1.0）从刘海长出两耳。耳高 = 刘海高 33.5，耳宽按内容、每耳最多 52.33：封面这一边主体 2 + 20 + 6.75 = 28.75，加肩 7.74 = 36.49，两耳等宽、紧贴刘海；肩跟着挪到新的外沿，不多占菜单栏（S1）。</li>
+      <li>左耳封面边长 = round(0.6 × 刘海高)，这台是 <b>20</b>；圆角 5（边长的 1/4，连续曲线）；上下各 6.75，右边离刘海 2、外侧留 6.75。菜单栏挤，耳宽被压到 30 以下时边长 = 主体 − 6；不到 14 就退回音符符号（今天的样子）。</li>
+      <li>右耳波形 5 根：宽 2、间距 1.6、最高 14、最低 2.4（一个圆点），上下居中，颜色是填充色。</li>
+      <li>比音乐优先的持续活动在（会话 95、录音 90、传输 80、专注 70、路线 60 &gt; 音乐 40）：音乐让出紧凑，退到那一排里。</li>
+    </ul></div>
+    <div class="card"><h3>紧凑：暂停、没有权限、收回</h3><ul>
+      <li><b>暂停</b>：封面透明度降到 0.5，根变成白 0.45 的静止圆点，0.18 秒淡过去。暂停满 <b>10 分钟</b>，紧凑 <span class="token">calm</span> 收回；那一排里仍有这一格，写“已暂停”。</li>
+      <li><b>没有录音权限</b>：5 个静止的点，主色、副色交替，封面不暗。和暂停的区别不只靠颜色：封面亮不亮也不同。</li>
+      <li>来源是 Spotify、输出是蓝牙耳机时也画静止点（理由见“数据源”）。系统静音时画静止点。</li>
+      <li>播放器退出、锁屏、进入全屏：紧凑 <span class="token">calm</span> 收回，不留话。</li>
+    </ul></div>
+    <div class="card"><h3>换歌一瞥</h3><ul>
+      <li>在放的时候换了曲目（含开始播放的第一首），刘海往下鼓 30：高 63.5，宽不变（还是两耳那么宽），底角 24。<span class="token">bloom</span> 开口，<span class="token">calm</span> 收回。</li>
+      <li>一行字：歌名 13 半粗，空 6，歌手 11 字色。太长从尾巴截，全名在大卡和读屏里。</li>
+      <li>停 <span class="token">announce.hold</span>：1.8 秒 + 每字 0.05 秒，最长 4.5 秒。还开着时又换了歌：原地换字，计时重算，不重开口。</li>
+      <li>封面 0.18 秒交叉淡化，不翻转。暂停后接着放同一首、那一排或大卡开着、全屏、锁屏、广告：都不一瞥。</li>
+    </ul></div>
+    <div class="card"><h3>长成大卡</h3><ul>
+      <li>点左耳或右耳，或在那一排里点“正在播放”那一格：<span class="token">expand</span>（0.40 / ζ 0.92）长成<b>大卡</b>：大卡例外，不受 160 限制，宽按内容（示意 420），刘海下方内容高 118（有控制行；只有一句话的“已退出”那种是 72），底角 28，画肩（跟着卡的外沿）。</li>
+      <li>形状走到四成内容才淡入（0.18）；封面用同一根弹簧从左耳长到 <b>56 × 56</b>，圆角 14（= 28 − 14）。暂停时封面缩到 0.9。波形留在右耳原处不动。</li>
+      <li>点刘海本身不变：一下回到主屏幕，两下调度中心，三下这个 App 的所有窗口；长按刘海本身 0.5 秒开那一排（指针停上去不展开）。耳朵只认点，不认悬停。</li>
+      <li>收回：点卡外、Esc、两指上推、指针离开 1.5 秒（拖进度条、调音量、开着设备列表时不算）。<span class="token">calm</span> 回到紧凑。</li>
+      <li>那一排的“正在播放”格右下留一个 24 的播放 / 暂停键：今天点格子就是播放 / 暂停，这一下不能少。</li>
+    </ul></div>
+    <div class="card"><h3>进度条</h3><ul>
+      <li>宽 = 卡宽 − 28。平时 4 高，按下 8 高（<span class="token">pop</span> 0.30 / ζ 0.75），圆角是半高，不画圆钮。轨道白 0.18，已播是填充色。</li>
+      <li>按下就跳到按下的地方，拖动跟手，松手才真的跳；松手前播放照常。时间 11 点等宽数字，白 0.6：左边已播“1:12”，右边剩余“−2:31”。</li>
+      <li>播放器不让跳：条不加粗，指针不变手。没有时长（直播、电台）：条换成“直播”。</li>
+      <li>位置每 2 秒和推送流校一次，中间按时间推算；卡开着时每秒刷 30 次，卡关着不刷。</li>
+    </ul></div>
+    <div class="card"><h3>音量与输出设备</h3><ul>
+      <li>大卡开着按音量键：控制那一行 0.18 秒换成音量条（喇叭随音量换 4 个样子 + 条 + 数字），松键 <b>1.2 秒</b>后换回（和《音量与亮度》同一个 <span class="token">Motion.Hold.level</span>）。条也能直接拖。系统自己的音量提示照裁定藏掉；压不住就两个都留，不说话。大卡没开时归《音量亮度》那张稿。</li>
+      <li>控制行右端是输出设备键，图标跟着当前设备（扬声器 / 耳机 / 音箱）。点开，卡往下长到放得下所有设备（每行 34，超过 5 行就滚），<span class="token">expand</span>；当前那个打勾，选完 0.3 秒收回列表。</li>
+      <li>列表只列系统声音输出里能选的设备（AirPods、这台 Mac、显示器、连上的音箱）。系统选不到的隔空播放音箱不列，我们不自己去连。</li>
+    </ul></div>
+  </div>
+  <div class="card"><h3>和别的东西撞上</h3>
+    <div class="tblwrap" style="box-shadow:none;background:transparent"><table class="tbl">
+      <tr><th>这时候</th><th>又来了</th><th>结果</th></tr>
+      <tr><td>紧凑（第 5 层）</td><td>配件连上、电量低（第 4 层）</td><td>提醒照常 <span class="token">bloom</span> 开口 2.6 秒，收回后回到音乐的紧凑，不重播一瞥。</td></tr>
+      <tr><td>换歌一瞥（第 4 层）</td><td>别的提醒</td><td>先到先占；后来的那条排在后面，一瞥收回后再开口。</td></tr>
+      <tr><td>大卡（第 3 层）</td><td>配件连上（第 4 层）</td><td>不开口，变成卡片右下一个 8 点的强调色圆点（右 10、下 8），读屏念出那一句。卡收回时这个点就消耗掉，不回来补说。</td></tr>
+      <tr><td>大卡</td><td>拖标题栏到刘海（第 2 层）</td><td>大卡挂起，落点小岛占位；放手后大卡原样回来，不重播进场。</td></tr>
+      <tr><td>大卡</td><td>刷脸、Touch ID、助手审批（第 1 层）</td><td>同上，挂起；审批结束后回来。</td></tr>
+      <tr><td>拖进度条中</td><td>任何提醒</td><td>手离开前什么都不进来，提醒变点。</td></tr>
+    </table></div>
+  </div>
+
+  <h2>对照：Atoll / Alcove / 今天 / 要做的</h2>
+  <p class="lede">Atoll 是 GPL，只借做法和数字（读的是 2026-10-08 的 2.3.3 源码）；Alcove 闭源，只看发行说明里写出来的行为。</p>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>项</th><th>Atoll</th><th>Alcove</th><th>WindowShade 今天</th><th>WindowShade 要做</th></tr>
+    <tr><td>紧凑左耳</td><td>封面，边长 = 收起高 − 12（32 高时 20），圆角 4，右下叠徽章</td><td>封面，暂停时变淡</td><td>音符符号 + 歌名</td><td class="ours">封面 20（0.6 × 刘海高），圆角 5，不叠徽章</td></tr>
+    <tr><td>紧凑右耳</td><td>默认是<b class="no">假波形</b>：4 根，每 0.3 秒随机高度；真波形默认关</td><td>真实波形（音频采集，自称 CPU 0–1%），采不到时有模拟波形</td><td>进度环</td><td class="ours">真实波形 5 根；没权限就静止点；<b>不画假的</b></td></tr>
+    <tr><td>换歌</td><td>预览默认关；浮条 1.5 秒或中间拉到 380 宽 3 秒；封面 3D 翻转 0.45 秒</td><td>Quick Peek，可滑动切歌</td><td>没有</td><td class="ours">往下鼓 30、宽不变，停 1.8 秒起；封面交叉淡化 0.18</td></tr>
+    <tr><td>展开</td><td>悬停 0.3 秒或点击；640 × 200，圆角上 19 下 24；弹簧 0.42 / 1.0</td><td>悬停、点击、下滑</td><td>那一排里的一格，点 = 播放 / 暂停</td><td class="ours">点耳朵或那一格长成大卡（宽按内容，刘海下方 118，底角 28），<span class="token">expand</span>；格上留播放键</td></tr>
+    <tr><td>进度条</td><td>可拖，8 → 14 高；已播 / 总长</td><td>可拖，颜色有最低亮度和对比度</td><td>只有进度环；剩余时间写好没接</td><td class="ours">4 → 8 高，按下即跳，已播 / 剩余</td></tr>
+    <tr><td>控制</td><td>5 个槽：随机、上一首、播放、下一首、重复</td><td>加了随机、重复、红心、播放速度</td><td>上一首、播放、下一首</td><td class="ours">上一首、播放、下一首、输出设备</td></tr>
+    <tr><td>输出设备</td><td>240 宽的弹出框：音量 + 设备列表</td><td>设备图标按型号区分</td><td>没有</td><td class="ours">卡里往下长出“播放到”列表</td></tr>
+    <tr><td>音量</td><td>按音量键时控制行换成音量条</td><td>卡上可选常驻音量滑块</td><td>独立的 210 × 36 音量胶囊</td><td class="ours">照 Atoll：卡开着时换控制行 1.2 秒</td></tr>
+    <tr><td>取色</td><td>64 × 64，16 个色相桶，权重 饱和度² × 亮度；歌手名亮度 ≥ 0.6</td><td>主色，有最低亮度、对比度</td><td>没有</td><td class="ours">64 × 64，OKLCH 16 桶，权重 = 彩度；字色 L ≥ 0.74</td></tr>
+    <tr><td>数据源</td><td>perl 借签名读 MediaRemote；15.4 以后默认改回 Music 的 AppleScript</td><td>“系统播放器” + AppleScript；中间坏过一段</td><td>推送流 + Music / Spotify 的 JXA 退路，<b>不取封面</b></td><td class="ours">同一条推送流；换曲时单独取一次封面</td></tr>
+    <tr><td>封面缺失</td><td>Music 缺封面时去 iTunes Search API 搜</td><td>占位</td><td>—</td><td class="ours">占位，不联网</td></tr>
+    <tr><td>波形采集</td><td>CoreAudio 进程 tap，白名单 10 个播放器；蓝牙输出时跳过 Spotify</td><td>“音频 tap”，细节不公开</td><td>没有</td><td class="ours">只 tap 正在播放的那一个进程；蓝牙 + Spotify 同样跳过（先实测）</td></tr>
+    <tr><td>全屏 / 锁屏</td><td>全屏视频时隐藏</td><td>锁屏有自己的播放器小组件</td><td>都不出</td><td class="ours">都不出；锁屏交给系统自己的</td></tr>
+  </table></div>
+  <div class="card"><h3>不取的，和为什么</h3><ul>
+    <li><b>假波形 / 模拟波形</b>：画面说“在响”，但它不知道响不响。我们的规矩是读不到就不画。</li>
+    <li><b>封面光晕、3D 视差、彩色轮廓、玻璃、渐进模糊</b>：刘海是硬件层，永远纯黑，不加材质（design-system §4.2、V4）。</li>
+    <li><b>封面 3D 翻转、跑马灯</b>：一天会看见上百次的东西不表演；交叉淡化和截尾就够。</li>
+    <li><b>iTunes Search 补封面、歌词（LRCLIB / 网易云）、Spotify 红心</b>：都要把你在听什么发到网上，或要登录账号。WindowShade 这条线不联网。</li>
+    <li><b>随机、重复、播放速度、复制链接</b>：每个播放器一套私有接口，坏了没人知道；在播放器里点更可靠。</li>
+    <li><b>自己的锁屏播放器</b>：锁屏时我们清掉一切可见内容，系统锁屏已有播放器。</li>
+    <li><b>自己挑来源</b>：系统认谁在放，我们就显示谁，和控制中心一致，不另做来源菜单。</li>
+  </ul></div>
+
+  <h2>边缘情况</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>情况</th><th>紧凑</th><th>大卡</th><th>为什么</th></tr>
+    <tr><td>没有封面</td><td>白 0.14 的圆角方块，中间白 0.6 的音符</td><td>同样的占位放大到 56；字色、填充色用白 0.92</td><td>没读到就不编一张；也不去网上搜</td></tr>
+    <tr><td>广告</td><td>不一瞥；封面和颜色不换</td><td>照常显示播放器给的字；进度条不让拖</td><td>没有歌手且时长 ≤ 60 秒当作广告；广告不值得开口</td></tr>
+    <tr><td>播客</td><td>同歌曲</td><td>同歌曲；有时长就能拖</td><td>播放器给什么就画什么</td></tr>
+    <tr><td>直播、电台（没有时长）</td><td>同歌曲</td><td>进度条换成“直播”，只写已播放时长；不能拖</td><td>不画一条假的进度</td></tr>
+    <tr><td>几个播放器同时在放</td><td>只显示系统认定的那一个</td><td>同左；不加来源菜单</td><td>和控制中心一致；推送流断了时，Music 和 Spotify 都在放就取最近开始放的那个</td></tr>
+    <tr><td>播放器退出</td><td><span class="token">calm</span> 收回到刘海</td><td>卡里一句“Spotify 已退出”，2.6 秒后收回</td><td>卡是你打开的，要告诉你它为什么没了</td></tr>
+    <tr><td>全屏</td><td>不出</td><td>打不开（刘海两侧是黑的，没有地方点）</td><td>全屏时菜单栏收起，不打扰看片；换歌也不一瞥</td></tr>
+    <tr><td>锁屏、睡眠、切换用户</td><td>清掉</td><td>清掉</td><td>解锁后只按现在的事实画，不补播锁屏前的一瞥</td></tr>
+    <tr><td>减少动态效果</td><td>形状直接切，内容 0.25 秒淡；波形变成静止的填充色点</td><td>同；封面不长大，原地淡出、目标处淡入</td><td>design-system §4.9</td></tr>
+    <tr><td>大卡开着来了提醒</td><td>—</td><td>卡片右下一个 8 点的强调色圆点（右 10、下 8）+ 读屏，不开口</td><td>第 3 层 &gt; 第 4 层，提醒被消耗</td></tr>
+    <tr><td>菜单栏挤（耳宽 &lt; 30）</td><td>封面 = 主体 − 6；&lt; 14 退回音符</td><td>不受影响</td><td>不为封面多占菜单栏</td></tr>
+    <tr><td>外接屏、没有刘海</td><td>胶囊（S4），内容同</td><td>从胶囊长出，同一张卡</td><td>形状从硬件来；没有刘海就用胶囊</td></tr>
+    <tr><td>系统静音、音量 0</td><td>静止点</td><td>喇叭画成静音</td><td>采集到的是播放器的声音，静音时它还在“响”，但你听不见</td></tr>
+    <tr><td>歌名极长、全是表情</td><td>一瞥截尾</td><td>一行截尾，读屏念全名</td><td>不跑马灯</td></tr>
+  </table></div>
+
+  <h2>数据源的现实</h2>
+  <div class="grid2">
+    <div class="card"><h3>推送流会坏</h3><ul>
+      <li>今天：<code>App/NowPlayingStream.swift</code> 起 <code>/usr/bin/perl</code> 跑 mediaremote-adapter（借系统签名读 MediaRemote），带 <code>--no-artwork --micros --debounce=150</code>。macOS 15.4 已经堵过一次第三方读取；哪天把 perl 这条缝也堵上，它会安静地失明。</li>
+      <li>判坏：启动 10 秒内没有第一行，或 60 秒内退出 3 次。坏了就转 <code>NotchActivitySources.swift</code> 的 JXA 退路——只认音乐和 Spotify；浏览器、播客 App 里的播放就从刘海消失，不猜。</li>
+      <li>设置里只写一句事实：“正在播放只认音乐和 Spotify”。刘海里不说话。</li>
+    </ul></div>
+    <div class="card"><h3>封面要另取</h3><ul>
+      <li>推送流继续 <code>--no-artwork</code>（一行几百 KB，会把解析器的 64 KB 上限顶穿）。曲目换了，再用 adapter 的 <code>get</code> 取一次，只解这一次的封面，上限 4 MB，超了当没有。<b>要先在本机核对 get 的输出带不带封面。</b></li>
+      <li>解出来立刻缩到 128 × 128（56 点 × 2 倍），内存里只留最新一张，不落盘，不进日志。</li>
+      <li>JXA 退路：音乐能直接拿到封面数据；Spotify 只给一个网址，<b>不去下载</b>，画占位。</li>
+    </ul></div>
+    <div class="card"><h3>波形要系统音频录制</h3><ul>
+      <li>macOS 14.2 起的 CoreAudio 进程 tap：只接<b>正在播放的那一个进程</b>（推送流给了 bundle id，按它找进程对象，容忍子进程），混成单声道，挂在一个私有聚合设备上（“声音”设置里看不见）。需要 <code>NSAudioCaptureUsageDescription</code>，用户在“隐私与安全性 › 系统音频录制”里同意。</li>
+      <li>每 1024 个样本（48 kHz 下约 21 毫秒）算 5 个频带的能量：60–250、250–800、800–2.5k、2.5k–6k、6k–14k Hz。dBFS 从 −54 到 −12 映射到 0–1，每秒 30 次，涨的时候系数 0.6、落的时候 0.15。根高 = 2.4 + 11.6 × 电平。</li>
+      <li>只在紧凑或大卡露着、而且在放时开着；暂停 3 秒、收回、锁屏、全屏就拆掉。声音不留下，离开音频线程的只有每帧 5 个数。目标 CPU ≤ 1%（本机活动监视器 30 秒平均）。</li>
+    </ul></div>
+    <div class="card"><h3>Atoll 的做法，我们怎么取舍</h3><ul>
+      <li><b>白名单 10 个播放器</b>：不取。我们知道正在放的是谁，只接它一个，少录别的 App 的声音。代价：没被推送流认出的播放器没有波形，只有静止点。</li>
+      <li><b>蓝牙输出时跳过 Spotify</b>：取，但先实测。Atoll 的说法是 tap 会干扰 AVRCP，AirPods 上捏一下暂停会变成叫 Siri。验收：AirPods Pro 连着，Spotify 和音乐各捏 10 次，暂停全部生效；不生效的组合加进跳过表。</li>
+      <li><b>tap 失败不回落</b>：取，失败就是静止点，和没权限一样。</li>
+      <li><b>6 频带 biquad + 1.5 倍增益</b>：思路取，数字不取；我们 5 根，用上面的 dB 映射，不做按频带的增益（会让安静的歌也跳满）。</li>
+    </ul></div>
+  </div>
+
+  <h2>权限与隐私</h2>
+  <div class="tblwrap"><table class="tbl">
+    <tr><th>读什么</th><th>什么时候读</th><th>默认</th><th>登记 <code>tools/privacy/registry.json</code></th></tr>
+    <tr><td>歌名、歌手、进度、在放还是暂停</td><td>推送流一有变化就读；退路时按通知读</td><td>开（实时活动）</td><td>已有 <code>music</code>，不变</td></tr>
+    <tr><td>封面</td><td>换曲时取一次，缩到 128，只留一张在内存</td><td>跟着 <code>music</code></td><td>改 <code>music</code>：reads 加“封面”，destination 写“只在内存里留最新一张，不落盘”；接口加 adapter 的 <code>get</code></td></tr>
+    <tr><td>播放的声音有多大（5 个频带的电平）</td><td>紧凑或大卡露着且在放时；暂停 3 秒就停</td><td><b>关</b>；设置里“跟着声音跳”打开时才问系统音频录制</td><td><b>新增</b> <code>music-levels</code>：sensitivity private，组“你同意后才读的”，permission“系统音频录制”，combined“声音大小合上正在放的歌，能看出你什么时候在听”；同步 <code>App/WS2PrivacyData.swift</code></td></tr>
+    <tr><td>输出设备的名字和当前设备</td><td>大卡里点“播放到”时读一次</td><td>开</td><td><b>新增</b> <code>audio-outputs</code>：设备名里可能有你的名字（“小明的 AirPods”），按 private 登记；不写日志</td></tr>
+    <tr><td>改系统音量、改输出设备、跳转播放位置</td><td>只在你拖、点的时候</td><td>—</td><td>音量键那一路随《音量亮度》那张稿一起登记；跳转走 MediaRemote 的命令，记进 <code>music</code> 的接口</td></tr>
+  </table></div>
+
+  <h2>实现落点与工作包</h2>
+  <p class="lede">路径都在 <code>prototype/</code> 下。顺序：NP-1 → NP-2 → NP-4 → NP-3、NP-5 → NP-6。NP-6 要等 Aaron 定权限在哪问。</p>
+  <div class="wp">
+    <div class="card"><h3><span class="id">NP-1</span>封面与取色</h3><p>改 <code>App/NowPlayingStream.swift</code>（换曲时 <code>get</code> 一次封面）、<code>Core/NowPlayingStreamParser.swift</code>（只在 get 路径放宽到 4 MB）；新建 <code>Core/ArtworkPalette.swift</code>（纯函数）和 <code>App/NowPlayingArtwork.swift</code>（解码、缩到 128、只留一张）；改 <code>tools/privacy/registry.json</code> 的 <code>music</code>。</p><p><b>验收</b>：<code>tests/ArtworkPaletteTests.swift</code> 里同一张图结果不变、灰图回到白 0.92、字色对纯黑 ≥ 7:1；<code>rg</code> 查不到封面写盘；推送流仍带 <code>--no-artwork</code>。</p></div>
+    <div class="card"><h3><span class="id">NP-2</span>紧凑两耳：封面 + 静止点</h3><p>改 <code>App/NotchActivityView.swift</code>（左耳封面、右耳 5 根）、<code>App/Notch.swift</code>（耳宽按内容，每耳最多 52.33；这一包封面边 28.75 + 肩 7.74）。这一包只画静止点，不接音频。</p><p><b>验收</b>：本机 33.5 刘海上封面 20、耳宽仍 34；耳宽压到 26 时退回音符；暂停 / 在放两种样子截图对上这张稿；<code>NotchShapeProbe</code> 量到第一帧和最后一帧与硬件轮廓重合。</p></div>
+    <div class="card"><h3><span class="id">NP-3</span>换歌一瞥</h3><p>改 <code>App/Notch.swift</code>（高 63.5 的那一档）、<code>Core/NotchAlerts.swift</code>（用 announce.hold 计时，原地换字）。</p><p><b>验收</b>：<code>tests/NotchActivityTests.swift</code> 里 1.5 秒内连按 5 次下一首只开一次口；那一排、大卡、全屏、广告、暂停后接着放都不一瞥。</p></div>
+    <div class="card"><h3><span class="id">NP-4</span>大卡</h3><p>新建 <code>App/NowPlayingCard.swift</code>；改 <code>App/Notch.swift</code>（宽按内容、刘海下方 118、底角 28、画肩，第 3 层，耳朵只认点）、<code>Core/NotchRow.swift</code>（格子动作改成长成大卡，格上留播放键）、<code>Core/NotchActivities.swift</code>（加跳转动作）。</p><p><b>验收</b>：<code>tests/NotchRowMergeTests.swift</code>：点格子 = 大卡、点播放键 = 播放 / 暂停；从紧凑和从那一排长出的是同一张卡；Esc、点外、离开 1.5 秒都收回，拖动时不收；进度松手才跳，不让跳的播放器条不加粗；点刘海本身仍是一下两下三下。</p></div>
+    <div class="card"><h3><span class="id">NP-5</span>卡里的音量与输出设备</h3><p>改 <code>App/NotchLevelObserver.swift</code>、<code>Core/NotchLevelGate.swift</code>（卡开着时音量键交给卡）；新建 <code>App/AudioOutputRoutes.swift</code>（复用 <code>NotchActivitySources.swift</code> 里的设备缓存，列出、切换默认输出）；登记 <code>audio-outputs</code>。</p><p><b>验收</b>：<code>tests/NotchLevelGateTests.swift</code>：卡开着按键不出独立胶囊；列表和系统“声音”设置一致；选 AirPods 后系统输出真的换了；列表开着时不自动收回。</p></div>
+    <div class="card"><h3><span class="id">NP-6</span>真实波形</h3><p>新建 <code>App/AudioLevelTap.swift</code>（进程 tap + 私有聚合设备）、<code>Core/AudioLevelBands.swift</code>（纯函数：5 频带、dB 映射、起落）；<code>Info.plist</code> 加 <code>NSAudioCaptureUsageDescription</code>；登记 <code>music-levels</code>，同步 <code>App/WS2PrivacyData.swift</code>。</p><p><b>验收</b>：<code>tests/AudioLevelBandsTests.swift</code> 用正弦和静音喂出预期电平；没权限时进程里一个 tap 都没有；暂停 3 秒内拆掉；CPU 30 秒平均 ≤ 1%；AirPods 捏一下暂停实测通过。</p></div>
+    <div class="card"><h3><span class="id">NP-7</span>边缘与减少动态效果</h3><p>改 <code>App/Notch.swift</code>、<code>App/NotchSpaceGate.swift</code>：全屏、锁屏、播放器退出、大卡里来提醒变点、减少动态效果。</p><p><b>验收</b>：边缘情况表逐行一条测试或一次本机截图；VoiceOver 念“歌名，正在播放”“歌名，已暂停”，提醒变点时也念出来。</p></div>
+  </div>
+
+  <h2>待 Aaron 定</h2>
+  <div class="card"><ul>
+    <li><b>1. 怎么进大卡。</b>推荐：点耳朵直接长成大卡；刘海本身还是一下、两下、三下，长按 0.5 秒开那一排；那一排里点格子也长成大卡，格上留播放 / 暂停键。备选：耳朵不能点，只能从那一排进（少一种点法，但多一步）。</li>
+    <li><b>2. 系统音频录制在哪问。</b>推荐：设置里“跟着声音跳”，默认关，打开时系统才弹窗；大卡里点那排静止的点，直接带到这一行。不在欢迎窗口问（那里已经问日历，三步不加第四步）。</li>
+  </ul></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+/* ---------- 令牌 ---------- */
+var TOK={calm:{r:.34,z:1},settle:{r:.38,z:1},expand:{r:.40,z:.92},bloom:{r:.42,z:.84},pop:{r:.30,z:.75}};
+var HW={w:185,h:33.5,rb:10.71,e:7.74};
+var ART_S=Math.round(0.6*HW.h); // 20
+var WAVE_W=5*2+4*1.6; // 16.4
+/* 耳宽按内容（《两耳的岛》）：主体 = 2 + 内容宽 + (刘海高 − 内容高) / 2，两耳取大的；每耳（主体 + 肩）最多 52.33 */
+var CX=490, BODY=Math.min(52.33-HW.e,Math.max(26,2+ART_S+(HW.h-ART_S)/2,2+WAVE_W+(HW.h-14)/2)), EAR=BODY+HW.e; // 28.75 / 36.49
+var CARD_W=420; // 示意：大卡宽按内容（歌名、歌手越长越宽），不受 160 限制
+
+/* ---------- 曲目（虚构）与封面 ---------- */
+var TRACKS=[
+  {t:'晚风里的灯',a:'林间合唱团',d:214,art:'dusk',app:'音乐'},
+  {t:'Neon Harbor',a:'Low Tide Club',d:187,art:'neon',app:'Spotify'},
+  {t:'Paper Moons',a:'Ada Vale',d:243,art:'paper',app:'音乐'}
+];
+var EXTRA={
+  noart:{t:'Demo 0412',a:'工作室录音',d:96,art:null,app:'QuickTime Player'},
+  live:{t:'城市电台',a:'晚间新闻',d:null,art:'radio',app:'Safari',live:true}
+};
+function drawArt(ctx,id,s){
+  ctx.clearRect(0,0,s,s);
+  var g;
+  if(id==='dusk'){
+    g=ctx.createLinearGradient(0,0,0,s);g.addColorStop(0,'#14213f');g.addColorStop(1,'#24476b');ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
+    g=ctx.createRadialGradient(s*.62,s*.44,0,s*.62,s*.44,s*.5);g.addColorStop(0,'#ffd27a');g.addColorStop(.25,'#ff9a3c');g.addColorStop(.6,'rgba(255,110,40,.35)');g.addColorStop(1,'rgba(255,110,40,0)');ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
+    ctx.fillStyle='#fff1c9';ctx.beginPath();ctx.arc(s*.62,s*.44,s*.07,0,7);ctx.fill();
+    ctx.fillStyle='#0d3b4a';ctx.beginPath();ctx.moveTo(0,s*.78);for(var x=0;x<=s;x+=s/8){ctx.lineTo(x,s*(.76+.03*Math.sin(x/s*9)));}ctx.lineTo(s,s);ctx.lineTo(0,s);ctx.fill();
+    ctx.fillStyle='#0a1a2a';ctx.fillRect(s*.12,s*.5,s*.05,s*.3);ctx.fillRect(s*.2,s*.58,s*.04,s*.22);
+  }else if(id==='neon'){
+    g=ctx.createLinearGradient(0,0,s,s);g.addColorStop(0,'#3a0ca3');g.addColorStop(.55,'#b5179e');g.addColorStop(1,'#f72585');ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
+    ctx.fillStyle='#4cc9f0';ctx.fillRect(0,s*.62,s,s*.035);ctx.fillRect(0,s*.71,s,s*.02);ctx.fillRect(0,s*.78,s,s*.012);
+    ctx.strokeStyle='rgba(255,255,255,.85)';ctx.lineWidth=s*.02;ctx.beginPath();ctx.arc(s*.5,s*.4,s*.17,0,7);ctx.stroke();
+  }else if(id==='paper'){
+    ctx.fillStyle='#e9e4da';ctx.fillRect(0,0,s,s);
+    ctx.fillStyle='#d3ccbf';ctx.beginPath();ctx.arc(s*.42,s*.46,s*.26,0,7);ctx.fill();
+    ctx.fillStyle='#bdb6a9';ctx.beginPath();ctx.arc(s*.66,s*.36,s*.1,0,7);ctx.fill();
+    ctx.fillStyle='#7d776c';ctx.fillRect(s*.12,s*.84,s*.5,s*.018);
+  }else if(id==='radio'){
+    g=ctx.createLinearGradient(0,0,s,s);g.addColorStop(0,'#0b6e4f');g.addColorStop(1,'#13a35c');ctx.fillStyle=g;ctx.fillRect(0,0,s,s);
+    ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=s*.035;
+    for(var i=1;i<4;i++){ctx.beginPath();ctx.arc(s*.5,s*.62,s*.1*i+s*.02,Math.PI*1.2,Math.PI*1.8);ctx.stroke();}
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s*.5,s*.62,s*.05,0,7);ctx.fill();
+  }
+}
+var artURL={}, artPal={};
+['dusk','neon','paper','radio'].forEach(function(id){
+  var c=document.createElement('canvas');c.width=c.height=128;drawArt(c.getContext('2d'),id,128);artURL[id]=c.toDataURL();
+  var c2=document.createElement('canvas');c2.width=c2.height=64;var x2=c2.getContext('2d');drawArt(x2,id,64);
+  artPal[id]=palette(x2.getImageData(0,0,64,64).data);
+});
+
+/* ---------- 取色：OKLCH，16 桶 ---------- */
+function lin(c){c/=255;return c<=.04045?c/12.92:Math.pow((c+.055)/1.055,2.4)}
+function gam(c){c=c<=.0031308?12.92*c:1.055*Math.pow(c,1/2.4)-.055;return c}
+function toOk(r,g,b){r=lin(r);g=lin(g);b=lin(b);
+  var l=Math.cbrt(.4122214708*r+.5363325363*g+.0514459929*b),m=Math.cbrt(.2119034982*r+.6806995451*g+.1073969566*b),s=Math.cbrt(.0883024619*r+.2817188376*g+.6299787005*b);
+  return [.2104542553*l+.7936177850*m-.0040720468*s,1.9779984951*l-2.4285922050*m+.4505937099*s,.0259040371*l+.7827717662*m-.8086757660*s];}
+function okToLin(L,a,b){var l=L+.3963377774*a+.2158037573*b,m=L-.1055613458*a-.0638541728*b,s=L-.0894841775*a-1.2914855480*b;l*=l*l;m*=m*m;s*=s*s;
+  return [4.0767416621*l-3.3077115913*m+.2309699292*s,-1.2684380046*l+2.6097574011*m-.3413193965*s,-.0041960863*l-.7034186147*m+1.7076147010*s];}
+function lchToRgb(L,C,h){ // 超出 sRGB 只降彩度
+  for(var k=0;k<60;k++){var a=C*Math.cos(h),b=C*Math.sin(h),v=okToLin(L,a,b);
+    if(v.every(function(x){return x>=-.0005&&x<=1.0005}))return v.map(function(x){return Math.max(0,Math.min(1,x))});C=Math.max(0,C-.005);}
+  return okToLin(L,0,0).map(function(x){return Math.max(0,Math.min(1,x))});}
+function css(v){return 'rgb('+v.map(function(x){return Math.round(gam(x)*255)}).join(',')+')'}
+function lum(v){return .2126*v[0]+.7152*v[1]+.0722*v[2]}
+function palette(px){
+  var B=[];for(var i=0;i<16;i++)B.push({w:0,a:0,b:0,L:0,n:0});
+  var kept=0,total=0;
+  for(var p=0;p<px.length;p+=4){total++;if(px[p+3]<128)continue;
+    var o=toOk(px[p],px[p+1],px[p+2]),C=Math.hypot(o[1],o[2]);
+    if(o[0]<.18||o[0]>.96||C<.035)continue;
+    kept++;var h=Math.atan2(o[2],o[1]);if(h<0)h+=2*Math.PI;var k=Math.min(15,Math.floor(h/(Math.PI/8)));
+    var bk=B[k];bk.w+=C;bk.a+=o[1]*C;bk.b+=o[2]*C;bk.L+=o[0]*C;bk.n++;}
+  var frac=kept/total, res={buckets:B.map(function(b){return b.w}),frac:frac};
+  var WHITE=[.83,.83,.83]; // 白 0.92 的线性值约 0.83
+  if(frac<.08){res.mono=true;res.text=res.fill=res.fill2=WHITE;res.top=-1;return res;}
+  var top=0;B.forEach(function(b,i){if(b.w>B[top].w)top=i});
+  var pb=B[top],L=pb.L/pb.w,a=pb.a/pb.w,bb=pb.b/pb.w,C0=Math.hypot(a,bb),h0=Math.atan2(bb,a);
+  function clampL(x,lo,hi){return Math.max(lo,Math.min(hi,x))}
+  res.top=top;res.base=lchToRgb(L,C0,h0);
+  res.text=lchToRgb(clampL(L,.74,.92),Math.min(C0,.14),h0);
+  res.fill=lchToRgb(clampL(L,.66,.90),Math.min(C0,.17),h0);
+  var sec=-1;B.forEach(function(b,i){var d=Math.abs(i-top);d=Math.min(d,16-d)*22.5;if(d>=45&&b.w>=.25*pb.w&&(sec<0||b.w>B[sec].w))sec=i});
+  if(sec>=0){var sb=B[sec],sL=sb.L/sb.w,sa=sb.a/sb.w,sB=sb.b/sb.w;res.fill2=lchToRgb(clampL(sL,.66,.90),Math.min(Math.hypot(sa,sB),.17),Math.atan2(sB,sa));res.sec=sec;}
+  else{res.fill2=lchToRgb(clampL(L+.1,.66,.95),Math.min(C0,.17),h0);res.sec=-1;}
+  return res;
+}
+function contrast(v){return (lum(v)+.05)/.05}
+var WHITEPAL={mono:true,text:[.83,.83,.83],fill:[.83,.83,.83],fill2:[.83,.83,.83],buckets:new Array(16).fill(0),frac:0,top:-1,none:true};
+
+/* ---------- 状态 ---------- */
+var S;
+function fresh(){return{state:'compact',music:true,playing:true,perm:true,track:TRACKS[0],ti:0,elapsed:42,vol:50,dev:0,
+  locked:false,full:false,alertDot:false,volUntil:0,peekUntil:0,alertUntil:0,quitUntil:0,rowByHover:false,dragging:false,preview:null,listOpen:false,pressTile:0}}
+S=fresh();
+var DEVS=[{n:'这台 Mac 的扬声器',k:'mac',bt:false},{n:'AirPods Pro',k:'hp',bt:true,sub:'电量 80%'},{n:'Studio Display',k:'spk',bt:false},{n:'客厅的音箱',k:'spk',bt:false}];
+
+var reducedBox=$('reduced'), ghostBox=$('ghost');
+function reduced(){return reducedBox.checked}
+
+/* ---------- 弹簧 ---------- */
+function Spr(x){return{x:x,v:0,t:x}}
+function step(s,tok,dt){
+  if(reduced()){s.x=s.t;s.v=0;return}
+  var T=TOK[tok],k=Math.pow(2*Math.PI/T.r,2),c=4*Math.PI*T.z/T.r,n=Math.ceil(dt/.004),h=dt/n;
+  for(var i=0;i<n;i++){var a=-k*(s.x-s.t)-c*s.v;s.v+=a*h;s.x+=s.v*h}
+}
+var G={W:Spr(HW.w),H:Spr(HW.h),r:Spr(HW.rb),e:Spr(HW.e),k:Spr(0)};
+var thick=Spr(4), curTok='settle', start={W:HW.w,H:HW.h}, shrinkDelay=0;
+
+function geom(){
+  var st=S.state;
+  if(S.locked||S.full)st='rest';
+  switch(st){
+    case 'compact':return{W:HW.w+2*BODY,H:HW.h,r:HW.rb,e:HW.e,k:0};
+    case 'peek':return{W:HW.w+2*BODY,H:HW.h+30,r:24,e:HW.e,k:0};
+    case 'row':return{W:571,H:HW.h+142,r:28,e:HW.e,k:0};
+    case 'card':return{W:CARD_W,H:S.listOpen?84+DEVS.length*34+22+14:HW.h+118,r:28,e:HW.e,k:reduced()?1:1};
+    case 'alert':return{W:408,H:84,r:24,e:HW.e,k:0};
+    case 'quit':return{W:CARD_W,H:HW.h+72,r:28,e:HW.e,k:1};
+    default:return{W:HW.w,H:HW.h,r:HW.rb,e:HW.e,k:0};
+  }
+}
+var CAP={
+  compact:['紧凑：左耳封面，右耳波形','settle','耳高 33.5，耳宽按内容（这一件主体 28.75 + 肩 7.74 = 36.49，上限 52.33），不多占菜单栏。封面 20 × 20，圆角 5。波形 5 根，最高 14。点任一只耳朵长成大卡；点刘海本身仍是回到主屏幕。'],
+  paused:['暂停：封面变淡，根变成静止的点','calm','封面透明度 0.5，根成白 0.45 的圆点。暂停满 10 分钟，紧凑收回，那一排里留一格“已暂停”。'],
+  noperm:['没有录音权限：静止的封面色点','calm','没有“系统音频录制”就不画会动的东西。5 个点主色、副色交替；封面不暗，和暂停分得开。'],
+  peek:['换歌一瞥：往下鼓 30，宽度不变','bloom','只多占刘海下面，不多占菜单栏。停 1.8 秒 + 每字 0.05 秒，最长 4.5 秒，再 calm 收回。封面 0.18 秒交叉淡化。'],
+  row:['那一排：左段收着的窗口，竖线，右段正在进行的','expand','两耳留在原处，格子绕着排。点“正在播放”那一格长成大卡；格子右下那个圆键仍是播放 / 暂停。'],
+  card:['大卡：像长按灵动岛','expand','大卡例外：宽按内容（示意 420），刘海下方 118，底角 28，画肩。封面从左耳长到 56；歌手名用字色。进度条可以拖：按下变粗，松手才跳。点卡外、Esc 收回。'],
+  vol:['音量键：控制行换成音量条','pop','松键 1.2 秒后换回。键盘上下方向键可以模拟。系统自己的音量提示藏掉；压不住就两个都留。'],
+  list:['播放到：卡往下长出设备列表','expand','只列系统声音输出里能选的设备。选完 0.3 秒收回列表。选 AirPods 后看右耳：Spotify 在蓝牙上不录，变成静止点。'],
+  alertdot:['大卡开着来了提醒：变成一个点','calm','第 3 层（你打开的）高于第 4 层（短暂提醒）。不开口，卡片右下一个 8 点的强调色圆点（右 10、下 8），读屏念出来；收回大卡时这个点消耗掉。'],
+  alert:['紧凑时来了提醒：照常开口','bloom','提醒 408 × 84，底角 24，画肩，停 2.6 秒，收回后回到音乐的紧凑，不重播换歌一瞥。'],
+  noart:['没有封面：占位，不去网上搜','settle','白 0.14 的圆角方块加音符。颜色回到白 0.92。'],
+  live:['直播：没有时长就不画进度','expand','进度条换成“直播”，只写已播多久，不能拖。'],
+  quit:['播放器退出','calm','大卡里说一句“Spotify 已退出”，2.6 秒后收回到刘海。紧凑时直接收回，不说话。'],
+  lock:['锁屏：什么都不画','calm','锁屏、睡眠、切换用户时清掉。解锁后按现在的事实画，不补播一瞥。点“重来”解锁。'],
+  full:['全屏：不出','calm','菜单栏收起，刘海两侧是黑的。换歌也不一瞥；音量键照《音量与亮度》：全屏里两耳照样出现。点“重来”退出全屏。'],
+  rest:['什么都没有：和实体刘海重合','calm','岛不画。'],
+  tap:['点刘海本身：回到主屏幕（不变）','calm','刘海本身的一下、两下、三下和长按 0.5 秒开那一排都保持原样；只有两侧的耳朵是这件活动的。']
+};
+var capKey='compact';
+function cap(key,sr){capKey=key;var c=CAP[key];$('capT').textContent=c[0];$('capP').textContent=c[2];$('capTok').textContent=reduced()?'reduced':c[1];if(sr!==undefined)$('sr').textContent=sr;}
+
+function setState(ns,tok){
+  if(ns===S.state&&!tok)return;
+  var g=geom();start={W:G.W.x,H:G.H.x};
+  var old=S.state;S.state=ns;
+  var ng=geom();
+  curTok=tok||(ng.H*ng.W>g.W*g.H?'expand':'calm');
+  shrinkDelay=(ng.H*ng.W<G.W.x*G.H.x)&&!reduced()?.08:0;
+  if(ns!=='card'){S.listOpen=false}
+}
+
+/* ---------- 画形状 ---------- */
+function shapePath(cx,W,H,rb,e){
+  var x0=cx-W/2,x1=cx+W/2,k=.5523,kb=.64,d='';rb=Math.min(rb,H/2,W/2);
+  d+='M'+(x0-e)+' -8 L'+(x0-e)+' 0 ';
+  if(e>.02)d+='C'+(x0-e+k*e)+' 0 '+x0+' '+(e-k*e)+' '+x0+' '+e+' ';else d+='L'+x0+' 0 ';
+  d+='L'+x0+' '+(H-rb)+' C'+x0+' '+(H-rb+kb*rb)+' '+(x0+rb-kb*rb)+' '+H+' '+(x0+rb)+' '+H+' ';
+  d+='L'+(x1-rb)+' '+H+' C'+(x1-rb+kb*rb)+' '+H+' '+x1+' '+(H-rb+kb*rb)+' '+x1+' '+(H-rb)+' ';
+  if(e>.02)d+='L'+x1+' '+e+' C'+x1+' '+(e-k*e)+' '+(x1+e-k*e)+' 0 '+(x1+e)+' 0 ';else d+='L'+x1+' 0 ';
+  d+='L'+(x1+e)+' -8 Z';return d;
+}
+
+/* ---------- 图标 ---------- */
+var IC={
+  play:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 4.5v15l12-7.5z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z"/></svg>',
+  mac:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="5.5" width="14" height="9.5" rx="1.5"/><path d="M2.5 18h19"/></svg>',
+  hp:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M4.5 15v-3a7.5 7.5 0 0 1 15 0v3"/><rect x="3.5" y="14" width="4" height="6" rx="1.5" fill="#fff"/><rect x="16.5" y="14" width="4" height="6" rx="1.5" fill="#fff"/></svg>',
+  spk:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8"><rect x="6" y="3.5" width="12" height="17" rx="3"/><circle cx="12" cy="14" r="3"/><circle cx="12" cy="7.5" r=".9" fill="#fff"/></svg>',
+  check:'<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  mouse:'<rect x="7" y="3.5" width="10" height="17" rx="5"/><path d="M12 3.5v5"/>'
+};
+function volIcon(v){
+  var w='';if(v>0)w+='<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/>';if(v>33)w+='<path d="M18 7a7 7 0 0 1 0 10"/>';if(v>66)w+='<path d="M20.5 4.5a10.5 10.5 0 0 1 0 15"/>';
+  if(v===0)w='<path d="M16 9.5l5 5M21 9.5l-5 5"/>';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><path d="M3.5 9h3.5l5-4v14l-5-4H3.5z" fill="#fff"/>'+w+'</svg>';
+}
+function renderDevs(){
+  $('devs').innerHTML=DEVS.map(function(d,i){return '<div class="dev'+(i===S.dev?' on':'')+'" data-dev="'+i+'">'+IC[d.k]+'<span>'+d.n+(d.sub?' <small>'+d.sub+'</small>':'')+'</span>'+IC.check+'</div>'}).join('');
+  $('bOut').innerHTML=IC[DEVS[S.dev].k];
+}
+
+/* ---------- 封面、颜色 ---------- */
+var artFront='artA', curArtId='__';
+function pal(){var t=S.track;return t.art?artPal[t.art]:WHITEPAL}
+function setArt(instant){
+  var id=S.track.art||'none';if(id===curArtId)return;curArtId=id;
+  var back=artFront==='artA'?'artB':'artA',bEl=$(back),fEl=$(artFront),ph=$('artPh');
+  var dur=reduced()?.25:.18;
+  [bEl,fEl,ph].forEach(function(e){e.style.transition=instant?'none':'opacity '+dur+'s ease'});
+  if(S.track.art){bEl.style.backgroundImage='url('+artURL[S.track.art]+')';bEl.style.opacity=1;fEl.style.opacity=0;ph.style.opacity=0;artFront=back;}
+  else{bEl.style.opacity=0;fEl.style.opacity=0;ph.style.opacity=1;}
+  var p=pal();
+  $('cartist').style.color=css(p.text);
+  $('sfill').style.background=css(p.fill);
+  renderPalette();
+}
+function renderPalette(){
+  var t=S.track,p=pal(),cv=$('palCanvas'),cx=cv.getContext('2d');
+  cx.clearRect(0,0,64,64);
+  if(t.art)drawArt(cx,t.art,64);else{cx.fillStyle='#2a2a2a';cx.fillRect(0,0,64,64);}
+  $('palWhich').textContent=t.art?('《'+t.t+'》缩到 64 × 64'):'没有封面';
+  var max=Math.max.apply(null,p.buckets.concat([1e-6]));
+  $('buckets').innerHTML=p.buckets.map(function(w,i){var hue=i*22.5+11.25;var c=css(lchToRgb(.72,.13,hue*Math.PI/180));
+    return '<i style="height:'+Math.max(1,w/max*100)+'%;background:'+c+'" class="'+(i===p.top?'top':'')+'" title="'+(i*22.5)+'–'+((i+1)*22.5)+'°"></i>'}).join('');
+  function chip(n,v,extra){return '<div class="chip"><b style="background:'+css(v)+'"></b><span>'+n+'</span>'+(extra?'<em>'+extra+'</em>':'')+'</div>'}
+  var h='';
+  if(!p.mono)h+=chip('桶里的平均色',p.base);
+  h+=chip('字色（歌手名）',p.text,'对黑 '+contrast(p.text).toFixed(1)+':1')+chip('填充色',p.fill,'对黑 '+contrast(p.fill).toFixed(1)+':1')+chip('副色（点）',p.fill2);
+  $('chips').innerHTML=h;
+  $('palVerdict').textContent=p.none?'没有封面：直接用白 0.92。':p.mono?('留下来的彩色像素只有 '+(p.frac*100).toFixed(1)+'%，不到 8%：这张封面当作没有颜色，用白 0.92。'):
+    ('留下来的彩色像素 '+(p.frac*100).toFixed(0)+'%。主色在第 '+(p.top+1)+' 桶（'+(p.top*22.5)+'–'+((p.top+1)*22.5)+'°）'+(p.sec>=0?('，副色在第 '+(p.sec+1)+' 桶'):'，没有够格的副色，用主色提亮')+'。');
+}
+
+/* ---------- 演示信号（不是产品的做法） ---------- */
+var lv=[0,0,0,0,0], lvAcc=0, rnd=[0,0,0,0,0];
+function demoLevels(t){
+  var beat=60/104,ph=(t%beat)/beat,bar=Math.floor(t/beat)%4,e8=((t*2)%beat)/beat;
+  var phrase=Math.floor(t/(beat*16))%2, vocal=(Math.floor(t/beat)%16<14)?.55+.25*Math.sin(t*2.3)+.1*Math.sin(t*7.1):.15;
+  return [
+    Math.min(1,.25+.75*Math.exp(-ph*6)),
+    .45+.25*Math.sin(t*3.1+bar)+.15*Math.exp(-ph*4),
+    Math.max(.1,vocal*(phrase?1:.85)),
+    (bar%2===1?.85*Math.exp(-ph*7):.1)+.25*vocal,
+    .25+.55*Math.exp(-e8*10)
+  ];
+}
+function waveMode(){
+  if(!S.music)return'off';
+  if(!S.playing)return'paused';
+  if(!S.perm)return'dots';
+  if(DEVS[S.dev].bt&&S.track.app==='Spotify')return'dots';
+  if(reduced())return'still';
+  return'live';
+}
+
+/* ---------- 每帧 ---------- */
+var LAYERS={peek:{el:$('Lpeek'),op:0},row:{el:$('Lrow'),op:0},card:{el:$('Lcard'),op:0},msg:{el:$('Lmsg'),op:0}};
+var SUBS={ctrl:{el:$('Sctrl'),op:1},vol:{el:$('Svol'),op:0},list:{el:$('Slist'),op:0}};
+var artOp=0,waveOp=0,last=performance.now(),T0=last;
+function fmt(s){s=Math.max(0,Math.floor(s));return Math.floor(s/60)+':'+('0'+s%60).slice(-2)}
+function scaleStage(){var o=$('outer'),s=o.clientWidth/980;$('stage').style.transform='scale('+s+')'}
+window.addEventListener('resize',scaleStage);scaleStage();
+
+function frame(now){
+  var dt=Math.min(.05,(now-last)/1000);last=now;var t=(now-T0)/1000;
+  // 时间
+  if(S.music&&S.playing&&!S.dragging){S.elapsed+=dt;if(S.track.d&&S.elapsed>=S.track.d)changeTrack(1,true);}
+  if(S.state==='peek'&&t>S.peekUntil)setState('compact','calm');
+  if(S.state==='alert'&&t>S.alertUntil)setState(S.music?'compact':'rest','calm');
+  if(S.state==='quit'&&t>S.quitUntil){S.music=false;setState('rest','calm');}
+  // 形状
+  var g=geom();G.W.t=g.W;G.H.t=g.H;G.r.t=g.r;G.e.t=g.e;G.k.t=g.k;
+  if(shrinkDelay>0)shrinkDelay-=dt;else{['W','H','r','e','k'].forEach(function(n){step(G[n],curTok,dt)});}
+  var W=G.W.x,H=G.H.x,r=Math.max(0,G.r.x),e=Math.max(0,Math.min(HW.e,G.e.x));
+  var p='<path d="'+shapePath(CX,W,H,r,e)+'" fill="#000"/>';
+  if(ghostBox.checked)p+='<path d="'+shapePath(CX,HW.w,HW.h,HW.rb,HW.e)+'" fill="none" stroke="var(--hw)" stroke-width="1" stroke-dasharray="3 2"/>';
+  $('shape').innerHTML=p;
+  var isl=$('island');isl.style.left=(CX-W/2)+'px';isl.style.width=W+'px';isl.style.height=H+'px';isl.style.borderRadius='0 0 '+r+'px '+r+'px';
+  var nh=$('notchhit');nh.style.left=(CX-HW.w/2)+'px';nh.style.width=HW.w+'px';nh.style.pointerEvents=(['card','row'].indexOf(S.state)<0&&!S.locked&&!S.full)?'auto':'none';
+  // 进度（形状走到四成，内容才进来）
+  var dW=Math.abs(g.W-start.W),dH=Math.abs(g.H-start.H),prog=1;
+  if(dW+dH>1)prog=1-Math.min(1,(Math.abs(g.W-W)+Math.abs(g.H-H))/(dW+dH));
+  var gate=reduced()||prog>=.4;
+  var st=(S.locked||S.full)?'rest':S.state;
+  var want={peek:st==='peek',row:st==='row',card:st==='card',msg:st==='alert'||st==='quit'};
+  var inR=reduced()?1/.25:1/.18,outR=reduced()?1/.25:1/.10;
+  Object.keys(LAYERS).forEach(function(n){var L=LAYERS[n],w=want[n]&&gate?1:0;L.op+=w>L.op?Math.min(w-L.op,inR*dt):-Math.min(L.op-w,outR*dt);L.el.style.opacity=L.op.toFixed(3);L.el.classList.toggle('live',want[n]&&L.op>.5);});
+  // 卡里的子层
+  var subW=S.listOpen?'list':(t<S.volUntil?'vol':'ctrl');
+  Object.keys(SUBS).forEach(function(n){var L=SUBS[n],w=n===subW?1:0;L.op+=w>L.op?Math.min(w-L.op,inR*dt):-Math.min(L.op-w,outR*dt);L.el.style.opacity=L.op.toFixed(3);L.el.classList.toggle('live',n===subW&&L.op>.5);});
+  // 封面
+  var showArt=S.music&&['compact','peek','row','card'].indexOf(st)>=0;
+  var aw=showArt&&(gate||G.k.t===0&&st!=='rest')?1:0;
+  if(['compact','peek','row'].indexOf(st)>=0&&['compact','peek','row'].indexOf(S._prev||'')>=0)aw=showArt?1:0;
+  artOp+=aw>artOp?Math.min(aw-artOp,inR*dt):-Math.min(artOp-aw,outR*dt);
+  var k=Math.max(0,Math.min(1.05,G.k.x));
+  var earL=(W-HW.w)/2-2-ART_S, earT=(HW.h-ART_S)/2;
+  var size=ART_S+(56-ART_S)*k, ax=earL+(14-earL)*k, ay=earT+(14-earT)*k, ar=5+(14-5)*k;
+  if(st==='card'&&!S.playing){var sh=size*.1;size*=.9;ax+=sh/2;ay+=sh/2;}
+  if(reduced()&&st==='card'){size=S.playing?56:50.4;ax=S.playing?14:16.8;ay=ax;ar=14;}
+  var art=$('art');art.style.left=ax+'px';art.style.top=ay+'px';art.style.width=art.style.height=size+'px';art.style.borderRadius=ar+'px';
+  var dim=(!S.playing&&k<.5)?.5:1;art.style.opacity=(artOp*dim).toFixed(3);
+  // 波形
+  var wv=$('wave'),mode=waveMode();
+  wv.style.left=((W+HW.w)/2+2)+'px';wv.style.top=((HW.h-14)/2)+'px';
+  var wW=showArt&&st!=='quit'?1:0;waveOp+=wW>waveOp?Math.min(wW-waveOp,inR*dt):-Math.min(waveOp-wW,outR*dt);wv.style.opacity=waveOp.toFixed(3);
+  lvAcc+=dt;
+  if(lvAcc>=1/30){lvAcc=0;var tgt=mode==='live'?demoLevels(t):[0,0,0,0,0];
+    for(var i=0;i<5;i++){rnd[i]=.85*rnd[i]+.15*(Math.random()-.5);var x=Math.max(0,Math.min(1,tgt[i]+(mode==='live'?rnd[i]*.3:0)));lv[i]+=(x-lv[i])*(x>lv[i]?.6:.15);}}
+  var P=pal(),bars=wv.children;
+  for(var j=0;j<5;j++){var b=bars[j],hgt=2.4;
+    if(mode==='live')hgt=2.4+11.6*lv[j];
+    b.style.height=hgt+'px';b.style.borderRadius=hgt<=2.6?'50%':'1px';
+    b.style.width=hgt<=2.6?'2.4px':'2px';
+    b.style.background=mode==='paused'?'rgba(255,255,255,.45)':css(mode==='dots'&&j%2===1?P.fill2:P.fill);}
+  var ad=$('adot');ad.style.left=(W-18)+'px';ad.style.top=(H-16)+'px';ad.style.opacity=(S.alertDot&&st==='card')?1:0;
+  // 文字
+  var tr=S.track;
+  $('peekline').innerHTML=esc(tr.t)+(tr.a?'<em style="color:'+css(P.text)+'">'+esc(tr.a)+'</em>':'');
+  $('ctitle').textContent=tr.t;$('cartist').textContent=tr.a||tr.app;
+  $('tileT').textContent=tr.t;$('tileS').textContent=S.playing?(tr.a||tr.app):'已暂停';
+  $('tilePP').innerHTML=S.playing?IC.pause:IC.play;$('bPlay').innerHTML=S.playing?IC.pause:IC.play;
+  $('tileGlyph').setAttribute('stroke',css(P.fill));[].forEach.call($('tileGlyph').querySelectorAll('circle'),function(c){c.setAttribute('fill',css(P.fill))});
+  var tm=$('tileMusic');tm.style.display=S.music?'block':'none';
+  if(S.pressTile>0){S.pressTile-=dt;tm.style.transform='scale(.96)';tm.style.background='rgba(255,255,255,.16)';}else{tm.style.transform='';tm.style.background='';}
+  // 进度条
+  thick.t=S.dragging?8:4;step(thick,'pop',dt);
+  var str=$('strack');str.style.height=thick.x+'px';str.style.marginTop=(-thick.x/2)+'px';str.style.borderRadius=(thick.x/2)+'px';
+  var live=!tr.d;
+  $('scrub').style.display=live?'none':'block';$('livepill').style.display=live?'block':'none';
+  var el=S.dragging&&S.preview!=null?S.preview:S.elapsed;
+  if(!live){$('sfill').style.width=(Math.min(1,el/tr.d)*100)+'%';$('tEl').textContent=fmt(el);$('tRem').textContent='−'+fmt(tr.d-el);$('times').style.left='14px';}
+  else{$('tEl').textContent='';$('tRem').textContent='已播 '+fmt(el);}
+  $('scrub').classList.toggle('noseek',live);
+  var po=(1-SUBS.list.op).toFixed(3);['scrub','times','livepill'].forEach(function(id){$(id).style.opacity=po});
+  $('vFill').style.width=S.vol+'%';$('vFill').style.background=css(P.fill);$('vNum').textContent=Math.round(S.vol);$('vIcon').innerHTML=volIcon(Math.round(S.vol));
+  $('menubar').style.opacity=S.full?0:.86;
+  $('lockveil').style.opacity=S.locked?1:0;$('fullveil').style.opacity=S.full?1:0;
+  S._prev=st;
+  $('capTok').textContent=reduced()?'reduced':CAP[capKey][1];
+  requestAnimationFrame(frame);
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+
+/* ---------- 动作 ---------- */
+function now(){return(performance.now()-T0)/1000}
+function hold(tr){var n=(tr.t+(tr.a||'')).length;return Math.min(4.5,1.8+.05*n)}
+function changeTrack(dir,auto){
+  if(!S.music)return;
+  if(S.track.live||S.track===EXTRA.noart){S.ti=0}else S.ti=(S.ti+dir+TRACKS.length)%TRACKS.length;
+  S.track=TRACKS[S.ti];S.elapsed=0;setArt(false);
+  var blocked=S.locked||S.full||['card','row','alert','quit'].indexOf(S.state)>=0||!S.playing;
+  if(!blocked){
+    if(S.state!=='peek')setState('peek','bloom');
+    S.peekUntil=now()+hold(S.track);
+    cap('peek','读屏：'+S.track.t+'，'+S.track.a);
+  }else if(S.state==='card'){cap('card','读屏：'+S.track.t+'，正在播放');}
+}
+function openCard(fromRow){
+  if(!S.music||S.locked||S.full)return;
+  if(fromRow){S.pressTile=.14;setTimeout(function(){setState('card','expand');cap('card','读屏：正在播放，'+S.track.t)},140);}
+  else{setState('card','expand');cap('card','读屏：正在播放，'+S.track.t);}
+}
+function closeAll(){
+  S.alertDot=false;S.listOpen=false;S.volUntil=0;
+  if(S.state==='card'||S.state==='row'||S.state==='peek')setState(S.music?'compact':'rest','calm');
+  cap(S.music?(S.playing?(S.perm?'compact':'noperm'):'paused'):'rest','');
+}
+function togglePlay(){if(!S.music)return;S.playing=!S.playing;if(S.state==='peek'&&!S.playing)setState('compact','calm');
+  if(['compact','peek'].indexOf(S.state)>=0)cap(S.playing?(S.perm?'compact':'noperm'):'paused');
+  $('sr').textContent='读屏：'+S.track.t+'，'+(S.playing?'正在播放':'已暂停');}
+function resetAll(keepReduced){
+  S=fresh();curArtId='__';setArt(true);G.W.x=HW.w;G.H.x=HW.h;G.r.x=HW.rb;G.e.x=HW.e;G.k.x=0;G.k.v=G.W.v=G.H.v=0;
+  start={W:HW.w,H:HW.h};curTok='settle';renderDevs();cap('compact','');
+}
+
+var ACT={
+  play:function(){if(!S.music||S.locked||S.full)resetAll();S.playing=true;S.perm=true;if(S.state!=='card'&&S.state!=='row')setState('compact','settle');cap('compact','')},
+  pause:function(){if(!S.music)resetAll();S.playing=false;if(S.state==='peek')setState('compact','calm');if(S.state!=='card'&&S.state!=='row')cap('paused','读屏：'+S.track.t+'，已暂停');},
+  perm:function(){if(!S.music)resetAll();S.perm=!S.perm;S.playing=true;cap(S.perm?'compact':'noperm');},
+  next:function(){if(!S.music||S.locked||S.full){resetAll()}S.playing=true;if(S.state==='alert')return;changeTrack(1)},
+  row:function(){if(S.locked||S.full)resetAll();S.rowByHover=false;setState('row','expand');cap('row','读屏：刘海那一排，4 项')},
+  fromrow:function(){if(S.locked||S.full)resetAll();if(!S.music)resetAll();S.rowByHover=false;setState('row','expand');cap('row');setTimeout(function(){if(S.state==='row')openCard(true)},1100)},
+  card:function(){if(S.locked||S.full||!S.music)resetAll();openCard(false)},
+  close:closeAll,
+  vol:function(){if(S.state!=='card'){ACT.card();setTimeout(function(){volKey(1)},520)}else volKey(1)},
+  list:function(){if(S.state!=='card'){ACT.card();setTimeout(openList,520)}else openList()},
+  alert:function(){if(!S.music)resetAll();if(S.state==='card'){S.alertDot=true;cap('alertdot','读屏：妙控鼠标已连接，电量 82%')}else{showAlert()}},
+  noart:function(){if(S.locked||S.full)resetAll();S.music=true;S.playing=true;S.track=EXTRA.noart;S.elapsed=12;setArt(false);if(S.state==='rest')setState('compact','settle');cap('noart','')},
+  live:function(){if(S.locked||S.full)resetAll();S.music=true;S.playing=true;S.track=EXTRA.live;S.elapsed=1312;setArt(false);if(S.state!=='card')openCard(false);cap('live','读屏：城市电台，直播')},
+  quit:function(){if(!S.music)resetAll();if(S.state==='card'){showQuit()}else{S.music=false;setState('rest','calm');cap('quit','')}},
+  lock:function(){S.locked=true;S.alertDot=false;S.listOpen=false;S.state=S.music?'compact':'rest';curTok='calm';start={W:G.W.x,H:G.H.x};cap('lock','')},
+  full:function(){S.full=true;S.state=S.music?'compact':'rest';curTok='calm';start={W:G.W.x,H:G.H.x};cap('full','')},
+  reset:function(){var wasHidden=S.locked||S.full;if(wasHidden){S.locked=false;S.full=false;curTok='settle';start={W:G.W.x,H:G.H.x};cap('compact','解锁后按现在的事实画，不补播一瞥')}else resetAll();}
+};
+function showAlert(){
+  var ear=$('msgEar'),ico=$('msgIco');
+  ico.innerHTML=IC.mouse;
+  $('msg').innerHTML='妙控鼠标已连接<small>电量 82%</small>';
+  ear.textContent='82%';
+  S.alertUntil=now()+2.6;setState('alert','bloom');cap('alert','读屏：妙控鼠标已连接，电量 82%');
+}
+function showQuit(){$('msgIco').innerHTML='';$('msgEar').textContent='';$('msg').innerHTML=esc(S.track.app)+(/[\u4e00-\u9fff]$/.test(S.track.app)?'':' ')+'已退出<small>没有在放的了</small>';
+  S.quitUntil=now()+2.6;S.listOpen=false;setState('quit','calm');cap('quit','读屏：'+S.track.app+' 已退出');}
+function openList(){if(S.state!=='card')return;S.listOpen=!S.listOpen;S.volUntil=0;setState('card',S.listOpen?'expand':'calm');cap('list');renderDevs();}
+function volKey(d){if(S.state!=='card')return;S.listOpen=false;S.vol=Math.max(0,Math.min(100,S.vol+d*6.25));S.volUntil=now()+1.2;setState('card','pop');cap('vol','读屏：音量 '+Math.round(S.vol)+'%');}
+
+[].forEach.call(document.querySelectorAll('[data-act]'),function(b){b.addEventListener('click',function(){ACT[b.dataset.act]()})});
+
+/* 舞台上的点 */
+$('stage').addEventListener('click',function(ev){
+  var tgt=ev.target, isl=$('island');
+  if(tgt.closest('#notchhit')){if(S.state==='compact'||S.state==='rest'||S.state==='peek'){cap('tap','')}return;}
+  if(!isl.contains(tgt)){if(S.state==='card'||S.state==='row')closeAll();return;}
+  if(S.state==='compact'||S.state==='peek'){openCard(false);return;}
+  if(S.state==='row'){
+    if(tgt.closest('#tilePP')){togglePlay();return;}
+    if(tgt.closest('#tileMusic')){openCard(true);return;}
+    var w=tgt.closest('[data-win]');if(w){$('sr').textContent='点窗口格：“'+w.dataset.win+'”回到原处（不在这张稿里演示）';}
+    return;
+  }
+  if(S.state==='card'){
+    if(tgt.closest('#bPlay')){togglePlay();return;}
+    if(tgt.closest('#bPrev')){changeTrack(-1);return;}
+    if(tgt.closest('#bNext')){changeTrack(1);return;}
+    if(tgt.closest('#bOut')){openList();return;}
+    var d=tgt.closest('[data-dev]');if(d){S.dev=+d.dataset.dev;renderDevs();$('sr').textContent='读屏：播放到 '+DEVS[S.dev].n;setTimeout(function(){if(S.listOpen){S.listOpen=false;setState('card','calm')}},300);return;}
+    if(S.alertDot){/* 留着 */}
+  }
+});
+/* 长按刘海本身 0.5 秒开那一排（指针停上去不展开）；离开 0.5 秒收（只对长按打开的那一排） */
+var hoverT=0,leaveT=0;
+$('notchhit').addEventListener('pointerdown',function(e){if(e.pointerType!=='mouse')return;clearTimeout(leaveT);hoverT=setTimeout(function(){if(['compact','rest'].indexOf(S.state)>=0&&!S.locked&&!S.full){S.rowByHover=true;setState('row','expand');cap('row','')}},500)});
+$('notchhit').addEventListener('pointerup',function(){clearTimeout(hoverT)});
+$('notchhit').addEventListener('pointerleave',function(){clearTimeout(hoverT)});
+$('island').addEventListener('pointerenter',function(){clearTimeout(leaveT)});
+$('island').addEventListener('pointerleave',function(){if(S.state==='row'&&S.rowByHover){leaveT=setTimeout(function(){if(S.state==='row')closeAll()},500)}});
+
+/* 拖进度条 */
+var scrub=$('scrub');
+function fracAt(ev){var r=scrub.getBoundingClientRect();return Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width))}
+scrub.addEventListener('pointerdown',function(ev){if(!S.track.d||S.state!=='card')return;ev.stopPropagation();scrub.setPointerCapture(ev.pointerId);S.dragging=true;S.preview=fracAt(ev)*S.track.d;cap('card','')});
+scrub.addEventListener('pointermove',function(ev){if(S.dragging)S.preview=fracAt(ev)*S.track.d});
+function endDrag(){if(!S.dragging)return;S.elapsed=S.preview;S.dragging=false;S.preview=null;$('sr').textContent='读屏：播放位置 '+fmt(S.elapsed);}
+scrub.addEventListener('pointerup',endDrag);scrub.addEventListener('pointercancel',endDrag);
+scrub.addEventListener('click',function(ev){ev.stopPropagation()});
+
+/* 键盘：Esc 收回；大卡开着时上下方向键当音量键 */
+window.addEventListener('keydown',function(ev){
+  if(ev.key==='Escape'){closeAll();return;}
+  if(S.state==='card'&&(ev.key==='ArrowUp'||ev.key==='ArrowDown')){ev.preventDefault();volKey(ev.key==='ArrowUp'?1:-1);}
+});
+$('outer').addEventListener('keydown',function(ev){if((ev.key==='Enter'||ev.key===' ')&&ev.target===$('outer')){ev.preventDefault();if(S.state==='compact')openCard(false);else if(S.state==='card')closeAll();}});
+
+/* 外观 */
+var themes=['auto','light','dark'],ti=0;
+$('theme').addEventListener('click',function(){ti=(ti+1)%3;var t=themes[ti];if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);
+  $('theme').textContent='外观：'+{auto:'跟随系统',light:'亮',dark:'暗'}[t];});
+reducedBox.addEventListener('change',function(){cap(capKey)});
+try{if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)reducedBox.checked=true}catch(e){}
+
+resetAll();
+requestAnimationFrame(frame);
+})();
+</script>
+<style id="ws-family">
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:-28px auto 20px;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55}.ws-sys .ws-sp{flex:1}
+/* 设计系统的纸面（2026-10-08 统一）：只管页面外框——底色、标题字、正文字；舞台里的画面不动 */
+:root{--wsf-paper:#EEF1F6;--wsf-ink:#131A25;--wsf-ink2:#46546A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}}
+:root[data-theme="dark"]{--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}
+:root[data-theme="light"]{--wsf-paper:#EEF1F6;--wsf-ink:#131A25;--wsf-ink2:#46546A}
+html body{background:var(--wsf-paper);color:var(--wsf-ink)}
+html body h1{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+html body h2{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;text-wrap:balance}
+html body .lede{color:var(--wsf-ink2)}
+</style>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-notch-motion-swift6/validation.json",
+  "artifact_sha256": "aee091a4de29f4ca30f0e2cbf9e8fa519d0669fc7b1c6b082568e4d5403bf69e",
+  "lenses": {
+    "task_contract": "actual Canvas/Motion/control callbacks, no production fix inferred from incorrect fixture",
+    "evidence_freshness": "6 source/58 evidence SHA checked, native518 and reused optimized519 current",
+    "edge_risk": "cancel generation and reduced direct target paths observed; own event pump not product runtime"
+  },
+  "findings": [
+    "Producer missed quantity endpoint; actual caller inspected and QA corrected only.",
+    "Worker syntax self-check insufficient; main fixed two consumer expectations then actual16/13 passed.",
+    "Compiler flags preserved, warnings emitted; not warning-free. Static hidden frame not real motion acceptance.",
+    "No product change in18; next progress visual draft with design grammar admission."
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "exit_code": 2,
+  "stdout": "",
+  "stderr": "REFUSED: output already exists\n",
+  "out_unchanged": true
+}

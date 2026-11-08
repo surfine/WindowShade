@@ -1,0 +1,108 @@
+{
+  "fixture" : "SilentPageLanguagePreview",
+  "frames" : [
+    {
+      "labels" : [
+        "静音操作",
+        "启动台",
+        "启动台",
+        "窗口",
+        "窗口",
+        "实时活动",
+        "实时活动",
+        "用量",
+        "用量",
+        "设置",
+        "设置",
+        "更多",
+        "更多",
+        "撤掉遮挡",
+        "撤掉遮挡",
+        "确认",
+        "确认"
+      ],
+      "language" : "zh",
+      "name" : "zh-silent-initial",
+      "preferencesWritten" : false,
+      "surface" : "silent"
+    },
+    {
+      "labels" : [
+        "静音操作",
+        "这一笔没有做成",
+        "启动台",
+        "启动台",
+        "窗口",
+        "窗口",
+        "实时活动",
+        "实时活动",
+        "用量",
+        "用量",
+        "设置",
+        "设置",
+        "更多",
+        "更多",
+        "撤掉遮挡",
+        "撤掉遮挡",
+        "确认",
+        "确认"
+      ],
+      "language" : "zh",
+      "name" : "zh-silent-notdone",
+      "preferencesWritten" : false,
+      "surface" : "silent"
+    },
+    {
+      "labels" : [
+        "Silent actions",
+        "Launchpad",
+        "Launchpad",
+        "Windows",
+        "Windows",
+        "Live activities",
+        "Live activities",
+        "Usage",
+        "Usage",
+        "Settings",
+        "Settings",
+        "More",
+        "More",
+        "Remove cover",
+        "Remove cover",
+        "Confirm",
+        "Confirm"
+      ],
+      "language" : "en",
+      "name" : "en-silent-initial",
+      "preferencesWritten" : false,
+      "surface" : "silent"
+    },
+    {
+      "labels" : [
+        "Silent actions",
+        "Didn't happen",
+        "Launchpad",
+        "Launchpad",
+        "Windows",
+        "Windows",
+        "Live activities",
+        "Live activities",
+        "Usage",
+        "Usage",
+        "Settings",
+        "Settings",
+        "More",
+        "More",
+        "Remove cover",
+        "Remove cover",
+        "Confirm",
+        "Confirm"
+      ],
+      "language" : "en",
+      "name" : "en-silent-notdone",
+      "preferencesWritten" : false,
+      "surface" : "silent"
+    }
+  ],
+  "preferencesWritten" : false
+}

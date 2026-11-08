@@ -1,0 +1,54 @@
+{"event": "service-ready", "port": 59650, "service": "_companion-link._tcp"}
+{"event": "service-ready", "port": 59651, "service": "_mediaremotetv._tcp"}
+{"event": "service-ready", "port": 59652, "service": "_airplay._tcp"}
+{"event": "ready", "lifetimeSeconds": 120, "name": "WindowShade Remote Probe", "pairingSeconds": 60, "port": 59650, "profile": "atv-core"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "pair-setup"}
+{"event": "handshake-phase", "phase": "enrolled"}
+{"categories": {}, "event": "connection-closed", "stage": "enrolled"}
+{"event": "rejected", "frameType": 8, "reason": "state", "stage": "enrolled"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"categories": {}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "unsupportedTag", "stage": "verified"}
+{"acceptedConnections": 8, "applicationActions": 0, "event": "finished", "persistentCredentials": false, "remainingListeners": 0, "unsupportedConnections": 0}

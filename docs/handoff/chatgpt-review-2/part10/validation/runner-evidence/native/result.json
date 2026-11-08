@@ -1,0 +1,28 @@
+{
+  "suite": "native",
+  "environment": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "candidate_sha256": "e1272ac9d11568274f7b96327397cc33939c037d48c565956e82c41bea1d1ac2",
+  "source_file_count": 1169,
+  "real_cli": false,
+  "real_devices": false,
+  "raw_logs_may_contain_local_paths": true,
+  "argv": [
+    "/opt/pyvenv/bin/python",
+    "-B",
+    "/tmp/ws2-final-suite-vhsw6qvy/part9/tests/run-previous.py",
+    "--repo",
+    "/mnt/data/WindowShade2-round2-handoff-v10/candidate-repo",
+    "--history",
+    "/mnt/data/ws2-part10-work/v9/WindowShade2-round2-handoff-v9",
+    "--suite",
+    "part7-native"
+  ],
+  "status": "PASSED",
+  "exit_code": 0,
+  "elapsed_seconds": 9.25485151099997,
+  "candidate_unchanged": true,
+  "logs_sha256": {
+    "stdout.txt": "eec48efcb1634859476146bf299af6437f39f4975e6606450c7e20cb4f9d6c73",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

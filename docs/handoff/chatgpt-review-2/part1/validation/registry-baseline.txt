@@ -1,0 +1,5 @@
+UTC 2026-10-03T05:34:57.768773+00:00
+COMMAND ['python3', '/mnt/data/WindowShade2-round2-part1/contracts/privacy/check-registry.py', '--repo', '/mnt/data/WindowShade2-review-round2/repo']
+EXPECTED 0
+EXIT 0
+PASS privacy-registry: 453 lexical sites, no unregistered additions; removed=0

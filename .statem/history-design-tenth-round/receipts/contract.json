@@ -1,0 +1,37 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-welcome-baseline/validation.json",
+  "artifact_sha256": "c58bec33cfcced7acc7659c232913115f4f7d1fe6d55441c2b73d00b8e1d4b58",
+  "checks": [
+    {
+      "command": "WelcomeStatePreview + check-welcome-state-preview.py",
+      "exit_code": 0,
+      "result": "14 actual geometry/state frames;7 distinct system appearance pairs;0 permission closure calls;no stored origin change",
+      "receipt": "design-welcome-host-exit.json"
+    },
+    {
+      "command": "welcome-window-probe.swift",
+      "exit_code": 0,
+      "result": "constructor clamps offscreen origin;explicit frame retains outside screen",
+      "receipt": "welcome-window-probe.log"
+    },
+    {
+      "command": "welcome-layer-order-probe.swift",
+      "exit_code": 0,
+      "result": "cacheDisplay/layer.render output blueZ0 above redZ7;capture order inconclusive for real compositor",
+      "receipt": "welcome-layer-order-probe.log"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "from": "../2026-10-11-media-owned-errors/validation.json",
+      "matched_current_inputs": 519
+    }
+  ],
+  "remaining_risk": "Welcome live material/z-order/focus/motion/VoiceOver/permission page not accepted;settings/windows/common five states/multiscreen/all original scope",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

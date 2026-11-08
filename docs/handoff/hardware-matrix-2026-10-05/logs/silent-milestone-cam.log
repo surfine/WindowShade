@@ -1,0 +1,8 @@
+INFO silent-milestone accessibility=true screenRecording=true camera=authorized
+PASS place: completed leftHalf observed=true frame (160,395 640x452) -> (-108,-1410 1280x1410) cg (-108,-1410 1280x1410)
+PASS cancel: 旧的右半屏没有执行 frame (-108,-1410 1280x1410)
+PASS target-change: 焦点换到另一扇临时窗口后，两扇都没动
+INFO hardware: accessibility=true screenRecording=true camera=authorized
+INFO qualification: 未运行
+INFO head: 未运行
+FAIL silent-milestone: pip: 没法回到临时窗口

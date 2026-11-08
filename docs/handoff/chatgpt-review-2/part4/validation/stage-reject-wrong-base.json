@@ -1,0 +1,6 @@
+{
+  "returncode": 2,
+  "stdout": "",
+  "stderr": "REFUSED: base changed; do not force overlay onto a newer working tree\n",
+  "outputCreated": false
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "core-final",
+    "command": [
+      "bash",
+      "tests/run-core.sh",
+      "/v4/candidate-repo"
+    ],
+    "exit_code": 0,
+    "scenarios": 40,
+    "assertions": 97
+  },
+  {
+    "name": "process-final",
+    "command": [
+      "bash",
+      "tests/run-process.sh"
+    ],
+    "exit_code": 0,
+    "scenarios": 8,
+    "assertions": 26
+  },
+  {
+    "name": "crypto-final",
+    "command": [
+      "python3",
+      "tests/crypto-reference.py"
+    ],
+    "exit_code": 0,
+    "unittest_count": 14
+  },
+  {
+    "name": "mac-crypto",
+    "command": [
+      "bash",
+      "tests/run-mac-crypto.sh",
+      "/v4/candidate-repo"
+    ],
+    "exit_code": 78,
+    "status": "NOT_RUN_LINUX"
+  }
+]

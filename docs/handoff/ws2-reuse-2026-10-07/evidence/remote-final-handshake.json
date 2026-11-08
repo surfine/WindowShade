@@ -1,0 +1,1 @@
+{"cases": [{"case": "same-socket-success", "passed": true}, {"case": "verified-restart", "passed": true}, {"case": "invalid-verify-signature", "passed": true}, {"case": "setup-key-input", "passed": true}, {"case": "expired-admission", "passed": true}, {"case": "fallback-repeat", "passed": true}], "networkListener": false, "realCryptography": true}

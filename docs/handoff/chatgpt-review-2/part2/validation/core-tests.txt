@@ -1,0 +1,23 @@
+PASS LEASE01 single global input owner
+PASS LEASE02 privileged owner table
+PASS LEASE03 authorization preempts synchronously
+PASS LEASE04 old key-down never confirms new approval
+PASS LEASE05 obscured reminder not replayed
+PASS LEASE06 lock barrier clears sensitive state
+PASS LEASE07 display removal cancels only owner
+PASS LEASE08 exact expiry and future request
+PASS LEASE09 reminder four seconds and no endless refresh
+PASS LEASE10 backward-time security invalidation
+PASS BLE01 five-second reads are not two-second age timeouts
+PASS BLE02 exact read deadline and stale callbacks
+PASS REMOTE01 discovery never means paired
+PASS REMOTE02 verified capability replay and revocation
+PASS CODEX01 initialize and two-phase handshake
+PASS CODEX02 thread then turn with actual field names
+PASS CODEX03 steer precondition and interrupt does not finish turn
+PASS CODEX04 approval IDs retain number versus string
+PASS CODEX05 unrelated completion and late reply ignored
+PASS CODEX06 every possible single split boundary
+PASS CODEX07 malformed, oversized and EOF safety
+PASS CODEX08 timeout makes outcome uncertain not retry
+PASS part2 core: 22 scenarios, 86 assertions

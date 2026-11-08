@@ -1,0 +1,9 @@
+{
+  "prototype/App/CalendarPresenter.swift": "81d3867445a0f8970ba949a83eedccc378e87cc420b501f63469dc29ea125ca4",
+  "prototype/App/NotchAuthentication.swift": "11f3f1c950cd34d0fe8364943011a4e06eec8448a979b8aa595a9c078fbc0945",
+  "prototype/App/NotchLeases.swift": "da57df03c261bbdd22e38c2fe82a566eb0b1ad6a960e0b5ccb53b4d364eb4d3c",
+  "prototype/Core/CalendarActivity.swift": "710d0d946dbf49786e18d27ce200f3135ea409e93e7810df46ef0fc4c48e82e1",
+  "prototype/Core/CalendarPresentation.swift": "72e76d2cb094cc020abe8ea160a50413c75d8afed17cd9a6cebf4e129c3ea4fa",
+  "tools/design-qa/CalendarCardPreview.swift": "8a10c91c04889a3fe59dc20672f40fe40d47a88257a34ec3f6a8bc79b9d4e620",
+  "tools/design-qa/render-calendar-card.sh": "09397b5d4ec44b1762dbb002a63f6e984f50d559dabacae5c9405aaeeefa2752"
+}

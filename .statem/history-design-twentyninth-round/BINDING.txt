@@ -1,0 +1,5 @@
+第29批（#39 + 0-B 发布基线）
+候选包：47930319f62cce1ea43e14342b1b6aecb31a8cd837096ea883283da2e0e7876f（9,858,449B）
+二进制：784ec4b618a46c185008a93eb1e200b96279acc66cc5b6379c81a65c7820eed4
+StateM run：20261012-issue39-release-0B（frame→solve→contract_check→self_review→handoff）
+证据：docs/releases/v1.0.16-acceptance/{gate-0B-verification,issue39-evidence,issue-replies}.md

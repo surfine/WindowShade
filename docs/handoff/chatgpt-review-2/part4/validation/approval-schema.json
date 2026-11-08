@@ -1,0 +1,6 @@
+{
+  "schemaFile": "docs/handoff/reference/codex-app-server-schema-0.153.0/CommandExecutionRequestApprovalResponse.json",
+  "schemaSHA256": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7",
+  "validatedPayloads": 1,
+  "scope": "synthetic serialized response bodies; NOT real CLI or authentication"
+}

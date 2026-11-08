@@ -1,0 +1,7 @@
+ROUND 0: first change 1037ms, strip 1429ms
+ROUND 1: first change 851ms, strip 1219ms
+ROUND 2: first change 971ms, strip 1091ms
+ROUND 3: first change 333ms, strip 895ms
+ROUND 4: first change 861ms, strip 886ms
+TIMING (fast capture, no animation, warm rounds): first change median 861ms, strip median 1091ms
+PASS glance: suite

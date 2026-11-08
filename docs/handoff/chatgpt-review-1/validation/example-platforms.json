@@ -1,0 +1,150 @@
+{
+  "T1": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/T1.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "L1": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/L1.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "A1": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/A1.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "D1": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/D1.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "D2": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/D2.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "I1": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/I1.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "I9": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/I9.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "M1": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/M1.swift"
+  },
+  "S1": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/S1.swift"
+  },
+  "T2": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/T2.swift"
+  },
+  "T4": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/T4.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "A3": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/A3.swift"
+  },
+  "D3": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/D3.swift"
+  },
+  "D4": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/D4.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "A2": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/A2.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "L2": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/L2.swift"
+  },
+  "L4": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/L4.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "I2": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/I2.swift"
+  },
+  "I3": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/I3.swift"
+  },
+  "I5": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/I5.swift"
+  },
+  "I8": {
+    "status": "not_run",
+    "reason": "Linux x86_64 has no macOS SDK",
+    "source": "examples/I8.swift"
+  },
+  "I7": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/I7.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "D5": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/D5.swift",
+    "stdout": "",
+    "stderr": ""
+  },
+  "D6": {
+    "status": "passed",
+    "exit_code": 0,
+    "command": "swiftc -swift-version 6 -parse-as-library -typecheck examples/D6.swift",
+    "stdout": "",
+    "stderr": ""
+  }
+}

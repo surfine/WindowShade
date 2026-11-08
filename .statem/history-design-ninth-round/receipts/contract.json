@@ -1,0 +1,46 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-media-owned-errors/validation.json",
+  "artifact_sha256": "96dee2ffa85a3db054a31beeb0e27e39dc68f87831b6eebf5cec74c2a9f590b1",
+  "checks": [
+    {
+      "command": "MediaOwnedStatePreview + check-media-owned-state-preview.py",
+      "exit_code": 0,
+      "result": "16 media/10 owned frames;8 identical media parent pairs;actual colors/bounded noncollapsed model actions;own child/temp cleanup;browser0",
+      "receipt": "native-final-exit.json"
+    },
+    {
+      "command": "run-owned-error-flow.sh",
+      "exit_code": 0,
+      "result": "4 actual controlled stdio scenarios;before2 failures/after0",
+      "receipt": "after-flow/flow-exit.json"
+    },
+    {
+      "command": "tests/run-conductor-owned-flow-tests.sh",
+      "exit_code": 0,
+      "result": "original stdio suite;malformed receipt preserves draft and disables send with retained error",
+      "receipt": "final-original-flow-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "optimized519 current sources;strict Swift6 flags/gates retained",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "tests/run-artwork-palette-tests.sh",
+      "exit_code": 0,
+      "revisions": [
+        0,
+        1
+      ],
+      "identity": "palette-inputs.json current12"
+    }
+  ],
+  "remaining_risk": "real media/output/login/focus/motion/VoiceOver;owned live reply scroll;other original surfaces/common five-state/multi-screen/signed Swift6 runtime",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

@@ -1,0 +1,6 @@
+WindowShade2第二十四批：把已核两列候选接回真实PrivacyRowView。整体设计目标active。
+沿23原稿4.4em标签列/默认12正文/10横4纵间距、标签secondary正文labelColor；产品字号用原SystemAppearancePolicy相对body-1，随系统文字大小，候选12不冒充大字验证。短可见“什么时候”“合起来看”，完整label提示；正文原文/技术接口/真假来源/开关/授权/未知/计划/动作/生命周期不改。
+只改WS2PrivacyPane.swift的detailLine与详情子行宽约束，不增来源/主宿主/开关/私有账户行为。完整字串留提示，原wrappingLabel只读可选字保持。Row可访问性沿22内部入口；绝不构造Page/AppDelegate/SystemValues/read/SettingsController或实际权限/源/网络/设备/偏好，不执行动作/输入/导出，自己的alpha0未显示离屏NSWindow；纯注册Data/合成presentation，真实Row组合行头、展开说明、授权文字、技术与计划字段。
+QA扩展现有PrivacyRowPreview并另写实际消费者；bodyrole/key由NSView.identifier，记录真实字段的Cocoa布局、font、wrap/readonly/tooltip和实际cell fitting height，完整原文来自WS2PrivacyData/registry；浅深/640/448/300/折叠与展开/技术/长值，实际48基线22只能当当前旧源参考，不拿独立候选当生产证明。
+验收：真实Row原生Swift6严格库518/实际新消费者/主模型查看普通与深色/窄长说明/行头长值完整82，当前519优化退出与输入身份；源码/entry/wrapper在检查进行中冻结，不并行覆盖C对象。新完整声明范围有限：Row静态组合，不是Page/真实读取/交互/读屏/动态字体/增强对比/隐私网络/磁盘/性能/硬件/签名生命周期通过。
+本批主模型接手实现/验收（23工人失败无产物，不盲重派）。保原始源字节SHA/24前QAentry/consumer、旧字体与单段文字实图；按照实际结果修不足，不以属性和工具退出0替代图片。

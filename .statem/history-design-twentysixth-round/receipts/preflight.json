@@ -1,0 +1,32 @@
+{
+  "classes": [
+    "external-effects",
+    "vision-image"
+  ],
+  "hazards": [
+    {
+      "class": "external-effects",
+      "evidence_paths": [],
+      "matched": [
+        "发布"
+      ],
+      "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
+      "severity": "high"
+    },
+    {
+      "class": "vision-image",
+      "evidence_paths": [
+        "tools/design-qa/render-native-surfaces.sh"
+      ],
+      "matched": [
+        "图像"
+      ],
+      "requirement": "内联图片计入 48 MiB 请求体上限；多图或长会话先算字节，超预算改用 Files API(file_id) 或丢弃旧图，并确认模型看到的图与结论依赖的图一致。",
+      "severity": "normal"
+    }
+  ],
+  "source": "preflight",
+  "task_path": "task.txt",
+  "task_sha256": "6c0006a05239ad0879fc6009c1e917d8f5bc96ba7385f905a9744b39b0d391c8",
+  "version": 1
+}

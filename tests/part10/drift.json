@@ -1,0 +1,45 @@
+{
+  "kind": "repo_drift_vs_part10_baseline",
+  "baseline": "v9 candidate (part10 base-sources / sources/code-map.json)",
+  "code_map_remap": {
+    "prototype/App/InteractionCoordinator.swift": "prototype/Core/InteractionCoordinator.swift"
+  },
+  "intentionally_absent": {
+    "prototype/App/WS2IslandCoordinator.swift": "本仓库从未有过这个文件。第十份候选里有它，W08 也把它列为来源；但本仓库并入第九份时决定沿用现有的单一刘海仲裁器 NotchLeaseHub（prototype/App/NotchLeases.swift，见 part9/MAC-EVIDENCE.md），WS2AppRuntime 与 WS2CodexApprovalHost 都已改接它。第十份只要求『不额外建立第二套全局活动仲裁』；在本仓库再加 WS2IslandCoordinator 就会成为第二套，所以这里断言它不存在。"
+  },
+  "code_map_drift": [
+    "prototype/App/WS2IslandCoordinator.swift",
+    "prototype/App/FoldCompletion.swift",
+    "prototype/App/FoldTransaction.swift",
+    "prototype/App/Reconcile.swift",
+    "prototype/App/ShadeController.swift",
+    "prototype/App/WS2AppRuntime.swift",
+    "prototype/App/WS2CodexApprovalHost.swift",
+    "prototype/App/WS2FoldCallbackGuard.swift",
+    "prototype/App/WS2GameControllerBridge.swift",
+    "prototype/App/WS2OwnedCodexSession+Authorization.swift",
+    "prototype/Core/CodexWire.swift",
+    "prototype/Core/PairingTLV.swift",
+    "prototype/Native/WS2Child.c",
+    "prototype/Support/WS2DuplexProcess.swift",
+    "prototype/Support/WS2KeychainPeerStorage.swift",
+    "prototype/Support/WS2LocalLaunchProfile.swift",
+    "prototype/build.sh",
+    "prototype/App/FaceObservationSource.swift",
+    "prototype/Window/AXHelpers.swift",
+    "prototype/App/NotchFaceObservations.swift",
+    "prototype/Recovery/Rescue.swift",
+    "prototype/App/FocusSession.swift",
+    "AGENTS.md",
+    "docs/blueprint.md",
+    "docs/handoff/START-HERE-deepseek.md",
+    "docs/privacy-page.md",
+    "docs/releases/v1.0.16-ledger.md",
+    "docs/copy-guide.md",
+    "prototype/App/WS2ConductorView.swift",
+    "docs/device-battery.md",
+    "prototype/App/DeviceBatteryController.swift",
+    "prototype/App/PeripheralBatterySource.swift",
+    "prototype/Core/DeviceBattery.swift"
+  ]
+}

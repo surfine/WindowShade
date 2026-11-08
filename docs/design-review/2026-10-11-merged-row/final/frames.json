@@ -1,0 +1,1016 @@
+{
+  "actions" : 0,
+  "frames" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-windows",
+      "ongoing" : 0,
+      "sample" : "windows",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 24.5,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 156.5,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-activities",
+      "ongoing" : 3,
+      "sample" : "activities",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "样件歌曲",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 278,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 416,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-mixed",
+      "ongoing" : 3,
+      "sample" : "mixed",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        },
+        {
+          "accessibility" : "设计工作间，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "样件歌曲",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-long",
+      "ongoing" : 3,
+      "sample" : "long",
+      "tiles" : [
+        {
+          "accessibility" : "放回 设计评审记录设计评审记录设计评审记录设计评审记…",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录"
+        },
+        {
+          "accessibility" : "放回 设计评审记录设计评审记录设计评审记录设计评审记…",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录"
+        },
+        {
+          "accessibility" : "设计工作间 — 长项目与文件名 — 长项目与文…，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容",
+          "title" : "设计工作间 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名"
+        },
+        {
+          "accessibility" : "正在播放 — 长项目与文件名 — 长项目与文件…，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容",
+          "title" : "正在播放 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名"
+        },
+        {
+          "accessibility" : "正在下载 — 长项目与文件名 — 长项目与文件…，下一段长内容下一段长内容下一段长内容下一段长内…",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容",
+          "title" : "正在下载 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-unknown",
+      "ongoing" : 3,
+      "sample" : "unknown",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        },
+        {
+          "accessibility" : "设计工作间，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "样件歌曲",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-stale-ended",
+      "ongoing" : 3,
+      "sample" : "stale-ended",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        },
+        {
+          "accessibility" : "设计工作间，在等你，可能已停",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : true,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，已暂停",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "已暂停",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-windows",
+      "ongoing" : 0,
+      "sample" : "windows",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 24.5,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 156.5,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-activities",
+      "ongoing" : 3,
+      "sample" : "activities",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "样件歌曲",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 278,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 416,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-mixed",
+      "ongoing" : 3,
+      "sample" : "mixed",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        },
+        {
+          "accessibility" : "设计工作间，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "样件歌曲",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-long",
+      "ongoing" : 3,
+      "sample" : "long",
+      "tiles" : [
+        {
+          "accessibility" : "放回 设计评审记录设计评审记录设计评审记录设计评审记…",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录"
+        },
+        {
+          "accessibility" : "放回 设计评审记录设计评审记录设计评审记录设计评审记…",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录设计评审记录"
+        },
+        {
+          "accessibility" : "设计工作间 — 长项目与文件名 — 长项目与文…，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容",
+          "title" : "设计工作间 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名"
+        },
+        {
+          "accessibility" : "正在播放 — 长项目与文件名 — 长项目与文件…，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容",
+          "title" : "正在播放 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名"
+        },
+        {
+          "accessibility" : "正在下载 — 长项目与文件名 — 长项目与文件…，下一段长内容下一段长内容下一段长内容下一段长内…",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容下一段长内容",
+          "title" : "正在下载 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名 — 长项目与文件名"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-unknown",
+      "ongoing" : 3,
+      "sample" : "unknown",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        },
+        {
+          "accessibility" : "设计工作间，在等你",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，正在播放",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "样件歌曲",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-stale-ended",
+      "ongoing" : 3,
+      "sample" : "stale-ended",
+      "tiles" : [
+        {
+          "accessibility" : "放回 样件窗口 1",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 700,
+          "kind" : "tucked",
+          "title" : "样件窗口 1"
+        },
+        {
+          "accessibility" : "放回 样件窗口 2",
+          "dark" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 701,
+          "kind" : "tucked",
+          "title" : "样件窗口 2"
+        },
+        {
+          "accessibility" : "设计工作间，在等你，可能已停",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 287,
+            "y" : 14
+          },
+          "id" : 800,
+          "kind" : "session",
+          "quantity" : "unknown",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : true,
+          "subtitle" : "等你",
+          "title" : "设计工作间"
+        },
+        {
+          "accessibility" : "正在播放，已暂停",
+          "dark" : true,
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 419,
+            "y" : 14
+          },
+          "id" : 801,
+          "kind" : "playing",
+          "quantity" : "fraction(0.42)",
+          "quantityText" : null,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "已暂停",
+          "title" : "正在播放"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "dark" : true,
+          "ended" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 551,
+            "y" : 14
+          },
+          "id" : 802,
+          "kind" : "activity",
+          "quantity" : "count(2, 9)",
+          "quantityText" : "第 2 \/ 9",
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载"
+        }
+      ],
+      "visible" : false,
+      "width" : 689,
+      "windows" : 2
+    }
+  ],
+  "sourceControllers" : 0
+}

@@ -1,0 +1,13 @@
+<!-- @dsCard group="收起與看一眼" height=150 subtitle="收起後 · 懸停" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ShadeStrip</title>
+<style>
+body{margin:0;padding:16px;background:var(--window-bg);font-family:var(--font-sf);display:flex;flex-direction:column;gap:20px}
+.strip{position:relative;max-width:520px;height:30px;border-radius:13px 13px 0 0;background:var(--window-bg);border:0.5px solid var(--separator);box-shadow:0 2px 12px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center}
+.lights{position:absolute;left:12px;display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%;background:var(--label-tertiary)}
+.t{font-size:13px;font-weight:600;color:var(--label)}
+.h{position:absolute;right:14px;font-size:11px;color:var(--label-secondary)}
+</style></head><body>
+<div class="strip" aria-label="已收起：設計系統 — Safari，雙擊放下"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="t">設計系統 — Safari</span></div>
+<div class="strip"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="t">設計系統 — Safari</span><span class="h">雙擊展開</span></div>
+</body></html>

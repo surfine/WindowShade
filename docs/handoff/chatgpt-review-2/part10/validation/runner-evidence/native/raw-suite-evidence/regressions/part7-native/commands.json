@@ -1,0 +1,16 @@
+[
+  {
+    "argv": [
+      "/opt/pyvenv/bin/python",
+      "/tmp/ws2-r9-regression-rwhyexks/part7/tests/run.py",
+      "--repo",
+      "/mnt/data/WindowShade2-round2-handoff-v10/candidate-repo",
+      "--suite",
+      "native"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS NATIVE01 direct child ignores TERM then owned group KILL [6]\nPASS NATIVE02 inherited descriptor descendant cannot delay direct exit [5]\nPASS NATIVE03 unrelated descriptors do not reach child [3]\nTOTAL 3 scenarios, 14 assertions\nDIAG exited=true termination=Optional(suite.WS2DuplexProcess.Termination(status: 0, wasSignalled: false)) stopped=true supervision=nil lines=[\"{\\\"parent\\\":1}\"] elapsed=0.10225163800009796\n",
+    "stderr": "",
+    "seconds": 8.702042548000009
+  }
+]

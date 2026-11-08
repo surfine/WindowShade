@@ -1,0 +1,29 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/packages/I1c/tests/run-middle-drag-tests.sh
+Exit: 0
+
+CASE I1c-01 | 标题栏移动恰好 10 点后抬手 → 一次点击
+ok   大于而非等于十点才拖
+ok   重复 up 无点击
+CASE I1c-02 | 短拖超阈值但不到提交进度 → 取消，不变成点击
+ok   短拖取消
+CASE I1c-03 | 斜拖未形成主方向 → 原样放行，不猜轴
+ok   斜拖灰区
+ok   不突然提交
+CASE I1c-04 | 锁定水平后垂直晃动 → 水平轴不翻转
+ok   固定主轴
+CASE I1c-05 | 同轴往返，回到起点抬手 → 取消，不补发短按
+ok   往返取消
+CASE I1c-06 | 四个明确方向大拖 → 对应既有标题栏/桌面意图
+ok   方向映射
+ok   方向映射
+ok   方向映射
+ok   标题栏单独意图
+CASE I1c-07 | 未知区域/非法坐标/倒流/中途取消 → 不提交动作
+ok   未知区域放行
+ok   无效坐标取消
+ok   时间倒流
+PASS I1c: 7 cases, 14 assertions, 0 failures

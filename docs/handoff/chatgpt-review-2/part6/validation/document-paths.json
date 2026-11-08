@@ -1,0 +1,38 @@
+[
+  {
+    "path": "prototype/App/InteractionCoordinator.swift",
+    "exists": true
+  },
+  {
+    "path": "prototype/App/WS2AppRuntime.swift",
+    "exists": true
+  },
+  {
+    "path": "prototype/App/WS2FocusWindowPort.swift",
+    "exists": false
+  },
+  {
+    "path": "prototype/App/WS2IslandCoordinator.swift",
+    "exists": true
+  },
+  {
+    "path": "prototype/App/WS2NativeSelectionAdapter.swift",
+    "exists": false
+  },
+  {
+    "path": "prototype/App/WS2OwnedLaunchController.swift",
+    "exists": false
+  },
+  {
+    "path": "prototype/App/WS2RemoteListenerHost.swift",
+    "exists": false
+  },
+  {
+    "path": "prototype/Support/WS2DuplexProcess.swift",
+    "exists": true
+  },
+  {
+    "path": "prototype/build.sh",
+    "exists": true
+  }
+]

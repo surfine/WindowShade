@@ -1,0 +1,10 @@
+SCENE PROC01 explicit bounded diagnostic tail does not block stdout
+SCENE PROC02 default diagnostics stays disabled
+SCENE PROC03 direct child exit status is separate from protocol outcome
+SCENE PROC05 partial final frame rejected
+SCENE PROC06 coalesced trailing frames retain ordering
+SCENE PROC07 stop closes transport once and waits for independent exit evidence
+SCENE PROC08 diagnostic buffer can be explicitly cleared
+SCENE PROC09 invalid diagnostic limit rejected before spawning
+SCENE PROC10 late scope change blocks an admitted frame
+RESULT scenarios=9 assertions=27 failures=0

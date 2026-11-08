@@ -1,0 +1,31 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v10/candidate-repo/prototype/Core/FoldVerifier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v10/candidate-repo/prototype/Core/WS2FoldCallbackStamp.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v10/candidate-repo/prototype/App/FoldCompletion.swift",
+      "/tmp/ws2-final-suite-ms1dx5fx/part9/tests/RegressionTests.swift",
+      "-o",
+      "/tmp/ws2-r9-voem8luo/tests"
+    ],
+    "exit_code": 0,
+    "seconds": 1.6973744959998385,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-r9-voem8luo/tests",
+      "/tmp/ws2-final-suite-ms1dx5fx/part9/validation/regression-results.json"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01582198000005519,
+    "stdout": "SCENARIOS 42 ASSERTIONS 93 FAILURES 0\n",
+    "stderr": ""
+  }
+]

@@ -1,0 +1,51 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/packages/D2/tests/run-conductor-capabilities-tests.sh
+Exit: 0
+
+CASE D2-01 | 真实能力只列四档 → 只允许原值，无静默降档
+ok   逐档原值
+ok   逐档原值
+ok   逐档原值
+ok   逐档原值
+ok   max 不能偷偷等于 xhigh
+ok   无原生 ultra 不发送
+CASE D2-02 | 明确列出的原生 ultra/max → 受支持但须费用确认
+ok   原生高开销需确认
+ok   原生高开销需确认
+CASE D2-03 | Claude 已登记 ultracode + xhigh → 工作流程字段；Codex 不借用绑定
+ok   显式工作流程
+ok   不得声称原生 ultra
+ok   Codex 不冒充 Claude 工作流
+CASE D2-04 | 固定四个位置、能力重排/消失/重复 → 位置稳定或明确不可用
+ok   列表重排不移动位置
+ok   缺席不移位补空
+ok   重复身份拒绝
+ok   恰好四槽
+CASE D2-05 | 审批前开始的按压、30 秒候选边界 → 都不能确认高费用
+ok   不能借先前 down
+ok   必须是新的序号
+ok   半开 30 秒期限
+CASE D2-06 | 确认后同绑定消费两次 → 只第一次成功；精确到期失败
+ok   新点按确认
+ok   一次性消费
+ok   票据到期即不可用
+CASE D2-07 | peer/项目/会话/代次/模型/能力/工作流程/草稿/候选任一变化 → 销毁旧票
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+ok   错目标后旧票也作废
+CASE D2-08 | 摘要长度错误、空能力、错误能力版本 → 拒绝
+ok   摘要恰好 32 字节
+ok   旧能力不接受新配置
+ok   空集合不是任意档位
+PASS D2: 8 cases, 35 assertions, 0 failures

@@ -1,0 +1,182 @@
+{
+  "status": "repairs_implemented_and_verified_in_probes; real-device visible motion not verified; whole goal active",
+  "batch": 26,
+  "branch": "codex/ws2-remote-gpt6-handoff-20261007",
+  "binding_convention": "binding_sha256 = sha256(json.dumps({'source_sha256':..., 'evidence_sha256':...}, sort_keys=True, separators=(',',':'))) —— 本批自定义、可复现；不沿用25的未记录算法",
+  "source_sha256": {
+    "prototype/Core/FlickMotion.swift": "44404b5bc6cec700ddb6547d5c1af273ed9ca9191d7b629af023f304ebcee3f0",
+    "prototype/App/Notch.swift": "a031697bb416b41668eed28c7b4ab7685e8d1a2e37b38426ab5ef2cb25937890",
+    "prototype/App/WS2PrivacyPane.swift": "2e4c466f87c17e3b8a12b5f54f091ef7ad58dab28b9642db5f9d4a25fda5b437",
+    "prototype/App/Motion.swift": "ce92dee8f379f849ff986b3f177bccc2340897829d486f2691e8ee98fdd7c423",
+    "tools/design-qa/MorphRetargetMathPreview.swift": "f0ea444b768653dec11f7f16798a9633775221bc229ee2b744900cd344080e7e",
+    "tools/design-qa/NotchRetargetPreview.swift": "82d438ab290b203e328f804eeb73c9403871c84788b9a36a1a1104ea9f42c233",
+    "tools/design-qa/PrivacyPageCompositionPreview.swift": "03d3e257e94cec06a647c8996ad5ec6932f8643f77dedad6f97b459f0b35bf92",
+    "tools/design-qa/make-batch26-entry.py": "2a4f7f568649d0145550d9f81533e1ec619855de983271f71b56f2891cd2e703",
+    "tools/design-qa/Batch26CombinedEntry.swift": "5022c50015b3ae669bead15c1da6522bd1ceac7367a019fe88673e5999f08fcf",
+    "tools/design-qa/Batch26CombinedEntry.inputs.json": "834dac9d7a0cfdc872129d12c3de2790adc747bf4c901d2340d5ed6d4c651399",
+    "tools/design-qa/check-batch26-native.py": "5018797def55f97578a5146ff0e965628f4ee4af5ee68a557bfdcf783081ce3b",
+    "tools/design-qa/render-native-surfaces.sh": "ba122841013531696d95af835435839cc25f0f101cf7c5710db896d4bbc3317d",
+    ".statem/history-design-twentysixth-round/source/before-sha256.txt": "c84c9e51e75dd8a4e3c95b8b4f476ae94886771dcef09178719f79b73d75803d",
+    ".statem/history-design-twentysixth-round/source/qa/before-sha256.txt": "7db24ec45e5172b8ad4813f31b387d4eb62aa326ffa524ce99d25bfa565a9c5c"
+  },
+  "evidence_sha256": {
+    "docs/design-review/2026-10-11-fluid-retarget/math/compile.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "docs/design-review/2026-10-11-fluid-retarget/math/failure.txt": "681b675637e2b115de22f0cf2bcb6f8c03d2694c31a8f0ecab619b052d4ab1fa",
+    "docs/design-review/2026-10-11-fluid-retarget/math/inputs-sha256.txt": "45a6f1bdfbcd2205c48c65a4bc83582d9b2bbb870cdc1520227f4abde75d9ad7",
+    "docs/design-review/2026-10-11-fluid-retarget/math/math.json": "3bba00c5900573f4420293b5e0df9547aaa27725b9f03e3f6be4a64470c1425a",
+    "docs/design-review/2026-10-11-fluid-retarget/math/probe-sha256.txt": "e667742c1fa9dc706663c96beff0c7b14954f8380a10c97f75395004ced3a8ce",
+    "docs/design-review/2026-10-11-fluid-retarget/math/run.log": "5e45a388cbf05be0218d914be9257a79236509bbe75f66bf3eff9a9b16bce82b",
+    "docs/design-review/2026-10-11-fluid-retarget/native/build-check.log": "11d3aa034e490cf6bf5e6889c3fbc49d54a2c7c95951480547e203beed438320",
+    "docs/design-review/2026-10-11-fluid-retarget/native/build-check-exit.json": "c317a2e3ce6f98e67b1b108daf9844b655d3d0ad054ccebbb60bb70566c3fab1",
+    "docs/design-review/2026-10-11-fluid-retarget/native/build-inputs.json": "d35459510a4758d7f552da86b9b495c85aece7888d0fd5646ea6204af00180b8",
+    "docs/design-review/2026-10-11-fluid-retarget/native/consumer-first-failure.txt": "34cc0a4e83a01f7cb861f83e26d4e44335ac760934d91a2dd917f53db6ba29ff",
+    "docs/design-review/2026-10-11-fluid-retarget/native/motion/retarget.json": "09c39a931a156fb979f1cc88a99356550ca544574235a7d08bef05fdbe1c1447",
+    "docs/design-review/2026-10-11-fluid-retarget/native/native-exit.txt": "19eaf43821a7660ec323a87c8457bf74823beb296c39f5e01aa8a683aa50f061",
+    "docs/design-review/2026-10-11-fluid-retarget/native/native.log": "4d1953406820122bd71fccd421ea9045f22d51c97147e47d0f5899ec16b2a249",
+    "docs/design-review/2026-10-11-fluid-retarget/native/renderer.json": "0352b94ca49027a2b97a35f9c002813fc08f250509908a04614a42bc0ab93854",
+    "docs/design-review/2026-10-11-fluid-retarget/native/sources.json": "fe687930ecc63d780c534cea686a21bf86f8629e5f14b37e696a2be1de9fd11c",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/frames.json": "693db84a385ee4b4ab99d75b364f9744943f49d4de1becfa0fd7acccde702e63",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/light-collapsed-top.png": "0c7ece8574de02a07a338a64669f30f2954d22bb3b4ac5882d060cbad91dcb94",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/light-collapsed-middle.png": "85c4ad6f3a5a4b50e4d9784085d737f9ebefd5cc55b346169a9b7780a90b56c8",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/light-collapsed-bottom.png": "72211ec9e92f36650b6c86fb8fad343d4276eff9e84a2b50da7ccb8e25ad9366",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/light-expanded-top.png": "6140ad038370eaa1129dec6df694934a712902646aca67712b04f04cd3d30c72",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/light-expanded-middle.png": "d302dd8e912be8e268ae0f983458f5d6e7b123eea0e8b1c2122aaa089ec12e8b",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/light-expanded-bottom.png": "6d61aa77988fb54b8444deb9969760144d240162174370b1e5d897cb7e6d06cd",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/dark-collapsed-top.png": "47f7ee854011b646e4752d1fc8016c3b6990cfea6474c27e4792b3ca7b3b4162",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/dark-collapsed-middle.png": "1b77a18cb6a511fb146733d591bc5b1119c85c21fb62e33902a9099ce664ae93",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/dark-collapsed-bottom.png": "bf7cf254455cd8ffd81716311615616c97db7861c285cb4a481c672b786937c6",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/dark-expanded-top.png": "0f489dadc4e18071eb7a5c92d6a3af42c517188ad5685745f2380a68dec648b8",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/dark-expanded-middle.png": "106722e08d665e11b6418d8824ccb8de2a90df314114e608f10131a8bf41dcd1",
+    "docs/design-review/2026-10-11-fluid-retarget/native/page/dark-expanded-bottom.png": "fa01937dd0dd9a8c467becb563424381dc934777170b60087747a15c6ccadc23"
+  },
+  "repairs": {
+    "signed_velocity_per_axis_retarget": {
+      "where": "prototype/Core/FlickMotion.swift MorphRetarget + prototype/App/Notch.swift handoffAxes/add/performMorph",
+      "mechanism": "signed instantaneous physical velocity from actual CASpringAnimation coefficients via FlickSpring.state; per-scalar keyPath normalized initialVelocity=-v/delta; caller velocity kept when no live old animation; bounded finite kick keyframes for near-zero travel with velocity; size/radius floors clip magnitude, keep direction",
+      "batch25_defect_reference": "incoming -20.405 midY delta, reversed target +20.405, initialVelocity kept +10.327"
+    },
+    "stale_presented_on_delayed_exit": {
+      "where": "prototype/App/Notch.swift performMorph/pendingExitMorph",
+      "mechanism": "re-read island/clip/keyLine/keyMask presentation layers at actual shape start; generation/cancel guards kept; measured actual start delay 0.1566s (0.10 fade + 0.04 gap + slack)"
+    },
+    "privacy_row_icon_branch_removed": {
+      "where": "prototype/App/WS2PrivacyPane.swift PrivacyRowView",
+      "mechanism": "removed WS2SettingsCopy.symbol(for:) keyword icon branch; focus-preferences header x now -2 like the other 40 rows (was 36)"
+    }
+  },
+  "math": {
+    "tool": "tools/design-qa/MorphRetargetMathPreview.swift",
+    "exit_code": 0,
+    "checks": 69,
+    "groups": 20,
+    "rerun_byte_identical": true,
+    "first_failure_kept": "math/failure.txt (judgement errors, archived before fix)",
+    "scope": "pure ODE/RK4 vs analytic; not device animation"
+  },
+  "page": {
+    "entry": "tools/design-qa/Batch26CombinedEntry.swift (privacy then motion in one NSApp.run)",
+    "exit_code": 0,
+    "frames": 12,
+    "appearances": [
+      "aqua",
+      "darkAqua"
+    ],
+    "states": [
+      "collapsed",
+      "expanded"
+    ],
+    "scroll_positions": 3,
+    "registered_default_rows": 41,
+    "groups": 4,
+    "mock_switches_expanded": 9,
+    "focus_preferences_header_x": -2,
+    "other_rows_header_x": -2,
+    "detail_column_x": 61,
+    "product_page": false,
+    "input_count": 518
+  },
+  "motion": {
+    "exit_code": 0,
+    "records": 62,
+    "input_count": 518,
+    "per_axis_continuity": {
+      "velocity_max_diff": 0.0,
+      "position_max_diff_pt": 1.144,
+      "position_reading_skew_ms": 4.0
+    },
+    "reverse_sign_ok": true,
+    "width_axis_own_travel": {
+      "bounds.size.width": 2.4301,
+      "position.y": 12.408
+    },
+    "settled_retarget_keeps_caller_velocity": true,
+    "kick_keyframes": {
+      "axes": [
+        "position.y",
+        "bounds.size.width",
+        "bounds.size.height"
+      ],
+      "full_curve_rk4_max_diff_pt": 0.1893,
+      "duration_max_s": 0.425
+    },
+    "cancel_callbacks": {
+      "aggregate_keys": 23,
+      "all_ones": true,
+      "regular-cancel-close": 0
+    },
+    "rich_exit_delayed_start_s": 0.1566,
+    "piecewise_prediction_max_diff_pt": {
+      "open": 0.3268,
+      "reverse": 0.1462,
+      "reopen": 0.0617,
+      "width": 0.1449,
+      "rich-exit-gap": 0.6478,
+      "kick": 0.2394
+    },
+    "reduced_no_shape_animation": true,
+    "compositor_pass": false,
+    "product_entry": false
+  },
+  "consumer": {
+    "tool": "tools/design-qa/check-batch26-native.py",
+    "first_run_failures": 9,
+    "first_failure_kept": "native/consumer-first-failure.txt",
+    "final_exit_code": 0,
+    "final_line": "PASS privacy 12 frames/41 rows/9 switches aligned; motion per-axis continuity via RK4; kick keyframes bounded; cancel/stale callbacks; reduced no animation; 518 current inputs"
+  },
+  "visual_review": {
+    "images_viewed": [
+      "light-collapsed-middle",
+      "light-collapsed-bottom",
+      "light-expanded-bottom",
+      "dark-expanded-bottom"
+    ],
+    "total_bytes": 2739340,
+    "cap_bytes": 50331648,
+    "result": "focus-preferences row is text-only, same columns as neighbours; detail rows aligned (checked in light collapsed/expanded and dark expanded bottom frames)",
+    "total_note": "2.61 MiB for all 12 PNGs; 3 viewed (light collapsed/expanded bottom, dark expanded bottom)"
+  },
+  "optimized": {
+    "command": "bash prototype/build.sh --check",
+    "exit_code": 0,
+    "utc": "2026-10-11T19:10:31Z",
+    "input_count": 519,
+    "changed_inputs": [],
+    "missing": [],
+    "added": [],
+    "warnings": 256,
+    "errors": 0,
+    "reused": false,
+    "note": "本批改动3个生产文件后新跑，非复用；日志 build-check.log，退出码 build-check-exit.json"
+  },
+  "limits": [
+    "hidden hosts, not a signed installed app; no real device notch animation",
+    "no frame pacing / input latency / visible compositor evidence",
+    "shoulders and companion animation still own paths",
+    "English not enabled this batch",
+    "privacy page is real Row components in own host, not the real Settings page; no real permissions/data/preferences",
+    "existing toolchain concurrency warnings retained; not warning-free",
+    "math/config/static/consumer cover their own scopes only; not merged into an 'Apple-grade' claim"
+  ],
+  "binding_sha256": "1e672104266fbb602cabcf7029b6d98286f0716f30ff78ba8095fbcdce881b6b"
+}

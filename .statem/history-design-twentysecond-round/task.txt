@@ -1,0 +1,6 @@
+WindowShade2第二十二批：隐私行的实际原生阅读布局。沿“WindowShade读到的”现有稿/分组设置，不增窗口/开关/事实承诺。完整设计目标active。
+先用纯注册表与合成快照，只实例化PrivacyRowView，绝不实例化WS2PrivacyPane/AppDelegate或调用WS2PrivacyValues.read。没有真实权限/设备/窗口/网络/设置/日志/导出/输入/偏好读写；不启动生产App，alpha0未显示离屏自身Window。禁真授权/导出按钮路由，只nil目标/动作与自己的计数闭包。
+为复用真实私有行，PrivacyRowView与PrivacySwitchSpec仅调整file-private到internal供同模块QA；不改页面生命周期/来源/设置路由。保原字节SHA；先真实基线，再根据字段布局和实际图片确定必要修正。真正页面顶栏、组装、滚动、读取与开关未验，不拿行片段当整页完成。
+合成普通/未知/授权拒绝/授权已给/长值/展开长说明/技术细节/实验planned，浅深×标准与窄宽；Actual NSStackView/Cocoa字号与字段矩形/标题值冲突、内容可读、完整提示；原生518/Swift6严格，必要生产变化当前519优化。目录现有断开的Markdown表格一并修复，可见文档不冒充产品。
+输入：docs/design-drafts/WindowShade读到的.html、docs/privacy-page.md、copy-guide、WS2PrivacyPane.swift的纯Row部分、WS2PrivacyModel.swift/生成Data与registry、原生wrapper与现有构建门禁。
+验收：实际fixture输出消费者和主模型原生PNG审阅，当前SHA绑定；网络/读屏/完整动作/硬件/性能明确not_run，禁止从单测推导隐私实测承诺。主模型主导敏感边界与设计。

@@ -1,0 +1,56 @@
+[
+  {
+    "chapter": 0,
+    "reference": "reference/demos/light-play-moves/SpotlightSweepReveal.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "unlock"
+  },
+  {
+    "chapter": 1,
+    "reference": "reference/demos/pill-slot-cycle/PillSlotCycle.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "footageSlots"
+  },
+  {
+    "chapter": 2,
+    "reference": "reference/demos/quad-split-parallel-scenes/QuadSplitParallelScenes.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "footageSlots"
+  },
+  {
+    "chapter": 3,
+    "reference": "reference/demos/type-and-filter/TypeAndFilter.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "footageSlots"
+  },
+  {
+    "chapter": 4,
+    "reference": "reference/demos/input-trigger-moves/CursorPerformancePunchIn.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "inputs"
+  },
+  {
+    "chapter": 5,
+    "reference": "reference/demos/draw-svg-trace/DrawSvgTrace.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "conduct"
+  },
+  {
+    "chapter": 6,
+    "reference": "reference/demos/circle-match-iris/CircleMatchIris.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "road"
+  },
+  {
+    "chapter": 7,
+    "reference": "reference/demos/odometer-digit-roll/OdometerDigitRoll.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "focus"
+  },
+  {
+    "chapter": 8,
+    "reference": "reference/demos/outro-group-photo-launch/OutroGroupPhotoLaunch.tsx",
+    "use": "motion reference only; original sceneSVG implementation; no FakeDashboard copied",
+    "actualFunction": "outro"
+  }
+]

@@ -1,0 +1,23 @@
+/mnt/data/WindowShade2-ChatGPT-review/tests/BoundaryTests.swift:112:19: error: call can throw, but it is executed in a non-throwing autoclosure
+110 |         let decision = hook["decision"] as! [String:Any]
+111 |         check(decision["behavior"] as? String == "allow" && hook["hookEventName"] as? String == "PermissionRequest", "allow encodes correct event-specific structure")
+112 |         check(try HookReply.deny.encode().last == 10, "hook response newline")
+    |                   `- error: call can throw, but it is executed in a non-throwing autoclosure
+113 | 
+114 |         var frames=JSONLinesDecoder()
+
+/mnt/data/WindowShade2-ChatGPT-review/tests/BoundaryTests.swift:115:19: error: call can throw, but it is executed in a non-throwing autoclosure
+113 | 
+114 |         var frames=JSONLinesDecoder()
+115 |         check(try frames.feed(Data("{\"a\":".utf8)).isEmpty,"partial frame buffered")
+    |                   `- error: call can throw, but it is executed in a non-throwing autoclosure
+116 |         let completed=try frames.feed(Data("1}\n{}\n".utf8))
+117 |         check(completed.count == 2 && String(data:completed[0],encoding:.utf8)=="{\"a\":1}","split plus coalesced frames")
+
+/mnt/data/WindowShade2-ChatGPT-review/tests/BoundaryTests.swift:119:19: error: call can throw, but it is executed in a non-throwing autoclosure
+117 |         check(completed.count == 2 && String(data:completed[0],encoding:.utf8)=="{\"a\":1}","split plus coalesced frames")
+118 |         var tiny=JSONLinesDecoder();tiny.maxBytes=2
+119 |         check(try tiny.feed(Data("{}\n".utf8)).count == 1,"exact frame size permitted")
+    |                   `- error: call can throw, but it is executed in a non-throwing autoclosure
+120 |         do { _ = try tiny.feed(Data("123".utf8)); check(false,"oversized frame must throw") }
+121 |         catch JSONLinesDecoder.Failure.frameTooLarge { check(true,"oversized frame rejected") }

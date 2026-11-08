@@ -1,0 +1,6 @@
+PASS fixed Python/CryptoKit key agreement, HKDF and signature vectors
+PASS synthetic client/server M1-M4 with fresh server ephemeral
+PASS bidirectional protected records
+PASS replay closes session
+PASS closed session cannot transmit
+Synthetic execution only; no PIN setup, Keychain, sockets or native Remote tested

@@ -1,0 +1,8 @@
+{
+  "tests/run-power-flash-tests.sh": "294d6de48efda75b04d27fb9f2bbe9d90b7887034dc997465f928ca83d4dd861",
+  "prototype/Core/DeviceBattery.swift": "ee45a56471a4918a13b442b3d47496eb23493e7dc63580fd38e199b595e595ff",
+  "prototype/Core/PowerFlash.swift": "714ce25a8e6f0204385375fc5f7940521fef8217bbb96b47c344afe40153b853",
+  "prototype/Core/NotchSentence.swift": "2e005f6977309ed0ab0a1405d69923f5572c54945fa979dee0a4e3610aa7fbb6",
+  "prototype/App/DeviceBatteryCopy.swift": "4751b15eca770c18234a3cbb343c498c9d208e957c733cf0a4aaa770fcdbc65d",
+  "tests/PowerFlashTests.swift": "dbb5963473c9ce4506ae9988fb9602413110d73a9e2e09c231816bccdb4ae95b"
+}

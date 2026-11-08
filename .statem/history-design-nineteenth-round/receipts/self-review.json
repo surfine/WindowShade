@@ -1,0 +1,20 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-progress-draft/validation.json",
+  "artifact_sha256": "2c03610fc232faaae823ded678f42f7920a6dc9032df1a3cfa7af4b041ba0c76",
+  "lenses": {
+    "task_contract": "finite static draft/actual large count complete numeric fallback, source qualification unchanged",
+    "evidence_freshness": "39 source including27 draft pixels/78 evidence SHA; actual26/30/current518 and519",
+    "edge_risk": "million count resolves, extreme Int/paused combined/file AX/compact and real sources remain explicit"
+  },
+  "findings": [
+    "Only glyph choice uses existing shortCountText when full label too wide; no model/controller/action/timer change.",
+    "Static draft has eleven admission answers, same existing shape/motion/material vocabulary.",
+    "Worker assumptions corrected by main; main own consumer substitution TypeError preserved and fixed, final actual consumer0.",
+    "Native paused/end are explicit synthetic facts, not existing source capability or completed-reminder proof.",
+    "Next usage static draft; no whole-goal completion or release claim."
+  ]
+}

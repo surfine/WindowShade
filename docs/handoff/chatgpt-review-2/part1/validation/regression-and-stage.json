@@ -1,0 +1,37 @@
+[
+  {
+    "name": "original-conductor-compile",
+    "exit": 0,
+    "log": "validation/original-conductor-compile.txt"
+  },
+  {
+    "name": "original-conductor-run",
+    "exit": 0,
+    "log": "validation/original-conductor-run.txt"
+  },
+  {
+    "name": "original-notches-compile",
+    "exit": 0,
+    "log": "validation/original-notches-compile.txt"
+  },
+  {
+    "name": "original-notches-run",
+    "exit": 0,
+    "log": "validation/original-notches-run.txt"
+  },
+  {
+    "name": "staged-focus-timer",
+    "exit": 0,
+    "log": "validation/staged-focus-timer.txt"
+  },
+  {
+    "name": "staged-conductor-session",
+    "exit": 0,
+    "log": "validation/staged-conductor-session.txt"
+  },
+  {
+    "name": "staged-remote-mode",
+    "exit": 0,
+    "log": "validation/staged-remote-mode.txt"
+  }
+]

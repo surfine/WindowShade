@@ -1,0 +1,25 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-notch-motion-swift6/validation.json",
+  "artifact_sha256": "aee091a4de29f4ca30f0e2cbf9e8fa519d0669fc7b1c6b082568e4d5403bf69e",
+  "binding_sha256": "e346bad133014ba981157a11292ee07939b0f9695bd17f5b76943221e29f959b",
+  "checks": [
+    {
+      "command": "Swift6 NotchMotionPreview + actual consumer",
+      "exit_code": 0,
+      "result": "16 states/13 main-thread callbacks/518 current identities/override restored",
+      "receipt": "final-exit.json"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 SHA independently unchanged since17",
+      "receipt": "reused-build.json"
+    }
+  ],
+  "remaining_risk": "cache/static control path, visual motion inconclusive; unsigned own event pump, product lifecycle untested; warnings emitted despite requested compiler flags; real sources, compositor, full arbitration, hardware untested",
+  "next_action": "self_review"
+}

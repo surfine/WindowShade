@@ -1,0 +1,29 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "prototype/Effects/EffectFrameAwaiter.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part9/tests/FrameTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-s0kplpir/tests"
+    ],
+    "exit_code": 0,
+    "seconds": 2.930588290997548,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-s0kplpir/tests",
+      "/Users/aaron/Documents/WindowShade/tests/part9/validation/frame-results.json"
+    ],
+    "exit_code": 0,
+    "seconds": 0.24438716701115482,
+    "stdout": "PASS FRAME01-main-actor-nonsendable-value\nPASS FRAME02-independent-actor\nPASS FRAME03-unisolated-caller\nPASS FRAME04-replaced-inside-getter\nPASS FRAME05-deadline-inside-getter\nPASS FRAME06-revoked-during-pause\nPASS FRAME07-timeout-zero\nPASS FRAME07-timeout-negative\nPASS FRAME07-timeout-nan\nPASS FRAME07-timeout-infinite\nPASS FRAME08-nonfinite-clock\nPASS FRAME09-clock-goes-backward\nPASS FRAME10-deadline-overflow\nPASS FRAME11-deadline-does-not-advance\nPASS FRAME12-task-cancelled\nSCENARIOS 15 ASSERTIONS 15 FAILURES 0\n",
+    "stderr": ""
+  }
+]

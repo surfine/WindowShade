@@ -1,0 +1,13 @@
+<!-- @dsCard group="收起與看一眼" height=260 subtitle="有畫面 · 收起時的畫面" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>GlanceCard</title>
+<style>
+body{margin:0;padding:16px;background:var(--window-bg);font-family:var(--font-sf);display:flex;gap:24px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;gap:0;width:260px;max-width:100%}
+.strip{height:26px;border-radius:13px 13px 0 0;background:var(--window-bg);border:0.5px solid var(--separator);font-size:12px;font-weight:600;color:var(--label);display:flex;align-items:center;justify-content:center}
+.card{height:170px;border-radius:0 0 13px 13px;box-shadow:var(--shadow-glance);overflow:hidden;background:linear-gradient(#f5f5f7 0 22%,#dfe6ee 22% 100%)}
+.card.stale{background:var(--window-bg);border:0.5px solid var(--separator);border-top:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--label-secondary)}
+</style></head><body>
+<div class="col"><div class="strip">設計系統 — Safari</div><div class="card" aria-label="看一眼：設計系統 — Safari"></div></div>
+<div class="col"><div class="strip">終端</div><div class="card stale">收起時的畫面</div></div>
+</body></html>

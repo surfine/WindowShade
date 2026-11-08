@@ -1,0 +1,4 @@
+signed-out: 需要登录 ChatGPT, passed=true
+config-rejected: 助手设置与当前权限不符，已断开。, passed=true
+malformed-account: 助手返回的信息不完整，已断开。, passed=true
+manual-stop: 已断开, passed=true

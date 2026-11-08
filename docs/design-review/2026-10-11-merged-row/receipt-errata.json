@@ -1,0 +1,42 @@
+{
+  "updated": "2026-10-11T11:09:27.653142+00:00",
+  "issue": "StateM contract/self-review receipts retained round14 identity during round15 transitions; gate transition is not independent acceptance evidence for round15",
+  "actual_evidence": "round15 own consumer pass12, 8 source/62 evidence hash binding afdea2247616d01d41b3b9fcc90a6c1295f1ab5769dfaa98fd9a369c2caad76c; verified after transition",
+  "correction": "actual round15 receipts below; original round14 bytes retained in history-design-fifteenth-round/receipts; no historical gate rerun claimed",
+  "contract": {
+    "kind": "contract_check",
+    "status": "residual_risk",
+    "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-merged-row/validation.json",
+    "artifact_sha256": "da6f4a7b3a95fc93e2c8d8f8162942443ed4e67da92567cf12ab0865bd6f3fa8",
+    "binding_sha256": "afdea2247616d01d41b3b9fcc90a6c1295f1ab5769dfaa98fd9a369c2caad76c",
+    "checks": [
+      {
+        "command": "check-merged-row-preview.py final",
+        "exit_code": 0,
+        "result": "12 actual frames;518 source hashes current"
+      }
+    ],
+    "reused_checks": [
+      {
+        "command": "round14 optimized check;519 current hashes compared",
+        "exit_code": 0
+      }
+    ],
+    "remaining_risk": "wrapper numeric exit unavailable;static only;synthetic icons;no real source/actions/motion",
+    "next_action": "self_review"
+  },
+  "self_review": {
+    "kind": "self_review",
+    "status": "residual_risk",
+    "issues_found": true,
+    "needs_evidence": false,
+    "lenses": {
+      "task_contract": "actual Core-derived mergedRow static baseline;no production change",
+      "evidence_freshness": "8 source/62 evidence hashes matched current15 artifact",
+      "edge_risk": "wrong initial payload excluded;wrapper status unknown;static only"
+    },
+    "findings": [
+      "StateM original receipts stale14;corrected identity now recorded without pretending prior gate read it"
+    ]
+  }
+}

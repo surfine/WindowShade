@@ -1,0 +1,27 @@
+{
+  "status": "pass: artifact/source consistency only; not a Mac build",
+  "part3BaseUnchanged": true,
+  "baseFiles": 1119,
+  "overlayFiles": 28,
+  "overlaySwiftFiles": 27,
+  "modifiedExisting": 19,
+  "addedFiles": 9,
+  "candidateFiles": 1128,
+  "candidateMatchesOverlay": true,
+  "decisionRows": 56,
+  "backgroundDocuments": 5,
+  "workorders": 5,
+  "coreScenarios": 72,
+  "coreAssertions": 188,
+  "coreFailures": 0,
+  "archiveExcluded": [
+    ".build",
+    "__pycache__",
+    ".DS_Store",
+    ".git",
+    "*.pyc",
+    "font files"
+  ],
+  "macSDKBuild": "not performed",
+  "realDeviceTests": "not performed"
+}

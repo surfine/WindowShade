@@ -1,0 +1,30 @@
+// 60fps。鏡頭停穩之後界面才動。
+export const FRAMES = 4800;
+
+export const LID = 36;
+export const HERE = 132;
+export const HERE_LEN = 240;
+export const DOLLY_IN = 432;
+export const BLOOM = 642;
+export const NOD = 732;
+export const GLIDE = 756;
+export const EXIT = 864;
+export const EXIT_SHAPE = 866;
+export const PASS = 1164;
+export const LAND = 1236;
+export const WORDS_OUT = 1680;
+export const TUCK = 1920;
+export const BULGE = 1962;
+export const VEIL = 2004;
+export const DIGIT = 2040;
+export const D2 = 2124;
+export const D1 = 2208;
+export const D0 = 2292;
+export const MATCH = 2640;
+export const UNVEIL = 2676;
+export const RESTORE = 2718;
+export const DOLLY_OUT = 3120;
+export const WEEK = 3840;
+export const WEEK_LEN = 360;
+export const TITLE = 4440;
+export const TITLE_LEN = 360;

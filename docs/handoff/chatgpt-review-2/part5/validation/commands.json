@@ -1,0 +1,267 @@
+[
+  {
+    "name": "combined-foundation-typecheck",
+    "command": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-typecheck",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2FocusWindowOwnership.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/PairingAttemptWindow.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/PairingTLV.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2CompanionFrame.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2ApprovalReview.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/FocusTimer.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/GamepadMapping.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2FocusEffectPlan.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2SemanticInputRouter.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Support/WS2PeerRepository.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Support/WS2PairSetupServer.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Support/WS2PairSetupCrypto.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Support/WS2FocusEffectExecutor.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Support/WS2DuplexProcess.swift"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "combined-foundation-typecheck.txt"
+  },
+  {
+    "name": "part4-regression-compile",
+    "command": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/FocusTimer.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2CompanionFrame.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2ApprovalReview.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/WS2FocusWindowOwnership.swift",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/part4/tests/CoreTests.swift",
+      "-o",
+      "/tmp/tmpipoyehlr/core"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "part4-regression-compile.txt"
+  },
+  {
+    "name": "part4-regression-run",
+    "command": [
+      "/tmp/tmpipoyehlr/core",
+      "/tmp/tmpipoyehlr/results"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "part4-regression-run.txt"
+  },
+  {
+    "name": "t1-regression-compile",
+    "command": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-parse-as-library",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/FocusTimer.swift",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/part1/tests/support/WS2TestSupport.swift",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/part1/packages/T1/tests/FocusTimerTests.swift",
+      "-o",
+      "/tmp/tmpipoyehlr/t1"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "t1-regression-compile.txt"
+  },
+  {
+    "name": "t1-regression-run",
+    "command": [
+      "/tmp/tmpipoyehlr/t1"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "t1-regression-run.txt"
+  },
+  {
+    "name": "gesture-regression-compile",
+    "command": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-parse-as-library",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/prototype/Core/ConductorGesture.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo/tests/ConductorGestureTests.swift",
+      "-o",
+      "/tmp/tmpipoyehlr/gesture"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "gesture-regression-compile.txt"
+  },
+  {
+    "name": "gesture-regression-run",
+    "command": [
+      "/tmp/tmpipoyehlr/gesture"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "gesture-regression-run.txt"
+  },
+  {
+    "name": "stage-reject-existing",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part5/tools/stage.py",
+      "--base",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/candidate-repo",
+      "--out",
+      "/mnt/data/WindowShade2-round2-handoff-v5/candidate-repo"
+    ],
+    "cwd": null,
+    "exit_code": 2,
+    "expected_exit": 2,
+    "as_expected": true,
+    "log": "stage-reject-existing.txt"
+  },
+  {
+    "name": "stage-reject-wrong-base",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part5/tools/stage.py",
+      "--base",
+      "/tmp/tmpipoyehlr/bad-base",
+      "--out",
+      "/tmp/tmpipoyehlr/must-not-exist"
+    ],
+    "cwd": null,
+    "exit_code": 2,
+    "expected_exit": 2,
+    "as_expected": true,
+    "log": "stage-reject-wrong-base.txt"
+  },
+  {
+    "name": "stage-reject-nested",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part5/tools/stage.py",
+      "--base",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/candidate-repo",
+      "--out",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/candidate-repo/must-not-exist"
+    ],
+    "cwd": null,
+    "exit_code": 2,
+    "expected_exit": 2,
+    "as_expected": true,
+    "log": "stage-reject-nested.txt"
+  },
+  {
+    "name": "prepare-isolated-srp",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part5/tools/prepare-srp-probe.py",
+      "--out",
+      "/tmp/tmpipoyehlr/srp-probe"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "prepare-isolated-srp.txt"
+  },
+  {
+    "name": "srp-manifest-dump",
+    "command": [
+      "swift",
+      "package",
+      "--package-path",
+      "/tmp/tmpipoyehlr/srp-probe",
+      "dump-package"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "srp-manifest-dump.txt"
+  },
+  {
+    "name": "source-map-check",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part5/tools/verify-sources.py",
+      "--base",
+      "/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/candidate-repo"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "source-map-check.txt"
+  },
+  {
+    "name": "shell-syntax-run-core",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part5/tests/run-core.sh"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "shell-syntax-run-core.txt"
+  },
+  {
+    "name": "shell-syntax-run-mac-crypto",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part5/tests/run-mac-crypto.sh"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "shell-syntax-run-mac-crypto.txt"
+  },
+  {
+    "name": "shell-syntax-run-process",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part5/tests/run-process.sh"
+    ],
+    "cwd": null,
+    "exit_code": 0,
+    "expected_exit": 0,
+    "as_expected": true,
+    "log": "shell-syntax-run-process.txt"
+  }
+]

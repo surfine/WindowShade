@@ -1,0 +1,120 @@
+{
+  "format": "ws2-r8-overlay-v1",
+  "baseline": "uploaded handoff-v7 candidate-repo",
+  "base_file_count": 1157,
+  "result_file_count": 1164,
+  "changes": [
+    {
+      "path": "docs/handoff/round2-part8/README.md",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "17ce3a43ca16572a43ebf6dc3b6f1c28910751f35c720fde531d5221d274717e"
+    },
+    {
+      "path": "docs/handoff/round2-part8/privacy-delta.json",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "1dc41ccfe8411ae8433dd86ee317da55a0d114553dc74d4bc589f2a3f2c5befc"
+    },
+    {
+      "path": "prototype/App/FoldExit.swift",
+      "operation": "replace",
+      "base_sha256": "02318b36ed4b257e1709818527db5aaa25f18e4d74ed3f08dfcc5865953bbb6b",
+      "sha256": "e69cdab84f86400d15e9bbf85f3a1a2a5eb71c9586332576c13c301581d7af30"
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "operation": "replace",
+      "base_sha256": "0cdb6083d236e72e193df9db07c672893c10f279be8f53b939be1a1f4cbd0733",
+      "sha256": "482e8b46ad1aec8d169653d75d0c3976379104191c2e53bbe3ecab05bb98e06c"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "operation": "replace",
+      "base_sha256": "354a6045d7221d33a2c16f849a34a910c969fce7acc58fbf7e958be6fb6b5d43",
+      "sha256": "f99ffc0698fa98d63b07a4d3c4ba196e6ddba38f1148df635295a47572c6a1c7"
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "operation": "replace",
+      "base_sha256": "b33f4f48c3b13e0aba198daa0282719a03f7dc0843bccd1c77d1e4971318e663",
+      "sha256": "f22cc7af4a270af54422820beea2807235198ba823b8bb42adf098b52f85a198"
+    },
+    {
+      "path": "prototype/App/WS2AppRuntime.swift",
+      "operation": "replace",
+      "base_sha256": "ae496e5fafe758ced14f91fa8ca9d042699e0b8a68062b51fae88073d7b4fe83",
+      "sha256": "99205e90fd9d99278da55fbfe88924e2100c4ada4223c6d35136da67cf5b6db2"
+    },
+    {
+      "path": "prototype/App/WS2DeviceActionHost.swift",
+      "operation": "replace",
+      "base_sha256": "9bad067f8333d54084cb88f2bffa4dd50307d1bb3db4d34aef501b01daa50011",
+      "sha256": "e969db6f1d29d4dc2af25afb99a58e90281b395480a704193de53e3b5cf2e5a7"
+    },
+    {
+      "path": "prototype/App/WS2FoldEvidenceAdapter.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "cb7f57c8020aeda4aca842a4a48a58b5e4a70acacc02cff63a2682d426a0c264"
+    },
+    {
+      "path": "prototype/App/WS2GameControllerBridge.swift",
+      "operation": "replace",
+      "base_sha256": "e8ff240ac2a42ae32eda28fa656c41ecd4ba3e88ad6f763f97af1e1815690a23",
+      "sha256": "cf257e4e8233d7030b96e5b317d02043024d25f2d03dc27824dd9976394881ee"
+    },
+    {
+      "path": "prototype/App/WS2IslandCoordinator.swift",
+      "operation": "replace",
+      "base_sha256": "6499c0c6d5b798b909d6546e8ab5c8c081b234c61cff852a6670cc8ed216ba98",
+      "sha256": "315bf8f9b76ead7600c8829b69c4609bf89d919f3421631b3154aedd13acd91f"
+    },
+    {
+      "path": "prototype/App/WS2ModelPickerView.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "1da4c59ec557195a5b03760eb038b2d8fe1ecabb2f733f2c29ab554d8790f73c"
+    },
+    {
+      "path": "prototype/App/WS2OwnedLaunchController.swift",
+      "operation": "replace",
+      "base_sha256": "631d6e462822fd75a3becc290c7b84492c7baacdc4b8adcbbd418dd125de3c07",
+      "sha256": "302f4b8ad841610a8a471caf79af657a5c8bc5d10e9c0e0a8d954363160a4ed2"
+    },
+    {
+      "path": "prototype/App/WS2OwnedSessionView.swift",
+      "operation": "replace",
+      "base_sha256": "ca1e124b84fd3f2138ee243eb2f3a0c175a03b9087f7eb1adc882fb727fe4ce8",
+      "sha256": "d3360e975925f28b112b32d4c51b9a75d195a507629793e5e5b3d3eed006434f"
+    },
+    {
+      "path": "prototype/Core/WS2DeviceActionContracts.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "bb69fd284e1fe4921c90e68f770915e724ce6198f12156662f81b04161a809a0"
+    },
+    {
+      "path": "prototype/Core/WS2FoldEvidence.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "3d1dd3583a1e6f93a4d721e6b4587a0cd700c993722fee2f7a03428919f420dd"
+    },
+    {
+      "path": "prototype/Core/WS2VisibleListInput.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "919b37b1add050fa65660fa70127a8dc131e659675ebedf791b86277d5acf425"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "operation": "replace",
+      "base_sha256": "4cbf3342bc01d1df701c23151617ad5df76bfe9a2b27c14f5149828c1242e228",
+      "sha256": "0c489c4b721315ef147f7b3898aa388377eac8b766ada421fda395716f16828a"
+    }
+  ],
+  "no_deletes": true,
+  "source_status": "candidate; see REMAINING",
+  "mac_sdk": "NOT RUN",
+  "runtime_hardware": "NOT RUN"
+}

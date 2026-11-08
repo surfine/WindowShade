@@ -1,0 +1,24 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-grid-title/validation.json",
+  "artifact_sha256": "b717767e27e465f02fb07a915ee9cd2bde9aaef00e2ade2aaecbdf2f2d5cfcb9",
+  "checks": [
+    {
+      "command": "WindowBrowserGridTitlePreview + check-grid-title-preview.py",
+      "exit_code": 0,
+      "result": "32 final actual Card/cell frames and 518 current identities;16 default before-after geometry pairs identical; actual pure derivedParams short18/long34;complete tooltip",
+      "receipt": "caller-after-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 current optimized inputs; strict flags/gates retained",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "chosen viewport not actual Dock placement;no real thumbnails/live video/window/controller;no compositor/focus/gesture/motion/signed Swift6 runtime",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

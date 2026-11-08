@@ -1,0 +1,6 @@
+{
+  "prototype/build.sh": "08ef94b8cf60a5f09b06874d898c81e92c2a757b47c0a54965ab0b33d17111e7",
+  "prototype/Native/WS2Child.c": "0800b71fa1f43e9037901474da2118c8af71ed4ab12eba3fdf4da48de4515183",
+  "prototype/Native/WS2Child.h": "95380850f4cbd24d868fc785978cda939307f3962640b091200068a17ea1a9da",
+  "prototype/Native/module.modulemap": "9cac42ba9402e4324e393d07c155c9375e20846e3bca84117460fdd0e6a0db8e"
+}

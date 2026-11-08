@@ -1,0 +1,5 @@
+WindowShade2第十九批：补原蓝图未出的进度画面稿，完整设计目标active。
+主模型先做设计判断：已有实时活动、三种量原口径、展开与紧凑同一件事、读不到不编百分比；纯黑宿主沿M11几何，最多三活动，不另造窗口/来源/仲裁。先从实际生产视图采百分比0/42/100、项数0/2/999、未知、暂停、完成、失效、长文件名与混合三条静态基线，再由样件决定候选；不把接线或自造图当外部来源通过。
+交付进度静态稿/文法11问准入与对照账、源码绑定实际原生PNG和真实AppKit字宽/层量/AX字符串消费者证据。设计文案先copy-guide；只新增设计稿与QA，若发现生产缺陷保红再主模型修，跑对应完整优化。
+只自有alpha0未显示离屏原生窗口/纯Core活动Projection，不运行产品main/Panel/Controller/真实来源或文件/账号/权限/系统输入，不写偏好、不提交/签名/安装。layer/cache只能静态，不当旋转或合成效果。编译用可选Swift6严格入口。
+入口：docs/design-drafts/README.md、design-grammar.md准入、progress-in-notch.md范围、copy-guide、NotchRow/NotchActivities、NotchTileView/NotchProgressPartLayers；消费者读当前实际JSON/SHA、检查数量与字宽/包含/隐藏宿主及PNG，主模型观察实际图。以当前真实回执推进状态。

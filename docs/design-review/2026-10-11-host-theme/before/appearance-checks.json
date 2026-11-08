@@ -1,0 +1,72 @@
+[
+  {
+    "darkContent" : false,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "model-picker-idle"
+  },
+  {
+    "darkContent" : false,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "conductor-page-idle"
+  },
+  {
+    "darkContent" : false,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "sessions-empty"
+  },
+  {
+    "darkContent" : false,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "sessions-mixed"
+  },
+  {
+    "darkContent" : false,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "sessions-long"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "conductor-connected"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameAqua",
+    "state" : "owned-session-idle"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "model-picker-idle"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "conductor-page-idle"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "sessions-empty"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "sessions-mixed"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "sessions-long"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "conductor-connected"
+  },
+  {
+    "darkContent" : true,
+    "parent" : "NSAppearanceNameDarkAqua",
+    "state" : "owned-session-idle"
+  }
+]

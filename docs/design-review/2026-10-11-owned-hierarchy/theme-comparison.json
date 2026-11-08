@@ -1,0 +1,11 @@
+{
+  "same_pairs": {
+    "ready": true,
+    "ready-model-picker": true,
+    "draft": true,
+    "running": true,
+    "completed": true,
+    "stopped": true
+  },
+  "before_launch": "different actual phases and selection; deliberately not compared"
+}

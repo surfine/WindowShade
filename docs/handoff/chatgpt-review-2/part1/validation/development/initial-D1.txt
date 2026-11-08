@@ -1,0 +1,30 @@
+/mnt/data/WindowShade2-round2-part1/packages/D1/tests/ConductorSessionTests.swift:212:13: error: invalid redeclaration of 'old'
+102 |         t.expect(a.state.candidate != nil && a.state.nextConfig?.effort=="high","完整五拍仍需点确认")
+103 |         t.section("D1-03", "候选前已按下的中心键后松开 → 无效；新的一按才确认")
+104 |         var b=Driver();let began=b.now+0.1;let old=b.down(.select,at:began);_=b.draw(beats(5))
+    |                                                `- note: 'old' previously declared here
+105 |         t.expect(b.up(.select,old,began:began,at:b.now+0.1).isEmpty && b.state.candidate != nil,"旧按压不能确认")
+106 |         _=b.click(.select);t.expect(b.state.candidate==nil && b.state.nextConfig?.effort=="max","新按压生效")
+    :
+210 |         t.expect(lock.state.context==nil && !lock.state.backendReady,"解锁不自动恢复控制")
+211 |         _=lock.connect(epoch:2,at:lock.now+0.1)
+212 |         let old=lock.state.receive(.init(context:oldContext,sequence:999,receivedAt:sec(lock.now+0.1),commandID:nil,turnID:nil,payload:.editDraft(text:"旧秘密",digest:digest())))
+    |             `- error: invalid redeclaration of 'old'
+213 |         t.expect(old==[.fault(.staleContext)] && lock.state.draft==nil,"旧回调不能复活内容")
+214 |         t.section("D1-22", "断开/撤销/电源退出 → 不发 interrupt，后端任务照跑")
+
+/mnt/data/WindowShade2-round2-part1/packages/D1/tests/ConductorSessionTests.swift:213:25: error: type 'Any' has no member 'fault'
+211 |         _=lock.connect(epoch:2,at:lock.now+0.1)
+212 |         let old=lock.state.receive(.init(context:oldContext,sequence:999,receivedAt:sec(lock.now+0.1),commandID:nil,turnID:nil,payload:.editDraft(text:"旧秘密",digest:digest())))
+213 |         t.expect(old==[.fault(.staleContext)] && lock.state.draft==nil,"旧回调不能复活内容")
+    |                         `- error: type 'Any' has no member 'fault'
+214 |         t.section("D1-22", "断开/撤销/电源退出 → 不发 interrupt，后端任务照跑")
+215 |         var exitRun=Driver();_=exitRun.send(.snapshot(turnID:"ongoing",actual:nil));let exited=exitRun.click(.power)
+
+/mnt/data/WindowShade2-round2-part1/packages/D1/tests/ConductorSessionTests.swift:213:32: error: cannot infer contextual base in reference to member 'staleContext'
+211 |         _=lock.connect(epoch:2,at:lock.now+0.1)
+212 |         let old=lock.state.receive(.init(context:oldContext,sequence:999,receivedAt:sec(lock.now+0.1),commandID:nil,turnID:nil,payload:.editDraft(text:"旧秘密",digest:digest())))
+213 |         t.expect(old==[.fault(.staleContext)] && lock.state.draft==nil,"旧回调不能复活内容")
+    |                                `- error: cannot infer contextual base in reference to member 'staleContext'
+214 |         t.section("D1-22", "断开/撤销/电源退出 → 不发 interrupt，后端任务照跑")
+215 |         var exitRun=Driver();_=exitRun.send(.snapshot(turnID:"ongoing",actual:nil));let exited=exitRun.click(.power)

@@ -1,0 +1,13 @@
+--- a/prototype/App/Preferences.swift
++++ b/prototype/App/Preferences.swift
+@@ -245,6 +245,10 @@
+         stack.addArrangedSubview(appearance)
+         appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
++
++        let ws2Pane = MainActor.assumeIsolated { WS2SupplementPane(owner: self) }
++        stack.addArrangedSubview(ws2Pane)
++        ws2Pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+ 
+         stack.addArrangedSubview(makePrefGroupLabel("声音"))
+         let sound = makeUnifiedSettingsCard([

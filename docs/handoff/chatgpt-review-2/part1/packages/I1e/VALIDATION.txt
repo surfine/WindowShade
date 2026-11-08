@@ -1,0 +1,39 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/packages/I1e/tests/run-siri-remote-buttons-tests.sh
+Exit: 0
+
+CASE I1e-01 | 12 个规定 HID 用法与未知用法 → 准确映射，未知不猜
+ok   HID 映射 66
+ok   HID 映射 67
+ok   HID 映射 68
+ok   HID 映射 69
+ok   HID 映射 128
+ok   HID 映射 134
+ok   HID 映射 96
+ok   HID 映射 205
+ok   HID 映射 226
+ok   HID 映射 233
+ok   HID 映射 234
+ok   HID 映射 4
+ok   不捏造电源用法
+CASE I1e-02 | 100ms 短按、重复 down/up → 一对阶段，无重复
+ok   按下
+ok   重复按下忽略
+ok   同一按压编号
+ok   松开去重无定时器
+CASE I1e-03 | 按住跨 0.5 秒和 1 秒 → 阈值各发一次，up 保留原编号
+ok   下一阈值
+ok   半秒
+ok   一秒
+ok   不持续重复 held
+ok   长按仍有匹配 up
+CASE I1e-04 | 两个键重叠按住后断开 → 各一个 cancel，无伪造 up
+ok   丢 up 用取消
+ok   重复取消幂等
+CASE I1e-05 | up 恰好一秒才到 → 先补阈值，再 up；非法值与倒流不变状态
+ok   事件顺序可消耗 release
+ok   非法事件无输出
+PASS I1e: 5 cases, 26 assertions, 0 failures

@@ -1,0 +1,60 @@
+{
+  "checkpoint": "third-design-checkpoint",
+  "persistent_goal": "active; all seven lines retained",
+  "status": "residual_risk",
+  "sources": {
+    "prototype/App/CalendarPresenter.swift": "77b5521fe33c7e59e8561ff42b2e51b418453f55826c1091857644e17c6e6436",
+    "prototype/App/WS2ConductorView.swift": "5a9f5a0a2b1eb5e8042aedb963c9327a389f38f9eb5e8aad1b64ec7ee5b83254",
+    "prototype/App/WS2OwnedSessionView.swift": "8cf6978787a243fc1c6f45e44edc1d379318291dd0b583918c7668f1c920ffab",
+    "tests/CalendarCardTests.swift": "6afdf766e9378609c5bc1e15dd1a272c9a61d6041cc74a17ce8d9c92eaeef99b",
+    "tools/design-qa/render-native-surfaces.sh": "2982efdd60574b0c0cb1f5de9e35a398e81c028c2bab5d3d8a7b47416c3406b0",
+    "tools/design-qa/ConductorSurfacePreview.swift": "575c5529fc5cc2e8b36cca71bb94520b35e62c62a9904ef88824e19736905bd2",
+    "prototype/build.sh": "08ef94b8cf60a5f09b06874d898c81e92c2a757b47c0a54965ab0b33d17111e7"
+  },
+  "evidence_sources": {
+    "final_swift_count": 515,
+    "after_snapshot_count": 518,
+    "current_hash_match": true
+  },
+  "checks": [
+    {
+      "command": "bash tests/run-appkit-tests.sh CalendarCardTests",
+      "exit_code": 0,
+      "result": "9 cases, 34 assertions; actual hosted card 440x175.5 radius28; privacy and revoked input",
+      "log": "../2026-10-11-calendar/calendar-regression.log"
+    },
+    {
+      "command": "bash tests/run-conductor-view-tests.sh",
+      "exit_code": 0,
+      "result": "8 cases, 68 assertions; pure presentation model only",
+      "log": "conductor-core.log"
+    },
+    {
+      "command": "render-native-surfaces.sh before / after",
+      "exit_code": 0,
+      "result": "14 before and 14 after invisible-window production-view captures; visual failure before; observed correction after",
+      "log": "after-render.log"
+    },
+    {
+      "command": "compare PNG bytes for parent Aqua/darkAqua",
+      "exit_code": 0,
+      "result": "7 of 7 after state pairs identical; limited to these static fixtures",
+      "log": "theme-comparison.json"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "result": "optimized app/update guard/hook compiled; localization206, privacy725, copy checks complete; existing warnings and46 long subtitles retained",
+      "script_exit_code": 0,
+      "exit_evidence": "Original session handle no longer available after context truncation. Complete log ends in successful final copy check; unchanged build.sh lines182-185 then exit0. Inferred from terminal log and deterministic script, not recovered process status. No rerun.",
+      "log": "build-check.log"
+    },
+    {
+      "command": "bash -n tools/design-qa/render-native-surfaces.sh; git diff --check",
+      "exit_code": 0,
+      "result": "syntax/whitespace pass; bad output path and product main guards reject with expected2",
+      "log": "preview-entry-guards.json"
+    }
+  ],
+  "live_hardware": "not_run: notch camera/multiple displays, motion, live input/VoiceOver, owned session backend flows",
+  "remaining": "Three other black-surface pages need native reproduction. Owned session hierarchy and action workflow are not design-converged. Other original seven-line work remains."
+}

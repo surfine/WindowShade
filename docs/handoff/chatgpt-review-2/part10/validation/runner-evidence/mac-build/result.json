@@ -1,0 +1,28 @@
+{
+  "suite": "mac-build",
+  "environment": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "candidate_sha256": "e1272ac9d11568274f7b96327397cc33939c037d48c565956e82c41bea1d1ac2",
+  "source_file_count": 1169,
+  "real_cli": false,
+  "real_devices": false,
+  "raw_logs_may_contain_local_paths": true,
+  "argv": [
+    "/opt/pyvenv/bin/python",
+    "-B",
+    "/mnt/data/WindowShade2-round2-part10/tools/run-mac-check.py",
+    "--candidate",
+    "/mnt/data/WindowShade2-round2-handoff-v10/candidate-repo",
+    "--report",
+    "/mnt/data/ws2-part10-evidence/mac-build/mac",
+    "--timeout",
+    "1800"
+  ],
+  "status": "NOT_RUN",
+  "exit_code": 78,
+  "elapsed_seconds": 0.9343816389998665,
+  "candidate_unchanged": true,
+  "logs_sha256": {
+    "stdout.txt": "72c630084e6e76f40707dcee4c27d86fdac54257691d56b4febfd0be17630168",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

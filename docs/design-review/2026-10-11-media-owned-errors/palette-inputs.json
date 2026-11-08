@@ -1,0 +1,14 @@
+{
+  "tests/run-artwork-palette-tests.sh": "c6c506ac594db8ee10a9e14b2451b150665b1f14e31c37e16cad2f4af72a343a",
+  "tests/ArtworkPaletteTests.swift": "bab7aa490e42341700902fefd7a75623daa5b3510e9bf0ed7c8d1d93f5ef49c9",
+  "prototype/Core/ArtworkPalette.swift": "a913e47730b0d4fd4ca8022ec5025c252dff03974e06f720ae5f8fb0b2e7dc03",
+  "prototype/Core/NowPlayingStreamParser.swift": "0f5de9d42f07bb34c65c64b2baa5c53b6927a2cab814c571a420555c87c4e860",
+  "prototype/Core/NowPlayingCardLogic.swift": "6c7ae418f0948d53ea37bf52ae1bf0dd917944f1ca173247b07f74cc80c8429f",
+  "prototype/Core/WireJSON.swift": "1aa9b98193b44a39a0840313870d1c865bd5148eef303dd54e1dda889debb244",
+  "prototype/Core/UsageReading.swift": "60911bfefc4fcb553df763a0db6a5f333cadf2bc2db241300b6f359de647af30",
+  "prototype/Core/NotchActivities.swift": "da43ab9d066be6a9949ed5c8b7c5c894ba4ae0342ccda9b0937ecb176d0d8fbe",
+  "prototype/Core/ReleaseDefaults.swift": "b7c5b0d7abcf86ba1a45ece9c0ab50937e671d2767940acfe70c9cbeadb7b938",
+  "prototype/App/NowPlayingArtwork.swift": "3de9741b6abbee3ab8cb34ed6d3a4655160583fbc817968ff7cbf8eda66c4dc2",
+  "prototype/App/NowPlayingStream.swift": "fe101de7db56e4800a212999b95b4bb8cf5b65a292ac43bf48c9808a4c482efa",
+  "prototype/App/NotchActivityPollPolicy.swift": "48791a010068d9c270db0a59289c9f81218bf2f6a07f27d4605c7afca0e3b694"
+}

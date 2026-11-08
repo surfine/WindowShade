@@ -1,0 +1,21 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": false,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-12-english-silent-lines/validation.json",
+  "artifact_sha256": "(validation.json 不自引用哈希; binding_sha256 5abf775956f990ac)",
+  "binding_sha256": "5abf775956f990ac",
+  "lenses": {
+    "task_contract": "本批改动全部在契约允许清单内：7 个静音源文件 + WS2SilentCopy + xcstrings + tests + tools/design-qa 夹具 + docs/copy-guide/证据 + .statem；未动 main、未提交未推送；中文输出逐字节不变由 2117 条纯测试回归网覆盖（约 120 条直接断言迁移中文句）",
+    "evidence_freshness": "validation binding 5abf775956f990ac 覆盖 17 源 + 16 证据文件；silent-prep（2117 ok）/localization（52 ok）/site build+check（42 项）为本 session 复跑并当场归档，其余（build-check、fixture、integration r01/r03）为批内原始档按原档引用并明示 reused；binding 公式先复算第27批 b332ab69a03e41c6 对上后才套用",
+    "edge_risk": "真机刘海静音页英文可读性（344pt 岛宽换行/截断）与真实触发路径未验——README/validation 已逐条记 not_run；夹具为静态渲染不证明交互与动效；'Launchpad' 贴边为既有密度记观察项不记失败；QA 探针中文按 §9 类别②豁免占棘轮位数；不写'英语已支持'，总目标 active"
+  },
+  "findings": [
+    "137 条去重中文字面量全部出表，7 文件代码行零中文残留（grep 非注释行复核为 0，与 README 声明一致）；语义身份路由保持中文源句，无英文串反查行为",
+    "§9.4 棘轮落地并冻结 3406；copy-lint 4 条超限句经 git diff 对照 2003e53^ 确认为迁移前逐字节原文后逐条豁免（LEGACY_SAYINGS），判据放宽逐条记录符合护栏",
+    "门5收尾补齐：测试日志复跑留档（/tmp 不过夜护栏）、validation.json、CONTINUE.md 第二十八检查点、StateM run 20261012-english-silent-lines 推进至 handoff；site 无词可同步（静音句不出现在官网/README）",
+    "整体目标仍 active：下一表面为隐私（WS2PrivacyData 为生成文件，迁移点在 tools/privacy/make-privacy-page-source.py 与 registry.json，先读生成链再动）；1.0.16 发布关 Phase 1–3 等用户真机，本批不在 82681b0 基线内、不阻塞发布"
+  ],
+  "next_action": "handoff"
+}

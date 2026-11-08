@@ -1,0 +1,5 @@
+{
+  "source_sha256": "38424356ef293a8f24a0807309c3035b93cf9d92725c5e48fdbb486fdaa650bb",
+  "basis": "HEAD reconstructed with the sole prior explicit corner override; hash exactly matches seventh frozen native inputs",
+  "image_basis": "same synthetic long ASCII basename, actual seventh production native frame; alpha0 offscreen, two parent PNGs identical"
+}

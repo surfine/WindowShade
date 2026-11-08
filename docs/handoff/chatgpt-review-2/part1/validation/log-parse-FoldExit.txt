@@ -1,0 +1,4 @@
+UTC 2026-10-03T05:34:56.276793+00:00
+COMMAND ['swiftc', '-frontend', '-parse', '/mnt/data/ws2-part1-log-stage/prototype/App/FoldExit.swift']
+EXPECTED 0
+EXIT 0

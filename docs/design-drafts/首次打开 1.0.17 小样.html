@@ -1,0 +1,1758 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>首次打开 1.0.17</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 版式：左对齐的长稿；每张画板是一扇按 pt 原尺寸画的 macOS 窗口，窄屏时整张等比缩小，标注跟在画板下面。
+   画面里的颜色照 macOS 系统语义色的近似值；稿纸本身用偏蓝的冷灰，和设计系统那几张稿一致。 */
+:root{
+  --paper:#eceef2; --sheet:#f7f8fa; --ink:#1d1d1f; --muted:#5f6168; --faint:#8a8c93; --rule:rgba(20,24,40,.12);
+  --accent:#007aff; --accent-ink:#ffffff; --ok:#1f9d48; --warn:#c26a00;
+  --win:#f2f2f4; --win-line:rgba(0,0,0,.12); --win-shadow:0 30px 70px -30px rgba(10,20,40,.45),0 0 0 .5px rgba(0,0,0,.18);
+  --ctl:#e3e3e7; --ctl-ink:#1d1d1f; --card:#ffffff; --card-line:rgba(0,0,0,.08); --sep:rgba(0,0,0,.08);
+  --wall:radial-gradient(120% 100% at 0% 0%,#bcd3ff 0%,transparent 60%),radial-gradient(100% 90% at 100% 0%,#f3cdea 0%,transparent 62%),radial-gradient(120% 100% at 60% 110%,#ffd9b8 0%,transparent 60%),#dfe4ef;
+  --menubar:#ececee; --mini-win:#ffffff; --mini-bar:#ececf0; --mini-line:#d6d6dc; --mini-text:#cfcfd5;
+  --menu:rgba(246,246,248,.86); --menu-hi:#007aff; --glass:rgba(250,250,252,.72); --glass-rim:rgba(255,255,255,.8);
+  --pill:rgba(28,28,32,.82); --pill-ink:#ffffff; --tag:#e8eefc; --tag-ink:#1d4fb8;
+  --tile:#f4f4f6; --devline:#b9bcc4; --devfill:#fbfbfc; --wp1:#6fb0f0; --wp2:#3b7fd6;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","PingFang TC","Hiragino Sans GB","Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  /* 弹簧（design-system §4.6），脚本按 response / ζ 现算成 linear()；脚本没跑时退回 ease */
+  --calm:ease; --calm-t:.34s; --settle:ease; --settle-t:.38s; --pop:ease; --pop-t:.3s; --bloom:ease; --bloom-t:.42s;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121317; --sheet:#1a1b20; --ink:#f2f2f5; --muted:#a4a6ad; --faint:#7d7f87; --rule:rgba(255,255,255,.12);
+  --accent:#0a84ff; --ok:#32c35c; --warn:#ff9f0a;
+  --win:#28282c; --win-line:rgba(255,255,255,.10); --win-shadow:0 30px 70px -30px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.14);
+  --ctl:#3a3a3f; --ctl-ink:#f2f2f5; --card:#323237; --card-line:rgba(255,255,255,.07); --sep:rgba(255,255,255,.08);
+  --wall:radial-gradient(120% 100% at 0% 0%,#253e72 0%,transparent 60%),radial-gradient(100% 90% at 100% 0%,#4e2a52 0%,transparent 62%),radial-gradient(120% 100% at 60% 110%,#5c3a22 0%,transparent 60%),#1b1e27;
+  --menubar:#1e1e22; --mini-win:#2c2c30; --mini-bar:#3a3a3f; --mini-line:#46464c; --mini-text:#55555c;
+  --menu:rgba(40,40,44,.86); --glass:rgba(44,44,48,.72); --glass-rim:rgba(255,255,255,.18);
+  --pill:rgba(250,250,252,.9); --pill-ink:#1d1d1f; --tag:#1f2d4d; --tag-ink:#9cc1ff;
+  --tile:#2a2a2e; --devline:#6a6c74; --devfill:#333338; --wp1:#2f5f9e; --wp2:#1d3f73;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#121317; --sheet:#1a1b20; --ink:#f2f2f5; --muted:#a4a6ad; --faint:#7d7f87; --rule:rgba(255,255,255,.12);
+  --accent:#0a84ff; --ok:#32c35c; --warn:#ff9f0a;
+  --win:#28282c; --win-line:rgba(255,255,255,.10); --win-shadow:0 30px 70px -30px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.14);
+  --ctl:#3a3a3f; --ctl-ink:#f2f2f5; --card:#323237; --card-line:rgba(255,255,255,.07); --sep:rgba(255,255,255,.08);
+  --wall:radial-gradient(120% 100% at 0% 0%,#253e72 0%,transparent 60%),radial-gradient(100% 90% at 100% 0%,#4e2a52 0%,transparent 62%),radial-gradient(120% 100% at 60% 110%,#5c3a22 0%,transparent 60%),#1b1e27;
+  --menubar:#1e1e22; --mini-win:#2c2c30; --mini-bar:#3a3a3f; --mini-line:#46464c; --mini-text:#55555c;
+  --menu:rgba(40,40,44,.86); --glass:rgba(44,44,48,.72); --glass-rim:rgba(255,255,255,.18);
+  --pill:rgba(250,250,252,.9); --pill-ink:#1d1d1f; --tag:#1f2d4d; --tag-ink:#9cc1ff;
+  --tile:#2a2a2e; --devline:#6a6c74; --devfill:#333338; --wp1:#2f5f9e; --wp2:#1d3f73;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 var(--sans);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 64px}
+.wrap{max-width:1000px;margin:0 auto;display:grid;gap:40px}
+a{color:var(--accent)}
+h1,h2,h3{text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:32px;line-height:1.2;font-weight:700}
+h2{font-size:22px;line-height:1.3;font-weight:650}
+h3{font-size:16px;font-weight:650}
+p{margin:0;max-width:68ch}
+.kicker{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.lead{color:var(--muted);font-size:16px}
+section{display:grid;gap:16px;min-width:0}
+.sheet{background:var(--sheet);border-radius:14px;padding:20px;box-shadow:0 0 0 .5px var(--rule);display:grid;gap:14px;min-width:0}
+code,.mono{font-family:var(--mono);font-size:.9em}
+table{border-collapse:collapse;width:100%;font-size:13px}
+.scroll table{min-width:600px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--rule)}
+th{font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap}
+td.num,th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto;min-width:0}
+ul.plain{margin:0;padding-left:1.2em;display:grid;gap:6px;max-width:72ch}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:1px 8px;border-radius:99px;background:var(--tag);color:var(--tag-ink);vertical-align:1px}
+.tag.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+
+/* 顶上的开关：语言、外观、减少动态效果 */
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;
+  background:color-mix(in srgb,var(--paper) 86%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:10px 0;border-bottom:1px solid var(--rule)}
+.seg{display:inline-flex;background:var(--ctl);border-radius:8px;padding:2px;gap:2px}
+.seg button{font:500 12px var(--sans);border:0;background:none;color:var(--ink);padding:4px 10px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--sheet);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.seg button:focus-visible,.chips button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.controls label{font-size:12px;color:var(--muted)}
+
+/* 状态切换（画板下面） */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:500 12px var(--sans);border:1px solid var(--rule);background:var(--sheet);color:var(--ink);padding:4px 10px;border-radius:99px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+/* 画板：外面是等比缩放的框，里面按 pt 原尺寸画 */
+.board-head{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}
+.board-head .size{font-family:var(--mono);font-size:12px;color:var(--faint)}
+.fit{width:100%;min-width:0;container-type:inline-size}
+.fit-inner{width:var(--w);height:var(--h);transform-origin:0 0;transform:scale(var(--s,1))}
+.fit-box{height:calc(var(--h) * var(--s,1));overflow:hidden;padding:0}
+.note-list{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.note-list li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:13px;color:var(--muted)}
+.note-list li b{color:var(--ink);font-weight:600}
+.note-list .n{width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:11.5px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+
+/* ——— macOS 窗口 ——— */
+.mac{width:100%;height:100%;background:var(--win);border-radius:16px;box-shadow:var(--win-shadow);position:relative;overflow:hidden;color:var(--ink);font:13px/1.45 var(--sans)}
+.mac .tb{height:40px;display:flex;align-items:center;padding-inline:16px;gap:8px}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%;display:block;background:#ff5f57;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.2)}
+.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.mac .body{position:absolute;inset:40px 26px 64px;display:flex;flex-direction:column}
+.mac .foot{position:absolute;left:26px;right:26px;bottom:0;height:64px;display:flex;align-items:center;justify-content:space-between}
+.dots{display:flex;gap:7px;align-items:center}.dots i{width:7px;height:7px;border-radius:4px;background:var(--faint);opacity:.55;display:block}
+.dots i.on{width:18px;background:var(--accent);opacity:1}
+.btns{display:flex;gap:10px;align-items:center}
+.b{font:500 13px var(--sans);border-radius:99px;padding:6px 18px;border:0;background:var(--ctl);color:var(--ctl-ink);cursor:pointer;min-width:84px;
+  box-shadow:inset 0 .5px 0 rgba(255,255,255,.5),0 0 0 .5px var(--win-line)}
+.b.primary{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.b.plain{background:none;box-shadow:none;color:var(--muted);min-width:0;padding-inline:8px}
+.b[disabled]{opacity:.4;cursor:default}
+.b:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:1px}
+.eyebrow{font-size:12px;color:var(--faint)}
+.mt{font-size:22px;line-height:1.25;font-weight:600;margin:2px 0 6px;letter-spacing:-.01em}
+.ml{font-size:15px;color:var(--muted);margin:0}
+.status{font-size:13px;color:var(--muted);min-height:20px;margin-top:8px;transition:opacity var(--calm-t) var(--calm)}
+.status.ok{color:var(--ok)}
+.fine{font-size:12px;color:var(--faint)}
+
+/* 舞台（迷你桌面） */
+.stage{position:relative;height:300px;border-radius:12px;background:var(--wall);overflow:hidden;box-shadow:inset 0 0 0 .5px var(--win-line);flex:none;margin-bottom:20px}
+.mbar{position:absolute;inset:0 0 auto;height:26px;background:var(--menubar);display:flex;align-items:center;padding-inline:14px;gap:16px;font-size:12px;font-weight:600}
+.mbar span{font-weight:400;opacity:.8}.mbar .sp{flex:1}
+.notch{position:absolute;top:0;left:50%;width:10.8%;aspect-ratio:1/.18;transform:translateX(-50%);background:#000;border-radius:0 0 5.8% 5.8%/0 0 32% 32%}
+/* 练习窗口：舞台里的一扇真窗口（App 里是一扇 WindowShade 自己的子窗口，不需要辅助功能） */
+.pw{position:absolute;left:174px;top:62px;width:320px;height:196px;background:var(--mini-win);border-radius:13px;
+  box-shadow:0 16px 34px -14px rgba(10,20,50,.5),0 0 0 .5px rgba(0,0,0,.2);overflow:hidden;
+  transition:height var(--settle-t) var(--settle)}
+.pw .pbar{height:28px;display:flex;align-items:center;gap:7px;padding-inline:10px;background:var(--mini-bar);font-size:12px;font-weight:600;color:var(--muted);cursor:default;user-select:none;border-bottom:1px solid var(--mini-line)}
+.pw .pbar:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pw .pbar .lights i{width:11px;height:11px}
+.pw .pbar b{flex:1;text-align:center;margin-right:46px;font-weight:600}
+.pw .ptxt{padding:12px 14px;display:grid;gap:9px;transition:opacity .1s}
+.pw .ptxt i{display:block;height:8px;border-radius:4px;background:var(--mini-text)}
+.pw .ptxt i:nth-child(2){width:72%}.pw .ptxt i:nth-child(3){width:86%}.pw .ptxt i:nth-child(4){width:58%}.pw .ptxt i:nth-child(5){width:80%}
+.pw.rolled{height:28px}
+.pw.rolled .pbar{border-bottom-color:transparent}
+.pw.rolled .ptxt{opacity:0}
+.hint{position:absolute;left:334px;top:28px;transform:translateX(-50%);background:var(--pill);color:var(--pill-ink);font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;white-space:nowrap;
+  transition:opacity var(--calm-t) var(--calm),transform var(--calm-t) var(--calm);pointer-events:none}
+.hint::after{content:"";position:absolute;left:50%;bottom:-4px;width:8px;height:8px;margin-left:-4px;background:inherit;transform:rotate(45deg);border-radius:1px}
+.hint.gone{opacity:0;transform:translateX(-50%) translateY(-4px)}
+.ripple{position:absolute;left:334px;top:76px;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:2px solid var(--accent);opacity:0;pointer-events:none}
+.ripple.go{animation:rip .5s ease-out}
+@keyframes rip{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}
+.side-win{position:absolute;left:520px;top:92px;width:130px;height:150px;background:var(--mini-win);border-radius:11px;opacity:.7;box-shadow:0 10px 24px -12px rgba(10,20,50,.45),0 0 0 .5px rgba(0,0,0,.18)}
+.side-win::before{content:"";display:block;height:22px;background:var(--mini-bar);border-radius:11px 11px 0 0}
+.check{display:inline-flex;width:18px;height:18px;border-radius:50%;background:var(--ok);color:#fff;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-right:6px;vertical-align:-3px;
+  transform:scale(.6);opacity:0;transition:transform var(--pop-t) var(--pop),opacity .12s}
+.status.ok .check{transform:none;opacity:1}
+.status:not(.ok) .check{display:none}
+
+/* 授权行 */
+.rows{background:var(--card);border-radius:12px;box-shadow:0 0 0 .5px var(--card-line);margin-top:18px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px}
+.row+.row{border-top:1px solid var(--sep)}
+.row .ic{width:32px;height:32px;border-radius:8px;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);display:flex;align-items:center;justify-content:center;flex:none}
+.row .t{flex:1;min-width:0}.row .t b{display:block;font-weight:600;font-size:13px}.row .t small{display:block;color:var(--muted);font-size:12px}
+.row .st{font-size:13px;color:var(--ok);font-weight:600;white-space:nowrap;display:none}
+.row.granted .st{display:inline-flex;align-items:center;gap:4px;animation:popin var(--pop-t) var(--pop)}
+.row.granted .b{display:none}
+@keyframes popin{from{transform:scale(.8);opacity:0}to{transform:none;opacity:1}}
+.row .wait{font-size:12px;color:var(--muted);display:none}
+.row.waiting .wait{display:block}
+.progress{font-size:12px;color:var(--muted);margin-top:14px}
+.stuck{font-size:12px;color:var(--warn);margin-top:8px;display:none}
+.stuck.on{display:block}
+
+/* A3 菜单栏 */
+.mbar .ws{width:26px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;background:color-mix(in srgb,var(--ink) 14%,transparent)}
+.ring{position:absolute;inset:-5px;border-radius:9px;border:2px solid var(--accent);animation:ring 2.4s var(--bloom) infinite}
+@keyframes ring{0%{opacity:0;transform:scale(.8)}18%{opacity:1;transform:none}60%{opacity:1}100%{opacity:0}}
+.dmenu{position:absolute;right:52px;top:30px;width:214px;background:var(--menu);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:10px;padding:5px;box-shadow:0 12px 30px -10px rgba(0,0,0,.4),0 0 0 .5px var(--win-line);font-size:12px}
+.dmenu div{padding:3px 10px;border-radius:5px;display:flex;justify-content:space-between}
+.dmenu div.hi{background:var(--menu-hi);color:#fff}
+.dmenu hr{border:0;border-top:1px solid var(--sep);margin:4px 8px}
+.dmenu .k{opacity:.55}
+.tour{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.tcard{background:var(--card);border-radius:12px;box-shadow:0 0 0 .5px var(--card-line);padding:10px 12px;display:grid;gap:4px;font-size:12px;color:var(--muted)}
+.tcard b{color:var(--ink);font-size:13px}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px;color:var(--ink);font-size:12px}
+.sw{width:30px;height:18px;border-radius:9px;background:var(--ctl);position:relative;border:0;padding:0;cursor:pointer;flex:none;transition:background var(--calm-t) var(--calm)}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform var(--calm-t) var(--calm)}
+.sw[aria-checked="true"]{background:var(--accent)}.sw[aria-checked="true"]::after{transform:translateX(12px)}
+.sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* C1 窗口浏览面板一角 */
+.panel{width:100%;height:100%;border-radius:18px;background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);box-shadow:0 20px 40px -18px rgba(0,0,0,.45),inset 0 0 0 1px var(--glass-rim);padding:12px;display:flex;flex-direction:column;gap:10px;font:13px/1.45 var(--sans);color:var(--ink)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;flex:1}
+.wcard{border-radius:8px;background:var(--mini-win);box-shadow:0 0 0 .5px var(--win-line);display:flex;flex-direction:column;overflow:hidden}
+.wcard .shot{flex:1;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 20%,var(--mini-win)),var(--mini-win))}
+.wcard.iconic .shot{background:var(--mini-bar);display:flex;align-items:center;justify-content:center}
+.wcard .shot .appic{width:34px;height:34px;border-radius:9px;background:linear-gradient(#8fb6ff,#3f7bf0)}
+.wcard .nm{font-size:11.5px;padding:5px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ask{display:flex;align-items:center;gap:10px;background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:12px;padding:8px 10px;font-size:12px}
+.ask p{flex:1;min-width:0}
+.ask .b{min-width:0;padding:4px 12px;font-size:12px}
+.footline{font-size:12px;color:var(--muted);padding-inline:4px}
+
+/* 流程图 */
+.flow svg{display:block;min-width:900px;width:100%;height:auto}
+.flow .box{fill:var(--card);stroke:var(--rule)}
+.flow .box.key{stroke:var(--accent);stroke-width:1.5}
+.flow .box.opt{stroke-dasharray:4 3}
+.flow text{fill:var(--ink);font:13px var(--sans)}
+.flow text.s{fill:var(--muted);font-size:11.5px}
+.flow .ln{stroke:var(--faint);fill:none;stroke-width:1.3}
+.flow .lbl{fill:var(--accent);font-size:11.5px;font-weight:600}
+.flow .ar{fill:var(--faint)}
+
+.qa{display:grid;gap:12px;counter-reset:q}
+.qa > div{background:var(--sheet);border-radius:12px;padding:14px 16px;box-shadow:0 0 0 .5px var(--rule);display:grid;gap:6px}
+.qa h3::before{counter-increment:q;content:counter(q) "　";color:var(--accent)}
+.qa .rec{font-size:13px}.qa .rec b{color:var(--accent)}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.twocol{grid-template-columns:1fr}h1{font-size:26px}}
+@media (prefers-reduced-motion:reduce){.ring{animation:none;opacity:1}.ripple.go{animation:none}}
+:root[data-motion="reduced"] .ring{animation:none;opacity:1}
+:root[data-motion="reduced"] .pw{transition:none}
+:root[data-motion="reduced"] .ripple.go{animation:none}
+
+/* ——— 手势教学 hero：左边是手上的设备，右边是屏幕上发生的事（照系统设置 → 触控板 / 鼠标） ——— */
+.hero{display:flex;gap:16px;flex:none}
+.tile{position:relative;border-radius:12px;overflow:hidden;flex:none}
+.tile .in{position:absolute;left:0;top:0;width:312px;height:200px;transform-origin:0 0}
+.tile.dev{background:var(--tile);box-shadow:inset 0 0 0 .5px var(--win-line)}
+.tile.res{background:linear-gradient(160deg,var(--wp1),var(--wp2));box-shadow:inset 0 0 0 .5px var(--win-line)}
+.pad{position:absolute;left:81px;top:50px;width:150px;height:100px;border:2px solid var(--devline);border-radius:12px;background:var(--devfill)}
+.mouse{position:absolute;left:126px;top:46px;width:60px;height:108px;border:2px solid var(--devline);border-radius:30px;background:var(--devfill);display:none}
+.mouse::after{content:"";position:absolute;left:50%;top:70px;width:10px;height:12px;margin-left:-5px;border-radius:5px 5px 4px 4px;background:var(--devline);opacity:.5}
+.tile.dev.m .pad{display:none}.tile.dev.m .mouse{display:block}
+.dot{position:absolute;left:0;top:0;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;opacity:0;
+  background:radial-gradient(circle at 40% 35%,#a9c8ff,#4f86e8);box-shadow:0 3px 6px rgba(30,60,120,.35)}
+.tile.dev.m .dot{background:transparent;border:2px solid var(--accent);box-shadow:none}
+.dbadge{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);font:600 11px var(--sans);color:var(--muted);background:var(--sheet);padding:2px 8px;border-radius:99px;white-space:nowrap;display:none}
+.mb{position:absolute;left:0;right:0;top:0;height:6px;background:var(--menubar)}
+.nt{position:absolute;top:0;left:139px;width:34px;height:6px;background:#000;border-radius:0 0 2px 2px;z-index:5}
+.dockbar{position:absolute;left:96px;top:184px;width:120px;height:12px;border-radius:4px;background:rgba(255,255,255,.42);display:flex;gap:3px;align-items:center;justify-content:center}
+.dockbar i{width:8px;height:8px;border-radius:2px;background:rgba(255,255,255,.85);display:block}.dockbar i:nth-child(3){background:#4f86e8}
+.w{position:absolute;left:0;top:0;background:var(--mini-win);border-radius:6px;box-shadow:0 6px 14px -6px rgba(0,0,0,.45),0 0 0 .5px rgba(0,0,0,.18);overflow:hidden;transform-origin:50% 0}
+.w b{display:block;height:10px;background:var(--mini-bar)}
+.w p{margin:6px 8px;display:grid;gap:5px;transition:opacity .1s}
+.w p i{display:block;height:4px;border-radius:2px;background:var(--mini-text)}.w p i:nth-child(2){width:70%}.w p i:nth-child(3){width:85%}
+.w.r p{opacity:0}
+.w.hl{box-shadow:0 0 0 2px var(--accent),0 6px 14px -6px rgba(0,0,0,.45)}
+.w.cl{cursor:default}
+.hrow{position:absolute;left:119px;top:8px;width:74px;height:19px;display:flex;justify-content:center;gap:1.5px;opacity:0;z-index:6}
+.hrow i{width:14px;height:19px;border-radius:2.6px;background:linear-gradient(#4a4a50,#4a4a50) center/9px 8px no-repeat,#242424;display:block}
+.hrow i.hot{background:linear-gradient(#6a6a72,#6a6a72) center/9px 8px no-repeat,#383838}
+.hpanel{position:absolute;left:66px;top:150px;width:180px;height:62px;border-radius:10px;background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 8px 18px -8px rgba(0,0,0,.45),inset 0 0 0 1px var(--glass-rim);display:flex;gap:6px;padding:6px;opacity:0}
+.hpanel i{flex:1;border-radius:4px;background:var(--mini-win);display:block}
+.ptr{position:absolute;left:0;top:0;width:12px;height:16px;z-index:8;opacity:0}
+.hhint{position:absolute;left:156px;top:24px;transform:translateX(-50%);background:var(--pill);color:var(--pill-ink);font:600 10px var(--sans);padding:2px 7px;border-radius:99px;white-space:nowrap;opacity:0;z-index:9;transition:opacity .2s}
+.ghost{position:absolute;border:1.5px dashed rgba(255,255,255,.9);border-radius:6px;display:none;z-index:1}
+.arr{position:absolute;inset:0;width:312px;height:200px;display:none;z-index:9;pointer-events:none}
+.arr path{fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tile.res .arr path{stroke:var(--accent);filter:drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff)}
+.hero.still .arr,.hero.still .ghost{display:block}
+/* 设置页 */
+.set-tb{height:52px;display:flex;align-items:center;gap:10px;padding-inline:18px;font-size:15px}
+.segc{display:flex;background:var(--ctl);border-radius:8px;padding:2px;margin-top:12px;gap:2px}
+.segc button{flex:1;font:500 12px var(--sans);border:0;background:none;color:var(--ink);padding:4px 0;border-radius:6px;cursor:pointer}
+.segc button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.segc button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.scard{background:var(--card);border-radius:12px;box-shadow:0 0 0 .5px var(--card-line);margin-top:14px}
+.srow{display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:0;cursor:default;outline:none}
+.scard .srow:first-child{border-radius:12px 12px 0 0}.scard .srow:last-child{border-radius:0 0 12px 12px}
+#n1rows .ic{position:relative}#n1rows .ic::after{content:"";position:absolute;inset:9px 8px;border:1.6px solid var(--accent);border-radius:3px;border-top-width:4px}
+.srow .ic{position:relative}.srow .ic::after{content:"";position:absolute;inset:8px 7px;border:1.6px solid var(--accent);border-radius:3px;border-top-width:4px;opacity:.85}
+.srow+.srow,.srow+.stable,.stable+.srow{border-top:1px solid var(--sep)}
+.srow:hover,.srow:focus-visible,.srow.sel{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.srow:focus-visible{box-shadow:inset 0 0 0 2px var(--accent)}
+.srow .ic{width:28px;height:28px;border-radius:7px;background:color-mix(in srgb,var(--accent) 14%,transparent);flex:none}
+.srow .tx{flex:1;min-width:0}.srow .tx b{display:block;font-size:13px;font-weight:600}.srow .tx small{display:block;color:var(--muted);font-size:11.5px}
+.fchip{display:inline-block;margin-top:4px;font-size:11px;padding:0 7px;border-radius:5px;border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);color:var(--accent)}
+.fchip.combo{border-color:var(--rule);color:var(--muted)}
+.stable{padding:2px 14px 8px 54px;font-size:11.5px}
+.stable div{display:flex;justify-content:space-between;gap:10px;padding:4px 8px;border-radius:6px;color:var(--muted);cursor:default}
+.stable div:hover,.stable div:focus-visible{background:color-mix(in srgb,var(--accent) 7%,transparent);color:var(--ink);outline:none}
+.stable div b{font-weight:500;color:var(--ink)}
+.sboard{display:grid;gap:14px}
+.frames{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}
+.frame{flex:none;display:grid;gap:4px;width:320px}
+.frame .cap{font-size:12px;color:var(--muted);line-height:1.45}.frame .cap b{color:var(--ink);font-variant-numeric:tabular-nums}
+.kc{position:absolute;top:72px;width:56px;height:56px;border-radius:9px;background:var(--sheet);box-shadow:0 2px 0 var(--devline),0 0 0 1px var(--devline);display:none;flex-direction:column;align-items:center;justify-content:center;font:600 22px var(--sans);color:var(--ink);opacity:0;transform-origin:50% 100%}
+.kc small{font:500 9px var(--sans);color:var(--muted)}
+.tile.dev.k .kc{display:flex}.tile.dev.k .pad,.tile.dev.k .mouse{display:none}
+.mbi{position:absolute;left:274px;top:1px;width:10px;height:4px;border-radius:2px;background:rgba(0,0,0,.55);opacity:0;z-index:6}
+.mbi.hl{box-shadow:0 0 0 2px var(--accent)}
+.hmenu{position:absolute;left:206px;top:8px;width:100px;padding:5px;border-radius:7px;background:var(--menu);box-shadow:0 8px 18px -8px rgba(0,0,0,.45),0 0 0 .5px var(--win-line);display:grid;gap:4px;opacity:0;z-index:7}
+.hmenu i{display:block;height:5px;border-radius:2px;background:var(--mini-text)}.hmenu i.hi{background:var(--accent)}
+.hmenu hr{border:0;border-top:1px solid var(--sep);margin:0}
+.nl{position:absolute;left:86px;top:6px;width:140px;text-align:center;color:#fff;z-index:6;opacity:0;display:grid;line-height:1.25}
+.nl b{font:600 10px var(--sans)}.nl small{font:400 8px var(--sans);opacity:.6}
+.origin{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.origin button{font:500 12px var(--sans);border:1px solid var(--rule);background:var(--card);color:var(--ink);padding:3px 12px;border-radius:12px;cursor:pointer}
+.origin button[aria-checked="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
+.origin button[aria-checked="true"]::before{content:"✓ "}
+.origin button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.tile.dev.tx .pad,.tile.dev.tx .mouse{display:none}
+.dtext{position:absolute;left:36px;right:36px;top:76px;min-height:48px;display:none;align-items:center;justify-content:center;text-align:center;padding:8px 12px;border-radius:10px;background:var(--sheet);box-shadow:0 0 0 1px var(--devline);font:600 13px var(--sans);color:var(--ink)}
+.tile.dev.tx .dtext{display:flex}
+.cover{position:absolute;inset:0;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;color:#fff;font:600 13px var(--sans);opacity:0;z-index:10}
+.offtag{position:absolute;left:8px;top:16px;font:600 10px var(--sans);background:var(--sheet);color:var(--muted);padding:1px 7px;border-radius:99px;opacity:0;z-index:11;transition:opacity .18s}
+.hero .tile{transition:opacity var(--calm-t) var(--calm),filter var(--calm-t) var(--calm)}
+.hero.off .tile{opacity:.55;filter:saturate(.15)}
+.hero.off .offtag{opacity:1}
+.w.uni b{background:#3a3a40}.w.uni{background:#3a3a40}
+.w.thumbc{border-radius:5px;box-shadow:0 0 0 1.5px rgba(255,255,255,.9),0 6px 14px -6px rgba(0,0,0,.5)}
+.hpanel.privp i:nth-child(2){background:repeating-linear-gradient(45deg,var(--mini-bar) 0 4px,var(--mini-win) 4px 8px)}
+.xside{width:204px;flex:none;background:color-mix(in srgb,var(--ink) 5%,var(--win));padding:52px 10px 10px;display:grid;align-content:start;gap:2px}
+.xside button{font:500 13px var(--sans);text-align:left;border:0;background:none;color:var(--ink);padding:6px 10px;border-radius:7px;cursor:pointer}
+.xside button[aria-selected="true"]{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.xside button:focus-visible{outline:2px solid var(--accent)}
+.xmain{flex:1;min-width:0;padding:0 28px 18px}
+.xopts.seg button{padding:2px 8px;font-size:11.5px}
+.wo{display:grid;gap:10px;margin:0;padding-left:1.4em;max-width:none}
+.wo li,.note-list li,.sheet p,.qa .rec{min-width:0;overflow-wrap:anywhere}code{overflow-wrap:anywhere}
+.wo li{font-size:13px}.wo li b{font-weight:650}
+
+.hpanel.h1 i:nth-child(1),.hpanel.h2 i:nth-child(2),.hpanel.h3 i:nth-child(3){box-shadow:0 0 0 2px var(--accent)}
+.hpanel.livep i:nth-child(2){background:linear-gradient(120deg,#8fb6ff,#f3cdea,#ffd9b8,#8fb6ff);background-size:300% 100%;animation:livebg 3s linear infinite}
+@keyframes livebg{to{background-position:300% 0}}
+.w.file{border-radius:3px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}.w.file b{background:#4f86e8;height:6px}
+.xk{font:600 11px var(--sans);color:var(--muted);border:1px solid var(--rule);border-radius:5px;padding:0 6px;white-space:nowrap}
+.srow .xopts.seg{flex:none}
+@media (prefers-reduced-motion:reduce){.hpanel.livep i:nth-child(2){animation:none}}
+:root[data-motion="reduced"] .hpanel.livep i:nth-child(2){animation:none}
+</style>
+</head>
+<body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">四 第一次打开与版本 · 第 20 张 · 首次打开 1.0.17</span><span class="ws-st ws-old">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc">← 欢迎使用 WindowShade</a><a href="https://claude.ai/artifact/VC2afTRXho6e2Fvxm7Hyoo">1.0.17 精简 →</a></nav>
+<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 1 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：整窗小样九页（含单独的「实验」页）</span> → <b>现在：</b>设置是 8 页，「实验」是「高级」页里的一张卡 <span class="src">（handoff/slim-1017-before-after.md（1.0.17 实装））</span></li></ol></details></aside>
+<div class="wrap">
+
+<div class="controls" role="toolbar" aria-label="画板设置">
+  <span class="seg" id="langSeg" aria-label="语言"><button data-lang="zh" aria-pressed="true">简体</button><button data-lang="en" aria-pressed="false">English</button><button data-lang="hant" aria-pressed="false">繁體</button></span>
+  <span class="seg" id="themeSeg" aria-label="外观"><button data-th="" aria-pressed="true">跟随系统</button><button data-th="light" aria-pressed="false">浅色</button><button data-th="dark" aria-pressed="false">深色</button></span>
+  <span class="seg" id="motionSeg" aria-label="减少动态效果"><button data-m="" aria-pressed="true">动态效果</button><button data-m="reduced" aria-pressed="false">减少动态效果</button></span>
+  <span class="seg" id="osSeg" aria-label="系统版本"><button data-os="15" aria-pressed="true">macOS 15 / 26</button><button data-os="27" aria-pressed="false">macOS 27</button></span>
+</div>
+
+<header style="display:grid;gap:12px">
+  <span class="kicker">设计稿 · 2026-10-17 · 目标版本 1.0.18（1.0.17 照现在的发） · 小样，不是 App 本身</span>
+  <h1>首次打开 1.0.17</h1>
+  <p class="lead">新装的人先用 10 秒学会一件事：双击标题栏，窗口收成卷帘条；再双击，原样展开。那一下做成后，停在条上还能看一眼里面。要收别的 App 的窗口时才问辅助功能（必需），顺带问屏幕录制（可选，没有它也能收起，只是没有实时画面）；这一问不算页码。这页之后的两页各做成一件：在标题栏上一甩到半屏、捏合撤回；长按刘海，收起的窗口排成一排，点一格回到原处。每页一组“手上怎么做 / 屏幕上发生什么”的演示，随时能跳过。设置 → 手势用同一套演示。升级上来的人看两页以内：缺授权先把两项再打开一次，再用一页说这一版新开了什么。整个设置窗口也用同一套讲解动画（E 节）。</p>
+  <p class="fine">文件名沿用第一版（1.0.17 小样），本稿已按 11-06 的 #110 重排成三页，下面的 A1 / A2 / T 画板编号对应 ① / 辅助功能那一问 / ③，新加 ② 在 A2 后面；内容已按 Aaron 10-17 的两轮补充改成 1.0.18。起点是现在发的三步欢迎窗口（<code>prototype/App/Welcome.swift</code>、<code>WelcomeFlow.swift</code>）和旧稿《欢迎使用 WindowShade》。画板里的窗口按 pt 原尺寸画；顶上能切语言、浅深色、减少动态效果和 macOS 27 的辅助功能新名字。画板里的按钮能点。</p>
+</header>
+
+<section class="sheet" aria-labelledby="chg">
+  <h2 id="chg">这一版改了什么（第 4 版，2026-10-17 晚）</h2>
+  <ul class="plain">
+    <li><b>第 5 版（2026-11-06，Aaron 决定 #110）：</b>首次打开重排成三页，各做成一件：① 双击标题栏收起、停在卷帘条上看一眼；② 标题栏上一甩到半屏、捏合撤回（撤销写出那一步，如“撤销 左半屏”）；③ 长按刘海，收起的窗口排成一排，点一格回到原处。辅助功能在 ① 做成后、要收别的 App 时才问，不算页码；屏幕录制写明可选。窗口浏览不作旗舰（#107），“点一下刘海，放回”删掉，改成长按。字号收进系统样式（标题 22 semibold、导语 15、正文 13、说明 12），选项卡圆角 12，示意刘海按真实比例（宽为屏宽的 10.8%，高宽比 0.18），强调色用 controlAccentColor 默认蓝。</li>
+    <li>设置小样 8 页（“实验”是“高级”页里的一张卡）的每一行都接上讲解：循环的行指上去就演，静图摆一帧，页默认回到这一页默认讲解的关键帧；新加 40 段帧数据，分镜表的时长都是脚本照帧数据现算的。</li>
+    <li>讲解之间改成两块一起淡出 0.10 s、淡入 0.18 s，指针一进到行上就开始换（实测从进入到开始变化 0 ms 起跳，100 ms 后新内容淡入）；每轮之间、复位时也走同一个淡入淡出，不再跳帧。按下 / 松开是 0.08 s 直接切换，不是位移；位移全走弹簧曲线（calm、settle、flyOut、bloom、pop、expand）。</li>
+    <li>整窗小样和手势页画板按真窗口量：900 × 680、侧栏 204、内容 640、两边各 28；行改成同一张卡片里方角相接，补了行图标。</li>
+    <li>三种语言：设置小样的行名、副标题、分段、手指一行都取自产品目录里的真文案；讲解块里的字也有英文、繁体。</li>
+    <li>按全尺寸截图逐页查过简体、英文、繁体 × 浅色、深色，以及减少动态效果和 400 宽；修了：A1 / A2 / T（现在的 ① / A2 / ③）窗口太空（各降 20–30 pt）、英文侧栏“实验”折行、U1 的屏幕录制行补“可选”、组合行副标题只取第一句、减少动态效果时右块箭头看不清、400 宽下工作单横向溢出与表格挤成一字一行。</li>
+  </ul>
+</section>
+
+<section class="sheet" aria-labelledby="why">
+  <h2 id="why">为什么要改现在这一版</h2>
+  <p><b>Aaron 拍板 2026-10-17：1.0.18 起这些默认开</b>（新装和升级上来没动过的都开；已经自己改过的照旧）：刘海主功能（<code>Notch.enabled</code>、<code>Notch.changeAlerts</code>、<code>Notch.teach</code>），刘海实时活动（<code>Notch.activitiesEnabled</code>、<code>Notch.activities.musicEnabled</code>、<code>Notch.activities.nowPlayingStream</code>、<code>Notch.mergedRow</code>、<code>Notch.minimalPresentation</code>、<code>Notch.deviceBattery.enabled</code>、<code>Notch.levelKeys.enabled</code>），Dock 悬停查看窗口（<code>WindowBrowserDockEnabled</code>），文件架和再点一下 Dock 图标让开（<code>FileShelf.enabled</code>、<code>Dock.clickToHide</code>）。这改了“只有真机验过的才默认开”那条纪律：这一批默认开的依据是 Aaron 的决定，不是验过。目的是让新用户一装上就看到 WindowShade 的长处，所以引导要把这几样领出来。</p>
+  <p>现在的欢迎窗口第一步讲“卡住时刘海告诉你怎么做”，第二步问“你之前常用哪个？”，第三步一次要三项授权。它没有教真正每天用的那一下（双击标题栏收起），也没说图标在菜单栏；而且 1.0.17 里刘海默认关，前两步讲的东西打开后看不到。1.0.18 刘海开了，前两步讲的东西有了，但仍缺核心动作和“去哪找”。</p>
+  <ul class="plain">
+    <li>启动时 <code>ensureAccessibility()</code> 带着 <code>AXTrustedCheckOptionPrompt: true</code>，每次没授权就启动都弹系统框，新用户会同时看到欢迎窗口和系统框，两件事抢一个注意力。</li>
+    <li>授权页一次要三项，而且两项都开才能“开始使用”。屏幕录制只管实时画面（R29 已在虚拟机里验过：没有它，收起、展开、窗口浏览的列表与动作、分屏都照常），所以改成可选、不卡“继续”；日程只给刘海里的“快开会”，等他第一次碰到再问。</li>
+    <li>手动从 1.0.16 装上来的人没有更新日志（签名换了，Sparkle 不走一键安装），<code>showPermissionOnboardingIfNeeded(force: false)</code> 又因为“看过引导”已经是 true 提前返回。按代码读，他启动后只会看到系统那个弹框，看不到“再打开一次这两项”那一页（推断，没在真机上走过）。</li>
+  </ul>
+</section>
+
+<section aria-labelledby="flowh">
+  <h2 id="flowh">流程</h2>
+  <div class="sheet flow">
+    <div class="scroll">
+    <svg viewBox="0 0 960 380" role="img" aria-labelledby="flowt">
+      <title id="flowt">流程图：启动时看安装记录。新装走三页：① 双击收起并看一眼、② 一甩到半屏并捏合撤回、③ 长按刘海拿回窗口；辅助功能和屏幕录制在 ① 之后、要收别的 App 时才问，不算页码；升级上来缺授权的先走 U1 再走 N1；授权都在的只走 N1；屏幕录制没开的在表面里留一句兜底。</title>
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ar" d="M0 0 L10 5 L0 10 z"/></marker></defs>
+      <rect class="box" x="10" y="160" width="130" height="58" rx="10"/>
+      <text x="24" y="184">启动</text><text class="s" x="24" y="203">读 InstallHistory</text>
+      <path class="ln" d="M140 180 C170 180 170 70 186 70" marker-end="url(#ah)"/>
+      <text class="lbl" x="150" y="112">新装</text>
+      <rect class="box opt" x="190" y="40" width="140" height="62" rx="10"/>
+      <text x="202" y="64">放进“应用程序”</text><text class="s" x="202" y="84">从下载里打开时，照旧</text>
+      <path class="ln" d="M330 71 L350 71" marker-end="url(#ah)"/>
+      <rect class="box key" x="354" y="40" width="140" height="62" rx="10"/>
+      <text x="366" y="64">① 双击收起</text><text class="s" x="366" y="84">停在条上看一眼</text>
+      <path class="ln" d="M494 71 L514 71" marker-end="url(#ah)"/>
+      <rect class="box key" x="518" y="40" width="140" height="62" rx="10"/>
+      <text x="530" y="64">② 一甩，捏合</text><text class="s" x="530" y="84">半屏，撤销写出那一步</text>
+      <path class="ln" d="M658 71 L678 71" marker-end="url(#ah)"/>
+      <rect class="box key" x="682" y="40" width="140" height="62" rx="10"/>
+      <text x="694" y="64">③ 长按刘海</text><text class="s" x="694" y="84">点一格，回到原处</text>
+      <path class="ln" d="M424 102 L424 124" stroke-dasharray="4 3" marker-end="url(#ah)"/>
+      <rect class="box opt" x="354" y="126" width="304" height="62" rx="10"/>
+      <text x="368" y="150">辅助功能（必需）+ 屏幕录制（可选）</text><text class="s" x="368" y="170">要收别的 App 的窗口时才问；不算页码</text>
+      <text class="s" x="682" y="124">① 的“跳过”到 ②；③ 的“跳过”：关窗口，算看过</text>
+      <path class="ln" d="M140 196 C170 196 170 240 196 240" marker-end="url(#ah)"/>
+      <text class="lbl" x="150" y="232">升级上来，缺授权</text>
+      <rect class="box key" x="200" y="212" width="190" height="62" rx="10"/>
+      <text x="214" y="236">U1 再打开一次这两项</text><text class="s" x="214" y="256">一页，两行，各自实时变 ✓</text>
+      <path class="ln" d="M390 243 L422 243" marker-end="url(#ah)"/>
+      <rect class="box" x="426" y="212" width="170" height="62" rx="10"/>
+      <text x="440" y="236">N1 这一版新开了这几样</text><text class="s" x="440" y="256">只列真变了的；一次</text>
+      <path class="ln" d="M140 205 C160 205 160 330 196 330" marker-end="url(#ah)"/>
+      <text class="lbl" x="150" y="318">升级上来，授权都在</text>
+      <rect class="box" x="200" y="302" width="190" height="56" rx="10"/>
+      <text x="214" y="326">N1（没变的就不弹）</text><text class="s" x="214" y="344">从 1.0.17 升上来的多半走这里</text>
+      <rect class="box opt" x="640" y="212" width="308" height="146" rx="10"/>
+      <text x="654" y="236">C1 缺屏幕录制时的一句（兜底）</text>
+      <text class="s" x="654" y="258">A2 已经问过；没开的，在这些地方留一句：</text>
+      <text class="s" x="654" y="276">看一眼、置顶预览、窗口浏览的缩略图、</text>
+      <text class="s" x="654" y="294">侧拉、画中画、收起后的样子选“缩略图”</text>
+      <text class="s" x="654" y="318">不弹窗、不追问；带一个“去授权”链接</text>
+      <text class="s" x="654" y="340">设置 → 隐私 里随时能开</text>
+    </svg>
+    </div>
+    <p class="fine">页码点只数 ①、②、③（三页，HIG 上限）。辅助功能那一问（A2 画板）、U1 和 C1 不是引导的一页。欢迎窗口在“设置 → 高级 → 关于 → 欢迎使用 WindowShade…”里随时能再打开，从 A1 看起。整段时长：① 演示 8 s + 自己试约 5 s，辅助功能那一问看授权快慢（系统设置里点开关、按 Touch ID 约 15 s），② 约 10 s，③ 约 10 s（画板标题旁有现算的数）。</p>
+  </div>
+</section>
+
+<!-- A1 -->
+<section aria-labelledby="a1h">
+  <div class="board-head"><h2 id="a1h">A1　① 双击收起，停在条上看一眼</h2><span class="size">720 × 470 pt · 两块 326 × 209，间距 16</span><span class="tag">新装第一页</span></div>
+  <div class="fit"><div class="fit-box" style="--w:720px;--h:470px"><div class="fit-inner">
+    <div class="mac" role="dialog" aria-labelledby="a1t">
+      <div class="tb"><span class="lights"><i></i><i></i><i></i></span></div>
+      <div class="body">
+        <div class="hero" id="a1hero" style="margin-bottom:20px"></div>
+        <div class="eyebrow" data-t="eyebrow">欢迎使用 WindowShade</div>
+        <div class="mt" id="a1t" data-t="a1.title">双击标题栏，把窗口收起来。</div>
+        <p class="ml" data-t="a1.lede">窗口收成一条卷帘条，里面的东西都还在；停在条上，就能看一眼。</p>
+        <div class="status" id="a1status" aria-live="polite"><span class="check" aria-hidden="true">✓</span><span id="a1statusText"></span></div>
+      </div>
+      <div class="foot">
+        <div class="dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+        <div class="btns"><span class="fine" data-t="a1.option" style="margin-right:6px">想要系统原来的双击？按住 Option 再双击。</span><button class="b plain" data-t="btn.skip">跳过</button><button class="b" id="a1next" data-t="btn.next">继续</button></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="a1chips" role="group" aria-label="A1 状态"><button data-s="demo" aria-pressed="true">先看一遍</button><button data-s="idle" aria-pressed="false">轮到你</button><button data-s="rolled" aria-pressed="false">收起了</button><button data-s="glance" aria-pressed="false">停在条上看一眼</button><button data-s="done" aria-pressed="false">展开了 ✓</button><button data-s="pad" aria-pressed="false">手上是触控板</button><button data-s="mouse" aria-pressed="false">手上是鼠标</button></div>
+  <p class="fine">“轮到你”之后，右边那扇窗口的标题栏真的能双击（键盘：Tab 到画板外不行，这里用鼠标试）。</p>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>同一套手势教学，欢迎窗口和设置页共用。</b>左边一块画手上的东西（触控板或鼠标，看这台 Mac 连着什么），右边一块画屏幕上发生的事。两块之间的对应就是这一课：左边点两下，右边收成卷帘条。数据和设置 → 手势页是同一份（见下面的分镜），只是这里的两块放大到 326 × 209。</span></li>
+    <li><span class="n">2</span><span><b>先看一遍，再轮到他。</b>打开时演示两轮，停在“收成卷帘条”那一帧；然后右边那扇窗口就是练习窗口：App 里是 WindowShade 自己开的一扇子窗口，叠在右边那块上，有真的标题栏。收起自己的窗口不需要辅助功能，所以这一步排在授权前面。他点的时候，左边那块跟着亮两下，手上和屏幕上对得上。他一动手演示就停。</span></li>
+    <li><span class="n">3</span><span><b>一页只教一件事。</b>标题、导语、状态行各说一件事。“在这里双击”的小牌子只在轮到他、还没试时出现；收起后状态行换成“停在条上能看一眼，再双击展开”；指针在条上停 0.12 秒，里面垂下来给他看一眼，移开就收回；展开后是绿色的 ✓ 和“别的窗口也一样”。卷帘条画法和别的窗口一样（统一标题栏那一种）。</span></li>
+    <li><span class="n">4</span><span><b>不卡人。</b>“继续”一直能点，试完后变主按钮。“跳过”直接到 ②。回车是“继续”，← → 翻页。</span></li>
+    <li><span class="n">5</span><span><b>说清楚怎么回到系统的双击。</b>底下小字照设置页副标题：按住 Option 双击不收起；系统设置里双击是“缩放”或“最小化”时，换成“三击标题栏会缩放窗口”那两种写法（<code>titlebarDoubleClickPreferenceSubtitle()</code>）。</span></li>
+    <li><span class="n">6</span><span><b>计时：</b>演示一轮（双击收起 → 停在条上看一眼 → 再双击展开）→ 轮到他 → 双击 → 0.38 s 收好 → 停一下看一眼 → 再双击 → ✓。不看演示直接双击也行，大约 10 s 拿到第一次成功，不用任何授权。</span></li>
+    <li><span class="n">7</span><span><b>VoiceOver：</b>两块合起来是一张图，名字读“演示：在标题栏上双击，窗口收成卷帘条；再双击，展开。”练习窗口的标题栏是按钮，名字“购物清单的标题栏”，提示“双击收起窗口”，带自定动作“收起窗口”。减少动态效果时不演示，两块停在关键帧，加箭头和虚线框（顶上切换能看）。</span></li>
+  </ol>
+</section>
+
+<!-- A2 -->
+<section aria-labelledby="a2h">
+  <div class="board-head"><h2 id="a2h">A2　辅助功能那一问：要收别的 App 时才问</h2><span class="size">720 × 470 pt · 无舞台，窗口用 calm 变矮</span><span class="tag">不算页码</span><span class="tag">Aaron 拍板 2026-10-17：屏幕录制在这里一起问</span></div>
+  <div class="fit"><div class="fit-box" style="--w:720px;--h:470px"><div class="fit-inner">
+    <div class="mac" role="dialog" aria-labelledby="a2t">
+      <div class="tb"><span class="lights"><i></i><i></i><i></i></span></div>
+      <div class="body">
+        <div class="mt" id="a2t" style="margin-top:14px" data-t="a2.title">让每扇窗口都能收起</div>
+        <p class="ml" data-t="a2.lede">刚才那扇是 WindowShade 自己的窗口。收起别的 App 的窗口，要打开辅助功能。</p>
+        <div class="rows">
+          <div class="row" id="a2row">
+            <span class="ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.2" r="1.3" fill="currentColor" stroke="none"/><path d="M7.5 10h9M12 10v4.5M12 14.5l-2.6 4M12 14.5l2.6 4"/></svg></span>
+            <span class="t"><b data-t="perm.ax">辅助功能</b><small data-t="perm.axSub">找到、移动和收起窗口</small><span class="wait" data-t="perm.wait">在系统设置里打开 WindowShade 的开关，这里会自己变。</span></span>
+            <button class="b" id="a2grant" data-t="perm.grant">去授权</button>
+            <span class="st" aria-live="polite">✓ <span data-t="perm.granted">已授权</span></span>
+          </div>
+          <div class="row" id="a2sr">
+            <span class="ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+            <span class="t"><b><span data-t="perm.sr">屏幕录制</span> <span class="tag" data-t="a2.optional">可选</span></b><small data-t="a2.srSub">开了，看一眼和窗口浏览里能看到窗口的实时画面。不开也能用。</small></span>
+            <button class="b" id="a2srGrant" data-t="perm.grant">去授权</button>
+            <span class="st" aria-live="polite">✓ <span data-t="perm.granted">已授权</span></span>
+          </div>
+        </div>
+        <div class="stuck" id="a2stuck" data-t="perm.stuck">开关开着却没用？在列表里选中 WindowShade，点“−”删掉，再回来点“去授权”。</div>
+        <div class="fine" id="a2admin" style="display:none;margin-top:8px" data-t="perm.admin2">打开这两项时，要输入管理员的名字和密码。</div>
+        <div class="fine" id="a2relaunch" style="display:none;margin-top:8px" data-t="a2.relaunch">屏幕录制要重新打开 WindowShade 才生效。</div>
+        <div class="status" id="a2status" aria-live="polite"><span class="check" aria-hidden="true">✓</span><span id="a2statusText"></span></div>
+        <div class="fine" style="margin-top:auto" data-t="a2.privacy">读了什么、为什么读，设置 → 隐私 里都列着。</div>
+      </div>
+      <div class="foot">
+        <div class="dots" aria-hidden="true"></div>
+        <div class="btns"><button class="b" id="a2later" data-t="btn.later">稍后再说</button><button class="b" id="a2next" data-t="btn.next" disabled>继续</button></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="a2chips" role="group" aria-label="A2 状态"><button data-s="off" aria-pressed="true">都没打开</button><button data-s="wait" aria-pressed="false">去系统设置了</button><button data-s="stuck" aria-pressed="false">回来 10 秒还没好</button><button data-s="admin" aria-pressed="false">标准账户</button><button data-s="on" aria-pressed="false">只开了辅助功能</button><button data-s="both" aria-pressed="false">两项都开了</button><button data-s="relaunch" aria-pressed="false">屏幕录制要重开</button><button data-s="real" aria-pressed="false">真的收起了一扇</button></div>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>两行，一行必需，一行可选。</b>辅助功能是收起别的窗口的前提，不占页码：① 做成后，等他第一次要收别的 App 的窗口时才出这一问，理由就是刚才那一下。屏幕录制同一问里一起问（Aaron 拍板），行名旁标“可选”，副标题一句话说它让什么变好：没有它也能收起，只是没有实时画面。“继续”只等辅助功能。日程不在这一页，等刘海第一次要说“快开会”时再问。</span></li>
+    <li><span class="n">2</span><span><b>“去授权”直接打开对的那一栏。</b>辅助功能打开 <code>Privacy_Accessibility</code> 并调一次 <code>AXIsProcessTrustedWithOptions(prompt: true)</code>，屏幕录制打开 <code>Privacy_ScreenCapture</code> 并调一次 <code>CGRequestScreenCaptureAccess()</code>，让 WindowShade 先出现在列表里。启动时那次带 prompt 的调用拿掉（Aaron 拍板）。</span></li>
+    <li><span class="n">3</span><span><b>每行各自变 ✓，不用重开。</b>沿用每秒刷新（只在窗口看得见、停在这页、还有一项没开时跑），两行分别读 <code>AXIsProcessTrusted()</code> 和 <code>CGPreflightScreenCaptureAccess()</code>。变成已授权的那一刻按钮淡出 0.10 s，“✓ 已授权”用 pop 弹进来；辅助功能一好，“继续”变主按钮，窗口拿回最前面。系统要求重开 App 才认屏幕录制时（真机待验），那一行换成一句“要重新打开 WindowShade 才生效”和按钮“重新打开”，不让系统替我们说。</span></li>
+    <li><span class="n">4</span><span><b>第一次真成功也算进来。</b>辅助功能好了以后，状态行说“去任何一扇窗口的标题栏上双击试试”；他真的收起一扇时换成“✓ 收起了‘访达’的一扇窗口”。</span></li>
+    <li><span class="n">5</span><span><b>卡住时说怎么办。</b>回到这页 10 秒还有一项没好，出现“−”那句（<code>update.permissionsStuckHint</code>）。标准账户多一句要管理员密码（已有的“这两项”说法）。</span></li>
+    <li><span class="n">6</span><span><b>macOS 27 叫法不同。</b>辅助功能那一栏叫“设备控制和数据访问”，所有提到它的句子过 <code>PrivacyPaneName.adjust</code>。</span></li>
+    <li><span class="n">7</span><span><b>没授权就走。</b>“稍后再说”算看过，回到他刚才在的那一页。之后按快捷键、点刘海“需要权限”时直接打开到这一页。屏幕录制没开的人，表面里只留一句兜底（C1），不再追问。</span></li>
+  </ol>
+</section>
+
+<!-- P2 -->
+<section aria-labelledby="p2h">
+  <div class="board-head"><h2 id="p2h">② 标题栏上一甩到半屏，捏合撤回</h2><span class="size">720 × 470 pt · 两块 326 × 209，间距 16</span><span class="tag">新装第二页</span><span class="tag">Aaron 拍板 2026-11-06（#110）</span></div>
+  <div class="fit"><div class="fit-box" style="--w:720px;--h:470px"><div class="fit-inner">
+    <div class="mac" role="dialog" aria-labelledby="p2t">
+      <div class="tb"><span class="lights"><i></i><i></i><i></i></span></div>
+      <div class="body">
+        <div class="hero" id="p2hero" style="margin-bottom:20px"></div>
+        <div class="eyebrow" data-t="eyebrow">欢迎使用 WindowShade</div>
+        <div class="mt" id="p2t" data-t="p2.title">在标题栏上一甩，窗口到半屏。</div>
+        <p class="ml" data-t="p2.lede">排错了？两指捏合，撤回这一步。</p>
+        <div class="status" id="p2status" aria-live="polite"><span class="check" aria-hidden="true">✓</span><span id="p2statusText"></span></div>
+      </div>
+      <div class="foot">
+        <div class="dots" aria-hidden="true"><i></i><i class="on"></i><i></i></div>
+        <div class="btns"><button class="b plain" data-t="btn.skip">跳过</button><button class="b primary" data-t="btn.next">继续</button></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="p2chips" role="group" aria-label="② 状态"><button data-s="demo" aria-pressed="true">先看一遍</button><button data-s="half" aria-pressed="false">甩到半屏了</button><button data-s="undo" aria-pressed="false">撤回了</button></div>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>一页一件事：</b>先学“甩”，再学“撤”。左块是手上的动作（按住标题栏往左一甩；然后两指捏合），右块是屏幕上发生的事：窗口滑到左半屏，捏合后回到原来的位置。窗口用 glide 滑到落点，撤回用 settle。</span></li>
+    <li><span class="n">2</span><span><b>撤销写出那一步。</b>捏合撤回时，刘海展开一句“撤销 左半屏”，不只写“撤销”。菜单里的“撤销”也写同样的句子（撤销扩成排布历史，Aaron 10-29 已定）。</span></li>
+    <li><span class="n">3</span><span><b>要触控板。</b>捏合只有触控板才有；手上是鼠标时，左块标“要用触控板”，右块仍演，撤销改走菜单里的“撤销 左半屏”。</span></li>
+    <li><span class="n">4</span><span><b>不卡人。</b>“继续”一直能点，“跳过”直接到 ③。减少动态效果时不演示，两块停在关键帧（甩到半屏），加箭头和虚线框。</span></li>
+    <li><span class="n">5</span><span><b>VoiceOver：</b>两块合起来是一张图，名字读“演示：在标题栏上往左一甩，窗口占左半屏；两指捏合，撤回，刘海写出‘撤销 左半屏’。”</span></li>
+  </ol>
+</section>
+
+<!-- T -->
+<section aria-labelledby="th">
+  <div class="board-head"><h2 id="th">T　③ 长按刘海，拿回收起的窗口</h2><span class="size">720 × 520 pt · 两块 326 × 209</span><span class="tag">新装第三页（最后一页）</span><span class="fine" id="tourTotal"></span></div>
+  <div class="fit"><div class="fit-box" style="--w:720px;--h:520px"><div class="fit-inner">
+    <div class="mac" role="dialog" aria-labelledby="tTitle">
+      <div class="tb"><span class="lights"><i></i><i></i><i></i></span></div>
+      <div class="body">
+        <div class="hero" id="tourHero"></div>
+                <div class="mt" id="tTitle" style="margin-top:14px"></div>
+        <p class="ml" id="tLede"></p>
+        <div class="origin" id="tOrigin" role="radiogroup" aria-labelledby="tOq">
+          <span class="fine" id="tOq" data-t="origin.q">你之前常用哪个？</span>
+          <button role="radio" aria-checked="false" data-o="win">Windows</button><button role="radio" aria-checked="false" data-o="ipad">iPad</button><button role="radio" aria-checked="false" data-o="mac" data-t="origin.mac">一直用 Mac</button>
+          <span class="fine" data-t="origin.opt">不选也行</span>
+        </div>
+        <div class="fine" style="margin-top:10px" data-t="a3.lede">WindowShade 没有 Dock 图标。点菜单栏上的这个图标，收起的窗口和设置都在这里。</div>
+        <div class="fine" id="tNoAx" style="display:none;color:var(--warn);margin-top:6px" data-t="a3.noax">还没打开辅助功能，现在只能收起 WindowShade 自己的窗口。</div>
+      </div>
+      <div class="foot">
+        <div class="dots" aria-hidden="true"><i></i><i></i><i class="on"></i></div>
+        <div class="btns"><button class="b plain" id="tSkip" data-t="btn.skip">跳过</button><button class="b primary" id="tNext" data-t="btn.next">继续</button></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="tChips" role="group" aria-label="T 状态"><button data-s="auto" aria-pressed="true">自己往下走</button><button data-s="ok" aria-pressed="false">已授权</button><button data-s="noax" aria-pressed="false">跳过了授权</button></div>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>一页一件事：拿回收起的窗口。</b>左块是手上的动作（指针放在刘海上，按住 0.5 秒），右块是屏幕上发生的事：刘海展开成一排，收起的窗口排在里面，点一格，那扇窗口回到原处。刘海本体不因为指针悬停而展开，只有长按；展开后指针停在一格上 0.12 秒，才给你看一眼。</span></li>
+    <li><span class="n">2</span><span><b>画板按系统尺寸。</b>展开那一排 408 × 160、圆角 28；格子 76 × 104、间距 8、圆角 14，放不下就左右滚动。示意刘海按真实比例（宽为屏宽的 10.8%，高宽比 0.18），一排的宽高按同一比例缩。用 expand 展开，点一格后窗口用 flyOut 沿原路飞回、一排用 calm 收起。</span></li>
+    <li><span class="n">3</span><span><b>“回到原处”和“去”。</b>这一排里点一格叫“回到原处”；别的桌面上的窗口才叫“去”。点刘海本体是回到主屏幕，点耳朵打开那件事的 App。</span></li>
+    <li><span class="n">4</span><span><b>“你之前常用哪个？”</b>仍放在这一页下面做一行可选的单选，不选也能继续（Aaron 10-17 拍板）：刘海教你默认开着，这个答案决定它教什么（决策 1）。“刘海教你”的演示、窗口浏览、手势与卷轴不再占引导的页（窗口浏览不作旗舰，#107），在 N1 和设置里讲。</span></li>
+    <li><span class="n">5</span><span><b>图标在哪：</b>最后一行小字告诉他 WindowShade 没有 Dock 图标，图标在菜单栏右边。跳过了授权时这里多一行橙色小字。</span></li>
+    <li><span class="n">6</span><span><b>最后一页：</b>“继续”变成“开始使用”；“跳过”直接关窗口，算看过。整页演示时长写在画板标题旁边（脚本按分镜现算）。</span></li>
+    <li><span class="n">7</span><span><b>减少动态效果：</b>不自己演，停在关键帧（刘海已展开一排，箭头 + 虚线框）。VoiceOver：两块读当前演示的名字。</span></li>
+  </ol>
+</section>
+
+<!-- U1 -->
+<section aria-labelledby="u1h">
+  <div class="board-head"><h2 id="u1h">U1　再打开一次这两项</h2><span class="size">720 × 470 pt</span><span class="tag">从 1.0.16 升级</span></div>
+  <div class="fit"><div class="fit-box" style="--w:720px;--h:470px"><div class="fit-inner">
+    <div class="mac" role="dialog" aria-labelledby="u1t">
+      <div class="tb"><span class="lights"><i></i><i></i><i></i></span></div>
+      <div class="body">
+        <div class="eyebrow" style="margin-top:10px">WindowShade 1.0.18</div>
+        <div class="mt" id="u1t" data-t="u1.title">再打开一次这两项</div>
+        <p class="ml"><span data-t="u1.lede">装好新版本后，系统要你重新打开辅助功能和屏幕录制。</span><span data-t="u1.once">只要这一次，以后更新不用再开。</span></p>
+        <div class="rows">
+          <div class="row" id="u1ax">
+            <span class="ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.2" r="1.3" fill="currentColor" stroke="none"/><path d="M7.5 10h9M12 10v4.5M12 14.5l-2.6 4M12 14.5l2.6 4"/></svg></span>
+            <span class="t"><b data-t="perm.ax">辅助功能</b><small data-t="u1.axSub">找到、移动和收起窗口</small></span>
+            <button class="b" data-grant="u1ax" data-t="perm.grant">去授权</button>
+            <span class="st">✓ <span data-t="perm.granted">已授权</span></span>
+          </div>
+          <div class="row" id="u1sr">
+            <span class="ic" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
+            <span class="t"><b><span data-t="perm.sr">屏幕录制</span> <span class="tag" data-t="a2.optional">可选</span></b><small data-t="u1.srSub">看一眼和缩略图里的实时画面要用。不开也能收起窗口。</small></span>
+            <button class="b" data-grant="u1sr" data-t="perm.grant">去授权</button>
+            <span class="st">✓ <span data-t="perm.granted">已授权</span></span>
+          </div>
+        </div>
+        <div class="progress" id="u1prog" aria-live="polite"></div>
+        <div class="stuck" id="u1stuck" data-t="perm.stuck">开关开着却没用？在列表里选中 WindowShade，点“−”删掉，再回来点“去授权”。</div>
+      </div>
+      <div class="foot">
+        <div class="dots" aria-hidden="true"></div>
+        <div class="btns"><button class="b" id="u1later" data-t="btn.later">稍后再说</button><button class="b" id="u1done" data-t="btn.start" disabled>开始使用</button></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="u1chips" role="group" aria-label="U1 状态"><button data-s="none" aria-pressed="true">两项都没有</button><button data-s="stuck" aria-pressed="false">开关开着却没用</button><button data-s="ax" aria-pressed="false">只有辅助功能</button><button data-s="both" aria-pressed="false">都好了</button></div>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>怎么认出他。</b>启动第一步已经在认 <code>InstallHistory</code>（<code>.shipped</code> / <code>.preview</code> 是老安装）。老安装、辅助功能没了、这一版还没给他看过 U1（新键 <code>PermissionsAgainShown.1.0.18</code>），就打开 U1。不依赖更新日志，所以手动下载装上来的也接得住。同签名的更新照 <code>update.md</code> G1 第 5 条走原来的“少了哪项”比较，落到同一页。</span></li>
+    <li><span class="n">2</span><span><b>两项一起找回。</b>和 A2 一样两行（他在 1.0.16 已经开过屏幕录制，这里是找回）。屏幕录制那一行的副标题说清不开也能用，“开始使用”只等辅助功能。</span></li>
+    <li><span class="n">3</span><span><b>说原因，不说术语。</b>导语沿用已有的 <code>update.permissionsAgainLead</code>，不提“签名”“证书”。加一句“只要这一次”，因为以后都用同一个 Developer ID 签，<code>update.md</code> 里装前比 DR 那一关保证授权不再丢。</span></li>
+    <li><span class="n">4</span><span><b>“开关开着却没用”是升级时最常见的样子。</b>系统设置列表里 WindowShade 的开关还亮着，但那是旧签名的那一份。所以这句不等 10 秒，U1 一打开就在；两行各自的“去授权”打开各自那一栏（<code>Privacy_Accessibility</code>、<code>Privacy_ScreenCapture</code>）。</span></li>
+    <li><span class="n">5</span><span><b>屏幕录制打开后要不要重开 App，没验过。</b>现在的授权页每秒读 <code>CGPreflightScreenCaptureAccess()</code>，截图里能变成已授权；系统有时会弹“退出并重新打开”。真机上走一次，要重开就在那一行换成“重新打开 WindowShade”按钮，不让系统替我们说。</span></li>
+  </ol>
+</section>
+
+<!-- N1 -->
+<section aria-labelledby="n1h">
+  <div class="board-head"><h2 id="n1h">N1　这一版新开了这几样</h2><span class="size">720 × 440 pt</span><span class="tag">从 1.0.17 及以前升级，一次</span><span class="tag">Aaron 拍板 2026-10-17：新老都开</span></div>
+  <div class="fit"><div class="fit-box" style="--w:720px;--h:440px"><div class="fit-inner">
+    <div class="mac" role="dialog" aria-labelledby="n1t">
+      <div class="tb"><span class="lights"><i></i><i></i><i></i></span></div>
+      <div class="body">
+        <div class="eyebrow" style="margin-top:10px">WindowShade 1.0.18</div>
+        <div class="mt" id="n1t" data-t="n1.title">这一版新开了这几样</div>
+        <p class="ml" data-t="n1.lede">你没动过的开关，现在是开着的。不想要哪样，在设置里关掉。</p>
+        <div class="rows" id="n1rows">
+          <div class="row" data-n="notch"><span class="ic" aria-hidden="true"></span><span class="t"><b data-t="n1.notch.t">刘海</b><small data-t="n1.notch.d">窗口能收进刘海；按错快捷键时刘海说一句；音乐、下载这些显示在刘海上。</small></span><button class="b plain" data-t="n1.change">在设置里改…</button></div>
+          <div class="row" data-n="dock"><span class="ic" aria-hidden="true"></span><span class="t"><b data-t="n1.dock.t">Dock 悬停查看窗口</b><small data-t="n1.dock.d">指针停在 Dock 图标上，这个 App 的窗口排出来。</small></span><button class="b plain" data-t="n1.change">在设置里改…</button></div>
+          <div class="row" data-n="shelf"><span class="ic" aria-hidden="true"></span><span class="t"><b data-t="n1.shelf.t">文件架和 Dock 图标</b><small data-t="n1.shelf.d">拖到刘海的文件放进文件架；再点一下 Dock 图标，让开这个 App。</small></span><button class="b plain" data-t="n1.change">在设置里改…</button></div>
+        </div>
+      </div>
+      <div class="foot">
+        <div class="dots" aria-hidden="true"></div>
+        <div class="btns"><button class="b" data-t="n1.tour">看看怎么用</button><button class="b primary" data-t="n1.ok">好</button></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="n1chips" role="group" aria-label="N1 状态"><button data-s="all" aria-pressed="true">三样都是新开的</button><button data-s="some" aria-pressed="false">他自己关过刘海</button></div>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>只列真变了的。</b>启动时比一遍这 13 个键：显式存过值的不算（照他自己的），没存过的、1.0.17 发出去是关、1.0.18 是开的才列。三组都没变就不弹这一页。他自己关过刘海，就不出刘海那一行。</span></li>
+    <li><span class="n">2</span><span><b>短，可以不看。</b>三行各一句；“在设置里改…”打开对应那一页（刘海、窗口浏览、刘海 → 文件架）；“看看怎么用”打开欢迎窗口的 ③；“好”和关窗口都算看过。键 <code>WhatsNewShown.1.0.18</code>，只弹一次。</span></li>
+    <li><span class="n">3</span><span><b>和 U1 的先后。</b>从 1.0.16 升上来又缺授权的，先 U1（不先找回授权，新开的这些也用不了），“开始使用”之后接 N1；从 1.0.17 升上来授权都在的，只看 N1。新装不看 N1，③ 已经演过。</span></li>
+  </ol>
+</section>
+
+<!-- C1 -->
+<section aria-labelledby="c1h">
+  <div class="board-head"><h2 id="c1h">C1　缺屏幕录制时的一句（兜底）</h2><span class="size">窗口浏览面板一角 · 460 × 250 pt</span><span class="tag">不再是主路径</span></div>
+  <div class="twocol">
+    <div class="fit"><div class="fit-box" style="--w:460px;--h:250px"><div class="fit-inner">
+      <div class="panel">
+        <div class="cards" id="c1cards">
+          <div class="wcard iconic"><div class="shot"><span class="appic"></span></div><div class="nm" data-t="c1.w1">季度计划.numbers</div></div>
+          <div class="wcard iconic"><div class="shot"><span class="appic"></span></div><div class="nm" data-t="c1.w2">预算</div></div>
+          <div class="wcard iconic"><div class="shot"><span class="appic"></span></div><div class="nm" data-t="c1.w3">会议记录</div></div>
+        </div>
+        <div class="footline" id="c1foot"><span data-t="c1.foot">没有屏幕录制权限，只显示图标与标题</span> · <a href="#a2h" data-t="c1.link">去授权</a></div>
+      </div>
+    </div></div></div>
+    <ol class="note-list">
+      <li><span class="n">1</span><span><b>屏幕录制在辅助功能那一问里问过一次（Aaron 拍板）。</b>他当时没开的，表面里不再追问，只留现有那句页脚（<code>browser.status.noRecording</code>）加一个“去授权”链接，打开系统设置的那一栏。</span></li>
+      <li><span class="n">2</span><span><b>哪些表面有这一句：</b>窗口浏览页脚、看一眼的卡片底、置顶预览、侧拉与画中画的菜单项（灰掉时的说明）、“收起后的样子”选缩略图时的副标题。说法都是同一句，不弹窗、不抢焦点。</span></li>
+    </ol>
+  </div>
+  <div class="chips" id="c1chips" role="group" aria-label="C1 状态"><button data-s="no" aria-pressed="true">没有屏幕录制</button><button data-s="yes" aria-pressed="false">有</button></div>
+</section>
+
+<section aria-labelledby="g1h">
+  <div class="board-head"><h2 id="g1h">S1　设置 → 手势</h2><span class="size">内容区 696 pt 宽（窗口 900 × 680，侧栏 204 不画）· 两边各 28 · 两块 312 × 200，间距 16 · 分段 640 × 28</span><span class="tag">设置页</span></div>
+  <div class="fit"><div class="fit-box" style="--w:696px;--h:680px"><div class="fit-inner">
+    <div class="mac" style="border-radius:0 16px 16px 0">
+      <div class="set-tb" style="padding-inline:28px"><span style="opacity:.45">‹ ›</span><b id="s1title">手势</b></div>
+      <div style="position:absolute;inset:52px 28px 18px 28px">
+        <div class="hero" id="setHero" role="img" aria-label=""></div>
+        <div class="segc" id="setTabs" role="tablist" aria-label="手势分组">
+          <button role="tab" data-g="fold" aria-selected="true">收起与展开</button><button role="tab" data-g="notch" aria-selected="false">刘海</button><button role="tab" data-g="arrange" aria-selected="false">排布</button><button role="tab" data-g="browse" aria-selected="false">窗口浏览</button>
+        </div>
+        <div class="scard" id="setRows" role="tabpanel"></div>
+      </div>
+    </div>
+  </div></div></div>
+  <div class="chips" id="setDev" role="group" aria-label="手上的设备"><button data-s="pad" aria-pressed="true">这台 Mac 有触控板</button><button data-s="mouse" aria-pressed="false">只连着鼠标</button></div>
+  <ol class="note-list">
+    <li><span class="n">1</span><span><b>照系统设置 → 触控板的样子。</b>顶上两块，下面一排分段，再下面是这一组的行。分段就是现在的四个分组（收起与展开、刘海、排布、窗口浏览），不另起名字；每段最多三行，整页不用滚。中键那一行仍跟着 WindowShade 2 的预览旗标，露出来时排在“收起与展开”第三行。</span></li>
+    <li><span class="n">2</span><span><b>指到哪一行，上面演哪一行。</b>指针一进到行上（或用 Tab 走到行上）就换成那一行，0 ms 开始淡出、100 ms 开始淡入，并循环播；点一下行（不是开关）把它选住，指针移开也接着播。什么都没选时，播这一段第一行一轮，然后停在它的关键帧。“标题栏手势”下面的对照表每一行也能指：往上滑、往下滑、往左 / 往右滑各演各的。</span></li>
+    <li><span class="n">3</span><span><b>左边那块画他手上的东西。</b>有触控板就画触控板和指尖；只连着鼠标时，点按、拖动、甩一下这几行改画鼠标和按下的圈，标题栏手势画成鼠标上一个指尖上下滑（滚轮也算）；只有两指能做的那一行（Dock 图标上两指上下滑）保留触控板，底下写“要用触控板”。下面切换能看。</span></li>
+    <li><span class="n">4</span><span><b>功能关着照样演，但说一声。</b>刘海在 1.0.17 默认关：“刘海”那一段的两块照样演，演的是打开以后的样子，行上的开关是关的；上面不加说明字，开关本身就是答案。</span></li>
+    <li><span class="n">5</span><span><b>减少动态效果：</b>不循环，两块停在关键帧，左边画手指移动的箭头，右边画结果加原来位置的虚线框。看不见窗口时停（沿用欢迎窗口那套）。</span></li>
+    <li><span class="n">6</span><span><b>VoiceOver：</b>两块合起来是一张图，名字是这一行在演什么（例如“演示：两指在标题栏上往上滑，窗口收成卷帘条”）；换行时发 polite 播报。分段是 tab 组。</span></li>
+    <li><span class="n">7</span><span><b>App 里怎么做：</b>两块是一个 <code>GestureHero</code> 视图，CALayer 画，帧数据放进纯逻辑文件（像 <code>WelcomeFlow</code> 那样有单测），欢迎窗口和设置页共用；弹簧用 <code>CASpringAnimation</code>，mass 1、stiffness (2π/response)²、damping 4πζ/response。分段用系统 <code>NSSegmentedControl</code>，行的悬停用 tracking area。</span></li>
+  </ol>
+</section>
+
+<section aria-labelledby="sbh">
+  <h2 id="sbh">分镜：每个手势演什么</h2>
+  <p class="fine">下面每一格是同一份帧数据摆出来的静帧（和上面画板里播的是同一份）。t 是这一帧开始的时刻；弹簧写 response / ζ，照 design-system §4.6。按下、松开是 0.08 s 的直接切换（不是位移）；淡入淡出是 <code>fade</code>（入 0.18 / 出 0.10）。每轮之间停 0.8 s。</p>
+  <div id="storyboards" class="sboard"></div>
+</section>
+
+<section aria-labelledby="exh">
+  <span class="kicker">Aaron 2026-10-17：「我希望整个设置都能用动画辅助理解，不只是手势」</span>
+  <h2 id="exh">E　整个设置窗口的讲解动画（SettingsExplainer）</h2>
+  <p>手势页那两块推广到每一页：每页顶上一条讲解带，左块画“你做什么 / 什么时候发生”（触控板、鼠标、键帽、菜单、时间），右块画“屏幕上发生什么”。指到、用 Tab 走到、或点选一行，讲解带就演那一行。下面先把规则定一次，再给能玩的整窗小样，最后逐页列每一行演什么。</p>
+
+  <div class="sheet">
+    <h3>规则（定一次，各页照用）</h3>
+    <div class="scroll"><table>
+      <thead><tr><th>项</th><th>定法</th></tr></thead>
+      <tbody>
+        <tr><td>尺寸</td><td>设置窗口 900 × 680，侧栏 204，内容区卡片宽 640。讲解带 640 × 200：两块各 312 × 200，间距 16，圆角 12（<code>system.card</code>），讲解带下面 14 pt 接第一组。帧数据统一用 312 × 200 的坐标，欢迎窗口按 326 / 312 放大。左块底色 <code>quaternarySystemFill</code>，右块是缩小的桌面（菜单栏、刘海、Dock 按需要出现）。</td></tr>
+        <tr><td>页循环</td><td>每页有一个默认讲解（列在下面各页表的第一行）。打开这一页时演 2 轮，然后停在它的关键帧（不加箭头）。</td></tr>
+        <tr><td>行循环</td><td>指针一进到行上（不等停留）或键盘焦点进到行上，就换成这一行的讲解，一直循环；0 ms 开始淡出，100 ms 后新的一段开始淡入，所以换讲解的反应在 120 ms 以内；指针扫过几行时，每进一行就改目标，不排队；点一下行（不是控件）把它选住，指针移开也接着演。移开且没选住时回到页循环的关键帧，不重新播页循环。同一行最多连演 6 轮（约 25 s）就停在关键帧，指针重新进来再演。</td></tr>
+        <tr><td>两段讲解之间</td><td>两块一起淡出 0.10 s、淡入 0.18 s（<code>fade</code>），块本身不动、不换尺寸。块里的东西照各自的弹簧：手指、指针 <code>calm</code> 0.34 / 1.0；窗口尺寸 <code>settle</code> 0.38 / 1.0；飞出刘海 <code>flyOut</code> 0.38 / 0.90；刘海说话 <code>bloom</code> 0.42 / 0.84；小确认 <code>pop</code> 0.30 / 0.75；按下 / 松开 0.08 s 直接切换。中途换讲解时，正在走的弹簧不等停稳，直接淡出（§4.6 不等停稳）。</td></tr>
+        <tr><td>开关关着时</td><td>照样演，但两块降到 55% 不透明、去掉饱和度，右块左上角一枚小标签“关着”。他在看的时候把开关打开，用 <code>calm</code> 回到全彩，标签淡出。</td></tr>
+        <tr><td>有几个选项的行</td><td>每个选项一段讲解（例如“收起后的样子”：跟原来一样 / 统一标题栏 / 缩略图）。讲解带演的是当前选中的那一项；指针停在分段控件的另一段上，先演那一段（不改设置），移开回到选中的那一项；选了就淡入新的那一段。</td></tr>
+        <tr><td>只是选项、没有屏幕上变化的行</td><td>两种处理：<b>静图</b>（这一行有一张值得看的画，例如“窗口之间留缝”的三种缝、隐私的私人窗口、界面语言三种文字）——左右两块摆一帧、不动；<b>页默认</b>（这一行和屏幕上看到的无关，例如诊断日志、导出导入设置、接收器地址）——讲解带保持页循环的关键帧，不为它换画。各页表里逐行标了是哪一种。</td></tr>
+        <tr><td>什么时候停</td><td>设置窗口不是最前、被挡住（<code>occlusionState</code> 不含 visible）、最小化、切到别的桌面：立刻停在当前段的关键帧，回来从这一段开头演。低电量模式：页循环不自动播，行循环只演 1 轮。</td></tr>
+        <tr><td>电量与 CPU</td><td>只用 CALayer 动画（渲染进程播，不占主线程）；一个窗口里同时只有一个讲解带在动；每段讲解在主线程上只有十来次换帧回调，没有逐帧计时器。目标：演的时候 CPU 不到 1%，停下来是 0；验收时用 Instruments 的 Core Animation 和 Energy 两条量一次，数写回这一节。</td></tr>
+        <tr><td>减少动态效果</td><td>不循环。两块摆关键帧，左块画手指 / 指针走向的箭头，右块画结果加原来位置的虚线框（顶上切换能看）。行、选项照样能换画，换的时候直接替换。</td></tr>
+        <tr><td>VoiceOver</td><td>讲解带是一张图，名字就是这段讲解的说明句（每段帧数据带一句，例如“演示：在标题栏上双击，窗口收成卷帘条”）。换讲解时发 polite 播报；同一句也挂在这一行的 <code>accessibilityHelp</code> 上，用读屏的人不用悬停也听得到。</td></tr>
+        <tr><td>减少透明度 / 增强对比度</td><td>右块里的玻璃面板改不透明；两块加 1 pt <code>separatorColor</code> 边（增强对比度时 <code>labelColor</code>）。</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="board-head"><h3>能玩的整窗小样</h3><span class="size">900 × 680 pt（实测窗口）· 侧栏 204 · 内容 640，两边各 28 · 点左边的页、指右边的行</span></div>
+  <div class="fit"><div class="fit-box" style="--w:900px;--h:680px"><div class="fit-inner">
+    <div class="mac" style="display:flex">
+      <div class="xside" id="xside" role="tablist" aria-label="设置的页"></div>
+      <div class="xmain">
+        <div class="set-tb" style="padding-inline:0"><b id="xtitle">效果</b></div>
+        <div class="hero" id="xhero" role="img" aria-label=""></div>
+        <div class="scard" id="xrows" style="height:382px;overflow:auto"></div>
+      </div>
+    </div>
+  </div></div></div>
+  <p class="fine">设置 8 页（“实验”是“高级”页里的一张卡）里每一行都接上了：循环的行指上去就演；标“静图”的摆一帧；标“页默认”的回到这一页默认讲解的关键帧。行名和副标题取自产品目录里的真文案（顶上切语言能看英文、繁体）；逐页表是给实现看的，只写简体。</p>
+
+  <h3>逐页：每一行演什么</h3>
+  <div id="xtables" class="sboard"></div>
+
+  <div class="sheet">
+    <h3>怎么做：一个 SettingsExplainer，欢迎窗口和设置共用</h3>
+    <ol class="plain" style="list-style:decimal">
+      <li><b>先做的共用部分（一个人，约 3 天，做完别的才能并行）</b>：帧数据模型与时序（纯逻辑、带单测）、两块的 CALayer 视图、页 / 行 / 选项 / 关着的状态机、悬停与焦点的接线、通用场景库（收起、收进刘海、窗口挪到某一格、面板升起、刘海说一句、键帽）、欢迎窗口 ① / ② / ③ 接上同一个视图。</li>
+      <li><b>然后每页一个人并行</b>（各自只动自己那页的场景文件和那一页的建页函数）：效果约 1.5 天、卷帘约 2 天、刘海约 2 天、手势约 1 天、窗口浏览约 1.5 天、快捷键约 1 天、隐私约 0.5 天、高级与实验约 1 天。</li>
+      <li><b>合并的坑</b>：七个页在同一个 <code>Preferences.swift</code> 里。共用部分先给 <code>makeUnifiedToggleRow</code> / <code>makeUnifiedControlRow</code> / <code>makeCollapseSettingsRow</code> 加一个 <code>explainer:</code> 参数并合进去，页的人只在自己那页的函数里填这个参数、在自己的 <code>ExplainerScenes+页名.swift</code> 里写帧数据，冲突就只剩几行；按页逐个合，每合一个跑一次检查。</li>
+    </ol>
+  </div>
+</section>
+
+<section class="sheet" aria-labelledby="polh">
+  <h2 id="polh">别的设置页顺手要改的</h2>
+  <p>不重做，只收这几处。都是看截图（<code>phase0-r3/settings-shots-zh</code>）能指出来的。</p>
+  <div class="scroll"><table>
+    <thead><tr><th>在哪</th><th>现在</th><th>改成</th></tr></thead>
+    <tbody>
+      <tr><td>每一页的标题栏</td><td>灰色两行：“WindowShade 设置 / 手势”</td><td>只写这一页的名字，粗体，和系统设置一样（“手势”）。侧栏已经说明了是哪个 App</td></tr>
+      <tr><td>页头（图标 + 一句话）</td><td>和下面第一个分组名“触发”贴在一起</td><td>页头下面留 16 pt 再接分组名；手势页不放页头，顶上那两块就是页头</td></tr>
+      <tr><td>同一张卡片里的行</td><td>有的行有图标、有的没有（卷帘页“走到一列时”“放得下就居中”），字一行在 572、一行在 496</td><td>同一张卡片里要么都有图标，要么都没有；没有图标的行字也对齐到 572</td></tr>
+      <tr><td>副标题重复标题</td><td>“标题栏手势 / 标题栏手势：上收下铺”；“Dock 悬停查看窗口 / 悬停 Dock 图标查看窗口”；“在菜单里显示‘选择窗口…’ / 快捷键默认留空”</td><td>“往上滑收起，往下滑铺满屏幕”；“不会打开没在运行的 App”；“菜单栏图标的菜单里多一项”</td></tr>
+      <tr><td>行尾的 ⓘ</td><td>几乎每一行都有，很多点开只是副标题再说一遍</td><td>只留点开有更多内容的；手势页的行有了上面的演示，ⓘ 全拿掉</td></tr>
+      <tr><td>手指一行的颜色</td><td>拖动、甩一下这类组合手势用橙色边</td><td>橙色在设计系统里是“出了问题”（§4.3 <code>problem</code>），换成次要文字色的细边；单一手势仍用强调色</td></tr>
+      <tr><td>标题栏手势的对照表</td><td>表下一行“只读对照，来自现有手势表，不是新开关。”</td><td>删掉（说的是实现，不是他遇到的事）；表的每一行改成能指、上面跟着演</td></tr>
+      <tr><td>窗口浏览页“打开窗口浏览”一行</td><td>按钮“打开面板…”</td><td>“选择窗口…”（固定词汇，菜单里也叫这个）</td></tr>
+      <tr><td>窗口浏览页第二行</td><td>“再点一下 Dock 图标，让开这个 App / 再点前台应用，让开窗口”</td><td>副标题改成“它在最前、窗口露着时才这样；再点一下回来”（照手势页那一行的说法）</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="sheet" aria-labelledby="sw">
+  <h2 id="sw">“之前常用”这一问</h2>
+  <p>1.0.18 里问，但不单独占一页：放在 ③ 下面，一行可选的单选（Windows / iPad / 一直用 Mac），旁边写“不选也行”，不选也能“继续”。理由是它这时真的起作用了：<code>Notch.teach</code> 默认开，卡住时刘海教什么跟着这个答案走（<code>HabitContext</code> 读 <code>SwitcherOrigin.current</code>）；而且 ③ 刚演完刘海这一排，问在这里，他知道刘海是干什么的。</p>
+  <p>没答时照现在一样：刘海自己猜到来处时会问他一次（<code>HabitContext.guessed</code> → <code>askOrigin</code>）。设置里的“之前常用”不动。注意一条副作用：<code>DockClickHideDefault</code> 对答了 Windows 或 iPad 的人默认关“再点一下 Dock 图标让开”，答了以后这一项会跟着关；这是那条已有的规则，这里不改，只在实现时别漏测。</p>
+</section>
+
+<section aria-labelledby="copyh">
+  <h2 id="copyh">全部文案</h2>
+  <p class="fine">繁体在顶上切换后直接看画板。标 <span class="tag">已有</span> 的是目录里已有的键，原样复用；其余是新句子，过了 copy-guide 的固定词汇（收起 / 展开、卷帘条、窗口浏览、欢迎使用 WindowShade…、继续 / 上一步 / 跳过 / 开始使用 / 稍后再说）。</p>
+  <div class="sheet scroll"><table id="copyTable"><thead><tr><th>位置 · 状态</th><th>简体中文</th><th>English</th></tr></thead><tbody></tbody></table></div>
+</section>
+
+<section aria-labelledby="motionh">
+  <h2 id="motionh">动效</h2>
+  <div class="sheet scroll">
+    <table>
+      <thead><tr><th>时刻</th><th>令牌</th><th class="num">response / ζ</th><th>减少动态效果时</th></tr></thead>
+      <tbody>
+        <tr><td>换页：窗口高度变化（574 ⇄ 420 ⇄ 470）</td><td><code>calm</code>（沿用 <code>WelcomeFlow.HeightMotion</code>，中途换目标接着当时速度）</td><td class="num">0.34 / 1.0</td><td>淡化的同时直接换高度</td></tr>
+        <tr><td>换页：内容</td><td><code>fade</code> 出 0.10 s、入 0.18 s，上浮 6 pt</td><td class="num">—</td><td>只淡化，不上浮</td></tr>
+        <tr><td>练习窗口收成卷帘条 / 展开</td><td><code>settle</code>（尺寸变化，不带速度，不回弹）</td><td class="num">0.38 / 1.0</td><td><code>reduced</code> 0.25 / 1.0；窗口和卷帘条原地交叉淡化</td></tr>
+        <tr><td>“在这里双击”小牌子消失、状态行换句</td><td><code>calm</code></td><td class="num">0.34 / 1.0</td><td>只淡化</td></tr>
+        <tr><td>✓ 出现（状态行、授权行）</td><td><code>pop</code>（小元素确认，按 §6-10 改后的值）</td><td class="num">0.30 / 0.75</td><td>直接出现</td></tr>
+        <tr><td>刘海教你：刘海长出那一句</td><td><code>bloom</code>（教学）</td><td class="num">0.42 / 0.84</td><td>直接摆在说话那一帧</td></tr><tr><td>演示里的手指、指针移动</td><td><code>calm</code>（design-system §5.11：示范用 calm）</td><td class="num">0.34 / 1.0</td><td>不动，画箭头</td></tr><tr><td>演示里窗口收进刘海 / 放回</td><td><code>settle</code> / <code>flyOut</code></td><td class="num">0.38 / 1.0；0.38 / 0.90</td><td>停在收进去那一帧，虚线框标原位</td></tr>
+        <tr><td>双击位置的涟漪（只在小样里画，App 里不画）</td><td>—</td><td class="num">—</td><td>不画</td></tr>
+      </tbody>
+    </table>
+    <p class="fine">稿里的 CSS 曲线由脚本按 mass 1、stiffness (2π/response)²、damping 4πζ/response 现算成 <code>linear()</code>，和 design-system §4.6 一致；位移不用贝塞尔。App 里练习窗口的高度要么走同一个 <code>FlickSpring</code>，要么直接用卷帘条现成的收起动画，以和别的窗口一模一样为准。</p>
+  </div>
+</section>
+
+<section class="sheet" aria-labelledby="a11yh">
+  <h2 id="a11yh">辅助设置、外观与窗口</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>项</th><th>处理</th></tr></thead>
+    <tbody>
+      <tr><td>窗口</td><td>标准 <code>NSWindow</code>，只有标题栏，宽 720 pt 不变，高按页走（574 / 420 / 470）。圆角不写死，macOS 26 起从 <code>effectiveCornerRadii</code> 读（design-system §4.1）。窗口背景用 <code>windowBackgroundColor</code>，不自绘玻璃（V4）。按钮用系统按钮，macOS 26 起自带 Liquid Glass 的外观；主按钮用 <code>keyEquivalent = "\r"</code> 着强调色。</td></tr>
+      <tr><td>舞台</td><td>内容层，不加材质。菜单栏那条在减少透明度时改不透明。迷你 Mac 的刘海仍按现在的 15% 示意，等 <code>DisplayShape</code> 落定再按本机比例画（welcome.md“这次没做的”）。</td></tr>
+      <tr><td>浅色 / 深色</td><td>跟随系统，切换外观时当页重画（沿用现有监听）。刘海永远纯黑。</td></tr>
+      <tr><td>减少动态效果</td><td>见上表；演示停在关键帧，加箭头和虚线框；③ 不自己演。顶上能切。</td></tr>
+      <tr><td>增强对比度</td><td>授权行卡片、窗口浏览卡片的边加到 1 pt <code>labelColor</code>（§4.2）。</td></tr>
+      <tr><td>VoiceOver</td><td>每页的窗口标题是这一页的标题；页码点读“第 n 页，共 3 页”（共 3 页是新加的）。练习标题栏是按钮 + 自定动作“收起窗口”。授权行状态变化发 polite 播报：“辅助功能已授权”。两块演示合起来是一张图，名字读当前演的是什么；③ 的最后一行小字说清图标在哪。</td></tr>
+      <tr><td>键盘</td><td>回车“继续”/“开始使用”，← → 翻页，Tab 走到练习标题栏后按空格等于双击。</td></tr>
+      <tr><td>不只靠颜色</td><td>✓ 和“已授权”二字同时出现；“继续”变主按钮时文字不变、焦点环跟着走。</td></tr>
+      <tr><td>三种语言</td><td>英文最长：A1 标题 “Double-click a title bar to roll the window up.” 在 668 pt 宽、22 pt 字下一行放得下；A2 导语两行。按 Apple 大小写惯例，按钮用 Title Case（Continue、Get Started、Not Now），句子用 sentence case。</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="sheet" aria-labelledby="scopeh">
+  <h2 id="scopeh">相对现在的 Welcome.swift，要改什么</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>现在</th><th>改成</th><th>落在</th></tr></thead>
+    <tbody>
+      <tr><td>默认值总账：刘海、实时活动、文件架、再点 Dock 让开这 12 键 <code>deviceVerified: false</code>，发出去是关</td><td><b>Aaron 拍板 2026-10-17：1.0.18 起这些默认开。</b>这 12 行 <code>designed: true</code> 不变；<code>Entry</code> 加一个字段 <code>ownerDecided: Bool</code>（或 <code>decidedBy: "Aaron 2026-10-17"</code>），<code>release = designed &amp;&amp; (deviceVerified || ownerDecided)</code>，这 12 行填 true，<code>deviceVerified</code> 照实留 false，账上看得出是拍板开的、不是验过开的。文件头那句“只有真机验过的才默认开”改成“验过的、或 Aaron 拍板的才默认开”，并写下这一批的日期</td><td><code>Core/ReleaseDefaults.swift</code>、<code>docs/releases/v1.0.18-defaults.md</code>（照 1.0.16 那份新开）</td></tr>
+      <tr><td>Dock 悬停查看窗口：<code>UserDefaults.bool(forKey: "WindowBrowserDockEnabled")</code>，没设过就是关</td><td>改成 <code>object(forKey:) as? Bool ?? ReleaseDefaults.value("WindowBrowserDockEnabled")</code>，总账加这一行（designed true、ownerDecided true）</td><td><code>WindowBrowser/WindowBrowserSettings.swift</code>、<code>ReleaseDefaults.swift</code></td></tr>
+      <tr><td>默认值不分新装和升级</td><td><b>Aaron 拍板 2026-10-17：新老都开。</b>显式存过值的照旧（总账已经这样），没存过的新老一律按新默认，所以 <code>ReleaseDefaults</code> 不用分新装和升级；升级的人用 N1 告诉他一次</td><td>不改 <code>ReleaseDefaults.value(_:)</code> 的签名；新 <code>WhatsNew1018.swift</code></td></tr>
+      <tr><td>第一步：卡住时刘海教你（⌃C → ⌘C 动画）</td><td>A1：左右两块的演示（双击标题栏 → 卷帘条），演两轮后右边那扇变成练习窗口。⌃C 那段动画不再占引导的页，留在 N1 和设置里（同一套两块）</td><td><code>WelcomeView.pages</code>、<code>WelcomeScene</code> 换成 <code>GestureHero</code>；练习窗口是一扇真子窗口</td></tr>
+      <tr><td>第二步：你之前常用哪个？（一整页，选了才能继续）</td><td>挪进 ③，一行可选的单选，不选也能继续</td><td><code>WelcomeFlow.originStep</code>、<code>canAdvance</code></td></tr>
+      <tr><td>第三步：一次要辅助功能、屏幕录制、日程三项；两项都开才能“开始使用”</td><td>辅助功能那一问（不算页码）两行：辅助功能（必需）+ 屏幕录制（可选，没有它也能收起，只是没有实时画面），各自实时变 ✓，“继续”只等辅助功能；日程挪到刘海第一次要说“快开会”时问</td><td><code>permissionsGranted</code>、<code>refreshOnboardingState()</code>、授权行生成</td></tr>
+      <tr><td>没有“去哪找”、没有招牌功能的介绍</td><td>② 一甩到半屏、捏合撤回；③ 长按刘海、点一格回到原处；各一组演示，可跳过。窗口浏览、手势与卷轴、菜单栏不再各占一段</td><td>新页；不再需要分段控件</td></tr>
+      <tr><td>设置 → 手势：四组行，没有演示</td><td>顶上两块演示 + 四段分段（就是现在的四组），指到哪一行演哪一行；对照表每行能指</td><td><code>makeGestureSettingsPage()</code>、<code>WS2GestureRows.swift</code></td></tr>
+      <tr><td>—</td><td>新的 <code>GestureHero</code>：两块 CALayer，帧数据放纯逻辑文件（分镜里那 13 组），欢迎窗口和设置共用；<code>CASpringAnimation</code> 按 §4.6 令牌；看不见时停；减少动态效果停在关键帧加箭头</td><td>新 <code>App/GestureHero.swift</code>、<code>Core/GestureHeroScript.swift</code>（带单测）</td></tr>
+      <tr><td>启动时 <code>ensureAccessibility()</code> 每次带 prompt</td><td>启动时只读不弹；A2 / U1 的“去授权”才带 prompt</td><td><code>WindowShade.swift</code> 启动序列</td></tr>
+      <tr><td>升级缺授权只认更新日志（<code>journal.permissionsBefore</code>）</td><td>再加一条：老安装（<code>InstallHistory</code>）+ 缺辅助功能 + 这一版没看过 U1</td><td><code>showPermissionOnboardingIfNeeded</code>、新键 <code>PermissionsAgainShown.1.0.18</code></td></tr>
+      <tr><td>“再打开一次这两项”是授权页换文案；“−”那句等 10 秒</td><td>U1 独立一页、没有页码点；“−”那句一打开就在；“开始使用”只等辅助功能</td><td><code>permissionsAgain</code> 分支</td></tr>
+      <tr><td>窗口浏览等表面缺录屏时只有页脚一句</td><td>C1 兜底：同一句加一个“去授权”链接，不弹、不追问</td><td><code>WindowBrowserController</code>、<code>Glance</code>、<code>PinnedPreview</code>、侧拉、画中画的缺权限分支</td></tr>
+      <tr><td>别的设置页</td><td>见“别的设置页顺手要改的”九条</td><td><code>Preferences.swift</code> 各页、目录文案</td></tr>
+    </tbody>
+  </table></div>
+  <p class="fine">不动的：放进“应用程序”那一步（<code>UpdaterMove</code>）、窗口高度弹簧与换页过渡、看不见时停动画、关窗口算看过、<code>--settings-shots</code> 框架（要按新页重拍）。<code>docs/welcome.md</code>、<code>docs/design-system.md</code> §5.11、<code>docs/releases/v1.0.16-defaults.md</code> 的后继要随实现一起改。默认开了以后，刘海 20、home 3、habits 7 那几组探针照样要在真机上跑：拍板改的是默认值，不是验收。</p>
+</section>
+
+<section aria-labelledby="qh">
+  <h2 id="qh">决定记录</h2>
+  <div class="qa">
+    <div><h3>1.0.18 起这些默认开</h3><p class="rec"><b>Aaron 拍板 2026-10-17。</b>刘海主功能、刘海实时活动、Dock 悬停查看窗口、文件架和再点 Dock 让开，共 13 个键；改了“只有真机验过才默认开”的纪律，账上用 <code>ownerDecided</code> 记，验收照样要跑。</p></div>
+    <div><h3>升级上来、没动过这些开关的人也开</h3><p class="rec"><b>Aaron 拍板 2026-10-17：新老都开</b>（我原本建议只给新装）。所以 <code>ReleaseDefaults</code> 不分新装和升级；升级的人用 N1 一页说一次新开了什么，只列真变了的，可以不看。</p></div>
+    <div><h3>“之前常用”问，一行可选</h3><p class="rec"><b>Aaron 拍板 2026-10-17。</b>放在 ③ 下面，不选也能继续。</p></div>
+    <div><h3>屏幕录制在引导里和辅助功能一起问</h3><p class="rec"><b>Aaron 拍板 2026-10-17</b>（我原本建议用到时再问）。辅助功能那一问两行各自实时变 ✓，“继续”只等辅助功能，屏幕录制标“可选”并一句话说它让什么变好；C1 退成表面里的一句兜底。</p></div>
+    <div><h3>启动时的系统辅助功能弹框拿掉</h3><p class="rec"><b>Aaron 拍板 2026-10-17。</b>只在辅助功能那一问 / U1 点“去授权”时弹。</p></div>
+    <div><h3>首次打开三页各做成一件</h3><p class="rec"><b>Aaron 拍板 2026-11-06（#110，Q2）。</b>① 双击收起、停在条上看一眼；② 一甩到半屏、捏合撤回；③ 长按刘海拿回收起的窗口。辅助功能在 ① 做成后、要收别的 App 时才问，不算页码。取代 10-17 的“四样招牌一页分段”；窗口浏览不作旗舰（#107）。</p></div>
+    <div><h3>整个设置都用动画讲解</h3><p class="rec"><b>Aaron 2026-10-17。</b>见 E 节：每页一条讲解带，行到哪演到哪；只是选项的行用静图或页默认。</p></div>
+  </div>
+  <p class="fine">没有待定的问题了。另外我自己定的：练习用一扇子窗口；设置 → 手势的分段就用现在的四个分组。还要真机确认的两件事：屏幕录制授权后要不要重开 App；手动从 1.0.16 升级上来启动时实际看到什么。</p>
+</section>
+
+<section class="sheet" aria-labelledby="woh">
+  <h2 id="woh">工作单（1.0.18，分支 claude/next）</h2>
+  <p class="fine">按顺序；标“共用”的先做，做完后“页”那几条可以一页一个人并行。每条写到文件与函数。</p>
+  <ol class="wo">
+    <li><b>默认值总账。</b><code>Core/ReleaseDefaults.swift</code>：<code>Entry</code> 加 <code>ownerDecided: Bool</code>，<code>release = designed &amp;&amp; (deviceVerified || ownerDecided)</code>；刘海 10 键、<code>FileShelf.enabled</code>、<code>Dock.clickToHide</code> 填 <code>ownerDecided: true</code>，新加一行 <code>WindowBrowserDockEnabled</code>（designed / ownerDecided 都 true）；文件头纪律改成“验过的、或 Aaron 拍板的”，注明 2026-10-17。单测跟着改。新文档 <code>docs/releases/v1.0.18-defaults.md</code>。</li>
+    <li><b>Dock 悬停读总账。</b><code>WindowBrowser/WindowBrowserSettings.swift</code> 的 <code>dockEnabled</code>：<code>object(forKey:) as? Bool ?? ReleaseDefaults.value(dockEnabledKey)</code>。</li>
+    <li><b>启动不弹系统框。</b><code>WindowShade.swift</code> 启动序列里 <code>ensureAccessibility()</code> 改成只读 <code>AXIsProcessTrusted()</code>；带 prompt 的调用只留给辅助功能那一问 / U1 的“去授权”（新 <code>requestAccessibilityPrompt()</code>，在 <code>App/Permissions.swift</code>）。</li>
+    <li><b>启动时选哪条路。</b><code>Preferences.swift</code> 的 <code>showPermissionOnboardingIfNeeded(force:)</code>：新装 → 欢迎窗口 A1；老安装（<code>InstallHistory</code> 不是 <code>.fresh</code>）且缺辅助功能且没看过 <code>PermissionsAgainShown.1.0.18</code> → U1，之后接 N1；老安装且有变化的新默认、没看过 <code>WhatsNewShown.1.0.18</code> → N1。更新日志那条路（<code>Updater.swift</code> 的 <code>permissionsBefore</code>）落到同一个 U1。</li>
+    <li><b>N1 这一版新开了这几样。</b>新 <code>App/WhatsNew1018.swift</code>（窗口与三行）+ <code>Core/WhatsNew1018Changes.swift</code>（纯逻辑：13 个键里哪些“没显式存过值、1.0.17 发出去是关、现在是开”，分成刘海 / Dock 悬停 / 文件架与 Dock 三组；带单测）。“在设置里改…”调 <code>showPreferences(page:)</code>，“看看怎么用”打开欢迎窗口的 ③。</li>
+    <li><b>共用：讲解动画的帧数据。</b>新 <code>Core/ExplainerScript.swift</code>：<code>ExplainerSpec</code>（设备种类、初始状态、帧：按元素的补丁 + 弹簧令牌名 + 停留、关键帧下标、箭头与虚线框、读屏说明句）、按令牌算时长（复用 <code>FlickSpring</code>，补 <code>flyOut</code>、<code>bloom</code>、<code>pop</code>）、页 / 行 / 选项 / 关着的状态机（停在哪一帧、演几轮、什么时候回页循环）。单测 <code>tests/run-explainer-tests.sh</code>：每段时长、关键帧存在、读屏句不空、6 轮上限、选项切换。</li>
+    <li><b>共用：场景库。</b>新 <code>Core/ExplainerScenes+Common.swift</code>：双击收起、两指滑、收进刘海与放回、窗口挪到某一格（参数是目标外框，快捷键页全靠它）、面板升起、刘海说一句（参数是两行字）、键帽、Dock 图标点按与悬停。分镜里那 13 组先落在这里。</li>
+    <li><b>共用：两块的视图。</b>新 <code>App/SettingsExplainerView.swift</code>：两个 CALayer 块（设备块：触控板 / 鼠标 / 键帽 / 文字；结果块：迷你桌面、窗口、刘海、Dock、面板、指针、遮罩），补丁用 <code>CASpringAnimation</code>（mass 1、stiffness (2π/response)²、damping 4πζ/response）；两段之间 fade 0.10 / 0.18；关着时 55% + 去饱和 +“关着”；减少动态效果画关键帧 + 箭头 + 虚线框；减少透明度、增强对比度；<code>occlusionState</code>、窗口不在最前、低电量模式时停；一张读屏图 + polite 播报。</li>
+    <li><b>共用：接到设置的行上。</b><code>Preferences.swift</code>：<code>makeUnifiedToggleRow</code>、<code>makeUnifiedControlRow</code>、<code>makeUnifiedPermissionRow</code>、<code>CollapseAppearanceSettings.makeCollapseSettingsRow</code>、<code>WS2GestureRows.decorate</code> 加 <code>explainer: ExplainerSpec.ID?</code> 参数；新 <code>App/SettingsExplainerHost.swift</code> 负责悬停（tracking area；指针一进到行上就换，不设停留）、焦点、点选住、分段控件逐段悬停、开关状态读写，把同一句读屏说明挂到行的 <code>accessibilityHelp</code>。<code>makeSettingsPageRoot()</code> 顶上插讲解带（640 × 200，下面留 14 pt）。</li>
+    <li><b>共用：欢迎窗口接上。</b><code>App/Welcome.swift</code>、<code>App/WelcomeFlow.swift</code>：三页 ① / ② / ③；① 用讲解视图演 <code>dblGlance</code> 两轮，再叠一扇真子窗口做练习（标题栏双击走自己的收起，不要辅助功能），左块跟着他的点击亮；辅助功能那一问（不算页码，两行授权：辅助功能必需、屏幕录制可选，<code>permissionsGranted</code> 只看辅助功能，屏幕录制读 <code>CGPreflightScreenCaptureAccess()</code>、“去授权”调 <code>CGRequestScreenCaptureAccess()</code>）；② 演 <code>flickUndo</code>；③ 演 <code>notchRow</code>，下面接 <code>SwitcherOrigin</code> 的一行可选单选；去掉第二步那一整页、日程行。U1 独立一页（<code>permissionsAgain</code> 分支），“−”那句一打开就在。页码点读“第 n 页，共 3 页”。</li>
+    <li><b>页（可并行）：效果</b> — <code>Effects/DuoSettingsWindow.swift</code> 效果页 + <code>Core/ExplainerScenes+Effects.swift</code>。现在那块大预览并进讲解带（右块就是预览，进度滑杆拖讲解的时间）；收起窗口时的动画（开 / 关两段）、桌面开合、锁屏开合。约 1.5 天。</li>
+    <li><b>页：卷帘</b> — <code>Preferences.swift</code> 的 <code>makeShadeSettingsPage()</code>、<code>CollapseAppearanceSettings.swift</code> + <code>ExplainerScenes+Shade.swift</code>。看一眼、留缝三选项、分屏把手、走到一列时两选项、收起后的样子三选项、浮在上面、半透明；音效与实验行用页默认。约 2 天。</li>
+    <li><b>页：刘海</b> — <code>makeNotchSettingsPage()</code> + <code>ExplainerScenes+Notch.swift</code>。有变化时提醒、实时活动、正在播放、浏览器下载、合成一排、悬停不误触、文件架、之前常用三选项。顺手：<code>设备的电量</code>从 高级 → 实验 搬回刘海页（1.0.18 默认开，实验那句“默认都关着”不再对）。约 2 天。</li>
+    <li><b>页：手势</b> — <code>makeGestureSettingsPage()</code>、<code>WS2GestureRows.swift</code> + <code>ExplainerScenes+Gestures.swift</code>。四段分段（就是四个分组）、对照表每行能指、组合手势的橙色边改中性色、删掉“只读对照……”那句、去掉行尾 ⓘ。约 1 天。</li>
+    <li><b>页：窗口浏览</b> — <code>makeWindowBrowserSettingsPage()</code> + <code>ExplainerScenes+Browser.swift</code>。Dock 悬停、再点 Dock 让开、Dock 留在这块屏、调度中心 ⌘W、按窗口切换三选项；面板外观选项用静图；“打开面板…”改“选择窗口…”。约 1.5 天。</li>
+    <li><b>页：快捷键</b> — <code>makeShortcutsSettingsPage()</code> + <code>ExplainerScenes+Shortcuts.swift</code>。左块读这一行实际录的组合（没录时静图写“没录”），右块用“窗口挪到某一格”按动作给目标外框；功能类动作借各功能页那一段；按编号展开。约 1 天。</li>
+    <li><b>页：隐私</b> — <code>makePermissionsSettingsPage()</code> + <code>ExplainerScenes+Privacy.swift</code>。私人窗口、两项权限（按开 / 关两张静图）、登录时启动；全是静图。约 0.5 天。</li>
+    <li><b>页：高级与实验</b> — <code>DuoSettingsWindow.swift</code> 高级页、<code>makeExperimentalSettingsCard()</code> + <code>ExplainerScenes+Advanced.swift</code>。界面语言静图、导出诊断信息静图、减少动态效果说明行演关键帧样子；实验里离开就锁、实时预览、跟着声音跳、离开期间、拷贝进度、猜你从哪来。约 1 天。</li>
+    <li><b>别的设置页顺手改的九条</b>（见上表）：标题栏只写页名、页头下 16 pt、同卡片图标对齐、三句副标题、ⓘ 只留有内容的。分给各页的人一起做。</li>
+    <li><b>C1 兜底。</b><code>WindowBrowserController</code> 页脚、<code>Glance</code>、<code>PinnedPreview</code>、侧拉与画中画菜单项、缩略图样式副标题：同一句 <code>browser.status.noRecording</code> + “去授权”链接；不新加询问。</li>
+    <li><b>文案目录。</b><code>Resources/Localizable.xcstrings</code>：本稿“全部文案”表里新句子的三语（简、英、繁），英文照 Apple 大小写；每段讲解的读屏说明句也进目录。</li>
+    <li><b>文档与截图。</b><code>docs/welcome.md</code>、<code>docs/design-system.md</code> §5.11（加 §5.14 讲解带）、<code>docs/copy-guide.md</code> 固定词汇（“讲解”不对用户露名字，界面上不起名）；<code>--settings-shots</code> 按 ① / ② / ③ / 辅助功能那一问 / U1 / N1 和各页讲解关键帧重拍。</li>
+    <li><b>验收。</b>真机：刘海 20、home 3、habits 7 探针（默认开了更要跑）；屏幕录制授权后要不要重开；手动从 1.0.16 装上来启动看到 U1 → N1；讲解带演的时候 CPU 与能耗（Instruments 量一次，数写回 E 节）。</li>
+  </ol>
+</section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  var ROWL10N=null, TL={};
+  // ——— 弹簧 → linear() ———
+  function spring(resp,z){
+    var w=2*Math.PI/resp, pts=[], T=0;
+    function x(t){ if(z>=1) return 1-Math.exp(-w*t)*(1+w*t);
+      var wd=w*Math.sqrt(1-z*z); return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t)); }
+    for(var t=0;t<4;t+=0.005){ if(Math.abs(1-x(t))<0.002 && Math.abs(1-x(t+0.05))<0.002){T=t;break;} }
+    if(!T) T=resp*2.5;
+    for(var i=0;i<=40;i++){ pts.push(+x(T*i/40).toFixed(4)); }
+    pts[40]=1;
+    return {e:"linear("+pts.join(",")+")",t:T.toFixed(3)+"s"};
+  }
+  try{
+    if(CSS.supports("transition-timing-function","linear(0,1)")){
+      [["calm",.34,1],["settle",.38,1],["pop",.30,.75],["bloom",.42,.84]].forEach(function(s){
+        var r=spring(s[1],s[2]); root.style.setProperty("--"+s[0],r.e); root.style.setProperty("--"+s[0]+"-t",r.t);
+      });
+    }
+  }catch(e){}
+
+  // ——— 文案（zh-Hans 是语义身份；en 照 Apple 大小写惯例） ———
+  var S={
+    "eyebrow":["欢迎使用 WindowShade","Welcome to WindowShade","歡迎使用 WindowShade",1],
+    "btn.skip":["跳过","Skip","跳過",1],"btn.next":["继续","Continue","繼續",1],"btn.back":["上一步","Back","上一步",1],
+    "btn.later":["稍后再说","Not Now","稍後再說",1],"btn.start":["开始使用","Get Started","開始使用",1],
+    "art.app":["备忘录","Notes","備忘錄"],"art.file":["文件","File","檔案"],"art.edit":["编辑","Edit","編輯"],"art.window":["窗口","Window","視窗"],
+    "art.listTitle":["购物清单","Shopping List","購物清單"],"art.finder":["访达","Finder","Finder"],
+    "a1.hint":["在这里双击","Double-click here","在這裡按兩下"],
+    "a1.title":["双击标题栏，把窗口收起来。","Double-click a title bar to roll the window up.","按兩下標題列，把視窗收起來。"],
+    "a1.lede":["窗口收成一条卷帘条，里面的东西都还在；停在条上，就能看一眼。","It becomes a roll-up bar. Everything inside stays put, and resting on the bar gives you a look.","視窗收成一條捲簾條，裡面的東西都還在；停在條上，就能看一眼。"],
+    "a1.rolled":["收起了。停在条上能看一眼；再双击卷帘条，原样展开。","Rolled up. Rest on the bar for a look inside; double-click it to unroll.","收起了。停在條上能看一眼；再按兩下捲簾條，原樣展開。"],
+    "a1.glance":["这就是看一眼：移开就收回。再双击卷帘条，原样展开。","That’s a look inside. Move away and it rolls back. Double-click the bar to unroll.","這就是看一眼：移開就收回。再按兩下捲簾條，原樣展開。"],
+    "p2.title":["在标题栏上一甩，窗口到半屏。","Flick a title bar to snap the window to half the screen.","在標題列上一甩，視窗到半螢幕。"],
+    "p2.lede":["排错了？两指捏合，撤回这一步。","Not right? Pinch with two fingers to undo.","排錯了？兩指捏合，撤回這一步。"],
+    "p2.half":["到左半屏了。两指捏合，撤回这一步。","Left half. Pinch with two fingers to undo.","到左半螢幕了。兩指捏合，撤回這一步。"],
+    "p2.undone":["撤销 左半屏。窗口回到原来的位置。","Undid Left Half. The window is back where it was.","撤銷 左半螢幕。視窗回到原來的位置。"],
+    "a1.done":["就这样。别的窗口也一样。","That’s it. Every window works the same way.","就這樣。別的視窗也一樣。"],
+    "a1.option":["想要系统原来的双击？按住 Option 再双击。","Want the usual double-click? Hold Option.","想要系統原來的按兩下？按住 Option 再按兩下。"],
+    "a1.ax.bar":["购物清单的标题栏。双击收起窗口。","Shopping List title bar. Double-click to roll up.","購物清單的標題列。按兩下收起視窗。"],
+    "a2.title":["让别的 App 的窗口也能收起","Roll up other apps’ windows too","讓別的 App 的視窗也能收起"],
+    "a2.lede":["刚才那扇是 WindowShade 自己的窗口。要收别的 App 的窗口，先打开辅助功能。","That one belonged to WindowShade. To roll up other apps’ windows, turn on Accessibility.","剛才那個是 WindowShade 自己的視窗。收起別的 App 的視窗，要開啟輔助使用。"],
+    "perm.ax":["辅助功能","Accessibility","輔助使用"],
+    "perm.axSub":["找到、移动和收起窗口","Find, move and roll up windows","找到、移動和收起視窗"],
+    "perm.sr":["屏幕录制","Screen Recording","螢幕錄製",1],
+    "perm.grant":["去授权","Grant","去授權",1],"perm.granted":["已授权","Granted","已授權",1],
+    "perm.wait":["在系统设置里打开 WindowShade 的开关，这里会自己变。","Turn on WindowShade in System Settings. This updates on its own.","在系統設定裡開啟 WindowShade 的開關，這裡會自己變。"],
+    "perm.stuck":["开关开着却没用？在列表里选中 WindowShade，点“−”删掉，再回来点“去授权”。","On but nothing happens? Select WindowShade in the list, remove it with −, then grant again.","開關開著卻沒用？在列表裡選中 WindowShade，點“−”刪掉，再回來點“去授權”。",1],
+    "perm.admin":["打开时要输入管理员的名字和密码。","You’ll need an administrator name and password.","開啟時要輸入管理員的名稱和密碼。"],
+    "a2.try":["现在去任何一扇窗口的标题栏上双击试试。","Now double-click the title bar of any window.","現在去任何一個視窗的標題列上按兩下試試。"],
+    "a2.real":["收起了“访达”的一扇窗口。","Rolled up a Finder window.","收起了「Finder」的一個視窗。"],
+    "a2.privacy":["读了什么、为什么读，设置 → 隐私 里都列着。","Settings → Privacy lists what WindowShade reads and why.","讀了什麼、為什麼讀，設定 → 隱私權 裡都列著。"],
+    "a3.title":["它在菜单栏里","It lives in the menu bar","它在選單列裡"],
+    "a3.lede":["WindowShade 没有 Dock 图标。点菜单栏上的这个图标，收起的窗口和设置都在这里。","WindowShade has no Dock icon. Click this icon in the menu bar for rolled-up windows and Settings.","WindowShade 沒有 Dock 圖示。點選單列上的這個圖示，收起的視窗和設定都在這裡。"],
+    "a3.noax":["还没打开辅助功能，现在只能收起 WindowShade 自己的窗口。","Accessibility is off, so only WindowShade’s own windows roll up for now.","還沒開啟輔助使用，現在只能收起 WindowShade 自己的視窗。"],
+    "a3.replay":["设置 → 高级 → 关于 里能再看这一遍。","See this again in Settings → Advanced → About.","設定 → 高階 → 關於 裡能再看這一遍。"],
+    "tour.g.t":["标题栏手势","Title bar gestures","標題列手勢",1],
+    "tour.g.d":["两指在标题栏上往左、往右滑：左半屏、右半屏。往上滑是收起。","Swipe left or right with two fingers on a title bar for the left or right half. Swipe up to roll up.","兩指在標題列上往左、往右滑：左半螢幕、右半螢幕。往上滑是收起。"],
+    "tour.b.t":["窗口浏览","Window browsing","視窗瀏覽",1],
+    "tour.b.d":["菜单里的“选择窗口…”列出一个 App 的全部窗口。","Choose Window… in the menu lists every window of an app.","選單裡的「選擇視窗…」列出一個 App 的全部視窗。"],
+    "tour.b.tog":["Dock 悬停查看窗口","Hover the Dock icon to see windows","指標停在 Dock 圖示",1],
+    "menu.arrange":["整理卷帘条","Arrange the Bars","整理捲簾條",1],"menu.choose":["选择窗口…","Choose Window…","選擇視窗…",1],
+    "menu.folded":["已收起的窗口","Rolled-up windows","已收起的視窗",1],"menu.unrollAll":["全部展开","Unroll All","全部展開",1],
+    "menu.settings":["设置…","Settings…","設定…",1],"menu.about":["关于","About","關於",1],"menu.quit":["退出 WindowShade","Quit WindowShade","退出 WindowShade",1],
+    "u1.title":["再打开一次这两项","Turn these two on again","再開啟一次這兩項",1],
+    "u1.lede":["装好新版本后，系统要你重新打开辅助功能和屏幕录制。","After installing the new version, macOS asks you to turn Accessibility and Screen Recording on again.","裝好新版本後，系統要你重新開啟輔助使用和螢幕錄製。",1],
+    "u1.once":["只要这一次，以后更新不用再开。"," This is a one-time step. Later updates keep them on.","只要這一次，以後更新不用再開。"],
+    "u1.axSub":["找到、移动和收起窗口","Find, move and roll up windows","找到、移動和收起視窗"],
+    "u1.srSub":["看一眼和窗口浏览里的实时画面要用，不开也能用。","Live pictures in Glance and Window Browsing use it. Everything works without it.","看一眼和視窗瀏覽裡的即時畫面要用，不開也能用。"],
+    "u1.left2":["还差 2 项","2 left","還差 2 項"],"u1.left1":["还差屏幕录制。不开也能用。","Screen Recording is left. You can go without it.","還差螢幕錄製。不開也能用。"],
+    "u1.ready":["权限已就绪","Permissions are ready","權限已就緒",1],
+    "a1.yourTurn":["轮到你：在右边那扇窗口的标题栏上双击。","Your turn: double-click the title bar of the window on the right.","輪到你：在右邊那個視窗的標題列上按兩下。"],
+    "tour.seg.notch":["刘海","Notch","瀏海",1],"tour.seg.browse":["窗口浏览","Window browsing","視窗瀏覽",1],"tour.seg.gest":["手势与卷轴","Gestures & Strip","手勢與捲軸"],"tour.seg.menu":["菜单栏","Menu Bar","選單列"],
+    "tour.notch.t":["长按刘海，拿回收起的窗口","Press and hold the notch to get windows back","長按瀏海，拿回收起的視窗"],
+    "tour.notch.l":["收起的窗口在刘海里排成一排。长按刘海，点一格，那扇窗口回到原处。","Rolled-up windows wait in a row at the notch. Press and hold the notch, then click one to put it back where it was.","收起的視窗在瀏海裡排成一排。長按瀏海，點一格，那扇視窗回到原處。"],
+    "tour.browse.t":["停在 Dock 图标上，看它的所有窗口","Rest on a Dock icon to see all its windows","停在 Dock 圖示上，看它的所有視窗"],
+    "tour.browse.l":["指针停一下，这个 App 的窗口就排出来，点哪扇去哪扇。菜单里的“选择窗口…”也行。","Pause the pointer and the app’s windows line up. Click one to go there. Choose Window… in the menu works too.","指標停一下，這個 App 的視窗就排出來，點哪個去哪個。選單裡的「選擇視窗…」也行。"],
+    "tour.gest.t":["两指一滑，窗口就排好","Two fingers, and the windows line up","兩指一滑，視窗就排好"],
+    "tour.gest.l":["两指在标题栏上往左、往右滑，占左半屏、右半屏。两指张开，窗口一列挨一列排好；放不下的接成卷轴，两指滑过去。","Swipe left or right on a title bar for the left or right half. Spread two fingers to line windows up in columns. When they don’t fit, they continue as a strip you swipe through.","兩指在標題列上往左、往右滑，佔左半螢幕、右半螢幕。兩指張開，視窗一列挨一列排好；放不下的接成捲軸，兩指滑過去。"],
+    "origin.q":["你之前常用哪个？","What did you use before?","你之前常用哪個？",1],"origin.mac":["一直用 Mac","Always Mac","一直用 Mac",1],"origin.opt":["不选也行","Optional","不選也行"],
+    "teach.line":["Mac 上拷贝按 ⌘C","On a Mac, copy is ⌘C","Mac 上拷貝按 ⌘C",1],"teach.sub":["常用快捷键把 ⌃ 换成 ⌘","Most shortcuts use ⌘ instead of ⌃","常用快速鍵把 ⌃ 換成 ⌘",1],
+    "a2.optional":["可选","Optional","可選"],
+    "a2.srSub":["开了，看一眼和窗口浏览里有窗口的实时画面。没有它也能收起，只是没有实时画面。","Turn it on to see live window pictures in Glance and Window Browsing. Without it, windows still roll up, just without live pictures.","開了，看一眼和視窗瀏覽裡有視窗的即時畫面。沒有它也能收起，只是沒有即時畫面。"],
+    "a2.relaunch":["屏幕录制要重新打开 WindowShade 才生效。","Reopen WindowShade to use Screen Recording.","螢幕錄製要重新開啟 WindowShade 才生效。"],
+    "perm.admin2":["打开这两项时，要输入管理员的名字和密码。","You’ll need an administrator name and password for these two.","開啟這兩項時，要輸入管理員的名稱和密碼。",1],
+    "n1.title":["这一版新开了这几样","New in this version, and on","這一版新開了這幾樣"],
+    "n1.lede":["你没动过的开关，现在是开着的。不想要哪样，在设置里关掉。","Switches you never changed are now on. Turn off anything you don’t want in Settings.","你沒動過的開關，現在是開著的。不想要哪樣，在設定裡關掉。"],
+    "n1.notch.t":["刘海","Notch","瀏海",1],"n1.notch.d":["窗口能收进刘海；按错快捷键时刘海说一句；音乐、下载这些显示在刘海上。","Tuck windows into the notch. It tells you the Mac shortcut when one doesn’t work, and shows music and downloads.","視窗能收進瀏海；按錯快速鍵時瀏海說一句；音樂、下載這些顯示在瀏海上。"],
+    "n1.dock.t":["Dock 悬停查看窗口","Hover the Dock icon to see windows","指標停在 Dock 圖示",1],"n1.dock.d":["指针停在 Dock 图标上，这个 App 的窗口排出来。","Rest the pointer on a Dock icon to see that app’s windows.","指標停在 Dock 圖示上，這個 App 的視窗排出來。"],
+    "n1.shelf.t":["文件架和 Dock 图标","File shelf and Dock icons","檔案架和 Dock 圖示"],"n1.shelf.d":["拖到刘海的文件放进文件架；再点一下 Dock 图标，让开这个 App。","Files you drag to the notch wait on the shelf. Click a Dock icon again to move that app out of the way.","拖到瀏海的檔案放進檔案架；再點一下 Dock 圖示，讓開這個 App。"],
+    "n1.change":["在设置里改…","Change in Settings…","在設定裡改…"],"n1.tour":["看看怎么用","Show Me How","看看怎麼用"],"n1.ok":["好","OK","好"],
+    "c1.link":["去授权","Grant","去授權",1],
+    "ex.off":["关着","Off","關著"],
+    "c1.w1":["季度计划.numbers","Quarterly Plan.numbers","季度計畫.numbers"],"c1.w2":["预算","Budget","預算"],"c1.w3":["会议记录","Meeting Notes","會議記錄"],
+    "c1.ask":["要看到窗口的实时画面，打开屏幕录制。","To see live window pictures, turn on Screen Recording.","要看到視窗的即時畫面，開啟螢幕錄製。"],
+    "c1.no":["不用了","No Thanks","不用了"],
+    "c1.foot":["没有屏幕录制权限，只显示图标与标题","Screen Recording is missing, so icons and titles only","沒有螢幕錄製權限，只顯示圖示與標題",1]
+  };
+  var COPY=[ // 文案表的顺序与位置说明
+    ["① · 眉题","eyebrow"],["A1 · 标题","a1.title"],["A1 · 导语","a1.lede"],["A1 · 舞台小牌子（没试时）","a1.hint"],
+    ["A1 · 状态（轮到你）","a1.yourTurn"],["A1 · 状态（收起后）","a1.rolled"],["A1 · 状态（展开后 ✓）","a1.done"],["A1 · 底部小字（系统双击是“无”时；另两种照设置页副标题）","a1.option"],["A1 · 读屏：练习标题栏","a1.ax.bar"],
+    ["A1 · 状态（看一眼）","a1.glance"],["A2 · 标题","a2.title"],["A2 · 导语","a2.lede"],["A2 · 行名（macOS 27 换成“设备控制和数据访问”）","perm.ax"],["A2 · 行副标题","perm.axSub"],
+    ["A2 · 按钮 / 已授权","perm.grant"],["","perm.granted"],["A2 · 去了系统设置","perm.wait"],["A2 · 回来 10 秒还没好","perm.stuck"],["A2 · 标准账户","perm.admin"],
+    ["A2 · 屏幕录制行（行名旁）","a2.optional"],["A2 · 屏幕录制副标题","a2.srSub"],["A2 · 屏幕录制要重开时","a2.relaunch"],["A2 · 标准账户（两项）","perm.admin2"],["A2 · 授权后","a2.try"],["A2 · 真收起一扇后 ✓","a2.real"],["A2 · 隐私小字","a2.privacy"],
+    ["② · 标题","p2.title"],["② · 导语","p2.lede"],["② · 状态（甩到半屏后）","p2.half"],["② · 状态（撤回后；撤销写出那一步）","p2.undone"],
+    ["③ · 标题","tour.notch.t"],["③ · 导语","tour.notch.l"],["③ · 可选的一问","origin.q"],["","origin.mac"],["","origin.opt"],
+    ["③ · 最后一行小字（图标在哪）","a3.lede"],["③ · 跳过了授权","a3.noax"],
+    ["U1 · 标题","u1.title"],["U1 · 导语","u1.lede"],["U1 · 导语第二句","u1.once"],["U1 · 辅助功能副标题","u1.axSub"],["U1 · 屏幕录制副标题","u1.srSub"],
+    ["U1 · 进度（两项都没有）","u1.left2"],["U1 · 进度（只差屏幕录制）","u1.left1"],["U1 · 进度（都好了）","u1.ready"],
+    ["N1 · 标题","n1.title"],["N1 · 导语","n1.lede"],["N1 · 刘海","n1.notch.t"],["","n1.notch.d"],["N1 · Dock 悬停","n1.dock.t"],["","n1.dock.d"],["N1 · 文件架","n1.shelf.t"],["","n1.shelf.d"],["N1 · 按钮","n1.change"],["","n1.tour"],["","n1.ok"],
+    ["C1 · 兜底一句","c1.foot"],["C1 · 链接","c1.link"],["讲解带 · 开关关着时","ex.off"],
+    ["按钮","btn.skip"],["","btn.next"],["","btn.back"],["","btn.later"],["","btn.start"]
+  ];
+  var L=0, os27=false, PANE=["设备控制和数据访问","Device Control and Data Access","裝置控制和資料取用"], LEG=["辅助功能","Accessibility","輔助使用"];
+  function t(k){ var v=S[k]; if(!v) return k; var s=v[L]; if(os27) s=s.split(LEG[L]).join(PANE[L]); return s; }
+  function applyLang(){
+    document.querySelectorAll("[data-t]").forEach(function(el){ el.textContent=t(el.getAttribute("data-t")); });
+    document.querySelectorAll("[data-al]").forEach(function(el){ el.setAttribute("aria-label",t(el.getAttribute("data-al"))); });
+    a1Render(); a2Render(); u1Render(); try{ p2Render(); tRender(); xRender(); renderRows(); }catch(e){}
+  }
+  // 文案表
+  var tb=document.querySelector("#copyTable tbody");
+  COPY.forEach(function(r){ var v=S[r[1]], tr=document.createElement("tr");
+    tr.innerHTML="<td></td><td></td><td></td>";
+    tr.children[0].textContent=r[0]; tr.children[1].textContent=v[0]; tr.children[2].textContent=v[1].trim();
+    if(v[3]){ var g=document.createElement("span"); g.className="tag"; g.textContent="已有"; g.style.marginLeft="6px"; tr.children[1].appendChild(g); }
+    tb.appendChild(tr); });
+
+  function seg(id,attr,fn){ var g=document.getElementById(id); g.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return;
+    g.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",x===b?"true":"false");}); fn(b.getAttribute(attr)); }); }
+  seg("langSeg","data-lang",function(v){ L={zh:0,en:1,hant:2}[v]; root.lang=["zh-CN","en","zh-TW"][L]; applyLang(); });
+  seg("themeSeg","data-th",function(v){ if(v) root.setAttribute("data-theme",v); else root.removeAttribute("data-theme"); });
+  seg("motionSeg","data-m",function(v){ if(v) root.setAttribute("data-motion",v); else root.removeAttribute("data-motion"); try{ refreshMotion(); tPlay(); xIdle(); }catch(e){} });
+  seg("osSeg","data-os",function(v){ os27=(v==="27"); applyLang(); });
+  function chips(id,fn){ var g=document.getElementById(id); g.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; setChip(g,b.getAttribute("data-s")); fn(b.getAttribute("data-s")); }); }
+  function setChip(g,s){ g.querySelectorAll("button").forEach(function(x){x.setAttribute("aria-pressed",x.getAttribute("data-s")===s?"true":"false");}); }
+
+  // ——— A2 ———
+  var a2="off", a2sr=false, a2timer=null;
+  function a2Render(){
+    var row=document.getElementById("a2row"), on=(a2==="on"||a2==="real"||a2==="both"||a2==="relaunch");
+    var sr=a2sr||a2==="both";
+    row.classList.toggle("granted",on); row.classList.toggle("waiting",a2==="wait"||a2==="stuck"||a2==="admin");
+    document.getElementById("a2sr").classList.toggle("granted",sr);
+    document.getElementById("a2stuck").classList.toggle("on",a2==="stuck");
+    document.getElementById("a2admin").style.display=a2==="admin"?"block":"none";
+    document.getElementById("a2relaunch").style.display=a2==="relaunch"?"block":"none";
+    var st=document.getElementById("a2status"), tx=document.getElementById("a2statusText");
+    st.classList.toggle("ok",a2==="real"); tx.textContent=(a2==="on"||a2==="both")?t("a2.try"):a2==="real"?t("a2.real"):"";
+    var nx=document.getElementById("a2next"); nx.disabled=!on; nx.classList.toggle("primary",on);
+    document.getElementById("a2later").style.display=on?"none":"";
+    setChip(document.getElementById("a2chips"),a2);
+  }
+  document.getElementById("a2grant").addEventListener("click",function(){ a2="wait"; a2Render(); clearTimeout(a2timer); a2timer=setTimeout(function(){ a2="on"; a2Render(); },1800); });
+  document.getElementById("a2srGrant").addEventListener("click",function(){ setTimeout(function(){ a2sr=true; a2Render(); },1200); });
+  chips("a2chips",function(s){ clearTimeout(a2timer); a2=s; a2sr=(s==="both"); a2Render(); });
+
+  // ——— U1 ———
+  var u1={ax:false,sr:false,stuck:false};
+  function u1Render(){
+    document.getElementById("u1ax").classList.toggle("granted",u1.ax);
+    document.getElementById("u1sr").classList.toggle("granted",u1.sr);
+    document.getElementById("u1prog").textContent = u1.ax&&u1.sr ? t("u1.ready") : u1.ax ? t("u1.left1") : t("u1.left2");
+    document.getElementById("u1prog").style.color = u1.ax&&u1.sr ? "var(--ok)" : "";
+    document.getElementById("u1stuck").classList.toggle("on",!u1.ax);
+    var d=document.getElementById("u1done"); d.disabled=!u1.ax; d.classList.toggle("primary",u1.ax);
+    document.getElementById("u1later").style.display=u1.ax?"none":"";
+  }
+  document.querySelectorAll("[data-grant]").forEach(function(b){ b.addEventListener("click",function(){ var k=b.getAttribute("data-grant")==="u1ax"?"ax":"sr"; setTimeout(function(){ u1[k]=true; u1Render(); },1200); }); });
+  chips("u1chips",function(s){ u1.ax=(s==="ax"||s==="both"); u1.sr=(s==="both"); u1Render(); });
+
+  // ——— C1 ———
+  function c1(s){ document.getElementById("c1foot").style.display=s==="no"?"block":"none";
+    document.querySelectorAll("#c1cards .wcard").forEach(function(c){ c.classList.toggle("iconic",s!=="yes"); });
+    setChip(document.getElementById("c1chips"),s); }
+  chips("c1chips",c1);
+  chips("n1chips",function(s){ document.querySelector('#n1rows [data-n="notch"]').style.display=s==="some"?"none":""; });
+
+  // ——— 手势教学 hero：一份帧数据，三处用（欢迎窗口 A1、设置 → 手势、分镜） ———
+  var TOK={calm:[.34,1],settle:[.38,1],pop:[.30,.75],bloom:[.42,.84],flyOut:[.38,.90],expand:[.40,.92],glide:[.42,.88]};
+  var TOKC={};
+  function tokOf(n){
+    if(TOKC[n]) return TOKC[n];
+    var r;
+    if(n==="tap") r={e:"linear",d:.08,label:"按下 / 松开 0.08 s 直接切换"};
+    else if(n==="fade") r={e:"ease",d:.18,label:"fade 0.18 s"};
+    else if(n==="none") r={e:"linear",d:0,label:"—"};
+    else { var s=spring(TOK[n][0],TOK[n][1]); r={e:s.e,d:parseFloat(s.t),label:n+" "+TOK[n][0].toFixed(2)+" / "+TOK[n][1].toFixed(2)}; }
+    TOKC[n]=r; return r;
+  }
+  var A0={x:70,y:40,w:172,h:118,o:1,s:1,r:0,hl:0};
+  function cp(o){ return JSON.parse(JSON.stringify(o)); }
+  var HEROES={
+    dbl:{name:"双击标题栏收起窗口",dev:"click",ax:"演示：在标题栏上双击，窗口收成卷帘条；再双击，展开。",
+      init:{A:A0,ptr:{x:236,y:160,o:1},d1:{x:156,y:96,o:0,p:0}},
+      frames:[
+        {k:1,n:"指针移到标题栏",e:"calm",set:{ptr:{x:150,y:44}}},
+        {n:"第一下",e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0}},hold:.06},
+        {n:"第二下",e:"tap",set:{d1:{p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+        {k:1,key:1,n:"收成卷帘条",e:"settle",set:{A:{h:10,r:1}},hold:1.0},
+        {e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0}},hold:.06},{e:"tap",set:{d1:{p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+        {k:1,n:"原样展开",e:"settle",set:{A:{h:118,r:0}},hold:.5},
+        {n:"指针离开",e:"calm",set:{ptr:{x:236,y:160}},hold:.8}],
+      arrow:{dev:"M146 70 l10 -8 l10 8 M146 86 l10 -8 l10 8",res:"M156 150 L156 60 M148 70 l8 -10 l8 10",ghost:A0}},
+    dblGlance:{name:"双击收起，停在条上看一眼",dev:"click",ax:"演示：在标题栏上双击，窗口收成卷帘条；指针停在条上，里面垂下来给你看一眼；移开就收回；再双击，原样展开。",
+      init:{A:A0,B:{x:70,y:52,w:172,h:0,o:0,s:1},ptr:{x:236,y:160,o:1},d1:{x:156,y:96,o:0,p:0}},
+      frames:[
+        {k:1,n:"指针移到标题栏",e:"calm",set:{ptr:{x:150,y:44}}},
+        {n:"第一下",e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0}},hold:.06},
+        {n:"第二下",e:"tap",set:{d1:{p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+        {k:1,n:"收成卷帘条",e:"settle",set:{A:{h:10,r:1}},hold:.12},
+        {k:1,key:1,n:"停在条上：垂下来看一眼",e:"calm",set:{B:{h:104,o:1}},hold:1.3},
+        {k:1,n:"移开：收回",e:"calm",set:{ptr:{x:236,y:160},B:{h:0,o:0}},hold:.4},
+        {e:"calm",set:{ptr:{x:150,y:44}},hold:.2},
+        {e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0}},hold:.06},{e:"tap",set:{d1:{p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+        {k:1,n:"原样展开",e:"settle",set:{A:{h:118,r:0}},hold:.5},
+        {n:"指针离开",e:"calm",set:{ptr:{x:236,y:160}},hold:.8}],
+      arrow:{dev:"M146 70 l10 -8 l10 8 M146 86 l10 -8 l10 8",res:"M156 60 L156 140 M150 132 l6 8 l6 -8",ghost:A0}},
+    flickUndo:{name:"标题栏上一甩到半屏，捏合撤回",dev:"two",twoOnly:1,ax:"演示：在标题栏上按住往左一甩，窗口占左半屏；两指捏合，撤回到原来的位置，刘海写出“撤销 左半屏”。",
+      nl:["撤销 左半屏","两指捏合"],
+      init:{A:A0,ptr:{x:150,y:44,o:1},d1:{x:170,y:98,o:0,p:0},d2:{x:196,y:98,o:0,p:0},nt:{w:34,h:6},nl:{o:0}},
+      frames:[
+        {k:1,n:"按住标题栏",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+        {k:1,key:1,n:"往左一甩：左半屏",set:{d1:{x:112,_e:"calm"},ptr:{x:80,y:16,_e:"glide"},A:{x:2,y:12,w:153,h:168,_e:"glide"}},hold:.5},
+        {n:"松手",e:"fade",set:{d1:{o:0,p:0}},hold:.9},
+        {e:"none",set:{d1:{x:128,y:98,p:0},d2:{x:196,y:98}}},
+        {k:1,n:"两指放上",e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,n:"捏合：撤回，刘海写出这一步",set:{d1:{x:150,_e:"calm"},d2:{x:174,_e:"calm"},A:{x:70,y:40,w:172,h:118,_e:"settle"},ptr:{x:150,y:44,_e:"settle"},nt:{w:150,h:36,_e:"bloom"},nl:{o:1,_e:"fade"}},hold:1.6},
+        {k:1,n:"刘海收回",set:{nt:{w:34,h:6,_e:"calm"},nl:{o:0,_e:"fade"},d1:{o:0},d2:{o:0}},hold:.6},
+        {reset:1}],
+      arrow:{dev:"M190 98 L118 98 M126 92 l-8 6 l8 6",res:"M200 100 L40 100 M48 94 l-8 6 l8 6",ghost:A0}},
+    notchRow:{name:"长按刘海，点一格回到原处",dev:"press",ax:"演示：长按刘海，收起的窗口在刘海里排成一排；点一格，那扇窗口回到原处。",
+      init:{A:{x:139,y:0,w:34,h:6,s:.4,o:0},ptr:{x:236,y:150,o:1},d1:{x:156,y:100,o:0,p:0},nt:{w:34,h:6},hrow:{o:0}},
+      frames:[
+        {k:1,n:"指针移到刘海",e:"calm",set:{ptr:{x:156,y:4}}},
+        {k:1,n:"长按刘海（0.5 秒）",e:"tap",set:{d1:{o:1,p:1}},hold:.5},
+        {k:1,key:1,n:"展开那一排",set:{nt:{w:74,h:29,br:5,_e:"expand"},hrow:{o:1,_e:"fade"},d1:{p:0,o:0,_e:"tap"}},hold:.9},
+        {k:1,n:"指针移到一格",e:"calm",set:{ptr:{x:156,y:18}},hold:.2},
+        {n:"点一格",e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+        {k:1,n:"回到原处",set:{A:{x:70,y:40,w:172,h:118,s:1,o:1,_e:"flyOut"},nt:{w:34,h:6,br:2,_e:"calm"},hrow:{o:0,_e:"fade"},ptr:{x:236,y:150,_e:"calm"}},hold:1.0},
+        {reset:1}],
+      arrow:{dev:"M156 120 L156 84",res:"M156 34 L156 66 M150 58 l6 8 l6 -8",ghost:A0}},
+    swipeUp:{name:"标题栏手势：往上滑",dev:"two",ax:"演示：两指在标题栏上往上滑，窗口收成卷帘条；往下滑，展开。",
+      init:{A:A0,ptr:{x:150,y:44,o:1},d1:{x:146,y:118,o:0,p:0},d2:{x:168,y:118,o:0,p:0}},
+      frames:[
+        {k:1,n:"两指放上",e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,key:1,n:"往上滑：收起",set:{d1:{y:78,_e:"calm"},d2:{y:78,_e:"calm"},A:{h:10,r:1,_e:"settle"}}},
+        {n:"抬手",e:"fade",set:{d1:{o:0},d2:{o:0}},hold:.9},
+        {e:"none",set:{d1:{y:78},d2:{y:78}}},{e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,n:"往下拉：展开",set:{d1:{y:118,_e:"calm"},d2:{y:118,_e:"calm"},A:{h:118,r:0,_e:"settle"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:.8}],
+      arrow:{dev:"M146 120 L146 76 M140 84 l6 -8 l6 8 M168 120 L168 76 M162 84 l6 -8 l6 8",res:"M156 150 L156 60 M148 70 l8 -10 l8 10",ghost:A0}},
+    swipeD:{name:"标题栏手势：往下滑",dev:"two",ax:"演示：两指在标题栏上往下滑，窗口铺满屏幕。",
+      init:{A:A0,ptr:{x:150,y:44,o:1},d1:{x:146,y:78,o:0,p:0},d2:{x:168,y:78,o:0,p:0}},
+      frames:[
+        {k:1,n:"两指放上",e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,key:1,n:"往下滑：铺满屏幕",set:{d1:{y:118,_e:"calm"},d2:{y:118,_e:"calm"},A:{x:2,y:12,w:308,h:168,_e:"settle"},ptr:{y:16,_e:"settle"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:1.0},{reset:1}],
+      arrow:{dev:"M146 76 L146 120 M140 112 l6 8 l6 -8 M168 76 L168 120 M162 112 l6 8 l6 -8",res:"M40 30 L14 18 M250 30 L298 18 M40 150 L14 176 M272 150 L298 176",ghost:A0}},
+    swipeL:{name:"标题栏手势：往左 / 往右滑",dev:"two",ax:"演示：两指在标题栏上往左滑，窗口占左半屏。",
+      init:{A:A0,ptr:{x:150,y:44,o:1},d1:{x:166,y:98,o:0,p:0},d2:{x:188,y:98,o:0,p:0}},
+      frames:[
+        {k:1,n:"两指放上",e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,key:1,n:"往左滑：左半屏",set:{d1:{x:120,_e:"calm"},d2:{x:142,_e:"calm"},A:{x:2,y:12,w:153,h:168,_e:"settle"},ptr:{x:80,y:16,_e:"settle"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:1.0},{reset:1}],
+      arrow:{dev:"M190 98 L118 98 M126 92 l-8 6 l8 6",res:"M200 100 L40 100 M48 94 l-8 6 l8 6",ghost:A0}},
+    tuck:{name:"收进刘海",dev:"press",ax:"演示：朝刘海甩一下标题栏，窗口收进刘海；长按刘海，展开一排，点一格放回。",
+      init:{A:A0,ptr:{x:150,y:44,o:1},d1:{x:156,y:120,o:0,p:0},nt:{w:34}},
+      frames:[
+        {k:1,n:"按住标题栏",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+        {k:1,key:1,n:"往刘海甩一下",set:{d1:{y:66,_e:"calm"},ptr:{y:6,x:156,_e:"calm"},A:{x:139,y:0,w:34,h:6,s:.4,o:0,_e:"settle"}}},
+        {n:"刘海接住",e:"settle",set:{nt:{w:52},d1:{o:0,p:0}},hold:.4},
+        {e:"calm",set:{nt:{w:34}},hold:.6},
+        {e:"none",set:{d1:{y:96}}},
+        {n:"长按刘海：展开那一排",e:"tap",set:{d1:{o:1,p:1}},hold:.5},{e:"tap",set:{d1:{p:0}}},
+        {k:1,n:"点一格：放回原处",set:{A:{x:70,y:40,w:172,h:118,s:1,o:1,_e:"flyOut"},ptr:{x:150,y:44,_e:"calm"},d1:{o:0,_e:"fade"}},hold:.8}],
+      arrow:{dev:"M156 124 L156 62 M150 70 l6 -8 l6 8",res:"M156 46 L156 14 M150 22 l6 -8 l6 8",ghost:A0}},
+    overview:{name:"卷轴概览能收进刘海",dev:"press",ax:"演示：在卷轴概览里把一扇窗口拖到刘海，松手就收进去。",
+      init:{A:{x:26,y:72,w:80,h:58,o:1,s:1},B:{x:116,y:72,w:80,h:58,o:1,s:1},C:{x:206,y:72,w:80,h:58,o:1,s:1},ptr:{x:156,y:96,o:1},d1:{x:156,y:120,o:0,p:0},nt:{w:34}},
+      frames:[
+        {k:1,n:"按住中间那扇",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+        {k:1,n:"往刘海拖",e:"calm",set:{d1:{y:84},B:{y:28},ptr:{y:52}}},
+        {k:1,key:1,n:"松手：收进去",set:{d1:{p:0,o:0,_e:"tap"},B:{x:139,y:0,w:34,h:6,s:.5,o:0,_e:"settle"},nt:{w:52,_e:"settle"},ptr:{y:8,_e:"calm"}},hold:.4},
+        {e:"calm",set:{nt:{w:34}},hold:.8},{reset:1}],
+      arrow:{dev:"M156 124 L156 80 M150 88 l6 -8 l6 8",res:"M156 70 L156 16 M150 24 l6 -8 l6 8",ghost:{x:116,y:72,w:80,h:58}}},
+    dropSplit:{name:"拖到窗口上并排",dev:"press",ax:"演示：把一扇窗口拖到另一扇上，两扇并排。",
+      init:{B:{x:126,y:28,w:164,h:140,o:1,s:1,hl:0},A:{x:24,y:70,w:120,h:90,o:1,s:1},ptr:{x:84,y:74,o:1},d1:{x:116,y:110,o:0,p:0}},
+      frames:[
+        {k:1,n:"按住标题栏",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+        {k:1,n:"拖到另一扇上",e:"calm",set:{d1:{x:176},A:{x:150,y:62},ptr:{x:210,y:66}}},
+        {n:"那一扇亮边",e:"calm",set:{B:{hl:1}},hold:.5},
+        {k:1,key:1,n:"松手：并排",set:{d1:{p:0,o:0,_e:"tap"},A:{x:2,y:12,w:153,h:168,_e:"settle"},B:{x:157,y:12,w:153,h:168,hl:0,_e:"settle"},ptr:{o:0,_e:"fade"}},hold:1.0},
+        {reset:1}],
+      arrow:{dev:"M110 110 L180 110 M172 104 l8 6 l-8 6",res:"M84 110 L196 100 M188 94 l8 6 l-8 6",ghost:{x:24,y:70,w:120,h:90}}},
+    stripDrag:{name:"拖标题栏换位置",dev:"press",ax:"演示：在卷轴里拖一列的标题栏，和旁边那列换位置。",
+      init:{A:{x:8,y:16,w:96,h:160,o:1,s:1},B:{x:108,y:16,w:96,h:160,o:1,s:1},C:{x:208,y:16,w:96,h:160,o:1,s:1},ptr:{x:156,y:20,o:1},d1:{x:126,y:100,o:0,p:0}},
+      frames:[
+        {k:1,n:"按住中间那列",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+        {k:1,key:1,n:"往右拖",set:{d1:{x:176,_e:"calm"},B:{x:208,y:22,_e:"calm"},C:{x:108,_e:"settle"},ptr:{x:256,y:26,_e:"calm"}}},
+        {k:1,n:"松手：落进那一列",set:{d1:{p:0,o:0,_e:"tap"},B:{y:16,_e:"settle"},ptr:{y:20,_e:"settle"}},hold:1.0},
+        {reset:1}],
+      arrow:{dev:"M120 100 L184 100 M176 94 l8 6 l-8 6",res:"M156 100 L250 100 M242 94 l8 6 l-8 6",ghost:{x:108,y:16,w:96,h:160}}},
+    dockSwipe:{name:"在 Dock 图标上两指上下滑",dev:"two",twoOnly:1,ax:"演示：指针停在 Dock 图标上，两指往上滑看这个 App 的所有窗口，往下滑让开它。",
+      init:{A:{x:60,y:28,w:190,h:118,o:1,s:1},dock:{o:1},panel:{o:0,y:150},ptr:{x:158,y:190,o:1},d1:{x:146,y:118,o:0,p:0},d2:{x:168,y:118,o:0,p:0}},
+      frames:[
+        {k:1,n:"两指放上",e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,key:1,n:"往上滑：所有窗口",set:{d1:{y:78,_e:"calm"},d2:{y:78,_e:"calm"},panel:{o:1,y:112,_e:"calm"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:1.0},
+        {e:"none",set:{d1:{y:78},d2:{y:78}}},{e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,n:"往下滑：让开这个 App",set:{d1:{y:118,_e:"calm"},d2:{y:118,_e:"calm"},panel:{o:0,y:150,_e:"calm"},A:{o:0,s:.96,_e:"calm"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:.8},{reset:1}],
+      arrow:{dev:"M146 120 L146 76 M140 84 l6 -8 l6 8 M168 120 L168 76 M162 84 l6 -8 l6 8",res:"M158 176 L158 150 M152 158 l6 -8 l6 8",ghost:null}},
+    teach:{name:"刘海教你",dev:"keys",ax:"演示：按 Control-C 没反应，刘海说 Mac 上拷贝按 Command-C；按了，刘海收回。",
+      init:{A:A0,K1:{o:1,p:0,t:["⌃","control"]},K2:{o:1,p:0,t:["C",""]},nt:{w:34,h:6},nl:{o:0}},
+      frames:[
+        {k:1,n:"按 ⌃C",e:"tap",set:{K1:{p:1},K2:{p:1}},hold:.12},{e:"tap",set:{K1:{p:0},K2:{p:0}},hold:.5},
+        {k:1,key:1,n:"刘海说一句",set:{nt:{w:150,h:36,_e:"bloom"},nl:{o:1,_e:"fade"}},hold:1.8},
+        {k:1,n:"键帽换成 ⌘",e:"fade",set:{K1:{t:["⌘","command"]}},hold:.4},
+        {n:"按 ⌘C",e:"tap",set:{K1:{p:1},K2:{p:1}},hold:.12},{e:"tap",set:{K1:{p:0},K2:{p:0}}},
+        {k:1,n:"刘海收回",set:{nt:{w:34,h:6,_e:"calm"},nl:{o:0,_e:"fade"}},hold:.8},
+        {e:"none",set:{K1:{t:["⌃","control"]}}}],
+      arrow:{dev:"M96 150 L216 150",res:"M156 50 L156 40",ghost:null}},
+    dockHover:{name:"Dock 悬停查看窗口",dev:"point",ax:"演示：指针停在 Dock 图标上，这个 App 的窗口排出来。",
+      init:{A:{x:60,y:28,w:190,h:118,o:1,s:1},dock:{o:1},panel:{o:0,y:150},ptr:{x:236,y:120,o:1},d1:{x:190,y:80,o:0,p:0}},
+      frames:[
+        {n:"手指放上",e:"fade",set:{d1:{o:1}}},
+        {k:1,n:"指针移到 Dock 图标",e:"calm",set:{d1:{x:160,y:120},ptr:{x:158,y:188}},hold:.3},
+        {k:1,key:1,n:"停一下：窗口排出来",e:"calm",set:{panel:{o:1,y:112},d1:{o:0}},hold:1.6},
+        {k:1,n:"移开就收回",e:"calm",set:{ptr:{x:236,y:120},panel:{o:0,y:150}},hold:.8}],
+      arrow:{dev:"M190 80 L162 116 M162 106 l0 10 l10 0",res:"M158 176 L158 150 M152 158 l6 -8 l6 8",ghost:null}},
+    tile:{name:"魔法平铺与卷轴",dev:"two",ax:"演示：两指张开，窗口一列挨一列排好；放不下的接成卷轴，两指滑过去。",
+      init:{A:{x:30,y:30,w:150,h:110,o:1,s:1},B:{x:110,y:56,w:150,h:110,o:1,s:1},C:{x:170,y:24,w:120,h:120,o:1,s:1},ptr:{x:200,y:100,o:0},d1:{x:150,y:100,o:0,p:0},d2:{x:162,y:100,o:0,p:0}},
+      frames:[
+        {k:1,n:"两指放上",e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,key:1,n:"张开：排成一列一列",set:{d1:{x:120,_e:"calm"},d2:{x:192,_e:"calm"},A:{x:6,y:16,w:110,h:166,_e:"settle"},B:{x:120,y:16,w:110,h:166,_e:"settle"},C:{x:234,y:16,w:110,h:166,_e:"settle"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:.6},
+        {e:"none",set:{d1:{x:176,y:100},d2:{x:198,y:100}}},{e:"fade",set:{d1:{o:1},d2:{o:1}}},
+        {k:1,n:"两指往左滑：卷轴跟手",set:{d1:{x:120,_e:"calm"},d2:{x:142,_e:"calm"},A:{x:-80,_e:"settle"},B:{x:34,_e:"settle"},C:{x:148,_e:"settle"}}},
+        {e:"fade",set:{d1:{o:0},d2:{o:0}},hold:1.0},{reset:1}],
+      arrow:{dev:"M140 100 L112 100 M120 94 l-8 6 l8 6 M172 100 L200 100 M192 94 l8 6 l-8 6",res:"M300 100 L312 100",ghost:null}},
+    menubar:{name:"它在菜单栏里",dev:"click",ax:"演示：点菜单栏上的 WindowShade 图标，菜单里有收起的窗口和设置。",
+      init:{A:A0,mbi:{o:1,hl:1},mn:{o:0},ptr:{x:200,y:120,o:1},d1:{x:156,y:96,o:0,p:0}},
+      frames:[
+        {k:1,n:"指针移到图标",e:"calm",set:{ptr:{x:280,y:4}},hold:.2},
+        {n:"点一下",e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+        {k:1,key:1,n:"菜单出来",e:"fade",set:{mn:{o:1}},hold:2.0},
+        {k:1,n:"收回",e:"fade",set:{mn:{o:0}},hold:.4},{e:"calm",set:{ptr:{x:200,y:120}},hold:.6}],
+      arrow:{dev:"",res:"M240 60 L276 14 M266 14 l10 0 l0 10",ghost:null}}
+  };
+  var PTR='<svg viewBox="0 0 24 32" width="12" height="16"><path d="M2 2 L2 26 L8 20 L12 30 L16 28 L12 18 L20 18 Z" fill="#fff" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  function reducedNow(){ return root.getAttribute("data-motion")==="reduced" || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches); }
+
+  function makeHero(host,opt){
+    opt=opt||{}; var sc=opt.scale||1, W=Math.round(312*sc), H=Math.round(200*sc);
+    host.innerHTML='<div class="tile dev" style="width:'+W+'px;height:'+H+'px"><div class="in" style="transform:scale('+sc+')"><div class="pad"></div><div class="mouse"></div><i class="dot" data-e="d1"></i><i class="dot" data-e="d2"></i><div class="kc" data-e="K1" style="left:96px"><span></span><small></small></div><div class="kc" data-e="K2" style="left:160px"><span></span><small></small></div><div class="dtext" data-e="DT"></div><span class="dbadge"></span><svg class="arr" viewBox="0 0 312 200"><path/></svg></div></div>'+
+      '<div class="tile res" style="width:'+W+'px;height:'+H+'px"><div class="in" style="transform:scale('+sc+')"><div class="mb"></div><div class="nt" data-e="nt"></div><div class="dockbar" data-e="dock" style="opacity:0"><i></i><i></i><i></i><i></i><i></i><i></i></div>'+
+      '<div class="ghost"></div>'+
+      ['B','A','C'].map(function(k){ return '<div class="w" data-e="'+k+'" style="opacity:0"><b></b><p><i></i><i></i><i></i></p></div>'; }).join('')+
+      '<span class="mbi" data-e="mbi"></span><div class="hmenu" data-e="mn"><i></i><i></i><hr><i></i><i class="hi"></i><hr><i></i></div><div class="nl" data-e="nl"><b></b><small></small></div><div class="hrow" data-e="hrow"><i><\/i><i class="hot"><\/i><i><\/i><\/div><div class="hpanel" data-e="panel"><i></i><i></i><i></i></div><span class="hhint"></span><div class="cover" data-e="CV"><b></b></div><span class="offtag"></span><div class="ptr" data-e="ptr">'+PTR+'</div><svg class="arr" viewBox="0 0 312 200"><path/></svg></div></div>';
+    var map={}; host.querySelectorAll("[data-e]").forEach(function(el){ map[el.getAttribute("data-e")]=el; });
+    var resIn=host.querySelectorAll(".tile .in")[1], devTile=host.querySelector(".tile.dev");
+    var H_={host:host,map:map,run:0,spec:null,mouse:false};
+    H_.applyOne=function(k,st,tok,instant){
+      var el=map[k]; if(!el) return; var tk=tokOf(st._e||tok||"calm");
+      el.style.transition = instant||!tk.d ? "none" : ["left","top","width","height","opacity","transform","box-shadow","border-radius"].map(function(p){ return p+" "+tk.d+"s "+tk.e; }).join(",");
+      var isDot=(k==="d1"||k==="d2"), m=H_.mouse&&isDot;
+      if("x" in st){ var x=st.x; if(m) x=156+(x-156)*.32; el.style.left=x+"px"; }
+      if("y" in st){ var y=st.y; if(m) y=100+(y-100)*.55; el.style.top=y+"px"; }
+      if("w" in st){ el.style.width=st.w+"px"; if(k==="nt") el.style.left=(156-st.w/2)+"px"; }
+      if("h" in st) el.style.height=st.h+"px";
+      if("br" in st) el.style.borderRadius="0 0 "+st.br+"px "+st.br+"px";
+      if("o" in st){ var o=st.o; if(k==="d2"&&H_.mouse) o=0; el.style.opacity=o; }
+      if("s" in st) el.style.transform="scale("+st.s+")";
+      if("p" in st) el.style.transform=st.p?"scale(.8)":"scale(1)";
+      if("r" in st) el.classList.toggle("r",!!st.r);
+      if("hl" in st) el.classList.toggle("hl",!!st.hl);
+      if("t" in st){ el.querySelector("span").textContent=st.t[0]; el.querySelector("small").textContent=st.t[1]; }
+      if("tx" in st){ (el.querySelector("b")||el).textContent=(typeof tl==="function"?tl(st.tx):st.tx); }
+      if("c" in st){ el.classList.remove("uni","thumbc","privp","livep","h1","h2","h3","file"); if(st.c) st.c.split(" ").forEach(function(c){ el.classList.add(c); }); }
+    };
+    H_.apply=function(set,tok,instant){ for(var k in set) H_.applyOne(k,set[k],tok,instant); };
+    H_.clear=function(){ ["A","B","C","panel","hrow","dock","ptr","d1","d2","K1","K2","mbi","mn","nl","DT","CV"].forEach(function(k){ map[k].style.transition="none"; map[k].style.opacity=0; map[k].classList.remove("r","hl","uni","thumbc","privp","livep","h1","h2","h3","file"); map[k].style.transform=""; });
+      map.nt.style.transition="none"; map.nt.style.width="34px"; map.nt.style.height="6px"; map.nt.style.left="139px"; map.nt.style.borderRadius=""; };
+    H_.load=function(spec){ H_.spec=spec; H_.clear(); H_.apply(cp(spec.init),null,true);
+      var useMouse=!!H_.devMouse && !spec.twoOnly && spec.dev!=="keys"; H_.mouse=useMouse; devTile.classList.toggle("m",useMouse); devTile.classList.toggle("k",spec.dev==="keys"); devTile.classList.toggle("tx",spec.dev==="text"); map.DT.textContent=(typeof tl==="function"?tl(spec.devText||""):(spec.devText||"")); host.querySelector(".offtag").textContent=t("ex.off");
+      var nl=map.nl; var _tl=(typeof tl==="function")?tl:function(x){return x;}; nl.querySelector("b").textContent=spec.nl?_tl(spec.nl[0]):t("teach.line"); nl.querySelector("small").textContent=spec.nl?_tl(spec.nl[1]):t("teach.sub");
+      var b=host.querySelector(".dbadge"); b.style.display=(H_.devMouse&&spec.twoOnly)?"block":"none"; b.textContent="要用触控板";
+      host.setAttribute("aria-label",spec.ax); H_.apply(cp(spec.init),null,true); };
+    H_.stateAt=function(spec,idx){ H_.load(spec); for(var i=0;i<=idx&&i<spec.frames.length;i++){ var f=spec.frames[i]; if(f.reset){ H_.load(spec); continue; } H_.apply(f.set,f.e,true); } };
+    H_.still=function(spec){ var ki=0; spec.frames.forEach(function(f,i){ if(f.key) ki=i; }); H_.stateAt(spec,ki);
+      host.classList.add("still"); var ps=host.querySelectorAll(".arr path"); ps[0].setAttribute("d",spec.arrow.dev); ps[1].setAttribute("d",spec.arrow.res);
+      var g=host.querySelector(".ghost"); if(spec.arrow.ghost){ var r=spec.arrow.ghost; g.style.cssText="left:"+r.x+"px;top:"+r.y+"px;width:"+r.w+"px;height:"+r.h+"px"; g.style.display=""; } else g.style.display="none"; };
+    H_.stop=function(){ H_.run++; host.querySelectorAll(".tile .in").forEach(function(e){ e.style.transition="none"; e.style.opacity=1; }); };
+    H_.setOff=function(b){ host.classList.toggle("off",!!b); };
+    var ins=host.querySelectorAll(".tile .in");
+    // 两段之间：两块一起淡出 0.10 s，换内容，再淡入 0.18 s（fade）。0 ms 就开始有反应；减少动态效果时直接替换。
+    H_.cross=function(my,fn){
+      if(reducedNow()||!H_.shown){ H_.shown=true; ins.forEach(function(e){ e.style.transition="none"; e.style.opacity=1; }); fn(); return; }
+      ins.forEach(function(e){ e.style.transition="opacity .1s ease-out"; e.style.opacity=0; });
+      setTimeout(function(){ if(my!==H_.run) return; fn(); ins.forEach(function(e){ e.style.transition="opacity .18s ease-out"; e.style.opacity=1; }); },100);
+    };
+    H_.rest=function(spec){ var my=++H_.run; H_.cross(my,function(){ H_.still(spec); host.classList.remove("still"); }); };
+    H_.show=function(spec,arrows){ var my=++H_.run; H_.cross(my,function(){ if(arrows||reducedNow()) H_.still(spec); else { host.classList.remove("still"); H_.load(spec); } }); };
+    H_.play=function(spec,loops,onDone){
+      var my=++H_.run;
+      if(!spec.frames.length||spec.forceStill){ H_.show(spec,!!spec.forceStill); if(onDone) onDone(); return; }
+      if(reducedNow()){ H_.cross(my,function(){ H_.still(spec); }); if(onDone) onDone(); return; }
+      var i=0, n=0;
+      function step(){
+        if(my!==H_.run) return;
+        if(i>=spec.frames.length){ n++; if(n>=loops){ H_.still(spec); host.classList.remove("still"); if(onDone) onDone(); return; }
+          i=0; H_.cross(my,function(){ host.classList.remove("still"); H_.load(spec); setTimeout(step,40); }); return; }
+        var f=spec.frames[i++];
+        if(f.reset){ H_.cross(my,function(){ H_.load(spec); setTimeout(step,40); }); return; }
+        H_.apply(f.set,f.e,false);
+        var d=0; for(var k in f.set){ var tk=tokOf(f.set[k]._e||f.e||"calm"); d=Math.max(d,tk.d); }
+        setTimeout(step,(d+(f.hold||0))*1000);
+      }
+      H_.cross(my,function(){ host.classList.remove("still"); H_.load(spec); setTimeout(step,40); });
+    };
+    return H_;
+  }
+  function frameTimes(spec){ var t=.14, out=[]; spec.frames.forEach(function(f){ out.push(t); if(f.reset){ t+=.32; return; } var d=0; for(var k in f.set){ d=Math.max(d,tokOf(f.set[k]._e||f.e||"calm").d); } t+=d+(f.hold||0); }); return {at:out,total:t}; }
+  function frameTok(f){ var seen={}, names=[]; for(var k in f.set){ var n=f.set[k]._e||f.e||"calm"; if(!seen[n]&&n!=="none"){ seen[n]=1; names.push(tokOf(n).label); } } return names.join("，"); }
+
+  // 分镜
+  var SB=[["dblGlance","双击收起，停在条上看一眼（欢迎窗口 ① 用这一份）"],["flickUndo","标题栏上一甩到半屏，捏合撤回（欢迎窗口 ②）"],["notchRow","长按刘海，点一格回到原处（欢迎窗口 ③）"],["dbl","双击标题栏收起窗口（设置 → 收起与展开）"],["teach","刘海教你（N1 和设置 → 刘海）"],["dockHover","Dock 悬停查看窗口（设置 → 窗口浏览）"],["tile","魔法平铺与卷轴（设置 → 手势）"],["menubar","它在菜单栏里（③ 最后一行小字配这一份）"],["swipeUp","标题栏手势 · 往上滑 / 往下拉"],["swipeD","标题栏手势 · 往下滑"],["swipeL","标题栏手势 · 往左 / 往右滑"],["tuck","收进刘海"],["overview","卷轴概览能收进刘海"],["dropSplit","拖到窗口上并排"],["stripDrag","拖标题栏换位置"],["dockSwipe","在 Dock 图标上两指上下滑"]];
+  var sbHost=document.getElementById("storyboards");
+  SB.forEach(function(s){
+    var spec=HEROES[s[0]], ft=frameTimes(spec);
+    var wrap=document.createElement("div"); wrap.className="sheet";
+    var h=document.createElement("h3"); h.textContent=s[1]; wrap.appendChild(h);
+    var meta=document.createElement("p"); meta.className="fine"; meta.textContent="一轮 "+ft.total.toFixed(1)+" s · 左块："+({click:"点按（鼠标或触控板）",two:"两指",press:"按住再移动（鼠标按住或触控板按下）",keys:"键盘",point:"指针移动（鼠标或触控板）"}[spec.dev])+(spec.twoOnly?" · 只有触控板能做":"");
+    wrap.appendChild(meta);
+    var row=document.createElement("div"); row.className="frames";
+    spec.frames.forEach(function(f,i){ if(!f.k) return;
+      var fr=document.createElement("div"); fr.className="frame";
+      var hh=document.createElement("div"); hh.className="hero"; hh.style.gap="8px"; fr.appendChild(hh);
+      var cap=document.createElement("div"); cap.className="cap"; cap.innerHTML="<b>t = "+ft.at[i].toFixed(2)+" s</b>　"; cap.appendChild(document.createTextNode(f.n+(f.key?"（关键帧）":"")+" · "+frameTok(f)));
+      fr.appendChild(cap); row.appendChild(fr);
+      var mh=makeHero(hh,{scale:.5}); mh.stateAt(spec,i);
+    });
+    wrap.appendChild(row); sbHost.appendChild(wrap);
+  });
+
+  // 设置 → 手势
+  var GROUPS={
+    fold:[{n:"标题栏手势",s:"往上滑收起，往下滑铺满屏幕",c:"两指 · 标题栏 · 滑动 / 张合 / 滚轮",h:"swipeUp",on:1,
+            table:[["往上滑","收起窗口；已铺满的窗口先撤销上次排布","swipeUp"],["往下滑","铺满屏幕","swipeD"],["往左 / 往右滑","左半屏 / 右半屏，再推一下沿梯子走一格","swipeL"],["卷帘条上往下拉","展开窗口","swipeUp"]]},
+          {n:"双击标题栏收起窗口",s:"三击标题栏会缩放窗口。按住 Option 双击不收起",c:"双击 · 标题栏",h:"dbl",on:1}],
+    notch:[{n:"收进刘海",s:"朝刘海甩一下标题栏，窗口就收进刘海；长按刘海，展开一排，点一格放回",c:"甩一下标题栏 → 刘海",combo:1,h:"tuck",on:1},
+           {n:"卷轴概览能收进刘海",s:"在卷轴概览里把窗口拖到刘海，松手就收进去",c:"拖 · 卷轴概览 → 刘海",combo:1,h:"overview",on:0}],
+    arrange:[{n:"拖到窗口上并排",s:"把窗口拖到另一扇上，两扇并排",c:"拖 · 窗口 → 另一扇窗口",combo:1,h:"dropSplit",on:0},
+             {n:"拖标题栏换位置",s:"在卷轴里拖标题栏换列；拉远一点才离开卷轴",c:"拖 · 卷轴里的标题栏",combo:1,h:"stripDrag",on:0}],
+    browse:[{n:"在 Dock 图标上两指上下滑",s:"往上滑看这个 App 的所有窗口，往下滑让开这个 App",c:"两指 · Dock 图标 · 上滑 / 下滑",h:"dockSwipe",on:1}]
+  };
+  var setHero=makeHero(document.getElementById("setHero"),{scale:1}), curG="fold", selRow=null;
+  function idlePlay(){ var g=GROUPS[curG]; var spec=HEROES[selRow||g[0].h]; setHero.play(spec, selRow?Infinity:1); }
+  function renderRows(){
+    if(typeof rl==="function"&&ROWL10N){ document.getElementById("s1title").textContent=rl("手势"); document.querySelectorAll("#setTabs button").forEach(function(b){ if(!b.dataset.zh) b.dataset.zh=b.textContent; b.textContent=rl(b.dataset.zh); }); }
+    var box=document.getElementById("setRows"); box.innerHTML="";
+    GROUPS[curG].forEach(function(r){
+      var row=document.createElement("div"); row.className="srow"+(selRow===r.h?" sel":""); row.tabIndex=0;
+      row.innerHTML='<span class="ic" aria-hidden="true"></span><span class="tx"><b></b><small></small><span class="fchip'+(r.combo?" combo":"")+'"></span></span><button class="sw" role="switch" aria-checked="'+(r.on?"true":"false")+'"></button>';
+      row.querySelector("b").textContent=(typeof rl==="function"?rl(r.n):r.n); row.querySelector("small").textContent=(L&&typeof rl==="function")?(rl(r.n,1)||r.s):r.s; row.querySelector(".fchip").textContent=(typeof rl==="function"?rl(r.c):r.c);
+      row.querySelector(".sw").setAttribute("aria-label",r.n);
+      row.querySelector(".sw").addEventListener("click",function(e){ e.stopPropagation(); var b=e.currentTarget; b.setAttribute("aria-checked",b.getAttribute("aria-checked")==="true"?"false":"true"); });
+      function hot(){ setHero.play(HEROES[r.h],Infinity); }
+      row.addEventListener("mouseenter",hot); row.addEventListener("focus",hot);
+      row.addEventListener("mouseleave",idlePlay); row.addEventListener("blur",idlePlay);
+      row.addEventListener("click",function(){ selRow=(selRow===r.h)?null:r.h; renderRows(); idlePlay(); });
+      box.appendChild(row);
+      if(r.table){ var tb=document.createElement("div"); tb.className="stable";
+        r.table.forEach(function(x){ var d=document.createElement("div"); d.tabIndex=0; d.innerHTML="<b></b><span></span>"; d.children[0].textContent=(typeof rl==="function"?rl(x[0]):x[0]); d.children[1].textContent=(typeof rl==="function"?rl(x[1]):x[1]);
+          function hot2(){ setHero.play(HEROES[x[2]],Infinity); }
+          d.addEventListener("mouseenter",hot2); d.addEventListener("focus",hot2); d.addEventListener("mouseleave",idlePlay); d.addEventListener("blur",idlePlay);
+          tb.appendChild(d); });
+        box.appendChild(tb); }
+    });
+  }
+  document.getElementById("setTabs").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return; curG=b.getAttribute("data-g"); selRow=null;
+    this.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-selected",x===b?"true":"false"); }); renderRows(); idlePlay(); });
+  chips("setDev",function(s){ setHero.devMouse=(s==="mouse"); idlePlay(); });
+  renderRows(); idlePlay();
+
+  // ——— A1（欢迎窗口第一页：先看一遍，再轮到他） ———
+  var a1="demo", a1H=makeHero(document.getElementById("a1hero"),{scale:326/312});
+  var a1W=a1H.map.A, a1Hint=document.querySelector("#a1hero .hhint");
+  function a1Render(){
+    var st=document.getElementById("a1status"), tx=document.getElementById("a1statusText");
+    st.classList.toggle("ok",a1==="done");
+    tx.textContent=a1==="idle"?t("a1.yourTurn"):a1==="rolled"?t("a1.rolled"):a1==="glance"?t("a1.glance"):a1==="done"?t("a1.done"):"";
+    a1Hint.textContent=t("a1.hint"); a1Hint.style.opacity=a1==="idle"?1:0;
+    document.getElementById("a1next").classList.toggle("primary",a1==="done");
+    setChip(document.getElementById("a1chips"),a1);
+  }
+  function a1Practice(state){
+    a1H.stop(); a1H.host.classList.remove("still"); a1H.load(HEROES.dblGlance);
+    a1H.apply({ptr:{o:0},A:{h:state==="rolled"?10:118,r:state==="rolled"?1:0}},null,true);
+    a1W.classList.add("cl"); a1=state; a1Render();
+  }
+  function a1Demo(){ a1="demo"; a1Render(); a1W.classList.remove("cl"); a1H.play(HEROES.dblGlance,2,function(){ if(a1==="demo") a1Practice("idle"); }); }
+  function a1Flash(){ var d=a1H.map.d1; a1H.applyOne("d1",{o:1,p:1},"tap"); setTimeout(function(){ a1H.applyOne("d1",{p:0},"tap"); },90); setTimeout(function(){ a1H.applyOne("d1",{o:0},"fade"); },400); }
+  var a1Dwell=null;
+  a1W.addEventListener("pointerenter",function(){ if(a1!=="rolled") return; clearTimeout(a1Dwell); a1Dwell=setTimeout(function(){ if(a1==="rolled"){ a1H.applyOne("B",{h:104,o:1},"calm"); a1="glance"; a1Render(); } },120); });
+  a1W.addEventListener("pointerleave",function(){ clearTimeout(a1Dwell); if(a1==="glance"){ a1H.applyOne("B",{h:0,o:0},"calm"); a1="rolled"; a1Render(); } });
+  a1W.querySelector("b").addEventListener("dblclick",function(){
+    clearTimeout(a1Dwell); a1H.applyOne("B",{h:0,o:0},"calm");
+    if(a1==="demo") a1Practice("idle");
+    a1Flash();
+    var next=(a1==="rolled"||a1==="glance")?"done":"rolled";
+    a1H.applyOne("A",{h:next==="rolled"?10:118,r:next==="rolled"?1:0},"settle");
+    a1=next; a1Render();
+  });
+  chips("a1chips",function(s){
+    if(s==="pad"||s==="mouse"){ a1H.devMouse=(s==="mouse"); setHero.devMouse=a1H.devMouse; if(a1==="demo") a1Demo(); else a1Practice(a1); setChip(document.getElementById("a1chips"),a1); return; }
+    if(s==="glance"){ a1Practice("rolled"); a1H.apply({B:{h:104,o:1}},"calm"); a1="glance"; a1Render(); return; }
+    if(s==="demo") a1Demo(); else a1Practice(s);
+  });
+  a1Demo();
+  function refreshMotion(){ if(a1==="demo") a1Demo(); idlePlay(); if(typeof p2Demo==="function"&&p2==="demo") p2Demo(); }
+
+  // ——— ②：一甩到半屏，捏合撤回 ———
+  var p2="demo", p2H=makeHero(document.getElementById("p2hero"),{scale:326/312});
+  function p2Idx(name){ var f=HEROES.flickUndo.frames, i; for(i=0;i<f.length;i++) if(f[i].n===name) return i; return 0; }
+  function p2Render(){
+    var st=document.getElementById("p2status"), tx=document.getElementById("p2statusText");
+    st.classList.toggle("ok",p2==="undo");
+    tx.textContent=p2==="half"?t("p2.half"):p2==="undo"?t("p2.undone"):"";
+    setChip(document.getElementById("p2chips"),p2);
+  }
+  function p2Demo(){ p2="demo"; p2Render(); p2H.play(HEROES.flickUndo,2,function(){ if(p2==="demo"){ p2="undo"; p2Render(); } }); }
+  chips("p2chips",function(s){
+    if(s==="demo"){ p2Demo(); return; }
+    p2H.stop(); p2H.host.classList.remove("still");
+    p2H.stateAt(HEROES.flickUndo, s==="half"?p2Idx("松手"):p2Idx("捏合：撤回，刘海写出这一步"));
+    p2=s; p2Render();
+  });
+  p2Demo();
+
+  // ——— ③：长按刘海，拿回收起的窗口（板块 id 仍叫 T） ———
+  var TOUR=[
+    {seg:"notch",title:"tour.notch.t",lede:"tour.notch.l",heroes:["notchRow"],origin:1}
+  ];  var tH=makeHero(document.getElementById("tourHero"),{scale:326/312}), tI=0, tAuto=true, tRun=0;
+  (function(){ var tot=0; TOUR.forEach(function(s){ s.heroes.forEach(function(h){ var n=s.heroes.length>1?1:2; tot+=frameTimes(HEROES[h]).total*n; }); });
+    document.getElementById("tourTotal").textContent="整页约 "+tot.toFixed(0)+" s（两块一起演两轮）"; })();
+  function tRender(){
+    var s=TOUR[tI];
+    document.getElementById("tTitle").textContent=t(s.title); document.getElementById("tLede").textContent=t(s.lede);
+    document.getElementById("tOrigin").style.display=s.origin?"flex":"none";
+    document.querySelectorAll("#tourSeg button").forEach(function(b,i){ b.setAttribute("aria-selected",i===tI?"true":"false"); });
+    var last=(tI===TOUR.length-1), nx=document.getElementById("tNext"); nx.textContent=last?t("btn.start"):t("btn.next");
+  }
+  function tPlay(){
+    var my=++tRun, s=TOUR[tI], k=0; tRender();
+    function next(){ if(my!==tRun) return;
+      if(k>=s.heroes.length){ if(tAuto && tI<TOUR.length-1 && !reducedNow()){ tI++; tPlay(); } return; }
+      var h=s.heroes[k++]; tH.play(HEROES[h], s.heroes.length>1?1:2, function(){ if(my!==tRun) return; if(reducedNow()) return; setTimeout(next,400); });
+      if(reducedNow()) { /* 减少动态效果：停在第一块的关键帧 */ }
+    }
+    next();
+  }
+  document.getElementById("tourHero").addEventListener("mouseenter",function(){ tAuto=false; });
+  document.getElementById("tNext").addEventListener("click",function(){ tAuto=false; if(tI<TOUR.length-1){ tI++; tPlay(); } });
+  document.getElementById("tOrigin").addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b) return;
+    this.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-checked",x===b?"true":"false"); }); });
+  chips("tChips",function(s){ document.getElementById("tNoAx").style.display=s==="noax"?"block":"none"; if(s==="auto"){ tAuto=true; tI=0; tPlay(); } });
+  tPlay();
+
+
+
+  // ——— E：整个设置窗口的讲解 ———
+  TOK.expand=[.40,.92];
+  function variant(id,fn){ var s=cp(HEROES[id]); fn(s); return s; }
+  function clean(o){ for(var k in o) if(o[k]===undefined) delete o[k]; return o; }
+  function still(name,devText,init,ax,dev){ init=clean(init); if(devText) init.DT={o:1}; return {name:name,dev:dev||(devText?"text":"pad"),devText:devText,ax:ax,init:init,frames:[],arrow:{dev:"",res:"",ghost:null}}; }
+  function say(name,devText,line,sub,ax,o){ o=o||{}; var init=clean({A:o.A||A0,nt:{w:34,h:6},nl:{o:0},DT:{o:1},dock:o.dock?{o:1}:undefined,ptr:o.ptr});
+    var fr=[{n:"等",e:"none",set:{},hold:.6}];
+    if(o.ptrTo) fr.push({k:1,n:"指针停在刘海上",e:"calm",set:{ptr:o.ptrTo},hold:.12});
+    fr.push({k:1,key:1,n:"刘海说一句",set:{nt:{w:o.w||160,h:o.h||36,_e:"bloom"},nl:{o:1,_e:"fade"}},hold:2.6});
+    fr.push({k:1,n:"收回",set:{nt:{w:34,h:6,_e:"calm"},nl:{o:0,_e:"fade"}},hold:.8});
+    if(o.ptr) fr.push({e:"calm",set:{ptr:o.ptr},hold:.3});
+    return {name:name,dev:"text",devText:devText,nl:[line,sub],ax:ax,init:init,frames:fr,arrow:{dev:"",res:"M156 54 L156 40",ghost:null}}; }
+  function keysDo(name,k1,k2,ax,init,result,keyName,o){ o=o||{}; init=clean(init); init.K1={o:1,p:0,t:k1}; init.K2={o:1,p:0,t:k2};
+    var fr=[{n:"等",e:"none",set:{},hold:.4},{k:1,n:"按下组合键",e:"tap",set:{K1:{p:1},K2:{p:1}},hold:.12},{e:"tap",set:{K1:{p:0},K2:{p:0}}},
+      {k:1,key:1,n:keyName,e:o.e||"settle",set:result,hold:1.1}];
+    fr.push({reset:1});
+    return {name:name,dev:"keys",ax:ax,init:init,frames:fr,arrow:{dev:"",res:o.arrow||"",ghost:o.ghost||null}}; }
+  var H=HEROES;
+  H.rollInstant=variant("dbl",function(s){ s.ax="演示：关掉动画时，双击后窗口直接变成卷帘条。"; s.frames.forEach(function(f){ if(f.set&&f.set.A&&"h" in f.set.A) f.e="none"; }); });
+  H.appUni=variant("dbl",function(s){ s.ax="演示：收起后统一成一样的标题栏。"; s.frames.forEach(function(f){ if(f.set&&f.set.A&&"h" in f.set.A) f.set.A.c=f.set.A.h<20?"uni":""; }); });
+  H.appThumb=variant("dbl",function(s){ s.ax="演示：收起后在原处缩成一张缩略图。"; s.frames.forEach(function(f){ if(f.set&&f.set.A&&"h" in f.set.A){ if(f.set.A.h<20) f.set.A={x:214,y:124,w:88,h:62,r:0,c:"thumbc"}; else f.set.A={x:70,y:40,w:172,h:118,r:0,c:""}; } }); s.arrow.res="M156 100 L250 150 M240 150 l10 0 l0 -10"; });
+  H.glance={name:"看一眼",dev:"point",ax:"演示：指针停在卷帘条上，窗口内容垂下来给你看一眼；移开就收回。",
+    init:{A:{x:70,y:40,w:172,h:10,o:1,s:1,r:1},B:{x:70,y:52,w:172,h:0,o:0,s:1},ptr:{x:236,y:160,o:1},d1:{x:190,y:120,o:0,p:0}},
+    frames:[{n:"手指放上",e:"fade",set:{d1:{o:1}}},
+      {k:1,n:"指针停在卷帘条上",e:"calm",set:{ptr:{x:150,y:44},d1:{x:150,y:84}},hold:.12},
+      {k:1,key:1,n:"垂下来看一眼",e:"calm",set:{B:{h:104,o:1}},hold:1.4},
+      {k:1,n:"移开就收回",e:"calm",set:{ptr:{x:236,y:160},d1:{x:190,y:120},B:{h:0,o:0}},hold:.4},{e:"fade",set:{d1:{o:0}},hold:.6}],
+    arrow:{dev:"M190 120 L154 88",res:"M156 60 L156 140 M150 132 l6 8 l6 -8",ghost:null}};
+  H.alert=say("有变化时提醒","窗口标题变了","构建完成","“构建日志”那扇窗口","演示：收起的窗口标题变了，刘海展开说一句，2.6 秒后收回。",{A:{x:70,y:40,w:172,h:10,o:1,s:1,r:1}});
+  H.shortcutLeft=keysDo("快捷键：左半屏",["⌃⌘","control command"],["←",""],"演示：按下录好的快捷键，当前窗口占左半屏。",{A:A0},{A:{x:2,y:12,w:153,h:168}},"窗口占左半屏",{arrow:"M200 100 L40 100 M48 94 l-8 6 l8 6",ghost:A0});
+  H.dockClickHide={name:"再点一下 Dock 图标，让开这个 App",dev:"click",ax:"演示：它在最前时再点一下 Dock 图标，这个 App 让开；再点一下回来。",
+    init:{A:{x:60,y:28,w:190,h:118,o:1,s:1},dock:{o:1},ptr:{x:236,y:120,o:1},d1:{x:156,y:96,o:0,p:0}},
+    frames:[{k:1,n:"指针到 Dock 图标",e:"calm",set:{ptr:{x:158,y:188}}},
+      {e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+      {k:1,key:1,n:"让开",e:"calm",set:{A:{o:0,s:.96}},hold:1.0},
+      {e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+      {k:1,n:"再点一下回来",e:"calm",set:{A:{o:1,s:1}},hold:.6},{e:"calm",set:{ptr:{x:236,y:120}},hold:.4}],
+    arrow:{dev:"",res:"M158 176 L158 150",ghost:{x:60,y:28,w:190,h:118}}};
+  H.awayLock={name:"离开就锁",dev:"text",devText:"iPhone 在身边",ax:"演示：随身设备走远了，倒数 10 秒后锁屏。",
+    init:{A:A0,dock:{o:1},CV:{o:0,tx:""},DT:{o:1,tx:"iPhone 在身边"}},
+    frames:[{n:"在身边",e:"none",set:{},hold:.8},{k:1,n:"走远了",e:"fade",set:{DT:{tx:"iPhone 走远了"}},hold:.6},
+      {k:1,n:"倒数",e:"fade",set:{CV:{o:1,tx:"10 秒后锁屏"}},hold:1.2},{k:1,key:1,n:"锁屏",e:"fade",set:{CV:{tx:"已锁定"}},hold:1.4},
+      {e:"fade",set:{CV:{o:0},DT:{tx:"回来了"}},hold:.8},{reset:1}],arrow:{dev:"",res:"",ghost:null}};
+  function gapSpec(g,name){ var w=(312-3*g)/2, h=190-2*g-10; return still("窗口之间留缝 · "+name,"窗口之间留缝 · "+name,{A:{x:g,y:10+g,w:w,h:h,o:1,s:1},B:{x:2*g+w,y:10+g,w:w,h:h,o:1,s:1}},"静图：两扇并排的窗口之间留"+name+"。"); }
+  H.gap0=gapSpec(0,"不留"); H.gap4=gapSpec(4,"窄"); H.gap10=gapSpec(10,"宽");
+  H.privateWin=still("私人窗口","私人窗口：1Password",{A:{x:60,y:28,w:190,h:70,o:1,s:1},dock:{o:1},panel:{o:1,y:112,c:"privp"}},"静图：选进私人窗口的 App，在窗口浏览和看一眼里只露图标，不露内容。");
+  H.langStatic=still("界面语言","简体中文 · English · 繁體中文",{A:A0,mbi:{o:1},mn:{o:1}},"静图：界面语言切换后立即生效。");
+  // 效果
+  H.lid={name:"桌面开合",dev:"text",devText:"合上盖子，再打开",ax:"演示：合上一半再打开，桌面跟着往下压一点、再回来。",
+    init:{A:A0,dock:{o:1},DT:{o:1}},frames:[{n:"等",e:"none",set:{},hold:.4},{k:1,key:1,n:"合到一半",e:"settle",set:{A:{s:.9,y:52}},hold:.5},{k:1,n:"打开",e:"settle",set:{A:{s:1,y:40}},hold:.9}],
+    arrow:{dev:"",res:"M156 30 L156 50 M150 42 l6 8 l6 -8",ghost:A0}};
+  H.lockLid={name:"锁屏开合效果",dev:"text",devText:"锁屏时合上盖子",ax:"演示：锁屏时开合盖子，锁屏画面跟着动。",
+    init:{CV:{o:1,tx:"锁屏",s:1},DT:{o:1}},frames:[{n:"等",e:"none",set:{},hold:.4},{k:1,key:1,n:"合到一半",e:"settle",set:{CV:{s:.9}},hold:.5},{k:1,n:"打开",e:"settle",set:{CV:{s:1}},hold:.9}],arrow:{dev:"",res:"",ghost:null}};
+  H.pauseFx=still("暂停效果","暂停",{A:A0},"静图：效果都先停一停，讲解带也停住。");
+  // 卷帘
+  H.split={name:"分屏把手",dev:"press",ax:"演示：拖中间那根竖条，两扇窗口一起变宽变窄。",
+    init:{A:{x:2,y:12,w:153,h:168,o:1,s:1},B:{x:157,y:12,w:153,h:168,o:1,s:1},ptr:{x:156,y:100,o:1},d1:{x:156,y:120,o:0,p:0}},
+    frames:[{k:1,n:"按住竖条",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+      {k:1,key:1,n:"往左拖",set:{d1:{x:116,_e:"calm"},ptr:{x:106,_e:"calm"},A:{w:103,_e:"settle"},B:{x:107,w:203,_e:"settle"}},hold:.8},
+      {k:1,n:"往回拖",set:{d1:{x:156,_e:"calm"},ptr:{x:156,_e:"calm"},A:{w:153,_e:"settle"},B:{x:157,w:153,_e:"settle"}}},{e:"tap",set:{d1:{p:0,o:0}},hold:.8}],
+    arrow:{dev:"M156 120 L116 120 M124 114 l-8 6 l8 6",res:"M156 100 L106 100 M114 94 l-8 6 l8 6",ghost:null}};
+  H.colEdge=still("走到一列时 · 贴边","贴边",{A:{x:-70,y:16,w:120,h:166,o:1,s:1},B:{x:54,y:16,w:120,h:166,o:1,s:1},C:{x:178,y:16,w:132,h:166,o:1,s:1}},"静图：走到的那一列贴着屏幕边停。");
+  H.colCenter=still("走到一列时 · 居中","居中",{A:{x:-28,y:16,w:120,h:166,o:1,s:1},B:{x:96,y:16,w:120,h:166,o:1,s:1},C:{x:220,y:16,w:120,h:166,o:1,s:1}},"静图：走到的那一列停在屏幕正中。");
+  H.centerFit=still("放得下就居中","",{A:{x:46,y:16,w:108,h:166,o:1,s:1},B:{x:158,y:16,w:108,h:166,o:1,s:1}},"静图：两列加起来不到一屏，整组放在正中。");
+  H.rememberW=still("记住每个 App 的列宽","",{A:{x:6,y:16,w:80,h:166,o:1,s:1},B:{x:90,y:16,w:140,h:166,o:1,s:1},C:{x:234,y:16,w:80,h:166,o:1,s:1}},"静图：同一个 App 下次进卷轴还是那么宽。");
+  H.floatTop={name:"浮在其他窗口上面",dev:"click",ax:"演示：点一下后面那扇窗口，它到前面来，卷帘条仍在最上面。",
+    init:{B:{x:30,y:30,w:200,h:140,o:1,s:1,hl:0},A:{x:120,y:20,w:172,h:10,o:1,s:1,r:1},ptr:{x:260,y:160,o:1},d1:{x:156,y:96,o:0,p:0}},
+    frames:[{k:1,n:"指针到后面那扇",e:"calm",set:{ptr:{x:80,y:100}}},{e:"tap",set:{d1:{o:1,p:1}},hold:.06},{e:"tap",set:{d1:{p:0,o:0}}},
+      {k:1,key:1,n:"它到前面，卷帘条仍在上面",e:"calm",set:{B:{hl:1}},hold:1.2},{e:"calm",set:{B:{hl:0},ptr:{x:260,y:160}},hold:.6}],arrow:{dev:"",res:"",ghost:null}};
+  H.trans=still("卷帘条半透明","",{B:{x:40,y:30,w:200,h:130,o:1,s:1},A:{x:90,y:60,w:172,h:10,o:.55,s:1,r:1}},"静图：卷帘条半透明，后面的内容透出来。");
+  H.iphoneFull={name:"把 iPhone 的画面放到整块屏",dev:"press",ax:"演示：长按刘海，整块屏变成 iPhone 的画面；按 Esc 回来。",
+    init:{A:A0,CV:{o:0,tx:"iPhone 的画面"},ptr:{x:156,y:5,o:1},d1:{x:156,y:96,o:0,p:0}},
+    frames:[{k:1,n:"长按刘海",e:"tap",set:{d1:{o:1,p:1}},hold:.6},{k:1,key:1,n:"全屏",e:"fade",set:{CV:{o:1}},hold:1.4},{k:1,n:"Esc 回来",e:"fade",set:{CV:{o:0},d1:{p:0,o:0}},hold:.8}],arrow:{dev:"",res:"",ghost:null}};
+  // 刘海
+  H.live=say("实时活动","放一首歌","♪ 晴天","两边：封面和波形","演示：放一首歌，刘海两边长出封面和波形。",{w:180,h:22});
+  H.nowPlaying=say("正在播放","换下一首","♪ 七里香","封面换成新的","演示：换歌时，刘海上的封面换成新的。",{w:160,h:28});
+  H.download=say("浏览器下载","Safari 开始下载","下载 48%","report.pdf","演示：浏览器下载时，刘海一边显示进度。",{w:150,h:28});
+  H.merged=say("合成一排","指针停在刘海上","2 扇窗口 · 1 项下载","排在同一排","演示：指针停在刘海上，窗口和正在进行的事排成一排。",{w:200,h:40,ptr:{x:236,y:120,o:1},ptrTo:{x:156,y:6}});
+  H.hoverGuard={name:"悬停不误触",dev:"point",ax:"演示：指针路过刘海不展开，停一下才展开。",
+    init:{A:A0,ptr:{x:30,y:6,o:1},nt:{w:34,h:6},nl:{o:0}},nl:["停一下才展开",""],
+    frames:[{k:1,n:"路过：不展开",e:"calm",set:{ptr:{x:280}},hold:.4},{k:1,n:"回来停住",e:"calm",set:{ptr:{x:156}},hold:.12},
+      {k:1,key:1,n:"停一下才展开",set:{nt:{w:150,h:30,_e:"expand"},nl:{o:1,_e:"fade"}},hold:1.2},{e:"calm",set:{nt:{w:34,h:6},nl:{o:0},ptr:{x:30}},hold:.6}],
+    arrow:{dev:"",res:"M30 16 L280 16",ghost:null}};
+  H.shelf={name:"文件架",dev:"press",ax:"演示：把文件拖到刘海，它进文件架。",
+    init:{A:A0,B:{x:240,y:140,w:22,h:28,o:1,s:1,c:"file"},nt:{w:34,h:6},ptr:{x:251,y:150,o:1},d1:{x:200,y:130,o:0,p:0}},
+    frames:[{k:1,n:"按住文件",e:"tap",set:{d1:{o:1,p:1}},hold:.15},
+      {k:1,key:1,n:"拖到刘海",set:{d1:{x:156,y:70,_e:"calm"},ptr:{x:156,y:6,_e:"calm"},B:{x:145,y:0,w:22,h:10,o:0,s:.6,_e:"settle"},nt:{w:54,_e:"settle"}},hold:.5},
+      {k:1,n:"进了文件架",set:{nt:{w:34,_e:"calm"},d1:{o:0,p:0,_e:"fade"}},hold:.8},{reset:1}],
+    arrow:{dev:"M200 130 L160 74",res:"M240 140 L160 14",ghost:null}};
+  H.origWin={name:"之前常用 · Windows",dev:"keys",ax:"演示：选了 Windows，Alt 和 Ctrl 的位置原地换成 Mac 的 Command 和 Control。",
+    init:{A:A0,K1:{o:1,p:0,t:["Ctrl",""]},K2:{o:1,p:0,t:["Alt",""]}},
+    frames:[{n:"等",e:"none",set:{},hold:.8},{k:1,n:"Ctrl 换成 ⌃",e:"fade",set:{K1:{t:["⌃","control"]}},hold:.4},{k:1,key:1,n:"Alt 换成 ⌘",e:"fade",set:{K2:{t:["⌘","command"]}},hold:1.4},{e:"none",set:{K1:{t:["Ctrl",""]},K2:{t:["Alt",""]}}}],
+    arrow:{dev:"",res:"",ghost:null}};
+  H.origIpad=still("之前常用 · iPad","两指点按",{A:A0,mn:{o:1}},"静图：选了 iPad，刘海提示菜单要两指点按。");
+  H.origMac=still("之前常用 · 一直用 Mac","一直用 Mac",{A:A0},"静图：一直用 Mac，刘海多半不开口。");
+  // 窗口浏览
+  H.dockStay={name:"Dock 留在现在这块屏上",dev:"point",ax:"演示：指针碰到另一块屏的底边，Dock 不跟过去。",
+    init:{A:A0,dock:{o:1},ptr:{x:290,y:100,o:1},d1:{x:180,y:80,o:0,p:0}},
+    frames:[{n:"手指放上",e:"fade",set:{d1:{o:1}}},{k:1,key:1,n:"碰到底边：Dock 不动",e:"calm",set:{ptr:{y:196},d1:{y:130}},hold:1.2},{e:"calm",set:{ptr:{y:100},d1:{y:80,o:0}},hold:.6}],
+    arrow:{dev:"M180 80 L180 130",res:"M290 100 L290 190",ghost:null}};
+  H.mcClose=keysDo("调度中心里按 ⌘W 关窗",["⌘","command"],["W",""],"演示：在调度中心里指着一张卡按 ⌘W，那扇窗口关掉。",
+    {A:{x:20,y:50,w:84,h:62,o:1,s:1},B:{x:114,y:50,w:84,h:62,o:1,s:1},C:{x:208,y:50,w:84,h:62,o:1,s:1},ptr:{x:150,y:80,o:1}},{B:{o:0,s:.9}},"那张卡关掉",{e:"calm"});
+  H.menuItem=still("在菜单里显示“选择窗口…”","菜单栏图标",{A:A0,mbi:{o:1,hl:1},mn:{o:1}},"静图：菜单栏图标的菜单里多出“选择窗口…”。");
+  function switcher(k,name){ return {name:name,dev:"keys",ax:"演示：按住"+k[1]+"连按 Tab，一扇扇挑窗口，松手到那扇。",
+    init:{A:A0,panel:{o:0,y:70,c:""},K1:{o:1,p:0,t:k},K2:{o:1,p:0,t:["⇥","tab"]}},
+    frames:[{k:1,n:"按住",e:"tap",set:{K1:{p:1}},hold:.1},{e:"tap",set:{K2:{p:1}}},{k:1,n:"第一下",e:"calm",set:{K2:{p:0},panel:{o:1,c:"h1"}},hold:.4},
+      {e:"tap",set:{K2:{p:1}}},{k:1,key:1,n:"第二下",e:"tap",set:{K2:{p:0},panel:{c:"h2"}},hold:.4},{e:"tap",set:{K2:{p:1}}},{e:"tap",set:{K2:{p:0},panel:{c:"h3"}},hold:.4},
+      {k:1,n:"松手",e:"calm",set:{K1:{p:0},panel:{o:0}},hold:.8}],arrow:{dev:"",res:"",ghost:null}}; }
+  H.switchOff=still("按窗口切换 · 关","关",{A:A0},"静图：按窗口切换关着。");
+  H.switchOpt=switcher(["⌥","option"],"按窗口切换 · ⌥Tab"); H.switchCmd=switcher(["⌘","command"],"按窗口切换 · ⌘Tab");
+  H.panelStatic=still("窗口浏览面板","",{A:{x:60,y:28,w:190,h:70,o:1,s:1},dock:{o:1},panel:{o:1,y:112}},"静图：窗口浏览的面板。");
+  // 快捷键
+  H.pin=keysDo("置顶",["⌃⌘","control command"],["P",""],"演示：按下置顶的快捷键，当前窗口留在最前面。",{B:{x:30,y:30,w:160,h:120,o:1,s:1},A:{x:120,y:50,w:170,h:120,o:1,s:1,hl:0}},{A:{hl:1}},"留在最前",{e:"calm"});
+  H.numberExpand=keysDo("按编号展开已收起的窗口",["⌃⌘","control command"],["2",""],"演示：按 ⌃⌘2，第二条卷帘条展开。",{A:{x:200,y:16,w:104,h:10,o:1,s:1,r:1},B:{x:200,y:30,w:104,h:10,o:1,s:1,r:1}},{B:{x:70,y:44,w:172,h:118,r:0}},"第二条展开");
+  H.rectKeys=still("用 Rectangle 的快捷键","",{A:{x:2,y:12,w:153,h:168,o:1,s:1},K1:{o:1,p:0,t:["⌃⌥","control option"]},K2:{o:1,p:0,t:["←",""]}},"静图：换成 Rectangle 那一套组合键。","keys");
+  // 隐私
+  H.axStatic=still("辅助功能","辅助功能 · 已授权",{A:{x:70,y:40,w:172,h:10,o:1,s:1,r:1}},"静图：打开辅助功能，窗口才能被收起、挪动。");
+  H.srStatic=still("屏幕录制","屏幕录制 · 已授权",{A:{x:60,y:28,w:190,h:70,o:1,s:1},dock:{o:1},panel:{o:1,y:112,c:"livep"}},"静图：打开屏幕录制，卡片里是窗口的实时画面。");
+  H.loginStatic=still("登录时自动启动","登录这台 Mac",{A:A0,mbi:{o:1,hl:1}},"静图：登录后，菜单栏里的图标自己出现。");
+  // 高级
+  H.reduceDemo=variant("dbl",function(s){ s.forceStill=1; s.name="减少动态效果"; s.ax="静图：打开减少动态效果后，讲解停在关键帧，用箭头标出怎么动。"; });
+  H.diagStatic=still("导出诊断信息","导出诊断信息…",{CV:{o:1,tx:"文件夹在这台 Mac 上 · 不会自动发出"}},"静图：诊断信息存成这台 Mac 上的一个文件夹，不会自动发出。");
+  // 实验
+  H.liveCard=variant("dockHover",function(s){ s.name="普通窗口实时预览"; s.ax="演示：窗口浏览里选中的那张卡播放实时画面。"; s.init.panel.c="livep"; });
+  H.beat={name:"跟着声音跳",dev:"text",devText:"音乐的节拍",ax:"演示：刘海两边跟着音乐的节拍跳。",init:{A:A0,nt:{w:34,h:6},DT:{o:1}},
+    frames:[{k:1,n:"一拍",e:"pop",set:{nt:{w:60,h:6}},hold:.1},{e:"calm",set:{nt:{w:48,h:6}},hold:.1},{k:1,key:1,n:"又一拍",e:"pop",set:{nt:{w:63,h:6}},hold:.1},{e:"calm",set:{nt:{w:48,h:6}},hold:.1},{e:"pop",set:{nt:{w:58,h:6}},hold:.1},{e:"calm",set:{nt:{w:34,h:6}},hold:.8}],arrow:{dev:"",res:"",ghost:null}};
+  H.awaySummary={name:"回来时说一下离开期间的事",dev:"text",devText:"锁屏 → 解锁",nl:["离开期间","2 扇窗口有变化"],ax:"演示：解锁回来，刘海说离开期间有什么变化。",
+    init:{A:A0,CV:{o:1,tx:"锁屏"},nt:{w:34,h:6},nl:{o:0},DT:{o:1}},
+    frames:[{n:"锁着",e:"none",set:{},hold:.8},{k:1,n:"解锁",e:"fade",set:{CV:{o:0}},hold:.3},{k:1,key:1,n:"刘海说一句",set:{nt:{w:160,h:36,_e:"bloom"},nl:{o:1,_e:"fade"}},hold:2.6},{k:1,n:"收回",set:{nt:{w:34,h:6,_e:"calm"},nl:{o:0,_e:"fade"}},hold:.6},{reset:1}],arrow:{dev:"",res:"",ghost:null}};
+  H.copyProg=say("拷贝进度","在访达里拷文件","拷贝 3 / 10","照片 → 移动硬盘","演示：在访达里拷文件时，刘海里显示拷到哪了。",{w:160,h:30});
+  H.guess=variant("teach",function(s){ s.name="猜你从哪来"; s.nl=["你之前常用 Windows？","点一下刘海回答"]; s.ax="演示：按出 Windows 的习惯时，刘海问一次你之前常用什么。"; });
+  H.battery=say("设备的电量","AirPods 连上","AirPods 已连接","电量 82%","演示：AirPods 连上时，刘海说一声电量。",{w:160,h:36});
+  H.bystander=still("旁人靠近 · 随身设备","照行文案画（待定）",{A:A0},"静图：待定。");
+
+  var R=function(n,k,h,left,right,key,extra){ var o={n:n,k:k,h:h,left:left,right:right,key:key}; for(var x in extra||{}) o[x]=extra[x]; return o; };
+  var PAGES=[
+    {id:"fx",name:"效果",def:"dbl",rows:[
+      R("收起窗口时的动画","L","dbl","双击标题栏","开：卷起来；关：直接变成卷帘条","收成卷帘条",{toggle:1,offH:"rollInstant"}),
+      R("桌面开合","L","lid","合上盖子，再打开","桌面跟着往下压一点、再回来","合到一半",{toggle:1}),
+      R("锁屏开合效果","L","lockLid","锁屏时合上盖子","锁屏画面跟着动","合到一半",{toggle:1}),
+      R("暂停效果","S","pauseFx","“暂停”键","讲解带本身停住","—"),
+      R("预览对象 · 预览样式 · 预览进度","P",null,"—","那块大预览并进讲解带：右块就是预览，滑杆拖这一段的时间","—")]},
+    {id:"shade",name:"卷帘",def:"glance",rows:[
+      R("看一眼","L","glance","指针停在卷帘条上","窗口内容垂下来，移开收回","垂下来",{toggle:1}),
+      R("窗口之间留缝","S","gap0","缝的名字","两扇并排，缝 0 / 4 / 10 pt","—",{opts:[["不留","gap0"],["窄","gap4"],["宽","gap10"]]}),
+      R("分屏把手","L","split","按住中间的竖条拖","两扇一起变宽变窄","往左拖",{toggle:1}),
+      R("走到一列时","S","colEdge","贴边 / 居中","那一列停在屏幕边 / 正中","—",{opts:[["贴边","colEdge"],["居中","colCenter"]]}),
+      R("放得下就居中","S","centerFit","—","两列不到一屏，整组在正中","—",{toggle:1}),
+      R("记住每个 App 的列宽","S","rememberW","—","同一个 App 下次进卷轴还是那么宽","—",{toggle:1,off:1}),
+      R("收起后的样子","L","dbl","双击标题栏","跟原来一样 / 统一标题栏 / 缩略图","收起那一帧",{opts:[["跟原来一样","dbl"],["统一标题栏","appUni"],["缩略图","appThumb"]]}),
+      R("浮在其他窗口上面","L","floatTop","点后面那扇窗口","它到前面，卷帘条仍在最上面","卷帘条压在上面",{toggle:1}),
+      R("卷帘条半透明","S","trans","—","后面的内容透出来","—",{toggle:1}),
+      R("收起和展开时播放音效 · 收起音效 · 展开音效","P",null,"扬声器和音效名","不换画；行尾试听","—"),
+      R("把 iPhone 的画面放到整块屏","L","iphoneFull","长按刘海","整块屏变成 iPhone 的画面；Esc 回来","全屏",{toggle:1,off:1}),
+      R("接收器地址 · 静音口令","P",null,"—","—","—")]},
+    {id:"notch",name:"刘海",def:"tuck",rows:[
+      R("有变化时提醒","L","alert","窗口标题变了","刘海说“构建完成”，2.6 s 后收回","刘海说一句",{toggle:1}),
+      R("实时活动","L","live","放一首歌","刘海两边长出封面和波形","两边都在",{toggle:1}),
+      R("正在播放","L","nowPlaying","换下一首","封面换成新的","换歌",{toggle:1}),
+      R("浏览器下载","L","download","Safari 开始下载","刘海一边出现进度","进度一半",{toggle:1}),
+      R("合成一排","L","merged","指针停在刘海上","窗口和正在进行的事排成一排","展开",{toggle:1}),
+      R("悬停不误触","L","hoverGuard","指针路过 / 停一下","路过不展开，停一下才展开","停住展开",{toggle:1}),
+      R("文件架","L","shelf","把文件拖到刘海","文件进文件架","落进去",{toggle:1}),
+      R("之前常用","L","origWin","Windows / iPad / 一直用 Mac","Windows：键帽换成 Mac 的；iPad：两指点按；Mac：刘海不开口","键帽换好",{opts:[["Windows","origWin"],["iPad","origIpad"],["一直用 Mac","origMac"]]})]},
+    {id:"gest",name:"手势",def:"swipeUp",rows:[
+      R("标题栏手势","L","swipeUp","两指在标题栏上滑（滚轮也算）","往上收起、往下拉展开","收起",{toggle:1}),
+      R("双击标题栏收起窗口","L","dbl","双击标题栏","收成卷帘条，再双击展开","收成卷帘条",{toggle:1}),
+      R("收进刘海","L","tuck","按住标题栏往刘海甩","飞进刘海，点刘海放回","甩进去",{toggle:1}),
+      R("卷轴概览能收进刘海","L","overview","在概览里拖一扇到刘海","松手收进去","松手",{toggle:1,off:1}),
+      R("拖到窗口上并排","L","dropSplit","拖一扇到另一扇上","两扇并排","松手并排",{toggle:1,off:1}),
+      R("拖标题栏换位置","L","stripDrag","在卷轴里拖标题栏","和旁边那列换位置","往右拖",{toggle:1,off:1}),
+      R("在 Dock 图标上两指上下滑","L","dockSwipe","两指在 Dock 图标上滑","往上看所有窗口，往下让开","往上滑",{toggle:1})]},
+    {id:"browse",name:"窗口浏览",def:"dockHover",rows:[
+      R("Dock 悬停查看窗口","L","dockHover","指针停在 Dock 图标上","这个 App 的窗口排出来","排出来",{toggle:1}),
+      R("再点一下 Dock 图标，让开这个 App","L","dockClickHide","点最前那个 App 的图标","它让开；再点一下回来","让开",{toggle:1}),
+      R("Dock 留在现在这块屏上","L","dockStay","指针碰到另一块屏的底边","Dock 不跟过去","Dock 不动",{toggle:1,off:1}),
+      R("调度中心里按 ⌘W 关窗","L","mcClose","⌘W","指着的那张卡关掉","卡片消失",{toggle:1}),
+      R("在菜单里显示“选择窗口…”","S","menuItem","—","菜单里多出这一项","—",{toggle:1}),
+      R("按窗口切换","L","switchOpt","按住修饰键连按 Tab","一排窗口，高亮一格格走，松手到那扇","第二格高亮",{opts:[["关","switchOff"],["⌥Tab","switchOpt"],["⌘Tab","switchCmd"]]}),
+      R("打开窗口浏览 · 按应用排除","S","panelStatic","—","面板；被排除的 App 不出现","—"),
+      R("面板背景 · 默认显示方式 · 排布与撤销","S","panelStatic","选项名","面板换底 / 换排法","—")]},
+    {id:"keys",name:"快捷键",def:"shortcutLeft",rows:[
+      R("左半屏","L","shortcutLeft","这一行录的组合键","当前窗口挪到那一格（所有排布动作同一个场景，只换目标）","挪到位"),
+      R("置顶或取消置顶当前窗口","L","pin","⌃⌘P","当前窗口留在最前","留在最前"),
+      R("按编号展开已收起的窗口","L","numberExpand","⌃⌘2","第二条卷帘条展开","展开",{toggle:1}),
+      R("用 Rectangle 的快捷键 · 方向键换成字母","S","rectKeys","键帽换成另一套","—","—")]},
+    {id:"privacy",name:"隐私",def:"privateWin",rows:[
+      R("私人窗口","S","privateWin","私人窗口里的 App","窗口浏览、看一眼里只露图标","—"),
+      R("辅助功能","S","axStatic","已授权","窗口能被收起、挪动","—"),
+      R("屏幕录制","S","srStatic","已授权","卡片是实时画面","—"),
+      R("登录时自动启动","S","loginStatic","登录这台 Mac","菜单栏里图标自己出现","—",{toggle:1}),
+      R("读到的都列在这里","P",null,"—","—","—")]},
+    {id:"adv",name:"高级",def:"langStatic",rows:[
+      R("界面语言","S","langStatic","三种文字","菜单照所选语言","—"),
+      R("恢复动态效果默认值 · 诊断日志","P",null,"—","—","—"),
+      R("减少动态效果","S","reduceDemo","—","讲解带切到关键帧加箭头","—"),
+      R("导出诊断信息","S","diagStatic","导出诊断信息…","一个文件夹落在这台 Mac 上，不会自动发出","—"),
+      R("导出设置 · 导入设置 · 欢迎使用 WindowShade · 报告问题","P",null,"—","—","—")]},
+    {id:"lab",name:"实验",def:"awayLock",rows:[
+      R("离开就锁","L","awayLock","iPhone 走远了","倒数 10 秒后锁屏","已锁定",{toggle:1,off:1}),
+      R("普通窗口实时预览","L","liveCard","指针停在 Dock 图标上","那张卡里画面在动","排出来",{toggle:1,off:1}),
+      R("跟着声音跳","L","beat","音乐的节拍","刘海两边跟着跳","跳起",{toggle:1,off:1}),
+      R("回来时说一下离开期间的事","L","awaySummary","锁屏 → 解锁","刘海说离开期间有什么变化","刘海说话",{toggle:1,off:1}),
+      R("拷贝进度","L","copyProg","在访达里拷文件","刘海里一条进度","刘海说话",{toggle:1,off:1}),
+      R("猜你从哪来","L","guess","按 ⌃C","刘海问一次你之前常用什么","刘海问话",{toggle:1,off:1}),
+      R("设备的电量","L","battery","AirPods 连上","刘海说电量","刘海说话",{toggle:1}),
+      R("离开就锁 · 旁人靠近","S","bystander","照行文案画","—","—")]}
+  ];
+  ROWL10N={"屏幕录制": ["屏幕录制", "Screen Recording", "螢幕錄製", "", "", ""], "居中": ["居中", "Center", "置中", "", "", ""], "放得下就居中": ["放得下就居中", "Center when it fits", "放得下就置中", "列加起来不到一屏时，整组放在正中", "When the columns fit on one screen, center the group", "列加起來不到一螢幕時，整組放在正中"], "收进刘海": ["收进刘海", "Tuck into the notch", "收進瀏海", "朝刘海甩一下标题栏，窗口就收进刘海；长按刘海，展开一排，点一格放回", "Flick a title bar toward the notch to tuck the window; press and hold the notch, then click one to bring it back", "朝瀏海甩一下標題列，視窗就收進瀏海；長按瀏海，展開一排，點一格放回"], "拷贝进度": ["拷贝进度", "Copy progress", "複製進度", "Finder 拷贝时在刘海上显示拷到哪了", "Show copy progress at the notch while Finder copies", "Finder 複製時在瀏海上顯示拷到哪了"], "设备的电量": ["设备的电量", "Device batteries", "裝置的電量", "耳机、手机这些设备连上或电量低时，刘海说一声", "The notch says when headphones or phones connect or run low", "耳機、手機這些裝置連上或電量低時，瀏海說一聲"], "面板背景": ["面板背景", "Panel background", "面板背景", "开启系统的“减少透明度”时，自动使用不透明背景。", "Opaque with Reduce transparency", "開啟系統的“減少透明度”時，自動使用不透明背景。"], "默认显示方式": ["默认显示方式", "Default layout", "預設顯示方式", "自动：窗口多的时候用列表，少的时候用缩略图。面板里的切换只影响这一次。", "List or thumbnails, by count", "自動：視窗多的時候用列表，少的時候用縮圖。面板裡的切換隻影響這一次。"], "排布与撤销": ["排布与撤销", "Arrange and undo", "排布與還原", "在窗口右键菜单里选“排布”：左半、右半、四角、居中、铺满屏幕、移到另一块屏幕。可以先看效果，移好之后还能撤销。", "Arrange in a window's context menu: left half, right half, corners, center, fill, move to another screen. You can preview it and undo afterwards.", "在視窗右鍵選單裡選“排布”：左半、右半、四角、置中、鋪滿螢幕、移到另一塊螢幕。可以先看效果，移好之後還能還原。"], "窄": ["窄", "Narrow", "窄", "", "", ""], "合成一排": ["合成一排", "One merged row", "合成一排", "窗口和正在进行的事排在同一排", "Windows and live activities in a single row", "視窗和正在進行的事排在同一排"], "按窗口切换": ["按窗口切换", "Switch by window", "按視窗切換", "按住连按 Tab 一扇一扇地挑，松手切过去；收着的窗口也在里面。选 ⌘Tab 会换掉系统的 App 切换", "Hold and press Tab to pick a window", "按住連按 Tab 一扇一扇地挑，鬆手切過去；收著的視窗也在裡面。選 ⌘Tab 會換掉系統的 App 切換"], "之前常用": ["之前常用", "Used before", "之前常用", "卡住时，刘海按你原来的习惯提示 Mac 上怎么做", "When stuck, the notch shows the Mac way based on what you used before", "卡住時，瀏海按你原來的習慣提示 Mac 上怎麼做"], "导出诊断信息": ["导出诊断信息", "Export Diagnostics", "匯出診斷資訊", "存成文件夹给你过目，不会自动发出", "Saved to a folder. Nothing is sent.", "存成資料夾給你過目，不會自動送出"], "宽": ["宽", "Wide", "寬", "", "", ""], "桌面开合": ["桌面开合", "Desktop lid", "桌面開合", "合上或打开盖子时，桌面跟着动一下。", "Moves when the lid closes or opens", "合上或開啟蓋子時，桌面跟著動一下。"], "浮在其他窗口上面": ["浮在其他窗口上面", "Float above other windows", "浮在其他視窗上面", "收起的窗口也不会被别的窗口挡住", "A rolled-up window stays uncovered", "收起的視窗也不會被別的視窗擋住"], "双击标题栏收起窗口": ["双击标题栏收起窗口", "Double-click a title bar to roll up", "按兩下標題列收起視窗", "在任意窗口的标题栏上双击。按住 Option 双击不收起", "Double-click any window's title bar. Hold Option to skip rolling up.", "在任意視窗的標題列上按兩下。按住 Option 按兩下不收起"], "文件架": ["文件架", "File shelf", "檔案架", "拖到刘海暂存的文件放在这里；关掉后清空", "Files you drop on the notch wait here; turning it off clears it", "拖到瀏海暫存的檔案放在這裡；關掉後清空"], "用 Rectangle 的快捷键": ["用 Rectangle 的快捷键", "Use Rectangle's shortcuts", "用 Rectangle 的快速鍵", "装过 Rectangle 的照它现在的设置，没装过的用它推荐的那一套（⌃⌥ 加方向键和字母）。下面的名字和 Raycast 的窗口命令一一对应", "Takes over Rectangle's set", "裝過 Rectangle 的照它現在的設定，沒裝過的用它推薦的那一套（⌃⌥ 加方向鍵和字母）。下面的名字和 Raycast 的視窗命令一一對應"], "方向键换成字母": ["方向键换成字母", "Letters instead of arrow keys", "方向鍵換成字母", "", "", ""], "窗口浏览": ["窗口浏览", "Window browsing", "視窗瀏覽", "", "", ""], "卷帘条半透明": ["卷帘条半透明", "Translucent bar", "捲簾條半透明", "", "", ""], "正在播放": ["正在播放", "Now playing", "正在播放", "歌名和封面显示在刘海上", "Track name and artwork at the notch", "歌名和封面顯示在瀏海上"], "Dock 悬停查看窗口": ["Dock 悬停查看窗口", "Hover the Dock icon to see windows", "指標停在 Dock 圖示", "鼠标停在 Dock 图标上时显示窗口面板。不会启动没在运行的应用。", "A window panel on hover", "滑鼠停在 Dock 圖示上時顯示視窗面板。不會啟動沒在執行的應用。"], "悬停不误触": ["悬停不误触", "Hover guard", "停留不誤觸", "指针在刘海上停一下才展开，路过不展开", "Expands the notch only when the pointer rests on it, not when it passes by", "指標在瀏海上停一下才展開，路過不展開"], "导出设置": ["导出设置", "Export Settings", "匯出設定", "备份成一个文件，换电脑时导回去", "Back up to a file.", "備份成一個檔案，換電腦時匯回去"], "导入设置": ["导入设置", "Import Settings", "匯入設定", "合并回来，不清空现有设置", "Merges in; nothing is cleared.", "合併回來，不清空現有設定"], "欢迎使用 WindowShade": ["欢迎使用 WindowShade", "Welcome to WindowShade", "歡迎使用 WindowShade", "再看一遍第一次打开时的说明", "See the first-launch guide again", "再看一遍第一次開啟時的說明"], "报告问题": ["报告问题", "Report a Problem", "回報問題", "在 GitHub 上新建一条，可附诊断信息", "Opens a new issue on GitHub.", "在 GitHub 上新建一則，可附診斷資訊"], "打开窗口浏览": ["打开窗口浏览", "Open the window browser", "開啟視窗瀏覽", "", "", ""], "按应用排除": ["按应用排除", "Leave apps out", "按應用排除", "", "", ""], "有变化时提醒": ["有变化时提醒", "Tell me when things change", "有變化時提醒", "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你", "When a rolled-up window's title changes — a build finishing, say — the notch opens briefly", "收起的視窗標題變了，比如編譯完成，瀏海會短暫展開告訴你"], "离开就锁": ["离开就锁", "Lock when you leave", "離開就鎖", "随身设备走远了，倒数 10 秒后锁屏", "Locks 10 seconds after you leave", "隨身裝置走遠了，倒數 10 秒後鎖定畫面"], "往下滑": ["往下滑", "Swipe down", "往下滑", "", "", ""], "收起后的样子": ["收起后的样子", "What a rolled-up window looks like", "收起後的樣子", "", "", ""], "收起和展开时播放音效": ["收起和展开时播放音效", "Play a sound on roll up and unroll", "收起和展開時播放音效", "", "", ""], "收起音效": ["收起音效", "Roll-up sound", "收起音效", "", "", ""], "展开音效": ["展开音效", "Unroll sound", "展開音效", "", "", ""], "卷帘": ["卷帘", "Roll up", "捲簾", "", "", ""], "往上滑": ["往上滑", "Swipe up", "往上滑", "", "", ""], "接收器地址": ["接收器地址", "Receiver address", "接收器地址", "ws:// 开头并带令牌；不填时全屏只显示示意画面", "Starts with ws:// and carries a token; empty shows a placeholder only", "ws:// 開頭並帶權杖；不填時全螢幕只顯示示意畫面"], "静音口令": ["静音口令", "Silent phrases", "靜音口令", "", "", ""], "辅助功能": ["辅助功能", "Accessibility", "輔助使用", "", "", ""], "拖标题栏换位置": ["拖标题栏换位置", "Drag the title bar to reorder", "拖標題列換位置", "在卷轴里拖标题栏换列；拉远一点才离开卷轴", "Drag a title bar in the strip to swap columns; pull further to leave the strip", "在卷軸裡拖標題列換列；拉遠一點才離開卷軸"], "界面语言": ["界面语言", "Interface language", "介面語言", "切换后立即生效", "Takes effect immediately", "切換後立即生效"], "置顶或取消置顶当前窗口": ["置顶或取消置顶当前窗口", "Pin or unpin the window in front", "置頂或取消置頂當前視窗", "", "", ""], "暂停效果": ["暂停效果", "Pause effects", "暫停效果", "所有效果先停一停，开关保持原样。", "Pauses effects. Switches stay put.", "所有效果先停一停，開關保持原樣。"], "快捷键": ["快捷键", "Shortcuts", "快速鍵", "", "", ""], "锁屏开合效果": ["锁屏开合效果", "Lock Screen Fold Effect", "鎖定畫面開合效果", "锁屏时开合盖子，锁屏画面跟着动。", "The lock screen moves with the lid", "鎖定時開合蓋子，鎖定畫面跟著動。"], "按编号展开已收起的窗口": ["按编号展开已收起的窗口", "Unroll a rolled-up window by number", "按編號展開已收起的視窗", "%@ 对应菜单里的前 9 个窗口", "%@ matches the first 9 windows in the menu", "%@ 對應選單裡的前 9 個視窗"], "把 iPhone 的画面放到整块屏": ["把 iPhone 的画面放到整块屏", "iPhone screen on the full display", "把 iPhone 的畫面放到整塊螢幕", "长按刘海进入全屏；再长按或按 Esc 回到桌面", "Long-press the notch for full screen; long-press again or press Esc to leave", "長按瀏海進入全螢幕；再長按或按 Esc 回到桌面"], "关": ["关", "Off", "關", "", "", ""], "实验": ["实验", "Experiments", "實驗", "", "", ""], "高级": ["高级", "Advanced", "高階", "", "", ""], "隐私": ["隐私", "Privacy", "隱私權", "", "", ""], "私人窗口": ["私人窗口", "Private windows", "私人視窗", "", "", ""], "手势": ["手势", "Gestures", "手勢", "", "", ""], "标题栏手势": ["标题栏手势", "Title bar gestures", "標題列手勢", "在标题栏上两指滑动、滚动滚轮或拖着甩一下：往上收起，往下铺满", "Two-finger swipe, scroll or flick", "在標題列上兩指滑動、捲動滾輪或拖著甩一下：往上收起，往下鋪滿"], "跟着声音跳": ["跟着声音跳", "Bounce with the sound", "跟著聲音跳", "刘海右边的小点随歌起伏", "The dots on the notch's right ear follow the music", "瀏海右邊的小點隨歌起伏"], "分屏把手": ["分屏把手", "Split handle", "分割顯示把手", "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉", "When two windows fill a screen, drag the bar between them to resize both; push it to the edge to send one into Slide Over", "兩扇視窗拼滿一塊螢幕時，中間出現一根小豎條：拖它兩扇一起變，推到螢幕邊那一扇進側拉"], "左半屏": ["左半屏", "Left half", "左半螢幕", "", "", ""], "登录时自动启动": ["登录时自动启动", "Open at login", "登入時自動啟動", "", "", ""], "卷轴概览能收进刘海": ["卷轴概览能收进刘海", "Strip overview can tuck into the notch", "卷軸概覽能收進瀏海", "在卷轴概览里把窗口拖到刘海，松手就收进去", "Drag a window to the notch in the strip overview and let go to tuck it away", "在卷軸概覽裡把視窗拖到瀏海，鬆手就收進去"], "普通窗口实时预览": ["普通窗口实时预览", "Live Preview of Regular Windows", "普通視窗即時預覽", "窗口浏览里选中的窗口播放实时画面", "Plays the selected window live", "視窗瀏覽裡選中的視窗播放即時畫面"], "缩略图": ["缩略图", "Thumbnail", "縮圖", "", "", ""], "浏览器下载": ["浏览器下载", "Browser downloads", "瀏覽器下載", "读取「下载」文件夹，看有没有没下完的文件", "Read the Downloads folder for unfinished downloads", "讀取「下載」資料夾，看有沒有沒下完的檔案"], "回来时说一下离开期间的事": ["回来时说一下离开期间的事", "Catch me up after I'm away", "回來時說一下離開期間的事", "锁屏或睡眠时有变化才说", "Only when something changed while locked or asleep", "鎖定畫面或睡眠時有變化才說"], "窗口之间留缝": ["窗口之间留缝", "Gap between windows", "視窗之間留縫", "半屏、四角、网格、魔法平铺、卷轴排好的窗口之间和屏幕边留一道缝", "A gap between arranged windows and the screen edges", "半螢幕、四角、網格、魔法並排、卷軸排好的視窗之間和螢幕邊留一道縫"], "卷帘条上往下拉": ["卷帘条上往下拉", "Pull down on the rolled-up bar", "捲簾條上往下拉", "", "", ""], "统一标题栏": ["统一标题栏", "One consistent bar", "統一標題列", "", "", ""], "iPad": ["iPad", "iPad", "iPad", "", "", ""], "猜你从哪来": ["猜你从哪来", "Guess where you came from", "猜你從哪來", "按出别的系统的习惯时问一次", "Asked once when you use another system's habits", "按出別的系統的習慣時問一次"], "恢复动态效果默认值": ["恢复动态效果默认值", "Reset effect defaults", "回復動態效果預設值", "把效果页的开关都恢复默认。", "Resets every effect switch", "把效果頁的開關都回復預設。"], "诊断日志": ["诊断日志", "Diagnostics log", "診斷日誌", "打开诊断日志排查问题。", "Open the diagnostics log to find problems.", "開啟診斷日誌排查問題。"], "Windows": ["Windows", "Windows", "Windows", "", "", ""], "再点一下 Dock 图标，让开这个 App": ["再点一下 Dock 图标，让开这个 App", "Click the Dock icon again to hide the app", "再點一下 Dock 圖示，讓開這個 App", "它已经在最前、窗口露着时才这样（和 Windows 任务栏一样）；再点一下回来", "Click again to bring it back", "它已經在最前、視窗露著時才這樣（和 Windows 工作列一樣）；再點一下回來"], "跟原来一样": ["跟原来一样", "Keep as-is", "跟原來一樣", "", "", ""], "拖到窗口上并排": ["拖到窗口上并排", "Drop onto a window to split", "拖到視窗上並排", "把窗口拖到另一扇上，两扇并排", "Drag a window onto another; they sit side by side", "把視窗拖到另一扇上，兩扇並排"], "在菜单里显示“选择窗口…”": ["在菜单里显示“选择窗口…”", "Show Choose a Window… in the menu", "在選單裡顯示“選擇視窗…”", "默认不占用快捷键，可以在“快捷键”里设置", "No shortcut by default", "預設不佔用快速鍵，可以在“快速鍵”裡設定"], "调度中心里按 ⌘W 关窗": ["调度中心里按 ⌘W 关窗", "⌘W closes a window in Mission Control", "指揮中心裡按 ⌘W 關窗", "指针指着哪扇就关哪扇，⌘Q 退出它的 App；只在调度中心开着时这样，平时不动你的 ⌘W", "⌘W closes the window under the pointer", "指標指著哪扇就關哪扇，⌘Q 退出它的 App；只在指揮中心開著時這樣，平時不動你的 ⌘W"], "看一眼": ["看一眼", "Glance", "看一眼", "指针停在卷帘条上，窗口在原处出现，移开就收回", "Rest the pointer on the bar to see the window in place; move away and it rolls back", "指標停在捲簾條上，視窗在原處出現，移開就收回"], "效果": ["效果", "Effects", "效果", "", "", ""], "实时活动": ["实时活动", "Live activities", "即時活動", "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线", "Music, accessories, AirDrop and routes at the notch and the launchpad's left page", "在瀏海和啟動台主畫面最左邊那一頁檢視音樂、耳機、AirDrop與路線"], "记住每个 App 的列宽": ["记住每个 App 的列宽", "Remember each app's column width", "記住每個 App 的列寬", "改过宽度的 App，下次开在卷轴里还是那个宽度", "An app you resized opens at that width in the strip next time", "改過寬度的 App，下次開在卷軸裡還是那個寬度"], "走到一列时": ["走到一列时", "When you reach a column", "走到一列時", "贴边：挪得最少。居中：永远在正中", "Keep near: least moving. Center: always in the middle", "貼邊：挪得最少。置中：永遠在正中"], "不留": ["不留", "None", "不留", "", "", ""], "预览对象": ["预览对象", "Preview target", "預覽物件", "看看桌面或单个窗口的效果。", "Try it on the desktop or a window", "看看桌面或單個視窗的效果。"], "预览样式": ["预览样式", "Preview style", "預覽樣式", "选择效果的观感。", "Choose how the effect looks", "選擇效果的觀感。"], "预览进度": ["预览进度", "Preview position", "預覽進度", "", "", ""], "一直用 Mac": ["一直用 Mac", "Always Mac", "一直用 Mac", "", "", ""], "Dock 留在现在这块屏上": ["Dock 留在现在这块屏上", "Keep the Dock on this screen", "Dock 留在現在這塊螢幕上", "指针碰到别的屏的底边时 Dock 不跟过去（只管放在底部的 Dock）；打开时记下 Dock 现在在哪", "The Dock stays put", "指標碰到別的螢幕的底邊時 Dock 不跟過去（只管放在底部的 Dock）；開啟時記下 Dock 現在在哪"], "收起窗口时的动画": ["收起窗口时的动画", "Rolling-up animation", "收起視窗時的動畫", "收起或展开窗口时播放动画。", "Plays as windows roll and unroll", "收起或展開視窗時播放動畫。"], "刘海": ["刘海", "Notch", "瀏海", "", "", ""], "在 Dock 图标上两指上下滑": ["在 Dock 图标上两指上下滑", "Two-finger swipe on a Dock icon", "在 Dock 圖示上兩指上下滑", "往上滑看这个 App 的所有窗口，往下滑让开这个 App", "Up for windows, down to hide", "往上滑看這個 App 的所有視窗，往下滑讓開這個 App"], "往左 / 往右滑": ["往左 / 往右滑", "Swipe left / right", "往左 / 往右滑", "", "", ""], "贴边": ["贴边", "Keep near", "貼邊", "", "", ""], "左半屏 / 右半屏，再推一下沿梯子走一格": ["左半屏 / 右半屏，再推一下沿梯子走一格", "Left half / right half; push again to step along the ladder", "左半螢幕 / 右半螢幕，再推一下沿梯子走一格", "", "", ""], "展开窗口": ["展开窗口", "Unrolls the window", "展開視窗", "", "", ""], "拖 · 窗口 → 另一扇窗口": ["拖 · 窗口 → 另一扇窗口", "Drag · Window → Another window", "拖 · 視窗 → 另一扇視窗", "", "", ""], "拖 · 卷轴里的标题栏": ["拖 · 卷轴里的标题栏", "Drag · Title bar in the strip", "拖 · 卷軸裡的標題列", "", "", ""], "两指 · Dock 图标 · 上滑 / 下滑": ["两指 · Dock 图标 · 上滑 / 下滑", "Two fingers · Dock icon · Swipe up / down", "兩指 · Dock 圖示 · 上滑 / 下滑", "", "", ""], "排布": ["排布", "Arranging", "排布", "", "", ""], "甩一下标题栏 → 刘海": ["甩一下标题栏 → 刘海", "Flick the title bar → Notch", "甩一下標題列 → 瀏海", "", "", ""], "两指 · 标题栏 · 滑动 / 张合 / 滚轮": ["两指 · 标题栏 · 滑动 / 张合 / 滚轮", "Two fingers · Title bar · Swipe / Pinch / Scroll", "兩指 · 標題列 · 滑動 / 張合 / 滾輪", "", "", ""], "收起与展开": ["收起与展开", "Rolling Up & Unrolling", "收起與展開", "", "", ""], "双击 · 标题栏": ["双击 · 标题栏", "Double-click · Title bar", "按兩下 · 標題列", "", "", ""], "收起窗口；已铺满的窗口先撤销上次排布": ["收起窗口；已铺满的窗口先撤销上次排布", "Rolls up the window; a filled window first undoes the last arrangement", "收起視窗；已鋪滿的視窗先還原上次排布", "", "", ""], "拖 · 卷轴概览 → 刘海": ["拖 · 卷轴概览 → 刘海", "Drag · Strip overview → Notch", "拖 · 卷軸概覽 → 瀏海", "", "", ""], "铺满屏幕": ["铺满屏幕", "Fill the screen", "鋪滿螢幕", "", "", ""]};
+  function rl(zh,which){ // which: 0 名字 1 副标题
+    if(!ROWL10N) return which?"":zh;
+    if(!which && ROWL10N[zh] && zh.indexOf(" · ")>0){ var w=ROWL10N[zh]; return L?(w[L]||zh):zh; }
+    var parts=zh.split(" · "), out=[];
+    parts.forEach(function(p){ var v=ROWL10N[p]; if(!v){ out.push(which?"":tl(p)); return; } out.push(which? (v[3+L]||"") : (L?v[L]:p)); });
+    out=out.filter(Boolean); return which?(out[0]||""):out.join(" · ");
+  }
+  TL={"静图":["Still","靜圖"],"页默认":["Page default","頁預設"],"减少动态效果":["Reduce Motion","減少動態效果"],"旁人靠近":["Someone nearby","旁人靠近"],"读到的都列在这里":["What WindowShade reads","讀到的都列在這裡"],"窗口标题变了": ["Window title changed", "視窗標題變了"], "构建完成": ["Build finished", "建置完成"], "“构建日志”那扇窗口": ["The “Build Log” window", "「建置記錄」那個視窗"], "iPhone 在身边": ["iPhone is nearby", "iPhone 在身邊"], "iPhone 走远了": ["iPhone walked away", "iPhone 走遠了"], "10 秒后锁屏": ["Locking in 10 s", "10 秒後鎖定"], "已锁定": ["Locked", "已鎖定"], "回来了": ["Back", "回來了"], "窗口之间留缝 · 不留": ["Window gaps · None", "視窗間距 · 不留"], "窗口之间留缝 · 窄": ["Window gaps · Narrow", "視窗間距 · 窄"], "窗口之间留缝 · 宽": ["Window gaps · Wide", "視窗間距 · 寬"], "私人窗口：1Password": ["Private windows: 1Password", "私人視窗：1Password"], "简体中文 · English · 繁體中文": ["简体中文 · English · 繁體中文", "简体中文 · English · 繁體中文"], "合上盖子，再打开": ["Close the lid, then open it", "闔上蓋子，再打開"], "锁屏时合上盖子": ["Close the lid while locked", "鎖定時闔上蓋子"], "锁屏": ["Lock Screen", "鎖定畫面"], "暂停": ["Pause", "暫停"], "贴边": ["Edge", "貼邊"], "居中": ["Center", "置中"], "iPhone 的画面": ["iPhone screen", "iPhone 的畫面"], "放一首歌": ["Play a song", "放一首歌"], "♪ 晴天": ["♪ Sunny Day", "♪ 晴天"], "两边：封面和波形": ["Cover art and waveform", "兩邊：封面和波形"], "换下一首": ["Next track", "換下一首"], "♪ 七里香": ["♪ Common Jasmine", "♪ 七里香"], "封面换成新的": ["New cover art", "封面換成新的"], "Safari 开始下载": ["Safari starts a download", "Safari 開始下載"], "下载 48%": ["Downloading 48%", "下載 48%"], "指针停在刘海上": ["Pointer rests on the notch", "指標停在瀏海上"], "2 扇窗口 · 1 项下载": ["2 windows · 1 download", "2 個視窗 · 1 項下載"], "排在同一排": ["In one row", "排在同一排"], "停一下才展开": ["Opens only when you pause", "停一下才展開"], "两指点按": ["Two-finger click", "兩指點按"], "一直用 Mac": ["Always Mac", "一直用 Mac"], "菜单栏图标": ["Menu bar icon", "選單列圖示"], "关": ["Off", "關"], "辅助功能 · 已授权": ["Accessibility · Granted", "輔助使用 · 已授權"], "屏幕录制 · 已授权": ["Screen Recording · Granted", "螢幕錄製 · 已授權"], "登录这台 Mac": ["Log in to this Mac", "登入這台 Mac"], "导出诊断信息…": ["Export Diagnostics…", "輸出診斷資訊…"], "文件夹在这台 Mac 上 · 不会自动发出": ["A folder on this Mac · never sent", "檔案夾在這台 Mac 上 · 不會自動送出"], "音乐的节拍": ["The music’s beat", "音樂的節拍"], "锁屏 → 解锁": ["Lock → unlock", "鎖定 → 解鎖"], "离开期间": ["While you were away", "離開期間"], "2 扇窗口有变化": ["2 windows changed", "2 個視窗有變化"], "在访达里拷文件": ["Copy files in Finder", "在 Finder 裡拷貝檔案"], "拷贝 3 / 10": ["Copying 3 of 10", "拷貝 3 / 10"], "照片 → 移动硬盘": ["Photos → external drive", "照片 → 外接硬碟"], "你之前常用 Windows？": ["Coming from Windows?", "你之前常用 Windows？"], "点一下刘海回答": ["Click the notch to answer", "點一下瀏海回答"], "撤销 左半屏": ["Undo Left Half", "撤銷 左半螢幕"], "两指捏合": ["Pinch with two fingers", "兩指捏合"], "AirPods 连上": ["AirPods connect", "AirPods 連上"], "AirPods 已连接": ["AirPods connected", "AirPods 已連接"], "电量 82%": ["Battery 82%", "電量 82%"], "照行文案画（待定）": ["Per row copy (TBD)", "照行文案畫（待定）"], "report.pdf": ["report.pdf", "report.pdf"]};
+  function tl(z){ if(!z||!L) return z; var v=TL[z]; return v?v[L-1]:z; }
+  // 小样
+  var xH=makeHero(document.getElementById("xhero"),{scale:1}), xP=PAGES[0], xSel=null;
+  function xSpec(r,opt){ var id=opt||r.optSel||r.h; if(r.offH && r.offOn===false) id=r.offH; return id?HEROES[id]:null; }
+  function isOn(r){ return (r.offOn!==undefined)?r.offOn:!r.off; }
+  function xIdle(){ if(xSel){ xPlayRow(xSel); return; } xH.setOff(false); if(!xP.played){ xP.played=1; xH.play(HEROES[xP.def],2); } else xH.rest(HEROES[xP.def]); }
+  function xPlayRow(r,opt){
+    var spec=xSpec(r,opt);
+    if(r.k==="P"||!spec){ xH.setOff(false); xH.rest(HEROES[xP.def]); return; }
+    xH.setOff(!!r.toggle && !isOn(r) && !r.offH);
+    if(!spec.frames.length||spec.forceStill){ xH.show(spec, !!spec.forceStill); return; }
+    xH.play(spec,6);
+  }
+  function xRender(){
+    var pn=function(p,side){ return p.id==="lab" ? (side? rl("实验") : rl("高级")+" → "+rl("实验")) : rl(p.name); };
+    document.getElementById("xtitle").textContent=pn(xP);
+    var side=document.getElementById("xside"); side.innerHTML="";
+    PAGES.forEach(function(p){ var b=document.createElement("button"); b.setAttribute("role","tab"); b.textContent=pn(p,1); b.setAttribute("aria-selected",p===xP?"true":"false");
+      if(p.id==="lab") b.style.paddingLeft="22px";
+      b.addEventListener("click",function(){ xP=p; xSel=null; xRender(); xIdle(); }); side.appendChild(b); });
+    var box=document.getElementById("xrows"); box.innerHTML="";
+    xP.rows.forEach(function(r){
+      var row=document.createElement("div"); row.className="srow"+(xSel===r?" sel":""); row.tabIndex=0;
+      row.innerHTML='<span class="ic" aria-hidden="true"></span><span class="tx"><b></b><small></small></span><span class="xk"></span><span class="xopts"></span>';
+      row.querySelector("b").textContent=rl(r.n); var sub=rl(r.n,1); row.querySelector("small").textContent=sub||(L?"":r.right);
+      row.querySelector(".xk").textContent=tl({L:"",S:"静图",P:"页默认"}[r.k]); if(r.k==="L") row.querySelector(".xk").remove();
+      if(r.opts){ var seg=row.querySelector(".xopts"); seg.className="xopts seg";
+        r.opts.forEach(function(o,i){ var ob=document.createElement("button"); ob.textContent=rl(o[0]); ob.setAttribute("aria-pressed",((r.optSel||r.h)===o[1])?"true":"false");
+          ob.addEventListener("mouseenter",function(){ xPlayRow(r,o[1]); });
+          ob.addEventListener("mouseleave",function(){ xPlayRow(r); });
+          ob.addEventListener("click",function(e){ e.stopPropagation(); r.optSel=o[1]; seg.querySelectorAll("button").forEach(function(x){ x.setAttribute("aria-pressed",x===ob?"true":"false"); }); xPlayRow(r); });
+          seg.appendChild(ob); }); } else row.querySelector(".xopts").remove();
+      if(r.toggle){ var sw=document.createElement("button"); sw.className="sw"; sw.setAttribute("role","switch"); sw.setAttribute("aria-checked",isOn(r)?"true":"false"); sw.setAttribute("aria-label",rl(r.n));
+        sw.addEventListener("click",function(e){ e.stopPropagation(); r.offOn=!isOn(r); sw.setAttribute("aria-checked",isOn(r)?"true":"false"); xPlayRow(r); }); row.appendChild(sw); }
+      function hot(){ xPlayRow(r); }
+      row.addEventListener("mouseenter",hot); row.addEventListener("focus",hot); row.addEventListener("mouseleave",xIdle); row.addEventListener("blur",xIdle);
+      row.addEventListener("click",function(){ xSel=(xSel===r)?null:r; box.querySelectorAll(".srow").forEach(function(x){ x.classList.toggle("sel",x===row&&xSel===r); }); xIdle(); });
+      box.appendChild(row);
+    });
+  }
+  xRender(); xIdle(); renderRows();
+  // 逐页表
+  var xt=document.getElementById("xtables");
+  PAGES.forEach(function(p){
+    var w=document.createElement("div"); w.className="sheet";
+    var h=document.createElement("h3"); h.textContent=(p.id==="lab"?"高级 → 实验":p.name)+"　页默认："+(HEROES[p.def].name); w.appendChild(h);
+    var sc=document.createElement("div"); sc.className="scroll"; var tb=document.createElement("table");
+    tb.innerHTML="<thead><tr><th>行</th><th>类型</th><th>左块</th><th>右块</th><th>关键帧</th><th class='num'>一轮</th></tr></thead><tbody></tbody>";
+    p.rows.forEach(function(r){ var tr=document.createElement("tr");
+      var sp=r.h&&HEROES[r.h], dur=(sp&&sp.frames.length&&!sp.forceStill)?frameTimes(sp).total.toFixed(1)+" s":"—";
+      var kind={L:"循环",S:"静图",P:"页默认"}[r.k]+(r.opts?" · 按选项换（"+r.opts.map(function(o){return o[0];}).join(" / ")+"）":"")+(r.toggle?" · 关着降灰":"");
+      [r.n,kind,r.left,r.right,r.key,dur].forEach(function(c,i){ var td=document.createElement("td"); td.textContent=c; if(i===5) td.className="num"; tr.appendChild(td); });
+      tb.querySelector("tbody").appendChild(tr); });
+    sc.appendChild(tb); w.appendChild(sc); xt.appendChild(w);
+  });
+
+  // ——— 画板等比缩放 ———
+  function fit(){ document.querySelectorAll(".fit").forEach(function(f){ var box=f.querySelector(".fit-box"); var w=parseFloat(box.style.getPropertyValue("--w"));
+    var s=Math.min(1,f.clientWidth/w); box.style.setProperty("--s",s.toFixed(4)); }); }
+  try{ new ResizeObserver(fit).observe(document.body); }catch(e){ window.addEventListener("resize",fit); }
+  fit(); applyLang();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{
+  "checkpoint": "eighth-design-checkpoint",
+  "goal": "active; original seven lines and common five-state/multi-screen/motion scope retained",
+  "status": "residual_risk",
+  "sources": {
+    "prototype/App/FileShelfView.swift": "31de9b973db078662f01bd1ff605373d591a4179ed67d47be3dc67e48d755bc8",
+    "prototype/Core/NotchRow.swift": "0566e2ec1078a9fe3aafd8e1339ff67fba8ed4cbfeafd95e4e7d7c045cdb455d",
+    "prototype/App/FileShelfStore.swift": "3c37c06f3e209f6c5d44499d640e466843dbb7330ba8d1125c945c8338baad5a",
+    "tools/design-qa/FileShelfStatePreview.swift": "5ec5ebda4f1398cd362eab845591ca275fd05833d3de83cee3d9d740235a4dbb",
+    "tools/design-qa/check-fileshelf-state-preview.py": "eae65e0943c362f55548cab7a6492c699fed53ba1ea8487ce13548b05ebbfde5",
+    "tools/design-qa/FileNameChecks.swift": "25ddb89f3fb8a7d1e1b029a9f378e68123acdcc90c18b26fa1d9e87abb38aeb6",
+    "tools/design-qa/run-file-name-checks.py": "9aed5bd69e2249ad07c20ab872a55375f797eeb18aaf63b23d6bfc224deac1fc",
+    "tools/design-qa/render-native-surfaces.sh": "2982efdd60574b0c0cb1f5de9e35a398e81c028c2bab5d3d8a7b47416c3406b0",
+    "prototype/build.sh": "08ef94b8cf60a5f09b06874d898c81e92c2a757b47c0a54965ab0b33d17111e7"
+  },
+  "evidence": {
+    "FileNameChecks.swift": "25ddb89f3fb8a7d1e1b029a9f378e68123acdcc90c18b26fa1d9e87abb38aeb6",
+    "FileShelfStatePreview.swift": "5ec5ebda4f1398cd362eab845591ca275fd05833d3de83cee3d9d740235a4dbb",
+    "FileShelfView.swift": "31de9b973db078662f01bd1ff605373d591a4179ed67d47be3dc67e48d755bc8",
+    "README.md": "b75d39c2ac9af5b4e69585e09bc12ffb552c3e47a8619817dd281fd366cc5725",
+    "accepted-check.json": "ca79f54a868b4a648d0f48677f624c6f0a9e207e980c11fa0b7266d4f1ba1d32",
+    "accepted-check.log": "23ce39d313d7dc8bfa2aea69f3585aa255303bd1a4d2330bc7537abf7a6db92c",
+    "after/cleanup.json": "ac4cca113338f2a550d41c68468063c380e52d73da2dcc697624088ee96fc3a8",
+    "after/dark-action-check.json": "3cf84fb7526a8514d81c830e8203f864a2450cf5d31687796cf65a0d3daff6bb",
+    "after/dark-cleared.png": "0836ab74ed0635ee4d826c0d91976944f8c76d84ca38dd3564036ce5316ad5a4",
+    "after/dark-empty.png": "da231086aae8881cab4554a08c7b995ce6540aca16b7edb68c384f9825836115",
+    "after/dark-long-name.png": "69e097eefc83c6dec1a48f0fb2ce197280636bee63a7cdfc5f167198afe4070e",
+    "after/dark-many.png": "b7ee7847a1be0557c914d4b9fec321f406850b11264236865a84da9f1d34cf34",
+    "after/dark-missing.png": "ce24e620fa0ac57a638676b5bded618b49a0251cc83288f55410910658d2454b",
+    "after/dark-one.png": "8704ac9aba1737e2e6b039d73e78deb55adddc94a76b065c4b44cfddca044da7",
+    "after/dark-restored.png": "8704ac9aba1737e2e6b039d73e78deb55adddc94a76b065c4b44cfddca044da7",
+    "after/dark-unicode-name.png": "fad26e09bc4f9c22e007bb7fe0b413481812f769bf65c2a056fcf94650c50567",
+    "after/dark-wide-name.png": "4031fc30f12cd4e6e3f02b4ffea687cc4e89223c69105ea0fe92e1581e9a24cd",
+    "after/frames.json": "c0b8fd0a08f94af0d71e467b03d65e93e067b62c8e247747fce1eac62ad0cfb4",
+    "after/light-action-check.json": "3cf84fb7526a8514d81c830e8203f864a2450cf5d31687796cf65a0d3daff6bb",
+    "after/light-cleared.png": "0836ab74ed0635ee4d826c0d91976944f8c76d84ca38dd3564036ce5316ad5a4",
+    "after/light-empty.png": "da231086aae8881cab4554a08c7b995ce6540aca16b7edb68c384f9825836115",
+    "after/light-long-name.png": "69e097eefc83c6dec1a48f0fb2ce197280636bee63a7cdfc5f167198afe4070e",
+    "after/light-many.png": "b7ee7847a1be0557c914d4b9fec321f406850b11264236865a84da9f1d34cf34",
+    "after/light-missing.png": "ce24e620fa0ac57a638676b5bded618b49a0251cc83288f55410910658d2454b",
+    "after/light-one.png": "8704ac9aba1737e2e6b039d73e78deb55adddc94a76b065c4b44cfddca044da7",
+    "after/light-restored.png": "8704ac9aba1737e2e6b039d73e78deb55adddc94a76b065c4b44cfddca044da7",
+    "after/light-unicode-name.png": "fad26e09bc4f9c22e007bb7fe0b413481812f769bf65c2a056fcf94650c50567",
+    "after/light-wide-name.png": "4031fc30f12cd4e6e3f02b4ffea687cc4e89223c69105ea0fe92e1581e9a24cd",
+    "after/native-exit.json": "f8aca9b9090ff4c7837bade4b700ca1e13085b8ef966bf131ed4fd6a18e00ab1",
+    "after/native.log": "5e1e66d2670e75fd31d50b3e97d54c351ce2c6c0538e3ea0eeb7f394ac203dfc",
+    "after/renderer.json": "d0737ed6cc521bccaa03e09162cc2bf4e1cb3f83ce3242b7fc7d50c2cb5e7203",
+    "after/sources.json": "cbd85e60c0be0466a9ba7fcc4dcf2b9dbfdf42442cf46889285c97c3659b803a",
+    "before/light-long-name.png": "18895e8c9466353450b10c0276e54f824e79d24a96e90c240dbe9c32c11567d1",
+    "before/source-identity.json": "34cbfc40ae23d0dbd60e22b39f2b1af51241f6a7f6bf859e8840c8320299ad59",
+    "before-FileShelfView.swift": "38424356ef293a8f24a0807309c3035b93cf9d92725c5e48fdbb486fdaa650bb",
+    "build-check.log": "f0b114994799fbb29de9829205dba8c121260f91855d96b54fa0769d14898370",
+    "build-exit.json": "9637e3113f3f900522c2ec34cc4f44385420261c5f883cbfed6d8934952648cf",
+    "build-inputs.json": "78db2359cdfd768ef09bce3e739e43ac61cd5b72694bf02736593ff31f90e02e",
+    "check-fileshelf-state-preview.py": "eae65e0943c362f55548cab7a6492c699fed53ba1ea8487ce13548b05ebbfde5",
+    "font-check/compiled-check-source.swift": "e9400963864073ebfa523e63ada8fc2325c68800fab6b97c51a8aa205b8e741c",
+    "font-check/name-checks-exit.json": "47b1e1036e498ea9d3f37a14b2248b4470498c1f4a609dfc3d4ca9c7bdb33cc9",
+    "font-check/name-checks.json": "85ddae228d35784ef7553daa7770244081f09b5d0028df7f903bd704531715b1",
+    "run-file-name-checks.py": "9aed5bd69e2249ad07c20ab872a55375f797eeb18aaf63b23d6bfc224deac1fc",
+    "worker-original-sha.json": "368becb8edde54ef671d93e8ffbbde414eb61e468b4b32a76e32f7b99a0b68d5",
+    "worker-original.swift": "6200e8582d66484726b76a75505cac1bb55f42c545e8e160efe09878f831e5d6",
+    "worker-receipt.json": "6dbceedefd93003874bfa649190bd486246b3dd08dcdfca764e4c1ca24b7d101"
+  },
+  "checks": [
+    {
+      "command": "FileShelfStatePreview + check-fileshelf-state-preview.py",
+      "exit_code": 0,
+      "result": "18 production frames;9 identical parent pairs; actual nameLines widths/extensions/status;2 actual remove/undo/stale/revoke reports;own temp/domain cleanup",
+      "receipt": "after/native-exit.json"
+    },
+    {
+      "command": "run-file-name-checks.py",
+      "exit_code": 0,
+      "result": "16 real AppKit font cases;exact production helper extracted;Swift6 strict compile",
+      "receipt": "font-check/name-checks-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "optimized519 current inputs;gates passed;flags retained",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "identity": {
+    "formal_inputs": 519,
+    "native_inputs": 518,
+    "all_match": true
+  },
+  "worker": "parse0 scaffold rejected;original preserved;main rewrote before native execution",
+  "remaining": "real FileShelf thumbnails/open/share/drop/keyboard/VoiceOver/private-sharing state/motion;media artwork/more than5 routes/real playback/output;owned login/errors/long model/live scrolling;original remaining surfaces,real notch/multiscreen/signed Swift6 actor isolation"
+}

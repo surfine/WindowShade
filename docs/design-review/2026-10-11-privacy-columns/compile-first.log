@@ -1,0 +1,7 @@
+tools/design-qa/PrivacyDetailColumnDraftPreview.swift:67:65: error: value of type 'NSColor' has no member 'resolvedColor'
+65 |                             var fields=[[String:Any]]()
+66 |                             for field in view.fields {
+67 |                                 let color=field.view.textColor!.resolvedColor(with:field.view.effectiveAppearance).usingColorSpace(.sRGB)!
+   |                                                                 `- error: value of type 'NSColor' has no member 'resolvedColor'
+68 |                                 fields.append(["key":field.key,"role":field.role,"text":field.view.stringValue,"tooltip":field.view.toolTip ?? "","frame":box(field.view.convert(field.view.bounds,to:view)),"font":field.view.font!.pointSize,"wraps":field.view.cell?.wraps ?? false,"maxLines":field.view.maximumNumberOfLines,"editable":field.view.isEditable,"selectable":field.view.isSelectable,"color":[color.redComponent,color.greenComponent,color.blueComponent,color.alphaComponent]])
+69 |                             }

@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>一颗岛</title>
+<style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --ok:#0e6436; --play:#28cd41; --tone:#007aff;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --ok:#4cc38a; --play:#32d74b; --tone:#0a84ff;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --ok:#4cc38a; --play:#32d74b; --tone:#0a84ff;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:980px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+.lede{color:var(--muted);max-width:72ch;margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
+button{font:inherit;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+.sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.stage{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);cursor:pointer}
+.menu{position:absolute;inset:0 0 auto;height:34px;display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--menu);pointer-events:none}
+.sensor{position:absolute;left:50%;top:0;width:185px;height:33.5px;transform:translateX(-50%);background:#000;border-radius:0 0 10.7px 10.7px;z-index:2;pointer-events:none}
+.island{position:absolute;left:50%;top:0;background:#000;color:#fff;overflow:hidden;transform:translateX(-50%);z-index:3;pointer-events:none;border-radius:0 0 10.7px 10.7px;--e:32px}
+.shd{position:absolute;top:0;width:7.74px;height:5.06px;z-index:3;pointer-events:none;background:radial-gradient(ellipse 7.74px 5.06px at 0 100%,transparent 97%,#000 100%)}
+.shd.r{background:radial-gradient(ellipse 7.74px 5.06px at 100% 100%,transparent 97%,#000 100%)}
+.ear{position:absolute;top:0;height:33.5px;width:var(--e);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;white-space:nowrap;transition:opacity .01s linear}
+.ear.l{right:calc(50% + 92.5px)}
+.ear.r{left:calc(50% + 92.5px)}
+.ear b{font-weight:600}
+.cover{width:24px;height:24px;border-radius:6px;background:linear-gradient(160deg,#ff9f0a,#ff453a);display:flex;align-items:center;justify-content:center}
+.wave{display:flex;gap:3px;align-items:center;height:16px}
+.wave i{display:block;width:3px;height:100%;border-radius:2px;background:#fff;animation:wv 1.1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:-.3s}.wave i:nth-child(3){animation-delay:-.6s}.wave i:nth-child(4){animation-delay:-.15s}
+@keyframes wv{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+.rm .wave i{animation:none;transform:scaleY(.6)}
+.vbar{display:block;width:54px;height:6px;border-radius:3px;background:rgba(255,255,255,.25);overflow:hidden}
+.vbar>i{display:block;height:100%;width:40%;background:#fff;border-radius:3px}
+.peninsula{display:none;position:absolute;left:0;right:0;top:33.5px;flex-direction:column;padding:4px 18px 12px;gap:8px;box-sizing:border-box}
+.peninsula.on{display:flex}
+.who{font-size:13px;font-weight:600;letter-spacing:-.01em;line-height:20px;opacity:0}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:12px;opacity:0}
+.progress{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+.progress>i{display:block;height:100%;width:40%;background:var(--play);border-radius:2px}
+.num{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;min-width:2.5ch;text-align:right}
+.ctrls{display:none;gap:18px;justify-content:center;opacity:0;font-size:15px}
+.ctrls.on{display:flex}
+.ctrls span{opacity:.85}
+.alertc{display:none;position:absolute;left:0;right:0;top:33.5px;padding:2px 18px 0;text-align:center;opacity:0}
+.alertc.on{display:block}
+.alertc .at{font-size:13px;font-weight:600;line-height:20px}
+.alertc .as{font-size:12px;line-height:16px;color:rgba(255,255,255,.6)}
+.splitdot{position:absolute;top:0;width:33.5px;height:33.5px;border-radius:50%;background:#000;color:#fff;display:flex;align-items:center;justify-content:center;opacity:0;z-index:3;pointer-events:none}
+.splitdot svg{position:absolute;inset:0}
+.rm .ear,.rm .who,.rm .meta,.rm .ctrls,.rm .alertc,.rm .splitdot{transition:opacity .18s ease}
+.rm .off{transition-duration:.10s}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card h2{font-size:13px;margin:0 0 6px}
+.card p{margin:0;color:var(--muted);font-size:14px}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.note{margin-top:10px;font-size:13px;color:var(--faint)}
+.hint{margin-top:8px;font-size:12px;color:var(--faint)}
+</style>
+</head>
+<body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 5 张 · 一颗岛</span><span class="ws-st">按 WS2 设计系统修订 · 11-06</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6">← 安静的刘海 动效样片</a><a href="https://claude.ai/artifact/XThUaQsegtCM4Yyj3wT3AR">照系统的岛 →</a></nav>
+
+<div class="wrap">
+  <h1>一颗岛</h1>
+  <p class="lede">对 Alcove 与 WWDC23 10194 / HIG Live Activities 的那一张画面。贴硬件的是<strong>岛</strong>（紧凑两耳、最小圆）；往下鼓出的是<strong>半岛</strong>（展开）——「半岛」只是设计别名，界面仍叫展开、刘海那一排。弹簧只用已有令牌；不画假刘海；界面不叫灵动岛。内容贴传感器、无空白额头；紧凑与半岛相对位置连续。尺寸照系统值：刘海 185 × 33.5（底角 10.7），耳高 = 刘海高、宽按内容，大卡底角 28，宽过刘海的形状都画肩；点耳朵开 App、点刘海回主屏幕、长按 0.5 秒展开，指针停上去不展开。</p>
+  <div class="row" role="group" aria-label="看哪一段">
+    <button type="button" data-scene="ears" aria-pressed="true">紧凑两耳</button>
+    <button type="button" data-scene="peninsula">半岛展开</button>
+    <button type="button" data-scene="minimal">最小圆</button>
+    <button type="button" data-scene="alert">提醒再回去</button>
+    <button type="button" data-scene="replace">内容替换</button>
+    <button type="button" data-scene="numeric">数字过渡</button>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+  </div>
+  <div class="stage" id="stage" role="button" tabindex="0" aria-label="点、按住或用空格操作本段交互">
+    <div class="menu">音乐</div>
+    <div class="sensor" aria-hidden="true"></div>
+    <div class="shd" id="shL" aria-hidden="true"></div><div class="shd r" id="shR" aria-hidden="true"></div>
+    <div class="island" id="island">
+      <div class="ear l" id="lead"></div>
+      <div class="ear r" id="trail"></div>
+      <div class="peninsula" id="peninsula">
+        <div class="who" id="who">September</div>
+        <div class="meta">
+          <div class="progress"><i id="bar"></i></div>
+          <span class="num" id="pct">40%</span>
+        </div>
+        <div class="ctrls" id="ctrls"><span>⏮</span><span>⏸</span><span>⏭</span></div>
+      </div>
+      <div class="alertc" id="alertc"><div class="at">妙控鼠标已连接</div><div class="as">电量 82%</div></div>
+    </div>
+    <div class="splitdot" id="splitdot" aria-hidden="true"><svg viewBox="0 0 33.5 33.5"><circle cx="16.75" cy="16.75" r="14" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="2"/><circle cx="16.75" cy="16.75" r="14" fill="none" stroke="var(--play)" stroke-width="2" stroke-linecap="round" pathLength="100" stroke-dasharray="40 100" transform="rotate(-90 16.75 16.75)"/></svg><svg width="16" height="16" viewBox="0 0 24 24" style="position:static" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/></g></svg></div>
+  </div>
+  <div class="card">
+    <h2 id="title">紧凑就是活动本身</h2>
+    <p id="copy">左耳是封面，右耳是波形。内容贴着传感器区，尽量窄。长按刘海 0.5 秒沿 expand 长成半岛；再点沿 calm 收回。第二件事只留一颗带信息的最小圆。</p>
+    <p class="note">这一下的弹簧：<span class="token" id="token">expand</span></p>
+    <p class="hint" id="hint">点耳朵、点刘海，或按住刘海 0.5 秒。</p>
+  </div>
+</div>
+<script>
+// 尺寸都是 pt，1 pt 画 1 px；舞台模拟本机 Air 15″ 的 1710 模式：刘海 185 × 33.5，底角 10.7，菜单栏 34
+const NOTCH_W = 185, NOTCH_H = 33.5, R_HW = 10.7, SH_W = 7.74, GAP_SPLIT = 6;
+const EAR = { music: 32, download: 37, volume: 54 }; // 耳宽（主体）按内容，两耳等宽；主体上限 44.59，加肩 7.74 每耳 52.33（音量、亮度是例外：主体 54，连肩 61.74，不超过 62.33）
+const tokens = {
+  calm: { response: 0.34, zeta: 1 },
+  expand: { response: 0.40, zeta: 0.92 },
+  bloom: { response: 0.42, zeta: 0.84 },
+  pop: { response: 0.30, zeta: 0.75 },
+  reduced: { response: 0.25, zeta: 1 }
+};
+const stage = document.getElementById('stage');
+const island = document.getElementById('island');
+const peninsula = document.getElementById('peninsula');
+const lead = document.getElementById('lead');
+const trail = document.getElementById('trail');
+const who = document.getElementById('who');
+const pct = document.getElementById('pct');
+const bar = document.getElementById('bar');
+const ctrls = document.getElementById('ctrls');
+const alertc = document.getElementById('alertc');
+const splitdot = document.getElementById('splitdot');
+const shL = document.getElementById('shL');
+const shR = document.getElementById('shR');
+const title = document.getElementById('title');
+const copy = document.getElementById('copy');
+const tokenEl = document.getElementById('token');
+const hint = document.getElementById('hint');
+const reducedBox = document.getElementById('reduced');
+
+let scene = 'ears';
+let open = false;
+let splitOn = false;
+let level = 0.4;
+let levelHold = 0;
+let alertT = 0;
+let track = 0;
+let replaceFlash = 0;
+let contentIn = 0;
+let shape = { w: NOTCH_W + 2 * EAR.music, h: NOTCH_H, e: EAR.music, wv: 0, hv: 0, ev: 0 };
+let sp = { x: 0, v: 0 };
+let last = performance.now();
+
+const activities = [
+  { kind: 'music', title: 'September', artist: 'Earth, Wind & Fire', progress: 0.4 },
+  { kind: 'download', title: 'report.zip', artist: '下载', progress: 0.4 }
+];
+
+const scenes = {
+  ears: {
+    title: '紧凑就是活动本身',
+    copy: '左耳是封面，右耳是真实波形（没权限就画静止的取色点），进度只在大卡里。耳高 = 刘海高 33.5，宽按内容，两耳紧贴刘海，外上角画肩。点耳朵打开音乐，点刘海本体回到主屏幕；长按 0.5 秒沿 expand 长成大卡，指针停上去不展开；再点沿 calm 收回。',
+    token: 'expand',
+    hint: '点耳朵、点刘海，或按住刘海 0.5 秒（键盘：Return 同点，空格同长按）。'
+  },
+  peninsula: {
+    title: '半岛：展开往下鼓',
+    copy: '从紧凑长成下鼓：封面和波形仍在原处，不搬家，往下多出曲名、进度和控件。顶边贴住刘海，没有空白额头；刘海下方的内容高是 72 或 118，总高再加刘海 33.5，宽按内容（这里示意 300 / 360），底角 28，两侧画肩。大卡不受 160 限制；展开那一排（408 × 160）里的格子，指针停 0.12 秒才看一眼。',
+    token: 'expand',
+    hint: '点舞台收回；收回后按住刘海 0.5 秒再展开。'
+  },
+  minimal: {
+    title: '最小圆：分开 / 合并',
+    copy: '多个持续活动时，第二件从右耳外分出一颗小圆（bloom）：直径 = 耳高，离右耳 6，不是空 logo，里面是真实进度的弧。点小圆打开它的 App；再点把它合并回去（calm）。读屏仍念正在进行的那一件。',
+    token: 'bloom',
+    hint: '点舞台分开 / 合并小圆。'
+  },
+  alert: {
+    title: '提醒变半岛，再回媒体',
+    copy: '配件连上：bloom 把岛长成 408 × 84、底角 24 的提醒，耳朵里的封面和波形不动，停 alert.hold（2.6 秒）后收回，回到原来的媒体紧凑，不洗曲目。不另开浮窗。',
+    token: 'bloom',
+    hint: '点舞台触发一次提醒；等它自己回去，或再点打断。'
+  },
+  replace: {
+    title: '内容替换，形状不重置',
+    copy: '换一件活动（音乐 → 下载）时，耳里的符号和字做 content replace（淡化换位），耳宽按新内容变，岛的外框继续 morph，不整岛重启、不清空状态。下载这种有数字的事才把百分比放进右耳。',
+    token: 'calm',
+    hint: '点舞台切到下一件活动。'
+  },
+  numeric: {
+    title: '数字过渡',
+    copy: '音量连按：两耳各 62.33、不往下鼓；左耳符号随电平换，右耳 54 × 6 白条，不写数；最后一下 1.2 秒后沿 calm 收回。减少动态效果时只交叉淡化。看的是按键，不是数值：按了才开口，到顶、到底也开口（借 Atoll / Alcove）；个性化音量、App 自己改了音量不开口；锁屏时让系统自己的提示显示。系统按键这一路要先做隐私登记。',
+    token: 'pop',
+    hint: '按 ↑ / ↓ 调音量。'
+  }
+};
+
+function springTo(current, velocity, target, name, dt) {
+  const token = reducedBox.checked ? tokens.reduced : tokens[name];
+  const k = Math.pow(2 * Math.PI / token.response, 2);
+  const c = 4 * Math.PI * token.zeta / token.response;
+  const force = -k * (current - target) - c * velocity;
+  velocity += force * dt;
+  current += velocity * dt;
+  return [current, velocity];
+}
+
+function currentActivity() {
+  return activities[track % activities.length];
+}
+
+function kindNow() {
+  if (scene === 'numeric' && levelHold > 0) return 'volume';
+  if (scene === 'replace') return currentActivity().kind;
+  return 'music';
+}
+
+function speaker(l) {
+  const arcs = l <= 0 ? '' : (l < 0.34 ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/>' :
+    (l < 0.67 ? '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18 7a7 7 0 0 1 0 10"/>' :
+      '<path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/><path d="M18 7a7 7 0 0 1 0 10"/><path d="M20.5 4.5a10.5 10.5 0 0 1 0 15"/>'));
+  return '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l4.5-3.5v12L7 14.5H4z" fill="#fff"/>' + arcs + '<\/g><\/svg>';
+}
+
+let earKey = '';
+let vfill = null;
+function setEars(kind) {
+  if (earKey === kind) return;
+  earKey = kind;
+  vfill = null;
+  if (kind === 'music') {
+    lead.innerHTML = '<span class="cover"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M9 4v11.3A3.5 3.5 0 1 0 11 18.5V8h6V4z"/><\/svg><\/span>';
+    trail.innerHTML = '<span class="wave"><i><\/i><i><\/i><i><\/i><i><\/i><\/span>';
+  } else if (kind === 'download') {
+    lead.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="var(--tone)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19.5h14"/><\/g><\/svg>';
+    trail.innerHTML = '<b>40%<\/b>';
+  } else {
+    lead.innerHTML = '<span id="spk"><\/span>';
+    trail.innerHTML = '<span class="vbar"><i id="vfill"><\/i><\/span>';
+    vfill = document.getElementById('vfill');
+  }
+}
+
+function fade(el, v) {
+  el.style.opacity = v;
+  el.classList.toggle('off', v === 0);
+}
+
+function say(t) {
+  hint.textContent = t;
+  clearTimeout(say.t);
+  say.t = setTimeout(() => { hint.textContent = scenes[scene].hint; }, 2200);
+}
+
+function applySceneChrome() {
+  const s = scenes[scene];
+  title.textContent = s.title;
+  copy.textContent = s.copy;
+  hint.textContent = s.hint;
+  tokenEl.textContent = reducedBox.checked ? 'reduced' : s.token;
+}
+
+function render() {
+  const reduced = reducedBox.checked;
+  const kind = kindNow();
+  const cardOn = (scene === 'ears' || scene === 'peninsula') && open && shape.h > NOTCH_H + 22;
+  const alertOn = scene === 'alert' && alertT > 0 && shape.h > NOTCH_H + 8;
+
+  const rt = scene === 'alert' ? 24 : 28;
+  const r = R_HW + (rt - R_HW) * Math.min(1, Math.max(0, (shape.h - NOTCH_H) / 30));
+  island.style.width = shape.w + 'px';
+  island.style.height = shape.h + 'px';
+  island.style.borderRadius = '0 0 ' + r + 'px ' + r + 'px';
+  island.style.setProperty('--e', shape.e + 'px');
+  shL.style.left = 'calc(50% - ' + (shape.w / 2 + SH_W) + 'px)';
+  shR.style.left = 'calc(50% + ' + (shape.w / 2) + 'px)';
+
+  setEars(kind);
+  const flash = scene === 'replace' && replaceFlash > 0 ? Math.max(0.25, 1 - replaceFlash * 2) : 1;
+  fade(lead, flash);
+  fade(trail, flash);
+  if (kind === 'volume') {
+    document.getElementById('spk').innerHTML = speaker(level);
+    if (vfill) vfill.style.width = Math.round(level * 100) + '%';
+  }
+
+  const inV = reduced ? 1 : contentIn;
+  peninsula.classList.toggle('on', cardOn);
+  ctrls.classList.toggle('on', cardOn && shape.h > NOTCH_H + 90);
+  alertc.classList.toggle('on', alertOn);
+  fade(who, cardOn ? inV : 0);
+  document.querySelector('.meta').style.opacity = cardOn ? inV : 0;
+  fade(ctrls, cardOn ? inV * 0.95 : 0);
+  fade(alertc, alertOn ? inV : 0);
+
+  who.textContent = activities[0].title + ' · ' + activities[0].artist;
+  pct.textContent = Math.round(activities[0].progress * 100) + '%';
+  bar.style.width = Math.round(activities[0].progress * 100) + '%';
+
+  const sd = Math.min(1, Math.max(0, sp.x));
+  const sx = shape.w / 2 + GAP_SPLIT - (reduced ? 0 : (1 - sd) * (NOTCH_H + GAP_SPLIT));
+  splitdot.style.left = 'calc(50% + ' + sx + 'px)';
+  splitdot.style.transform = reduced ? 'none' : 'scale(' + (0.7 + 0.3 * Math.min(1.1, sd)) + ')';
+  fade(splitdot, splitOn ? (reduced ? 1 : Math.min(1, sd * 2.5)) : (reduced ? 0 : Math.min(1, sd * 2.5)));
+}
+
+function targets() {
+  const e = EAR[kindNow()];
+  const compact = { w: NOTCH_W + 2 * e, h: NOTCH_H, e, spring: 'calm' };
+  const tallCard = { w: 360, h: NOTCH_H + 118 };  // 内容高 118 档，宽按内容（示意）
+  const shortCard = { w: 300, h: NOTCH_H + 72 };  // 内容高 72 档，避开临界高度
+  if (scene === 'ears') {
+    return open ? { w: tallCard.w, h: tallCard.h, e, spring: 'expand' } : compact;
+  }
+  if (scene === 'peninsula') {
+    return open ? { w: shortCard.w, h: shortCard.h, e, spring: 'expand' } : compact;
+  }
+  if (scene === 'alert') {
+    return alertT > 0 ? { w: 408, h: 84, e, spring: 'bloom' } : compact;
+  }
+  if (scene === 'numeric') {
+    return levelHold > 0 ? { ...compact, spring: 'pop' } : compact;
+  }
+  return compact;
+}
+
+function frame(now) {
+  const dt = Math.min(0.032, (now - last) / 1000);
+  last = now;
+  const reduced = reducedBox.checked;
+  const t = targets();
+
+  if (reduced) {
+    shape.w = t.w; shape.h = t.h; shape.e = t.e; shape.wv = shape.hv = shape.ev = 0;
+    sp.x = splitOn ? 1 : 0; sp.v = 0;
+  } else {
+    [shape.w, shape.wv] = springTo(shape.w, shape.wv, t.w, t.spring, dt);
+    [shape.h, shape.hv] = springTo(shape.h, shape.hv, t.h, t.spring, dt);
+    [shape.e, shape.ev] = springTo(shape.e, shape.ev, t.e, t.spring, dt);
+    [sp.x, sp.v] = springTo(sp.x, sp.v, splitOn ? 1 : 0, splitOn ? 'bloom' : 'calm', dt);
+  }
+
+  // 形状走到四成，内容才淡入
+  const growing = t.h > NOTCH_H + 2;
+  const progress = growing ? Math.min(1, Math.max(0, (shape.h - NOTCH_H) / Math.max(1, t.h - NOTCH_H))) : 1;
+  const contentTarget = growing ? (progress >= 0.4 ? 1 : 0) : 1;
+  const wantContent = reduced ? 1 : contentTarget;
+  contentIn += (wantContent - contentIn) * Math.min(1, dt / 0.16);
+
+  if (scene === 'alert' && alertT > 0) {
+    alertT = Math.max(0, alertT - dt);
+  }
+  if (scene === 'numeric') levelHold = Math.max(0, levelHold - dt);
+  if (replaceFlash > 0) replaceFlash = Math.max(0, replaceFlash - dt);
+
+  tokenEl.textContent = reduced ? 'reduced' : (scene === 'alert' && alertT > 0 ? 'bloom' : scenes[scene].token);
+  if (scene === 'ears' || scene === 'peninsula') {
+    tokenEl.textContent = reduced ? 'reduced' : (open ? 'expand' : 'calm');
+  }
+  if (scene === 'minimal') tokenEl.textContent = reduced ? 'reduced' : (splitOn ? 'bloom' : 'calm');
+  if (scene === 'numeric' && levelHold > 0) tokenEl.textContent = reduced ? 'reduced' : 'pop';
+
+  render();
+  requestAnimationFrame(frame);
+}
+
+function setScene(name) {
+  scene = name;
+  open = name === 'peninsula';
+  splitOn = name === 'minimal';
+  sp.x = splitOn ? 1 : 0; sp.v = 0;
+  alertT = 0;
+  levelHold = 0;
+  replaceFlash = 0;
+  track = 0;
+  document.querySelectorAll('[data-scene]').forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.dataset.scene === name ? 'true' : 'false');
+  });
+  applySceneChrome();
+}
+
+// 点哪里：刘海本体 / 左耳 / 右耳（只有紧凑时分三块；指针停上去不展开）
+function zoneAt(e) {
+  const r = stage.getBoundingClientRect();
+  const x = e.clientX - r.left - r.width / 2;
+  const y = e.clientY - r.top;
+  if (y > shape.h || Math.abs(x) > shape.w / 2) return 'none';
+  if (Math.abs(x) <= NOTCH_W / 2) return 'body';
+  return x < 0 ? 'earL' : 'earR';
+}
+function gestureScene() { return scene === 'ears' || scene === 'peninsula'; }
+function tap(zone) {
+  if (open) { open = false; return; }
+  if (zone === 'body') say('点刘海本体：回到主屏幕。长按 0.5 秒才展开。');
+  else if (zone === 'earL' || zone === 'earR') say('点耳朵：打开音乐 App。');
+}
+function longPress() {
+  open = !open;
+}
+
+let pressT = null, pressFired = false, pressZone = 'none';
+stage.addEventListener('pointerdown', e => {
+  if (!gestureScene()) return;
+  pressFired = false;
+  pressZone = zoneAt(e);
+  clearTimeout(pressT);
+  if (!open && pressZone !== 'none') pressT = setTimeout(() => { pressFired = true; longPress(); }, 500);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => stage.addEventListener(ev, () => clearTimeout(pressT)));
+
+function onActivate() {
+  if (scene === 'numeric') return;
+  if (scene === 'minimal') { splitOn = !splitOn; return; }
+  if (scene === 'replace') {
+    track = (track + 1) % activities.length;
+    replaceFlash = 0.45;
+    return;
+  }
+  if (scene === 'alert') {
+    if (alertT > 0) { alertT = 0; return; }
+    alertT = 2.6;
+    return;
+  }
+}
+
+document.querySelectorAll('[data-scene]').forEach(button => {
+  button.addEventListener('click', () => setScene(button.dataset.scene));
+});
+stage.addEventListener('click', e => {
+  if (gestureScene()) {
+    if (pressFired) { pressFired = false; return; }
+    tap(zoneAt(e));
+    return;
+  }
+  onActivate();
+});
+stage.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  if (gestureScene()) {
+    if (e.key === ' ') longPress(); else tap('body');
+    return;
+  }
+  onActivate();
+});
+window.addEventListener('keydown', event => {
+  if (scene !== 'numeric') return;
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.preventDefault();
+    level = Math.min(1, Math.max(0, level + (event.key === 'ArrowUp' ? 0.08 : -0.08)));
+    levelHold = 1.2;
+  }
+});
+reducedBox.addEventListener('change', () => { stage.classList.toggle('rm', reducedBox.checked); applySceneChrome(); });
+applySceneChrome();
+requestAnimationFrame(frame);
+</script>
+<style id="ws-family">
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 设计系统的纸面（2026-10-08 统一）：只管页面外框——底色、标题字、正文字；舞台里的画面不动 */
+:root{--wsf-paper:#EEF1F6;--wsf-ink:#131A25;--wsf-ink2:#46546A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}}
+:root[data-theme="dark"]{--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}
+html body{background:var(--wsf-paper);color:var(--wsf-ink)}
+html body h1{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+html body h2{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;text-wrap:balance}
+html body .lede,html body .sub{color:var(--wsf-ink2)}
+</style>
+</body>
+</html>

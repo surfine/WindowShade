@@ -1,0 +1,210 @@
+{
+  "retrieved_date": "2026-10-05",
+  "source_commit": "713d3884e31d4d6e698a7dc81df99219db1518b3",
+  "sources": [
+    {
+      "id": "C01",
+      "title": "Branches",
+      "url": "https://api.github.com/repos/surfine/WindowShade/branches?per_page=100",
+      "note": "Main and active branch checked separately."
+    },
+    {
+      "id": "C02",
+      "title": "docs/handoff/FINAL-HANDOFF.md",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/handoff/FINAL-HANDOFF.md",
+      "note": "Read current opening status; historical sections are not new measurements."
+    },
+    {
+      "id": "C03",
+      "title": "docs/handoff/hardware-matrix-2026-10-05/matrix.json",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/handoff/hardware-matrix-2026-10-05/matrix.json",
+      "note": "20 labeled cases; test levels differ."
+    },
+    {
+      "id": "C04",
+      "title": "prototype/App/WS2SilentApply.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/WS2SilentApply.swift",
+      "note": "Read command dispatch, physical ports, remaining unknown/waiting outcomes."
+    },
+    {
+      "id": "C05",
+      "title": "prototype/App/WS2SilentPrivacyCover.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/WS2SilentPrivacyCover.swift",
+      "note": "Read complete cover class."
+    },
+    {
+      "id": "C06",
+      "title": "prototype/App/WS2SilentHost.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/WS2SilentHost.swift",
+      "note": "Read host and page including first-frame polling, cancellation, and input guards."
+    },
+    {
+      "id": "C07",
+      "title": "prototype/Recovery/Journal.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Recovery/Journal.swift",
+      "note": "Read parsing and new journal writes; title omission is already present."
+    },
+    {
+      "id": "C08",
+      "title": "prototype/Recovery/Rescue.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Recovery/Rescue.swift",
+      "note": "Read background rescue action collection and verification."
+    },
+    {
+      "id": "C09",
+      "title": "docs/handoff/hardware-matrix-2026-10-05/logs/silent-milestone-rerun2.log",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/handoff/hardware-matrix-2026-10-05/logs/silent-milestone-rerun2.log",
+      "note": "Actual committed log says camera authorized but zero delivered samples."
+    },
+    {
+      "id": "C10",
+      "title": "docs/handoff/hardware-matrix-2026-10-05/logs/soak-8.json",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/handoff/hardware-matrix-2026-10-05/logs/soak-8.json",
+      "note": "Committed 8-second metrics; not a new run."
+    },
+    {
+      "id": "C11",
+      "title": "prototype/Effects/EffectSoakProbe.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/EffectSoakProbe.swift",
+      "note": "Duration before 10 seconds cannot exercise its reversal phase; exit criteria inspected."
+    },
+    {
+      "id": "C12",
+      "title": "prototype/Effects/FoldRenderer.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/FoldRenderer.swift",
+      "note": "Initialization, CPU image conversion, cache, and render setup."
+    },
+    {
+      "id": "C13",
+      "title": "prototype/Effects/FoldRenderer.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/FoldRenderer.swift",
+      "note": "Render passes, mipmaps, completion/presentation callbacks inspected."
+    },
+    {
+      "id": "C14",
+      "title": "prototype/Effects/EffectSession.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/EffectSession.swift",
+      "note": "Hard-coded 60Hz; lifecycle and held-frame behavior."
+    },
+    {
+      "id": "C15",
+      "title": "prototype/App/NotchActivitySources.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/NotchActivitySources.swift",
+      "note": "Existing notifications/caches and residual 2-second driver."
+    },
+    {
+      "id": "C16",
+      "title": "docs/performance.md",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/performance.md",
+      "note": "Historical measurements and already-landed optimizations; not latest energy baseline."
+    },
+    {
+      "id": "C17",
+      "title": "prototype/Effects/DuoController.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/DuoController.swift",
+      "note": "Read sensor admission and desktop-session start/lifecycle portion."
+    },
+    {
+      "id": "C18",
+      "title": "prototype/App/FaceObservationSource.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/FaceObservationSource.swift",
+      "note": "Capture format, sampling, time validation, Vision error and ANE hint."
+    },
+    {
+      "id": "C19",
+      "title": "prototype/App/FocusSession.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/FocusSession.swift",
+      "note": "Read startFocusCurrentAppSession preflight and fold loop."
+    },
+    {
+      "id": "C20",
+      "title": "prototype/Effects/Duo.metal",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/Duo.metal",
+      "note": "duoPage depends on content/source, not fold progress."
+    },
+    {
+      "id": "C21",
+      "title": "prototype/App/DeviceAuthorizationKey.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/App/DeviceAuthorizationKey.swift",
+      "note": "Read explicit biometryCurrentSet policy and key preparation."
+    },
+    {
+      "id": "C22",
+      "title": "docs/handoff/hardware-matrix-2026-10-05/logs/fold-timing-rescue-fix.log",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/handoff/hardware-matrix-2026-10-05/logs/fold-timing-rescue-fix.log",
+      "note": "Fast capture/no-animation timing; cold and warm are separate."
+    },
+    {
+      "id": "C23",
+      "title": "docs/handoff/hardware-matrix-2026-10-05/logs/glance-single-rerun.log",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/docs/handoff/hardware-matrix-2026-10-05/logs/glance-single-rerun.log",
+      "note": "Single-window live-preview timings."
+    },
+    {
+      "id": "C24",
+      "title": "prototype/Core/InteractionCoordinator.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Core/InteractionCoordinator.swift",
+      "note": "New suspended revocation present; one active lease in this class still visible."
+    },
+    {
+      "id": "C25",
+      "title": "prototype/Effects/EffectFrameSource.swift",
+      "url": "https://github.com/surfine/WindowShade/blob/713d3884e31d4d6e698a7dc81df99219db1518b3/prototype/Effects/EffectFrameSource.swift",
+      "note": "Latest-frame slot, generation, serialized stop/start, 8ms first-frame wait."
+    },
+    {
+      "id": "A01",
+      "title": "Apple M5 introduction",
+      "url": "https://www.apple.com/newsroom/2025/10/apple-unleashes-m5-the-next-big-leap-in-ai-performance-for-apple-silicon/",
+      "note": "Base M5; do not conflate GPU Neural Accelerators with ANE."
+    },
+    {
+      "id": "A02",
+      "title": "MacBook Neo technical specifications",
+      "url": "https://support.apple.com/en-in/126322",
+      "note": "Actual Mac A18 Pro configuration; runtime capabilities remain necessary."
+    },
+    {
+      "id": "A03",
+      "title": "MLComputeUnits.cpuAndNeuralEngine",
+      "url": "https://developer.apple.com/documentation/coreml/mlcomputeunits/cpuandneuralengine",
+      "note": "Permission to use CPU and ANE, excluding GPU; not ANE-only."
+    },
+    {
+      "id": "A04",
+      "title": "Tune CPU job scheduling for Apple silicon games",
+      "url": "https://developer.apple.com/videos/play/tech-talks/110147/",
+      "note": "Primary guidance on avoiding busy waits and excessive worker pools."
+    },
+    {
+      "id": "A05",
+      "title": "Accelerate ML with M5 and A19 GPUs",
+      "url": "https://developer.apple.com/videos/play/tech-talks/111432/",
+      "note": "GPU matrix/tensor acceleration and measurement."
+    },
+    {
+      "id": "A06",
+      "title": "TN3121 camera pixel formats",
+      "url": "https://developer.apple.com/documentation/Technotes/tn3121-selecting-a-pixel-format-for-an-avcapturevideodataoutput",
+      "note": "Choose supported native formats; BGRA is not automatically the efficient default."
+    },
+    {
+      "id": "A07",
+      "title": "TN2445 frame drops",
+      "url": "https://developer.apple.com/library/archive/technotes/tn2445/_index.html",
+      "note": "Capture callbacks, frame drops and actual camera-rate adjustment."
+    },
+    {
+      "id": "A08",
+      "title": "AppKit event monitoring",
+      "url": "https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/EventOverview/MonitoringEvents/MonitoringEvents.html",
+      "note": "Local monitor receives only the current app event stream."
+    },
+    {
+      "id": "A09",
+      "title": "Optimize your Core ML usage",
+      "url": "https://developer.apple.com/cn/videos/play/wwdc2022/10027/",
+      "note": "Model performance reports and Core ML Instrument."
+    }
+  ]
+}

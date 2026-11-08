@@ -1,0 +1,30 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-power-ears/validation.json",
+  "artifact_sha256": "306934612e4b5bf8d1f8585c9ad9f5c8af0c6eb70b43885e924ad4b24d45006d",
+  "checks": [
+    {
+      "command": "PowerEarPreview + check-power-ear-preview.py",
+      "exit_code": 0,
+      "result": "16 actual compact frames;8 identical parent pairs;101 valid percentages fit actual production layout;Core synthesized payload;no real source/AX/timer",
+      "receipt": "after-repaired-native-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "optimized519 current source identities;strict Swift6 flags/gates retained",
+      "receipt": "build-exit.json"
+    },
+    {
+      "command": "tests/run-power-flash-tests.sh",
+      "exit_code": 0,
+      "result": "bridge revision0, pure Core/Copy;6 current input hashes match;worker report failed-context, main takeover;not rerun",
+      "receipt": "worker-receipt.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "real battery events/AX announcements/timed dismissal/arbitration/hardware/signed Swift6 runtime;Welcome compositor/focus/motion;settings/windows/other original surfaces",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

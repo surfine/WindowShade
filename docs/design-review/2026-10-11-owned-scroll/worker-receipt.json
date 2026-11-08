@@ -1,0 +1,10 @@
+{
+  "job_id": "f94badc953a84ac19202f10c4f31e6ab",
+  "state": "failed",
+  "reason": "Context budget reached",
+  "changed_files": [],
+  "checks": [],
+  "api_rounds": 2,
+  "actual_contribution": null,
+  "takeover": "main implemented and checked native fixture/design/actual consumer; no rerun of failed audit"
+}

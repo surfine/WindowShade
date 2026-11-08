@@ -1,0 +1,90 @@
+[
+  {
+    "file": "probes/MultitouchSymbolProbe.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "probes/MultitouchSymbolProbe.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "probes/RemoteHIDProbe.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "probes/RemoteHIDProbe.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "probes/BLEReadProbe.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "probes/BLEReadProbe.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "probes/IdentityBoundaryProbe.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "probes/IdentityBoundaryProbe.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "probes/LockStateProbe.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "probes/LockStateProbe.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "packages/T2/prototype/App/FocusTimerHost.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "packages/T2/prototype/App/FocusTimerHost.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "packages/T2/prototype/App/FocusTimerCard.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "packages/T2/prototype/App/FocusTimerCard.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  },
+  {
+    "file": "packages/S1/prototype/App/WS2SettingsInfo.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "packages/S1/prototype/App/WS2SettingsInfo.swift"
+    ],
+    "exit": 0,
+    "diagnostics": ""
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "schema": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ThreadResumeParams.json",
+  "schemaSHA256": "8ac68582a81d60940b10b330be8546123f56bfe246b56f8a4f121da00f347cf2",
+  "records": [
+    {
+      "message": {
+        "id": 3,
+        "method": "thread/resume",
+        "params": {
+          "threadId": "thread-fixture"
+        }
+      },
+      "valid": true
+    }
+  ],
+  "schemaJSONCount": 304
+}

@@ -1,0 +1,16 @@
+[
+  {
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-05tlaqir/part7/tests/run.py",
+      "--repo",
+      ".",
+      "--suite",
+      "native"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS NATIVE01 direct child ignores TERM then owned group KILL [6]\nPASS NATIVE02 inherited descriptor descendant cannot delay direct exit [5]\nPASS NATIVE03 unrelated descriptors do not reach child [3]\nTOTAL 3 scenarios, 14 assertions\nDIAG exited=true termination=Optional(suite.WS2DuplexProcess.Termination(status: 0, wasSignalled: false)) stopped=true supervision=nil lines=[\"{\\\"parent\\\":1}\"] elapsed=0.1403940000163857\n",
+    "stderr": "",
+    "seconds": 14.686697833007202
+  }
+]

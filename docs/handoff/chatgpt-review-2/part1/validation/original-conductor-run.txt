@@ -1,0 +1,43 @@
+UTC 2026-10-03T05:35:12.488158+00:00
+COMMAND ['/mnt/data/WindowShade2-round2-part1/.build/regression/original-conductor']
+EXIT 0
+ok   C-011 flat line with natural wobble is tone 1 → low
+ok   C-012 rising stroke is tone 2 → medium
+ok   C-012 raw y-down coordinates are flipped first, so tone 2 stays tone 2
+ok   C-012 (control) forgetting the flip would swap tones 2 and 4
+ok   C-013 one rounded valley is tone 3 → high
+ok   C-014 falling stroke is tone 4 → xhigh, never max
+ok   C-013 a broken zigzag with several valleys is rejected, not tone 3
+ok   C-013 a dip below the jitter band is still a flat tone 1, not tone 3
+ok   C-013 a valley without a real rise afterwards is rejected, not tone 3
+ok   between tone 1 and tone 2 slopes is rejected, not rounded to the nearest
+ok   C-015 a small tremor is rejected, not scaled up into a tone
+ok   contact shorter than the settle period counts as an accidental touch
+ok   C-016 vertical swipes select no effort
+ok   C-016 right-to-left strokes are not mirrored into tones
+ok   C-016 a stroke that doubles back is not a tone
+ok   C-017 a narrow V reads as both tone 3 and one beat, so it is rejected
+ok   C-017 three beats drifting right are rejected, not tone 3 and not 3 beats
+ok   C-018 a full five-beat phrase requests max
+ok   C-018 after the fourth beat the preview shows 4
+ok   C-019 a full six-beat phrase requests ultra
+ok   C-019 after the fifth beat the preview shows 5
+ok   C-019 lifting in the middle of the sixth beat is rejected, not taken as 5 beats (max)
+ok   1 beats request the matching level
+ok   2 beats request the matching level
+ok   3 beats request the matching level
+ok   4 beats request the matching level
+ok   seven beats are rejected, not clamped to six
+ok   C-020 a wobble at the bottom of a beat does not count as an extra beat
+ok   C-020 a drop without a real rebound is not a beat
+ok   C-021 fast and slow five-beat phrases both request max
+ok   C-021 beats faster than 150ms apart are rejected
+ok   C-021 a long pause inside a phrase breaks it instead of counting on
+ok   C-022 a phrase longer than 6 seconds is dropped
+ok   a NaN coordinate rejects the whole stroke
+ok   an out-of-range coordinate rejects the whole stroke
+ok   time going backwards rejects the whole stroke
+ok   an empty stroke is safe
+ok   out-of-range gestures map to no effort
+ok   no tone ever requests max or ultra
+all conductor gesture tests passed

@@ -1,0 +1,54 @@
+{
+  "kind": "contract_check",
+  "status": "passed",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-12-english-silent-lines/validation.json",
+  "artifact_sha256": "(validation.json 不自引用哈希; binding_sha256 5abf775956f990ac)",
+  "binding_sha256": "5abf775956f990ac",
+  "checks": [
+    {
+      "command": "bash tests/run-silent-prep-tests.sh",
+      "exit_code": 0,
+      "result": "2117 ok / 0 FAIL（含约 120 条直接断言迁移中文句——zh 逐字节不变回归网）；日志 native/silent-prep-tests.log（2026-10-12 深夜复跑留档）"
+    },
+    {
+      "command": "bash tests/run-localization-tests.sh",
+      "exit_code": 0,
+      "result": "52 ok：500 键逐键走 WSL10n 出英文、无汉字；棘轮 3406 全过；日志 native/localization-tests.log（复跑留档）"
+    },
+    {
+      "command": "bash tests/run-silent-integration-tests.sh --case r01 / --case r03（批内已跑）",
+      "exit_code": 0,
+      "result": "r01 12 ok（效果端口与完成判定）/ r03 5 ok（台账/结果行/回执）；native/integration-r01.log、integration-r03.log 真编译产品源"
+    },
+    {
+      "command": "bash tools/design-qa/run-silent-page-language-preview.sh（批内已跑）",
+      "exit_code": 0,
+      "result": "4 帧 PASS（zh/en × 初始/结果句，真 WS2SilentPageView/IslandChip 离屏渲染）；native/fixture-run.log + frames.json；4 PNG 实看（'Launchpad' 贴边=既有密度，记观察项）"
+    },
+    {
+      "command": "bash prototype/build.sh --check（批内已跑）",
+      "exit_code": 0,
+      "result": "514 文件全优化编译、500 键本地化检查、隐私登记 PASS、文案检查 PASS（LEGACY_SAYINGS 4 条豁免逐条记录）；native/build-check.log"
+    },
+    {
+      "command": "cd site && npm run build && npm run check",
+      "exit_code": 0,
+      "result": "42 deploy assets checked；静音句只出现在刘海/面板，官网与 README 无词可同步；NOT deployed；日志 native/site-build.log、site-check.log（复跑留档）"
+    },
+    {
+      "command": "零中文残留核查（grep 非注释行）",
+      "exit_code": 0,
+      "result": "7 个静音文件非注释行 0 中文字符（身份表 lines/sayings 除外），与 README 声明一致"
+    },
+    {
+      "command": "docs/copy-guide.md 第二批英文表核对",
+      "exit_code": 0,
+      "result": "10 行在档（Didn't happen/Waiting/Rolled up/Tucked into the notch/Look, then confirm./…）；旧 silent.* 6 条英文已对齐（只改 en，中文身份不动）"
+    }
+  ],
+  "reused_checks": [
+    "build-check.log、fixture-run.log、integration-r01/r03.log 为批内原始档，未重跑，按原档引用（哈希在 validation.json evidence 表内绑定）"
+  ],
+  "remaining_risk": "无真机刘海静音页英文可读性验证（岛宽 344pt 换行/截断）/ 无真实触发路径（相机/口令/输入）/ 夹具静态渲染不证明交互与动效 / QA 探针中文按 §9 类别②豁免占棘轮位数 / 英语 §9 剩余表面未开工——不写'英语已支持'",
+  "next_action": "self_review"
+}

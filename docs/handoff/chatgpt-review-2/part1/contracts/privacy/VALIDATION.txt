@@ -1,0 +1,37 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/contracts/privacy/run-secure-log-tests.sh
+Exit: 0
+
+CASE LOG-01 | 新日志 → 父目录0700、文件0600，原文字节可读
+ok   专用目录与文件权限
+ok   内容一致
+CASE LOG-02 | 既有文件权限0644 → 写前收紧为0600
+ok   保留既有日志但收紧权限
+CASE LOG-03 | 大小超限 → 一个0600备份，不额外复制历史
+ok   真的发生轮转
+ok   备份保持0600
+ok   新文件只含当前记录
+CASE LOG-04 | 日志名为符号链接 → 拒绝，不改链接目标
+ok   拒绝末级链接
+ok   目标未被写入
+CASE LOG-05 | 父目录为链接 → 拒绝，不沿链接创建日志
+ok   拒绝路径中的链接
+ok   不创建目标文件
+CASE LOG-06 | 日志为硬链接、FIFO或目录 → 立即拒绝，不阻塞
+ok   拒绝多链接文件
+ok   FIFO非阻塞拒绝
+ok   拒绝目录作文件
+CASE LOG-07 | 备份名被置为链接 → 轮转失败，不删除链接及其目标
+ok   拒绝不安全备份
+ok   不删除攻击者放置的未知对象
+CASE LOG-08 | 路径含..、相对路径、公共可写祖先、超大记录 → 拒绝
+ok   相对路径拒绝
+ok   不规范化遍历路径
+ok   不可只看最后一级权限
+ok   超大记录不写
+CASE LOG-09 | macOS 空ACL已应用 → 文件的extended ACL必须没有条目
+ok   不保留具名或继承授权；另需双账户验证
+PASS PRIVACY-LOG: 9 cases, 20 assertions, 0 failures

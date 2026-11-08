@@ -2155,4 +2155,704 @@ extension AppDelegate {
         NotificationCenter.default.post(name: WindowBrowserNotification.didChangeSettings, object: nil)
     }
 
+    /// 计时器的一键启用：把它录成 ⌃⌥T，照常注册、刷新菜单。
+    @objc func prefEnableCountdownShortcut() {
+        applyShortcut(GlobalShortcutSettings.countdownHotKey, for: .countdownTimer)
+    }
+
+    @objc func prefResetShortcuts() {
+        GlobalShortcutSettings.resetAll()
+        registerGlobalShortcuts()
+        rebuildMenu()
+        refreshPreferencesWindowIfOpen()
+    }
+
+    /// 「手势」页（规格 R16）：十条手指、中键、拖动触发的设置按用户在做的事分四组。
+    /// 行、键、动作、默认值都沿用原来的；只多一行「手指」，标题栏手势下多一张只读对照表。
+    /// 三指、四指轻点还没核对，留在「鼠标与触控板」，核对完再露出。
+    func makeGestureSettingsPage() -> NSView {
+        inputController.apply()
+        let prefs = inputController.preferences
+        let (root, stack) = makeSettingsPageRoot()
+
+        func group(_ title: String, _ rows: [NSView]) {
+            let card = makeUnifiedSettingsCard(rows)
+            stack.addArrangedSubview(makePrefGroupLabel(title))
+            stack.addArrangedSubview(card)
+            card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+            stack.setCustomSpacing(18, after: card)
+        }
+
+        let titleBarTable = GestureTableDisclosure(
+            title: WSL10n.setting("settings.gesture.table.toggle", zh: "这个手势都会做什么"),
+            gestureColumn: WSL10n.setting("settings.gesture.table.col.gesture", zh: "手指"),
+            effectColumn: WSL10n.setting("settings.gesture.table.col.effect", zh: "效果"),
+            lines: [
+                .init(gesture: WSL10n.setting("settings.gesture.table.up.gesture", zh: "往上滑"),
+                      effect: WSL10n.setting("settings.gesture.table.up.effect", zh: "收起窗口；已铺满的窗口先撤销上次排布")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.down.gesture", zh: "往下滑"),
+                      effect: WSL10n.setting("settings.gesture.table.down.effect", zh: "铺满屏幕")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.side.gesture", zh: "往左 / 往右滑"),
+                      effect: WSL10n.setting("settings.gesture.table.side.effect", zh: "左半屏 / 右半屏，再推一下沿梯子走一格")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.spread.gesture", zh: "张开"),
+                      effect: WSL10n.setting("settings.gesture.table.spread.effect", zh: "魔法平铺")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.pinch.gesture", zh: "捏合"),
+                      effect: WSL10n.setting("settings.gesture.table.pinch.effect", zh: "撤销上次排布")),
+                .init(gesture: WSL10n.setting("settings.gesture.table.strip.gesture", zh: "卷帘条上往下拉"),
+                      effect: WSL10n.setting("settings.gesture.table.strip.effect", zh: "展开窗口")),
+            ],
+            note: WSL10n.setting("settings.gesture.table.note", zh: "只读对照，来自现有手势表，不是新开关。"))
+
+        // 中键收起窗口属于 WindowShade 2 的输入设备实验：预览旗标关着时藏起来，已经打开的照样露出来好关掉。
+        let showsMiddleFold = WS2Preview.shows(previewOn: WS2Preview.isOn, alreadyOn: prefs.middleFold)
+        var foldRows: [NSView] = [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.trackpad.name", zh: "标题栏手势"),
+                                     subtitle: trackpadGesturePreferenceSubtitle(),
+                                     isOn: TrackpadGestureController.isEnabled,
+                                     action: #selector(prefToggleTrackpadGestures(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.titleBar", zh: "两指 · 标题栏 · 滑动 / 张合 / 滚轮"), kind: .primitive, table: titleBarTable),
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.doubleClick.name", zh: "双击标题栏收起窗口"),
+                                     subtitle: titlebarDoubleClickPreferenceSubtitle(),
+                                     isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.doubleClick", zh: "双击 · 标题栏"), kind: .primitive),
+        ]
+        if showsMiddleFold {
+            foldRows.append(GestureRows.decorate(
+                inputRow(name: WSL10n.setting("settings.input.middleFold.name", zh: "中键收起窗口"),
+                         subtitle: middleSubtitle(prefs),
+                         detail: WSL10n.setting("settings.input.middleFold.detail", zh: "在标题栏上用中键点一下收起或展开；往上拖也是收起，往下拖展开。默认关，打开才装钩子。"),
+                         symbol: "rectangle.compress.vertical",
+                         control: inputSwitch(on: prefs.middleFold, enabled: true,
+                                              action: #selector(prefInputMiddleFold(_:)), name: WSL10n.text("settings.input.middleFold.name", zh: "中键收起窗口"))),
+                fingers: WSL10n.setting("settings.gesture.chip.middle", zh: "中键 · 标题栏 · 点一下 / 上下拖"), kind: .primitive))
+        }
+        group(WSL10n.text("settings.gesture.group.fold", zh: "收起与展开"), foldRows)
+        group(WSL10n.text("settings.shade.group.notch", zh: "刘海"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.tuckNotch.name", zh: "收进刘海"),
+                                     subtitle: WSL10n.setting("settings.shade.tuckNotch.sub", zh: "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"),
+                                     isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.tuck", zh: "甩一下标题栏 → 刘海"), kind: .combination),
+            GestureRows.decorate(
+                makeUnifiedToggleRow(name: WSL10n.text("settings.stripNotch.name", zh: "卷轴概览能收进刘海"),
+                                     subtitle: WSL10n.text("settings.stripNotch.sub", zh: "在卷轴概览里把窗口拖到刘海，松手就收进去"),
+                                     isOn: ScrollStripController.notchLinkEnabled(), action: #selector(prefToggleStripNotch(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.overviewNotch", zh: "拖 · 卷轴概览 → 刘海"), kind: .combination),
+        ])
+        group(WSL10n.text("settings.shade.group.arrange", zh: "排布"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排"),
+                                                               subtitle: WSL10n.setting("settings.shade.dropSplit.sub", zh: "把窗口拖到另一扇上，两扇并排"),
+                                                               symbol: "rectangle.split.2x1"),
+                                     accessibleName: WSL10n.setting("settings.shade.dropSplit.name", zh: "拖到窗口上并排").shown,
+                                     minHeight: 48, isOn: TrackpadGestureController.dropSplitEnabled,
+                                     enabled: true, action: #selector(prefToggleDropSplit(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.dropSplit", zh: "拖 · 窗口 → 另一扇窗口"), kind: .combination),
+            GestureRows.decorate(
+                makeUnifiedToggleRow(labels: makeUnifiedLabels(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
+                                                               subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
+                                                               symbol: "arrow.left.and.right"),
+                                     accessibleName: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
+                                     minHeight: 48, isOn: StripTitleDrag.isEnabled(),
+                                     enabled: true, action: #selector(prefToggleStripTitleDrag(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.stripDrag", zh: "拖 · 卷轴里的标题栏"), kind: .combination),
+        ])
+        group(WSL10n.text("settings.section.browser", zh: "窗口浏览"), [
+            GestureRows.decorate(
+                makeUnifiedToggleRow(
+                    name: WSL10n.setting("settings.browser.dockSwipe.name", zh: "在 Dock 图标上两指上下滑"),
+                    subtitle: WSL10n.setting("settings.browser.dockSwipe.sub", zh: "往上滑看这个 App 的所有窗口，往下滑让开这个 App"),
+                    isOn: DockSwipeController.isEnabled,
+                    action: #selector(prefToggleDockSwipe(_:))),
+                fingers: WSL10n.setting("settings.gesture.chip.dockSwipe", zh: "两指 · Dock 图标 · 上滑 / 下滑"), kind: .primitive),
+        ])
+        return root
+    }
+
+    func makeWindowBrowserSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: WSL10n.text("settings.section.browser", zh: "窗口浏览"),
+            subtitle: WSL10n.setting("settings.browser.subtitle", zh: "在 Dock 图标上看这个应用的全部窗口，也可以用菜单或快捷键打开。"),
+            symbolName: "rectangle.on.rectangle"))
+
+        let triggers = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(
+                name: WSL10n.setting("settings.browser.dockHover.name", zh: "Dock 悬停查看窗口"),
+                subtitle: WSL10n.setting("settings.browser.dockHover.sub", zh: "鼠标停在 Dock 图标上时显示窗口面板。不会启动没在运行的应用。"),
+                isOn: WindowBrowserSettings.dockEnabled,
+                action: #selector(prefToggleWindowBrowserDock(_:))),
+            makeUnifiedToggleRow(
+                name: WSL10n.setting("settings.browser.dockClick.name", zh: "再点一下 Dock 图标，让开这个 App"),
+                subtitle: WSL10n.setting("settings.browser.dockClick.sub", zh: "它已经在最前、窗口露着时才这样（和 Windows 任务栏一样）；再点一下回来"),
+                isOn: DockClickHide.isEnabled,
+                action: #selector(prefToggleDockClickHide(_:))),
+            makeUnifiedToggleRow(
+                name: WSL10n.setting("settings.browser.dockStay.name", zh: "Dock 留在现在这块屏上"),
+                subtitle: WSL10n.setting("settings.browser.dockStay.sub", zh: "指针碰到别的屏的底边时 Dock 不跟过去（只管放在底部的 Dock）；打开时记下 Dock 现在在哪"),
+                isOn: DockLock.isEnabled,
+                action: #selector(prefToggleDockLock(_:))),
+            makeUnifiedToggleRow(
+                name: WSL10n.setting("settings.browser.missionControlClose.name", zh: "调度中心里按 ⌘W 关窗"),
+                subtitle: WSL10n.setting("settings.browser.missionControlClose.sub", zh: "指针指着哪扇就关哪扇，⌘Q 退出它的 App；只在调度中心开着时这样，平时不动你的 ⌘W"),
+                isOn: MissionControlKeys.isEnabled,
+                action: #selector(prefToggleMissionControlKeys(_:))),
+            makeUnifiedToggleRow(
+                name: WSL10n.setting("settings.browser.menuItem.name", zh: "在菜单里显示“选择窗口…”"),
+                subtitle: WSL10n.setting("settings.browser.menuItem.sub", zh: "默认不占用快捷键，可以在“快捷键”里设置"),
+                isOn: WindowBrowserSettings.keyboardPanelEnabled,
+                action: #selector(prefToggleWindowBrowserKeyboard(_:))),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.trigger", zh: "触发")))
+        stack.addArrangedSubview(triggers)
+        triggers.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: triggers)
+
+        let triggerSeg = NSSegmentedControl(labels: [WSL10n.text("settings.browser.trigger.off", zh: "关"), "⌥Tab", "⌘Tab"], trackingMode: .selectOne,
+                                            target: self, action: #selector(prefSelectSwitcherTrigger(_:)))
+        switch WindowSwitcherKeys.trigger {
+        case .off: triggerSeg.selectedSegment = 0
+        case .option: triggerSeg.selectedSegment = 1
+        case .command: triggerSeg.selectedSegment = 2
+        }
+        let switcherCard = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(name: WSL10n.setting("settings.browser.byWindow.name", zh: "按窗口切换"),
+                                  subtitle: WSL10n.setting("settings.browser.byWindow.sub", zh: "按住连按 Tab 一扇一扇地挑，松手切过去；收着的窗口也在里面。选 ⌘Tab 会换掉系统的 App 切换"),
+                                  control: triggerSeg),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.switching", zh: "切换")))
+        stack.addArrangedSubview(switcherCard)
+        switcherCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: switcherCard)
+
+        // 普通窗口实时预览搬到了 高级 → 实验（makeExperimentalSettingsCard），键不变。
+        let preview = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(
+                name: WSL10n.setting("settings.browser.open.name", zh: "打开窗口浏览"),
+                subtitle: nil,
+                control: {
+                    let button = NSButton(title: WSL10n.text("settings.browser.open.button", zh: "打开面板…"), target: self,
+                                          action: #selector(openWindowBrowserPanel))
+                    button.bezelStyle = .rounded
+                    return button
+                }()),
+            makeUnifiedControlRow(
+                name: WSL10n.setting("settings.browser.exclude.name", zh: "按应用排除"),
+                subtitle: excludedAppsSubtitle(),
+                control: {
+                    let button = NSButton(title: WSL10n.text("settings.browser.exclude.edit", zh: "编辑排除清单…"), target: self,
+                                          action: #selector(prefEditWindowBrowserExclusions))
+                    button.bezelStyle = .rounded
+                    return button
+                }()),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.panel", zh: "面板")))
+        stack.addArrangedSubview(preview)
+        preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: preview)
+
+        // 外观：跟随系统（可用的系统玻璃 / 原生材质）或明确的不透明背景。
+        let appearanceControl = NSSegmentedControl(
+            labels: WindowBrowserAppearanceStyle.allCases.map(\.displayName),
+            trackingMode: .selectOne, target: self,
+            action: #selector(prefChangeWindowBrowserAppearance(_:)))
+        appearanceControl.selectedSegment =
+            WindowBrowserAppearanceStyle.current == .paper ? 1 : 0
+        let styleControl = NSSegmentedControl(
+            labels: WindowBrowserSettings.PreferredStyle.allCases.map(\.displayName),
+            trackingMode: .selectOne, target: self,
+            action: #selector(prefChangeWindowBrowserStyle(_:)))
+        styleControl.selectedSegment = WindowBrowserSettings.PreferredStyle.allCases
+            .firstIndex(of: WindowBrowserSettings.preferredStyle) ?? 0
+        let appearance = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(
+                name: WSL10n.setting("settings.browser.panelBackground.name", zh: "面板背景"),
+                subtitle: WSL10n.setting("settings.browser.panelBackground.sub", zh: "开启系统的“减少透明度”时，自动使用不透明背景。"),
+                control: appearanceControl),
+            makeUnifiedControlRow(
+                name: WSL10n.setting("settings.browser.defaultLayout.name", zh: "默认显示方式"),
+                subtitle: WSL10n.setting("settings.browser.defaultLayout.sub", zh: "自动：窗口多的时候用列表，少的时候用缩略图。面板里的切换只影响这一次。"),
+                control: styleControl),
+            makeUnifiedControlRow(
+                name: WSL10n.setting("settings.browser.arrangeMenu.name", zh: "排布与撤销"),
+                subtitle: WSL10n.setting("settings.browser.arrangeMenu.sub", zh: "在窗口右键菜单里选“排布”：左半、右半、四角、居中、铺满屏幕、移到另一块屏幕。可以先看效果，移好之后还能撤销。"),
+                control: NSTextField(labelWithString: "")),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.browser.group.appearance", zh: "外观")))
+        stack.addArrangedSubview(appearance)
+        appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: appearance)
+
+        let permissions = makeUnifiedSettingsCard([
+            makeUnifiedPermissionRow(symbol: "accessibility", name: WSL10n.setting("settings.common.accessibility", zh: "辅助功能").namingPrivacyPane(),
+                subtitle: WSL10n.setting("settings.browser.axPerm.sub", zh: "识别 Dock 图标，切换、收起、展开和关闭窗口"),
+                granted: hasAccessibilityPermission(),
+                action: #selector(openAccessibilitySettingsAction)),
+            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: WSL10n.setting("settings.common.screenRecording", zh: "屏幕录制"),
+                subtitle: WSL10n.setting("settings.browser.screenPerm.sub", zh: "窗口缩略图与实时预览；缺失时显示图标和文字列表"),
+                granted: hasScreenRecordingPermission(),
+                action: #selector(openScreenRecordingSettingsAction)),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel(WSL10n.text("settings.common.group.permissions", zh: "权限")))
+        stack.addArrangedSubview(permissions)
+        permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        return root
+    }
+
+    private func excludedAppsSubtitle() -> SettingsText {
+        let ids = WindowBrowserSettings.excludedBundleIDs
+        if ids.isEmpty { return WSL10n.setting("settings.browser.excluded.none", zh: "尚未排除任何应用") }
+        // 分隔号和“等”都要按语言取：英文里是逗号加空格、“and others”。
+        let tail = ids.count > 2 ? WSL10n.text("settings.browser.excluded.more", zh: " 等") : ""
+        return WSL10n.setting("settings.browser.excluded.some", zh: "已排除 %@ 个应用：%@%@",
+                              String(ids.count),
+                              ids.sorted().prefix(2).joined(separator: WSL10n.text("settings.browser.excluded.separator", zh: "、")),
+                              tail)
+    }
+
+    @objc func prefToggleWindowBrowserDock(_ sender: NSSwitch) {
+        WindowBrowserSettings.dockEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefSelectArrangeGap(_ sender: NSSegmentedControl) {
+        let value = ArrangeGap.choices[max(0, min(ArrangeGap.choices.count - 1, sender.selectedSegment))]
+        ArrangeGap.points = value
+        UserDefaults.standard.set(Double(value), forKey: ArrangeGap.defaultsKey)
+    }
+
+    @objc func prefSelectSwitcherTrigger(_ sender: NSSegmentedControl) {
+        let choices: [WindowSwitcherKeys.Trigger] = [.off, .option, .command]
+        WindowSwitcherKeys.trigger = choices[max(0, min(2, sender.selectedSegment))]
+        MainActor.assumeIsolated { switcher.applySetting() }
+    }
+
+    @objc func prefToggleDockLock(_ sender: NSSwitch) {
+        DockLock.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { DockLock.isEnabled ? dockLock.relock() : dockLock.apply() }
+    }
+
+    @objc func prefToggleSplitDivider(_ sender: NSSwitch) {
+        SplitViewController.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { splitView.refresh() }
+    }
+
+    /// "走到一列时"的三个选项，顺序同 ScrollStrip.Centering.allCases（edge、always、overflow）。
+    /// "走到一列时"下拉里的三种落位（第27批）：按当前语言取；顺序与 ScrollStrip.Centering.allCases 一致。
+    static var centeringTitles: [String] {
+        [WSL10n.text("settings.shade.centering.edge", zh: "贴边"),
+         WSL10n.text("settings.shade.centering.center", zh: "居中"),
+         WSL10n.text("settings.shade.centering.fits", zh: "放不下才居中")]
+    }
+
+    @objc func prefSelectCentering(_ sender: NSPopUpButton) {
+        let modes = ScrollStrip.Centering.allCases
+        ScrollStrip.store(mode: modes[max(0, min(modes.count - 1, sender.indexOfSelectedItem))])
+        MainActor.assumeIsolated { gestures.strips.refreshCentering() }
+    }
+
+    @objc func prefToggleCenterWhenFits(_ sender: NSSwitch) {
+        ScrollStrip.store(whenFits: sender.state == .on)
+        MainActor.assumeIsolated { gestures.strips.refreshCentering() }
+    }
+
+    @objc func prefToggleHoverGuard(_ sender: NSSwitch) {
+        NotchHoverPolicy.setEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleStripWidths(_ sender: NSSwitch) {
+        StripWidthMemory.setEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleStripNotch(_ sender: NSSwitch) {
+        ScrollStripController.setNotchLinkEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleStripTitleDrag(_ sender: NSSwitch) {
+        StripTitleDrag.setEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleDropSplit(_ sender: NSSwitch) {
+        TrackpadGestureController.dropSplitEnabled = sender.state == .on
+    }
+
+    @objc func prefToggleDockClickHide(_ sender: NSSwitch) {
+        DockClickHide.isEnabled = sender.state == .on
+    }
+
+    @objc func prefToggleDockSwipe(_ sender: NSSwitch) {
+        DockSwipeController.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { DockSwipeController.shared.apply(owner: self) }
+    }
+
+    @objc func prefToggleMissionControlKeys(_ sender: NSSwitch) {
+        UserDefaults.standard.set(sender.state == .on, forKey: MissionControlKeys.defaultsKey)
+        MainActor.assumeIsolated { missionControlKeys.applySetting() }
+    }
+
+    @objc func prefToggleWindowBrowserKeyboard(_ sender: NSSwitch) {
+        WindowBrowserSettings.keyboardPanelEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefToggleWindowBrowserLive(_ sender: NSSwitch) {
+        WindowBrowserSettings.livePreviewEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefChangeWindowBrowserAppearance(_ sender: NSSegmentedControl) {
+        WindowBrowserAppearanceStyle.current = sender.selectedSegment == 1 ? .paper : .system
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefChangeWindowBrowserStyle(_ sender: NSSegmentedControl) {
+        let styles = WindowBrowserSettings.PreferredStyle.allCases
+        guard sender.selectedSegment >= 0, sender.selectedSegment < styles.count else { return }
+        WindowBrowserSettings.preferredStyle = styles[sender.selectedSegment]
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefEditWindowBrowserExclusions() {
+        let alert = NSAlert()
+        alert.messageText = WSL10n.text("settings.browser.exclude.name", zh: "按应用排除")
+        alert.informativeText = WSL10n.text("settings.browser.exclude.detail", zh: "一行一个应用标识。这里列出的应用不会出现在窗口浏览面板里。")
+        // 多行编辑必须用 NSTextView：单行 NSTextField 放不下"每行一个 bundle ID"。
+        let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 360, height: 140))
+        scroll.hasVerticalScroller = true
+        scroll.borderType = .bezelBorder
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 340, height: 140))
+        textView.isEditable = true
+        textView.isRichText = false
+        textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        textView.string = WindowBrowserSettings.excludedBundleIDs.sorted().joined(separator: "\n")
+        scroll.documentView = textView
+        alert.accessoryView = scroll
+        alert.addButton(withTitle: WSL10n.text("settings.common.save", zh: "保存"))
+        alert.addButton(withTitle: WSL10n.text("settings.common.cancel", zh: "取消"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let ids = Set(textView.string
+            .split(whereSeparator: { $0 == "\n" || $0 == "," || $0 == ";" })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty })
+        WindowBrowserSettings.excludedBundleIDs = ids
+        notifyWindowBrowserSettingsChanged()
+        refreshPreferencesWindowIfOpen()
+    }
+
+    private func notifyWindowBrowserSettingsChanged() {
+        NotificationCenter.default.post(name: WindowBrowserNotification.didChangeSettings, object: nil)
+    }
+
+}
+
+/// 设置里的"之前常用"：Windows / iPad / 一直用 Mac 三段，名字和欢迎窗口第二步一样；没答时一段都不选。
+/// 自己盯着 SwitcherOrigin 的变化（欢迎窗口里点了、刘海问过之后他点了），设置页开着也跟着变。
+final class SwitcherOriginControl: NSSegmentedControl {
+    /// 分段标题（第31批）：名字统一走 SwitcherOrigin.titleText（和欢迎窗口第二步、刘海问来处同一份）。
+    static func localizedTitles() -> [String] {
+        SwitcherOrigin.answers.compactMap { $0.titleText }
+    }
+
+    static func make() -> SwitcherOriginControl {
+        let control = SwitcherOriginControl(labels: localizedTitles(),
+                                            trackingMode: .selectOne, target: nil, action: nil)
+        control.target = control
+        control.action = #selector(picked)
+        control.setAccessibilityLabel(WSL10n.text("settings.shade.origin.name", zh: "之前常用"))
+        control.showCurrent()
+        NotificationCenter.default.addObserver(control, selector: #selector(showCurrent),
+                                               name: SwitcherOrigin.didChangeNotification, object: nil)
+        return control
+    }
+
+    @objc private func picked() {
+        guard SwitcherOrigin.answers.indices.contains(selectedSegment) else { return }
+        SwitcherOrigin.current = SwitcherOrigin.answers[selectedSegment]
+    }
+
+    @objc private func showCurrent() {
+        if let at = SwitcherOrigin.answers.firstIndex(of: SwitcherOrigin.current) {
+            selectedSegment = at
+        } else {
+            for segment in 0..<segmentCount { setSelected(false, forSegment: segment) }
+        }
+    }
+}
+
+/// 快捷键记录器：只在设置页明确聚焦时读取键盘事件，不安装任何全局监听。
+final class HotKeyRecorderView: NSControl {
+    typealias HotKey = WindowBrowserSettings.HotKey
+    var onCapture: ((HotKey?) -> Void)?
+    /// 录到的组合不能用时返回原因（显示在标签里）；能用返回 nil。
+    var validate: ((HotKey) -> String?)?
+    private let label = NSTextField(labelWithString: WSL10n.text("settings.shortcuts.notSet", zh: "未设置"))
+    private let recordButton = NSButton(title: WSL10n.text("settings.shortcuts.record", zh: "录制…"), target: nil, action: nil)
+    private let clearButton = NSButton(title: WSL10n.text("settings.shortcuts.clear", zh: "清除"), target: nil, action: nil)
+    private var current: HotKey?
+    private var recording = false
+    private var messageWork: DispatchWorkItem?
+
+    init(accessibilityName: String) {
+        super.init(frame: .zero)
+        label.font = WindowBrowserTypography.monospacedDigits
+        label.lineBreakMode = .byTruncatingTail
+        for button in [recordButton, clearButton] {
+            button.bezelStyle = .rounded
+            button.controlSize = .small
+        }
+        recordButton.target = self
+        recordButton.action = #selector(beginRecording)
+        clearButton.target = self
+        clearButton.action = #selector(clearHotKey)
+        for view in [label, recordButton, clearButton] { addSubview(view) }
+        widthAnchor.constraint(equalToConstant: 280).isActive = true
+        heightAnchor.constraint(equalToConstant: 24).isActive = true
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel(accessibilityName)
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override var acceptsFirstResponder: Bool { true }
+
+    func configure(current: HotKey?) {
+        self.current = current
+        messageWork?.cancel()
+        showText(current.map { WindowBrowserSettings.displayName(for: $0) } ?? WSL10n.text("settings.shortcuts.notSet", zh: "未设置"))
+        clearButton.isEnabled = current != nil
+    }
+
+    private func showText(_ text: String) {
+        label.stringValue = text
+        label.toolTip = text
+        setAccessibilityValue(text)
+        needsLayout = true
+    }
+
+    /// 录到不能用的组合：提示音 + 标签里说明原因，1.8 秒后回到当前组合。
+    private func reject(_ message: String) {
+        shadeSounds.beep()
+        showText(message)
+        messageWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.configure(current: self.current)
+        }
+        messageWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
+    }
+
+    override func layout() {
+        super.layout()
+        clearButton.frame = NSRect(x: bounds.width - 56, y: (bounds.height - 24) / 2,
+                                   width: 56, height: 24)
+        recordButton.frame = NSRect(x: bounds.width - 56 - 6 - 64,
+                                    y: (bounds.height - 24) / 2, width: 64, height: 24)
+        label.frame = NSRect(x: 0, y: (bounds.height - 16) / 2,
+                             width: max(60, recordButton.frame.minX - 8), height: 16)
+    }
+
+    @objc private func beginRecording() {
+        recording = true
+        messageWork?.cancel()
+        showText(WSL10n.text("settings.shortcuts.pressKeys", zh: "请按快捷键…"))
+        window?.makeFirstResponder(self)
+    }
+
+    @objc private func clearHotKey() {
+        recording = false
+        onCapture?(nil)
+    }
+
+    override func resignFirstResponder() -> Bool {
+        if recording {
+            recording = false
+            configure(current: current)
+        }
+        return super.resignFirstResponder()
+    }
+
+    override func keyDown(with event: NSEvent) {
+        guard recording else {
+            super.keyDown(with: event)
+            return
+        }
+        if event.keyCode == UInt16(kVK_Escape) {
+            recording = false
+            configure(current: current)
+            return
+        }
+        capture(event)
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard recording else { return super.performKeyEquivalent(with: event) }
+        capture(event)
+        return true
+    }
+
+    private func capture(_ event: NSEvent) {
+        // 只按修饰键不构成快捷键：保持录制状态，等真正的键。
+        guard !WindowBrowserSettings.isModifierOnlyKeyCode(event.keyCode) else { return }
+        recording = false
+        let hotKey = HotKey(keyCode: UInt32(event.keyCode),
+                            modifiers: Self.carbonModifiers(from: event.modifierFlags))
+        if WindowBrowserSettings.isReserved(hotKey) {
+            let hasControlOrOption = hotKey.modifiers & UInt32(controlKey | optionKey) != 0
+            reject(hasControlOrOption ? WSL10n.text("settings.shortcuts.reject.systemInUse", zh: "系统在用这个组合") : WSL10n.text("settings.shortcuts.reject.needsModifier", zh: "组合里要有 ⌃ 或 ⌥"))
+            return
+        }
+        if let message = validate?(hotKey) {
+            reject(message)
+            return
+        }
+        onCapture?(hotKey)
+    }
+
+    private static func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
+        var modifiers: UInt32 = 0
+        if flags.contains(.command) { modifiers |= UInt32(cmdKey) }
+        if flags.contains(.option) { modifiers |= UInt32(optionKey) }
+        if flags.contains(.control) { modifiers |= UInt32(controlKey) }
+        if flags.contains(.shift) { modifiers |= UInt32(shiftKey) }
+        return modifiers
+    }
+}
+
+
+/// 装着"有人在看时收起私人窗口"那一行；私人 App 名单一变就按最新名单重画，不用重进页面。
+@MainActor private final class BystanderRowHost: NSStackView {
+    private let build: () -> NSView
+    init(build: @escaping () -> NSView) {
+        self.build = build
+        super.init(frame: .zero)
+        orientation = .vertical; spacing = 0; alignment = .leading
+        place(build())
+        // 视图没了就把自己的监听摘掉；摘的时机是下一次名单变化。
+        let token = ObserverToken()
+        token.value = NotificationCenter.default.addObserver(
+            forName: PrivateAppList.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else {
+                    if let value = token.value { NotificationCenter.default.removeObserver(value) }
+                    return
+                }
+                self.reload()
+            }
+        }
+    }
+    private final class ObserverToken: @unchecked Sendable { var value: NSObjectProtocol? }
+    private func place(_ row: NSView) {
+        addArrangedSubview(row)
+        row.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
+    }
+    required init?(coder: NSCoder) { nil }
+    private func reload() {
+        for view in arrangedSubviews { removeArrangedSubview(view); view.removeFromSuperview() }
+        place(build())
+    }
+}
+
+
+/// 装着"音量和亮度"那一行；设置开关、辅助功能授权变了（NotchLevelSetting.didChange）就按最新状态重画，不用重进页面。
+@MainActor private final class LevelRowHost: NSStackView {
+    private let build: () -> NSView
+    init(build: @escaping () -> NSView) {
+        self.build = build
+        super.init(frame: .zero)
+        orientation = .vertical; spacing = 0; alignment = .leading
+        place(build())
+        // 视图没了就把自己的监听摘掉；摘的时机是下一次通知。
+        let token = ObserverToken()
+        token.value = NotificationCenter.default.addObserver(
+            forName: NotchLevelSetting.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else {
+                    if let value = token.value { NotificationCenter.default.removeObserver(value) }
+                    return
+                }
+                self.reload()
+            }
+        }
+    }
+    private final class ObserverToken: @unchecked Sendable { var value: NSObjectProtocol? }
+    private func place(_ row: NSView) {
+        addArrangedSubview(row)
+        row.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
+    }
+    required init?(coder: NSCoder) { nil }
+    private func reload() {
+        for view in arrangedSubviews { removeArrangedSubview(view); view.removeFromSuperview() }
+        place(build())
+    }
+}
+
+/// 点"允许…"之后等你在系统设置里打开辅助功能：设置窗口在前台时每 1 秒看一次，最多 2 分钟；
+/// 窗口不在前台就停，回到前台再看一次、接着数；不在后台轮询。允许了就马上装监听，不用重开。
+@MainActor private final class LevelAllowWatcher {
+    static let shared = LevelAllowWatcher()
+    private var watch: NotchLevelAllowWatch?
+    private var timer: Timer?
+    private weak var window: NSWindow?
+    private var observers: [NSObjectProtocol] = []
+
+    private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    func start(window: NSWindow?) {
+        finish()
+        self.window = window
+        watch = NotchLevelAllowWatch(startedAt: now)
+        let center = NotificationCenter.default
+        observers.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil,
+                                            queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.evaluate() }
+        })
+        if let window {
+            observers.append(center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window,
+                                                queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.evaluate() }
+            })
+        }
+        evaluate()
+    }
+
+    private func evaluate() {
+        guard let watch else { return }
+        let inFront = window.map { $0.isVisible && $0.isKeyWindow && NSApp.isActive } ?? false
+        switch watch.step(now: now, trusted: hasAccessibilityPermission(), windowInFront: inFront) {
+        case .allowed:
+            finish()
+            (NSApp.delegate as? AppDelegate)?.notch.installLevelTapIfAllowed()
+            NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
+        case .expired:
+            finish()
+        case .paused:
+            stopTimer()
+        case .waiting:
+            guard timer == nil else { return }
+            let next = Timer.scheduledTimer(withTimeInterval: NotchLevelAllowWatch.interval, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.evaluate() }
+            }
+            next.tolerance = NotchLevelAllowWatch.interval / 4
+            RunLoop.main.add(next, forMode: .common)
+            timer = next
+        }
+    }
+
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func finish() {
+        stopTimer()
+        for token in observers { NotificationCenter.default.removeObserver(token) }
+        observers.removeAll()
+        watch = nil
+        window = nil
+    }
 }

@@ -1,0 +1,87 @@
+{
+  "activationPolicy" : "prohibited",
+  "backendCopy" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-phase-preview-EA1ED0AF-5AE4-4D19-937B-680282A5B84A\/synthetic-codex.py",
+  "backendCopySHA256" : "643d5597d948597c0bd75450af2a9caf37a50551aa341b2a3b031654fe170ee9",
+  "childReaped" : true,
+  "controllerCount" : 1,
+  "fixtureSHA256" : "3cc79fb3045f3e62a6678c4bd718c017596f80b8f9bfc0bda800204bb5649afb",
+  "fixtureSource" : "tests\/fixtures\/conductor-backend.py",
+  "frames" : [
+    {
+      "image" : "light-before-launch.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "idle"
+    },
+    {
+      "image" : "light-ready.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "ready"
+    },
+    {
+      "image" : "light-ready-model-picker.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "ready"
+    },
+    {
+      "image" : "light-draft.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "ready"
+    },
+    {
+      "image" : "light-running.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "running"
+    },
+    {
+      "image" : "light-completed.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "completed"
+    },
+    {
+      "image" : "light-stopped.png",
+      "parentAppearance" : "NSAppearanceNameAqua",
+      "phase" : "stopped"
+    },
+    {
+      "image" : "dark-before-launch.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "stopped"
+    },
+    {
+      "image" : "dark-ready.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "ready"
+    },
+    {
+      "image" : "dark-ready-model-picker.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "ready"
+    },
+    {
+      "image" : "dark-draft.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "ready"
+    },
+    {
+      "image" : "dark-running.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "running"
+    },
+    {
+      "image" : "dark-completed.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "completed"
+    },
+    {
+      "image" : "dark-stopped.png",
+      "parentAppearance" : "NSAppearanceNameDarkAqua",
+      "phase" : "stopped"
+    }
+  ],
+  "noRealAssistant" : true,
+  "note" : "真实 WS2OwnedLaunchController + 合成 stdio 后端；未联系真实助手、账号、网络或浏览器。",
+  "synthetic" : true,
+  "temporaryPathStillOnDisk" : false,
+  "temporaryRemoved" : true,
+  "temporaryRoot" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-phase-preview-EA1ED0AF-5AE4-4D19-937B-680282A5B84A"
+}

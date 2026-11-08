@@ -1,0 +1,21 @@
+{
+  "v5CandidateFilesComparedToAttachedZip": 1140,
+  "v5CandidateUnchanged": true,
+  "v6CandidateFiles": 1145,
+  "finalStagedEqualsTestedCandidate": true,
+  "archives": [
+    {
+      "file": "WindowShade2-review-round2.zip",
+      "sha256": "6b8ecf89552de7385d0ee4489f2efcc57aeb65915f5aa08818f67de6be5b949a",
+      "bytes": 16854243,
+      "crcCheck": "PASS"
+    },
+    {
+      "file": "WindowShade2-round2-handoff-v5.zip",
+      "sha256": "83605350f691136f4edd58df5fa6768971297187594a6fb822097b6d33f9b39c",
+      "bytes": 20050172,
+      "crcCheck": "PASS"
+    }
+  ],
+  "boundary": "No prior-turn original extraction was mutated. Archive CRC and current digest are integrity records, not a new functional audit."
+}

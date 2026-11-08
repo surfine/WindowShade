@@ -1,0 +1,125 @@
+App/ArrangeController.swift:48:41: warning: capture of 'savedHandlers' with non-Sendable type '[(NativeProxyOverlayWindow, ((NSWindow) -> Void)?)]' in a '@Sendable' closure [#SendableClosureCaptures]
+App/ArrangeController.swift:48:63: warning: main actor-isolated property 'onResize' can not be mutated from a Sendable closure
+App/FoldTransaction.swift:112:107: warning: passing non-Sendable parameter 'action' to function expecting a '@Sendable' closure
+App/LaunchpadArtwork.swift:94:30: warning: mutation of captured var 'results' in concurrently-executing code [#SendableClosureCaptures]
+App/LaunchpadArtwork.swift:96:13: warning: capture of 'completion' with non-Sendable type '([LaunchpadArtwork.Drawing]) -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+App/MissionControlKeys.swift:114:23: warning: capture of 'self' with non-Sendable type 'MissionControlKeys?' in a '@Sendable' closure [#SendableClosureCaptures]
+App/TrackpadGestures.swift:643:71: warning: capture of 'settle' with non-Sendable type '(CGFloat) -> ()' in a '@Sendable' closure [#SendableClosureCaptures]
+App/UpdaterSystem.swift:466:24: warning: static property 'calls' is not concurrency-safe because non-'Sendable' type 'any LegacyLaunchdJobCalls.Type' may have shared mutable state [#MutableGlobalVariable]
+Effects/DuoController.swift:138:63: warning: call to main actor-isolated instance method 'suspend()' in a synchronous nonisolated context [#ActorIsolatedCall]
+Effects/DuoController.swift:138:88: warning: call to main actor-isolated instance method 'resume()' in a synchronous nonisolated context [#ActorIsolatedCall]
+Effects/DuoController.swift:164:84: warning: capture of 'action' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+Effects/FoldRenderer.swift:399:29: warning: capture of 'retainedFrame' with non-Sendable type 'EffectFrame?' in a '@Sendable' closure [#SendableClosureCaptures]
+Effects/LockOverlayController.swift:37:27: warning: call to main actor-isolated instance method 'refreshSoon()' in a synchronous nonisolated context [#ActorIsolatedCall]
+Effects/LockOverlayController.swift:57:103: warning: capture of 'action' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+Effects/LockOverlayController.swift:63:101: warning: call to main actor-isolated instance method 'refresh()' in a synchronous nonisolated context [#ActorIsolatedCall]
+Effects/RestoreVerification.swift:50:74: warning: passing non-Sendable parameter 'action' to function expecting a '@Sendable' closure
+Overlay/GestureHUD.swift:248:31: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
+Overlay/ShadeStrip.swift:676:47: warning: main actor-isolated property 'window' can not be referenced from a nonisolated context
+Overlay/ShadeStrip.swift:677:23: warning: call to main actor-isolated instance method 'convertToScreen' in a synchronous nonisolated context [#ActorIsolatedCall]
+Overlay/ShadeStrip.swift:677:46: warning: call to main actor-isolated instance method 'convert(_:to:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+Private/LockSpaceBridge.swift:44:80: warning: main actor-isolated property 'ignoresMouseEvents' can not be referenced from a nonisolated context
+Private/LockSpaceBridge.swift:45:22: warning: main actor-isolated property 'canBecomeKey' can not be referenced from a nonisolated context
+Private/LockSpaceBridge.swift:45:43: warning: main actor-isolated property 'canBecomeMain' can not be referenced from a nonisolated context
+Private/LockSpaceBridge.swift:55:28: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+Private/LockSpaceBridge.swift:68:15: warning: call to main actor-isolated instance method 'orderOut' in a synchronous nonisolated context [#ActorIsolatedCall]
+Private/LockSpaceBridge.swift:69:36: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+Private/LockSpaceBridge.swift:70:48: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+Recovery/Rescue.swift:223:18: warning: call to main actor-isolated instance method 'collectJournalRescueActions(targetTopLeft:into:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+Recovery/Rescue.swift:226:33: warning: call to main actor-isolated instance method 'collectParkedWindowRescueActions(targetTopLeft:into:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+ScreenCaptureBridge.swift:118:20: warning: main actor-isolated property 'videoGravity' can not be mutated from a nonisolated context
+ScreenCaptureBridge.swift:415:34: warning: main actor-isolated property 'sampleBufferRenderer' can not be referenced from a nonisolated context
+ScreenCaptureBridge.swift:416:54: warning: main actor-isolated property 'sampleBufferRenderer' can not be referenced from a nonisolated context
+Window/AppWindows.swift:113:9: warning: mutation of captured var 'images' in concurrently-executing code [#SendableClosureCaptures]
+Window/AppWindows.swift:95:9: warning: mutation of captured var 'discovered' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverObserver.swift:590:50: warning: main actor-isolated property 'dockPID' can not be referenced from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:591:26: warning: call to main actor-isolated instance method 'invalidate(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverObserver.swift:600:67: warning: main actor-isolated property 'running' can not be referenced from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:601:26: warning: call to main actor-isolated instance method 'invalidate(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverObserver.swift:622:38: warning: main actor-isolated property 'running' can not be referenced from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:624:38: warning: main actor-isolated property 'displayLayout' can not be referenced from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:625:26: warning: call to main actor-isolated instance method 'refreshDockAreas()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverObserver.swift:628:22: warning: main actor-isolated property 'displayLayout' can not be mutated from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:629:22: warning: main actor-isolated property 'topologyVersion' can not be mutated from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:630:22: warning: main actor-isolated property 'detection' can not be mutated from a Sendable closure
+WindowBrowser/DockHoverObserver.swift:631:22: warning: call to main actor-isolated instance method 'rebuildObserver(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverProbe.swift:1014:14: warning: concurrently-executed local function 'mismatch()' must be marked as '@Sendable'
+WindowBrowser/DockHoverProbe.swift:1027:13: warning: mutation of captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1028:13: warning: mutation of captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1028:25: warning: reference to captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1028:32: warning: call to main actor-isolated local function 'mismatch()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverProbe.swift:1028:32: warning: capture of 'mismatch()' with non-Sendable type '() -> CGFloat' in a '@Sendable' closure [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1029:13: warning: mutation of captured var 'widths' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1029:33: warning: main actor-isolated property 'frame' can not be referenced from a Sendable closure
+WindowBrowser/DockHoverProbe.swift:1030:16: warning: reference to captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1032:27: warning: call to main actor-isolated local function 'mismatch()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverProbe.swift:1033:31: warning: main actor-isolated property 'frame' can not be referenced from a Sendable closure
+WindowBrowser/DockHoverProbe.swift:1036:32: warning: reference to captured var 'widths' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1038:62: warning: reference to captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1039:32: warning: reference to captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:1041:19: warning: call to main actor-isolated instance method 'orderOut' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverProbe.swift:1042:19: warning: call to main actor-isolated instance method 'close()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/DockHoverProbe.swift:299:13: warning: mutation of captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:299:42: warning: reference to captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:300:53: warning: reference to captured var 'lastHeartbeat' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:301:13: warning: mutation of captured var 'lastHeartbeat' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:385:13: warning: capture of 'heartbeat' with non-Sendable type 'Timer' in a '@Sendable' closure [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:389:41: warning: reference to captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:825:17: warning: reference to captured var 'self' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:825:23: warning: main actor-isolated property 'tickerFires' can not be mutated from a Sendable closure
+WindowBrowser/DockHoverProbe.swift:826:17: warning: mutation of captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:827:20: warning: reference to captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:827:34: warning: mutation of captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/DockHoverProbe.swift:828:23: warning: main actor-isolated property 'frame' can not be mutated from a Sendable closure
+WindowBrowser/DockHoverProbe.swift:828:40: warning: reference to captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+WindowBrowser/WindowBrowserActions.swift:49:43: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
+WindowBrowser/WindowBrowserContentView.swift:209:23: warning: call to main actor-isolated instance method 'notifyVisibleKeys()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserContentView.swift:911:31: warning: main actor-isolated property 'isHidden' can not be mutated from a Sendable closure
+WindowBrowser/WindowBrowserContentView.swift:911:60: warning: main actor-isolated property 'alphaValue' can not be referenced from a Sendable closure
+WindowBrowser/WindowBrowserController.swift:1321:19: warning: call to main actor-isolated instance method 'sweepClosedWindows()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:2789:19: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:2936:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:2939:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:2954:22: warning: main actor-isolated property 'scheduler' can not be referenced from a Sendable closure
+WindowBrowser/WindowBrowserController.swift:2956:21: warning: call to main actor-isolated parameter 'completion' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:2964:26: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:2991:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:3024:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:345:76: warning: capture of 'body' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+WindowBrowser/WindowBrowserController.swift:371:31: warning: call to main actor-isolated instance method 'environmentDidSuspend(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:373:31: warning: call to main actor-isolated instance method 'environmentDidResume(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:508:19: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserController.swift:514:27: warning: capture of 'batch' with non-Sendable type 'WindowBrowserTargetBatch<AXUIElement>?' in a '@Sendable' closure [#SendableClosureCaptures]
+WindowBrowser/WindowBrowserFixture.swift:109:29: warning: main actor-isolated property 'searchText' can not be referenced from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:121:17: warning: call to main actor-isolated instance method 'update(mode:records:selection:style:busyKeys:screenRecordingAvailable:hasAccessibility:status:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserFixture.swift:127:25: warning: call to main actor-isolated instance method 'applyThumbnail(_:for:note:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserFixture.swift:24:22: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:24:28: warning: main actor-isolated property 'appearance' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:25:23: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:25:29: warning: main actor-isolated property 'appearance' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:37:21: warning: call to main actor-isolated initializer 'init(mode:frame:params:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserFixture.swift:38:15: warning: main actor-isolated property 'onCancel' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:38:28: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:38:34: warning: call to main actor-isolated instance method 'terminate' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserFixture.swift:40:17: warning: main actor-isolated property 'onActivate' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:41:17: warning: main actor-isolated property 'onSelect' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:42:17: warning: main actor-isolated property 'onPrimary' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:48:17: warning: main actor-isolated property 'onPin' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:54:17: warning: main actor-isolated property 'onSearchChanged' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:55:17: warning: main actor-isolated property 'onStyleChanged' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:56:17: warning: main actor-isolated property 'onCommit' can not be mutated from a nonisolated context
+WindowBrowser/WindowBrowserFixture.swift:59:15: warning: call to main actor-isolated instance method 'presentKeyboardPanel()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserGeometry.swift:153:28: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserGeometry.swift:153:44: warning: main actor-isolated property 'intrinsicContentSize' can not be referenced from a nonisolated context
+WindowBrowser/WindowBrowserIdentityProbe.swift:189:62: warning: main actor-isolated property 'fabricatedKey' can not be referenced from a nonisolated context
+WindowBrowser/WindowBrowserIdentityProbe.swift:194:81: warning: main actor-isolated property 'fabricatedKey' can not be referenced from a Sendable closure
+WindowBrowser/WindowBrowserIdentityProbe.swift:233:31: warning: main actor-isolated property 'allocator' can not be referenced from a Sendable closure
+WindowBrowser/WindowBrowserIdentityProbe.swift:57:17: warning: capture of 'self' with non-Sendable type 'IdentityProbeBackend' in a '@Sendable' closure [#SendableClosureCaptures]
+WindowBrowser/WindowBrowserListRowView.swift:106:42: warning: main actor-isolated property 'isSelected' can not be referenced from a Sendable closure
+WindowBrowser/WindowBrowserListRowView.swift:107:26: warning: call to main actor-isolated instance method 'refreshAppearance(animated:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowBrowser/WindowBrowserLiveAppProbe.swift:359:74: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
+WindowBrowser/WindowBrowserMetadataQueue.swift:26:47: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
+WindowBrowser/WindowBrowserPanel.swift:154:31: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
+WindowBrowser/WindowBrowserPanel.swift:190:34: warning: main actor-isolated property 'resizeGeneration' can not be referenced from a Sendable closure
+WindowBrowser/WindowBrowserPanel.swift:191:18: warning: call to main actor-isolated instance method 'settle(to:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+WindowShade.swift:88:25: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context

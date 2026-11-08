@@ -1,0 +1,65 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-build-71l0ccdc/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.07755307699994773,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Native",
+      "/tmp/ws2-build-71l0ccdc/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2QuitBarrier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/App/WS2OwnedLaunchController.swift",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part7/tests/TestSupport.swift",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part7/tests/CoreTests.swift",
+      "-o",
+      "/tmp/ws2-build-71l0ccdc/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 5.419543632999876,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-build-71l0ccdc/suite",
+      "/mnt/data/WindowShade2-round2-part8/validation/regressions/part7/core-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017553567000049952,
+    "stdout": "PASS JSON01 empty object [1]\nPASS JSON02 nested [1]\nPASS JSON03 duplicate [1]\nPASS JSON04 escaped duplicate [1]\nPASS JSON05 nested duplicate [1]\nPASS JSON06 surrogate pair [1]\nPASS JSON07 lone high surrogate [1]\nPASS JSON08 lone low surrogate [1]\nPASS JSON09 leading zero [1]\nPASS JSON10 fraction exponent [1]\nPASS JSON11 trailing data [1]\nPASS JSON12 trailing comma [1]\nPASS JSON13 invalid escape [1]\nPASS JSON14 raw control [1]\nPASS JSON15 unicode [1]\nPASS JSON16 incomplete exponent [1]\nPASS JSON17 deep [1]\nPASS JSON18 whitespace [1]\nPASS JSON19 size and node budgets [3]\nPASS URL01 browser scheme and exact host [8]\nPASS WIRE01 duplicate keys close before RPC interpretation [2]\nPASS QUIT01 both owners must settle [3]\nPASS QUIT02 updater alone cannot release child [3]\nPASS WIRE02 ambiguous result/error envelope [2]\nPASS QUIT03 veto and double begin [3]\nPASS PROFILE01 creates private state without overwriting changes [6]\nPASS PROFILE02 project configuration and linked state reject [3]\nTOTAL 27 scenarios, 51 assertions\n",
+    "stderr": ""
+  }
+]

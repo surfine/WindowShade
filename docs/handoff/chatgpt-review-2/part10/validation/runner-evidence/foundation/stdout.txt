@@ -1,0 +1,9 @@
+Swift version 6.2.1 (swift-6.2.1-RELEASE)
+Target: x86_64-unknown-linux-gnu
+cc (Debian 14.2.0-19) 14.2.0
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Linux 016dcd9a6658 6.18.44 #1 SMP Sat Sep 26 20:02:31 UTC 2026 x86_64 GNU/Linux
+Foundation: 40 Parse only: 13 Mac SDK: NOT RUN

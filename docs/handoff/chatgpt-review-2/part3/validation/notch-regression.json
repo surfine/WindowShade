@@ -1,0 +1,8 @@
+{
+  "command": [
+    "/tmp/ws2-r3-validate-78o5fsui/notch-regression"
+  ],
+  "exitCode": 0,
+  "stdout": "PASS notch activity store\n",
+  "stderr": ""
+}

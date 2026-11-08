@@ -1,0 +1,65 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-build-nbop6__v/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11701306400004796,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native",
+      "/tmp/ws2-build-nbop6__v/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedLaunchController.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/TestSupport.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/FlowTests.swift",
+      "-o",
+      "/tmp/ws2-build-nbop6__v/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 8.16644602600013,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-build-nbop6__v/suite",
+      "/mnt/data/WindowShade2-round2-part7/fixtures/fake-codex.py",
+      "/mnt/data/WindowShade2-round2-part7/validation/flow-results.json"
+    ],
+    "exit_code": -4,
+    "elapsed_seconds": 0.03925725800013424,
+    "stdout": "",
+    "stderr": "suite/TestSupport.swift:11: Fatal error: FAIL FLOW01 local launch and actual stream completion: launch accepted\n\n*** Signal 4: Backtracing from 0x7f10ef4d5788... done ***\n\n*** Program crashed: Illegal instruction at 0x00007f10ef4d5788 ***\n\nPlatform: x86_64 Linux (Debian GNU/Linux 13 (trixie))\n\nThread 0 \"suite\" crashed:\n\n  0                  0x00007f10ef4d5788 _assertionFailure(_:_:file:line:flags:) + 264 in libswiftCore.so\n  1 [ra]             0x0000556ad1979850 TestLog.check(_:_:) + 799 in suite\n  2 [ra]             0x0000556ad198796d start #1 (_:diagnostics:) in static FlowTests.main() + 124 in suite\n  3 [async]          0x0000556ad197adf0 static FlowTests.main() in suite\n  4 [async]          0x0000556ad198bbb0 static FlowTests.$main() in suite\n  5 [async] [system] 0x0000556ad198bd70 async_MainTQ0_ in suite\n  6 [async] [thunk]  0x0000556ad198be30 thunk for @escaping @convention(thin) @async () -> () in suite\n  7 [async] [thunk]  0x0000556ad198bf30 partial apply for thunk for @escaping @convention(thin) @async () -> () in suite\n  8 [async] [system] 0x00007f10ef1c35e0 completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*) in libswift_Concurrency.so\n...\n\n\nRegisters:\n\nrax 0x0000000200000003  8589934595\nrdx 0x0000000000000002  2\nrcx 0xfffffffe00000000  18446744065119617024\nrbx 0x0000000000000003  3\nrsi 0x0000556ae44ba2b8  03 00 00 00 00 00 00 00 90 00 00 00 00 00 00 80  ················\nrdi 0x0000000000000002  2\nrbp 0x00007ffd614a1f00  30 20 4a 61 fd 7f 00 00 50 98 97 d1 6a 55 00 00  0 Jaý···P··ÑjU··\nrsp 0x00007ffd614a1e90  30 3f 4b e4 6a 55 00 00 00 00 00 00 00 00 00 00  0?KäjU··········\n r8 0x0000000000000060  96\n r9 0x0000000000000046  70\nr10 0x0000000000000000  0\nr11 0x0000000000000000  0\nr12 0x00007f10eb6a8c88  7c 05 00 00 00 00 00 00 a0 2d 4b e4 6a 55 00 00  |······· -KäjU··\nr13 0x00007ffd614a1fd8  46 00 00 00 00 00 00 f0 b0 a2 4b e4 6a 55 00 00  F······ð°¢KäjU··\nr14 0x0000556ae44b7bc0  50 33 4b e4 6a 55 00 00 f0 ad 97 d1 6a 55 00 00  P3KäjU··ð­·ÑjU··\nr15 0x0000556ae44b2da0  20 69 1e ef 10 7f 00 00 03 00 00 00 00 00 00 00   i·ï············\nrip 0x00007f10ef4d5788  0f 0b 48 8d 35 7f 0c fb ff 48 8d 55 a0 45 31 e4  ··H·5··ûÿH·U E1ä\n\nrflags 0x0000000000010206  PF\n\ncs 0x0033  fs 0x0000  gs 0x0000\n\n\nImages (17 omitted):\n\n0x0000556ad18b1000–0x0000556ad198c761 1ecadb0b75f55c931a1c2b43feccddec96111e49 suite                   /tmp/ws2-build-nbop6__v/suite\n0x00007f10ef150000–0x00007f10ef1e0080 493a5257250e4963477b8a6d418481e8db54e2c4 libswift_Concurrency.so /usr/local/swift/usr/lib/swift/linux/libswift_Concurrency.so\n0x00007f10ef1f3000–0x00007f10ef7a41e8 fd1782c519b557fc55329e9a457a811e94945645 libswiftCore.so         /usr/local/swift/usr/lib/swift/linux/libswiftCore.so\n\nBacktrace took 0.01s\n\n"
+  }
+]

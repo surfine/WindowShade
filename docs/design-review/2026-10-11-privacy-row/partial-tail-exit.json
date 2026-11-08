@@ -1,0 +1,8 @@
+{
+  "session_id": 54275,
+  "exit_code": 0,
+  "consumer_exit_code": 0,
+  "frames": 48,
+  "visual_status": "reading_incomplete: tail truncation hides trailing82%",
+  "not_final_acceptance": true
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "python3",
+    "/mnt/data/WindowShade2-round2-part6/tools/stage.py",
+    "--base",
+    "/mnt/data/ws2-v6-base/WindowShade2-round2-handoff-v5/candidate-repo",
+    "--out",
+    "/mnt/data/ws2-v6-final-candidate",
+    "--report",
+    "/mnt/data/WindowShade2-round2-part6/validation/stage.json"
+  ],
+  "exitCode": 0,
+  "stdout": "{\"status\": \"STAGED\", \"outputFiles\": 1145}\n",
+  "stderr": ""
+}

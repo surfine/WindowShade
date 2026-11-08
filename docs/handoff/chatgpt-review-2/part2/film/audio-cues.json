@@ -1,0 +1,74 @@
+[
+  {
+    "frame": 840,
+    "file": "assets/audio/sfx/transition/transition-soft.mp3",
+    "volume": 0.22,
+    "fadeInFrames": 0,
+    "fadeOutFrames": 12,
+    "durationInFrames": 90,
+    "approved": false
+  },
+  {
+    "frame": 1800,
+    "file": "assets/audio/sfx/transition/swoosh-quick.mp3",
+    "volume": 0.18,
+    "fadeInFrames": 0,
+    "fadeOutFrames": 12,
+    "durationInFrames": 90,
+    "approved": false
+  },
+  {
+    "frame": 3240,
+    "file": "assets/audio/sfx/text/keyboard.mp3",
+    "volume": 0.16,
+    "fadeInFrames": 3,
+    "fadeOutFrames": 8,
+    "durationInFrames": 36,
+    "approved": false
+  },
+  {
+    "frame": 3840,
+    "file": "assets/audio/sfx/transition/swoosh-quick.mp3",
+    "volume": 0.18,
+    "fadeInFrames": 0,
+    "fadeOutFrames": 12,
+    "durationInFrames": 90,
+    "approved": false
+  },
+  {
+    "frame": 4500,
+    "file": "assets/audio/sfx/text/typewriter-hit-single.mp3",
+    "volume": 0.12,
+    "fadeInFrames": 0,
+    "fadeOutFrames": 6,
+    "durationInFrames": 18,
+    "approved": false
+  },
+  {
+    "frame": 5880,
+    "file": "assets/audio/sfx/transition/transition-soft.mp3",
+    "volume": 0.2,
+    "fadeInFrames": 0,
+    "fadeOutFrames": 12,
+    "durationInFrames": 90,
+    "approved": false
+  },
+  {
+    "frame": 6960,
+    "file": "assets/audio/sfx/riser/riser-cine.mp3",
+    "volume": 0.18,
+    "fadeInFrames": 8,
+    "fadeOutFrames": 20,
+    "durationInFrames": 180,
+    "approved": false
+  },
+  {
+    "frame": 7140,
+    "file": "assets/audio/sfx/impact/impact-deep-whoosh.mp3",
+    "volume": 0.25,
+    "fadeInFrames": 0,
+    "fadeOutFrames": 30,
+    "durationInFrames": 180,
+    "approved": false
+  }
+]

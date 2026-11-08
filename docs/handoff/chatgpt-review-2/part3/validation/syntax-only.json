@@ -1,0 +1,305 @@
+{
+  "warning": "仅语法解析，没有 macOS SDK 类型检查",
+  "files": [
+    {
+      "path": "/mnt/data/WindowShade2-round2-part3/probes/BLEReadProbe.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/WindowShade2-round2-part3/probes/BLEReadProbe.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/WindowShade2-round2-part3/probes/IdentityBoundaryProbe.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/WindowShade2-round2-part3/probes/IdentityBoundaryProbe.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/WindowShade2-round2-part3/probes/LockStateProbe.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/WindowShade2-round2-part3/probes/LockStateProbe.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/WindowShade2-round2-part3/probes/MultitouchSymbolProbe.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/WindowShade2-round2-part3/probes/MultitouchSymbolProbe.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/WindowShade2-round2-part3/probes/RemoteHIDProbe.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/WindowShade2-round2-part3/probes/RemoteHIDProbe.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/FocusTimerCard.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/FocusTimerCard.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/FocusTimerHost.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/FocusTimerHost.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/FoldExit.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/FoldExit.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/InteractionCoordinator.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/InteractionCoordinator.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/MenuBarController.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/MenuBarController.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/Notch.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/Notch.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/NotchActivityController.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/NotchActivityController.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/NotchActivityView.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/NotchActivityView.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/Preferences.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/Preferences.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/ShadeController.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/ShadeController.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/WS2AgentSessionView.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/WS2AgentSessionView.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/WS2AppRuntime.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/WS2AppRuntime.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/WS2ConductorView.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/WS2ConductorView.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/WS2SettingsInfo.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/WS2SettingsInfo.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/App/WS2SupplementPane.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/App/WS2SupplementPane.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/Core/NotchActivities.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/Core/NotchActivities.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/PinnedPreview.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/PinnedPreview.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/Support/Diagnostics.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/Support/Diagnostics.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/Window/AXHelpers.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/Window/AXHelpers.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "path": "/mnt/data/ws2-r3-stage/prototype/WindowShade.swift",
+      "command": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "/mnt/data/ws2-r3-stage/prototype/WindowShade.swift"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    }
+  ]
+}

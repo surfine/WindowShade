@@ -1,0 +1,11 @@
+{
+  "baseline_session": 12419,
+  "baseline_exit": 0,
+  "final_session": 50127,
+  "final_exit": 0,
+  "consumer_exit": 0,
+  "wrapper_direct_attempt_exit": 126,
+  "optimized_reused_session": 19124,
+  "optimized_input_count": 519,
+  "changed_inputs": []
+}

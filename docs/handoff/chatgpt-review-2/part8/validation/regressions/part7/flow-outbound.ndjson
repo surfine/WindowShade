@@ -1,0 +1,92 @@
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/login-cancel-0E49B4E5-2A66-4BD1-B275-BD1FF0E2B698/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "account/login/start", "params": {"type": "chatgpt"}}
+{"id": 6, "method": "account/login/cancel", "params": {"loginId": "login-fixture"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/directory-FE626E31-F34E-464C-88C7-0360778EE85D/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/url-FA4C284A-A522-4DFE-80E3-F08EB49FDC50/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "account/login/start", "params": {"type": "chatgpt"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/login-E5666CE1-2325-45C5-BB8A-EE9AB223F372/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "account/login/start", "params": {"type": "chatgpt"}}
+{"id": 6, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 7, "method": "account/logout"}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/failed-C2FCCD78-D6A6-4E77-8F4D-67650F4F886D/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/failed-C2FCCD78-D6A6-4E77-8F4D-67650F4F886D/project", "model": "fixture-a", "sandbox": "read-only"}}
+{"id": 6, "method": "turn/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "effort": "medium", "input": [{"text": "\u5931\u8d25\u6d4b\u8bd5", "text_elements": [], "type": "text"}], "model": "fixture-a", "sandboxPolicy": {"networkAccess": false, "type": "readOnly"}, "threadId": "thread-real-fixture"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/approval-D670114A-429D-4C18-A097-582CFAA00ADB/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/approval-D670114A-429D-4C18-A097-582CFAA00ADB/project", "model": "fixture-a", "sandbox": "read-only"}}
+{"id": 6, "method": "turn/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "effort": "medium", "input": [{"text": "\u67e5\u8be2", "text_elements": [], "type": "text"}], "model": "fixture-a", "sandboxPolicy": {"networkAccess": false, "type": "readOnly"}, "threadId": "thread-real-fixture"}}
+{"id": "approval-fixture", "result": {"decision": "decline"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/diagnostics-477A1DD9-1AFE-4DB5-839F-ED86A58150B6/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/diagnostics-477A1DD9-1AFE-4DB5-839F-ED86A58150B6/project", "model": "fixture-a", "sandbox": "read-only"}}
+{"id": 6, "method": "turn/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "effort": "medium", "input": [{"text": "\u8bca\u65ad", "text_elements": [], "type": "text"}], "model": "fixture-a", "sandboxPolicy": {"networkAccess": false, "type": "readOnly"}, "threadId": "thread-real-fixture"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/lock/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/lock/project", "model": "fixture-a", "sandbox": "read-only"}}
+{"id": 6, "method": "turn/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "effort": "medium", "input": [{"text": "\u9501\u5b9a\u6d4b\u8bd5", "text_elements": [], "type": "text"}], "model": "fixture-a", "sandboxPolicy": {"networkAccess": false, "type": "readOnly"}, "threadId": "thread-real-fixture"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/config-CC881711-4C7E-43CD-84D2-7C8B68D540D9/project", "includeLayers": true}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/login-wrong-id-CDD75C1C-6DC1-4D32-A51F-90671EA5739A/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "account/login/start", "params": {"type": "chatgpt"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/normal-579A4D27-D597-4DCF-94DD-5DC87DF8055A/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/normal-579A4D27-D597-4DCF-94DD-5DC87DF8055A/project", "model": "fixture-a", "sandbox": "read-only"}}
+{"id": 6, "method": "turn/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "effort": "medium", "input": [{"text": "\u4f60\u597d", "text_elements": [], "type": "text"}], "model": "fixture-a", "sandboxPolicy": {"networkAccess": false, "type": "readOnly"}, "threadId": "thread-real-fixture"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/normal-579A4D27-D597-4DCF-94DD-5DC87DF8055A/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/resume", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "sandbox": "read-only", "threadId": "thread-real-fixture"}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/other", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "version": "2-probe"}}}
+{"method": "initialized"}
+{"id": 2, "method": "model/list", "params": {"includeHidden": false, "limit": 100}}
+{"id": 3, "method": "config/read", "params": {"cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/hold-60135D72-F0D6-46F7-9EFE-89E84563EAE9/project", "includeLayers": true}}
+{"id": 4, "method": "account/read", "params": {"refreshToken": false}}
+{"id": 5, "method": "thread/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "cwd": "/tmp/ws2-part7-flow-9DCC548E-352B-4A7F-86C9-04311AA2716B/hold-60135D72-F0D6-46F7-9EFE-89E84563EAE9/project", "model": "fixture-a", "sandbox": "read-only"}}
+{"id": 6, "method": "turn/start", "params": {"approvalPolicy": "on-request", "approvalsReviewer": "user", "effort": "medium", "input": [{"text": "\u505c\u5728\u8fd9\u91cc", "text_elements": [], "type": "text"}], "model": "fixture-a", "sandboxPolicy": {"networkAccess": false, "type": "readOnly"}, "threadId": "thread-real-fixture"}}
+{"id": 7, "method": "turn/interrupt", "params": {"threadId": "thread-real-fixture", "turnId": "turn-1"}}

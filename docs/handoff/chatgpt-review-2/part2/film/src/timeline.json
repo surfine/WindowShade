@@ -1,0 +1,218 @@
+{
+  "fps": 60,
+  "frames": 7560,
+  "bpmEditorial": 120,
+  "chapters": [
+    {
+      "id": 0,
+      "title": "开盖，认出你",
+      "start": 0,
+      "duration": 840,
+      "holds": [
+        [
+          0,
+          60
+        ],
+        [
+          360,
+          420
+        ],
+        [
+          660,
+          780
+        ]
+      ],
+      "shape": "expanded",
+      "color": "#FFF4E0",
+      "kind": "unlock"
+    },
+    {
+      "id": 1,
+      "title": "刘海，活了",
+      "start": 840,
+      "duration": 960,
+      "holds": [
+        [
+          180,
+          270
+        ],
+        [
+          420,
+          510
+        ],
+        [
+          660,
+          750
+        ]
+      ],
+      "shape": "alert",
+      "color": "#5FD38A",
+      "kind": "footage"
+    },
+    {
+      "id": 2,
+      "title": "看不见的，都在这里",
+      "start": 1800,
+      "duration": 1080,
+      "holds": [
+        [
+          180,
+          240
+        ],
+        [
+          450,
+          510
+        ],
+        [
+          720,
+          780
+        ],
+        [
+          840,
+          960
+        ]
+      ],
+      "shape": "expanded",
+      "color": "#FFFFFF",
+      "kind": "footage"
+    },
+    {
+      "id": 3,
+      "title": "点一下，所有 App",
+      "start": 2880,
+      "duration": 960,
+      "holds": [
+        [
+          180,
+          270
+        ],
+        [
+          420,
+          510
+        ],
+        [
+          660,
+          780
+        ]
+      ],
+      "shape": "compact",
+      "color": "#FFFFFF",
+      "kind": "footage"
+    },
+    {
+      "id": 4,
+      "title": "任何输入，同一套动作",
+      "start": 3840,
+      "duration": 600,
+      "holds": [
+        [
+          120,
+          180
+        ],
+        [
+          330,
+          390
+        ],
+        [
+          450,
+          510
+        ]
+      ],
+      "shape": "compact",
+      "color": "#FFFFFF",
+      "kind": "input"
+    },
+    {
+      "id": 5,
+      "title": "画一笔，说一句",
+      "start": 4440,
+      "duration": 1440,
+      "holds": [
+        [
+          180,
+          240
+        ],
+        [
+          480,
+          570
+        ],
+        [
+          780,
+          870
+        ],
+        [
+          1080,
+          1170
+        ],
+        [
+          1260,
+          1350
+        ]
+      ],
+      "shape": "expanded",
+      "color": "#E98BB2",
+      "kind": "conduct"
+    },
+    {
+      "id": 6,
+      "title": "长按，换一种用法",
+      "start": 5880,
+      "duration": 720,
+      "holds": [
+        [
+          120,
+          180
+        ],
+        [
+          390,
+          510
+        ],
+        [
+          570,
+          630
+        ]
+      ],
+      "shape": "expanded",
+      "color": "#4AA3FF",
+      "kind": "road"
+    },
+    {
+      "id": 7,
+      "title": "专注时安静，走开就锁",
+      "start": 6600,
+      "duration": 360,
+      "holds": [
+        [
+          90,
+          150
+        ],
+        [
+          240,
+          300
+        ]
+      ],
+      "shape": "compact",
+      "color": "#FF6B5E",
+      "kind": "focus"
+    },
+    {
+      "id": 8,
+      "title": "WindowShade 2",
+      "start": 6960,
+      "duration": 600,
+      "holds": [
+        [
+          240,
+          420
+        ],
+        [
+          480,
+          600
+        ]
+      ],
+      "shape": "quiet",
+      "color": "#FFFFFF",
+      "kind": "outro"
+    }
+  ]
+}

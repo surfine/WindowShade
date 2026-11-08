@@ -1,0 +1,2 @@
+$ swiftc -swift-version 6 -parse-as-library -typecheck examples/D6.swift
+exit=0

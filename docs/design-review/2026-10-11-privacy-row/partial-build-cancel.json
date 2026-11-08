@@ -1,0 +1,7 @@
+{
+  "reason": "actual PNG reveals trailing82% lost; tail candidate obsolete before acceptance",
+  "own_frontend_pid": 24601,
+  "own_build_parent_pid": 22071,
+  "signal": "SIGTERM",
+  "not_a_compile_failure_diagnosis": true
+}

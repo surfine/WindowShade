@@ -1,0 +1,10 @@
+{
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "machine": "x86_64",
+  "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+  "swift": "Swift version 6.2.1 (swift-6.2.1-RELEASE)\nTarget: x86_64-unknown-linux-gnu\n",
+  "jsonschema": "4.26.0",
+  "macOSSDK": false,
+  "realCLI": false,
+  "realDevices": false
+}

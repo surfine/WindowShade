@@ -1,0 +1,4 @@
+signed-out: 需要登录 ChatGPT, passed=true
+config-rejected: 已断开, passed=false
+malformed-account: 已断开, passed=false
+manual-stop: 已断开, passed=true

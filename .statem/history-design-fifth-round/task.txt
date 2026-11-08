@@ -1,0 +1,57 @@
+第五设计检查点：持续高级感目标、蓝图七线完整保留。上一轮有生产修正与当前原生/流程证据，判为progress。本批主模型负责Owned会话页面结构和状态：配置只在启动前出现，运行会话以项目/状态、实际模型、回复、草稿和唯一主操作为层次；不新增产品窗口/材质/权限，不弱化授权/组合输入/发送守卫。空草稿按钮禁用，实际已选模型状态不再要求重选。原生宿主480高度上限保持；底部提示需完整进入可见内容或滚动区域，不把滚动本身当错误。先用同一实际相位fixture交付可检查小样再扩大。
+验收：当前完整OwnedPhasePreview14实际状态+受控按钮负例/组合输入/撤销与文本边界；现有conductor-owned-flow测试；最终prototype/build.sh --check，绑定当前源码身份。原生fixture仅系统唯一临时项目/合成后端、屏幕外不激活，不访问真实账号/项目/网络。实际焦点/VoiceOver/真机/动效仍not_run。构建输入不可变，不并行写同一QA入口；不提交推送签名安装发版。第四原始契约/回执归档history-design-fourth-round。
+
+修正合成样件约束（由实际检查决定）：仓库.build下的项目会被真实LaunchProfile祖先配置门禁拒绝。只把自造项目/exe/profile放系统temporaryDirectory唯一UUID目录，输出仍.build；不改生产边界、不删或读取实际账号配置内容。成功与错误路径均先stop并等待reap，再只删除该自造目录；原始失败输出与校验值错误样件保存在rejected-worker，不能作为通过证据。
+
+第四批独立推进补充：最终生产构建期间，用已有conductor-backend.py合成stdio后端与自造临时项目，给真实OwnedLaunchController走ready/running/completed/stopped等状态并捕获原生会话页。只向合成后端发fixture文字，不访问真实账号/项目/网络、不打开登录或浏览器；数据与进程清理必须可验证。此为下一批设计样件/证据，不改变正在编译的生产源码，不把合成协议成功推广为真实助手体验。
+
+持续原始目标：请持续推进 WindowShade 2，从设计开始发现问题并解决问题，直到品味和格调建立起来。七条线与蓝图完整目标保留，检查点不是缩小成功标准。
+本批契约：用实际原生生产视图复现模型选择、指挥详情、会话列表在黑色刘海宿主的浅/深外观；若复现继承问题，由主模型决定唯一宿主的外观策略，保持相机/授权/输入/取消逻辑。梳理会话列表的内容层次与边距，按《看与指挥》画面核对；Owned会话的工作流继续保留，不把只读空闲样件当操作验收。
+交付：生产修正、当前前后PNG、源码/构建身份、实际宿主回归与边界证据、持续笔记。
+读取：CONTINUE、第三批证据、相关视图、Notch宿主、看与指挥/指挥模式相关稿段落。检查：隔离原生renderer，相关AppKit测试，build.sh --check仅最终一遍并持久记录退出码，git diff --check。不改在途脚本，不复用旧编译为当前证据。
+约束：不覆盖用户 .zcode 或新工作区变化，不提交/推送/签名/安装/启动产品，不访问实际用户项目/日历/助手，不激活fixture，不操作用户窗口。真机/多屏/动效未验则not_run；不宣称整体完成。无破坏性外部操作，旧检查点字节与摘要已保存在history-design-third-round。
+
+此前可见契约（历史）：
+持续设计第三检查点：完整用户目标与原始七线不变。接续第二批的当前源码与CONTINUE.md；上一goal turn有真实生产改动和当前原生/build证据，判为progress。
+本批动作：主模型先原生复现指挥/会话固定黑底在浅色外观的问题，按画面修正；接入已看过的日程按钮整体居中与28底角候选，核对实际宿主与既有日程输入/权限/共享行为。独立原生预览编译入口交DeepSeek，唯一可写tools/design-qa/render-native-surfaces.sh，主模型验实际差异与实际运行证据。
+完成本批需实际前后画面及同源身份、原生控件/实际宿主必要回归、最终prototype/build.sh --check，未验真机项仍not_run；不把子批通过缩成完整goal完成。设计稿、copy-guide、单宿主/租约及授权链保持；不提交推送签名安装，不运行日常产品，不动用户窗口/日历/会话。所有fixture自造输入、窗口不显示；运行中的脚本保持不改。
+原始任务与前两批契约保留；第三批之后继续播放器/文件架/设置上手/窗口/遥控指挥/安全电量隐私及共同刘海真机验收。目标持续active。
+
+持续目标（用户 2026-10-11）：持续推进 WindowShade 2，从设计开始发现并解决粗糙问题，直到有品味、有格调的高级感建立且得到验证。这个目标不因某轮范围、token 或已有测试通过而缩小。
+完成判据：共同刘海入口五态/硬件几何/仲裁/多屏一致；七条线已实现表面的视觉、交互、文案与失败反馈有统一且真实的证据；原始七条线与所有蓝图目标保留；真实宿主关键交互及必要硬件矩阵已验收，没证据不声明完成。源码、画面、文档对账；不靠添加装饰或新架构掩盖问题。
+当前推进：先复现已记录的下方外接屏胶囊 covered 缺陷，修因并测试；随后做活动卡片统一，逐张生成真实 AppKit 原生画面及状态核验。执行过程中按新证据选择下一处，不把此次交回当整体结束。
+本轮入口：NotchWatch/MenuBarRoom、NotchRoomPolicy、NotchSpaceGate、Notch.swift；一颗岛/实时活动晋级稿；活测试与既有原生验收手册。必须先有能捕捉症状的当前证据再改系统几何。
+检查：相关 MenuBarRoom/NotchRoom/space 测试，实际相关离屏原生卡片画面，最终源码 prototype/build.sh --check；真机未运行项明确 not_run，不能用纯模型测试证明真机已修。
+授权与边界：主模型负责设计、关键实现和验收；不提交推送签名发布，不替换日常 App，不动用户真实窗口；源码上轮 FocusTimerCard 与 .zcode 均保留；旧文档与历史失败不删。需要原生操作时走 CUA/受控资料；本次只读事实和未显示 fixture 不动私人窗口。没有批准把设计稿上传外部服务。
+前轮成果与完整旧任务保留在 history-design-first-round 和 history-design-20261011；持续目标为当前工作首要契约。
+WindowShade 2 设计接管，2026-10-11。
+原始目标：从设计开始纠正历轮粗糙实现，七条产品线继续保留；主模型主导设计判断与本轮实现。
+本轮交付：基于 5daafb2 与当前实际源码核对中央刘海与番茄钟；留下可复用的设计接管记录、待修优先级、原生番茄钟卡片首个修正与同源前后画面。不是整个 WS2 完成声明。
+输入：FINAL-HANDOFF、blueprint、design-drafts/README、番茄钟.html、design-grammar、design-system、copy-guide、FocusTimerCard/Host/Model、最新验收会话。
+验收：AppKit 原生卡片离屏渲染，实际查看前后 PNG（仅证明画面）；现有 run-focus-surface-tests.sh；prototype/build.sh --check。真实刘海宿主、抢占恢复、点击与硬件矩阵未经本轮操作均 not_run。
+约束：不覆盖 .zcode 或既有用户改动；不提交推送签名发布、不替换日常 App、不动私人窗口、不动授权链与计时状态机。不把历史截图当当前源码证据。新视觉方向先给具体小样；不批量改七条线。旧任务、进度与阻塞原始字节/sha256 保留在 history-design-20261011，未完成项保留。
+
+
+---
+
+## 保留的上一轮记录（当前设计契约优先，原目标和证据不删除）
+
+# WindowShade 2 开源借鉴实施契约（2026-10-07）
+目标：按用户批准计划先突破蓝牙身份/真解锁前提；落实相机共享、六口令实验、遥控生产接线、CarPlay无凭据验证，以及可独立完成的媒体/电量/隐私收益。
+交付物：两角色蓝牙隔离探针与证据分级；现有相机订阅生命周期；口令真实landmark管线与留出评估；既有遥控栈接线；固定PlayPort无凭据实验包；研究来源记录与既有版本台账更新。
+验收：新针对runner实际执行；现有相关silent/camera/remote/privacy回归；prototype/build.sh --check全App真编译。真实设备/权限/凭据/模型资格无法验证时明确not_run或blocked，不制造绿灯。查看入口tools/probes/BLEReadProbe.swift、prototype/App/FaceObservationSource.swift、Core/WS2SilentPhrases.swift、App/WS2SilentHost.swift、Support/WS2Companion*。
+约束：保留原7个未提交性能文件；不提交推送签名发布、不替换日常App、不动真实窗口、不读取/提取私钥或真实密码；不带GPL代码进MIT App；不用模拟认证接真解锁。无手机配套App、声纹不进2.1。已证实在场不等于设备身份；身份/活体/注视未过时解锁仍阻断。当前CarPlay无硬件无可用认证材料，仅无凭据实验。
+分工：主模型蓝牙、安全准入、静音口令集成、隐私与总验收；lip_sources相机共享；remote_implementation遥控；notch_sourcesCarPlay。
+保底：旧StateM三文件原始字节和sha256已存.build/ws2-reuse/preexisting-statem；现有性能改动不覆盖。无用户数据变异。
+
+## 本次续接：原生Remote第二轮发现
+用户明确要求立即测试已备好的atv-core三服务配置。仅运行已验收的120秒工具，临时PIN60秒；不改App、不写Keychain、不路由输入。观察本机Bonjour、连接/配对/验签/事件阶段及用户手机结果，写device-tests；服务结束核对0listener。旧计划与未完成项保留，不把实验通过当全功能交付。
+
+## 第四轮后续：OPACK真机兼容
+手机已完成真实PairVerify，frame8解码失败。只补有固定来源的UUID、原始时间、F0字典别名与错误offset；不猜宽引用、不降密码学门槛。读取Core/WS2OPACK.swift、独立reference fixtures与remote-device。验收run-companion-channel-tests.sh、remote-device离线与handshake-interop.py、全App build.sh --check；其后120秒真机观察，日志剔PIN，退出0listener。
+
+用户纠正后：停止逐报错开真机，先完整重审atv-core固定源码（server.rs/session.rs/opack.rs/identity.rs）与本地差异，完成发现、认证、消息信封、初始化、应答、事件订阅、HID的对照表与一次完整独立加密客户端回归。协议兼容不继承上游省略验签；隔离工具不路由系统动作。不再仅为诊断开手机测试。
+
+
+## 2026-10-10 收尾计划（已批准执行）
+范围：工程收尾+本机验收，七条线均衡，遥控纳入纯工程。W1 接线收尾→W2 专注收聊天→W3 遥控SRP/音量/C1/C5→W4 蓝牙在场来源→W5 六口令前半→W6 自动化验收→W7 回归文档。红线：不提交推送发布、能耗不高于 1.0.15、没真机验证的开关默认关。执行结果见 progress.md 末段；剩余项全在 blocked.json。

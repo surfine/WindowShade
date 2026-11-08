@@ -1,0 +1,16 @@
+{
+  "schema_version": "0.153.0",
+  "messages_sha256": "afba11a22f457a8ad3a350df972ae0921b59494937dfcb10cf50134dc9100663",
+  "counts": {
+    "ClientRequest": 77,
+    "ClientNotification": 14,
+    "CommandExecutionRequestApprovalResponse": 1
+  },
+  "schema_sha256": {
+    "ClientRequest": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "ClientNotification": "706cf248d75027c84a3c63348d0ed507182e8eba40069dd17541793de029145a",
+    "CommandExecutionRequestApprovalResponse": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7"
+  },
+  "failures": [],
+  "meaning": "synthetic backend, real candidate outbound bytes; not live CLI, sandbox or authentication proof"
+}

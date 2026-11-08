@@ -1,0 +1,30 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-usage-draft/validation.json",
+  "artifact_sha256": "b4ebe14c70aa599c389491f77f1b465ba7b260bfeab18ecbd732498302ca1f82",
+  "binding_sha256": "a73df346200428c32b3703d40455356c291d02710083846a071ebc4293bcc785",
+  "checks": [
+    {
+      "command": "actual UsageQuantityPreview Swift6 + stdlib consumer",
+      "exit_code": 0,
+      "result": "20 static states/current518;low5→4 retained;expiry pending;shared hidden",
+      "receipt": "projected-exit.json"
+    },
+    {
+      "command": "run-usage-tests + run-notch-row-merge-tests",
+      "exit_code": 0,
+      "result": "49/851 current behaviors; original expiry and projection red retained",
+      "receipt": "projected-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 current optimized inputs",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "synthetic quota, no actual account/network/event lifecycle; actual native Canvas update, Panel path inspected only; full account multiwindow/model/context page still candidate pending; real notifications/refresh/readscreen/animation/hardware/lifecycle not_run",
+  "next_action": "self_review"
+}

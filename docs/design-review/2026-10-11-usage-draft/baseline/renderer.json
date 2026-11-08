@@ -1,0 +1,8 @@
+{
+  "renderer": "/Users/aaron/Documents/WindowShade/.build/native-surfaces.gqefwS/render",
+  "sha256": "905a018068867fc01f4b2960320e86a56695aabed6c5ea108191988054e02dc8",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false
+}

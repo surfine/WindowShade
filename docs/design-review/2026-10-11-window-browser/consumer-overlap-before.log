@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-window-browser-preview.py", line 36, in <module>
+    assert title['x'] + title['width'] + 8 <= actions['x'] + 0.5, (frame['name'], row)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('light-paper-long-list', {'actions': {'height': 28, 'width': 124, 'x': 384, 'y': 12}, 'barHidden': False, 'bounds': {'height': 53, 'width': 516, 'x': 0, 'y': 0}, 'requiredWidth': 124, 'status': [{'frame': {'height': 13, 'width': 370, 'x': 38, 'y': 18}, 'text': ''}], 'title': {'height': 16, 'width': 370, 'x': 38, 'y': 18}, 'titleTooltip': '季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录'})

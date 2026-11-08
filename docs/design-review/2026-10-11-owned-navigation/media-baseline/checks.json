@@ -1,0 +1,16 @@
+[
+  {
+    "localPlayCallbacks" : 1,
+    "parent" : "light",
+    "passed" : true,
+    "pendingTimersAfterRevoke" : 0,
+    "staleAndRevokedCallbacks" : 0
+  },
+  {
+    "localPlayCallbacks" : 1,
+    "parent" : "dark",
+    "passed" : true,
+    "pendingTimersAfterRevoke" : 0,
+    "staleAndRevokedCallbacks" : 0
+  }
+]

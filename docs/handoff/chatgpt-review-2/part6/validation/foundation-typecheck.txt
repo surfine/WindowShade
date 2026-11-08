@@ -1,0 +1,1 @@
+PASS combined Foundation typecheck; platform-inactive CryptoKit branches were not checked on Linux

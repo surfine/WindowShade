@@ -1,0 +1,10 @@
+{
+  "prototype/App/FocusTimerCard.swift": "ea0eb4518bcbc869bfb62de75ddc2ad767128cae33b6fb6c167e0b1e07de955a",
+  "prototype/App/NotchAuthentication.swift": "11f3f1c950cd34d0fe8364943011a4e06eec8448a979b8aa595a9c078fbc0945",
+  "prototype/App/NotchLeases.swift": "d985c2b4f409b2fc4f5a39db57c382c396b5d4e3b97a5d4b4beeeeb37911ab2a",
+  "prototype/Core/Contracts.swift": "1932fd07a030608e9b51064c38617da8d02ef9533eba4920581e47961b4f91ec",
+  "prototype/Core/FocusTimer.swift": "f10c4aac4c718c732844ea64edf6d908565a2b4097246eeeecfcd5745e420e1e",
+  "prototype/App/FocusTimerHost.swift": "7aa01c91cb3abf4503ff8eb92a8060efcdfca907b295caa3ab0fde88d264b666",
+  "tools/design-qa/FocusTimerCardPreview.swift": "f33e5c3cd11df80728f8e5ca26ed2b02e39193fbb1a5d7ad9305cb5bfc51e99a",
+  "tools/design-qa/render-focus-card.sh": "af26a302ca368f41eecb20c280858ab0e27ea7b25140c5f0fd8e4cbcb84226b4"
+}

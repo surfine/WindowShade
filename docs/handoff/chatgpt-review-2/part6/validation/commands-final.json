@@ -1,0 +1,109 @@
+[
+  {
+    "log": "core.txt",
+    "command": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-core.sh",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 0,
+    "expectedExitCode": 0,
+    "matched": true
+  },
+  {
+    "log": "process.txt",
+    "command": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-process.sh",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 0,
+    "expectedExitCode": 0,
+    "matched": true
+  },
+  {
+    "log": "wire.txt",
+    "command": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-wire.sh",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 0,
+    "expectedExitCode": 0,
+    "matched": true
+  },
+  {
+    "log": "foundation-typecheck.txt",
+    "command": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part6/tests/check-foundation.sh",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 0,
+    "expectedExitCode": 0,
+    "matched": true
+  },
+  {
+    "log": "readiness-tests.txt",
+    "command": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part6/tests/test-readiness.py"
+    ],
+    "exitCode": 0,
+    "expectedExitCode": 0,
+    "matched": true
+  },
+  {
+    "log": "source-map-check.json",
+    "command": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part6/tools/check-source-map.py",
+      "--candidate",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 0,
+    "expectedExitCode": 0,
+    "matched": true
+  },
+  {
+    "log": "mac-check-not-run.txt",
+    "command": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-mac-check.sh",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 78,
+    "expectedExitCode": 78,
+    "matched": true
+  },
+  {
+    "log": "readiness-current.txt",
+    "command": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part6/tools/readiness.py",
+      "--input",
+      "/mnt/data/WindowShade2-round2-part6/fixtures/readiness-current.json",
+      "--evidence-root",
+      "/mnt/data/WindowShade2-round2-part6",
+      "--candidate",
+      "/mnt/data/ws2-v6-work/candidate-repo",
+      "--report",
+      "/mnt/data/WindowShade2-round2-part6/validation/readiness-current.json"
+    ],
+    "exitCode": 2,
+    "expectedExitCode": 2,
+    "matched": true
+  },
+  {
+    "log": "exit-inheritance-probe.txt",
+    "command": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-exit-probe.sh",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 2,
+    "expectedExitCode": 2,
+    "matched": true,
+    "classification": "unmet-requirement; BLOCKED; NOT a passed feature test"
+  }
+]

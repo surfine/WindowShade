@@ -1,0 +1,1 @@
+Initial syntax parse rejected text.minSize=.zero at WS2OwnedSessionView.swift:71 because Swift requires consistent operator spacing before dot syntax. Corrected to text.minSize = .zero. No Mac SDK was loaded during this operation.

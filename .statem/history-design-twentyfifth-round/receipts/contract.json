@@ -1,0 +1,38 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-composition-and-motion-baseline/validation.json",
+  "artifact_sha256": "71d16af0a800d8b7a0e24dee9ed3dd070ccc0a910df272b1b16a18c7154296d3",
+  "binding_sha256": "92b8bffa633b98565c56064353b8c4e46f5ab905b7c9797b066e5683aba72511",
+  "checks": [
+    {
+      "command": "actual page composition native20465 + consumer",
+      "exit_code": 0,
+      "result": "12 actual-component frames/41rows/9switches/518; not productionPage; one icon design issue remains"
+    },
+    {
+      "command": "actual retarget native68386 + structural consumer",
+      "exit_code": 0,
+      "result": "30/518; direction diagnostic false, repair required, not animation pass"
+    },
+    {
+      "command": "own Cocoa API14004 + consumer",
+      "exit_code": 0,
+      "result": "1 source/180 actual samples/46 normalized comparisons"
+    },
+    {
+      "command": "existing pure localization baseline7700",
+      "exit_code": 0,
+      "result": "6Swift/8source/206 keys, actual App English disabled"
+    }
+  ],
+  "reused_checks": [
+    {
+      "origin": "24/36743",
+      "exit_code": 0,
+      "result": "519 source inputs exact match"
+    }
+  ],
+  "remaining_risk": "motion direction failed; one privacy row icon/indent inconsistent; delayed rich exit stale source needs next probe; actualPage/actions/source/hardware/VO/large-font/performance/English complete coverage not_run",
+  "next_action": "self_review"
+}

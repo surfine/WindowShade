@@ -1,0 +1,24 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-window-browser/validation.json",
+  "artifact_sha256": "8f0f01e939b136dcd6ee7eb8c7edec9e01de79bae5646e735312d0a4aefb4aa3",
+  "checks": [
+    {
+      "command": "WindowBrowserStatePreview + check-window-browser-preview.py",
+      "exit_code": 0,
+      "result": "36 actual frames/518 current identities; actual title/status/action spacing8; busy124/156 widths/narrow; first consumer missed overlap preserved red1",
+      "receipt": "host-corrected-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 current optimized inputs and strict flags retained",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "grid title wrap defect pending;no actual thumbnails/live content;no compositor/hardware/real window actions/focus/motion/signed runtime",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

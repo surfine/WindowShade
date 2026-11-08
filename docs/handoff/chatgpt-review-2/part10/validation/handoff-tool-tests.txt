@@ -1,0 +1,21 @@
+test_01_fresh_report_private (__main__.Tests.test_01_fresh_report_private) ... ok
+test_02_existing_report_not_overwritten (__main__.Tests.test_02_existing_report_not_overwritten) ... ok
+test_03_nested_report_rejected (__main__.Tests.test_03_nested_report_rejected) ... ok
+test_04_ancestor_report_rejected (__main__.Tests.test_04_ancestor_report_rejected) ... ok
+test_05_symlink_parent_rejected (__main__.Tests.test_05_symlink_parent_rejected) ... ok
+test_06_missing_parent_rejected (__main__.Tests.test_06_missing_parent_rejected) ... ok
+test_07_file_output_rejected (__main__.Tests.test_07_file_output_rejected) ... ok
+test_08_inventory_sees_content_change (__main__.Tests.test_08_inventory_sees_content_change) ... ok
+test_09_inventory_does_not_dereference_link (__main__.Tests.test_09_inventory_does_not_dereference_link) ... ok
+test_10_all_original_axes_present (__main__.Tests.test_10_all_original_axes_present) ... ok
+test_11_dependencies_acyclic_and_valid (__main__.Tests.test_11_dependencies_acyclic_and_valid) ... ok
+test_12_all_workorders_and_actual_paths_exist (__main__.Tests.test_12_all_workorders_and_actual_paths_exist) ... ok
+test_13_no_original_work_package_lost (__main__.Tests.test_13_no_original_work_package_lost) ... ok
+test_14_code_map_hashes_and_lines (__main__.Tests.test_14_code_map_hashes_and_lines) ... ok
+test_15_candidate_final_entry_is_real (__main__.Tests.test_15_candidate_final_entry_is_real) ... ok
+test_16_carplay_not_artificially_blocked_by_companion (__main__.Tests.test_16_carplay_not_artificially_blocked_by_companion) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 0.013s
+
+OK

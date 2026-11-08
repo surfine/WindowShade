@@ -1,0 +1,20 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-row/validation.json",
+  "artifact_sha256": "6accef55eddb839332f3a31ceb6c44472e2b5f3f5f942e124c10c453d3c5cd89",
+  "lenses": {
+    "task_contract": "actual registered Row columns bounded; middle preserves82%; no source/action assumptions",
+    "evidence_freshness": "63/162 hashes checked; final62151/48/518 and optimized39527/519 actual0",
+    "edge_risk": "loose baseline viewport qualified; tail geometric pass rejected; no Page/privacy assurances"
+  },
+  "findings": [
+    "Production only access levels, title hint/truncation, column constraints and text-value middle mode; data and actions untouched.",
+    "Actual native final pixels show82% at640/448/300; complete text preserved in tooltip.",
+    "Hidden source-free Row cannot accept complete PrivacyPane or current device/privacy network behavior.",
+    "Old partial consumer not separately retained, limitation explicit; final actual consumer current and hash bound.",
+    "Actual original draft two-column/body12 hierarchy still pending; next candidate, whole goal active."
+  ]
+}

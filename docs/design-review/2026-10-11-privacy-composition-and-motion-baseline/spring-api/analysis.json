@@ -1,0 +1,10 @@
+{
+  "actual_api": "CASpringAnimation",
+  "evidence": "speed perturbation doubles when travel doubles",
+  "normalized_velocity_supported": true,
+  "eligible_comparisons": 46,
+  "maximum_double_scale_error": 0,
+  "compositor_accepted": false,
+  "instantaneous_velocity_measured": false,
+  "source_count": 1
+}

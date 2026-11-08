@@ -1,0 +1,902 @@
+{
+  "actions" : 0,
+  "controllerStarted" : false,
+  "frames" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-short",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-cjk",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-ascii",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-emoji",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 186,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-short-derived",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 18,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-cjk-derived",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-ascii-derived",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "light-paper-emoji-derived",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-short",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-cjk",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-ascii",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-emoji",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 186,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-short-derived",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 18,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-cjk-derived",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-ascii-derived",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "light-system-emoji-derived",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-short",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-cjk",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-ascii",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-emoji",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 186,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-short-derived",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 18,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-cjk-derived",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-ascii-derived",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : false,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "paper",
+      "maxLines" : 2,
+      "name" : "dark-paper-emoji-derived",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-short",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-cjk",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-ascii",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 219,
+        "width" : 295
+      },
+      "derivedParams" : false,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-emoji",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 25
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 186,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-short-derived",
+      "sample" : "short",
+      "title" : "季度报告",
+      "titleFrame" : {
+        "height" : 18,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-cjk-derived",
+      "sample" : "cjk",
+      "title" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-ascii-derived",
+      "sample" : "ascii",
+      "title" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_QuarterlyReport_Review_",
+      "visible" : false,
+      "wraps" : true
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "breakMode" : 0,
+      "cardBounds" : {
+        "height" : 202,
+        "width" : 295
+      },
+      "derivedParams" : true,
+      "font" : 13,
+      "insideGlass" : true,
+      "lastLineTruncates" : true,
+      "lineHeight" : 16,
+      "material" : "glass",
+      "maxLines" : 2,
+      "name" : "dark-system-emoji-derived",
+      "sample" : "emoji",
+      "title" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "titleFrame" : {
+        "height" : 34,
+        "width" : 279,
+        "x" : 8,
+        "y" : 8
+      },
+      "tooltip" : "周末 — 👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦👩🏽‍💻🇹🇼👨‍👩‍👧‍👦",
+      "visible" : false,
+      "wraps" : true
+    }
+  ]
+}

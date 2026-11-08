@@ -1,0 +1,392 @@
+{
+  "is_error": false,
+  "incomplete": false,
+  "result": "The file is complete and consistent. Done.\n\n## Summary\n\nImplemented `tools/design-qa/check-progress-quantity-preview.py`, a stdlib-only consumer for the `ProgressQuantityPreview.swift` entry (I read only that entry to learn the exact emitted schema).\n\n**What it does**\n\n- **Inputs**: reads ONLY `ABS_OUTPUT/frames.json`, `sources.json`, `renderer.json`, plus the local files named by `sources.json` for SHA256. No network/UI/product-code reads, no writes to other files.\n- **Schema/identity/host**: 26 frames = 2 appearances × 13 samples in order; `windows==0`, `completions==1`, `canvasDark` per parent, hidden window (`alpha==0`, `visible false`, `active false`); report `sourceControllers==0`, `actions==0`; tiles 1 except `three`==3.\n- **Exact real quantities**: fraction0/.42/1, count 2/9, 999/1000, 999999/1000000, indeterminate, unknown; `three` per-tile `[fraction(0.42), count(2,9), indeterminate]`; count pairs parsed and checked.\n- **Part model**: `partQuantity == tile.quantity`; count sample root hidden, ring shown, indeterminate shown for `indeterminate`; `unknown` root hidden.\n- **Cross-appearance**: corresponding actual quantity/quantityText/geometry/core labels compared identically for both parents.\n- **AX/tooltip/stale**: `accessibilityValue == quantityText`; tooltip contains the full subtitle; stale `true` for `stale`.\n- **Containment/finite**: tile and optional part root frames finite and contained in the frame; optional part must not touch real UI (no window/controller/action fields).\n- **Ended semantics**: fraction(1) value does NOT imply ended; `ended` is the separate flag; draw amount is NOT asserted as task-done.\n- **naturalQuantityWidth**: compared against available tile width − 20 (and ring diameter when a ring layer is present) as an **observation only**; overflow is recorded as an issue and yields `status: design_review_required` rather than pass.\n- **sources.json**: exactly 518 entries, each SHA256 verified against current disk. **renderer.json**: swift6, strictConcurrency true, warningsAsErrors true, optimized false.\n- **Per-state output**: prints `naturalWidth`, `availableWidth`, `quantity`, `quantityText`, observation, and explicit `cache_static_only`/`hardware`/`compositor` = `not_run`.\n\n**Check result**: fixed syntax check passed (exit 0: `syntax only; actual native consumer pending`).\n\n**Unresolved**: no actual `frames.json`/`sources.json`/`renderer.json` exists yet, so the consumer's runtime behaviour against real native output is unexercised — the syntax check is not behavioural evidence. I did not fabricate JSON.",
+  "model": "deepseek-flash",
+  "finish_reason": "stop",
+  "changed_files": [
+    "tools/design-qa/check-progress-quantity-preview.py"
+  ],
+  "checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "python3",
+        "-c",
+        "import ast,pathlib; ast.parse(pathlib.Path('tools/design-qa/check-progress-quantity-preview.py').read_text()); print('syntax only; actual native consumer pending')"
+      ],
+      "exit_code": 0,
+      "revision": 4,
+      "timed_out": false,
+      "output": "syntax only; actual native consumer pending\n",
+      "truncated": false
+    }
+  ],
+  "usage_by_round": [
+    {
+      "prompt_tokens": 1382,
+      "completion_tokens": 150,
+      "total_tokens": 1532,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 1382
+    },
+    {
+      "prompt_tokens": 2021,
+      "completion_tokens": 139,
+      "total_tokens": 2160,
+      "prompt_tokens_details": {
+        "cached_tokens": 1408
+      },
+      "prompt_cache_hit_tokens": 1408,
+      "prompt_cache_miss_tokens": 613
+    },
+    {
+      "prompt_tokens": 8587,
+      "completion_tokens": 155,
+      "total_tokens": 8742,
+      "prompt_tokens_details": {
+        "cached_tokens": 2048
+      },
+      "prompt_cache_hit_tokens": 2048,
+      "prompt_cache_miss_tokens": 6539
+    },
+    {
+      "prompt_tokens": 10032,
+      "completion_tokens": 4750,
+      "total_tokens": 14782,
+      "prompt_tokens_details": {
+        "cached_tokens": 8704
+      },
+      "prompt_cache_hit_tokens": 8704,
+      "prompt_cache_miss_tokens": 1328
+    },
+    {
+      "prompt_tokens": 14814,
+      "completion_tokens": 514,
+      "total_tokens": 15328,
+      "prompt_tokens_details": {
+        "cached_tokens": 14592
+      },
+      "prompt_cache_hit_tokens": 14592,
+      "prompt_cache_miss_tokens": 222
+    },
+    {
+      "prompt_tokens": 15416,
+      "completion_tokens": 112,
+      "total_tokens": 15528,
+      "prompt_tokens_details": {
+        "cached_tokens": 15232
+      },
+      "prompt_cache_hit_tokens": 15232,
+      "prompt_cache_miss_tokens": 184
+    },
+    {
+      "prompt_tokens": 19196,
+      "completion_tokens": 71,
+      "total_tokens": 19267,
+      "prompt_tokens_details": {
+        "cached_tokens": 15488
+      },
+      "prompt_cache_hit_tokens": 15488,
+      "prompt_cache_miss_tokens": 3708
+    },
+    {
+      "prompt_tokens": 19381,
+      "completion_tokens": 113,
+      "total_tokens": 19494,
+      "prompt_tokens_details": {
+        "cached_tokens": 19200
+      },
+      "prompt_cache_hit_tokens": 19200,
+      "prompt_cache_miss_tokens": 181
+    },
+    {
+      "prompt_tokens": 20621,
+      "completion_tokens": 651,
+      "total_tokens": 21272,
+      "prompt_tokens_details": {
+        "cached_tokens": 19456
+      },
+      "prompt_cache_hit_tokens": 19456,
+      "prompt_cache_miss_tokens": 1165
+    }
+  ],
+  "api_rounds": 9,
+  "tool_calls": 13,
+  "tool_history": [
+    {
+      "tool": "search_files",
+      "args": {
+        "path": ".",
+        "query": "ProgressQuantityPreview",
+        "offset": 0
+      },
+      "result": {
+        "matches": [
+          {
+            "path": "tools/design-qa/ProgressQuantityPreview.swift",
+            "line": 5,
+            "text": "#error(\"ProgressQuantityPreview requires --swift6\")"
+          },
+          {
+            "path": "tools/design-qa/ProgressQuantityPreview.swift",
+            "line": 9,
+            "text": "@main enum ProgressQuantityPreview {"
+          }
+        ],
+        "truncated": false,
+        "next_offset": null
+      }
+    },
+    {
+      "tool": "search_files",
+      "args": {
+        "path": "tools/design-qa",
+        "query": "ABS_OUTPUT",
+        "offset": 0
+      },
+      "result": {
+        "matches": [
+          {
+            "path": "tools/design-qa/check-notch-motion-preview.py",
+            "line": 4,
+            "text": "Reads ONLY ABS_OUTPUT/frames.json, sources.json, renderer.json plus the local"
+          },
+          {
+            "path": "tools/design-qa/check-notch-motion-preview.py",
+            "line": 91,
+            "text": "    assert len(sys.argv) == 2, \"usage: check-notch-motion-preview.py ABS_OUTPUT\""
+          },
+          {
+            "path": "tools/design-qa/make-window-image-fixtures.py",
+            "line": 5,
+            "text": "    python3 tools/design-qa/make-window-image-fixtures.py ABS_OUTPUT"
+          },
+          {
+            "path": "tools/design-qa/make-window-image-fixtures.py",
+            "line": 7,
+            "text": "Writes five opaque RGBA8 PNG files plus manifest.json into ABS_OUTPUT."
+          },
+          {
+            "path": "tools/design-qa/make-window-image-fixtures.py",
+            "line": 169,
+            "text": "        print(\"usage: make-window-image-fixtures.py ABS_OUTPUT\", file=sys.stderr)"
+          },
+          {
+            "path": "tools/design-qa/render-native-surfaces.sh",
+            "line": 15,
+            "text": "  echo \"usage: render-native-surfaces.sh ABS_OUTPUT_DIR ABS_SWIFT_ENTRY [--swift6]\" >&2"
+          },
+          {
+            "path": "tools/design-qa/render-native-surfaces.sh",
+            "line": 19,
+            "text": "  echo \"usage: render-native-surfaces.sh ABS_OUTPUT_DIR ABS_SWIFT_ENTRY [--swift6]\" >&2"
+          }
+        ],
+        "truncated": false,
+        "next_offset": null
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/ProgressQuantityPreview.swift",
+        "start_line": 1
+      },
+      "result": {
+        "text": "1: import Cocoa\n2: import QuartzCore\n3: \n4: #if !swift(>=6.0)\n5: #error(\"ProgressQuantityPreview requires --swift6\")\n6: #endif\n7: \n8: /// Production M11 canvas/content, without any source/controller/window operation.\n9: @main enum ProgressQuantityPreview {\n10:     enum Failure: Error { case check(String) }\n11:     static func rect(_ r: NSRect) -> [String: Double] { [\"x\": r.minX, \"y\": r.minY, \"width\": r.width, \"height\": r.height] }\n12:     @MainActor static func main() async {\n13:         _ = NSApplication.shared; NSApp.setActivationPolicy(.prohibited)\n14:         let out = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)\n15:         do {\n16:             try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)\n17:             var frames: [[String: Any]] = []\n18:             for parent in [NSAppearance.Name.aqua, .darkAqua] {\n19:                 for sample in [\"zero\", \"percent\", \"complete-value\", \"count\", \"large-count\", \"huge-count\", \"indeterminate\", \"unknown\", \"paused\", \"ended\", \"stale\", \"long\", \"three\"] {\n20:                     let windows = 0\n21:                     let ongoing = sample == \"three\" ? 3 : 1\n22:                     var tiles = [NotchTile]()\n23:                     for index in 0..<ongoing {\n24:                         let quantity: NotchActivity.Quantity\n25:                         switch sample {\n26:                         case \"zero\": quantity = .fraction(0)\n27:                         case \"complete-value\", \"ended\": quantity = .fraction(1)\n28:                         case \"count\": quantity = .count(2,9)\n29:                         case \"large-count\": quantity = .count(999,1000)\n30:                         case \"huge-count\": quantity = .count(999999,1000000)\n31:                         case \"indeterminate\": quantity = .indeterminate\n32:                         case \"unknown\": quantity = .unknown\n33:                         case \"three\": quantity = index == 0 ? .fraction(0.42) : (index == 1 ? .count(2,9) : .indeterminate)\n34:                         default: quantity = .fraction(0.42)\n35:                         }\n36:                         guard quantity.isValid else {throw Failure.check(\"valid fixture quantity\")}\n37:                         let subtitle = sample == \"long\" ? \"WindowShade_设计评审_最终材料_\" + String(repeating:\"外观与动作检查\", count:12) + \".zip\" : \"演示材料.zip\"\n38:                         var item = NotchActivity(id:\"qa-progress-\\(index)\",kind:.download,title:\"正在下载\",subtitle:subtitle,symbol:\"arrow.down.circle\",startedAt:0,progress:quantity,isPaused:sample == \"paused\",sessionPhase:nil)\n39:                         item.isStale = sample == \"stale\"\n40:                         if sample == \"ended\" {item.endedAt = 1}\n41:                         guard let cell = NotchRow.ongoingCells(from:[item]).first else {throw Failure.check(\"actual Core projection\")}\n42:                         let value = NotchTile.Ongoing(activityID:cell.activityID,subtitle:cell.subtitle,symbol:cell.symbol,phase:cell.phase,isPaused:cell.isPaused,quantity:cell.quantity,quantityText:cell.quantityText,spoken:cell.spoken,action:cell.action,closesRow:cell.closesRow,accessory:cell.accessory,isStale:cell.isStale,isEnded:cell.isEnded)\n43:                         tiles.append(NotchTile(id:UInt32(850+index),kind:.activity,snapshot:nil,icon:nil,title:cell.title,waiting:false,ongoing:value))\n44:                     }\n45:                     let layout = NotchRow.layout(windows: windows, ongoing: ongoing)\n46:                     let width = max(185 + 120, layout.islandWidth(minimum: 0))\n47:                     let height = 33.5 + NotchIsland.peninsulaContentHeight(142)\n48:                     let bounds = NSRect(x: 0, y: 0, width: width, height: height)\n49:                     let canvas = NotchCanvasView(frame: bounds)\n50:                     let window = NSWindow(contentRect: bounds, styleMask: [.borderless], backing: .buffered, defer: false)\n51:                     window.isReleasedWhenClosed = false; window.alphaValue = 0\n52:                     window.appearance = NSAppearance(named: parent); window.contentView = canvas\n53:                     window.setFrame(NSRect(x: -8000, y: -8000, width: width, height: height), display: false)\n54:                     let content = NotchCanvasView.Content(tiles: tiles, dots: 0, dotsChanged: false, dotsY: 0,\n55:                         compact: nil, compactSlots: nil, alert: nil, hint: nil, notchHeight: 33.5)\n56:                     var completions = 0\n57:                     canvas.morph(to: bounds, style: .init(cornerRadius: 28, allCorners: false, fill: .black, border: 1),\n58:                         content: content, spring: nil) { completions += 1 }\n59:                     canvas.layoutSubtreeIfNeeded(); try await Task.sleep(nanoseconds: 150_000_000); canvas.layoutSubtreeIfNeeded()\n60:                     var actual: [[String: Any]] = []\n61:                     func visit(_ view: NSView) {\n62:                         if let tile = view as? NotchTileView, !tile.isHiddenOrHasHiddenAncestor {\n63:                             guard let payload = Mirror(reflecting: tile).children.first(where: { $0.label == \"tile\" })?.value as? NotchTile else { return }\n64:                             var record: [String: Any] = [\"id\": tile.tileID, \"frame\": rect(tile.convert(tile.bounds, to: canvas)),\n65:                                 \"title\": payload.title, \"kind\": String(describing: payload.kind), \"dark\": tile.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua,\n66:                                 \"accessibility\": tile.accessibilityLabel() ?? \"\"]\n67:                             if let value = payload.ongoing {\n68:                                 record[\"subtitle\"] = value.subtitle; record[\"quantity\"] = String(describing: value.quantity)\n69:                                 record[\"quantityText\"] = value.quantityText as Any? ?? NSNull()\n70:                                 record[\"stale\"] = value.isStale; record[\"ended\"] = value.isEnded\n71:                                 record[\"shelf\"] = value.shelfCount as Any? ?? NSNull()\n72:                                 record[\"drawing\"] = String(describing:value.quantity.drawing)\n73:                                 record[\"paused\"] = value.isPaused\n74:                                 record[\"accessibilityValue\"] = tile.accessibilityValue() as Any? ?? NSNull()\n75:                                 record[\"tooltip\"] = tile.toolTip as Any? ?? NSNull()\n76:                                 let font = NSFont.monospacedDigitSystemFont(ofSize:10.5,weight:.semibold)\n77:                                 let rounded = font.fontDescriptor.withDesign(.rounded).flatMap {NSFont(descriptor:$0,size:font.pointSize)} ?? font\n78:                                 record[\"naturalQuantityWidth\"] = NSAttributedString(string:value.quantityText ?? \"\",attributes:[.font:rounded]).size().width\n79:                                 if let part = Mirror(reflecting:tile).children.first(where:{$0.label == \"part\"})?.value as? NotchProgressPartLayers {\n80:                                     record[\"partHidden\"] = part.root.isHidden\n81:                                     record[\"partFrame\"] = rect(part.root.frame)\n82:                                     record[\"partQuantity\"] = String(describing:part.model.quantity)\n83:                                     record[\"layerChildren\"] = (part.root.sublayers ?? []).map {layer -> [String:Any] in\n84:                                         var entry: [String:Any] = [\"hidden\":layer.isHidden,\"animations\":layer.animationKeys() ?? []]\n85:                                         if let shape=layer as? CAShapeLayer {entry[\"strokeEnd\"]=shape.strokeEnd}\n86:                                         return entry\n87:                                     }\n88:                                 }\n89:                             }\n90:                             actual.append(record)\n91:                         }\n92:                         view.subviews.forEach(visit)\n93:                     }\n94:                     visit(canvas)\n95:                     guard actual.count == tiles.count, completions == 1, !window.isVisible, !NSApp.isActive,\n96:                         window.alphaValue == 0, NSScreen.screens.allSatisfy({ !window.frame.intersects($0.frame) }) else { throw Failure.check(\"actual tiles/host\") }\n97:                     let name = \"\\(parent == .aqua ? \"light\" : \"dark\")-\\(sample)\"\n98:                     guard let bitmap = canvas.bitmapImageRepForCachingDisplay(in: canvas.bounds) else { throw Failure.check(\"bitmap\") }\n99:                     canvas.cacheDisplay(in: canvas.bounds, to: bitmap)\n100:                     guard let png = bitmap.representation(using: .png, properties: [:]) else { throw Failure.check(\"png\") }\n101:                     try png.write(to: out.appendingPathComponent(name + \".png\"))\n102:                     frames.append([\"name\": name, \"sample\": sample, \"windows\": windows, \"ongoing\": ongoing,\n103:                         \"width\": width, \"height\": height, \"tiles\": actual, \"completions\": completions,\n104:                         \"canvasDark\": canvas.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua,\n105:                         \"visible\": window.isVisible, \"active\": NSApp.isActive, \"alpha\": window.alphaValue])\n106:                     window.contentView = nil; window.close()\n107:                 }\n108:             }\n109:             try JSONSerialization.data(withJSONObject: [\"frames\": frames, \"sourceControllers\": 0, \"actions\": 0], options: [.prettyPrinted, .sortedKeys]).write(to: out.appendingPathComponent(\"frames.json\"))\n110:             print(\"PASS \\(frames.count) actual progress quantity static frames; no source/controllers/actions\")\n111:         } catch { fputs(\"FAIL \\(error)\\n\", stderr); exit(1) }\n112:     }\n113: }",
+        "total_lines": 113,
+        "next_line": null,
+        "truncated": false
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/check-notch-motion-preview.py",
+        "start_line": 1
+      },
+      "result": {
+        "text": "1: #!/usr/bin/env python3\n2: \"\"\"Consumer for render-native-surfaces.sh --swift6 output of NotchMotionPreview.swift.\n3: \n4: Reads ONLY ABS_OUTPUT/frames.json, sources.json, renderer.json plus the local\n5: sources named by sources.json (for SHA256). It never touches UI, product code,\n6: the network, permissions or any other source.\n7: \n8: What this proves: control-path structure in emitted JSON (stage ordering, model\n9: geometry/tile identity/quantity bookkeeping, callback counts, main-thread flags)\n10: plus the fact that frames.json/sources.json/renderer.json are internally\n11: consistent with current on-disk sources. What it cannot prove: that any animation\n12: actually ran, that the visual compositor produced motion, or anything about real\n13: hardware, presentation timing or product lifecycle. `presentation` and `cacheOnly`\n14: are recorded data, not evidence of real motion. File existence and a clean\n15: ast.parse of this script are NOT behavioural evidence.\n16: \"\"\"\n17: import ast, hashlib, json, math, sys\n18: from pathlib import Path\n19: \n20: STAGES = [\"initial\", \"open-start\", \"open-settled\", \"same-id\", \"replace-id\",\n21:           \"close-before-interrupt\", \"reopened\", \"closed\"]\n22: TRANSITION_STAGES = {\"open-start\", \"close-before-interrupt\"}\n23: # stage -> exact per-mode callback completion key that must occur\n24: EXPECT_ONE = {\"initial\", \"open\", \"same-id\", \"replace-id\", \"reopen\", \"close-final\"}\n25: # stage -> callback key that must NOT fire in regular mode\n26: EXPECT_ZERO_REGULAR_ONLY = {\"close-interrupted\"}\n27: \n28: MODES = {\"regular\": False, \"reduced\": True}\n29: COMPACT = (185, 33.5)\n30: EXPANDED_W = 305\n31: EXPANDED_H = 175.5\n32: CENTER_X = 400\n33: TOP_Y = 400\n34: \n35: \n36: def finite_nonnegative(value, label):\n37:     assert isinstance(value, (int, float)) and not isinstance(value, bool), f\"{label}: not a number: {value!r}\"\n38:     assert math.isfinite(value), f\"{label}: not finite: {value!r}\"\n39:     assert value >= 0, f\"{label}: negative: {value!r}\"\n40:     return value\n41: \n42: \n43: def finite(value, label):\n44:     assert isinstance(value, (int, float)) and not isinstance(value, bool), f\"{label}: not a number: {value!r}\"\n45:     assert math.isfinite(value), f\"{label}: not finite: {value!r}\"\n46:     return value\n47: \n48: \n49: def check_frame_common(frame, mode, stage):\n50:     label = f\"{mode}-{stage}\"\n51:     for key, expected in ((\"active\", False), (\"visible\", False), (\"mainThread\", True), (\"cacheOnly\", True)):\n52:         assert frame.get(key) is expected, f\"{label}: {key} expected {expected!r} got {frame.get(key)!r}\"\n53:     assert frame.get(\"alpha\") == 0, f\"{label}: alpha expected 0 got {frame.get('alpha')!r}\"\n54:     assert frame.get(\"model\") is not None and isinstance(frame[\"model\"], dict), f\"{label}: missing model box\"\n55:     for dim in (\"x\", \"y\", \"width\", \"height\"):\n56:         assert dim in frame[\"model\"], f\"{label}: model missing {dim}\"\n57:         finite(frame[\"model\"][dim], f\"{label}.model.{dim}\")\n58:     assert \"presentation\" in frame, f\"{label}: missing presentation field\"\n59:     assert isinstance(frame.get(\"animations\"), list), f\"{label}: animations must be a list\"\n60:     for anim in frame[\"animations\"]:\n61:         assert set((\"key\", \"duration\", \"class\")) <= set(anim), f\"{label}: animation missing keys: {anim!r}\"\n62:         assert isinstance(anim[\"key\"], str) and anim[\"class\"], f\"{label}: bad animation id: {anim!r}\"\n63:         finite_nonnegative(anim[\"duration\"], f\"{label}.animations[{anim['key']}].duration\")\n64:     assert isinstance(frame.get(\"pendingExit\"), bool), f\"{label}: pendingExit must be bool\"\n65:     for key, kind in ((\"tileIDs\", list), (\"tileIdentities\", list), (\"tileQuantities\", list)):\n66:         assert isinstance(frame.get(key), kind), f\"{label}: {key} must be a list\"\n67:     assert len(frame[\"tileIDs\"]) == len(frame[\"tileIdentities\"]) == len(frame[\"tileQuantities\"]), \\\n68:         f\"{label}: tile arrays length mismatch\"\n69:     for tid in frame[\"tileIDs\"]:\n70:         assert isinstance(tid, int) and not isinstance(tid, bool), f\"{label}: tile id not an int: {tid!r}\"\n71:     for ident in frame[\"tileIdentities\"]:\n72:         assert isinstance(ident, str) and ident, f\"{label}: tile identity not a string: {ident!r}\"\n73:     for q in frame[\"tileQuantities\"]:\n74:         assert set(q) == {\"completed\", \"total\"}, f\"{label}: tile quantity shape: {q!r}\"\n75:         finite_nonnegative(q[\"completed\"], f\"{label}.quantity.completed\")\n76:         finite_nonnegative(q[\"total\"], f\"{label}.quantity.total\")\n77:     assert \"currentIdentity\" in frame, f\"{label}: missing currentIdentity\"\n78: \n79: \n80: def check_model_rect(frame, mode, stage, width, height):\n81:     label = f\"{mode}-{stage}\"\n82:     model = frame[\"model\"]\n83:     assert model[\"width\"] == width, f\"{label}: model width expected {width} got {model['width']}\"\n84:     assert model[\"height\"] == height, f\"{label}: model height expected {height} got {model['height']}\"\n85:     cx = model[\"x\"] + model[\"width\"] / 2\n86:     assert cx == CENTER_X, f\"{label}: model centre x expected {CENTER_X} got {cx}\"\n87:     assert model[\"y\"] + model[\"height\"] == TOP_Y, f\"{label}: model top edge expected {TOP_Y} got {model['y'] + model['height']}\"\n88: \n89: \n90: def main():\n91:     assert len(sys.argv) == 2, \"usage: check-notch-motion-preview.py ABS_OUTPUT\"\n92:     out = Path(sys.argv[1]).resolve()\n93:     root = Path(__file__).resolve().parents[2]\n94: \n95:     frames_path = out / \"frames.json\"\n96:     sources_path = out / \"sources.json\"\n97:     renderer_path = out / \"renderer.json\"\n98:     for required in (frames_path, sources_path, renderer_path):\n99:         assert required.is_file(), f\"missing required output: {required.name}\"\n100: \n101:     report = json.loads(frames_path.read_text())\n102:     frames = report.get(\"frames\")\n103:     callbacks = report.get(\"callbacks\")\n104:     counts = report.get(\"counts\")\n105:     assert isinstance(frames, list), \"frames must be a list\"\n106:     assert isinstance(callbacks, list), \"callbacks must be a list\"\n107:     assert isinstance(counts, dict), \"counts must be a dict\"\n108: \n109:     # --- report-level schema -------------------------------------------------\n110:     assert report.get(\"swiftLanguageVersion\") == 6, \"swiftLanguageVersion must be 6\"\n111:     assert report.get(\"productEntry\") is False, \"productEntry must be false\"\n112:     for key in (\"realSources\", \"globalInputEvents\", \"windowActions\"):\n113:         assert report.get(key) == 0, f\"{key} must be 0 got {report.get(key)!r}\"\n114:     assert report.get(\"mainThread\") is True, \"report mainThread must be true\"\n115:     assert report.get(\"status\") == \"completed_callbacks_static_cache_only\", \\\n116:         f\"status must be completed_callbacks_static_cache_only got {report.get('status')!r}\"\n117: \n118:     assert report.get(\"overrideRestored\") is True, \"process-local reduced override not restored\"\n119: \n120:     # --- frames: 16 total, 8 per mode, one per stage, ordered ---------------\n121:     assert len(frames) == 16, f\"expected 16 frames got {len(frames)}\"\n122:     by_mode = {}\n123:     for frame in frames:\n124:         name = frame.get(\"name\")\n125:         assert isinstance(name, str) and \"-\" in name, f\"bad frame name: {name!r}\"\n126:         mode, stage = name.split(\"-\", 1)\n127:         assert mode in MODES, f\"unexpected mode in frame name: {name!r}\"\n128:         assert frame.get(\"stage\") == stage, f\"{name}: stage field mismatch\"\n129:         assert frame.get(\"reduced\") is MODES[mode], f\"{name}: reduced flag mismatch\"\n130:         by_mode.setdefault(mode, []).append(frame)\n131:     for mode in MODES:\n132:         mode_frames = by_mode.get(mode, [])\n133:         assert len(mode_frames) == 8, f\"{mode}: expected 8 frames got {len(mode_frames)}\"\n134:         assert [f[\"stage\"] for f in mode_frames] == STAGES, \\\n135:             f\"{mode}: stage order/sequence mismatch: {[f['stage'] for f in mode_frames]}\"\n136: \n137:     # --- per-frame checks ----------------------------------------------------\n138:     for mode in MODES:\n139:         for frame in by_mode[mode]:\n140:             stage = frame[\"stage\"]\n141:             check_frame_common(frame, mode, stage)\n142:             if stage in (\"initial\", \"closed\") or (mode == \"reduced\" and stage == \"close-before-interrupt\"):\n143:                 check_model_rect(frame, mode, stage, *COMPACT)\n144:             else:\n145:                 check_model_rect(frame, mode, stage, EXPANDED_W, EXPANDED_H)\n146: \n147:         # tile identity / quantity expectations\n148:         exp = {\n149:             \"initial\": (set(), []),\n150:             \"open-start\": (None, None),   # transition: presentation/tiles not asserted\n151:             \"open-settled\": ({900}, [{\"completed\": 2, \"total\": 9}]),\n152:             \"same-id\": ({900}, [{\"completed\": 3, \"total\": 9}]),\n153:             \"replace-id\": ({901}, [{\"completed\": 4, \"total\": 9}]),\n154:             \"reopened\": ({901}, [{\"completed\": 4, \"total\": 9}]),\n155:             \"closed\": (set(), []),\n156:         }\n157:         for frame in by_mode[mode]:\n158:             stage = frame[\"stage\"]\n159:             if stage in (\"open-start\", \"close-before-interrupt\"):\n160:                 # transition stages: do not assert tile visibility or presentation\n161:                 assert \"presentation\" in frame, f\"{mode}-{stage}: presentation field must exist\"\n162:                 continue\n163:             expected_ids, expected_q = exp[stage]\n164:             assert set(frame[\"tileIDs\"]) == expected_ids, \\\n165:                 f\"{mode}-{stage}: tile ids expected {sorted(expected_ids)} got {sorted(frame['tileIDs'])}\"\n166:             assert frame[\"tileQuantities\"] == expected_q, \\\n167:                 f\"{mode}-{stage}: quantities expected {expected_q} got {frame['tileQuantities']}\"\n168:             if expected_ids:\n169:                 assert frame[\"currentIdentity\"] not in (None,), f\"{mode}-{stage}: currentIdentity null with tiles present\"\n170: \n171:         # same-id: the retained tile must reuse the same TileIdentity object\n172:         same = next(f for f in by_mode[mode] if f[\"stage\"] == \"same-id\")\n173:         opened = next(f for f in by_mode[mode] if f[\"stage\"] == \"open-settled\")\n174:         assert len(same[\"tileIdentities\"]) == 1 and len(opened[\"tileIdentities\"]) == 1, \\\n175:             f\"{mode}: expected exactly one tile identity for same-id comparison\"\n176:         assert same[\"tileIdentities\"][0] == opened[\"tileIdentities\"][0], \\\n177:             f\"{mode}-same-id: TileIdentity changed across same-id update\"\n178:         assert same[\"currentIdentity\"] == opened[\"currentIdentity\"], \\\n179:             f\"{mode}-same-id: currentIdentity changed across same-id update\"\n180: \n181:         # replace-id / reopened: identity content must switch to 901\n182:         repl = next(f for f in by_mode[mode] if f[\"stage\"] == \"replace-id\")\n183:         reop = next(f for f in by_mode[mode] if f[\"stage\"] == \"reopened\")\n184:         assert repl[\"tileIDs\"] == [901] and reop[\"tileIDs\"] == [901], f\"{mode}: replace/reopen must show id 901\"\n185: \n186:         # close-before-interrupt must reflect the interruption contract exactly\n187:         before = next(f for f in by_mode[mode] if f[\"stage\"] == \"close-before-interrupt\")\n188:         if mode == \"regular\":\n189:             check_model_rect(before, mode, \"close-before-interrupt\", EXPANDED_W, EXPANDED_H)\n190:             assert before[\"pendingExit\"] is True, \"regular close-before-interrupt: pendingExit must stay true\"\n191:         else:\n192:             check_model_rect(before, mode, \"close-before-interrupt\", *COMPACT)\n193:             assert before[\"pendingExit\"] is False, \"reduced close-before-interrupt: pendingExit must be false\"\n194: \n195:         # final stage must have no pending exit\n196:         closed = next(f for f in by_mode[mode] if f[\"stage\"] == \"closed\")\n197:         assert closed[\"pendingExit\"] is False, f\"{mode}-closed: pendingExit must be false\"\n198: \n199:     # --- counts: exact completions ------------------------------------------\n200:     for mode in MODES:",
+        "total_lines": 259,
+        "next_line": 201,
+        "truncated": true
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/check-notch-motion-preview.py",
+        "start_line": 201
+      },
+      "result": {
+        "text": "201:         for key in EXPECT_ONE:\n202:             k = f\"{mode}-{key}\"\n203:             assert k in counts, f\"missing callback count: {k}\"\n204:             assert counts[k] == 1, f\"{k}: completion count expected 1 got {counts.get(k)!r}\"\n205:         for key in EXPECT_ZERO_REGULAR_ONLY:\n206:             k = f\"{mode}-{key}\"\n207:             if mode == \"regular\":\n208:                 assert counts.get(k, 0) == 0, f\"{k}: regular interrupted close must not complete (got {counts.get(k)!r})\"\n209:             else:\n210:                 assert counts.get(k, 0) in (0, 1), f\"{k}: reduced must be 0 or 1 (got {counts.get(k)!r})\"\n211:         # no count may exceed one\n212:         for k, v in counts.items():\n213:             if k.startswith(mode + \"-\"):\n214:                 assert v <= 1, f\"count for {k} exceeds 1: {v!r}\"\n215: \n216:     # --- callbacks: all main-thread, consistent with counts -----------------\n217:     callback_tally = {}\n218:     for cb in callbacks:\n219:         assert set((\"name\", \"mainThread\", \"time\")) <= set(cb), f\"callback missing keys: {cb!r}\"\n220:         assert cb[\"mainThread\"] is True, f\"callback {cb['name']} not on main thread\"\n221:         finite_nonnegative(cb[\"time\"], f\"callback {cb['name']}.time\")\n222:         callback_tally[cb[\"name\"]] = callback_tally.get(cb[\"name\"], 0) + 1\n223:     assert callback_tally == counts, f\"callbacks tally {callback_tally} != counts {counts}\"\n224: \n225:     # --- renderer.json -------------------------------------------------------\n226:     renderer = json.loads(renderer_path.read_text())\n227:     assert renderer.get(\"swiftLanguageVersion\") == 6, \"renderer swiftLanguageVersion must be 6\"\n228:     assert renderer.get(\"strictConcurrency\") is True, \"renderer strictConcurrency must be true\"\n229:     assert renderer.get(\"warningsAsErrors\") is True, \"renderer warningsAsErrors must be true\"\n230:     assert renderer.get(\"optimized\") is False, \"renderer optimized must be false\"\n231: \n232:     # --- sources.json: 518 entries, each SHA256 matches current source ------\n233:     sources = json.loads(sources_path.read_text())\n234:     assert isinstance(sources, dict) and len(sources) == 518, \\\n235:         f\"sources.json must contain 518 entries got {len(sources)}\"\n236:     for name, digest in sources.items():\n237:         local = root / name\n238:         assert local.is_file(), f\"missing local source: {name}\"\n239:         actual = hashlib.sha256(local.read_bytes()).hexdigest()\n240:         assert actual == digest, f\"source drift for {name}: {actual} != {digest}\"\n241: \n242:     print(json.dumps({\n243:         \"status\": \"pass_control_path_visual_inconclusive\",\n244:         \"frames\": len(frames),\n245:         \"callbacks\": len(callbacks),\n246:         \"sources_sha256\": len(sources),\n247:         \"geometry_state_control_path\": \"checked\",\n248:         \"presentation_real_motion\": \"inconclusive\",\n249:         \"cache_only_real_motion\": \"inconclusive\",\n250:         \"visual_compositor\": \"untested\",\n251:         \"hardware\": \"untested\",\n252:         \"product_lifecycle\": \"untested\",\n253:     }))\n254: \n255: \n256: # Prove this file parses as valid Python before trusting it as a consumer.\n257: # This check does not exercise the code paths above.\n258: ast.parse(Path(__file__).read_text())\n259: main()",
+        "total_lines": 259,
+        "next_line": null,
+        "truncated": false
+      }
+    },
+    {
+      "tool": "search_files",
+      "args": {
+        "path": "tools/design-qa",
+        "query": "renderer.json",
+        "offset": 0
+      },
+      "result": {
+        "matches": [
+          {
+            "path": "tools/design-qa/check-notch-motion-preview.py",
+            "line": 4,
+            "text": "Reads ONLY ABS_OUTPUT/frames.json, sources.json, renderer.json plus the local"
+          },
+          {
+            "path": "tools/design-qa/check-notch-motion-preview.py",
+            "line": 10,
+            "text": "plus the fact that frames.json/sources.json/renderer.json are internally"
+          },
+          {
+            "path": "tools/design-qa/check-notch-motion-preview.py",
+            "line": 97,
+            "text": "    renderer_path = out / \"renderer.json\""
+          },
+          {
+            "path": "tools/design-qa/check-notch-motion-preview.py",
+            "line": 225,
+            "text": "    # --- renderer.json -------------------------------------------------------"
+          },
+          {
+            "path": "tools/design-qa/render-native-surfaces.sh",
+            "line": 112,
+            "text": "(output / 'renderer.json').write_text(json.dumps("
+          }
+        ],
+        "truncated": false,
+        "next_offset": null
+      }
+    },
+    {
+      "tool": "create_file",
+      "args": {
+        "path": "tools/design-qa/check-progress-quantity-preview.py",
+        "content_chars": 18219
+      },
+      "result": {
+        "written": "tools/design-qa/check-progress-quantity-preview.py"
+      }
+    },
+    {
+      "tool": "replace_text",
+      "args": {
+        "path": "tools/design-qa/check-progress-quantity-preview.py",
+        "old_chars": 59,
+        "new_chars": 53
+      },
+      "result": {
+        "written": "tools/design-qa/check-progress-quantity-preview.py"
+      }
+    },
+    {
+      "tool": "replace_text",
+      "args": {
+        "path": "tools/design-qa/check-progress-quantity-preview.py",
+        "old_chars": 61,
+        "new_chars": 57
+      },
+      "result": {
+        "written": "tools/design-qa/check-progress-quantity-preview.py"
+      }
+    },
+    {
+      "tool": "replace_text",
+      "args": {
+        "path": "tools/design-qa/check-progress-quantity-preview.py",
+        "old_chars": 322,
+        "new_chars": 232
+      },
+      "result": {
+        "written": "tools/design-qa/check-progress-quantity-preview.py"
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/check-progress-quantity-preview.py",
+        "start_line": 98
+      },
+      "result": {
+        "text": "98:     except ValueError:\n99:         return None\n100: \n101: \n102: def has_ring(tile):\n103:     \"\"\"True when the optional progress part shows a ring (shape layer w/ stroke).\"\"\"\n104:     for layer in tile.get(\"layerChildren\") or []:\n105:         if isinstance(layer, dict) and \"strokeEnd\" in layer:\n106:             return True\n107:     return False\n108: \n109: \n110: def check_part(tile, label, expect_hidden=None, expect_indeterminate=None):\n111:     \"\"\"Validate the optional part model mirrors the tile quantity and geometry.\"\"\"\n112:     if \"partQuantity\" not in tile:\n113:         return None\n114:     assert tile.get(\"partHidden\") in (True, False), f\"{label}: partHidden must be bool\"\n115:     if expect_hidden is not None:\n116:         assert tile[\"partHidden\"] is expect_hidden, \\\n117:             f\"{label}: partHidden expected {expect_hidden} got {tile['partHidden']!r}\"\n118:     assert tile[\"partQuantity\"] == tile.get(\"quantity\"), \\\n119:         f\"{label}: part.model.quantity {tile['partQuantity']!r} != tile quantity {tile.get('quantity')!r}\"\n120:     assert isinstance(tile.get(\"layerChildren\"), list), f\"{label}: layerChildren must be a list\"\n121:     indeterminate_shown = any(\n122:         isinstance(layer, dict) and layer.get(\"hidden\") is False\n123:         for layer in tile[\"layerChildren\"])\n124:     if expect_indeterminate is not None:\n125:         assert indeterminate_shown is expect_indeterminate, \\\n126:             f\"{label}: indeterminate layer shown expected {expect_indeterminate} got {indeterminate_shown}\"\n127:     return indeterminate_shown\n128: \n129: \n130: def check_tile_common(tile, label, frame_w, frame_h):\n131:     # finite + contained tile frame.\n132:     assert isinstance(tile.get(\"frame\"), dict), f\"{label}: missing frame\"\n133:     fx, fy = finite(tile[\"frame\"].get(\"x\"), f\"{label}.frame.x\"), finite(tile[\"frame\"].get(\"y\"), f\"{label}.frame.y\")\n134:     fw = finite_nonnegative(tile[\"frame\"].get(\"width\"), f\"{label}.frame.width\")\n135:     fh = finite_nonnegative(tile[\"frame\"].get(\"height\"), f\"{label}.frame.height\")\n136:     assert fx >= 0 and fy >= 0 and fx + fw <= frame_w and fy + fh <= frame_h, \\\n137:         f\"{label}: tile frame {tile['frame']!r} not contained in {frame_w}x{frame_h}\"\n138: \n139:     # optional part root frame must also be finite and contained, and the\n140:     # optional part must not touch real UI (no window/controller/action fields).\n141:     if \"partFrame\" in tile:\n142:         pf = tile[\"partFrame\"]\n143:         px, py = finite(pf.get(\"x\"), f\"{label}.partFrame.x\"), finite(pf.get(\"y\"), f\"{label}.partFrame.y\")\n144:         pw = finite_nonnegative(pf.get(\"width\"), f\"{label}.partFrame.width\")\n145:         ph = finite_nonnegative(pf.get(\"height\"), f\"{label}.partFrame.height\")\n146:         assert px >= 0 and py >= 0 and px + pw <= frame_w and py + ph <= frame_h, \\\n147:             f\"{label}: part root frame {pf!r} not contained in {frame_w}x{frame_h}\"\n148:         for forbidden in (\"window\", \"controller\", \"action\", \"actions\", \"windowActions\"):\n149:             assert forbidden not in tile, f\"{label}: optional part touched real UI via {forbidden!r}\"\n150: \n151:     # AX value must equal quantityText.\n152:     assert tile.get(\"accessibilityValue\") == tile.get(\"quantityText\"), \\\n153:         f\"{label}: accessibilityValue {tile.get('accessibilityValue')!r} != quantityText {tile.get('quantityText')!r}\"\n154:     # tooltip must include the full subtitle.\n155:     subtitle = tile.get(\"subtitle\")\n156:     tooltip = tile.get(\"tooltip\")\n157:     assert isinstance(tooltip, str) and isinstance(subtitle, str), f\"{label}: tooltip/subtitle must be strings\"\n158:     assert subtitle in tooltip, f\"{label}: tooltip {tooltip!r} does not include full subtitle {subtitle!r}\"\n159:     return fw\n160: \n161: \n162: def check_tile(tile, label, sample, index, frame_w, frame_h):\n163:     # identity / core labels.\n164:     assert isinstance(tile.get(\"id\"), int) and not isinstance(tile[\"id\"], bool), f\"{label}: bad tile id\"\n165:     assert isinstance(tile.get(\"title\"), str) and tile[\"title\"], f\"{label}: bad title\"\n166:     assert isinstance(tile.get(\"subtitle\"), str), f\"{label}: bad subtitle\"\n167:     assert isinstance(tile.get(\"dark\"), bool), f\"{label}: dark must be bool\"\n168:     assert isinstance(tile.get(\"accessibility\"), str) and tile[\"accessibility\"], f\"{label}: bad accessibility label\"\n169: \n170:     # exact real quantity.\n171:     expected_q = THREE_QUANTITIES[index] if sample == \"three\" else QUANTITY[sample]\n172:     assert tile.get(\"quantity\") == expected_q, \\\n173:         f\"{label}: quantity expected {expected_q!r} got {tile.get('quantity')!r}\"\n174: \n175:     # quantityText presence: indeterminate/unknown have no numeric text.\n176:     qtext = tile.get(\"quantityText\")\n177:     if sample in NON_NUMERIC:\n178:         assert qtext is None, f\"{label}: quantityText should be null for {sample} got {qtext!r}\"\n179:     else:\n180:         assert isinstance(qtext, str) and qtext, f\"{label}: quantityText required for {sample}\"\n181: \n182:     # count parses to the exact real (completed, total) and stays consistent.\n183:     if sample in COUNT_PAIRS:\n184:         pair = parse_count(tile[\"quantity\"])\n185:         assert pair == COUNT_PAIRS[sample], f\"{label}: count pair {pair!r} != {COUNT_PAIRS[sample]!r}\"\n186:         assert pair[0] <= pair[1], f\"{label}: count pair ordering invalid: {pair!r}\"\n187:     elif sample == \"three\" and expected_q.startswith(\"count(\"):\n188:         assert parse_count(expected_q) == (2, 9), f\"{label}: three[1] count mismatch\"\n189: \n190:     # paused / ended / stale flags are exactly per sample.\n191:     assert tile.get(\"paused\") is (sample in PAUSED), f\"{label}: paused flag mismatch\"\n192:     assert tile.get(\"ended\") is (sample in ENDED), f\"{label}: ended flag mismatch\"\n193:     assert tile.get(\"stale\") is (sample in STALE), f\"{label}: stale flag mismatch\"\n194: \n195:     # percent value 1 is NOT ended; ended comes from the separate ended flag.\n196:     if sample in COMPLETE:\n197:         assert tile.get(\"quantity\") == \"fraction(1.0)\", f\"{label}: complete-value must be fraction(1.0)\"\n198:         assert tile.get(\"ended\") is False, f\"{label}: fraction(1) value must not imply ended\"\n199:     # do NOT assert draw amount means task done; only the explicit ended flag says so.\n200:     if sample == \"ended\":\n201:         assert tile.get(\"ended\") is True, f\"{label}: ended flag must be true\"\n202: \n203:     fw = check_tile_common(tile, label, frame_w, frame_h)\n204: \n205:     # part model must match the tile quantity exactly.\n206:     expect_hidden = True if sample == \"unknown\" else None\n207:     expect_ind = True if sample == \"indeterminate\" else None\n208:     check_part(tile, label, expect_hidden=expect_hidden, expect_indeterminate=expect_ind)\n209: \n210:     # Natural width vs available tile width minus 20 (and ring diameter when shown).\n211:     natural = finite_nonnegative(tile.get(\"naturalQuantityWidth\"), f\"{label}.naturalQuantityWidth\")\n212:     available = fw - 20.0 - (RING_DIAMETER if has_ring(tile) else 0.0)\n213:     return {\n214:         \"label\": label,\n215:         \"quantity\": tile.get(\"quantity\"),\n216:         \"quantityText\": qtext,\n217:         \"naturalWidth\": natural,\n218:         \"availableWidth\": available,\n219:         \"overflow\": natural > available,\n220:     }\n221: \n222: \n223: def main():\n224:     assert len(sys.argv) == 2, \"usage: check-progress-quantity-preview.py ABS_OUTPUT\"\n225:     out = Path(sys.argv[1]).resolve()\n226:     root = Path(__file__).resolve().parents[2]\n227: \n228:     frames_path = out / \"frames.json\"\n229:     sources_path = out / \"sources.json\"\n230:     renderer_path = out / \"renderer.json\"\n231:     for required in (frames_path, sources_path, renderer_path):\n232:         assert required.is_file(), f\"missing required output: {required.name}\"\n233: \n234:     report = json.loads(frames_path.read_text())\n235:     frames = report.get(\"frames\")\n236:     assert isinstance(frames, list), \"frames must be a list\"\n237: \n238:     # --- report-level schema / identity ------------------------------------\n239:     assert report.get(\"sourceControllers\") == SOURCE_CONTROLLERS, \\\n240:         f\"sourceControllers must be {SOURCE_CONTROLLERS} got {report.get('sourceControllers')!r}\"\n241:     assert report.get(\"actions\") == ACTIONS, \\\n242:         f\"actions must be {ACTIONS} got {report.get('actions')!r}\"\n243: \n244:     # --- 26 frames: aqua/dark x 13 samples ---------------------------------\n245:     assert len(frames) == 26, f\"expected 26 frames got {len(frames)}\"\n246:     by_appearance = {}\n247:     for frame in frames:\n248:         name = frame.get(\"name\")\n249:         assert isinstance(name, str) and \"-\" in name, f\"bad frame name: {name!r}\"\n250:         appearance, sample = name.split(\"-\", 1)\n251:         assert appearance in APPEARANCES, f\"unexpected appearance in frame name: {name!r}\"\n252:         assert frame.get(\"sample\") == sample, f\"{name}: sample field mismatch\"\n253:         assert sample in SAMPLES, f\"{name}: unexpected sample {sample!r}\"\n254:         assert frame.get(\"windows\") == WINDOWS, f\"{name}: windows must be {WINDOWS} got {frame.get('windows')!r}\"\n255:         assert frame.get(\"completions\") == 1, f\"{name}: completions must be 1 got {frame.get('completions')!r}\"\n256:         assert frame.get(\"canvasDark\") is APPEARANCES[appearance], \\\n257:             f\"{name}: canvasDark mismatch\"\n258:         # hidden window alpha0 activefalse.\n259:         assert frame.get(\"alpha\") == 0, f\"{name}: alpha must be 0 got {frame.get('alpha')!r}\"\n260:         assert frame.get(\"visible\") is False, f\"{name}: visible must be false\"\n261:         assert frame.get(\"active\") is False, f\"{name}: active must be false\"\n262:         by_appearance.setdefault(appearance, []).append(frame)\n263: \n264:     for appearance in APPEARANCES:\n265:         names = [f[\"sample\"] for f in by_appearance.get(appearance, [])]\n266:         assert names == SAMPLES, f\"{appearance}: sample order/sequence mismatch: {names}\"\n267: \n268:     # --- per-frame checks ---------------------------------------------------\n269:     observed = []\n270:     issues = []\n271:     for appearance in APPEARANCES:\n272:         for frame in by_appearance[appearance]:\n273:             sample = frame[\"sample\"]\n274:             label = frame[\"name\"]\n275:             width = finite_nonnegative(frame.get(\"width\"), f\"{label}.width\")\n276:             height = finite_nonnegative(frame.get(\"height\"), f\"{label}.height\")\n277:             tiles = frame.get(TILES)\n278:             assert isinstance(tiles, list), f\"{label}: tiles must be a list\"\n279: \n280:             expected_tiles = 3 if sample == \"three\" else 1\n281:             assert len(tiles) == expected_tiles, \\\n282:                 f\"{label}: expected {expected_tiles} tiles got {len(tiles)}\"\n283: \n284:             for index, tile in enumerate(tiles):\n285:                 tl = f\"{label}[{index}]\"\n286:                 obs = check_tile(tile, tl, sample, index, width, height)\n287:                 observed.append((appearance, obs))\n288:                 if obs[\"overflow\"]:\n289:                     issues.append(\n290:                         f\"{label}[{index}]: naturalQuantityWidth {obs['naturalWidth']:.2f} \"\n291:                         f\"exceeds available {obs['availableWidth']:.2f}\")\n292: \n293:     # --- identical corresponding actual quantity/geometry/core labels ------\n294:     light = {f[\"sample\"]: f for f in by_appearance[\"light\"]}\n295:     dark = {f[\"sample\"]: f for f in by_appearance[\"dark\"]}\n296:     for sample in SAMPLES:\n297:         lt, dt = light[sample][\"tiles\"], dark[sample][\"tiles\"]",
+        "total_lines": 363,
+        "next_line": 298,
+        "truncated": true
+      }
+    },
+    {
+      "tool": "run_check",
+      "args": {
+        "index": 0
+      },
+      "result": {
+        "check_index": 0,
+        "argv": [
+          "python3",
+          "-c",
+          "import ast,pathlib; ast.parse(pathlib.Path('tools/design-qa/check-progress-quantity-preview.py').read_text()); print('syntax only; actual native consumer pending')"
+        ],
+        "exit_code": 0,
+        "revision": 4,
+        "timed_out": false,
+        "output": "syntax only; actual native consumer pending\n",
+        "truncated": false
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/check-progress-quantity-preview.py",
+        "start_line": 298
+      },
+      "result": {
+        "text": "298:         assert len(lt) == len(dt), f\"{sample}: tile count differs across appearances\"\n299:         for index, (a, b) in enumerate(zip(lt, dt)):\n300:             for key in (\"id\", \"title\", \"kind\", \"subtitle\", \"quantity\", \"quantityText\",\n301:                         \"stale\", \"ended\", \"shelf\", \"drawing\", \"paused\",\n302:                         \"accessibility\", \"accessibilityValue\", \"tooltip\",\n303:                         \"naturalQuantityWidth\", \"partHidden\", \"partQuantity\",\n304:                         \"layerChildren\"):\n305:                 if key in a or key in b:\n306:                     assert a.get(key) == b.get(key), \\\n307:                         f\"{sample}[{index}]: {key} differs across appearances: {a.get(key)!r} != {b.get(key)!r}\"\n308:             assert a.get(\"frame\") == b.get(\"frame\"), \\\n309:                 f\"{sample}[{index}]: tile geometry differs across appearances\"\n310: \n311:     # --- renderer.json ------------------------------------------------------\n312:     renderer = json.loads(renderer_path.read_text())\n313:     assert renderer.get(\"swiftLanguageVersion\") == 6, \"renderer swiftLanguageVersion must be 6\"\n314:     assert renderer.get(\"strictConcurrency\") is True, \"renderer strictConcurrency must be true\"\n315:     assert renderer.get(\"warningsAsErrors\") is True, \"renderer warningsAsErrors must be true\"\n316:     assert renderer.get(\"optimized\") is False, \"renderer optimized must be false\"\n317: \n318:     # --- sources.json: exactly 518 entries, SHA256 matches current disk ----\n319:     sources = json.loads(sources_path.read_text())\n320:     assert isinstance(sources, dict) and len(sources) == SOURCE_COUNT, \\\n321:         f\"sources.json must contain {SOURCE_COUNT} entries got {len(sources)}\"\n322:     for name, digest in sources.items():\n323:         local = root / name\n324:         assert local.is_file(), f\"missing local source: {name}\"\n325:         actual = hashlib.sha256(local.read_bytes()).hexdigest()\n326:         assert actual == digest, f\"source drift for {name}: {actual} != {digest}\"\n327: \n328:     # --- report per-state observations; overflow is an issue, not a pass ----\n329:     for appearance, obs in observed:\n330:         print(json.dumps({\n331:             \"frame\": f\"{appearance}-{obs['label']}\",\n332:             \"observation\": (\"naturalWidth_exceeds_available\" if obs[\"overflow\"]\n333:                             else \"naturalWidth_within_available\"),\n334:             \"naturalWidth\": obs[\"naturalWidth\"],\n335:             \"availableWidth\": obs[\"availableWidth\"],\n336:             \"quantity\": obs[\"quantity\"],\n337:             \"quantityText\": obs[\"quantityText\"],\n338:             \"cache_static_only\": \"not_run\",\n339:             \"hardware\": \"not_run\",\n340:             \"compositor\": \"not_run\",\n341:         }, sort_keys=True))\n342: \n343:     status = \"design_review_required\" if issues else \"pass_static_schema_visual_inconclusive\"\n344:     print(json.dumps({\n345:         \"status\": status,\n346:         \"frames\": len(frames),\n347:         \"tiles_observed\": len(observed),\n348:         \"sources_sha256\": len(sources),\n349:         \"schema_identity_containment\": \"checked\",\n350:         \"naturalWidth_overflow_issues\": issues,\n351:         \"quantity_meaning_draw_amount\": \"not_asserted\",\n352:         \"cache_static_only\": \"not_run\",\n353:         \"hardware\": \"not_run\",\n354:         \"compositor\": \"not_run\",\n355:         \"naturalWidth_overflow_is_issue\": True,\n356:         \"main_decision\": \"naturalWidth overflow is reported for design review, not failed here\",\n357:     }, sort_keys=True))\n358: \n359: \n360: # Prove this file parses as valid Python before trusting it as a consumer.\n361: # This check does not exercise the code paths above.\n362: ast.parse(Path(__file__).read_text())\n363: main()",
+        "total_lines": 363,
+        "next_line": null,
+        "truncated": false
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 111450,
+    "completion_tokens": 6655,
+    "total_tokens": 118105
+  },
+  "progress": {
+    "phase": "finished",
+    "api_rounds": 9,
+    "tool_calls": 13,
+    "changed_files": [
+      "tools/design-qa/check-progress-quantity-preview.py"
+    ],
+    "checks": [
+      {
+        "check_index": 0,
+        "exit_code": 0,
+        "revision": 4,
+        "timed_out": false,
+        "truncated": false
+      }
+    ],
+    "last_tool": "read_file",
+    "updated_at": 1791720181.225087
+  },
+  "balance_check": {
+    "currency": "CNY",
+    "balance": "0.64",
+    "threshold": "10",
+    "low": true,
+    "available": true,
+    "notify": false
+  }
+}

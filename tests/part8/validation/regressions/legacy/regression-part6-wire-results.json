@@ -1,0 +1,8 @@
+{
+  "assertions" : 11,
+  "boundary" : "Synthetic CodexWire fixtures; no real CLI or sandbox enforcement",
+  "failures" : [
+
+  ],
+  "scenarios" : 5
+}

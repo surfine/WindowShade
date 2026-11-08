@@ -1,0 +1,36 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-host-theme/validation.json:sha256:e051557ab716ee947bdf3b22eeb267556d79e7c3e364b3b6a2c39d8b70816932",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "native HostSurfacePreview before/after",
+      "exit_code": 0,
+      "result": "14 before and14 after;14 dark roots;7 real-button guards pass",
+      "log": "after-render.log"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "current optimized Swift6 full app and existing gates; durable process exit0",
+      "log": "build-check.log",
+      "receipt": "build-exit.json"
+    },
+    {
+      "command": "OwnedPhasePreview synthetic stdio",
+      "exit_code": 0,
+      "result": "14 actual phase frames; one controller reused; real SHA256; child reaped and own temp removed",
+      "log": "../2026-10-11-owned-phases/render.log"
+    },
+    {
+      "command": "tests/run-conductor-owned-flow-tests.sh",
+      "exit_code": 0,
+      "result": "existing assertions unchanged; runner WireJSON dependency repaired",
+      "log": "../2026-10-11-owned-phases/core-flow.log"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "Owned status incorrect after model choice, send enabled with empty draft, clipped footer, too many equal actions and empty output; session list lacks project display name; original other seven-line scope incomplete; live hardware and real assistant not_run; full goal active",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

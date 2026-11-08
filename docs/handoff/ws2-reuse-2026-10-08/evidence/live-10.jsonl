@@ -1,0 +1,19 @@
+{"basis":"pinned-source-format-support","configuration":{"identifierRepresentation":"compact","m6Metadata":"none","pairingEnvelope":"default","replyPolicy":"current"},"event":"codec-compatibility","formats":["UUID-0x05","rawTime-0x06","dictionary-0xF0-0xFF"],"priorFailureTag":"not-captured"}
+{"event":"service-ready","port":59674,"service":"_companion-link._tcp"}
+{"event":"service-ready","port":59675,"service":"_mediaremotetv._tcp"}
+{"event":"service-ready","port":59677,"service":"_airplay._tcp"}
+{"event":"ready","lifetimeSeconds":120,"name":"WindowShade Remote Probe","pairingSeconds":60,"pinDisplay":"stderr-tty","port":59674,"profile":"atv-core","simulatedMediaState":true}
+{"connectionIndex":1,"event":"connection","stage":"initial"}
+{"connectionIndex":1,"event":"first-frame","frameType":5,"phase":"initial"}
+{"connectionIndex":1,"event":"handshake-phase","phase":"pair-verify"}
+{"connectionIndex":1,"event":"handshake-phase","phase":"pair-setup"}
+{"connectionIndex":1,"event":"handshake-phase","phase":"enrolled"}
+{"authenticatedInputCount":0,"authenticatedMessageCount":0,"candidateAeadMatched":false,"categories":{},"closeAt":107955.541734125,"closeCause":"protocol-reject","compatibilityInputCount":0,"compatibilityMessageCount":0,"connectionIndex":1,"event":"connection-closed","highWaterBytes":421,"highWaterEntries":1,"identityBound":false,"inputCategories":{},"lastFrameLength":5222,"lastFrameType":8,"lastSendOutcome":"content-processed","outboxBytes":0,"outboxEntries":0,"phase":"enrolled","phaseChangedAt":107955.52665925001,"processedRecords":4,"processedSlices":4,"protocolDeadline":107965.526658,"queuedRecords":4,"receivedFrames":5,"recordRX":1,"recordTX":0,"sending":false,"stage":"enrolled","unhandledMethods":0}
+{"connectionIndex":1,"event":"rejected","frameType":8,"reason":"protocol-failure","stage":"enrolled"}
+{"authenticatedInputCount":0,"candidate":"initial-pv-main","classification":"aead-failed","compatibilityInputCount":0,"connectionIndex":1,"event":"candidate-aead","identityBound":false,"predictedCounter":0}
+{"connectionIndex":2,"event":"connection","stage":"initial"}
+{"connectionIndex":2,"event":"first-frame","frameType":5,"phase":"initial"}
+{"connectionIndex":2,"event":"handshake-phase","phase":"pair-verify"}
+{"connectionIndex":2,"event":"handshake-phase","phase":"verified"}
+{"authenticatedInputCount":235,"authenticatedMessageCount":263,"candidateAeadMatched":false,"categories":{"_hidC":6,"_hidT":229,"_interest":6,"_sessionStart":1,"_systemInfo":1,"_tiStart":1,"_touchStart":1,"FetchAttentionState":1,"FetchCurrentNowPlayingInfoEvent":1,"FetchLaunchableApplicationsEvent":1,"FetchMediaControlStatus":1,"FetchSiriRemoteInfo":1,"TVRCSessionStart":1},"closeAt":108066.80688483334,"closeCause":"owner-stop","compatibilityInputCount":0,"compatibilityMessageCount":0,"connectionIndex":2,"event":"connection-closed","highWaterBytes":511,"highWaterEntries":7,"identityBound":true,"inputCategories":{"buttonDown":3,"buttonUp":3,"messages":235,"touchBegin":22,"touchEnd":22,"touchMove":185,"valid":235},"lastFrameLength":81,"lastFrameType":8,"lastSendOutcome":"content-processed","outboxBytes":0,"outboxEntries":0,"phase":"verified","phaseChangedAt":107955.59178308334,"processedRecords":37,"processedSlices":37,"protocolDeadline":108066.77519216599,"queuedRecords":37,"receivedFrames":265,"recordRX":263,"recordTX":35,"sending":false,"stage":"verified","unhandledMethods":12}
+{"acceptedConnections":2,"applicationActions":0,"deniedConnections":0,"event":"finished","incomingConnections":2,"persistentCredentials":false,"remainingListeners":0,"unsupportedConnections":0}

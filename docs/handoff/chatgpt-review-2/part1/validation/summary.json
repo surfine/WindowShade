@@ -1,0 +1,138 @@
+{
+  "timestamp_utc": "2026-10-03T05:48:21.364341+00:00",
+  "compiler": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "records": [
+    {
+      "name": "T1",
+      "exit": 0,
+      "log": "packages/T1/VALIDATION.txt",
+      "cases": 12,
+      "assertions": 32
+    },
+    {
+      "name": "L1",
+      "exit": 0,
+      "log": "packages/L1/VALIDATION.txt",
+      "cases": 14,
+      "assertions": 37
+    },
+    {
+      "name": "A1",
+      "exit": 0,
+      "log": "packages/A1/VALIDATION.txt",
+      "cases": 11,
+      "assertions": 28
+    },
+    {
+      "name": "D1",
+      "exit": 0,
+      "log": "packages/D1/VALIDATION.txt",
+      "cases": 32,
+      "assertions": 87
+    },
+    {
+      "name": "D2",
+      "exit": 0,
+      "log": "packages/D2/VALIDATION.txt",
+      "cases": 8,
+      "assertions": 35
+    },
+    {
+      "name": "I1a",
+      "exit": 0,
+      "log": "packages/I1a/VALIDATION.txt",
+      "cases": 6,
+      "assertions": 15
+    },
+    {
+      "name": "I1b",
+      "exit": 0,
+      "log": "packages/I1b/VALIDATION.txt",
+      "cases": 5,
+      "assertions": 8
+    },
+    {
+      "name": "I1c",
+      "exit": 0,
+      "log": "packages/I1c/VALIDATION.txt",
+      "cases": 7,
+      "assertions": 14
+    },
+    {
+      "name": "I1d",
+      "exit": 0,
+      "log": "packages/I1d/VALIDATION.txt",
+      "cases": 7,
+      "assertions": 21
+    },
+    {
+      "name": "I1e",
+      "exit": 0,
+      "log": "packages/I1e/VALIDATION.txt",
+      "cases": 5,
+      "assertions": 26
+    },
+    {
+      "name": "I1f",
+      "exit": 0,
+      "log": "packages/I1f/VALIDATION.txt",
+      "cases": 6,
+      "assertions": 15
+    },
+    {
+      "name": "I9",
+      "exit": 0,
+      "log": "packages/I9/VALIDATION.txt",
+      "cases": 8,
+      "assertions": 16
+    },
+    {
+      "name": "CONTRACTS",
+      "exit": 0,
+      "log": "contracts/VALIDATION.txt",
+      "cases": 9,
+      "assertions": 24
+    },
+    {
+      "name": "PRIVACY-LOG",
+      "exit": 0,
+      "log": "contracts/privacy/VALIDATION.txt",
+      "cases": 9,
+      "assertions": 20
+    },
+    {
+      "name": "COMBINED-SWIFT6",
+      "exit": 0,
+      "log": "validation/combined-typecheck.txt",
+      "cases": 0,
+      "assertions": 0
+    },
+    {
+      "name": "D1-OPTIMIZED",
+      "exit": 0,
+      "log": "validation/d1-optimized-build.txt",
+      "cases": 0,
+      "assertions": 0
+    },
+    {
+      "name": "D1-OPTIMIZED-RUN",
+      "exit": 0,
+      "log": "validation/d1-optimized-run.txt",
+      "cases": 32,
+      "assertions": 87
+    }
+  ],
+  "pure_unique_cases": 121,
+  "pure_unique_assertions": 334,
+  "all_exits_zero": true,
+  "not_run": [
+    "macOS SDK build",
+    "Darwin ACL branch",
+    "actual devices",
+    "actual authorization backend",
+    "real agent transport",
+    "energy experiment",
+    "film rendering"
+  ]
+}

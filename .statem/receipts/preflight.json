@@ -1,0 +1,23 @@
+{
+  "classes": [
+    "external-effects"
+  ],
+  "hazards": [
+    {
+      "class": "external-effects",
+      "evidence_paths": [
+        "gate-0B-verification.md",
+        "issue39-evidence.md"
+      ],
+      "matched": [
+        "发布"
+      ],
+      "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
+      "severity": "high"
+    }
+  ],
+  "source": "preflight",
+  "task_path": "task.txt",
+  "task_sha256": "5a6abc58933f7adca6173be0fceece08bf02f2f5c9c1a261a61e5f62d04ea544",
+  "version": 1
+}

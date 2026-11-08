@@ -1,0 +1,429 @@
+# WindowShade 开发指南
+
+面向开发者的构建、签名、模块结构、调试与发布流程。用户向内容见 [README](README_CN.md)。
+
+## 环境要求
+
+- macOS 15 或更新版本（构建目标是 macOS 15，见下面的支持政策）
+- Xcode Command Line Tools
+- 用于签名的 Apple Development 证书（构建脚本强制要求，拒绝 ad-hoc 签名）
+
+## 支持的系统版本
+
+只支持**最近三个大版本**的 macOS（2026-10-16 定，与 Homebrew 的 Apple Silicon 一级支持、Safari Technology Preview 同一口径）：
+现在是 macOS 15、26、27；下一个 macOS 的测试版尽力而为、不承诺。每年 9 月新版 macOS 正式推出时往前滚一版
+（2027 年 9 月起最低是 26）。
+
+- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](docs/releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
+- **从 1.0.17 起最低 macOS 15**：`build.sh` 的构建目标与 `prototype/Info.plist` 的 `LSMinimumSystemVersion` 已经改好；
+  发 1.0.17 时那一项 appcast 的 `minimumSystemVersion` 写 `15.0.0`（旧项保持 `14.0.0`，留在 14 的人停在 1.0.16），
+  README（三份）、官网与宣传片里的「macOS 14 及以上」在 1.0.17 发布时一起改，**不要提前改**（会把 1.0.16 说错）。
+- 不再为低于最低版本的系统写 `#available` 分支；最低版本前滚时，把随之恒真的判断一并删掉。
+- 宣称支持就要验过：所有真机证据都在最新那一版上，发版前在另外两个支持的版本上各跑一轮核心探针
+  （系统版本差异可以用 Apple Silicon 虚拟机，硬件差异不行）。
+
+### 发版前的虚拟机回归
+
+虚拟机在外置 QA 盘（`/Volumes/TiPlus 7100/WindowShade-QA`，Lume，见那里的 `RUNBOOK.md`）：`wsqa-manual` 是 macOS 26.6.2，
+`wsqa-15` 是 macOS 15.6.1（Lume 的 `--unattended sequoia` 在最后一步失败，所以是手动走的设定助理）；两台都开着 SIP、和一般用户一样，帐号 `lume`，本机公钥已放进去，WindowShade 的辅助功能与屏幕录制已授权。先 `./build.sh --stage`、在本机跑过一次 `tests/run-glance-probe.sh`
+（编出临时 App），开机（`./lume.sh run <名字> --storage windowshade-qa --display none`）后：
+
+```sh
+tests/vm/run-core-probes.sh lume@<虚拟机地址>
+```
+
+默认跑 fold-timing、restore-guard、fold-unminimizable、orphan、wins、browser-more；每组 `fails=0` 才算过。
+虚拟机只有 2–4 核：计时（fold-timing 约是本机的两三倍）只看有没有跑通，不和本机比；browser-more 里几处 5 秒等待在虚拟机上偶尔不够，
+失败要重跑一次再判断。跑完正常停机（`./lume.sh stop <名字> --storage windowshade-qa`）。
+2026-10-16 在 macOS 26.6.2 上首跑：前五组全过，browser-more 三次里一次全过、两次在不同步骤等满 5 秒（记 inconclusive）。
+同日 macOS 15.6.1（`wsqa-15`，4 核）首跑：六组全过；计时与本机相近（第一次画面变化 168 ms、卷帘条 391 ms）。
+
+### 第一个 Developer ID 版（1.0.17）
+
+1.0.16 及以前是开发证书签的（Team `FVGLY6W6S4`），Developer ID 的 Team 是 `DQ45KFVHJ8`，DR 一定不同，所以 1.0.17 是
+[docs/update.md](docs/update.md) 里的「换证书的一版」：appcast 那一项标 `sparkle:informationalUpdate` 配 `belowVersion=17`
+（1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
+用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
+同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
+**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目草稿在 docs/releases/appcast-item-1.0.17.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](docs/releases/v1.0.17-release-gate.md)。
+
+## 模块结构
+
+```text
+prototype/
+├── main.swift                        # 入口（NSApplication + AppDelegate）
+├── WindowShade.swift                 # 全局常量 + AppDelegate 骨架（启动、观察者、生命周期）
+├── ScreenCaptureBridge.swift         # SCStream 捕获（置顶预览的实时流）
+├── PinnedPreview.swift               # 置顶预览控制器（目标解析、watchdog、交互接管）
+├── PinnedPreviewPanel.swift          # 预览面板与菜单实时缩略图
+├── App/                              # AppDelegate 扩展（按功能拆分的控制器）
+│   ├── MenuBarController.swift       # 状态栏图标、菜单重建与菜单代理回调
+│   ├── Reconcile.swift               # 折叠会话监控（reconcile 定时核对/并行快照）
+│   ├── EventTap.swift                # 全局快捷键、事件 tap、标题栏双击/三击
+│   ├── EventTapCallback.swift        # CGEventTap 的 C 回调与标题栏带预过滤
+│   ├── Permissions.swift             # 权限检测与隐私设置跳转
+│   ├── StatusBarIcon.swift           # 状态栏模板图标
+│   ├── Preferences.swift             # 设置窗口与引导页
+│   ├── OverlayPresentation.swift     # 覆盖层展示与 Space 不变量
+│   ├── HoverPreview.swift            # 悬停预览（peek / 菜单悬停）
+│   ├── OverlayFactory.swift          # 覆盖层窗口工厂（截图条/经典条/代理标题栏）
+│   ├── ArrangeController.swift       # 卷帘条整理与专注 shelf
+│   ├── FocusSession.swift            # 专注会话
+│   ├── FoldTransaction.swift         # 折叠事务辅助（隐藏/恢复/验证/转发/通知）
+│   ├── FoldCompletion.swift          # 窗口动作与标题栏手势共用的完成等待
+│   ├── ShadeController.swift         # 折叠入口（shade/toggle/折叠计划/截图）
+│   ├── FoldExit.swift                # 折叠出口（unshade/清理/交通灯/QuickLook）
+│   └── Updater*.swift                # 应用内更新（docs/update.md）：Updater 状态与把关、UpdaterSparkle 唯一接 Sparkle 的一层
+│                                     # （#if canImport(Sparkle)）、UpdaterLaunch（--self-check 与启动时读更新日志）、
+│                                     # UpdaterSystem（DR、备份、换回、launchd，看护也编译）、UpdaterMove、UpdaterWindow、UpdaterSettings、UpdaterCopy
+├── Private/
+│   └── SkyLightBridge.swift          # SkyLight 私有 API 隔离层（全部有 fallback）
+├── Compatibility/
+│   ├── WindowPolicy.swift            # 窗口策略协议 + CaptureMode/HidingStrategy
+│   ├── Policies.swift                # 具体策略 + windowPolicy(for:)
+│   └── AppPredicates.swift           # 按应用的判断（特殊外框高度、应用识别）
+├── Core/
+│   ├── WindowState.swift             # 折叠操作状态机（非法转换拒绝）
+│   ├── ShadeModels.swift             # 折叠相关值类型（ShadeState、策略、外框画像）
+│   └── Update*.swift                 # 更新的纯逻辑：版本比较、更新日志与 refused.json、每一步的判断（看护也编译）
+├── Capture/
+│   ├── WindowSnapshotCache.swift     # 折叠截图 500ms 短 TTL 缓存
+│   ├── PreviewRenderer.swift         # 渲染与图像分析（chrome 扫描、圆角镜像、条制备）
+│   └── ShareableContentCache.swift   # SCShareableContent 短 TTL 缓存
+├── Overlay/
+│   ├── ShadeStripPool.swift          # 简单卷帘条窗口池（OverlayWindow 复用）
+│   └── ShadeStrip.swift              # 覆盖层视图（代理标题栏/经典条/预览窗/调色板）
+├── Window/
+│   ├── WindowRegistry.swift          # app 元数据（名称/bundleID）短 TTL 缓存
+│   ├── AXWindow.swift                # AX 辅助（几何/ID 解析/chrome 探测/按钮交互）
+│   ├── AXHelpers.swift               # 交通灯、QuickLook 重开、系统标题栏设置、唤回回调
+│   ├── AppWindows.swift              # 应用窗口枚举（事务备忘/并发）与显示标题
+│   ├── ChromeProfile.swift           # 窗口外框画像与缓存
+│   ├── Coordinates.swift             # AX / Cocoa 坐标换算与屏幕归属
+│   └── WindowListCache.swift         # WindowServer 窗口列表缓存与单窗口查询
+├── Effects/                          # 合盖桌面效果与窗口收起动画（Metal 渲染、传感器、设置窗口）
+├── WindowBrowser/                    # 窗口浏览：Dock 悬停与“选择窗口…”面板
+│   ├── WindowBrowserController.swift # 会话、目录、截图请求与面板生命周期
+│   ├── WindowBrowserViews.swift      # 视图共用部分（协议、图标缓存、表面样式）
+│   └── WindowBrowser*View.swift 等   # 每个视图一个文件：卡片、列表行、详情、大图预览、内容视图
+├── Support/
+│   └── Diagnostics.swift             # 日志、主线程活动标记、慢调用日志、卡顿哨兵
+├── Recovery/
+│   ├── Journal.swift                 # 恢复日志数据层（持久化/匹配/生命周期标记）
+│   └── Rescue.swift                  # 离屏窗口救援编排（后台扫描 + 主线程写回）
+├── Watchdog/                         # 更新看护 WindowShadeUpdateGuard.app 的入口和图标，单独编译，放进 Contents/Helpers/
+└── Vendor/
+    └── Sparkle.framework             # Sparkle 2.10.0，已删 XPCServices，符号链接保留（ditto 放入）
+```
+
+`build.sh` 会自动收集上述目录里的 `.swift` 文件（排序稳定，排除 `WindowShade.app`、
+`dist`、`.build`、`Watchdog`、`Vendor`），新增源文件无需手工维护编译列表。
+看护只编 `Watchdog/*.swift` 加 `Core/Update*.swift`、`App/UpdaterSystem.swift`、`App/UpdaterCopy.swift`；
+这几份共用文件只能依赖 Foundation/AppKit/Security/ServiceManagement 和彼此，不能引用 App 里别的类型。
+
+## 构建
+
+构建脚本原地更新 `prototype/WindowShade.app`（保留 bundle、Info.plist 与资源）。
+全新克隆没有 bundle 时，脚本会用仓库里的 `Info.plist` 与
+`assets/app-icon/WindowShade.icns` 自动 bootstrap 一个最小 bundle；已有 bundle
+则继续原地替换 Mach-O，保留 TCC 授权身份。
+
+```sh
+cd prototype
+./build.sh
+open WindowShade.app
+```
+
+本地反复检查界面时，若 LLVM 优化耗时过长，可用 `./build.sh --local-parallel`。
+它保留 `-O -whole-module-optimization`，增加四个后端线程。
+默认构建和 `--stage` 发布构建保持原编译选项，性能验收须注明所用模式。
+
+只想验证编译、不签名也不改动 app bundle：
+
+```sh
+./build.sh --check
+```
+
+### 签名
+
+`build.sh` 的签名身份来自环境变量或本机未跟踪配置文件（不写入 Git）：
+
+```sh
+WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
+```
+
+也可以写在 `prototype/local-codesign.env` 里（该文件已在 `.gitignore` 中）：
+
+```sh
+WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)"
+```
+
+构建脚本默认拒绝 ad-hoc 签名：macOS 的 TCC 授权（辅助功能 / 屏幕录制）绑定签名
+身份，重建 bundle 或换 ad-hoc 签名会重置权限。
+
+### 编译验证（不签名，仅验证）
+
+```sh
+cd prototype
+./build.sh --check
+```
+
+`--check` 复用 `build.sh` 同一份自动收集的源文件清单，只做 swiftc 类型检查，
+不签名、不修改 app bundle。README 与本文档不再需要第二套独立的 swiftc 文件清单。
+找得到 `Vendor/Sparkle.framework` 时带 `-F` 一起检查 Sparkle 接口层，找不到时 `App/UpdaterSparkle.swift`
+靠 `#if canImport(Sparkle)` 跳过；另有一次小的类型检查只编看护。更新的纯逻辑测试：`tests/run-update-tests.sh`
+（不链接 Sparkle，不动已装的 App）。
+
+日常 `./build.sh` 出来的开发版不写 `SUFeedURL`，更新器不启动，不会被线上版本换掉；只有 `--stage` 写。
+签名从里往外逐个签（Sparkle 的 Autoupdate、Updater.app、框架、看护，最后主程序），全部同一个身份，不用 `--deep`。
+
+## 调试
+
+- 设置与纸面组件的隔离验收入口：见 [设计规范 v1 落地与验证](docs/design-v1.md)。
+- 纸面组件事件与命中区域回归：`bash tests/run-paper-tests.sh`，使用离屏 AppKit 视图，不操作用户窗口。
+- 看一眼：状态机 `bash tests/run-glance-tests.sh`；真机探针先 `./build.sh --stage`，再
+  `bash tests/run-glance-probe.sh [--single | --carry [--other-space]]`（独立临时 App，解锁状态下运行）。说明见 [docs/glance.md](docs/glance.md)。
+- 标题栏手势：识别状态机 `bash tests/run-gesture-tests.sh`；真机探针 `bash tests/run-glance-probe.sh --gesture`
+  （同一个临时 App，合成事件直接交给控制器，不动指针）。说明见 [docs/gestures.md](docs/gestures.md)。
+- AppKit 回归合跑：`bash tests/run-appkit-tests.sh all`，一次编译后在四个独立进程运行设置、经典卷帘条、收起动画和看一眼生命周期测试，避免重复编译整套生产源码。各单项入口保留。
+- 设置页恢复与滚动保持：`bash tests/run-settings-tests.sh`，编译生产 AppKit 视图的独立入口；使用隔离偏好设置，不显示或操作用户窗口。
+- 经典卷帘条辅助操作与点击边界：`bash tests/run-appkit-tests.sh ClassicStripTests`；直接调用生产视图的事件处理，不注入系统事件，浅深色组件图输出到 `.build/appkit-tests/strip-shots/`。设置测试也复用这个构建入口，保留原命令作为包装。
+- 看一眼与携带窗口生命周期：`bash tests/run-appkit-tests.sh GlanceLifecycleTests`；覆盖临时显示后的用户接管、关闭重入与旧回调隔离，以及返回前取消最小化的成功／失败顺序。使用注入的 AX 操作，不改用户窗口。
+- 窗口动画生命周期：`bash tests/run-appkit-tests.sh WindowFoldEffectsTests`；用无捕获任务检查旧回调隔离、取消、回退移交、隐藏超时代数和重入，不操作真实窗口。测试扩展仅拼入临时源码快照，以访问生产类型的私有生命周期。
+- 日志写在 `~/Library/Logs/WindowShade/windowshade.log`：目录 0700、文件 0600，拒绝符号链接，5MB 轮转（旧文件为 `.1`），不写窗口标题。开发时可用 `WINDOWSHADE_LOG_PATH` 指到一个已存在、只有自己可写的目录；共享的 `/tmp` 不行。
+- 主线程卡顿：日志里搜 `main-thread stall`。
+- 慢操作：日志里搜 `slow:` 前缀。
+- 状态机：日志里搜 `state:` 前缀；非法状态转换会记录 `state: illegal transition`。
+- 私有 API 降级：SkyLight 不可用时相关调用返回失败，日志可见 `private SLS ... unavailable`。
+- 卡顿归因：`main-thread stall` 会附带卡顿窗口内累计占用最久的标记及占比，
+  `未标记` / `占 0%` 说明阻塞落在所有标记之外（多半在异步回调里）。
+- AX / SkyLight 调用成本基准：`WindowShade.app/Contents/MacOS/WindowShade --duo-ax-bench`
+  （只读；必须用签名后的 bundle 运行，否则拿不到辅助功能权限）。
+  输出首次/重复完整枚举、原始 AX 列表、新建/复用应用句柄、ID 匹配及过滤成本。
+  加 `--ax-raw-first` 会先读原始列表，用来区分系统首次读取与生产过滤成本；
+  两种顺序应分别运行，不能把相邻热查询的中位数当作首次响应或 p95/p99。
+- 标题栏控件输入回归：签名后的隔离应用运行 `--duo-window-test --input-test`。探针启动自己的临时窗口，在标题栏放入输入框并预热裁剪缓存，确认真实 AX 命中后调用生产双击/三击处理函数，检查输入没有被吞掉或排入窗口操作。需要辅助功能权限及系统标题栏双击动作；不发送全局模拟点击，输出耗时不包含系统事件交付。测试会短暂激活临时窗口，以核对聚焦查找；结束后仅在前台仍是临时窗口时恢复原应用，不覆盖用户中途切换。
+
+### 系统集成与质感批次
+
+- 这批改动的评审索引（改动位置、行为、证据、验证命令、未验证项）见
+  [系统集成与质感批次](docs/system-integration-polish.md)。
+- 两个可复现检查脚本：`scripts/check-settings-appearance.sh`（设置页浅深色自适应）、
+  `scripts/check-standard-menu.sh`（关于面板与代理应用主菜单下的 ⌘V）。
+- 其余入口：`--settings-shots`（设置页真实截图）、`--window-browser-shots`（窗口浏览
+  组件截图 + 卷帘条配色检查）、`--standard-menu-probe`（打包探针）。
+
+### 窗口浏览（Dock 悬停 / 窗口选择面板）
+
+- 纯逻辑与离屏 AppKit 回归：`bash tests/run-window-browser-tests.sh`
+  （身份/目录/动作/缩略图/布局/状态机；不请求权限、不操作用户窗口）。
+
+  - 该脚本编译窗口浏览的生产源文件并运行 690 项断言，另运行预览启动取消/乱序和元数据队列阻塞回归；每次都会打印 50/200 窗口的
+    首屏耗时，便于和 `docs/window-browser-performance.md` 的数字对照。
+  - 生产源文件清单与 `prototype/build.sh` 的自动收集保持一致；新增窗口浏览源文件
+    时同步更新该脚本（只是显式列出，不复制实现）。
+
+- 真实组件截图（隔离构建，不停止正在使用的应用）：
+
+  ```sh
+  cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: …" ./build.sh --stage
+  cd .. && .build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade \
+    --window-browser-shots .build/window-browser-shots
+  ```
+
+  输出 16 张 PNG 与 `manifest.txt`（OS/SDK/缩放率/数据来源）。截图来自生产
+  `WindowBrowserPanel` 组件，数据是内置记录与本地占位画面，不打开真实窗口。
+  `WINDOWSHADE_SHOTS_DEBUG=1` 会打印首张卡片的 frame 摘要。
+
+- 激活应用统一用 `NSApp.activate()`（macOS 14+ 协作式），不要再用将被取代的
+  `activate(ignoringOtherApps:)`；键盘面板的激活重试与聚焦逻辑在
+  `WindowBrowserPanel.presentKeyboardPanel()`。
+- 设置窗口页面截图（离屏、不需要录屏权限）：
+  `./build.sh --stage` 后运行
+  `.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade --settings-shots .build/settings-shots`
+  输出每页的浅色/深色 PNG 与 `manifest.txt`；侧栏由系统材质绘制、效果页的 Metal 预览
+  画布也不会出现在离屏图里。窗口可自由缩放，`WINDOWSHADE_SETTINGS_SHOTS_SIZE=1115x680`
+  可以把同一批页面渲染成别的尺寸（内容列左右留白是否对称只能在非默认宽度上看出来）。
+  每次渲染都会打印一行内容列居中自检（`内容列居中偏移 0.0pt PASS`）：收起侧栏后详情区变成
+  整窗宽，内容列必须仍然居中，贴左会在右半边留下大片空白。
+  `WINDOWSHADE_SETTINGS_SHOTS_SIDEBAR=collapsed|expanded` 会在拍卷帘页前切换侧栏并核对窗口宽度
+  没变（`侧栏展开时窗口宽 900pt（切换前 900pt）PASS`）——设置窗口的最小尺寸只能用
+  `window.contentMinSize` 表达，给 split view 挂 required 宽高约束会让 AppKit 在展开侧栏时把整扇
+  窗口撑大一个侧栏宽度（实测 900 → 1115）。
+- 设置页外观自适应回归：`bash scripts/check-settings-appearance.sh`
+  （逐页比较浅色/深色平均亮度，防止静态颜色被冻结的缺陷复发）。
+- 系统外观（材质 / 对比度边线 / 薄纱 / 动画 / 可访问性文案）集中在
+  `prototype/Overlay/SystemAppearance.swift`：新增自定义表面时用 `SystemMaterialView`
+  并在 `applySystemAppearance(capabilities:)` 里读取 `SystemAppearancePolicy`，
+  不要在调用点各自判断 `accessibilityDisplayShould*`。`tests/run-paper-tests.sh`
+  覆盖策略本身与各表面的接线（材质、薄纱、边线、VoiceOver 文案）。
+- 代理应用的主菜单：WindowShade 是 `LSUIElement`，不显示菜单栏，但文本编辑快捷键与
+  ⌘W 依赖主菜单的 key equivalent。菜单由 `prototype/App/StandardMenu.swift` 生成，
+  在 `applicationDidFinishLaunching` 里安装；改动菜单后跑
+  `bash scripts/check-standard-menu.sh` 复核关于面板、无主菜单不粘贴、有主菜单可粘贴
+  （打包探针会临时激活应用约 1 秒）。
+- 编译期玻璃能力探测：`build.sh` 与测试脚本都会检查当前 SDK 是否包含
+  `AppKit.framework/Headers/NSGlassEffectView.h`，包含时定义
+  `WINDOWSHADE_SDK_HAS_GLASS`。旧 SDK 构建时玻璃分支不参与编译，运行时再用
+  `#available(macOS 26.0, *)` 决定是否启用；玻璃实现单独放在
+  `prototype/WindowBrowser/WindowBrowserMaterial.swift` 的
+  `WindowBrowserGlassBackdrop` 里。
+
+- 性能对照脚本（同机、同数据、基线 worktree）：
+
+  ```sh
+  git worktree add /tmp/ws-baseline 05e5472370e199e92b147f1e0af72175c6429288
+  /tmp/run-perf.sh    # 内容见 .build/window-browser-perf/ 的说明
+  ```
+- 隔离 fixture（不进入正式 AppDelegate，按钮只改 fake 状态）：
+
+  ```sh
+  cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="<身份>" bash build.sh --stage
+  APP=../.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
+  WINDOWSHADE_BROWSER_FIXTURE=many WINDOWSHADE_BROWSER_FIXTURE_AUTOEXIT=3 "$APP" --window-browser-fixture
+  ```
+
+  `WINDOWSHADE_BROWSER_FIXTURE` 可选 `mixed / many / empty / long / nopermission`，
+  `WINDOWSHADE_BROWSER_FIXTURE_SIZE=small` 用小屏尺寸，
+  `WINDOWSHADE_BROWSER_FIXTURE_APPEARANCE=dark|light` 强制浅/深色外观，
+  `WINDOWSHADE_BROWSER_FIXTURE_STYLE=list|grid` 会在自动退出前像用户一样点一次
+  分段控件（用来验证“点了就换布局”，输出里的 `renderedStyle/renderedRows/renderedCards`
+  是真实渲染结果）。
+- 只读真机探针（不移动用户指针、不捕获用户窗口；详见
+  [窗口浏览进度](docs/window-browser-progress.md) 的命令清单）：
+  `--window-browser-dock-probe`、`--window-browser-hover-probe`、
+  `--window-browser-catalog-probe`、`--window-browser-capture-probe`
+  （只捕获本应用自己的探针窗口）、`--window-browser-thumbnail-probe`、
+  `--window-browser-stream-probe`、`--window-browser-panel-probe`、
+  `--window-browser-ui-probe`、`--window-browser-idle-probe`
+  （临时关闭 Dock 开关后测空闲查询数，结束时恢复设置）、
+  `--window-browser-identity-probe`（真实 AX 身份解析：包含同名同位置的两个原生窗口、
+  歧义拒绝、关闭后不替换目标与协调器拒绝分支；不修改用户窗口）。
+  例外：`--window-browser-live-app-probe` 会对**另一个正在运行的 WindowShade**
+  走一遍真实状态栏菜单项并打开一次面板（随后按 Esc 关闭）。它只读用户窗口、不改设置，
+  但会短暂占用菜单栏与屏幕，请在不需要用机的时机运行。
+  `--window-browser-hover-live-probe` 会把系统指针移到 Dock 图标上约 1.2 秒再放回，
+  用于验证真实悬停通知；只悬停、不点击、不激活，运行前请确认当前没有正在进行中的
+  拖拽或需要保持指针位置的操作。
+
+用户向说明（入口、权限、兼容限制）见 [docs/window-browser.md](docs/window-browser.md)。
+
+需要外部/更高智能模型复检时，用 [复检交接与提示词](docs/review-handoff.md)：里面是
+可直接粘贴的评审提示词、按任务书逐条列出的需求与状态、已知缺口、冲突消解记录和复检命令。
+
+动手优化这一带之前先读 [docs/performance.md](docs/performance.md)：那里记了
+实测的调用成本量级、已走通的手法、以及已经证伪的方向（比如用 SkyLight
+绕开目标 App 在 SIP 开启时不可行），可以省掉重新走一遍的时间。
+
+## 发布前测试清单
+
+在以下应用上验证折叠 / 展开、双击标题栏、卷帘条预览、置顶预览、菜单管理、`⌃⌘1...9`、`⌃⌘0`：
+
+- Finder
+- Safari
+- Chrome
+- Telegram
+- WeChat
+- Adobe Photoshop
+- Premiere
+- After Effects
+- System Settings
+
+异常场景：
+
+- 杀掉 WindowShade 进程后，journal 能把停车窗口救回（启动后自动救援）。
+- 无录屏权限时原貌卷帘降级为代理标题栏，不崩溃。
+- 快速连续双击 / 快捷键不破坏窗口状态（状态机拒绝非法转换）。
+
+## 发布流程
+
+带更新器以后，每个公开的包都会被已装的 App 当成新版本，所以规则比以前严：
+
+1. **每个公开的包都升 `CFBundleVersion`**（`prototype/Info.plist`，同时升 `CFBundleShortVersionString`）。不再移动已发布的 tag，不再 `--clobber`；
+   换包就升一个小版本。以前的“同一版本重新发布”一节作废。
+   **`bash scripts/check-release-version.sh` 必须先 PASS**：`CFBundleVersion` 不大于 appcast 里已发过的最高 build 号就失败。
+   `--stage` 遇到同样情形只警告（验证用的 `--stage` 照常能跑），但那个包不能发布。
+2. `./build.sh --stage` 隔离构建并签名，产物为 `.build/duo-validation/WindowShade.app`，不会停止或覆盖日常运行的应用。
+   它会写入 `SUFeedURL`，检查链接了 Sparkle、嵌套代码同一个 Team、`SUPublicEDKey` 没变，并试跑 `--self-check`。
+   **输出里出现“更新器没接齐，这个包不能发布”就停下**：少了 `main.swift` 里的 `UpdateLaunch.handleEarlyArguments()` /
+   `UpdateLaunch.recordLaunch()` 或 `WindowShade.swift` 里的 `UpdaterController.shared.start()` 等，安装前的试跑会拉起整个 App、
+   新版写不了 healthy，每次更新都会被换回。然后运行相关回归检查（真机探针、虚拟机回归都用这个开发证书签的包）。
+3. **发布包用 Developer ID 签、公证、钉票据**（2026-10-16 起；账号 Team `DQ45KFVHJ8`）：
+   `./build.sh --release` 做和 `--stage` 同样的检查（idle-budget 除外，同源由 `--stage` 把关），产物在 `.build/release/WindowShade.app`，
+   所有嵌套代码用同一张 Developer ID 签、带 Apple 时间戳；再 `bash scripts/notarize.sh` 送公证、钉票据、用 Gatekeeper 核
+   （凭证是本人用 `xcrun notarytool store-credentials windowshade-notary …` 存进钥匙串的，脚本不碰密码）。
+   然后打包（`ditto` 保留框架里的符号链接）：
+
+   ```sh
+   cd prototype
+   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
+   mkdir -p dist
+   ditto -c -k --sequesterRsrc --keepParent ../.build/release/WindowShade.app "dist/WindowShade-v${VERSION}.zip"
+   (cd dist && shasum -a 256 "WindowShade-v${VERSION}.zip" > "WindowShade-v${VERSION}.zip.sha256")
+   ```
+
+4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 还没写，先按下面手动做：
+   1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
+   2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
+   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
+   4. `WindowShade.app/Contents/MacOS/WindowShade --self-check` 返回 0，输出里有这次的 build 号（`build=N`），1 秒左右返回。
+   5. `CFBundleVersion` 大于上一版（`bash scripts/check-release-version.sh` PASS）。
+   6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。
+   7. `lipo -archs` 和清单的 `hardwareRequirements` 一致。
+   8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
+   9. 上一版读得懂这一版的状态：新版 `--self-check --write-sample-state <目录>`，上一版 `--self-check --read-state <目录>` 返回 0。
+      第一个带更新器的版本没有“上一版”，跳过；从第二个起必做。
+5. 提交并推送实际构建的源文件、版本与发布说明，打新标签，上传 zip 和 `.sha256`，再下载回来核对 SHA-256：
+
+   ```sh
+   # 仍在 prototype/ 目录下执行
+   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
+   git tag "v${VERSION}" && git push origin "v${VERSION}"
+   gh release create "v${VERSION}" \
+     "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" \
+     --title "WindowShade v${VERSION}" \
+     --notes-file "../docs/releases/v${VERSION}.md"
+   curl -L -o /tmp/ws-check.zip "https://github.com/surfine/WindowShade/releases/download/v${VERSION}/WindowShade-v${VERSION}.zip"
+   shasum -a 256 /tmp/ws-check.zip; cat "dist/WindowShade-v${VERSION}.zip.sha256"
+   ```
+
+6. **清单**（`scripts/make-appcast.sh` 还没写，先手动）：`sign_update dist/WindowShade-v${VERSION}.zip` 得到 `sparkle:edSignature` 和
+   `length`，在 `site/public/appcast.xml` 加一条（保留最近三条，写法见 docs/update.md“发布流程”里的条目样子），改动说明取
+   `docs/releases/v<版本>.md` 开头最多三行；再给整个清单签名，`npm run deploy`，最后 `curl` 一次线上的清单。
+   先上传包、后发清单，反过来他会先看到新版本却下载不到。
+7. **先走测试频道**：条目先带 `<sparkle:channel>beta</sparkle:channel>` 发一次。Aaron 自己
+   `defaults write com.windowshade.prototype WindowShadeUpdateChannel beta` 打开测试频道，装上用一天，再去掉频道标记重发清单。
+8. **分批推送**：条目带 `sparkle:phasedRolloutInterval` 86400。**撤回一版**：从清单删掉那一条再部署。
+
+`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构；发布说明须标明实际架构。Apple Development 签名不等于公证，不宣称已经 notarized。
+
+### 更新签名的密钥
+
+- EdDSA 私钥只在 Aaron 的登录钥匙串里（账户名 `windowshade`），另有一份加密的离线备份，永不进仓库、不导出到别处。
+  `sign_update` 从钥匙串读它；Sparkle 的命令行工具在 Sparkle 2.10.0 发布包的 `bin/` 里（`sign_update`、`generate_appcast`）。
+- 公钥 `D/MZytH+oxawqKQsskoXBdwbvoPentrqfaj7Tj2pnkw=` 写在 `prototype/Info.plist` 的 `SUPublicEDKey`，`build.sh` 的 `EXPECTED_ED_KEY`
+  也记了一份，`--stage` 时比对。
+- 私钥丢了没有兜底：所有人要手动装一次带新公钥的版本。换密钥要单独发一版（用旧私钥签、Info.plist 换新公钥），这一版不能同时换证书。
+
+### 证书续期（开发证书 2027-06-14 到期，2027 年 5 月前做）
+
+1. 同一个账号下申请新的 Apple Development 证书。钥匙串里两张同名证书会让 `codesign` 报身份不唯一，
+   `WINDOWSHADE_CODESIGN_IDENTITY` 改用新证书的 SHA-1。
+2. `--stage` 后跑发布关。DR 逐字相同就照常发；不同就按 docs/update.md 的“换证书的一版”发（清单 `informationalUpdate` 配 `belowVersion`，
+   发布说明写明要手动安装、重新授权）。
+3. 确认新证书发的第一版在测试账户上授权还在，再删旧证书。
+
+### 升级 Sparkle
+
+1. 下载新版本的 `Sparkle-<版本>.tar.xz`，核对官方发布页的 SHA-256。
+2. `rm -rf prototype/Vendor/Sparkle.framework && ditto <解包目录>/Sparkle.framework prototype/Vendor/Sparkle.framework`（`ditto` 保留符号链接），
+   再删掉 `prototype/Vendor/Sparkle.framework/Versions/B/XPCServices` 和顶层的 `XPCServices` 链接（没开沙盒用不到）。
+   `build.sh` 的注释和本节的版本号一起改。
+3. 读发布说明，留意安装器、缓存目录（`~/Library/Caches/<bundle id>/org.sparkle-project.Sparkle/Installation/`，关靠它找解开的 App）、
+   续装和取消流程、`<bundle id>-sparkle-updater` 这个 launchd 标签有没有变。
+4. 跑 `tests/run-update-tests.sh`，再在发布机上把 docs/update.md“验收”里的集成测试走一遍。关找不到解开的 App 时结果是“不装”，
+   这样发出去就等于没法更新，所以不过不发。
+
+### Computer Use 原生界面验收
+
+[操作手册](docs/computer-use-qa.md) 是隔离 VM、单步输入、截图/AX 取证和视觉复核的唯一入口；[工具说明](tools/computer-use-qa/README.md) 提供 CLI 与离线检查。涉及界面行为的改动应选择对应场景，报告实际构建身份、失败、未测项与清理结果。已有单元测试及 glance 探针继续使用，不以 Computer Use 替代它们；历史二进制的通过不构成当前源码通过。

@@ -1,0 +1,20 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-usage-detail/validation.json",
+  "artifact_sha256": "cd293bac1a36040816a82d9e4aee86f5d4bf5d3da2609810c22821c6fffb291b",
+  "lenses": {
+    "task_contract": "account windows separated from current context; candidate not product integration",
+    "evidence_freshness": "27 sources/50 evidence independently SHA checked; actual16/518; reused519 exact identity",
+    "edge_risk": "unknown preserves absence; expiry preserves amount; shared hides details; model actual TextKit truncation"
+  },
+  "findings": [
+    "Main reviewed actual normal/long/expired/shared PNG.",
+    "Two windows retain individual reading and recovery; seven-day period not calendar week.",
+    "Candidate context is explicitly synthetic/unqualified.",
+    "GridTitle suspected truncation excluded by actual stored PNG and cell setting.",
+    "No production changes, true actions/refresh/hardware not_run."
+  ]
+}

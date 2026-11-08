@@ -1,0 +1,4 @@
+{"id":3,"method":"thread/start","params":{"approvalPolicy":"on-request","approvalsReviewer":"user","cwd":"/tmp/fixture-project","model":"test-model","sandbox":"read-only"}}
+{"id":4,"method":"turn/start","params":{"approvalPolicy":"on-request","approvalsReviewer":"user","effort":"medium","input":[{"text":"Synthetic request","text_elements":[],"type":"text"}],"model":"test-model","sandboxPolicy":{"networkAccess":false,"type":"readOnly"},"threadId":"t"}}
+{"id":3,"method":"thread/resume","params":{"approvalPolicy":"on-request","approvalsReviewer":"user","sandbox":"read-only","threadId":"known-thread"}}
+{"id":3,"method":"model/list","params":{"cursor":"next","includeHidden":false,"limit":100}}

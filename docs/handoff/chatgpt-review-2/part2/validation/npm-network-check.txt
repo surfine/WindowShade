@@ -1,0 +1,6 @@
+COMMAND curl --max-time 5 -I https://registry.npmjs.org/remotion
+EXIT 6
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0curl: (6) Could not resolve host: registry.npmjs.org

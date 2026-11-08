@@ -1,0 +1,122 @@
+[
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-normal.png",
+    "location" : "3 号会议室",
+    "others" : "",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-long-title.png",
+    "location" : "3 号会议室",
+    "others" : "",
+    "title" : "跨团队产品设计评审与下季度计划确认",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-no-location.png",
+    "location" : "",
+    "others" : "",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-sharing.png",
+    "location" : "",
+    "others" : "还有 1 个：日程 · 14:18",
+    "title" : "日程",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-started.png",
+    "location" : "3 号会议室",
+    "others" : "",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-others.png",
+    "location" : "3 号会议室",
+    "others" : "还有 1 个：项目周会 · 14:18",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-normal.png",
+    "location" : "3 号会议室",
+    "others" : "",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-long-title.png",
+    "location" : "3 号会议室",
+    "others" : "",
+    "title" : "跨团队产品设计评审与下季度计划确认",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-no-location.png",
+    "location" : "",
+    "others" : "",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-sharing.png",
+    "location" : "",
+    "others" : "还有 1 个：日程 · 14:18",
+    "title" : "日程",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-started.png",
+    "location" : "3 号会议室",
+    "others" : "",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-others.png",
+    "location" : "3 号会议室",
+    "others" : "还有 1 个：项目周会 · 14:18",
+    "title" : "设计评审",
+    "visibleWindow" : false,
+    "width" : 440
+  }
+]

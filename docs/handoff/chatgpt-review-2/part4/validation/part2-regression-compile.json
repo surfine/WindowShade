@@ -1,0 +1,20 @@
+{
+  "command": [
+    "swiftc",
+    "-swift-version",
+    "6",
+    "-strict-concurrency=complete",
+    "-warnings-as-errors",
+    "/mnt/data/WindowShade2-round2-part4/reference/prototype/Core/Contracts.swift",
+    "/mnt/data/WindowShade2-round2-part4/overlay/prototype/App/InteractionCoordinator.swift",
+    "/mnt/data/WindowShade2-round2-part4/overlay/prototype/Core/CodexWire.swift",
+    "/mnt/data/ws2-work4/handoff/WindowShade2-round2-handoff/part2/packages/D5a/prototype/Core/RemoteSessionGate.swift",
+    "/mnt/data/ws2-work4/handoff/WindowShade2-round2-handoff/part2/packages/L2/prototype/Core/PresenceReadDeadline.swift",
+    "/mnt/data/ws2-work4/handoff/WindowShade2-round2-handoff/part2/tests/Part2CoreTests.swift",
+    "-o",
+    "/mnt/data/WindowShade2-round2-part4/.build/part2-regression"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": ""
+}

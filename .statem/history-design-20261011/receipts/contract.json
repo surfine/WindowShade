@@ -1,0 +1,16 @@
+{
+  "kind": "contract",
+  "status": "passed",
+  "artifact": "4accf310d505041f5d4458e204c62e55e022a900",
+  "checks": [
+    "git push exit 0",
+    "git ls-remote confirms exact commit",
+    "82 source hashes match build evidence",
+    "prompt and portable evidence committed"
+  ],
+  "reused_checks": [
+    "prior build and offline checks; source unchanged"
+  ],
+  "remaining_risk": "Native Remote real-device connection remains unresolved and documented",
+  "next_action": "self_review"
+}

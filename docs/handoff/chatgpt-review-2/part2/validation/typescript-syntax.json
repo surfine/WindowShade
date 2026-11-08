@@ -1,0 +1,118 @@
+{
+  "typescript": "5.8.3",
+  "kind": "syntax-only; no type checking or module resolution",
+  "files": [
+    {
+      "file": "Film.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "Root.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "index.ts",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/Caption.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/ClipCard.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/DigitRoll.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/FlashCut.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/FlatPanel.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/PageCam.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/VerticalTicker.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/helpers/camera.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/helpers/motion.ts",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/helpers/rand.ts",
+      "diagnostics": []
+    },
+    {
+      "file": "lib/helpers/shake.ts",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Camera.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch0Unlock.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch1Island.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch2Windows.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch3Launchpad.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch4Inputs.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch5Conduct.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch6CarPlay.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch7Focus.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Ch8Outro.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Footage.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Notch.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/Stage.tsx",
+      "diagnostics": []
+    },
+    {
+      "file": "scenes/wsSpring.ts",
+      "diagnostics": []
+    }
+  ]
+}

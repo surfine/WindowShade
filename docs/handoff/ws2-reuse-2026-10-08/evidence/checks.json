@@ -1,0 +1,115 @@
+{
+  "baseHEAD": "4accf310d505041f5d4458e204c62e55e022a900",
+  "binarySHA256": "98e0efa4735430a97a24047fdebf92698b8d9dca5b6509798db8cb7efa6290fe",
+  "pythonPath": "/tmp/windowshade-srp-research/srptools:/tmp/windowshade-srp-research/python-deps",
+  "checks": [
+    {
+      "name": "probe-build",
+      "command": "bash tools/probes/remote-device/run.sh --build-only",
+      "exitCode": 0
+    },
+    {
+      "name": "offline",
+      "command": ".build/remote-device-probe/RemoteDeviceProbe --self-test",
+      "exitCode": 0
+    },
+    {
+      "name": "handshake",
+      "command": "python3 tools/probes/remote-device/handshake-interop.py --bridge .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "session",
+      "command": "python3 tools/probes/remote-device/session-interop.py --bridge .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "candidate",
+      "command": "python3 tools/probes/remote-device/candidate-interop.py .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "configuration",
+      "command": "python3 tools/probes/remote-device/configuration-interop.py .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "reply-policy",
+      "command": "python3 tools/probes/remote-device/reply-policy-interop.py .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "socket-current",
+      "command": "python3 tools/probes/remote-device/socket-interop.py .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "socket-reference",
+      "command": "python3 tools/probes/remote-device/socket-interop.py .build/remote-device-probe/RemoteDeviceProbe --reply-policy upstream-reference",
+      "exitCode": 0
+    },
+    {
+      "name": "pipelined",
+      "command": "python3 tools/probes/remote-device/pipelined-interop.py .build/remote-device-probe/RemoteDeviceProbe",
+      "exitCode": 0
+    },
+    {
+      "name": "app-build",
+      "command": "TOOLCHAINS=com.apple.dt.toolchain.Metal.32023.921.5,com.apple.dt.toolchain.XcodeDefault bash prototype/build.sh --check",
+      "exitCode": 0
+    },
+    {
+      "name": "mac-crypto",
+      "command": "CLANG_MODULE_CACHE_PATH=\"$PWD/.build/mac-crypto/module-cache\" bash tests/run-mac-crypto-tests.sh",
+      "exitCode": 0
+    },
+    {
+      "name": "pair-crypto",
+      "command": "CLANG_MODULE_CACHE_PATH=\"$PWD/.build/part5-mac-pair-crypto/module-cache\" bash tests/run-part5-mac-crypto-tests.sh",
+      "exitCode": 0
+    }
+  ],
+  "logSHA256": {
+    "offline-final.log": "92651d52bcded645fb32ee70e27e69be0dd77103d5128e6d1721e2aedaab0b96",
+    "handshake-final.log": "56fd552f3dc03e5bc7252fc72f950d1690aaddb15e53a0b3e873efc8461d454c",
+    "session-final.log": "2a1ab915d7cba79d19713ef3da3b1826afbb2452f2e7d3748f017317ccf4b45f",
+    "candidate-final.log": "813d38fa5566ebdb289f1ad0813a333cc33790a51ebca37be65b5279607db2ad",
+    "configuration-final.log": "722a750fbf9ec319faf4bd79f539ab3ae260dc3101d7faf81cef843252abf0da",
+    "reply-policy-final.log": "368f73ccc8181a0cb67f2b1421b0ca353b6a7374928e51412cf8fa44f8896ae4",
+    "socket-current.log": "4b2a9ec14444a66002964e4a7fa6ab93ccdfbb6e46b00fddb0ec3a386bfbb359",
+    "socket-reference.log": "12c1d2d4c2995dbe034bfaebf660020b54bbc90910d365aeb8d328994689283f",
+    "pipelined-final.log": "9d7e485c6f571e0ebf62a740e1d677eccfcec76ced236c4bac3585d7340576aa",
+    "profile.log": "44db78a7fef035211d3c920fb74155fb306dff48307f1aa5797e893b0ad41ab4",
+    "channel.log": "b60ebf12d37a8474c3c3dd56aa2f8e049346273658e71de60c384a4b7f13571f",
+    "transport-control.log": "4817472fd0c74c8e6a4db5ae574dad75c6aae6ed3a8629eed853354371671003",
+    "transport-loopback.log": "d26f9ff698083ae5736491b9db62c4ef8724127f152c3fc661aad496c905854a",
+    "transport-receipt.json": "49dcd1481078ca9219e8b73cb28920f5e54185a91d8c5e3dee219995409107fe",
+    "initial-pv-red.json": "a98ac5c59cc5a49458d3b00535c1f2405404972b293a0f9899b91d144c7614be",
+    "app-build-final.log": "a0dc04285ab9a3d4ed02a7089a66250fbc8e2ceca9fefa17a389bb595d440539",
+    "mac-crypto-final.log": "1d4204a55bb84cf5471d2c30ea9ffffd02a47097a749fbeddfcfe04da31ddcc8",
+    "pair-crypto-final.log": "396018e439bbcc266fbd60052dca0492478b6cdc920137a07d8d8b15e2cd54fe",
+    "live-09.jsonl": "8791adbc1d0764b548475081795c5d813544d55877aa6821fb78372edd28f3d1",
+    "live-10.jsonl": "e97f9b6bba046d7e8500a0a2a450f2a2224b1225e31b0a8287f5fd0acdbce72a",
+    "live-result.json": "b5eb3dad976be887604da472703e5a0c86782f1f137aeed5928524ad4e0a379d",
+    "live-10-result.json": "795701c924d74413796cae325c07924b8d6e92ba86560977d5af4c2ec648d67f",
+    "live-cleanup.json": "2dd59ba49826effee6482233c7a6f50f18bc4877c9057acd7b4c4454951b739f",
+    "live-10-cleanup.json": "c08348895f9e1b1802edbba91b04d1890aa76b12166ca85e2ca8cdfb2264d8fd"
+  },
+  "testSourceSHA256": {
+    "tools/probes/remote-device/session-interop.py": "f02e6ed6d73255b67ca4d97f42c72ffcfcceb50f2e30aa616ae161dafe06ac31",
+    "tools/probes/remote-device/handshake-interop.py": "663d71a338ebe9d425da3e7a6c69b391b426666cee9d7f4cfe8695b77cab8582",
+    "tools/probes/remote-device/reply-policy-interop.py": "14415fdf795cb93e01f5777839626afe0cfe1a6a1087bf9b0571ce91798666c9",
+    "tools/probes/remote-device/candidate-interop.py": "4f506602009c6ae854dba190ee8b414be1bc6bf3d5a65505d159d3aba3a5c089",
+    "tools/probes/remote-device/wire-opack.py": "301d793884843bc9c887d27141719f7f78b56e887cd326d4f0b01b23095b399d",
+    "tools/probes/remote-device/socket-interop.py": "905d8dcf84c8e6c388cb31a111853a34a056c7e6eb187c558e75f5c6d245d7d8",
+    "tools/probes/remote-device/pipelined-interop.py": "319e0d66f9fb0b1673e043e7bb33ca5666d2e31e82d13268fca3c4d5a3528e53",
+    "tools/probes/remote-device/configuration-interop.py": "04675ecff1660808442d9d9d468655bd4baa193bc8654f40339bc43521bd9cda",
+    "tools/probes/remote-device/build-manifest.py": "20dd808e52227d409f1b27169e9529097ac56eb48f52d35cb35e35a413b1e771",
+    "tools/probes/remote-device/test-profile-values.py": "5c84924835f996f7ccc5df03722c8db50badbfd1d8e5320cc8f0798ef1a9ae00"
+  },
+  "phoneTest": {
+    "round9": "NO_CONNECTION_SAMPLE",
+    "round10": "PASS_ISOLATED_NATIVE_REMOTE_FRESH_PV",
+    "result": "live-10-result.json"
+  }
+}

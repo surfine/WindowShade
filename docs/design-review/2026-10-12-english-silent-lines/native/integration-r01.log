@@ -1,0 +1,12 @@
+ok   r01 lab has no effect port
+ok   r01 glance without a preview is not completed
+ok   r01 glance invoked without a live first frame waits, not completed
+ok   r01 glance with a live first frame is completed
+ok   r01 usage without a protocol response is not completed
+ok   r01 cover without an overlay is not completed
+ok   r01 cover with missing screens is partial, not completed
+ok   r01 cover observed on every requested screen is completed
+ok   r01 pulling the effect port fails the positive check
+ok   r01 Host no longer routes diagnostic simulated nods into accept/apply
+ok   r01 Apply.glance requires Glance.isLive, not panelFrame alone
+ok   r01 Apply.cover uses the per-screen privacy cover adapter

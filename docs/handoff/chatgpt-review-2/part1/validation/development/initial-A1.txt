@@ -1,0 +1,39 @@
+/mnt/data/WindowShade2-round2-part1/packages/A1/tests/AgentSessionsTests.swift:82:55: error: '==' is not a postfix unary operator
+80 |         t.expect(requests.receive(env(c,10,2,.approval(over))).contains(.finishApproval(over.key,.deferToHost)) && requests.approvalCount==8,"不驱逐已有审批")
+81 |         t.section("A1-11", "风险类型明确或 shell 未知 → 高风险/未知不降成普通")
+82 |         t.expect(AgentSessions.risk(of:.readWorkspace)==.normal && AgentSessions.risk(of:.runDeclaredTests)==.normal,"明确声明的普通动作")
+   |                                                       `- error: '==' is not a postfix unary operator
+83 |         t.expect(AgentSessions.risk(of:.shell)==.unknown && AgentSessions.risk(of:.delete)==.high && AgentSessions.risk(of:.network)==.high,"不靠 shell 前缀")
+84 | 
+
+/mnt/data/WindowShade2-round2-part1/packages/A1/tests/AgentSessionsTests.swift:82:108: error: '==' is not a postfix unary operator
+80 |         t.expect(requests.receive(env(c,10,2,.approval(over))).contains(.finishApproval(over.key,.deferToHost)) && requests.approvalCount==8,"不驱逐已有审批")
+81 |         t.section("A1-11", "风险类型明确或 shell 未知 → 高风险/未知不降成普通")
+82 |         t.expect(AgentSessions.risk(of:.readWorkspace)==.normal && AgentSessions.risk(of:.runDeclaredTests)==.normal,"明确声明的普通动作")
+   |                                                                                                            `- error: '==' is not a postfix unary operator
+83 |         t.expect(AgentSessions.risk(of:.shell)==.unknown && AgentSessions.risk(of:.delete)==.high && AgentSessions.risk(of:.network)==.high,"不靠 shell 前缀")
+84 | 
+
+/mnt/data/WindowShade2-round2-part1/packages/A1/tests/AgentSessionsTests.swift:83:47: error: '==' is not a postfix unary operator
+81 |         t.section("A1-11", "风险类型明确或 shell 未知 → 高风险/未知不降成普通")
+82 |         t.expect(AgentSessions.risk(of:.readWorkspace)==.normal && AgentSessions.risk(of:.runDeclaredTests)==.normal,"明确声明的普通动作")
+83 |         t.expect(AgentSessions.risk(of:.shell)==.unknown && AgentSessions.risk(of:.delete)==.high && AgentSessions.risk(of:.network)==.high,"不靠 shell 前缀")
+   |                                               `- error: '==' is not a postfix unary operator
+84 | 
+85 |         t.finish()
+
+/mnt/data/WindowShade2-round2-part1/packages/A1/tests/AgentSessionsTests.swift:83:91: error: '==' is not a postfix unary operator
+81 |         t.section("A1-11", "风险类型明确或 shell 未知 → 高风险/未知不降成普通")
+82 |         t.expect(AgentSessions.risk(of:.readWorkspace)==.normal && AgentSessions.risk(of:.runDeclaredTests)==.normal,"明确声明的普通动作")
+83 |         t.expect(AgentSessions.risk(of:.shell)==.unknown && AgentSessions.risk(of:.delete)==.high && AgentSessions.risk(of:.network)==.high,"不靠 shell 前缀")
+   |                                                                                           `- error: '==' is not a postfix unary operator
+84 | 
+85 |         t.finish()
+
+/mnt/data/WindowShade2-round2-part1/packages/A1/tests/AgentSessionsTests.swift:83:133: error: '==' is not a postfix unary operator
+81 |         t.section("A1-11", "风险类型明确或 shell 未知 → 高风险/未知不降成普通")
+82 |         t.expect(AgentSessions.risk(of:.readWorkspace)==.normal && AgentSessions.risk(of:.runDeclaredTests)==.normal,"明确声明的普通动作")
+83 |         t.expect(AgentSessions.risk(of:.shell)==.unknown && AgentSessions.risk(of:.delete)==.high && AgentSessions.risk(of:.network)==.high,"不靠 shell 前缀")
+   |                                                                                                                                     `- error: '==' is not a postfix unary operator
+84 | 
+85 |         t.finish()

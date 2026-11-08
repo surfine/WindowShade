@@ -1,0 +1,1 @@
+{"command": ["python3", "tools/design-qa/check-feedback-preview.py", ".build/design-media-feedback/native"], "exit_code": 0}

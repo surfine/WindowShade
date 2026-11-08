@@ -1,0 +1,6 @@
+screens=2
+panel screen=1710x1107 visible=true
+panel screen=2560x1440 visible=true
+requested=2 visible=2 allScreensCovered=true missingScreens=false
+PASS cover-observe: opaque overlays visible on every screen
+cleared=true

@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>手势分组 小样</title>
+<style>
+:root{
+  color-scheme:light;
+  --paper:#EDF1F7;--surface:#FFFFFF;--surface-2:#F6F8FC;
+  --ink:#141B26;--ink-2:#45536B;--ink-3:#6E7C93;
+  --line:#D7DEEA;--line-soft:#E6EBF3;
+  --accent:#2F62C4;--accent-soft:#E3EAF9;
+  --flag:#A8600F;--flag-soft:#FBF0DF;--keep:#2C7350;--keep-soft:#E2F0E8;
+  --switch-off:#C9D1DE;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;
+    --ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;
+    --line:#26303F;--line-soft:#1E2733;
+    --accent:#7FA5F0;--accent-soft:#1B2740;
+    --flag:#E0A264;--flag-soft:#2A2115;--keep:#6CC495;--keep-soft:#14271D;
+    --switch-off:#3A4558;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;
+  --ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;
+  --line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;
+  --flag:#E0A264;--flag-soft:#2A2115;--keep:#6CC495;--keep-soft:#14271D;
+  --switch-off:#3A4558;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--doc);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:860px;margin:0 auto;padding:32px 16px 72px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--ink-3);margin:0 0 8px}
+h1{font-size:clamp(24px,6vw,32px);line-height:1.2;margin:0 0 10px;font-weight:600;text-wrap:balance}
+h2{font-size:18px;margin:44px 0 10px;font-weight:600}
+p{margin:0 0 10px;max-width:64ch}
+.lede{color:var(--ink-2)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+
+/* tabs: css only */
+.tabs input{position:absolute;opacity:0;pointer-events:none}
+.tabbar{display:flex;gap:4px;margin:24px 0 14px;padding:3px;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;width:fit-content;max-width:100%}
+.tabbar label{padding:6px 14px;border-radius:7px;font-size:13px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+#t-now:checked ~ .tabbar label[for=t-now],#t-new:checked ~ .tabbar label[for=t-new]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+#t-now:focus-visible ~ .tabbar label[for=t-now],#t-new:focus-visible ~ .tabbar label[for=t-new]{outline:2px solid var(--accent)}
+.pane{display:none}
+#t-now:checked ~ .panes .p-now,#t-new:checked ~ .panes .p-new{display:block}
+
+/* settings window */
+.win{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.win-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line-soft);background:var(--surface-2)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.win-title{margin-left:8px;font-size:12.5px;color:var(--ink-2)}
+.win-body{padding:14px 14px 18px;background:var(--paper)}
+.group-label{font-size:12px;color:var(--ink-3);margin:16px 4px 6px}
+.group-label:first-child{margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:10px 14px}
+.row + .row{border-top:1px solid var(--line-soft)}
+.name{font-size:13.5px;font-weight:500}
+.sub{grid-column:1;font-size:12px;color:var(--ink-3);line-height:1.45}
+.sw{grid-column:2;grid-row:1 / span 3;width:34px;height:20px;border-radius:10px;background:var(--accent);position:relative;flex:none}
+.sw::after{content:"";position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.sw.off{background:var(--switch-off)}
+.sw.off::after{right:auto;left:2px}
+.row.dim .name,.row.dim .sub{color:var(--ink-3)}
+.where{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin:12px 4px 4px}
+
+/* proposed: primitive vs action */
+.prim{grid-column:1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
+.chip{font-family:var(--mono);font-size:11px;line-height:1.5;padding:1px 8px;border-radius:5px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.chip.combo{background:transparent;color:var(--flag);box-shadow:inset 0 0 0 1px var(--flag)}
+.chip.plain{background:var(--surface-2);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line)}
+.kind{font-size:11px;color:var(--ink-3)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2);margin:0 0 10px;align-items:center}
+details{grid-column:1 / -1;margin-top:6px}
+summary{cursor:pointer;font-size:12px;color:var(--accent);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";}
+details[open] summary::before{content:"▾ ";}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.mini{width:100%;border-collapse:collapse;margin-top:8px;font-size:12px}
+.mini th,.mini td{text-align:left;padding:5px 10px 5px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.mini th{font-weight:500;color:var(--ink-3);font-size:11px}
+.mini-note{font-size:11.5px;color:var(--ink-3);margin:6px 0 0}
+
+/* notes */
+.scroll-x{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table.map{width:100%;min-width:620px;border-collapse:collapse;font-size:12.5px}
+table.map th,table.map td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+table.map th{font-weight:500;color:var(--ink-3);font-size:11.5px;white-space:nowrap;background:var(--surface-2)}
+table.map tr:last-child td{border-bottom:0}
+.tag{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.tag.keep{background:var(--keep-soft);color:var(--keep)}
+.tag.flag{background:var(--flag-soft);color:var(--flag)}
+ol.q{padding-left:20px;margin:0}
+ol.q li{margin:0 0 10px;max-width:64ch}
+.callout{background:var(--flag-soft);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:13px;margin:14px 0 0;max-width:68ch}
+@media (max-width:420px){
+  .wrap{padding-top:20px}
+  .row{padding:10px 12px}
+  .tabbar label{padding:6px 10px}
+}
+</style>
+</head>
+<body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">三 窗口 · 第 18 张 · 手势分组 小样</span><span class="ws-st ws-old">归档 · 小样 · 10-16</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs">← 手边的每一样</a><a href="https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc">欢迎使用 WindowShade →</a></nav>
+<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 2 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：新开一页「手势」，还是不开页？</span> → <b>现在：</b>已定并已做：1.0.17 新开「手势」页，设置共 8 页 <span class="src">（handoff/slim-1017-before-after.md（1.0.17 实装））</span></li><li><span class="was">原来：三指、四指轻点灰着放进各自的组？</span> → <b>现在：</b>留在「鼠标与触控板」页，随 WindowShade 2 预览旗标藏起，核对完再露出 <span class="src">（handoff/slim-1017-before-after.md（1.0.17 实装））</span></li></ol></details></aside>
+<div class="wrap">
+  <p class="eyebrow">WINDOWSHADE · 设计小样 · R16 手势按类别分栈</p>
+  <h1>手势分组</h1>
+  <p class="lede">现在没有一个叫「手势」的地方：十条和手指、指针动作有关的设置散在三页里。右边的分组把它们按「你在做什么」放到一起，每一条再把「怎么动手」和「做什么」分开写。行为一条不改，也没有新增任何设置。</p>
+
+  <div class="tabs">
+    <input type="radio" name="tab" id="t-new" checked>
+    <input type="radio" name="tab" id="t-now">
+    <div class="tabbar" role="tablist" aria-label="切换视图">
+      <label for="t-new">分组后</label>
+      <label for="t-now">现在（散在三页）</label>
+    </div>
+
+    <div class="panes">
+
+      <!-- ============ 分组后 ============ -->
+      <div class="pane p-new">
+        <div class="legend">
+          <span><span class="chip">原语</span> 一个动作：双击、轻点、两指滑</span>
+          <span><span class="chip combo">组合</span> 动作加落点：拖到哪儿、甩向哪儿</span>
+        </div>
+        <div class="win">
+          <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="win-title">设置 · 手势</span></div>
+          <div class="win-body">
+
+            <div class="group-label">收起与展开</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">标题栏手势</div>
+                <div class="sub">在标题栏上两指滑动、滚动滚轮或拖着甩一下：往上收起，往下铺满</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip">两指 · 标题栏 · 滑动 / 张合 / 滚轮</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+                <details>
+                  <summary>这个手势都会做什么</summary>
+                  <table class="mini">
+                    <tr><th>手指</th><th>效果</th></tr>
+                    <tr><td>往上滑</td><td>收起窗口；已铺满的窗口先撤销上次排布</td></tr>
+                    <tr><td>往下滑</td><td>铺满屏幕</td></tr>
+                    <tr><td>往左 / 往右滑</td><td>左半屏 / 右半屏，再推一下沿梯子走一格</td></tr>
+                    <tr><td>张开</td><td>魔法平铺</td></tr>
+                    <tr><td>捏合</td><td>撤销上次排布</td></tr>
+                    <tr><td>卷帘条上往下拉</td><td>展开窗口</td></tr>
+                  </table>
+                  <p class="mini-note">只读对照，来自现有手势表，不是新开关。</p>
+                </details>
+              </div>
+              <div class="row">
+                <div class="name">双击标题栏收起窗口</div>
+                <div class="sub">三击标题栏会缩放窗口。按住 Option 双击不收起</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip">双击 · 标题栏</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">中键收起窗口</div>
+                <div class="sub">在标题栏上用中键点一下收起或展开；往上拖也是收起，往下拖展开。默认关，打开才装钩子。</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip">中键 · 标题栏 · 点一下 / 上下拖</span></div>
+                <span class="sw off" role="img" aria-label="关"></span>
+              </div>
+              <div class="row dim">
+                <div class="name">三指轻点是中键</div>
+                <div class="sub">还没核对，先不用</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip">三指 · 轻点</span></div>
+                <span class="sw off" role="img" aria-label="关，暂不能开"></span>
+              </div>
+            </div>
+
+            <div class="group-label">刘海</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">收进刘海</div>
+                <div class="sub">朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip combo">甩一下标题栏 → 刘海</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">卷轴概览能收进刘海</div>
+                <div class="sub">在卷轴概览里把窗口拖到刘海，松手就收进去</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip combo">拖 · 卷轴概览 → 刘海</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row dim">
+                <div class="name">四指轻点打开看不见的窗口</div>
+                <div class="sub">还没核对，先不用</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip">四指 · 轻点</span></div>
+                <span class="sw off" role="img" aria-label="关，暂不能开"></span>
+              </div>
+            </div>
+
+            <div class="group-label">排布</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">拖到窗口上并排</div>
+                <div class="sub">把窗口拖到另一扇上，两扇并排</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip combo">拖 · 窗口 → 另一扇窗口</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">拖标题栏换位置</div>
+                <div class="sub">在卷轴里拖标题栏换列；拉远一点才离开卷轴</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip combo">拖 · 卷轴里的标题栏</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+            </div>
+
+            <div class="group-label">窗口浏览</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">在 Dock 图标上两指上下滑</div>
+                <div class="sub">往上滑看这个 App 的所有窗口，往下滑让开这个 App</div>
+                <div class="prim"><span class="kind">手指</span><span class="chip">两指 · Dock 图标 · 上滑 / 下滑</span></div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="callout">名称和说明一字不改，只多了「手指」那一行。说明里已经写了触发的，实现时可以删掉重复的半句，等你点头再动。灰掉的两行和现在一样：还没核对，开关不能开。</p>
+      </div>
+
+      <!-- ============ 现在 ============ -->
+      <div class="pane p-now">
+        <p class="lede">下面三块是现在这十条各自的家。没有哪一页叫手势；每一条旁边还住着和手势无关的设置。</p>
+        <div class="win">
+          <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="win-title">设置</span></div>
+          <div class="win-body">
+
+            <div class="where">页：卷帘 · 卡：触发</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">双击标题栏收起窗口</div>
+                <div class="sub">三击标题栏会缩放窗口。按住 Option 双击不收起</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">看一眼</div>
+                <div class="sub">指针停在卷帘条上，窗口在原处出现，移开就收回</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">标题栏手势</div>
+                <div class="sub">在标题栏上两指滑动、滚动滚轮或拖着甩一下：往上收起，往下铺满</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+            </div>
+
+            <div class="where">页：卷帘 · 卡：刘海（共 15 项，这里只列手势相关的 1 项）</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">收进刘海</div>
+                <div class="sub">朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row" style="color:var(--ink-3)"><div class="sub">……另外 14 项（有变化时提醒、实时活动、正在播放……）</div></div>
+            </div>
+
+            <div class="where">页：卷帘 · 卡：排布（共 8 行，这里只列手势相关的 3 行）</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">拖到窗口上并排</div>
+                <div class="sub">把窗口拖到另一扇上，两扇并排</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">拖标题栏换位置</div>
+                <div class="sub">在卷轴里拖标题栏换列；拉远一点才离开卷轴</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+              <div class="row">
+                <div class="name">卷轴概览能收进刘海</div>
+                <div class="sub">在卷轴概览里把窗口拖到刘海，松手就收进去</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+            </div>
+
+            <div class="where">页：鼠标与触控板</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">中键收起窗口</div>
+                <div class="sub">关着</div>
+                <span class="sw off" role="img" aria-label="关"></span>
+              </div>
+              <div class="row dim">
+                <div class="name">三指轻点是中键</div>
+                <div class="sub">还没核对，先不用</div>
+                <span class="sw off" role="img" aria-label="关，暂不能开"></span>
+              </div>
+              <div class="row dim">
+                <div class="name">四指轻点打开看不见的窗口</div>
+                <div class="sub">还没核对，先不用</div>
+                <span class="sw off" role="img" aria-label="关，暂不能开"></span>
+              </div>
+            </div>
+
+            <div class="where">页：窗口浏览 · 卡：触发</div>
+            <div class="card">
+              <div class="row">
+                <div class="name">在 Dock 图标上两指上下滑</div>
+                <div class="sub">往上滑看这个 App 的所有窗口，往下滑让开这个 App</div>
+                <span class="sw" role="img" aria-label="开"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="callout">例如「收进刘海」要在卷帘页刘海卡的 15 项里找，「卷轴概览能收进刘海」却在同一页的排布卡里，两条说的是同一件事。</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>分组规则</h2>
+  <p>按用户在做的事分，不按手指数或按页分：收起与展开、刘海、排布、窗口浏览。手指怎么动单独写在每行的「手指」一行，分成两种：<b>原语</b>是一个动作（双击、轻点、两指滑）；<b>组合</b>是动作加落点（甩到刘海、拖到另一扇窗口上）。说明文字是原来的，用来写「做什么」。</p>
+  <p>只收「用手指、中键或拖动触发」的设置。悬停（看一眼、悬停不误触、Dock 悬停查看窗口）、滚动（平滑滚动、滚动方向、⌥ 精细）、侧键、再点一下 Dock 图标、分屏把手不是手势，原地不动。</p>
+
+  <h2>旧行到新分组</h2>
+  <div class="scroll-x">
+  <table class="map">
+    <thead><tr><th>现在的行</th><th>现在在</th><th>新分组</th><th>手指</th></tr></thead>
+    <tbody>
+      <tr><td>标题栏手势</td><td>卷帘 · 触发</td><td>收起与展开</td><td><span class="tag keep">原语</span> 两指 · 标题栏</td></tr>
+      <tr><td>双击标题栏收起窗口</td><td>卷帘 · 触发</td><td>收起与展开</td><td><span class="tag keep">原语</span> 双击 · 标题栏</td></tr>
+      <tr><td>中键收起窗口</td><td>鼠标与触控板</td><td>收起与展开</td><td><span class="tag keep">原语</span> 中键 · 标题栏</td></tr>
+      <tr><td>三指轻点是中键</td><td>鼠标与触控板</td><td>收起与展开</td><td><span class="tag keep">原语</span> 三指 · 轻点（未核对）</td></tr>
+      <tr><td>收进刘海</td><td>卷帘 · 刘海</td><td>刘海</td><td><span class="tag flag">组合</span> 甩标题栏 → 刘海</td></tr>
+      <tr><td>卷轴概览能收进刘海</td><td>卷帘 · 排布</td><td>刘海</td><td><span class="tag flag">组合</span> 拖 → 刘海</td></tr>
+      <tr><td>四指轻点打开看不见的窗口</td><td>鼠标与触控板</td><td>刘海</td><td><span class="tag keep">原语</span> 四指 · 轻点（未核对）</td></tr>
+      <tr><td>拖到窗口上并排</td><td>卷帘 · 排布</td><td>排布</td><td><span class="tag flag">组合</span> 拖 → 另一扇窗口</td></tr>
+      <tr><td>拖标题栏换位置</td><td>卷帘 · 排布</td><td>排布</td><td><span class="tag flag">组合</span> 拖 · 卷轴里</td></tr>
+      <tr><td>在 Dock 图标上两指上下滑</td><td>窗口浏览 · 触发</td><td>窗口浏览</td><td><span class="tag keep">原语</span> 两指 · Dock 图标</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p style="margin-top:10px;color:var(--ink-3);font-size:12.5px">共 10 行，每行出现一次。没有新增或删除任何设置。</p>
+
+  <h2>要你定的 3 件事</h2>
+  <ol class="q">
+    <li><b>放在哪。</b>新开一页「手势」（上图），还是不开页、把这十行原地留着，只在各行加「手指」一行并把卷帘页的卡按这四组重排？前者最清楚，但多一页；设置里已有九页。</li>
+    <li><b>「手指」一行和那张只读对照表要不要。</b>两者都只是展示，不是新设置，也不改行为。「手指」一行是新写的文案；标题栏手势的对照表来自现有手势表。可以只要一行、不要表，反之亦然。</li>
+    <li><b>未核对的两行放哪。</b>三指、四指轻点现在是灰的，开关不能开。保持灰着放进各自的组（上图），还是核对完再露出？</li>
+  </ol>
+</div>
+</body>
+</html>

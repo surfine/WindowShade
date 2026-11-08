@@ -1,0 +1,24 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-column-production/validation.json",
+  "artifact_sha256": "a933ad419e3b2efe1f273273697c1f786deab5552450c2831c83ca4304661b67",
+  "binding_sha256": "b48d18ad7d731fd1435e05d67a07f7959e03458b60b63b9ed90508028fc7eed3",
+  "checks": [
+    {
+      "command": "actual PrivacyRowPreview Swift6 + actual output consumer",
+      "exit_code": 0,
+      "result": "48/current518/actual cell全文height and current font/columns/role/color/source text",
+      "receipt": "native-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "current519 optimized inputs no drift",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "actualRow only, no Page/owner/source/action construction; current font only, not dynamic large font/auxiliary colors; experiment fixture not qualified default visibility; VO/keyboard/performance/real privacy/motion/hardware/lifecycle not_run",
+  "next_action": "self_review"
+}

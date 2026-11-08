@@ -1,0 +1,14 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "actual Core-derived mergedRow static baseline;no production change",
+    "evidence_freshness": "8 source/62 evidence hashes matched current15 artifact",
+    "edge_risk": "wrong initial payload excluded;wrapper status unknown;static only"
+  },
+  "findings": [
+    "StateM original receipts stale14;corrected identity now recorded without pretending prior gate read it"
+  ]
+}

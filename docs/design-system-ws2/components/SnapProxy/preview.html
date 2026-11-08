@@ -1,0 +1,12 @@
+<!-- @dsCard group="標題欄排窗" height=230 subtitle="跟手中：代理朝左半屏" -->
+<!doctype html>
+<html><head><meta charset="utf-8"><title>SnapProxy</title>
+<style>
+body{margin:0;padding:16px;background:var(--window-bg);font-family:var(--font-sf)}
+.screen{position:relative;max-width:520px;height:190px;border-radius:12px 12px 0 0;background:#3b4a5c;overflow:hidden}
+.slot{position:absolute;left:6px;top:6px;bottom:6px;width:calc(50% - 9px);border-radius:13px;border:1.5px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);opacity:.7}
+.win{position:absolute;left:42%;top:30px;width:46%;height:130px;border-radius:13px;background:#f5f5f7;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.win::before{content:"";display:block;height:22px;border-radius:13px 13px 0 0;background:#e6e6ea}
+</style></head><body>
+<div class="screen" aria-label="向左滑，到左半屏"><div class="slot"></div><div class="win"></div></div>
+</body></html>

@@ -1,0 +1,1 @@
+{"status": "pass_control_path_visual_inconclusive", "frames": 16, "callbacks": 13, "sources_sha256": 518, "geometry_state_control_path": "checked", "presentation_real_motion": "inconclusive", "cache_only_real_motion": "inconclusive", "visual_compositor": "untested", "hardware": "untested", "product_lifecycle": "untested"}

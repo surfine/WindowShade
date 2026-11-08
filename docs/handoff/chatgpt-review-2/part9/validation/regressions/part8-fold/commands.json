@@ -1,0 +1,16 @@
+[
+  {
+    "argv": [
+      "/opt/pyvenv/bin/python3",
+      "/tmp/ws2-r9-regression-odie0nix/part8/tests/run.py",
+      "--repo",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo",
+      "--suite",
+      "fold"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS FOLD01 admission is not evidence [2]\nPASS FOLD02 hidden needs physical attempt and bound transaction [2]\nPASS FOLD03 exactly one ordinary completion [4]\nPASS FOLD04 wrong transaction cannot complete [2]\nPASS FOLD05 deadline before hide proves not started [2]\nPASS FOLD06 deadline after hide remains unknown [2]\nPASS FOLD07 late success is marked separately [2]\nPASS FOLD08 early failure means no hiding attempt [2]\nPASS FOLD09 failure after mutation not called cancelled [2]\nPASS FOLD10 error cannot turn into notStarted after write [2]\nPASS FOLD11 visible observation can later confirm hidden [2]\nPASS FOLD12 repeated unknown is silent [2]\nPASS FOLD13 window-id reuse cannot consume old ticket [2]\nPASS FOLD14 duplicate live window refused [2]\nPASS FOLD15 bounded observer capacity [2]\nPASS FOLD16 bad time and identifiers refused [5]\nPASS FOLD17 exact deadline prevents mutation [3]\nPASS FOLD18 second transaction cannot overwrite binding [3]\nPASS FOLD19 callback after bounded release is inert [2]\nPASS FOLD20 forged ticket cannot use matching request UUID [2]\nPASS FOLD21 backward time cannot start mutation [2]\nTOTAL 21 scenarios, 49 assertions\n",
+    "stderr": "",
+    "seconds": 1.5734865720000926
+  }
+]

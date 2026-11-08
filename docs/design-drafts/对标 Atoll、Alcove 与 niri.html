@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>对标 Atoll、Alcove 与 niri</title>
+<style>
+/* 版式：一张对照总表为主，上面一颗能切换的岛做“四块要追的”示意，下面是顺序、裁定与不取。 */
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --ahead:#0e6436; --chase:#a24d00; --skip:#6e6f76; --gap:#b3261e;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:rgba(255,255,255,.55); --menuInk:#101114;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --round:"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --ahead:#4cc38a; --chase:#ffb366; --skip:#8e8f97; --gap:#ff8a80;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:rgba(30,32,40,.6); --menuInk:#f4f5f8;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --ahead:#4cc38a; --chase:#ffb366; --skip:#8e8f97; --gap:#ff8a80;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:rgba(30,32,40,.6); --menuInk:#f4f5f8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding-block:28px 64px;padding-inline:16px}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px;text-wrap:balance}
+h2{font-size:17px;margin:36px 0 6px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 4px}
+.lede{color:var(--muted);max-width:72ch;margin:0 0 16px}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:0 0 12px}
+.row .lab{font-size:12px;color:var(--faint);min-width:3.5em}
+button{font:inherit;font-size:14px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.card{background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:820px){.grid2,.grid3{grid-template-columns:1fr}}
+.grid2>*,.grid3>*{min-width:0}
+.note{margin-top:10px;font-size:12.5px;color:var(--faint)}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+
+/* 舞台 */
+.stage{position:relative;border-radius:12px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);height:240px}
+.menubar{position:absolute;inset:0 0 auto 0;height:24px;background:var(--menu);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:12px;color:var(--menuInk)}
+.menubar .r{font-variant-numeric:tabular-nums}
+.island{position:absolute;top:0;left:50%;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;
+  width:120px;height:24px;border-radius:0 0 10px 10px;
+  transition:width .40s cubic-bezier(.2,1.1,.3,1),height .40s cubic-bezier(.2,1.1,.3,1),border-radius .40s ease}
+.island .ear{position:absolute;top:0;height:24px;display:flex;align-items:center;gap:5px;font:600 11px/1 var(--round);opacity:0;transition:opacity .18s ease .12s}
+.island .ear.l{left:9px}.island .ear.r{right:9px}
+.island.on .ear{opacity:1}
+.island .body{position:absolute;inset:30px 14px 12px 14px;opacity:0;transition:opacity .18s ease .2s;font-size:12px}
+.island.big .body{opacity:1}
+.art{width:15px;height:15px;border-radius:4px;background:linear-gradient(135deg,#ff7a59,#ffc15e 55%,#7b5cff)}
+.bars{display:flex;gap:2px;align-items:center;height:12px}
+.bars i{display:block;width:2px;border-radius:1px;background:#ffb26b;height:6px;transition:height .12s linear}
+.cap{width:36px;height:5px;border-radius:3px;background:rgba(255,255,255,.22);overflow:hidden}
+.cap b{display:block;height:100%;width:62%;background:#fff;border-radius:3px}
+.ring{width:13px;height:13px;border-radius:50%;background:conic-gradient(#5fd38a 0 70%,rgba(255,255,255,.18) 0)}
+.ring.cal{background:conic-gradient(#ff9f0a 0 40%,rgba(255,255,255,.18) 0)}
+.dim{color:rgba(255,255,255,.6)}
+.big-art{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#ff7a59,#ffc15e 55%,#7b5cff);float:left;margin-right:12px}
+.scrub{clear:both;position:relative;top:10px;height:5px;border-radius:3px;background:rgba(255,255,255,.22)}
+.scrub b{position:absolute;inset:0 58% 0 0;border-radius:3px;background:#ffb26b}
+.times{display:flex;justify-content:space-between;margin-top:16px;font:500 10px/1 var(--mono);color:rgba(255,255,255,.6)}
+.ctl{display:flex;justify-content:center;gap:28px;margin-top:8px;font-size:15px}
+.shelf{display:flex;gap:10px;margin-top:4px}
+.shelf .f{width:58px;text-align:center;font-size:10px;color:rgba(255,255,255,.75)}
+.shelf .f i{display:block;width:34px;height:40px;margin:0 auto 4px;border-radius:6px;background:linear-gradient(#f2f2f5,#cfd2da)}
+.caption{position:absolute;left:12px;right:12px;bottom:10px;font-size:12.5px;color:#0b1222;background:rgba(255,255,255,.72);border-radius:9px;padding:6px 10px}
+:root[data-theme="dark"] .caption{color:#f2f2f5;background:rgba(20,22,28,.72)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .caption{color:#f2f2f5;background:rgba(20,22,28,.72)}}
+@media (prefers-reduced-motion:reduce){.island{transition:none}.island .ear,.island .body{transition:opacity .25s linear}}
+.reduced .island{transition:none}.reduced .island .ear,.reduced .island .body{transition:opacity .25s linear}
+
+/* 总表 */
+.tablewrap{overflow-x:auto;background:var(--panel);border-radius:14px;box-shadow:inset 0 0 0 .5px var(--line)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:.5px solid var(--line)}
+th{font-size:12px;color:var(--faint);font-weight:600;position:sticky;top:0;background:var(--panel)}
+td:first-child{font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font-size:11.5px;font-weight:650;border-radius:20px;padding:1px 8px;white-space:nowrap}
+.pill.chase{color:var(--chase);box-shadow:inset 0 0 0 1px var(--chase)}
+.pill.ahead{color:var(--ahead);box-shadow:inset 0 0 0 1px var(--ahead)}
+.pill.skip{color:var(--skip);box-shadow:inset 0 0 0 1px var(--skip)}
+.pill.gap{color:var(--gap);box-shadow:inset 0 0 0 1px var(--gap)}
+tr[hidden]{display:none}
+ol.order{margin:0;padding-left:20px;display:grid;gap:8px}
+ol.order li{color:var(--muted)}
+ol.order b{color:var(--ink)}
+.src{font-size:12px;color:var(--faint)}
+.src a{color:var(--accent)}
+</style>
+</head>
+<body>
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">七 对标 · 第 32 张 · 对标 Atoll、Alcove 与 niri</span><span class="ws-st ws-old">归档 · 总账 · 10-09</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/XoqB5LVY9M3dRbsfKPiPjj">← 认你、指挥页与露出</a><a href="https://claude.ai/artifact/VqdmW6GiU22FVvndnE4x37">经得起考验 →</a></nav>
+<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 5 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：欢迎窗口三步；日历授权在欢迎窗口里问一次</span> → <b>现在：</b>欢迎见《首次打开 1.0.17 小样》；日程授权等刘海第一次要说「快开会」时再问 <span class="src">（《首次打开 1.0.17 小样》（Aaron 10-17 拍板））</span></li><li><span class="was">原来：待定：右耳写不写百分比、条用白色还是强调色</span> → <b>现在：</b>已定：右耳只画条，不写数；条白色 <span class="src">（design-grammar 对照账 283（LV3，Aaron 10-09））</span></li><li><span class="was">原来：待定：怎么进正在播放大卡</span> → <b>现在：</b>已定：点耳朵直接长成大卡；点刘海本体不变；在那一排里点那一格也长成大卡 <span class="src">（《日历、电量与计时器》（Aaron 10-09））</span></li><li><span class="was">原来：词汇待补进 copy-guide（日程、加入、计时器、文件架……）</span> → <b>现在：</b>已进 copy-guide 固定词汇 <span class="src">（copy-guide.md）</span></li><li><span class="was">原来：正在播放：剩余时间进右耳</span> → <b>现在：</b>右耳是真实波形；剩余时间只在大卡里 <span class="src">（《正在播放》）</span></li></ol></details></aside>
+<div class="wrap">
+  <h1>对标 Atoll、Alcove 与 niri</h1>
+  <p class="lede">刘海这条线对标 Atoll（开源，GPL，功能最宽）和 Alcove（闭源，$14.99，最讲究动效）；卷轴这条线对标 niri（开源，GPL，滚动平铺）。这一张说清三件事：每一块我们落后、持平还是领先；这一轮先追哪四块、怎么追；哪些不取，为什么。画面依据在各自的单张稿，这里只放总账。数字和行为来自 2026-10-09 的调研：Atoll 读源码（2.3.3，提交 2a37457），Alcove 读官网与全部 78 条发布说明（最新 1.7.9，2026-06-30），WindowShade 读当前工作区。</p>
+
+  <h2>这一轮追的四块，长在同一颗岛上</h2>
+  <p class="lede">向苹果灵动岛靠：平时只有两只耳朵，点一下长成大卡，事情办完收回去。点下面的按钮看每一块在岛上的样子。</p>
+  <div class="row" role="group" aria-label="看哪一块">
+    <span class="lab">看</span>
+    <button type="button" data-demo="idle" aria-pressed="true">平时</button>
+    <button type="button" data-demo="music" aria-pressed="false">正在播放</button>
+    <button type="button" data-demo="musicBig" aria-pressed="false">点开成大卡</button>
+    <button type="button" data-demo="volume" aria-pressed="false">按音量键</button>
+    <button type="button" data-demo="shelf" aria-pressed="false">拖文件进来</button>
+    <button type="button" data-demo="meeting" aria-pressed="false">快开会了</button>
+    <button type="button" data-demo="charge" aria-pressed="false">插上电源</button>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+  </div>
+  <div class="stage" id="stage">
+    <div class="menubar"><span>Finder　文件　编辑　显示</span><span class="r">周五 10:41</span></div>
+    <div class="island" id="island" role="img" aria-label="刘海">
+      <div class="ear l" id="earL"></div>
+      <div class="ear r" id="earR"></div>
+      <div class="body" id="body"></div>
+    </div>
+    <div class="caption" id="caption">平时：刘海里什么都没有，和硬件刘海一样黑。</div>
+  </div>
+  <p class="note">示意比例按 MacBook Air 15 英寸（刘海 185 × 33.5 点）缩小。弹簧照令牌：两耳 <span class="token">settle 0.38/1.0</span>，提醒 <span class="token">bloom 0.42/0.84</span>，大卡 <span class="token">expand 0.40/0.92</span>，音量条 <span class="token">pop 0.30/0.75</span>。</p>
+
+  <h2>总账</h2>
+  <div class="row" role="group" aria-label="筛选">
+    <span class="lab">只看</span>
+    <button type="button" data-filter="all" aria-pressed="true">全部</button>
+    <button type="button" data-filter="chase" aria-pressed="false">这轮要追</button>
+    <button type="button" data-filter="gap" aria-pressed="false">落后、以后再说</button>
+    <button type="button" data-filter="ahead" aria-pressed="false">持平或领先</button>
+    <button type="button" data-filter="skip" aria-pressed="false">不取</button>
+  </div>
+  <div class="tablewrap">
+  <table id="ledger">
+    <thead><tr><th>表面</th><th>Atoll</th><th>Alcove</th><th>WindowShade 今天</th><th>要做到（超越点）</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr data-k="chase"><td>正在播放</td><td>左耳封面 20×20、右耳 4 根<b>假</b>波形（每 0.3 秒随机）；展开 640×200，封面 90×90、可拖进度、输出设备与 AirPlay、光晕与视差</td><td>封面＋<b>真实</b>波形（系统音频采集，自称 0–1% CPU，取不到时模拟）；对齐 iOS；可拖进度、音量、输出设备、无损徽章、取色轮廓</td><td>不取封面；左耳音符＋歌名、右耳进度环；卡片只有上一首、播放、下一首；没有波形、拖动、音量、输出设备</td><td>封面＋真实波形（没权限画静止取色点，绝不画假的）；点那一格长成大卡；按音量键时控制行变成音量条；剩余时间进右耳</td><td><span class="pill chase">这轮追</span></td></tr>
+      <tr data-k="chase"><td>音量、亮度、键盘背光</td><td>吞媒体键自己写值（辅助功能权限）＋冻结 OSDUIHelper；26 上冻结已无效，崩溃后会一直冻着；有背光、16 格样式、可拖</td><td>藏掉系统提示（1.6.2 起靠辅助功能）；0% 和 100% 有过冲回弹；锁屏和个性化音量不弹；没有背光</td><td>只旁听不拦，系统提示和我们的同时出现；没有背光；喇叭图标不随音量变</td><td>只拦截不冻结，<b>能写才吞</b>；压不住就静悄悄退回两个都留；过冲回弹；背光；图标随电平变；输出设备图标</td><td><span class="pill chase">这轮追</span></td></tr>
+      <tr data-k="chase"><td>文件架</td><td>标签页里的大货架：书签引用、无上限、跨启动保留、隔空投送区、局域网发送</td><td>没有（官方说 1.8 主打，至今未发）</td><td>文件拖到刘海＝开启动台用某个 App 打开；不暂存</td><td>拖文件进来才出现；暂存、隔空投送、用…打开三个去处；和窗口落点分得开；平时只在最低优先级露一个数</td><td><span class="pill chase">这轮追</span></td></tr>
+      <tr data-k="chase"><td>日历</td><td>展开卡片右栏 120 点高的日程；开会前 5 分钟成为活动（环形倒计时）</td><td>会议倒计时、加入会议、出发提醒、展开月历</td><td>没有</td><td>只在快开会时成为一件活动；有会议链接就给“加入”；授权在欢迎窗口里问一次</td><td><span class="pill chase">这轮追</span></td></tr>
+      <tr data-k="chase"><td>电量与充电</td><td>插电、低电量、充满三种 3 秒提示；事件驱动</td><td>电池小组件、低电量、耗尽时间；充电动画只见二手报道</td><td>每 120 秒读一次；只有 20/10/5% 低电量提醒</td><td>改成事件驱动；插上电源说一句；低电量与充满统一样子；低电量模式</td><td><span class="pill chase">这轮追</span></td></tr>
+      <tr data-k="chase"><td>计时器</td><td>独立标签页，预设 25/5/45 分，颜色随进度变，超时闪红；镜像“时钟”App</td><td>没有（只有保持唤醒）</td><td>只有番茄钟</td><td>番茄钟之外的通用倒计时；从哪里开始见单张稿（菜单顶层只留 9 项）</td><td><span class="pill chase">这轮追</span></td></tr>
+      <tr data-k="ahead"><td>蓝牙设备与 AirPods</td><td>连接 2.5 秒提示，3D 动画（受版权资源）；聆听模式切换</td><td>连接活动、各代 AirPods 图标、低电量声音</td><td>“名字已连接 · 电量 N%”，0.6 秒内合成一句；耳机左、右、盒</td><td>样子并进新的电量那一套</td><td><span class="pill ahead">持平</span></td></tr>
+      <tr data-k="ahead"><td>下载与拷贝进度</td><td>下载目录监视，进度环或条</td><td>没有</td><td>下载（默认关）＋ Finder 拷贝进度（实验）；环、第 k / n、不确定弧</td><td>保持；进度零件已领先</td><td><span class="pill ahead">领先</span></td></tr>
+      <tr data-k="ahead"><td>无刘海屏</td><td>悬浮药丸</td><td>药丸（1.7.0）、可强制模拟刘海</td><td>胶囊五态，留在菜单栏条内</td><td>保持</td><td><span class="pill ahead">持平</span></td></tr>
+      <tr data-k="ahead"><td>一颗岛的仲裁</td><td>右翼按固定优先级叠徽章</td><td>多活动循环切换、duo</td><td>六层仲裁；一颗岛默认开，其余退成最小点；合成一排</td><td>保持；新四块都进同一套仲裁</td><td><span class="pill ahead">领先</span></td></tr>
+      <tr data-k="ahead"><td>收起的窗口</td><td>—</td><td>—</td><td>收起、收进刘海、缩略图、看一眼、跨桌面</td><td>这是我们独有的主线</td><td><span class="pill ahead">独有</span></td></tr>
+      <tr data-k="ahead"><td>编程会话与额度</td><td>读本地文件估 LLM 用量（默认关）</td><td>—</td><td>Claude Code 在跑 / 等你 / 做完了；额度只取自己启动的会话报来的</td><td>保持；不读别人的文件</td><td><span class="pill ahead">领先</span></td></tr>
+      <tr data-k="ahead"><td>遥控、指挥、离开就锁、有人在看</td><td>—</td><td>—</td><td>iPhone 遥控、指挥手势、离开就锁、旁人在看时收私人窗口</td><td>保持</td><td><span class="pill ahead">独有</span></td></tr>
+      <tr data-k="ahead"><td>隐私说明</td><td>—</td><td>一句“不收集任何数据”</td><td>“读到的”页：每一项读什么、何时读、去哪、合起来能看出什么；构建检查不许漏登记</td><td>新四块的读取全部先登记</td><td><span class="pill ahead">领先</span></td></tr>
+      <tr data-k="gap"><td>专注模式</td><td>收起态显示图标，靠日志流</td><td>自定义专注、专注符号可替换波形</td><td>专注开着时只留一个小点（读不到当没有）</td><td>下一轮：专注符号进耳朵</td><td><span class="pill gap">以后</span></td></tr>
+      <tr data-k="gap"><td>录屏与隐私指示</td><td>录屏红点、摄像头和麦克风在用的点</td><td>录屏时隐藏</td><td>共享或录屏时收敛（私人格只剩图标）</td><td>下一轮：摄像头、麦克风在用的点</td><td><span class="pill gap">以后</span></td></tr>
+      <tr data-k="gap"><td>手势展开与悬停</td><td>悬停 0.3 秒展开，两指下拉</td><td>悬停、点击、下滑、Quick Peek</td><td>指针停 0.12 秒、点击、两指横扫一次一下</td><td>换歌时的 Quick Peek 进“正在播放”稿</td><td><span class="pill gap">部分</span></td></tr>
+      <tr data-k="skip"><td>锁屏小组件</td><td>私有 SkyLight 窗口画在锁屏上</td><td>锁屏小组件一整套</td><td>—</td><td>不取：锁屏是系统的地方，私有窗口层随系统更新容易坏</td><td><span class="pill skip">不取</span></td></tr>
+      <tr data-k="skip"><td>冻结系统提示进程</td><td>SIGSTOP OSDUIHelper＋看门狗</td><td>—</td><td>—</td><td>不取：26 上已无效，崩溃后整机提示一直消失</td><td><span class="pill skip">不取</span></td></tr>
+      <tr data-k="skip"><td>假波形</td><td>默认就是假的</td><td>取不到音频时模拟</td><td>—</td><td>不取：没权限就静止，不装作在跟音乐</td><td><span class="pill skip">不取</span></td></tr>
+      <tr data-k="skip"><td>摄像头镜像、剪贴板、取色器、终端、天气、笔记</td><td>都有，多数默认开</td><td>天气在锁屏</td><td>—</td><td>不取：刘海不是工具箱；每加一样都要过文法准入</td><td><span class="pill skip">不取</span></td></tr>
+      <tr data-k="chase"><td>卷轴（对 niri）</td><td colspan="2">niri：列、列宽预设、一列里叠几扇、居中策略、缩小总览、竖向工作区、按手势速度吸附；niri 是合成器，能直接画窗口</td><td>卷轴已借了松手速度只看最后 150 毫秒、关窗回上一列、拖到边自动滚；有概览和魔法平铺</td><td>在 macOS 上只能用辅助功能挪真窗口：先把能做的追齐（列宽预设、居中、一列叠几扇、总览里拖），做不到的写明为什么；见单张稿</td><td><span class="pill chase">这轮追</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>顺序</h2>
+  <div class="card">
+    <ol class="order">
+      <li><b>音量、亮度、背光。</b>最常碰到，也最能看出差距：今天按一下音量，屏幕上同时出现两个提示。先做“能写才吞”的拦截和退回规则，再做样子。</li>
+      <li><b>正在播放。</b>先取封面、接剩余时间（代码已写好未接），再做大卡与拖动进度，最后做真实波形（要“系统音频录制”权限）。</li>
+      <li><b>电量、日历、计时器。</b>电量改事件驱动最便宜；日历等欢迎窗口三步落地后接授权；计时器先定从哪里开始。</li>
+      <li><b>文件架。</b>Alcove 还没有，做好了是领先；但它和窗口落点共用“拖到刘海”，先把两种拖分清再做。</li>
+      <li><b>卷轴。</b>和刘海互不阻塞，单独一条线追 niri。</li>
+    </ol>
+    <p class="note">每一块都按成熟度梯子走：规格 → 实验 → 开发版 → 发布线，新行为先默认关或随已有开关；四块的新读取（封面、系统音频、日历、电源事件）全部先进 <span class="token">tools/privacy/registry.json</span>。</p>
+  </div>
+
+  <h2>Aaron 2026-10-09 已定</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>对标这一轮</h3>
+      <ul>
+        <li>追四块：正在播放加大、音量亮度提示、文件架、日历电量计时器。</li>
+        <li>系统提示藏掉，默认开；压不住或系统版本没验过，自动退回两个都留，不说话不弹窗。</li>
+        <li>视觉向苹果灵动岛靠，两家只作功能参考。</li>
+        <li>展开一页为主：点正在播放那一格长成大卡；拖文件进来才出现文件架；日历只在快开会时成为活动。</li>
+        <li>波形用真实音频，要权限时才画。</li>
+        <li>日历授权在欢迎窗口里问一次。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>同一天早些时候</h3>
+      <ul>
+        <li>欢迎窗口三步；菜单顶层 9 项；收起展开音效默认关。</li>
+        <li>一颗岛与“最小”呈现默认开；合成一排默认开。</li>
+        <li>无刘海屏的胶囊留在菜单栏条内。</li>
+        <li>卡住提示的小叉只关这一次；审批照 M01 的分法。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>单张稿</h2>
+  <div class="grid3" id="drafts">
+    <div class="card"><h3><a href="https://claude.ai/artifact/Sg3LLBSJBTT87GD7KtqCcp">正在播放</a></h3><p>左耳 20 点封面、右耳 5 根真实波形，耳宽仍 34；点耳朵或那一格长成 420 × 175.5 大卡；OKLCH 16 桶取色。包 NP-1 至 NP-7。</p></div>
+    <div class="card"><h3><a href="https://claude.ai/artifact/YL7pvC72qRoiWRLqnLQn9e">音量与亮度</a></h3><p>两耳各 76、不下鼓；到头再按拉长回弹；能写、看得见、没有别的主人才拦键；不冻结系统进程。包 LV1 至 LV5。</p></div>
+    <div class="card"><h3><a href="https://claude.ai/artifact/TGh15t3EV9FkPjLnzQay4j">文件架</a></h3><p>同一块落点小岛：文件三格、窗口五格；只记书签不拷贝，24 格；平时是那一排里最后一格。包 FS-01 至 FS-07。</p></div>
+    <div class="card"><h3><a href="https://claude.ai/artifact/JnUmLbVvSb9igvSxs4QSYp">日历、电量与计时器</a></h3><p>开会前 5 分钟倒数、有链接就“加入”；电量改系统推送，插上闪一下；计时器 ⌃⌥T。包 ACT-W、CAL、PWR、DEV、TMR。</p></div>
+    <div class="card"><h3><a href="https://claude.ai/artifact/SGBdwfP5ZFr7NDMzPJ7Yvs">卷轴</a></h3><p>对 niri：居中三种、一列并进与拆出、跟手概览里拖着换位置、和刘海互通。包 SS-01 至 SS-07。</p></div>
+    <div class="card"><h3><a href="https://claude.ai/artifact/Y1xC2moskAEa2bjHNk2JKb">实时活动晋级</a></h3><p>对照 Bartender、Ice 等菜单栏工具：先量空位再长耳朵、悬停不误触、九种活动同一套样子与生命周期、那一排里打字筛选。包 LA-0 至 LA-9。</p></div>
+    <div class="card"><h3><a href="https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac">一颗岛</a></h3><p>已有。五种形状和仲裁，新四块都长在它上面。</p></div>
+  </div>
+
+  <h2>待 Aaron 定（各稿的推荐项）</h2>
+  <div class="card"><ul>
+    <li><b>音量右耳写不写百分比</b>：推荐不写，只画条，读屏念数。</li>
+    <li><b>音量条白色还是强调色</b>：推荐白色，像系统一样黑底白条。</li>
+    <li><b>怎么进正在播放大卡</b>：推荐点耳朵直接长成大卡，点刘海本身不变；那一格上留播放 / 暂停键。</li>
+    <li><b>系统音频录制在哪问</b>：推荐设置里“跟着声音跳”，默认关，打开时才问。</li>
+    <li><b>计时器从哪开</b>：推荐 ⌃⌥T 在刘海里选分钟，加启动台负一屏一张卡。</li>
+    <li><b>计时器到时间默认响不响</b>：推荐响一次系统提示音，设置里单独开关。</li>
+    <li><b>文件松在刘海那一条上去哪</b>：推荐暂存。</li>
+    <li><b>空闲时露不露文件架个数</b>：推荐露，排最低。</li>
+    <li><b>停在屏幕外的卷轴列进不进刘海那一排</b>：推荐进，只在展开时。</li>
+    <li><b>卷轴走到一列时默认哪种</b>：推荐贴边；“放得下就居中”默认开。</li>
+  </ul><p class="note">词汇待补进 copy-guide：日程、加入、计时器、文件架、暂存、移出文件架、并进这一列、拆成一列。</p></div>
+
+  <p class="src" style="margin-top:28px">来源：Atoll <a href="https://github.com/Ebullioscopic/Atoll">github.com/Ebullioscopic/Atoll</a>（GPL-3.0，只借做法）；Alcove <a href="https://tryalcove.com/changelog">tryalcove.com/changelog</a>（闭源，只看公开行为）；niri <a href="https://github.com/YaLTeR/niri">github.com/YaLTeR/niri</a>（GPL-3.0，只借做法）。读取于 2026-10-09。</p>
+</div>
+
+<script>
+(function(){
+  var island=document.getElementById('island'), L=document.getElementById('earL'), R=document.getElementById('earR'),
+      B=document.getElementById('body'), C=document.getElementById('caption'), stage=document.getElementById('stage');
+  var bars='<span class="bars" id="bars"><i></i><i></i><i></i><i></i><i></i></span>';
+  var S={
+    idle:{w:120,h:24,r:'0 0 10px 10px',on:false,big:false,l:'',r2:'',b:'',c:'平时：刘海里什么都没有，和硬件刘海一样黑。'},
+    music:{w:200,h:24,r:'0 0 12px 12px',on:true,big:false,l:'<span class="art"></span>',r2:bars,b:'',c:'正在播放：左耳封面，右耳跟着音乐跳的真实波形。没给“系统音频录制”权限时，右耳是一排不动的取色点。'},
+    musicBig:{w:340,h:142,r:'0 0 28px 28px',on:false,big:true,l:'',r2:'',
+      b:'<div class="big-art"></div><div style="font-weight:600;font-size:13px">夜航</div><div style="color:#ffc89a;font-size:12px">示例歌手</div><div class="scrub"><b></b></div><div class="times"><span>1:24</span><span>−2:07</span></div><div class="ctl"><span>⏮</span><span>⏸</span><span>⏭</span></div>',
+      c:'点一下长成大卡：封面、歌手名取封面的颜色、可拖的进度、上一首／暂停／下一首。按音量键时，控制行变成一条音量条。'},
+    volume:{w:200,h:24,r:'0 0 12px 12px',on:true,big:false,l:'<svg width="15" height="12" viewBox="0 0 15 12" aria-hidden="true"><path d="M1 4h3l4-3v10L4 8H1z" fill="#fff"/><path d="M10 3.5c1.2 1.4 1.2 3.6 0 5" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M12 1.8c2 2.3 2 6.1 0 8.4" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/></svg>',r2:'<span class="cap"><b id="lvl"></b></span>',b:'',c:'按音量键：左耳喇叭随电平变，右耳一条胶囊。系统自己的提示被藏掉；吞不了键或写不了值时，键原样交给系统，两个都留。'},
+    shelf:{w:300,h:96,r:'0 0 22px 22px',on:false,big:true,l:'',r2:'',
+      b:'<div class="dim" style="font-size:11px;margin-bottom:6px">放到哪里</div><div class="shelf"><div class="f"><i></i>暂存</div><div class="f"><i style="background:linear-gradient(#5ac8fa,#0a84ff)"></i>隔空投送</div><div class="f"><i style="background:linear-gradient(#e5e5ea,#aeaeb2)"></i>用…打开</div></div>',
+      c:'拖文件进来：岛长成落点，三个去处。拖的是窗口时还是原来的五个去处，两种不会混。'},
+    meeting:{w:200,h:24,r:'0 0 12px 12px',on:true,big:false,l:'<span class="ring cal"></span>',r2:'<span style="color:#ff9f0a">4 分钟</span>',b:'',c:'快开会了：开会前 5 分钟成为一件活动，左耳倒数环，右耳分钟数；点开有“加入”。全天事件不算。'},
+    charge:{w:200,h:24,r:'0 0 12px 12px',on:true,big:false,l:'<svg width="10" height="13" viewBox="0 0 10 13" aria-hidden="true"><path d="M6 0L0 7.5h3.5L3 13l7-8H6.4z" fill="#5fd38a"/></svg>',r2:'<span style="color:#5fd38a">78%</span>',b:'',c:'插上电源：说一句，停 2.6 秒收回。电量由系统电源事件推来，不再每两分钟读一次。'}
+  };
+  var t=null;
+  function show(k){
+    var s=S[k]; clearInterval(t);
+    island.style.width=s.w+'px'; island.style.height=s.h+'px'; island.style.borderRadius=s.r;
+    island.classList.toggle('on',s.on); island.classList.toggle('big',s.big);
+    L.innerHTML=s.l; R.innerHTML=s.r2; B.innerHTML=s.b; C.textContent=s.c;
+    island.setAttribute('aria-label','刘海：'+s.c);
+    if(k==='music' && !document.body.classList.contains('reduced')){
+      var bs=document.querySelectorAll('#bars i'), ph=0;
+      t=setInterval(function(){ph+=0.42;for(var i=0;i<bs.length;i++){var v=0.45+0.35*Math.sin(ph+i*1.3)+0.2*Math.sin(ph*2.1+i);bs[i].style.height=(3+Math.max(0,Math.min(1,v))*9).toFixed(1)+'px';}},120);
+    }
+    if(k==='volume'){var lv=document.getElementById('lvl'),v=0.62,dir=1;t=setInterval(function(){v+=dir*0.0625;if(v>1){v=1;dir=-1;}if(v<0.3){dir=1;}lv.style.width=(v*100)+'%';},420);}
+  }
+  document.querySelectorAll('[data-demo]').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('[data-demo]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});show(b.dataset.demo);});});
+  document.getElementById('reduced').addEventListener('change',function(e){document.body.classList.toggle('reduced',e.target.checked);
+    var cur=document.querySelector('[data-demo][aria-pressed="true"]');show(cur.dataset.demo);});
+  document.querySelectorAll('[data-filter]').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('[data-filter]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+    var f=b.dataset.filter;document.querySelectorAll('#ledger tbody tr').forEach(function(tr){tr.hidden=!(f==='all'||tr.dataset.k===f);});});});
+  show('idle');
+})();
+</script>
+</body>
+</html>

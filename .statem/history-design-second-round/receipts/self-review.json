@@ -1,0 +1,18 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": false,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Persistent seven-line design objective remains active. Current production checkpoint restores timer draft dimensions/ring and visibility obstruction boundary. Calendar stays candidate; conductor color issue is hypothesis needing native reproduction.",
+    "evidence_freshness": "validation.json sources and 515 Swift snapshot match current workspace; full build exit0. After renderer source hashes match; actual card frames visually examined. Actual NotchPanel tests and binary run pass, failed runner attempts retained separately.",
+    "edge_risk": "Visible panels still obstruct; hidden/transparent/orderOut do not. MainActor snapshots only value frames into AX queue. Host default min68/radius24 and existing NowPlaying/FileShelf geometry maintained; current timer mode shape and revoked input verified. Live notch/multi-screen/animation not_run."
+  },
+  "findings": [
+    "No further production changes after current build or renders.",
+    "Repeated QA input-isolation failures resolved and filtered into one conditional StateM practice; final obstruction runner passed with isolated native snapshot.",
+    "Existing compiler warnings/copy debt remain; current successful gate is not zero-debt claim.",
+    "No commit/push/sign/install/user-window operation; .zcode unchanged. Continue actual design work, not mark persistent goal complete."
+  ],
+  "updated": "2026-10-11"
+}

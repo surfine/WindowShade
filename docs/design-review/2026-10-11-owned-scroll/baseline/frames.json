@@ -1,0 +1,391 @@
+{
+  "actionsOnRealSources" : 0,
+  "childrenReaped" : true,
+  "frames" : [
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 0,
+        "containerWidth" : 576,
+        "documentHeight" : 98,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+
+      },
+      "dark" : true,
+      "height" : 342.5,
+      "name" : "light-empty",
+      "outputHidden" : true,
+      "parent" : "light",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "empty",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 1527,
+        "containerWidth" : 576,
+        "documentHeight" : 640,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 542,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 0,
+        "containerWidth" : 576,
+        "documentHeight" : 98,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "light-initial",
+      "outputHidden" : false,
+      "parent" : "light",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "initial",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 3054,
+        "containerWidth" : 576,
+        "documentHeight" : 1255,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 1157,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 1527,
+        "containerWidth" : 576,
+        "documentHeight" : 640,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 542,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "light-bottom",
+      "outputHidden" : false,
+      "parent" : "light",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "bottom",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 4581,
+        "containerWidth" : 576,
+        "documentHeight" : 1870,
+        "gap" : 1772,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 3054,
+        "containerWidth" : 576,
+        "documentHeight" : 1255,
+        "gap" : 1157,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "light-top",
+      "outputHidden" : false,
+      "parent" : "light",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "top",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 6108,
+        "containerWidth" : 576,
+        "documentHeight" : 2485,
+        "gap" : 645,
+        "lineHeight" : 15,
+        "origin" : 1742,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 4581,
+        "containerWidth" : 576,
+        "documentHeight" : 1870,
+        "gap" : 30,
+        "lineHeight" : 15,
+        "origin" : 1742,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "light-outside-threshold",
+      "outputHidden" : false,
+      "parent" : "light",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "outside-threshold",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 7635,
+        "containerWidth" : 576,
+        "documentHeight" : 3100,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 3002,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 6108,
+        "containerWidth" : 576,
+        "documentHeight" : 2485,
+        "gap" : 20,
+        "lineHeight" : 15,
+        "origin" : 2367,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "light-inside-threshold",
+      "outputHidden" : false,
+      "parent" : "light",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "inside-threshold",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 0,
+        "containerWidth" : 576,
+        "documentHeight" : 98,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+
+      },
+      "dark" : true,
+      "height" : 342.5,
+      "name" : "dark-empty",
+      "outputHidden" : true,
+      "parent" : "dark",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "empty",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 1527,
+        "containerWidth" : 576,
+        "documentHeight" : 640,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 542,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 0,
+        "containerWidth" : 576,
+        "documentHeight" : 98,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "dark-initial",
+      "outputHidden" : false,
+      "parent" : "dark",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "initial",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 3054,
+        "containerWidth" : 576,
+        "documentHeight" : 1255,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 1157,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 1527,
+        "containerWidth" : 576,
+        "documentHeight" : 640,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 542,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "dark-bottom",
+      "outputHidden" : false,
+      "parent" : "dark",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "bottom",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 4581,
+        "containerWidth" : 576,
+        "documentHeight" : 1870,
+        "gap" : 1772,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 3054,
+        "containerWidth" : 576,
+        "documentHeight" : 1255,
+        "gap" : 1157,
+        "lineHeight" : 15,
+        "origin" : 0,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "dark-top",
+      "outputHidden" : false,
+      "parent" : "dark",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "top",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 6108,
+        "containerWidth" : 576,
+        "documentHeight" : 2485,
+        "gap" : 645,
+        "lineHeight" : 15,
+        "origin" : 1742,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 4581,
+        "containerWidth" : 576,
+        "documentHeight" : 1870,
+        "gap" : 30,
+        "lineHeight" : 15,
+        "origin" : 1742,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "dark-outside-threshold",
+      "outputHidden" : false,
+      "parent" : "dark",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "outside-threshold",
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "after" : {
+        "characters" : 7635,
+        "containerWidth" : 576,
+        "documentHeight" : 3100,
+        "gap" : 0,
+        "lineHeight" : 15,
+        "origin" : 3002,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "alpha" : 0,
+      "before" : {
+        "characters" : 6108,
+        "containerWidth" : 576,
+        "documentHeight" : 2485,
+        "gap" : 20,
+        "lineHeight" : 15,
+        "origin" : 2367,
+        "textWidth" : 586,
+        "visibleHeight" : 98
+      },
+      "dark" : true,
+      "height" : 480.5,
+      "name" : "dark-inside-threshold",
+      "outputHidden" : false,
+      "parent" : "dark",
+      "phase" : "running",
+      "sameView" : true,
+      "stage" : "inside-threshold",
+      "visible" : false
+    }
+  ],
+  "synthetic" : true,
+  "temporaryRemoved" : true,
+  "temporaryRoot" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-scroll-B27C6830-DB0B-4C46-8E55-FDF5048FD0E5"
+}

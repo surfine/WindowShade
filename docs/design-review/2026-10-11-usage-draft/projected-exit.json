@@ -1,0 +1,18 @@
+{
+  "native_session": 98843,
+  "native_exit": 0,
+  "frames": 20,
+  "consumer_exit": 0,
+  "source_count": 518,
+  "usage_session": 75788,
+  "usage_exit": 0,
+  "usage_assertions": 49,
+  "row_session": 56763,
+  "row_exit": 0,
+  "row_assertions": 851,
+  "pure_expiry_red_session": 49505,
+  "pure_expiry_red_exit": 133,
+  "projection_red_session": 42200,
+  "projection_red_exit": 1,
+  "main_takeover": true
+}

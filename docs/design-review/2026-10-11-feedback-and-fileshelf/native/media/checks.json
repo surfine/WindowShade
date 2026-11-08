@@ -1,0 +1,36 @@
+[
+  {
+    "kind" : "play-guard",
+    "localPlayCallbacks" : 1,
+    "parent" : "light",
+    "passed" : true,
+    "pendingTimersAfterRevoke" : 0,
+    "staleAndRevokedCallbacks" : 0
+  },
+  {
+    "kind" : "empty-feedback",
+    "parent" : "light",
+    "passed" : true,
+    "pendingTimersAfterRevoke" : 0,
+    "retryDeviceCount" : 5,
+    "returned" : true,
+    "totalRouteReads" : 2
+  },
+  {
+    "kind" : "play-guard",
+    "localPlayCallbacks" : 1,
+    "parent" : "dark",
+    "passed" : true,
+    "pendingTimersAfterRevoke" : 0,
+    "staleAndRevokedCallbacks" : 0
+  },
+  {
+    "kind" : "empty-feedback",
+    "parent" : "dark",
+    "passed" : true,
+    "pendingTimersAfterRevoke" : 0,
+    "retryDeviceCount" : 5,
+    "returned" : true,
+    "totalRouteReads" : 2
+  }
+]

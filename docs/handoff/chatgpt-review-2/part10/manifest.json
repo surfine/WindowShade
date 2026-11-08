@@ -1,0 +1,45 @@
+{
+  "part": 10,
+  "base": "v9",
+  "base_file_count": 1168,
+  "result_file_count": 1169,
+  "changes": [
+    {
+      "path": "AGENTS.md",
+      "operation": "replace",
+      "base_sha256": "5ec0f273f4e4f46c7fc2281fd436c58b79aed02183c35e3105bd664f84854f26",
+      "sha256": "0793c499259866d9afac64dec032649fc4f8dad9341db0f4caec4477edc7ae70"
+    },
+    {
+      "path": "docs/handoff/FINAL-HANDOFF.md",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "b4cabe18c3a84a975f827793685bca1fa12e30bce3e5f9f209153de91adb0060"
+    },
+    {
+      "path": "docs/handoff/START-HERE-deepseek.md",
+      "operation": "replace",
+      "base_sha256": "f312e6ff55ae910ad7d4c4127f1548ed0b711f709ca23196afa0449094010edd",
+      "sha256": "a0d8c8e82c23678451ad777b844816faaf2c43b5e4c9ebd6cd1d59de821ae5d7"
+    },
+    {
+      "path": "docs/releases/v1.0.16-ledger.md",
+      "operation": "replace",
+      "base_sha256": "5ef9ad81aedae8dfe2089eef058a022ffe22fd14d34c33b3af2d937ce8313170",
+      "sha256": "c3b034007fd4b99da063998ee08ba15d1baab3c05e9a46109ef0c5cf9a879323"
+    },
+    {
+      "path": "prototype/Recovery/Journal.swift",
+      "operation": "replace",
+      "base_sha256": "0fa6eb0b1ef02048ffb0b26a1e8ff546c83d37dd96774da231d088e528c075c2",
+      "sha256": "5ffdb659b88cba3b72a346192fef9ba0c6a0eb22fad68aebd0681c09eb5b85aa"
+    },
+    {
+      "path": "prototype/build.sh",
+      "operation": "replace",
+      "base_sha256": "e6db6c9f3499fcdcb4f28c065199f4f87aa64aeb0c5a46b098164dc761ad588c",
+      "sha256": "7059bc9f7cf023359899cb35bcb92b3fa934e06f30bfb2f2737bed28a55c493d"
+    }
+  ],
+  "no_runtime_capability_enabled": true
+}

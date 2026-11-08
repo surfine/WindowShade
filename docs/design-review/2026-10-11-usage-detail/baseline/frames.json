@@ -1,0 +1,3075 @@
+{
+  "actions" : 0,
+  "candidateOnly" : true,
+  "contextSourceQualified" : false,
+  "frames" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 389.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 263
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 290
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 317
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 77.5,
+            "x" : 426.5,
+            "y" : 221
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 95%",
+          "tooltip" : "剩 95%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 235
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 73,
+            "x" : 16,
+            "y" : 217
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "1 小时后恢复",
+          "tooltip" : "1 小时后恢复",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 62.5,
+            "x" : 441.5,
+            "y" : 175
+          },
+          "id" : "window-1-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 7%",
+          "tooltip" : "剩 7%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 189
+          },
+          "id" : "window-1-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "本周额度",
+          "tooltip" : "本周额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 90.5,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "window-1-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "周二 23:06恢复",
+          "tooltip" : "周二 23:06恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-normal",
+      "pageSize" : {
+        "height" : 356,
+        "width" : 520
+      },
+      "sample" : "normal",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 95,
+          "name" : "五小时额度",
+          "recovery" : "1 小时后恢复",
+          "windowMinutes" : 300
+        },
+        {
+          "leftPercent" : 7,
+          "name" : "本周额度",
+          "recovery" : "周二 23:06恢复",
+          "windowMinutes" : 10080
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 325.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "account-empty",
+          "maximumNumberOfLines" : 0,
+          "text" : "暂未读到用量",
+          "tooltip" : "暂未读到用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 199
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "暂未读到上下文",
+          "tooltip" : "暂未读到上下文",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 226
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 253
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-unknown",
+      "pageSize" : {
+        "height" : 292,
+        "width" : 520
+      },
+      "sample" : "unknown",
+      "visible" : false,
+      "windows" : [
+
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 325.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "account-empty",
+          "maximumNumberOfLines" : 0,
+          "text" : "暂未读到用量",
+          "tooltip" : "暂未读到用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 199
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 226
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 253
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-context-only",
+      "pageSize" : {
+        "height" : 292,
+        "width" : 520
+      },
+      "sample" : "context-only",
+      "visible" : false,
+      "windows" : [
+
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 389.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 263
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 290
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 317
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 63.5,
+            "x" : 440.5,
+            "y" : 221
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 5%",
+          "tooltip" : "剩 5%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 235
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 76,
+            "x" : 16,
+            "y" : 217
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "等待用量更新",
+          "tooltip" : "等待用量更新",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 78,
+            "x" : 426,
+            "y" : 175
+          },
+          "id" : "window-1-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 40%",
+          "tooltip" : "剩 40%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 189
+          },
+          "id" : "window-1-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "本周额度",
+          "tooltip" : "本周额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 90.5,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "window-1-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "周二 23:06恢复",
+          "tooltip" : "周二 23:06恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-expired",
+      "pageSize" : {
+        "height" : 356,
+        "width" : 520
+      },
+      "sample" : "expired",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 5,
+          "name" : "五小时额度",
+          "recovery" : "等待用量更新",
+          "windowMinutes" : 300
+        },
+        {
+          "leftPercent" : 40,
+          "name" : "本周额度",
+          "recovery" : "周二 23:06恢复",
+          "windowMinutes" : 10080
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 405.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 279
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 32,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型 — 跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析",
+          "tooltip" : "演示模型 — 跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 116.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 147.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 306
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 333
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 77.5,
+            "x" : 426.5,
+            "y" : 237
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 95%",
+          "tooltip" : "剩 95%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 251
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 73,
+            "x" : 16,
+            "y" : 233
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "1 小时后恢复",
+          "tooltip" : "1 小时后恢复",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 62.5,
+            "x" : 441.5,
+            "y" : 191
+          },
+          "id" : "window-1-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 7%",
+          "tooltip" : "剩 7%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 205
+          },
+          "id" : "window-1-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "本周额度",
+          "tooltip" : "本周额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 90.5,
+            "x" : 16,
+            "y" : 187
+          },
+          "id" : "window-1-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "周二 23:06恢复",
+          "tooltip" : "周二 23:06恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-long-model",
+      "pageSize" : {
+        "height" : 372,
+        "width" : 520
+      },
+      "sample" : "long-model",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 95,
+          "name" : "五小时额度",
+          "recovery" : "1 小时后恢复",
+          "windowMinutes" : 300
+        },
+        {
+          "leftPercent" : 7,
+          "name" : "本周额度",
+          "recovery" : "周二 23:06恢复",
+          "windowMinutes" : 10080
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 335.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 209
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 236
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 263
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 78,
+            "x" : 426,
+            "y" : 171
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 88%",
+          "tooltip" : "剩 88%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 176
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-unknown-window",
+      "pageSize" : {
+        "height" : 302,
+        "width" : 520
+      },
+      "sample" : "unknown-window",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 88,
+          "name" : "账户额度",
+          "recovery" : null,
+          "windowMinutes" : null
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 343.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 217
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 244
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 271
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 64,
+            "x" : 440,
+            "y" : 175
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 0%",
+          "tooltip" : "剩 0%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 189
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 73,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "1 小时后恢复",
+          "tooltip" : "1 小时后恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-zero",
+      "pageSize" : {
+        "height" : 310,
+        "width" : 520
+      },
+      "sample" : "zero",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 0,
+          "name" : "五小时额度",
+          "recovery" : "1 小时后恢复",
+          "windowMinutes" : 300
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 243.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 89
+          },
+          "id" : "account-empty",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量已隐藏",
+          "tooltip" : "用量已隐藏",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 117
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "编程会话",
+          "tooltip" : "编程会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 49.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 144
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "会话信息已隐藏",
+          "tooltip" : "会话信息已隐藏",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-shared",
+      "pageSize" : {
+        "height" : 210,
+        "width" : 520
+      },
+      "sample" : "shared",
+      "visible" : false,
+      "windows" : [
+
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 389.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 263
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 290
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 317
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 77.5,
+            "x" : 426.5,
+            "y" : 221
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 95%",
+          "tooltip" : "剩 95%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 235
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 73,
+            "x" : 16,
+            "y" : 217
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "1 小时后恢复",
+          "tooltip" : "1 小时后恢复",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 62.5,
+            "x" : 441.5,
+            "y" : 175
+          },
+          "id" : "window-1-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 7%",
+          "tooltip" : "剩 7%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 189
+          },
+          "id" : "window-1-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "本周额度",
+          "tooltip" : "本周额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 90.5,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "window-1-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "周二 23:06恢复",
+          "tooltip" : "周二 23:06恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-normal",
+      "pageSize" : {
+        "height" : 356,
+        "width" : 520
+      },
+      "sample" : "normal",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 95,
+          "name" : "五小时额度",
+          "recovery" : "1 小时后恢复",
+          "windowMinutes" : 300
+        },
+        {
+          "leftPercent" : 7,
+          "name" : "本周额度",
+          "recovery" : "周二 23:06恢复",
+          "windowMinutes" : 10080
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 325.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "account-empty",
+          "maximumNumberOfLines" : 0,
+          "text" : "暂未读到用量",
+          "tooltip" : "暂未读到用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 199
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "暂未读到上下文",
+          "tooltip" : "暂未读到上下文",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 226
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 253
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-unknown",
+      "pageSize" : {
+        "height" : 292,
+        "width" : 520
+      },
+      "sample" : "unknown",
+      "visible" : false,
+      "windows" : [
+
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 325.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "account-empty",
+          "maximumNumberOfLines" : 0,
+          "text" : "暂未读到用量",
+          "tooltip" : "暂未读到用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 199
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 226
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 253
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-context-only",
+      "pageSize" : {
+        "height" : 292,
+        "width" : 520
+      },
+      "sample" : "context-only",
+      "visible" : false,
+      "windows" : [
+
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 389.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 263
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 290
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 317
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 63.5,
+            "x" : 440.5,
+            "y" : 221
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 5%",
+          "tooltip" : "剩 5%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 235
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 76,
+            "x" : 16,
+            "y" : 217
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "等待用量更新",
+          "tooltip" : "等待用量更新",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 78,
+            "x" : 426,
+            "y" : 175
+          },
+          "id" : "window-1-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 40%",
+          "tooltip" : "剩 40%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 189
+          },
+          "id" : "window-1-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "本周额度",
+          "tooltip" : "本周额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 90.5,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "window-1-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "周二 23:06恢复",
+          "tooltip" : "周二 23:06恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-expired",
+      "pageSize" : {
+        "height" : 356,
+        "width" : 520
+      },
+      "sample" : "expired",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 5,
+          "name" : "五小时额度",
+          "recovery" : "等待用量更新",
+          "windowMinutes" : 300
+        },
+        {
+          "leftPercent" : 40,
+          "name" : "本周额度",
+          "recovery" : "周二 23:06恢复",
+          "windowMinutes" : 10080
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 405.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 279
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 32,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型 — 跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析",
+          "tooltip" : "演示模型 — 跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析跨领域推理与图像分析",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 116.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 147.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 306
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 333
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 77.5,
+            "x" : 426.5,
+            "y" : 237
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 95%",
+          "tooltip" : "剩 95%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 251
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 73,
+            "x" : 16,
+            "y" : 233
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "1 小时后恢复",
+          "tooltip" : "1 小时后恢复",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 62.5,
+            "x" : 441.5,
+            "y" : 191
+          },
+          "id" : "window-1-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 7%",
+          "tooltip" : "剩 7%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 205
+          },
+          "id" : "window-1-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "本周额度",
+          "tooltip" : "本周额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 90.5,
+            "x" : 16,
+            "y" : 187
+          },
+          "id" : "window-1-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "周二 23:06恢复",
+          "tooltip" : "周二 23:06恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-long-model",
+      "pageSize" : {
+        "height" : 372,
+        "width" : 520
+      },
+      "sample" : "long-model",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 95,
+          "name" : "五小时额度",
+          "recovery" : "1 小时后恢复",
+          "windowMinutes" : 300
+        },
+        {
+          "leftPercent" : 7,
+          "name" : "本周额度",
+          "recovery" : "周二 23:06恢复",
+          "windowMinutes" : 10080
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 335.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 209
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 236
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 263
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 78,
+            "x" : 426,
+            "y" : 171
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 88%",
+          "tooltip" : "剩 88%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : 16,
+            "y" : 176
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-unknown-window",
+      "pageSize" : {
+        "height" : 302,
+        "width" : 520
+      },
+      "sample" : "unknown-window",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 88,
+          "name" : "账户额度",
+          "recovery" : null,
+          "windowMinutes" : null
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 343.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 217
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "context",
+          "maximumNumberOfLines" : 0,
+          "text" : "上下文占用 25%",
+          "tooltip" : "上下文占用 25%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 45.5
+          },
+          "id" : "effort",
+          "maximumNumberOfLines" : 0,
+          "text" : "思考：深入",
+          "tooltip" : "思考：深入",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 72.5
+          },
+          "id" : "model",
+          "maximumNumberOfLines" : 2,
+          "text" : "演示模型",
+          "tooltip" : "演示模型",
+          "wraps" : true
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 100.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "设计工作间",
+          "tooltip" : "设计工作间",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 131.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 244
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "Codex · 演示账户",
+          "tooltip" : "Codex · 演示账户",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 271
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 22,
+          "frame" : {
+            "height" : 26,
+            "width" : 64,
+            "x" : 440,
+            "y" : 175
+          },
+          "id" : "window-0-amount",
+          "maximumNumberOfLines" : 0,
+          "text" : "剩 0%",
+          "tooltip" : "剩 0%",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 68.5,
+            "x" : 16,
+            "y" : 189
+          },
+          "id" : "window-0-name",
+          "maximumNumberOfLines" : 0,
+          "text" : "五小时额度",
+          "tooltip" : "五小时额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 73,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "window-0-recovery",
+          "maximumNumberOfLines" : 0,
+          "text" : "1 小时后恢复",
+          "tooltip" : "1 小时后恢复",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-zero",
+      "pageSize" : {
+        "height" : 310,
+        "width" : 520
+      },
+      "sample" : "zero",
+      "visible" : false,
+      "windows" : [
+        {
+          "leftPercent" : 0,
+          "name" : "五小时额度",
+          "recovery" : "1 小时后恢复",
+          "windowMinutes" : 300
+        }
+      ]
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "candidateOnly" : true,
+      "canvasSize" : {
+        "height" : 243.5,
+        "width" : 520
+      },
+      "completions" : 1,
+      "fields" : [
+        {
+          "dark" : true,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 488,
+            "x" : 16,
+            "y" : 89
+          },
+          "id" : "account-empty",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量已隐藏",
+          "tooltip" : "用量已隐藏",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 117
+          },
+          "id" : "account-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "账户额度",
+          "tooltip" : "账户额度",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 15,
+          "frame" : {
+            "height" : 19,
+            "width" : 488,
+            "x" : 16,
+            "y" : 18.5
+          },
+          "id" : "project",
+          "maximumNumberOfLines" : 0,
+          "text" : "编程会话",
+          "tooltip" : "编程会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 49.5
+          },
+          "id" : "session-heading",
+          "maximumNumberOfLines" : 0,
+          "text" : "当前会话",
+          "tooltip" : "当前会话",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 488,
+            "x" : 16,
+            "y" : 144
+          },
+          "id" : "source",
+          "maximumNumberOfLines" : 0,
+          "text" : "会话信息已隐藏",
+          "tooltip" : "会话信息已隐藏",
+          "wraps" : false
+        },
+        {
+          "dark" : true,
+          "font" : 18,
+          "frame" : {
+            "height" : 21,
+            "width" : 488,
+            "x" : 16,
+            "y" : 171
+          },
+          "id" : "title",
+          "maximumNumberOfLines" : 0,
+          "text" : "用量",
+          "tooltip" : "用量",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-shared",
+      "pageSize" : {
+        "height" : 210,
+        "width" : 520
+      },
+      "sample" : "shared",
+      "visible" : false,
+      "windows" : [
+
+      ]
+    }
+  ],
+  "globalInputEvents" : 0,
+  "networkReads" : 0,
+  "productionIntegration" : false,
+  "sourceControllers" : 0
+}

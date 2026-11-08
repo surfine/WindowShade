@@ -1,0 +1,15 @@
+{
+  "kind": "self_review",
+  "status": "clean",
+  "issues_found": false,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Push and GPT-6 Pro prompt committed at 4accf31; remote ref confirms identity",
+    "evidence_freshness": "82 source hashes match build; remote checked after push",
+    "edge_risk": "Real-device failure expressly unresolved in prompt; no release or main merge"
+  },
+  "findings": [
+    "No outstanding issue for push-and-handoff scope"
+  ],
+  "next_action": "handoff"
+}

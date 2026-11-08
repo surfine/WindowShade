@@ -1,0 +1,4 @@
+UTC 2026-10-03T05:35:13.458533+00:00
+COMMAND ['/mnt/data/WindowShade2-round2-part1/.build/regression/original-notches']
+EXIT 0
+PASS notch activity store

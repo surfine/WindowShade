@@ -1,0 +1,29 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-fileshelf-name/validation.json:sha256:fc2c69c879280fdbe68a76d11d1c61d33de7fc96ca52bdc7cd781c388567ead8",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "FileShelfStatePreview + check-fileshelf-state-preview.py",
+      "exit_code": 0,
+      "result": "18 production frames;9 identical parent pairs; actual nameLines widths/extensions/status;2 actual remove/undo/stale/revoke reports;own temp/domain cleanup",
+      "receipt": "after/native-exit.json"
+    },
+    {
+      "command": "run-file-name-checks.py",
+      "exit_code": 0,
+      "result": "16 real AppKit font cases;exact production helper extracted;Swift6 strict compile",
+      "receipt": "font-check/name-checks-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "optimized519 current inputs;gates passed;flags retained",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "real FileShelf thumbnails/open/share/drop/keyboard/VoiceOver/private-sharing state/motion;media artwork/more than5 routes/real playback/output;owned login/errors/long model/live scrolling;original remaining surfaces,real notch/multiscreen/signed Swift6 actor isolation",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

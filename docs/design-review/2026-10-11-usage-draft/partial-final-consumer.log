@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-usage-quantity-preview.py", line 26, in <module>
+    assert tile['quantityText']==amount, f'{name}: quota amount absent/stale: {tile["quantityText"]!r} != {amount!r}'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: light-low: quota amount absent/stale: None != '剩 5%'

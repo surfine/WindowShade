@@ -1,0 +1,14 @@
+qc_gate  ws2-next-v2-b-original-1080p.mp4
+PASS  spec      duration=39.746s size=1920x1080 fps=30.000
+PASS  audio     I=-14.0 LUFS TP=-3.3 dBFS (target -14.0 +- 1.0 LUFS, TP <= -1.0)
+PASS  black     no black span >= 0.2 s
+PASS  still     longest 2.27 s (start 21.00 s, end hold excluded) still ratio 0.620; frames 1192; want <= 3.00 s
+PASS  end-hold  last 3.23 s still (want >= 1.00 s)
+PASS  open      opening mean luma 43.8 over first 0.30 s (want >= 8)
+FAIL  rhythm    verify_promo verdict FAIL
+    PASS  rest       still 0.558  longest quiet 3.5 s
+    PASS  burst      bursts [(0.08, 0.5), (2.25, 2.67), (3.92, 5.33), (5.33, 5.67), (9.5, 10.92), (11.0, 12.08), (12.08, 13.33), (16.25, 16.67), (29.42, 30.33), (32.75, 33.0), (35.0, 35.5)]
+    PASS  not-flat   row-profile variation 0.56 (advisory, >= 0.35)
+    FAIL  audio      peak -3.3 dBFS  clipped 0  quiet 0.013
+PASS  carry     score 1.00 considered 9 (want >= 0.50)
+VERDICT: FAIL

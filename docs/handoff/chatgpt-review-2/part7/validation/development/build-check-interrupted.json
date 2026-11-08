@@ -1,0 +1,43 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Swift version 6.2.1 (swift-6.2.1-RELEASE)\nTarget: x86_64-unknown-linux-gnu\n",
+    "stderr": "",
+    "elapsed_seconds": 0.07567712499985646
+  },
+  {
+    "argv": [
+      "cc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "cc (Debian 14.2.0-19) 14.2.0\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "stderr": "",
+    "elapsed_seconds": 0.00222361100031776
+  },
+  {
+    "argv": [
+      "uname",
+      "-a"
+    ],
+    "exit_code": 0,
+    "stdout": "Linux 5544ed776db5 6.18.44 #1 SMP Sat Sep 26 20:02:31 UTC 2026 x86_64 GNU/Linux\n",
+    "stderr": "",
+    "elapsed_seconds": 0.0019448989996817545
+  },
+  {
+    "argv": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/build.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.0029930590003459656
+  }
+]

@@ -1,0 +1,367 @@
+{
+  "assertions" : 188,
+  "failures" : 0,
+  "results" : [
+    {
+      "assertions" : 5,
+      "id" : "FOC-01 pending-preset-keeps-current-deadline",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "FOC-02 next-start-uses-pending-values",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FOC-03 changing-tuck-does-not-lose-restore",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FOC-04 enabling-tuck-does-not-invent-ownership",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "FOC-05-pause-configuration-does-not-resume",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "FOC-06-locked-and-manual-pause-independent",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FOC-07-rest-continues-through-lock",
+      "passed" : true
+    },
+    {
+      "assertions" : 4,
+      "id" : "FOC-08-no-automatic-next-focus",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "FOC-09-visibility-wake-budget",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FOC-10-progress-uses-active-duration",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FOC-11-backwards-clock-refused",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FOC-12-next-run-retains-daily-count-and-token-sequence",
+      "passed" : true
+    },
+    {
+      "assertions" : 69,
+      "id" : "FRM-01-fragmented-at-every-boundary",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FRM-02-multiple-frames-one-read",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FRM-03-big-endian-length",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "FRM-04-oversized-header-terminates",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FRM-05-unknown-type-terminates",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FRM-06-truncated-tag-terminates",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "FRM-07-local-payload-limit",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FRM-08-bounded-read-batch",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FRM-09-bounded-frame-count",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "FRM-10-data-slice-safe",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "NON-01-little-endian-prefix",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "NON-02-no-repeat",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "NON-03-no-wrap",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "NON-04-terminal-close",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "APR-01-complete-command-review",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-02-wrong-thread",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-03-empty-command",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-04-relative-cwd",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-05-stdin-kind",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-06-unknown-field",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-07-network-request",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-08-policy-upgrade",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-09-remote-environment",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-10-missing-time",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-11-long-command",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-12-file-without-diff-not-reviewable",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-13-request-id-type-bound",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-14-whitespace-in-command-bound",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "APR-15-bidi-is-visible-not-silently-dropped",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-16-cannot-confirm-before-layout",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-17-preheld-input-refused",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-18-old-sequence-refused",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "APR-19-fresh-confirm-then-grant-still-required",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-20-target-change-invalidates-confirmation",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-21-duplicate-confirmation-refused",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-22-clear-revokes-review",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "id" : "WIRE-01-accept-once-actual-encoded-response",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "WIRE-02-no-duplicate-accept",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "WIRE-03-wrong-payload-refused",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "WIRE-04-file-not-allowed-by-command-path",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "WIRE-05-turn-complete-clears-approval",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "WIRE-06-string-id-preserved",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "DEV-01-default-disabled",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "DEV-02-neutral-required-after-enable",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "DEV-03-fresh-press-release-pair",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "DEV-04-reconnect-requires-new-consent",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "DEV-05-lock-revokes",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "DEV-06-review-domain-cannot-begin-control",
+      "passed" : true
+    },
+    {
+      "assertions" : 4,
+      "id" : "DEV-08-domain-change-cancels-and-requires-neutral",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "DEV-09-unannounced-domain-change-suspends",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "APR-23-visible-context-escapes-bidi",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "DEV-07-replay-suspends",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "HID-01-exact-device-and-known-usage",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "HID-02-unknown-and-nonbinary-pass-through",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "OWN-01-only-completed-effects-recorded",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "OWN-02-exact-owner-one-use",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "id" : "OWN-03-manual-change-excludes-window",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "OWN-04-live-revision-change-refuses-restore",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "OWN-05-pid-reuse-cannot-match",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "id" : "OWN-06-other-run-cannot-consume",
+      "passed" : true
+    }
+  ],
+  "scenarios" : 72
+}

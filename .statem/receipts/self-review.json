@@ -1,0 +1,21 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": false,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/releases/v1.0.16-acceptance/gate-0B-verification.md",
+  "artifact_sha256": "(见文件)",
+  "binding_sha256": "0B-candidate-47930319",
+  "lenses": {
+    "task_contract": "#39 与 0-B 均在用户定案范围内：改动限 EventTap/EventTapCallback/Preferences/xcstrings/copy-guide/tests/tools/design-qa/docs/.statem；未发布、未提交；发布日流程（tag/gh release/appcast）未执行",
+    "evidence_freshness": "包级门禁在 0-B 包上重跑（gate-0B.log 非复用）；#39 判据、语言切换、更新器均在 0-B 来宾二进制（784ec4b6…）上实跑；沿用项已标明（外观、欢迎三步完整走查）并给出复用依据（git diff 为空）",
+    "edge_risk": "两文档折叠形态（inconclusive + 勘误 0-A 判读）、滑杆读数位置（未直接复验）、蓝牙三击（设备侧）、动画手感（not_run）全部写入 gate-0B-verification.md 的用户真机清单；不写'英语已支持'，不写'两文档已验证'"
+  },
+  "findings": [
+    "#39 在 tap 线程放行修饰键多击：不吞事件、不建三击意图，并异步清掉未完成的意图；纯测试与 VM 直测双证",
+    "发现并更正此前判读错误：0-A 轮'两文档历史雷未复现'证据不足（改名浮层干扰），已在 phase123-results.md 与 gate-0B-verification.md 双向勘误",
+    "事故与恢复：误用 git checkout 丢掉 xcstrings 第28批改动，用 .build 编译产物（zh/en 各 500 键）逐键恢复并核对零差异；已在交接 §15 如实记录",
+    "0-B 候选（含英语设置界面 + 静音散句 + #39）包级门禁与 Phase 1–3 复验完成；发布日流程待用户裁定与提交"
+  ],
+  "next_action": "handoff"
+}

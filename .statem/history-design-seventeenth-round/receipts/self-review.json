@@ -1,0 +1,20 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-window-images/validation.json",
+  "artifact_sha256": "a0f257497336140079991e00a2e4a54c3eff8f8843e1077eaf83eec106db2f05",
+  "lenses": {
+    "task_contract": "actual image interface restores all buttons wide;64 bar fits81 narrow;more/busy/28hit retained;original actions/menu routing unchanged",
+    "evidence_freshness": "14 source/310 evidence hashes independently matched,82 final/518 native and519 optimized current;two actual same-card images inspected",
+    "edge_risk": "original fixture border/selection assumptions and coarse consumer misses excluded;width cache clears configure/reset/more/overlay;list never calls fit and its buttons remain visible"
+  },
+  "findings": [
+    "Production difference limited to Card width arrangement and ActionBar visibility/cache. No new event/timer or action-policy change.",
+    "More menu route remains original Controller.presentContextMenu;Card accessibility custom actions still built from full enabled items. Real menu/AX execution not_run.",
+    "Native fixture error sources retained;no signed Swift6 runtime, real thumbnails/live view or pointer/focus/hardware acceptance.",
+    "Pack source lookup error corrected before contract receipt consumed;dependent transitions now separate calls."
+  ],
+  "updated": "2026-10-11T11:37:12.355992+00:00"
+}

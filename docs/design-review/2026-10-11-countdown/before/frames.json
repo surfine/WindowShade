@@ -1,0 +1,92 @@
+[
+  {
+    "cornerRadius" : 24,
+    "height" : 84,
+    "image" : "light-picker.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，选分钟，现在是 10 分钟",
+    "visibleWindow" : false,
+    "width" : 400
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-running.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，还剩 9 分钟",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-paused.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，已暂停，还剩 9 分钟",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "light-done.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，时间到，已超时 0:42",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 68,
+    "image" : "light-alert.png",
+    "minimumHeight" : 68,
+    "spoken" : "时间到，10 分钟计时器",
+    "visibleWindow" : false,
+    "width" : 400
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 84,
+    "image" : "dark-picker.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，选分钟，现在是 10 分钟",
+    "visibleWindow" : false,
+    "width" : 400
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-running.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，还剩 9 分钟",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-paused.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，已暂停，还剩 9 分钟",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 142,
+    "image" : "dark-done.png",
+    "minimumHeight" : 68,
+    "spoken" : "计时器，时间到，已超时 0:42",
+    "visibleWindow" : false,
+    "width" : 440
+  },
+  {
+    "cornerRadius" : 24,
+    "height" : 68,
+    "image" : "dark-alert.png",
+    "minimumHeight" : 68,
+    "spoken" : "时间到，10 分钟计时器",
+    "visibleWindow" : false,
+    "width" : 400
+  }
+]

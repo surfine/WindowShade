@@ -1,0 +1,1014 @@
+[
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 0,
+    "height" : 160,
+    "image" : "light-empty.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+
+    ],
+    "names" : [
+
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "empty",
+    "synthetic" : true,
+    "tileRects" : [
+
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      ""
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-one.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "样件文件1.txt",
+        "lines" : [
+          "样件文件1.txt"
+        ],
+        "widths" : [
+          67.085964098978593
+        ]
+      }
+    ],
+    "names" : [
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "one",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 7,
+    "height" : 160,
+    "image" : "light-many.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "样件文件7.txt",
+        "lines" : [
+          "样件文件7.txt"
+        ],
+        "widths" : [
+          67.333034411478593
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件6\n.txt",
+        "lines" : [
+          "样件文件6",
+          ".txt"
+        ],
+        "widths" : [
+          52.1865500364786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件5\n.txt",
+        "lines" : [
+          "样件文件5",
+          ".txt"
+        ],
+        "widths" : [
+          51.9824484739786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件4\n.txt",
+        "lines" : [
+          "样件文件4",
+          ".txt"
+        ],
+        "widths" : [
+          52.2617453489786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件3\n.txt",
+        "lines" : [
+          "样件文件3",
+          ".txt"
+        ],
+        "widths" : [
+          52.0791281614786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件2\n.txt",
+        "lines" : [
+          "样件文件2",
+          ".txt"
+        ],
+        "widths" : [
+          51.8213156614786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件1.txt",
+        "lines" : [
+          "样件文件1.txt"
+        ],
+        "widths" : [
+          67.085964098978593
+        ]
+      }
+    ],
+    "names" : [
+      "样件文件7.txt",
+      "样件文件6.txt",
+      "样件文件5.txt",
+      "样件文件4.txt",
+      "样件文件3.txt",
+      "样件文件2.txt",
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "many",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ],
+      [
+        98,
+        0,
+        76,
+        104
+      ],
+      [
+        182,
+        0,
+        76,
+        104
+      ],
+      [
+        266,
+        0,
+        76,
+        104
+      ],
+      [
+        350,
+        0,
+        76,
+        104
+      ],
+      [
+        434,
+        0,
+        76,
+        104
+      ],
+      [
+        518,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "7"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-long-name.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "long-file-na\n…-name-.txt",
+        "lines" : [
+          "long-file-na",
+          "…-name-.txt"
+        ],
+        "widths" : [
+          61.59033203125,
+          65.09228515625
+        ]
+      }
+    ],
+    "names" : [
+      "long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "long-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-wide-name.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "WWWWWW\n…WWW.pdf",
+        "lines" : [
+          "WWWWWW",
+          "…WWW.pdf"
+        ],
+        "widths" : [
+          64.259765625,
+          59.87158203125
+        ]
+      }
+    ],
+    "names" : [
+      "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.pdf"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "wide-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-unicode-name.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字\n…字👨‍👩‍👧‍👦.txt",
+        "lines" : [
+          "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字",
+          "…字👨‍👩‍👧‍👦.txt"
+        ],
+        "widths" : [
+          64.807392996108945,
+          52.921149227869648
+        ]
+      }
+    ],
+    "names" : [
+      "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "unicode-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 2,
+    "height" : 160,
+    "image" : "light-missing.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "自造样件资料",
+        "lines" : [
+          "自造样件资料"
+        ],
+        "widths" : [
+          65.614785992217904
+        ]
+      },
+      {
+        "availability" : "missing",
+        "joined" : "样件文件1.txt\n找不到了",
+        "lines" : [
+          "样件文件1.txt",
+          "找不到了"
+        ],
+        "widths" : [
+          67.085964098978593,
+          43.7431906614786
+        ]
+      }
+    ],
+    "names" : [
+      "自造样件资料",
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "missing",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ],
+      [
+        98,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "2"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : true,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 0,
+    "height" : 160,
+    "image" : "light-cleared.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+
+    ],
+    "names" : [
+
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "cleared",
+    "synthetic" : true,
+    "tileRects" : [
+
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "",
+      "文件架空了"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-restored.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "样件文件1.txt",
+        "lines" : [
+          "样件文件1.txt"
+        ],
+        "widths" : [
+          67.085964098978593
+        ]
+      }
+    ],
+    "names" : [
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "restored",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 0,
+    "height" : 160,
+    "image" : "dark-empty.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+
+    ],
+    "names" : [
+
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "empty",
+    "synthetic" : true,
+    "tileRects" : [
+
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      ""
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-one.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "样件文件1.txt",
+        "lines" : [
+          "样件文件1.txt"
+        ],
+        "widths" : [
+          67.085964098978593
+        ]
+      }
+    ],
+    "names" : [
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "one",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 7,
+    "height" : 160,
+    "image" : "dark-many.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "样件文件7.txt",
+        "lines" : [
+          "样件文件7.txt"
+        ],
+        "widths" : [
+          67.333034411478593
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件6\n.txt",
+        "lines" : [
+          "样件文件6",
+          ".txt"
+        ],
+        "widths" : [
+          52.1865500364786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件5\n.txt",
+        "lines" : [
+          "样件文件5",
+          ".txt"
+        ],
+        "widths" : [
+          51.9824484739786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件4\n.txt",
+        "lines" : [
+          "样件文件4",
+          ".txt"
+        ],
+        "widths" : [
+          52.2617453489786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件3\n.txt",
+        "lines" : [
+          "样件文件3",
+          ".txt"
+        ],
+        "widths" : [
+          52.0791281614786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件2\n.txt",
+        "lines" : [
+          "样件文件2",
+          ".txt"
+        ],
+        "widths" : [
+          51.8213156614786,
+          17.0693359375
+        ]
+      },
+      {
+        "availability" : "available",
+        "joined" : "样件文件1.txt",
+        "lines" : [
+          "样件文件1.txt"
+        ],
+        "widths" : [
+          67.085964098978593
+        ]
+      }
+    ],
+    "names" : [
+      "样件文件7.txt",
+      "样件文件6.txt",
+      "样件文件5.txt",
+      "样件文件4.txt",
+      "样件文件3.txt",
+      "样件文件2.txt",
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "many",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ],
+      [
+        98,
+        0,
+        76,
+        104
+      ],
+      [
+        182,
+        0,
+        76,
+        104
+      ],
+      [
+        266,
+        0,
+        76,
+        104
+      ],
+      [
+        350,
+        0,
+        76,
+        104
+      ],
+      [
+        434,
+        0,
+        76,
+        104
+      ],
+      [
+        518,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "7"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-long-name.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "long-file-na\n…-name-.txt",
+        "lines" : [
+          "long-file-na",
+          "…-name-.txt"
+        ],
+        "widths" : [
+          61.59033203125,
+          65.09228515625
+        ]
+      }
+    ],
+    "names" : [
+      "long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "long-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-wide-name.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "WWWWWW\n…WWW.pdf",
+        "lines" : [
+          "WWWWWW",
+          "…WWW.pdf"
+        ],
+        "widths" : [
+          64.259765625,
+          59.87158203125
+        ]
+      }
+    ],
+    "names" : [
+      "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.pdf"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "wide-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-unicode-name.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字\n…字👨‍👩‍👧‍👦.txt",
+        "lines" : [
+          "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字",
+          "…字👨‍👩‍👧‍👦.txt"
+        ],
+        "widths" : [
+          64.807392996108945,
+          52.921149227869648
+        ]
+      }
+    ],
+    "names" : [
+      "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "unicode-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 2,
+    "height" : 160,
+    "image" : "dark-missing.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "自造样件资料",
+        "lines" : [
+          "自造样件资料"
+        ],
+        "widths" : [
+          65.614785992217904
+        ]
+      },
+      {
+        "availability" : "missing",
+        "joined" : "样件文件1.txt\n找不到了",
+        "lines" : [
+          "样件文件1.txt",
+          "找不到了"
+        ],
+        "widths" : [
+          67.085964098978593,
+          43.7431906614786
+        ]
+      }
+    ],
+    "names" : [
+      "自造样件资料",
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "missing",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ],
+      [
+        98,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "2"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : true,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 0,
+    "height" : 160,
+    "image" : "dark-cleared.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+
+    ],
+    "names" : [
+
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "cleared",
+    "synthetic" : true,
+    "tileRects" : [
+
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "",
+      "文件架空了"
+    ],
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "clearPending" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-restored.png",
+    "intersectsScreen" : false,
+    "nameLines" : [
+      {
+        "availability" : "available",
+        "joined" : "样件文件1.txt",
+        "lines" : [
+          "样件文件1.txt"
+        ],
+        "widths" : [
+          67.085964098978593
+        ]
+      }
+    ],
+    "names" : [
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "restored",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "visibleLabels" : [
+      "文件架",
+      "1"
+    ],
+    "width" : 561
+  }
+]

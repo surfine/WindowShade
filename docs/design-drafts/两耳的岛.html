@@ -1,0 +1,801 @@
+<meta charset="utf-8">
+<title>两耳的岛</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版式：先说 11-05 推翻了什么、改回什么，再摆 Apple 写过的，然后是共用的几何和一个能玩的模拟器，
+   接着一种样子一节（静止、紧凑、最小、展开那一排、提醒、换歌一瞥、电量闪、封面与波形），每节以「要你定的」收尾，
+   最后是怎么变、外接屏、改哪里、对照账、真机要量的。外观沿用《挂下来的胶囊》《照系统的岛》：纸面与墨，刘海里只用白、系统灰和语气色。
+   页面字级四档：32、20、15、13。舞台和样张按 1 pt 对 1 px 画，缩小只为放进页面，里面的字号照产品。 */
+:root{
+  --paper:#eceef2; --sheet:#fbfbfc; --ink:#1d1d1f; --ink2:#5f6068; --ink3:#6e6f76; --rule:rgba(0,0,0,.1);
+  --accent:#0058cc; --amber:#ff9f0a; --green:#1f8f3f; --warn:#d9480f;
+  --wall-a:#c9d6e6; --wall-b:#e9dfd2; --menubar:rgba(255,255,255,.62); --menutext:#1b1b1d; --win:#f6f6f7; --wintitle:#e7e7ea;
+  --f-body:"Noto Sans SC",-apple-system,"PingFang SC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ff9f0a; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2; --win:#2a2b2f; --wintitle:#35363b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121316; --sheet:#1b1c20; --ink:#f2f2f5; --ink2:#a4a5ad; --ink3:#8e8f97; --rule:rgba(255,255,255,.12);
+  --accent:#5a9cff; --amber:#ff9f0a; --green:#32d15a; --warn:#ff7b45;
+  --wall-a:#1d2a3c; --wall-b:#2c2622; --menubar:rgba(28,28,30,.62); --menutext:#f2f2f2; --win:#2a2b2f; --wintitle:#35363b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 var(--f-body);font-variant-numeric:tabular-nums;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:1080px;margin:0 auto}
+header{padding:40px 0 8px}
+h1{font-size:32px;line-height:1.2;margin:0 0 14px;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:20px;line-height:1.3;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;font-weight:600;margin:0 0 4px}
+.lede{max-width:68ch;color:var(--ink2);margin:0}
+.lede+.lede{margin-top:8px}
+.quote{margin:12px 0 0;padding:8px 14px;border-left:3px solid var(--ink);background:var(--sheet);border-radius:0 10px 10px 0;max-width:68ch}
+section{padding:48px 0 0}
+.sec-head{display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;margin-bottom:16px}
+.sec-head h2{flex-basis:100%;margin:0}
+.sec-head p{flex-basis:100%;margin:0;color:var(--ink2);max-width:72ch}
+p{margin:.4em 0}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:13px;overflow-wrap:anywhere}
+.en{font-family:var(--f-sys);font-style:italic}
+.toc{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:16px;font-size:13px}
+.toc a{text-decoration:none}
+
+/* 样张 */
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.fig{min-width:0}
+.fig .wall{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--rule);background:linear-gradient(160deg,var(--wall-a),var(--wall-b))}
+.box{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys);color:#fff;font-variant-numeric:normal}
+.mb{position:absolute;left:0;right:0;top:0;height:34px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.win{position:absolute;background:var(--win);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);overflow:hidden}
+.win::before{content:"";position:absolute;left:0;right:0;top:0;height:28px;background:var(--wintitle)}
+.blk{position:absolute;background:#000}
+.ghost{position:absolute;border:1.5px dashed var(--warn);z-index:4;pointer-events:none}
+.dim{position:absolute;color:var(--ink);font-size:calc(13px / var(--s,1));line-height:1.2;white-space:nowrap;z-index:5}
+.fig .cap{margin-top:8px;font-size:13px;color:var(--ink2)}
+.fig h3 .st{font-weight:500;font-size:13px;color:var(--ink3);margin-left:6px}
+.fig.now h3 .st{color:var(--warn)}
+.fig.new h3 .st{color:var(--green)}
+.bars{position:absolute;display:flex;gap:1.6px;align-items:center}
+.bars i{display:block;width:2px;border-radius:1px;background:#fff}
+.cov{position:absolute;background:linear-gradient(140deg,#e2773d,#9c2f4d)}
+.abs{position:absolute}
+.pct{font:600 13px/1 var(--f-sys);letter-spacing:-.01em;white-space:nowrap}
+.t15{font:600 15px/1.2 var(--f-sys);white-space:nowrap}
+.t13{font:400 13px/1.2 var(--f-sys);color:rgba(255,255,255,.62);white-space:nowrap}
+.tile{position:absolute;border-radius:14px;background:#1c1c1e;overflow:hidden}
+.tile::after{content:"";position:absolute;left:14px;right:14px;top:14px;height:56px;border-radius:6px;background:linear-gradient(160deg,#3a3f4a,#2a2c33)}
+.tile b{position:absolute;left:14px;bottom:10px;font:500 11px/1 var(--f-sys);color:rgba(255,255,255,.75)}
+
+/* 舞台 */
+.stage-wrap{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--rule);background:linear-gradient(160deg,var(--wall-a),var(--wall-b));touch-action:manipulation}
+.stage{position:absolute;left:0;top:0;transform-origin:0 0;font-family:var(--f-sys);overflow:hidden;font-variant-numeric:normal;user-select:none;-webkit-user-select:none}
+.menubar{position:absolute;left:0;right:0;top:0;height:34px;background:var(--menubar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:13px;color:var(--menutext);z-index:1}
+.menubar .l,.menubar .r{display:flex;gap:18px;align-items:center;white-space:nowrap}
+.menubar .l b{font-weight:600}
+.island{position:absolute;top:0;background:#000;z-index:2;cursor:pointer}
+.sh{position:absolute;top:0;z-index:2;pointer-events:none}
+.layer{position:absolute;inset:0;opacity:0;transition:opacity .10s ease;pointer-events:none;color:#fff;z-index:3}
+.layer.on{opacity:1;transition:opacity .18s ease}
+.reduced .layer,.reduced .layer.on{transition-duration:.25s}
+.mc{position:absolute;top:0;border-radius:50%;background:#000;z-index:2;opacity:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* 控制条 */
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;margin-top:14px}
+.controls .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.controls .lab{font-size:13px;color:var(--ink3);margin-right:2px}
+button.b{font:500 15px/1 var(--f-body);padding:8px 12px;border-radius:8px;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+button.b:hover{border-color:var(--ink3)}
+button.b[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+button.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.readout{margin-top:12px;font:13px/1.6 var(--f-mono);color:var(--ink2);background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;min-height:64px;max-height:220px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* 表与列表 */
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;background:var(--sheet);max-width:100%}
+.tbl+.tbl,.figs+.tbl,.two+.tbl,.figs+.two{margin-top:20px}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:720px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--rule)}
+th{font-size:13px;font-weight:500;color:var(--ink3);background:var(--paper)}
+tr:last-child td{border-bottom:0}
+td.num{white-space:nowrap}
+.prov{font-size:13px;color:var(--warn);white-space:nowrap}
+.ok{font-size:13px;color:var(--green);white-space:nowrap}
+.rules{margin:0;padding-left:1.4em;color:var(--ink2)}
+.rules li{margin:.45em 0;max-width:80ch}
+.rules b{color:var(--ink)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:20px}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+.pick{margin-top:20px;border:1px solid var(--rule);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;background:var(--sheet);padding:12px 16px}
+.pick h3{margin-bottom:6px}
+.pick ol{margin:0;padding-left:1.4em}
+.pick li{margin:.5em 0;max-width:84ch}
+.pick .rec{color:var(--green);font-weight:600}
+.note{color:var(--ink2);margin-top:12px;max-width:80ch}
+.note b{color:var(--ink)}
+footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink3)}
+footer p{margin:.3em 0}
+@media (prefers-reduced-motion:reduce){.layer,.layer.on{transition-duration:.01s}}
+</style>
+
+<style id="ws-spine">
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}
+.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}
+.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+.ws-sys .ws-st{font-size:11px;padding:2px 7px;border-radius:999px;border:1px solid color-mix(in srgb,currentColor 22%,transparent);opacity:.8;white-space:nowrap}
+.ws-sys .ws-st.ws-old{border-color:#c77d00;color:#b06d00;opacity:1}
+.ws-errata{max-width:1128px;margin:12px auto 0;padding:10px 14px;border-left:3px solid #c77d00;background:color-mix(in srgb,currentColor 5%,transparent);border-radius:0 8px 8px 0;font:13px/1.6 "Noto Sans SC",-apple-system,system-ui,sans-serif}
+.ws-errata summary{cursor:pointer;font-weight:600}
+.ws-errata ol{margin:6px 0 2px;padding-left:1.4em}.ws-errata li{margin:3px 0}
+.ws-errata .was{opacity:.7}.ws-errata .src{opacity:.6;font-size:12px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root:not([data-theme="light"]) .ws-errata{border-left-color:#ffb340}}
+:root[data-theme="dark"] .ws-sys .ws-st.ws-old{color:#ffb340;border-color:#ffb340}:root[data-theme="dark"] .ws-errata{border-left-color:#ffb340}
+</style>
+<nav class="ws-sys" aria-label="WindowShade 设计稿"><a href="https://claude.ai/artifact/SLor83vC8ET5qhWYy4LrNr"><b>WindowShade 2 设计系统</b></a><span class="ws-n">二 刘海 · 第 39 张 · 两耳的岛</span><span class="ws-st ws-old">依据 · Aaron 11-05 已定</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/HXRqipsz4WmxG4VWFvzgNR">← 拍一下就藏好</a><a href="https://claude.ai/artifact/MhLe5KUaauvnbht8kxJuA4">挂下来的胶囊 →</a></nav>
+<aside class="ws-errata" id="ws-errata"><details open><summary>这张稿之后又定了 2 件（2026-10-29 统合；下面的正文保留原样，以这里为准）</summary><ol><li><span class="was">原来：耳内字 15 号、符号 18 号</span> → <b>现在：</b>折中 13 / 16（字 / 符号） <span class="src">（AARON-DECISIONS 11-05 第 86 条）</span></li><li><span class="was">原来：按住小圆展开那一排并滚到那件活动（待实现）</span> → <b>现在：</b>已定这一轮补上 <span class="src">（AARON-DECISIONS 11-05 第 84 条）</span></li></ol></details></aside>
+<div class="wrap">
+
+<header>
+  <h1>两耳的岛</h1>
+  <p class="lede">11-04 定过：有刘海的屏不画常驻岛，有内容时从刘海下沿垂下一颗胶囊（<code>bab193b0</code>、<code>64629782</code>、<code>3cb3ba32</code>）。11-05 Aaron 推翻了这一条：</p>
+  <p class="quote">「回到刘海的两耳吧，推翻之前那个决定，请你再重做一版设计稿，要符合Apple官方的审美和实现」</p>
+  <p class="lede" style="margin-top:12px">这张稿把有刘海的 Mac 上整颗岛重新定一遍：静止、紧凑（左右两耳）、最小（小圆）、展开（那一排、提醒、换歌一瞥）、电量闪、音乐的封面耳和波形，以及它们之间怎么变。做法尽量照 Apple 对灵动岛写过的规则和公开的照片。《挂下来的胶囊》作废。没有刘海的外接屏仍是菜单栏正中那颗胶囊，有系统灵动岛的新 MacBook Pro 仍照第 18、38 条让位，这张稿都不改。</p>
+  <p class="lede">机型按本机 Air 15 英寸（1710 × 1107）：刘海 185 × 33.5，底角 10.7，肩 r 5.06（延伸 7.74），菜单栏 34。2026-11-05 稿，<b>等 Aaron 定</b>。</p>
+  <nav class="toc" aria-label="本页目录"><a href="#back">改回什么</a><a href="#apple">Apple 写的</a><a href="#geo">共用的几何</a><a href="#sim">模拟器</a><a href="#rest">静止</a><a href="#compact">紧凑</a><a href="#min">最小</a><a href="#row">展开那一排</a><a href="#alert">提醒</a><a href="#peek">换歌一瞥</a><a href="#flash">电量闪</a><a href="#music">封面与波形</a><a href="#morph">怎么变</a><a href="#ext">外接屏</a><a href="#code">改哪里</a><a href="#ledger">对照账</a><a href="#measure">真机要量的</a></nav>
+</header>
+
+<section id="back">
+  <div class="sec-head"><h2>和 11-04 相比改回什么、保留什么</h2>
+    <p>改回的只有“刘海屏上岛长在哪”这一件。11-04 前后顺带修的动画毛病都和版式无关，全部留下。</p></div>
+  <div class="tbl"><table style="min-width:860px">
+    <thead><tr><th></th><th>11-04（<code>bab193b0</code> 起）</th><th>这张稿</th></tr></thead>
+    <tbody>
+      <tr><td>改回</td><td>刘海屏上 <code>compactShape</code> 恒为 <code>.pill</code>：紧凑是刘海下沿垂下的 185 × 37.33 胶囊</td><td>回到 <code>.sides</code>：刘海左右各长一只耳，高同刘海 33.5，顶边贴屏幕顶。放不下时仍退回下巴</td></tr>
+      <tr><td>改回</td><td>展开、提醒、换歌一瞥都从刘海下沿往下长（<code>islandFrame(hanging: true)</code>）</td><td>顶边贴屏幕顶，把刘海包在里面，往两边和往下长（Apple 新 MacBook Pro 照片里的样子）</td></tr>
+      <tr><td>跟着回来</td><td>电量闪、小圆、封面耳都要求两耳版式，刘海屏上一件都不出现</td><td>三件都回来，代码里各自的门槛不用改（见改哪里第 1 行）</td></tr>
+      <tr><td>跟着回来</td><td>胶囊宽 = 刘海宽，点哪里都算刘海本体，点不开活动</td><td>刘海以外是耳朵，第 31 条“点耳朵打开 App”重新成立</td></tr>
+      <tr><td>重新定</td><td>展开宽 408 → 371（<code>IslandMetrics.expandedWidth</code>）</td><td>刘海屏推荐回到 408，外接屏保持 371（展开那一排第 1 问）</td></tr>
+      <tr><td>保留</td><td>弹簧飞行保护、内容看门狗时序、退场缓冲不被吞（<code>7ba0d6b9</code>）</td><td>原样保留。都在 <code>NotchCanvas</code>，不看版式</td></tr>
+      <tr><td>保留</td><td>搬面板和读呈现层同一事务的竞态，用 <code>pendingShift</code> 补（<code>3cb3ba32</code> 第 2 处）</td><td>原样保留</td></tr>
+      <tr><td>保留</td><td>面板与岛顶边钉在屏幕顶的硬约束（<code>64629782</code>），<code>3cb3ba32</code> 收窄成只钉顶边本来贴顶的形状</td><td>保留。改回两耳后刘海屏上所有形状顶边都贴顶，收窄的条件恒成立，不用再动</td></tr>
+      <tr><td>保留</td><td>调试钩子 <code>WINDOWSHADE_NOTCH_DEBUG=1</code> 与探针 <code>--notch-debug-cycle</code></td><td>保留；探针里“收回停稳是 185 × 37.33 悬垂胶囊”的期望改成两耳</td></tr>
+      <tr><td>不动</td><td>外接屏：菜单栏正中的 iOS 胶囊 126 × 37.33，展开 371 × 160</td><td>不动（第 42 条）</td></tr>
+    </tbody></table></div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>怎么撤。</b><span class="rec">推荐 A：只改回刘海屏的两处分支</span>（<code>compactShape</code> 和 <code>islandFrame</code>），外接屏、动画修复、调试钩子一行不碰。B：<code>git revert bab193b0</code> 整个提交。会把外接屏的 iOS 尺寸一起退掉，还和 <code>3cb3ba32</code> 改过的同一段冲突，不推荐。</li>
+  </ol></div>
+</section>
+
+<section id="apple">
+  <div class="sec-head"><h2>Apple 写的</h2>
+    <p>来源两处，都在 2026-11-05 读过：HIG《Live Activities》（2026-10-13 更新）和 Newsroom 2026-10-28 新 MacBook Pro 的发布稿与照片。下面只摆它们写了的，没写的不编。英文是原文片段，其余是转述。</p></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>项</th><th>Apple 写的</th><th>这张稿怎么用</th></tr></thead>
+    <tbody>
+      <tr><td>紧凑</td><td>两块分开的内容，一块在摄像头左边，一块在右边。尽量窄，<span class="en">“snug against the TrueDepth camera”</span>，内容和摄像头之间不加留白。左右两块大小相近，读起来是同一件事，颜色字体一致。点哪一块都去同一个地方。</td><td>刘海就是 Mac 上的“摄像头那一块”。两耳紧贴刘海，两耳等宽，内容按内容定宽（紧凑一节）</td></tr>
+      <tr><td>最小</td><td>多个活动时最多三块：一块贴着岛，第二块（支持时还有第三块）分开放在一侧或两侧，圆形或椭圆。点了打开 App，按住看展开。要显示实时的内容，比如计时器显示剩余时间，不只放标志。</td><td>小圆和耳朵同高，顶边、底边对齐；里面画进度或剩余，不画 App 图标（最小一节）</td></tr>
+      <tr><td>展开</td><td>按住或有提醒时出现。是紧凑或最小的放大版，<span class="en">“expand predictably”</span>。内容要紧紧绕着摄像头，让摄像头不显眼。高度可以随内容变。</td><td>展开从两耳原地长大，耳朵里的东西不搬家（怎么变一节）</td></tr>
+      <tr><td>窄的时候</td><td>紧凑、最小放进直径 28 的圆；可以只留左边一块，右边藏起来。</td><td>菜单栏挤时的退路之一（紧凑第 2 问）</td></tr>
+      <tr><td>版式</td><td>四周边距一致，同心摆放；圆角的内层元素用 <code>ContainerRelativeShape</code>；内容不画到边上；分块用内嵌的容器形状或一条粗线。</td><td>边距 14、外圆角 = 内圆角 + 14；耳里外侧留白 = 上下留白</td></tr>
+      <tr><td>颜色</td><td>灵动岛里的实时活动用不透明的黑底，紧凑、最小、展开都不许换底色；文字和图形用醒目的颜色。深色模式下岛外会出现一圈描边，颜色要配合内容。字要大，中等字重或更粗。</td><td>岛永远纯黑；语气色只上符号和字；描边按内容着色（展开那一排第 3 问）</td></tr>
+      <tr><td>动效</td><td>系统和自定的动画最长 2 秒。换内容用内容替换过渡，数字用数字过渡。已有的元素挪到新位置，不要拿掉再加回来。避免重叠。</td><td>现有弹簧全部在 1 秒内落定（怎么变一节的表）</td></tr>
+      <tr><td>尺寸</td><td>macOS 一栏写的是 <span class="en">“Use the provided iOS dimensions”</span>。430 × 932 的屏：紧凑每侧 62.33 × 36.67，最小 36.67 至 45 × 36.67，展开 408 × 84 至 160。393 × 852 的屏：紧凑每侧 52.33 × 36.67，最小同上，展开 371 × 84 至 160。窄时 28 × 28。锁屏边距 14。</td><td>宽度以它为上限，高度换成刘海高（共用的几何）</td></tr>
+      <tr><td>Mac</td><td>实时活动出现在 Mac 的菜单栏（紧凑、最小、展开）。macOS 27.3 把实时活动扩到没有灵动岛的 Mac 上，放在菜单栏里。</td><td>系统已显示的同一件事，我们的耳朵不重复（第 39 条）。27.3 上它放在菜单栏哪里、和刘海什么关系，真机要量</td></tr>
+      <tr><td>照片</td><td>Newsroom 两张展开的照片（Apple Music 正在播放、隔空投送接受或拒绝）：黑卡片顶边和屏幕顶齐平，摄像头小点在卡片里、靠上居中；顶角小，底角大，和里面的内容同心；菜单栏在卡片两侧接着走；里面的按钮是胶囊；封面圆角和卡片同心。</td><td>展开的样子照这两张画。<b>没有紧凑的官方照片</b>：两耳的几何是把 HIG“紧贴摄像头”套到刘海上推出来的</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="geo">
+  <div class="sec-head"><h2>共用的几何</h2>
+    <p>整颗岛是一块黑：刘海在中间，两耳从刘海两侧长出，顶边永远贴屏幕顶。耳的高、底角、肩都照刘海自己的，三块读起来是同一个硬件。</p></div>
+  <div class="figs" id="figsGeo"></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>量</th><th>本稿的值</th><th>为什么</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr><td>耳高</td><td class="num">33.5（= 刘海高）</td><td>HIG 的 36.67 是 iPhone 上浮着的岛的高。Mac 的“摄像头那一块”顶着屏幕顶、高 33.5，耳朵要和它共用底边和底角才读成一块；画 36.67 会在刘海底角旁边凸出 3.17 的台阶，还比菜单栏 34 低出 2.67，压到窗口标题栏上</td><td>提议，第 1 问</td></tr>
+      <tr><td>底角</td><td class="num">10.7（= 刘海底角）</td><td><code>NotchIsland.compactRadius(hardware)</code>，今天就是这样</td><td><span class="ok">沿用</span></td></tr>
+      <tr><td>肩</td><td class="num">r 5.06，延伸 7.74，在耳朵外上角</td><td>刘海自己两个上角就有这道肩。耳朵把刘海“加宽”，肩跟着挪到新的外沿（§5.1 S1，今天的代码）</td><td>沿用，第 3 问</td></tr>
+      <tr><td>耳宽（主体）</td><td class="num">2 + 内容宽 + 外侧留白，夹在 26 至 44.59</td><td>HIG：尽量窄、紧贴、两侧相近。内侧 2 只给量刘海的误差（aux 和 <code>bezelPath</code> 每边差 0.125）和抗锯齿；外侧留白 = 内容上下的留白，四周一致</td><td>提议，第 2 问</td></tr>
+      <tr><td>耳宽上限</td><td class="num">主体 44.59 + 肩 7.74 = 52.33</td><td>HIG 最小的那一档紧凑宽。比它宽的只有音量亮度两耳（76，《音量与亮度》，不在这张稿改）</td><td>提议</td></tr>
+      <tr><td>耳宽下限</td><td class="num">26</td><td><code>narrowestSide</code>：一个 18 的符号加两边各 4。再窄就退回下巴</td><td><span class="ok">沿用</span></td></tr>
+      <tr><td>边距</td><td class="num">14</td><td>HIG 锁屏边距、今天展开的边距；外圆角 28 = 格子圆角 14 + 14</td><td><span class="ok">沿用</span></td></tr>
+    </tbody></table></div>
+  <div class="tbl"><table>
+    <thead><tr><th>本机几种内容的耳宽（主体 + 肩）</th><th>左</th><th>右</th><th>主体</th><th>整颗宽</th></tr></thead>
+    <tbody id="earTable"></tbody></table></div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>耳高。</b><span class="rec">推荐 A：33.5，和刘海一样高。</span>两耳和刘海共用底边、底角。B：36.67，HIG 的数。会在刘海底角旁边鼓出一截，三块读成三块。</li>
+    <li><b>耳宽。</b><span class="rec">推荐 A：按内容定宽，两耳等宽</span>，主体 26 至 44.59，本机常见 28 至 42。B：固定 52.33，今天的代码（10-30 起），什么内容都占满，菜单栏让出最多。C：固定 34，10-30 以前的值。</li>
+    <li><b>肩。</b><span class="rec">推荐 A：照旧在耳朵外上角画肩</span>，和刘海自己的上角一样，岛读成“变宽的刘海”。B：不画，外上角直角贴顶。省 7.74 的菜单栏，但和刘海的上角不一样。</li>
+  </ol></div>
+</section>
+
+<section id="sim">
+  <div class="sec-head"><h2>模拟器</h2>
+    <p>本机刘海按 1 pt 对 1 px 画，截了屏幕中间 760 宽。弹簧照 WWDC23 10158 换算，和产品同一组令牌；内容在形状走到四成时淡入，退场先淡出、停 0.04 秒再收形状（<code>Motion.Fade</code>）。直接在刘海上点、按住 0.5 秒也行：点耳朵打开 App，点刘海回到主屏幕，按住展开那一排。波形是示意，产品里是真实电平。肩画成圆弧，产品里是连续曲线。</p></div>
+  <div class="stage-wrap" id="stageWrap"></div>
+  <div class="controls">
+    <div class="grp"><span class="lab">活动</span>
+      <button class="b" data-act="music" aria-pressed="false">音乐</button><button class="b" id="pauseBtn" aria-pressed="false">暂停</button>
+      <button class="b" data-act="download" aria-pressed="false">下载</button><button class="b" data-act="timer" aria-pressed="false">计时器</button></div>
+    <div class="grp"><span class="lab">事件</span>
+      <button class="b" id="peekBtn">换歌</button><button class="b" id="alertBtn">妙控鼠标电量低</button><button class="b" id="plugBtn">插上电源</button>
+      <button class="b" id="rowBtn" aria-pressed="false">长按刘海</button></div>
+  </div>
+  <div class="controls">
+    <div class="grp"><span class="lab">耳宽</span>
+      <button class="b" data-ear="fit" aria-pressed="true">按内容</button><button class="b" data-ear="fixed" aria-pressed="false">固定 52.33</button></div>
+    <div class="grp"><span class="lab">展开宽</span>
+      <button class="b" data-w="408" aria-pressed="true">408</button><button class="b" data-w="371" aria-pressed="false">371</button></div>
+    <div class="grp"><span class="lab">小圆最多</span>
+      <button class="b" data-max="1" aria-pressed="true">1 颗</button><button class="b" data-max="2" aria-pressed="false">2 颗</button></div>
+    <div class="grp"><span class="lab">电量闪撞上活动</span>
+      <button class="b" data-policy="A" aria-pressed="true">A 不出</button><button class="b" data-policy="B" aria-pressed="false">B 换 2.6 秒</button></div>
+    <div class="grp"><button class="b" id="reducedBtn" aria-pressed="false">减少动态效果</button><button class="b" id="resetBtn">重来</button></div>
+  </div>
+  <div class="readout" id="log" role="status" aria-live="polite">点上面的按钮，或在刘海上点、按住。每一步的时间从按下那一刻算。</div>
+</section>
+
+<section id="rest">
+  <div class="sec-head"><h2>一　静止</h2>
+    <p>没有活动、没有提醒时，岛就是刘海本身：什么都不画。系统的岛静止时也只是摄像头那一块。</p></div>
+  <ul class="rules">
+    <li><b>样子：</b>岛的外框和刘海重合（<code>notch</code>，底角 <code>island.hug</code> = 10.7），看起来和关掉 WindowShade 一样。</li>
+    <li><b>点：</b>回到主屏幕（第 31 条）。<b>按住 0.5 秒：</b>那一排有东西就展开，什么都没有打开启动台“今天”（第 32、33 条）。<b>指针停上去：</b>不展开（第 32 条）。</li>
+    <li><b>键盘与读屏</b>照《照系统的岛》“怎么点、怎么按”：Return 同点，空格同按住，读“刘海，按钮”。</li>
+  </ul>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>指针停上去有没有一点反应。</b><span class="rec">推荐 A：没有。</span>系统的岛没有悬停（新 MacBook Pro 是触控屏），第 32 条已拿掉悬停展开。B：停 0.12 秒两侧各长 5 点，只当“这里能按”的提示。</li>
+  </ol></div>
+</section>
+
+<section id="compact">
+  <div class="sec-head"><h2>二　紧凑：左右两耳</h2>
+    <p>一件活动在进行时，刘海左边一只耳放“是什么”，右边一只耳放“到哪了”。两只耳一样宽，内容贴着刘海，外侧留白和上下留白一样。</p></div>
+  <div class="figs" id="figsCompact"></div>
+  <div class="two">
+    <div>
+      <h3>样子</h3>
+      <ul class="rules">
+        <li><b>左耳：</b>符号或封面，右边缘离刘海 2。<b>右耳：</b>进度、数字或波形，左边缘离刘海 2。</li>
+        <li><b>宽：</b>两耳都取宽的那一边：主体 = 2 + 内容宽 + (33.5 − 内容高) ÷ 2，夹在 26 至 44.59。“9:41”这类会变的数字按最宽的字形量一次，跳数时耳朵不抖。</li>
+        <li><b>字：</b>15 号半粗，语气色或白；符号 18。HIG 要大字、中等字重以上，菜单栏 13 号的字放在耳朵里太小。</li>
+        <li><b>颜色：</b>底永远纯黑，只给符号和字上色，一件活动一种语气色，左右同色。</li>
+      </ul>
+    </div>
+    <div>
+      <h3>怎么点、读屏</h3>
+      <ul class="rules">
+        <li><b>点任一只耳：</b>打开这件活动的 App（第 31 条）；音乐是长成正在播放大卡，和今天一样。两只耳去同一个地方。</li>
+        <li><b>点刘海本体：</b>回到主屏幕。<b>按住：</b>展开那一排。</li>
+        <li><b>读屏：</b>两只耳是一个元素，念“音乐，正在播放，按钮”，不分左右念两遍。</li>
+        <li><b>菜单栏放不下：</b>照今天先按量到的空位收窄，窄到 26 还放不下就退回下巴（刘海下面 8 的一截）。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>内容贴刘海还是在耳里居中。</b><span class="rec">推荐 A：贴刘海，内侧只留 2。</span>照 HIG“紧贴摄像头”。B：在耳里居中，耳宽固定时两边会各空出一截。</li>
+    <li><b>菜单栏挤到连 26 都放不下。</b><span class="rec">推荐 A：照今天退回下巴。</span>B：照 HIG 窄的时候的做法，只留左耳、右耳藏起来，左耳放不下再退下巴。多一档，但右耳那一半的信息看不到。</li>
+    <li><b>左右内容一宽一窄。</b><span class="rec">推荐 A：两耳等宽，取宽的。</span>HIG 要左右相近。B：各按各的宽，省几点菜单栏，岛会歪。</li>
+  </ol></div>
+</section>
+
+<section id="min">
+  <div class="sec-head"><h2>三　最小：小圆</h2>
+    <p>两件活动同时在：权重高的占两耳，另一件在右耳外分出一颗小圆（第 30 条）。小圆和耳朵一样高，顶边、底边都对齐，像 iPhone 上和岛同高的那颗。</p></div>
+  <div class="figs" id="figsMin"></div>
+  <div class="two">
+    <div>
+      <h3>样子</h3>
+      <ul class="rules">
+        <li><b>小圆：</b>直径 33.5，离右耳肩尖 6，竖直和耳朵居中（顶边贴屏幕顶）。</li>
+        <li><b>里面画实时的：</b>有进度的画进度弧（直径 22，线宽 2.5），计时器画剩余那一段，音乐画圆形封面。不画 App 图标。</li>
+        <li><b>菜单栏：</b>照今天要量右边空位：小圆在菜单栏这一条里，放不下就不画，第二件只在那一排里。</li>
+      </ul>
+    </div>
+    <div>
+      <h3>怎么点、时序</h3>
+      <ul class="rules">
+        <li><b>点小圆：</b>打开它的 App（HIG，《照系统的岛》暂定）。<b>按住：</b>见第 3 问。</li>
+        <li><b>分出：</b><code>bloom</code>（0.42 / ζ 0.84），落定约 <span data-settle-inline="bloom"></span>。从右耳外沿冒出，缩到 0.7、透明起步。<b>并回：</b><code>calm</code> 反着走。</li>
+        <li><b>换位：</b>小圆那件权重超过耳朵那件时互换，两边内容交叉淡化，形状不动（耳宽变了就跟着弹）。</li>
+        <li><b>展开、提醒、换歌一瞥出现前</b>先并回小圆，收完再分出（HIG：避免重叠）。减少动态效果：原处淡入淡出 0.25。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>小圆的形状。</b><span class="rec">推荐 A：直径 33.5 的圆，和耳朵同高对齐。</span>B：一截小刘海，36.67 × 33.5，顶边贴顶、底角 10.7、带肩。和硬件更像，但 HIG 写的是圆或椭圆。C：今天的 36.67 圆，按耳朵中线居中，顶上被屏幕边切掉 1.58。</li>
+    <li><b>最多几颗。</b><span class="rec">推荐 A：1 颗</span>（第 30 条）。第三件在那一排里。B：2 颗，是今天 <code>maxShapes</code> 的值，HIG 也允许三块，但右边会拖出 79 宽的一串菜单栏。</li>
+    <li><b>按住小圆。</b><span class="rec">推荐 A：展开那一排，并滚到这件活动。</span>那一排就是我们的展开。B：只长出这件活动自己的卡，和点耳朵长出大卡一样，但要多一种卡。</li>
+  </ol></div>
+</section>
+
+<section id="row">
+  <div class="sec-head"><h2>四　展开：那一排</h2>
+    <p>按住刘海，两耳原地往外、往下长成一张黑卡片，把刘海包在中间。顶边贴屏幕顶，顶角是肩，底角大、和里面的格子同心。照 Newsroom 那两张照片画。</p></div>
+  <div class="figs" id="figsRow"></div>
+  <div class="two">
+    <div>
+      <h3>样子</h3>
+      <ul class="rules">
+        <li><b>外框：</b>408 × 160，顶边 = 屏幕顶，底角 28，四周边距 14。</li>
+        <li><b>四块：</b>刘海左右那一条（高 33.5）是左、右两块：耳朵里原来的内容原地不动。刘海下面是格子：124 × 104，圆角 14，间距 8，左右滚，右边缘淡出 24（第 29 条）。</li>
+        <li><b>菜单栏：</b>卡片左右各盖住 111.5 的菜单栏，卡片两侧的菜单栏照常显示。</li>
+      </ul>
+    </div>
+    <div>
+      <h3>怎么点、怎么收</h3>
+      <ul class="rules">
+        <li><b>点格子：</b>回到原处（第 15 条）。<b>停在格子上：</b>看一眼（第 32 条保留）。</li>
+        <li><b>收：</b>Esc、点卡片以外、再点刘海。指针移开不收（《照系统的岛》第 3 件，暂定）。</li>
+        <li><b>时序：</b><code>expand</code>（0.40 / ζ 0.92），落定约 <span data-settle-inline="expand"></span>；收回 <code>calm</code>，回到两耳或静止。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>宽。</b><span class="rec">推荐 A：刘海屏 408，外接屏保持 371。</span>刘海就占了 185，408 时左右那一条各剩 97.5 能放东西，371 只剩 79；那一排在 408 下放得下约三格。B：两边都 371，今天的值。C：两边都 408，外接屏要跟着改。</li>
+    <li><b>顶角。</b><span class="rec">推荐 A：画肩</span>，和两耳、刘海一样，展开读成“同一块长大”，照片里的顶角也是小的。B：直角贴顶，今天的代码（S3：展开不画肩）。</li>
+    <li><b>深色模式的描边。</b><span class="rec">推荐 A：只在展开和提醒画 1 pt，颜色取内容的主色</span>（音乐取封面色，提醒取语气色），平时那一排用系统灰。HIG 要描边配合内容。B：照今天一律灰描边。</li>
+  </ol></div>
+</section>
+
+<section id="alert">
+  <div class="sec-head"><h2>五　提醒</h2>
+    <p>提醒是展开的一种，宽同那一排，高 84。教手势那一种高 112，内容多时最高 160。</p></div>
+  <div class="figs" id="figsAlert"></div>
+  <ul class="rules" style="margin-top:16px">
+    <li><b>排法：</b>刘海左边放符号，右边放状态（比如“10%”），都贴着刘海；刘海下面主句 15 号半粗，副句 13 号白 0.62，左对齐到边距 14。主句不超过 8 个字（文案规则第 7 条），比如主句“妙控鼠标电量低”，副句“还剩 10%，记得充电”。</li>
+    <li><b>外框：</b>408 × 84，顶边贴顶，底角 24（里面 10 的图标圆角 + 14）。问题和提示两种语气照今天加粗描边 1.5。</li>
+    <li><b>时序：</b><code>bloom</code> 长出，停留照今天按字数（<code>MotionHold.sentence*</code>），<code>calm</code> 收回原来的样子。摄像头在用时不长成提醒，只亮紧凑（第 40 条）。</li>
+  </ul>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>提醒的排法。</b><span class="rec">推荐 A：照 HIG 分四块</span>：符号、状态在刘海两侧，句子在下面。B：今天的排法，句子和符号都在刘海下面，刘海两侧那一条空着。</li>
+    <li><b>提醒来时已经有两耳。</b><span class="rec">推荐 A：两耳原地长成提醒，收完再缩回两耳。</span>耳朵里的符号换成提醒的符号（内容替换）。B：两耳先收回刘海，再长提醒，多一来一回。</li>
+  </ol></div>
+</section>
+
+<section id="peek">
+  <div class="sec-head"><h2>六　换歌一瞥</h2>
+    <p>换歌时音乐两耳往下多长 30，露出歌名和歌手，停一会儿再缩回两耳。宽和两耳一样，只往下长：这是紧凑最直接的放大版。</p></div>
+  <div class="figs" id="figsPeek"></div>
+  <ul class="rules" style="margin-top:16px">
+    <li><b>外框：</b>宽 = 音乐两耳的宽，高 = 刘海 + 30 = 63.5，底角 24（<code>NowPlayingPeek</code>，今天的值）。</li>
+    <li><b>内容：</b>封面和波形不动；下面一行“歌名 · 歌手”，13 号与 11 号，居中，太长截断。</li>
+    <li><b>时序：</b><code>bloom</code> 长出，停留按字数，<code>calm</code> 缩回。系统已在菜单栏显示同一首歌时照第 39 条不重复。</li>
+  </ul>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>留不留一瞥。</b><span class="rec">推荐 A：留，就是两耳往下长 30。</span>B：改成 408 × 84 的提醒，和别的提醒一样，但换歌比提醒轻，太大。C：不要，换歌只换封面（内容替换过渡）。</li>
+  </ol></div>
+</section>
+
+<section id="flash">
+  <div class="sec-head"><h2>七　电量闪</h2>
+    <p>插上电源、充满、打开低电量模式时，两耳亮 2.6 秒：左耳符号，右耳百分比。11-04 以后这件在刘海屏上不出现，改回两耳就回来了。</p></div>
+  <div class="figs" id="figsFlash"></div>
+  <div class="two">
+    <div>
+      <h3>样子</h3>
+      <ul class="rules">
+        <li><b>两耳：</b>按内容定宽，本机主体 37.75（“82%”15 号约 28 宽）。</li>
+        <li><b>符号</b>三种不同（<code>bolt.fill</code> / <code>battery.100</code> / <code>battery.25</code>），不只靠颜色区分。</li>
+        <li><b>颜色</b>照旧：高于 20% 绿 <code>#30d158</code>，20% 及以下红 <code>#ff453a</code>，低电量模式黄 <code>#ffd60a</code>。符号和数字同色。</li>
+        <li><b>读屏</b>照旧：“已接通电源，电量 82%”“电量已充满”“低电量模式已打开”。</li>
+      </ul>
+    </div>
+    <div>
+      <h3>时序</h3>
+      <ul class="rules">
+        <li><b>出：</b><code>settle</code>（0.38 / ζ 1.0），形状走到四成时内容淡入 0.18。</li>
+        <li><b>停：</b>2.6 秒（<code>PowerFlashPolicy.holdSeconds</code>），从开始长出算起。</li>
+        <li><b>收：</b>内容淡出 0.10，停 0.04，<code>calm</code>（0.34 / ζ 1.0）。一共约 <span data-total="flash"></span>。</li>
+        <li><b>不变的：</b>30 秒内再插不闪；拔掉不出；摄像头在用时不出（第 40 条）；外接屏不闪；台式 Mac 没有这一组。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>已有两耳时插电。</b><span class="rec">推荐 A：不出。</span>今天“有持续活动就算忙”的规则，菜单栏的电池图标已经变了。B：同一对耳朵里换成电量 2.6 秒再换回，形状跟着内容宽弹一下。</li>
+    <li><b>闪着的两耳接不接点按。</b><span class="rec">推荐 A：点击穿透</span>，和音量亮度两耳一样。2.6 秒的东西不该吃掉一下点按。B：点了照第 31 条回到主屏幕。</li>
+  </ol></div>
+</section>
+
+<section id="music">
+  <div class="sec-head"><h2>八　封面与波形（NP-6）</h2>
+    <p>音乐占着两耳时：左耳封面，右耳 5 根波形。数字沿用《正在播放》和 NP-6，只把封面贴到刘海边上、圆角改成和耳朵同心。</p></div>
+  <div class="figs" id="figsMusic"></div>
+  <div class="two">
+    <div>
+      <h3>样子</h3>
+      <ul class="rules">
+        <li><b>封面：</b>20 × 20（round(0.6 × 33.5)），上下各留 6.75，右边离刘海 2，外侧也留 6.75。圆角见第 1 问。</li>
+        <li><b>波形：</b>5 根，宽 2，间距 1.6，整组宽 16.4，左边离刘海 2，竖直居中。高 2.4 至 14，每秒 30 次，主色副色交替。</li>
+        <li><b>两耳主体</b>都取封面那边的 28.75，加肩 36.49，整颗 257.98。</li>
+      </ul>
+    </div>
+    <div>
+      <h3>状态</h3>
+      <ul class="rules">
+        <li><b>暂停：</b>封面降到 0.5，波形变成白 0.45 的静止点，0.18 秒淡过去。暂停 3 秒拆录音，满 10 分钟两耳收回（今天的规则）。</li>
+        <li><b>没权限、“跟着声音跳”关着（默认）、系统静音：</b>5 个静止取色点，封面不暗。不画假的。</li>
+        <li><b>减少动态效果：</b>拆录音，画静止点。</li>
+        <li><b>外接屏</b>不变：胶囊里是音符符号和静止点。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>封面圆角。</b><span class="rec">推荐 A：3.95，和耳朵底角同心</span>（10.7 − 6.75），HIG 的 <code>ContainerRelativeShape</code> 算出来就是这个。B：5，今天的边长 ÷ 4，比外框“更圆”，放大看不同心。</li>
+    <li><b>音乐退成小圆时画什么。</b><span class="rec">推荐 A：圆形封面，直径 22。</span>B：今天的语气色圆点，看不出是哪首歌。</li>
+  </ol></div>
+</section>
+
+<section id="morph">
+  <div class="sec-head"><h2>怎么变</h2>
+    <p>所有变化都是同一块黑在长或缩，顶边始终贴着屏幕顶。耳朵里的东西在展开、提醒、一瞥里原地不动，新内容从下面淡入（HIG：挪到新位置，不拿掉再加）。落定时间在页面加载时按同一个弹簧公式算，全部远低于 HIG 的 2 秒。</p></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>从 → 到</th><th>令牌</th><th>落定</th><th>形状</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td>静止 → 两耳</td><td><code>settle</code> 0.38 / 1.0</td><td data-settle="settle"></td><td>从刘海两侧往外长，肩跟着外沿走</td><td>形状到四成时淡入 0.18</td></tr>
+      <tr><td>两耳 → 静止</td><td><code>calm</code> 0.34 / 1.0</td><td data-settle="calm"></td><td>缩回刘海</td><td>先淡出 0.10，停 0.04</td></tr>
+      <tr><td>两耳 → 两耳（换活动、换宽）</td><td><code>settle</code></td><td data-settle="settle"></td><td>只变宽</td><td>内容替换：旧的淡出、新的淡入；数字用数字过渡</td></tr>
+      <tr><td>两耳 → 分出小圆</td><td><code>bloom</code> 0.42 / 0.84</td><td data-settle="bloom"></td><td>小圆从右耳外沿冒出，0.7 → 1</td><td>小圆里的内容跟着小圆</td></tr>
+      <tr><td>两耳 → 展开那一排</td><td><code>expand</code> 0.40 / 0.92</td><td data-settle="expand"></td><td>往外、往下长，底角 10.7 → 28</td><td>耳朵里的不动；格子在四成时淡入</td></tr>
+      <tr><td>两耳或静止 → 提醒</td><td><code>bloom</code></td><td data-settle="bloom"></td><td>往外、往下长到 408 × 84</td><td>符号替换，句子淡入</td></tr>
+      <tr><td>音乐两耳 → 换歌一瞥</td><td><code>bloom</code></td><td data-settle="bloom"></td><td>只往下长 30</td><td>封面、波形不动；歌名淡入</td></tr>
+      <tr><td>展开、提醒、一瞥 → 回去</td><td><code>calm</code></td><td data-settle="calm"></td><td>收回到两耳或静止</td><td>先淡出、停 0.04</td></tr>
+      <tr><td>减少动态效果</td><td><code>reducedNotch</code> 0.25 / 1.0</td><td data-settle="reduced"></td><td>不过冲，小圆不移动不缩放</td><td>交叉淡化 0.25，不分层</td></tr>
+    </tbody></table></div>
+  <div class="pick"><h3>要你定的</h3><ol>
+    <li><b>两耳长成展开时，耳朵里的东西。</b><span class="rec">推荐 A：原地不动，卡片在它周围长出来。</span>刘海屏上顶边不动，左右那一条和耳朵是同一个位置，这是 iPhone 做不到、我们正好能做的“可预期”。B：先全部淡出，展开到位再淡入。</li>
+    <li><b>正在展开时又来一件事（比如提醒）。</b><span class="rec">推荐 A：接着当前的位置和速度弹向新目标</span>（今天 <code>7ba0d6b9</code> 的飞行保护就是这样）。B：等落定再变，最多慢 0.6 秒。</li>
+  </ol></div>
+</section>
+
+<section id="ext">
+  <div class="sec-head"><h2>外接屏与有系统岛的 Mac</h2>
+    <p>这一节照已定的写，不另起新问题。</p></div>
+  <ul class="rules">
+    <li><b>没有刘海的外接屏：</b>菜单栏正中一颗胶囊（第 42 条），尺寸照 11-04 的 iOS 值 126 × 37.33，展开 371 × 160，从菜单栏下沿往下长。<code>islandFrame</code> 的外接屏分支、<code>NotchCapsule</code> 都不动。</li>
+    <li><b>有系统灵动岛的新 MacBook Pro（PROLED XDR、触控屏）：</b>内建屏上我们整颗不画，让给系统（第 18、38 条）；它的外接屏照上一条画胶囊（第 43 条）。系统已显示的同一件事不重复（第 39 条）。</li>
+    <li><b>旧刘海机装 macOS 27：</b>照这张稿画两耳（第 38 条）。27.3 起系统会在菜单栏放实时活动，放在哪、会不会挤到刘海旁边，真机要量。</li>
+  </ul>
+</section>
+
+<section id="code">
+  <div class="sec-head"><h2>改哪里</h2>
+    <p>给实现用，按推荐选项填。行号是 <code>3cb3ba32</code> 的位置。11-04 以前刘海代码在 <code>prototype/App/Notch.swift</code> 一个文件里，后来拆成 <code>prototype/App/Notch/</code> 下十个文件；<code>bab193b0</code> 时已经拆好，对照用 <code>git show bab193b0^:prototype/App/Notch/NotchPanel.swift</code>。外接屏的分支一律不碰。</p></div>
+  <div class="tbl"><table style="min-width:960px">
+    <thead><tr><th>#</th><th>文件与符号</th><th>改成</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>NotchPanel.compactShape</code> ~964</td><td>真刘海的 <code>return .pill</code> 改回 <code>return sideWidth &gt;= Self.narrowestSide ? .sides : .chin</code>（<code>bab193b0^</code> 第 950 行原样）。电量闪的 <code>isBusyForPowerFlash</code> ~1141、小圆的 <code>minimumShapes</code> guard ~1672、封面的 <code>coverSide</code> ~1984 都看 <code>.sides</code>，跟着回来，不用各改</td></tr>
+      <tr><td>2</td><td><code>NotchPanel.islandFrame(width:height:hanging:)</code> ~1647</td><td>真刘海：<code>y = notch.maxY - height</code>（顶边贴屏幕顶），外接屏分支不动。展开 ~1804、换歌一瞥 ~1812、提醒 ~1828 都经过它</td></tr>
+      <tr><td>3</td><td><code>legacyBaseTarget</code> 两处 <code>.pill</code> 分支 ~1852、~1868</td><td>改回后只有外接屏会走到：<code>max(iosCompactWidth, isVirtual ? 0 : notch.width)</code> 去掉真刘海那半句；注释改掉“真刘海屏从刘海下沿向下长”</td></tr>
+      <tr><td>4</td><td><code>IslandMetrics.expandedWidth</code>；<code>NotchPanel.alertWidth</code> ~951；那一排宽 ~1795；<code>NotchRow.islandWidth</code></td><td>刘海屏 408、外接屏用 <code>iosExpandedWidth</code> 371：宽要按 <code>isVirtual</code> 取。文件头 11-04 那段说明改写成本稿</td></tr>
+      <tr><td>5</td><td><code>NotchRoomPolicy.earWidth</code>、<code>fullSide</code>；新 <code>IslandMetrics.compactBody(content:notchHeight:)</code></td><td>耳宽按内容：主体 = 2 + 内容宽 + (刘海高 − 内容高) ÷ 2，夹在 26 至 52.33 − 肩；再和量到的空位取小。两耳取同一个值</td></tr>
+      <tr><td>6</td><td><code>NotchPanel.compactSlots</code> 的 <code>.sides</code> 分支 ~2192</td><td>左槽右对齐到刘海左边 − 2，右槽左对齐到刘海右边 + 2；不再整耳居中</td></tr>
+      <tr><td>7</td><td><code>NotchMinimalPresentation.size(for: .notched)</code> ~1406、<code>maxShapes</code> ~1416</td><td>直径从 36.67 改成刘海高 33.5（要传进来）；<code>frames</code> 已按耳朵 <code>midY</code> 居中、从含肩的外沿 + 6 排，不用改；<code>maxShapes</code> 2 → 1</td></tr>
+      <tr><td>8</td><td><code>NowPlayingEars.coverCorner</code></td><td>边长 ÷ 4 改成同心：耳底角 − (刘海高 − 边长) ÷ 2，本机 3.95</td></tr>
+      <tr><td>9</td><td><code>restingTarget</code> 的肩 ~1717 起</td><td>展开、提醒、一瞥也画肩（展开第 2 问 A）：S3 的“展开不画肩”改成肩跟着卡片外沿</td></tr>
+      <tr><td>10</td><td><code>apply</code> 的 <code>ignoresMouseEvents</code> ~1943</td><td>电量闪第 2 问 A：<code>meter != nil || powerFlashState != nil</code></td></tr>
+      <tr><td>11</td><td>硬约束 ~1997、~2034（<code>64629782</code>、<code>3cb3ba32</code>）</td><td>不动。改回后刘海屏上 <code>rect.maxY</code> 恒等于 <code>notch.maxY</code>，收窄条件恒真</td></tr>
+      <tr><td>12</td><td><code>NotchCanvas</code> 的 <code>preserving</code> ~475、<code>pendingShift</code> ~292 / ~458、看门狗与退场缓冲</td><td>不动（<code>7ba0d6b9</code>、<code>3cb3ba32</code> 的修复，和版式无关）</td></tr>
+      <tr><td>13</td><td><code>tests/NotchIslandMetricsTests.swift</code> IM-01；<code>tests/NotchRowMergeTests.swift</code> M11-04b；<code>CheckProbes1031.swift</code> 的 <code>--notch-debug-cycle</code></td><td>展开 371 → 408、视口 343 → 380；探针收回停稳的期望从 185 × 37.33 胶囊改成两耳（高 33.5、顶边 = 屏幕顶）</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="ledger">
+  <div class="sec-head"><h2>对照账：稿和代码对不上的地方</h2>
+    <p>读代码时发现的，这张稿没有改代码。</p></div>
+  <div class="tbl"><table style="min-width:900px">
+    <thead><tr><th>#</th><th>代码今天</th><th>稿</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>NotchPanel</code> ~934 注释写“最宽 34 点”，<code>NowPlayingEars</code> 文件头写“耳宽 34 = 26.6 + 7.4”；实际值是 52.33（<code>IslandMetrics.compactEarWidth</code>，<code>e2e1825f</code> 10-30 起）</td><td>注释过时。本稿按内容定宽，上限 52.33</td></tr>
+      <tr><td>2</td><td><code>IslandMetrics.compactHeight</code> 是 36.67、注释说“从屏幕顶边量起”，但 <code>compactEarsRect</code> 画的是刘海高 33.5，这个常量在两耳上没用到</td><td>本稿定 33.5，常量要么删、要么改名成“外接屏紧凑高”</td></tr>
+      <tr><td>3</td><td>小圆直径 36.67 比耳高 33.5 大，按耳朵中线居中时顶上被屏幕边切掉 1.58</td><td>本稿小圆 33.5，和耳朵对齐</td></tr>
+      <tr><td>4</td><td><code>alertWidth</code> ~951 的注释写“提醒和教手势都是展开的上限 408”，值已是 371</td><td>本稿刘海屏回到 408</td></tr>
+      <tr><td>5</td><td><code>IslandMetrics</code> 文件头还写着 11-04 的“有物理刘海的屏不画常驻岛”</td><td>11-05 推翻，改写</td></tr>
+      <tr><td>6</td><td>音量亮度两耳每耳 76，比 HIG 紧凑上限 62.33 宽（《照系统的岛》已记）</td><td>这张稿不改，仍是例外</td></tr>
+    </tbody></table></div>
+</section>
+
+<section id="measure">
+  <div class="sec-head"><h2>11 月 6 日后真机要量的</h2>
+    <p>前三行在有系统岛的 MacBook Pro 上量（我们在那台上让位，量来只做对照）；后三行在本机 Air 上看。</p></div>
+  <div class="tbl"><table style="min-width:820px">
+    <thead><tr><th>量什么</th><th>会改什么</th></tr></thead>
+    <tbody>
+      <tr><td>系统岛紧凑时左右两块的宽、高，和摄像头开口之间有没有缝</td><td>耳宽上限、耳高、内侧 2</td></tr>
+      <tr><td>展开卡片的宽、顶角是肩还是圆角、底角半径、深色模式描边颜色</td><td>展开第 1 至 3 问</td></tr>
+      <tr><td>第二件活动的小圆：直径、和岛对齐的方式、离多远</td><td>最小第 1 问</td></tr>
+      <tr><td>本机：两耳贴刘海那条缝，内侧 0、1、2 各看一次（IPS 屏的黑和刘海的黑不一样亮）</td><td>内侧 2</td></tr>
+      <tr><td>本机：菜单栏塞满图标时两耳收窄、退下巴的样子</td><td>紧凑第 2 问</td></tr>
+      <tr><td>本机 macOS 27.3：系统在菜单栏放的实时活动落在哪，和我们的耳朵会不会挤</td><td>第 39 条的落地</td></tr>
+    </tbody></table></div>
+</section>
+
+<footer>
+  <p>依据：Aaron 11-05（推翻 11-04，回到刘海两耳）；AARON-DECISIONS-2026-10-29 第 15、18、28 至 33、38 至 43 条；《照系统的岛》《正在播放》《日历、电量与计时器》《音量与亮度》；作废的《挂下来的胶囊》里的代码事实。</p>
+  <p>Apple：Human Interface Guidelines，<a href="https://developer.apple.com/design/human-interface-guidelines/live-activities">Live Activities</a>（2026-10-13 更新，11-05 读）；Newsroom 2026-10-28 <a href="https://www.apple.com/newsroom/2026/10/apple-unveils-groundbreaking-macbook-pro-with-proled-xdr-display/">新 MacBook Pro</a> 的照片。</p>
+  <p>代码：WindowShade <code>3cb3ba32</code>，对照 <code>bab193b0^</code>：<code>Notch/NotchPanel.swift</code>、<code>Notch/NotchCanvas.swift</code>、<code>Core/IslandMetrics.swift</code>、<code>Core/NotchRoomPolicy.swift</code>、<code>Core/DisplayShape.swift</code>（<code>NotchIsland</code>）、<code>Core/NotchActivities.swift</code>（<code>NotchMinimalPresentation</code>）、<code>Core/NowPlayingEars.swift</code>、<code>Core/FlickMotion.swift</code>（弹簧令牌）。机型尺寸见 design-system.md “本机（Air 15″）”表。</p>
+  <p>画面是示意，歌、颜色和百分比是例子。弹簧：stiffness = (2π/response)²，damping = 4πζ/response，每帧按 1/240 秒子步积分；落定时间按同一公式算，误差 0.5%。</p>
+</footer>
+</div>
+
+<script>
+(()=>{
+const TOK={calm:[.34,1],settle:[.38,1],expand:[.40,.92],bloom:[.42,.84],reduced:[.25,1]};
+const NW=185,NH=33.5,NR=10.7,SE=7.74,IN=2,MINB=26,MAXB=52.33-SE,MIN=NH,GAP=6;
+const COL={green:'#30d158',red:'#ff453a',yellow:'#ffd60a',orange:'#ff9f0a',blue:'#0a84ff'};
+const PAL=['#f2a65a','#e0607e'];
+const $=id=>document.getElementById(id);
+const r2=x=>Math.round(x*100)/100;
+class Spring{constructor(x){this.x=x;this.v=0;this.t=x;this.tok(TOK.calm)}
+  tok(p){this.k=(2*Math.PI/p[0])**2;this.c=4*Math.PI*p[1]/p[0]}
+  step(dt){const a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt}}
+function settleTime(name){const s=new Spring(0);s.tok(TOK[name]);s.t=1;let t=0,ok=0;
+  while(t<5){s.step(1/480);t+=1/480;if(Math.abs(s.x-1)<.005&&Math.abs(s.v)<.05){ok++;if(ok>24)break}else ok=0}
+  return r2(t-ok/480)}
+document.querySelectorAll('[data-settle-inline]').forEach(e=>e.textContent=settleTime(e.dataset.settleInline)+' 秒');
+document.querySelectorAll('td[data-settle]').forEach(e=>e.textContent=settleTime(e.dataset.settle)+' 秒');
+document.querySelectorAll('[data-total="flash"]').forEach(e=>e.textContent=r2(2.6+.14+settleTime('calm'))+' 秒（2.6 含长出的 '+settleTime('settle')+'，加淡出与停顿 0.14，加收回 '+settleTime('calm')+'）');
+
+/* ---------- 内容（宽、高） ---------- */
+const C={
+  music:{L:[20,20],R:[16.4,14]},download:{L:[18,18],R:[22,22]},timer:{L:[18,18],R:[32,18]},flash:{L:[18,18],R:[28,18]}};
+const side=([w,h])=>IN+w+(NH-h)/2;
+const bodyFit=k=>Math.min(MAXB,Math.max(MINB,side(C[k].L),side(C[k].R)));
+const S={acts:[],flash:null,alert:false,peek:false,row:false,paused:false,reduced:false,policy:'A',max:1,ear:'fit',W:408,t0:performance.now()};
+const body=k=>S.ear==='fixed'?MAXB:bodyFit(k);
+$('earTable').innerHTML=[['音乐','封面 20','波形 16.4 × 14','music'],['下载','符号 18','进度弧 22','download'],['计时器','符号 18','“9:41” 约 32','timer'],['电量闪','闪电 18','“82%” 约 28','flash']]
+  .map(([n,l,r,k])=>{const b=bodyFit(k);return `<tr><td>${n}</td><td>${l}</td><td>${r}</td><td class="num">${r2(b)}（+ 肩 = ${r2(b+SE)}）</td><td class="num">${r2(NW+2*(b+SE))}</td></tr>`}).join('')
+  +`<tr><td>今天的代码</td><td colspan="2">不看内容</td><td class="num">${r2(MAXB)}（+ 肩 = 52.33）</td><td class="num">${r2(NW+2*52.33)}</td></tr>`;
+
+/* ---------- 符号 ---------- */
+const sym={
+  bolt:(c,d=18)=>`<svg width="${d}" height="${d}" viewBox="0 0 24 24" aria-hidden="true"><path fill="${c}" d="M13.5 2 4.5 13.5h6L9.5 22l9-11.5h-6z"/></svg>`,
+  dl:(d=18)=>`<svg width="${d}" height="${d}" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5v12M7 10.5l5 5 5-5M5 20h14"/></g></svg>`,
+  timer:(c,d=18)=>`<svg width="${d}" height="${d}" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="13.5" r="8"/><path d="M12 13.5V9M9.5 2.5h5"/></g></svg>`,
+  mouse:(c,d=18)=>`<svg width="${d}" height="${d}" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="${c}" stroke-width="2.2"><rect x="6" y="2.5" width="12" height="19" rx="6"/><path d="M12 6v4" stroke-linecap="round"/></g></svg>`,
+  ring:(c,f,d=22,w=2.5)=>{const r=d/2-w/2,L=2*Math.PI*r;return `<svg width="${d}" height="${d}" viewBox="0 0 ${d} ${d}" aria-hidden="true"><circle cx="${d/2}" cy="${d/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="${w}"/><circle cx="${d/2}" cy="${d/2}" r="${r}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${L*f} ${L}" transform="rotate(-90 ${d/2} ${d/2})"/></svg>`}
+};
+const STILL=[2.4,2.4,2.4,2.4,2.4],LIVE=[6,11,14,8,4];
+const barsAt=(x,cy,hs,col)=>`<div class="bars" style="left:${x}px;top:${cy-7}px;height:14px">${hs.map((h,i)=>`<i style="height:${h}px;background:${Array.isArray(col)?col[i%2]:col}"></i>`).join('')}</div>`;
+const COVR=r2(NR-(NH-20)/2);
+
+/* 在一块宽 FW 的画布上，刘海居中：给出左右两耳内容的 HTML */
+function earsInner(k,cx,o={}){const nl=cx-NW/2,nr=cx+NW/2,cy=NH/2;const at=(x,w,h,html)=>`<div class="abs" style="left:${x}px;top:${cy-h/2}px;width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center">${html}</div>`;
+  if(k==='music')return `<div class="cov" id="${o.id||''}" style="left:${nl-IN-20}px;top:${(NH-20)/2}px;width:20px;height:20px;border-radius:${o.covr??COVR}px;opacity:${o.paused?.5:1};transition:opacity .18s"></div>`+(o.bars??barsAt(nr+IN,cy,LIVE,PAL));
+  if(k==='download')return at(nl-IN-18,18,18,sym.dl())+at(nr+IN,22,22,sym.ring('#fff',.58));
+  if(k==='timer')return at(nl-IN-18,18,18,sym.timer(COL.orange))+`<div class="abs t15" style="left:${nr+IN}px;top:${cy-9}px;color:${COL.orange}">9:41</div>`;
+  if(k==='flash'){const c=o.c||COL.green;return at(nl-IN-18,18,18,sym.bolt(c))+`<div class="abs t15" style="left:${nr+IN}px;top:${cy-9}px;color:${c}">${o.pct||82}%</div>`}
+  if(k==='alert')return at(nl-IN-18,18,18,sym.mouse(COL.red))+`<div class="abs t15" style="left:${nr+IN}px;top:${cy-9}px;color:${COL.red}">10%</div>`;
+  return ''}
+/* 一块黑：主体 + 两个肩（肩画成圆弧） */
+function blk(L,R,H,rad,sh=true,extra=''){return `<div class="blk" style="left:${L}px;top:0;width:${R-L}px;height:${H}px;border-radius:0 0 ${rad}px ${rad}px;${extra}"></div>`+(sh?shoulders(L,R):'')}
+function shoulders(L,R){return `<div class="sh" style="left:${L-SE}px;width:${SE}px;height:${SE}px;background:radial-gradient(circle ${SE}px at 0 100%,transparent 97%,#000 100%)"></div><div class="sh" style="left:${R}px;width:${SE}px;height:${SE}px;background:radial-gradient(circle ${SE}px at 100% 100%,transparent 97%,#000 100%)"></div>`}
+
+/* ---------- 样张 ---------- */
+function fitBox(wall,box,bw,bh){const go=()=>{const w=wall.clientWidth||bw,s=Math.min(1,w/bw);box.style.transform=`scale(${s})`;box.style.setProperty('--s',s);wall.style.height=bh*s+'px'};
+  new ResizeObserver(go).observe(wall);go()}
+const FW=520,FC=FW/2,FL=FC-NW/2,FR=FC+NW/2;
+const base=(h,win=true)=>`<div class="mb"></div>${win?`<div class="win" style="left:24px;top:46px;width:${FW-48}px;height:${h}px"></div>`:''}`+blk(FL,FR,NH,NR);
+const dim=(x,y,t)=>`<div class="dim" style="left:${x}px;top:${y}px">${t}</div>`;
+const ears=(k,o={})=>{const b=o.b??bodyFit(k);return blk(FL-b,FR+b,NH,NR)+earsInner(k,FC,o)};
+const circle=(x,inner)=>`<div class="blk" style="left:${x}px;top:0;width:${MIN}px;height:${MIN}px;border-radius:50%;display:flex;align-items:center;justify-content:center">${inner}</div>`;
+function card(W,H,rad,inner,sh=true){const L=FC-W/2;return blk(L,L+W,H,rad,sh)+inner}
+function tiles(L,W,top,n=3){let s='',x=L+14;const names=['访达','备忘录','Safari','邮件'];for(let i=0;i<n;i++){s+=`<div class="tile" style="left:${x}px;top:${top}px;width:124px;height:104px"><b>${names[i]}</b></div>`;x+=132}
+  return `<div class="abs" style="left:${L+14}px;top:${top}px;width:${W-28}px;height:104px;overflow:hidden;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask:linear-gradient(90deg,#000 calc(100% - 24px),transparent)"><div class="abs" style="left:${-(L+14)}px;top:${-top}px;width:${FW}px;height:300px">${s}</div></div>`}
+function figs(host,defs){defs.forEach(d=>{const f=document.createElement('div');f.className='fig '+(d.k||'');
+  f.innerHTML=`<h3>${d.t}<span class="st">${d.st}</span></h3><div class="wall"><div class="box" style="width:${FW}px;height:${d.h}px">${d.html}</div></div><div class="cap">${d.cap}</div>`;
+  $(host).appendChild(f);fitBox(f.querySelector('.wall'),f.querySelector('.box'),FW,d.h)})}
+
+const bT=bodyFit('timer');
+figs('figsGeo',[
+  {t:'静止',st:'什么都不画',k:'new',h:96,cap:'岛和刘海重合：185 × 33.5，底角 10.7，两个上角是硬件自己的肩。',
+   html:base(60)+dim(FR+12,10,'刘海 185 × 33.5')},
+  {t:'两耳（计时器）',st:'本稿',k:'new',h:96,cap:`每耳主体 ${r2(bT)} + 肩 7.74，高 33.5，底角 10.7。内容贴刘海，外侧留白 7.75 = 上下留白。`,
+   html:base(60)+ears('timer')+dim(FL-bT-SE-4,NH+8,`${r2(NW+2*(bT+SE))} × 33.5`)},
+  {t:'如果照 HIG 画 36.67 高',st:'不取',k:'now',h:96,cap:'两耳比刘海低 3.17，在刘海底角两边各鼓出一个台阶，也压出菜单栏 2.67。',
+   html:base(60)+blk(FL-bT,FL,36.67,NR,false)+blk(FR,FR+bT,36.67,NR,false)+`<div class="ghost" style="left:${FL}px;top:0;width:${NW}px;height:${NH}px;border-radius:0 0 ${NR}px ${NR}px"></div>`+dim(FR+bT+10,24,'台阶 3.17')}
+]);
+
+figs('figsCompact',[
+  {t:'按内容定宽',st:'推荐',k:'new',h:96,cap:`下载：两耳各 ${r2(bodyFit('download'))}（+ 肩），整颗 ${r2(NW+2*(bodyFit('download')+SE))}。`,
+   html:base(60)+ears('download')},
+  {t:'固定 52.33',st:'今天的代码',k:'now',h:96,cap:`同一件下载，两耳各 ${r2(MAXB)}（+ 肩），整颗 289.66，内容贴刘海时外侧空出一截。`,
+   html:base(60)+ears('download',{b:MAXB})},
+  {t:'11-04：从刘海下沿垂下',st:'已推翻',k:'now',h:96,cap:'185 × 37.33 的胶囊，顶边在刘海下沿，压在前台窗口的标题栏上。',
+   html:base(60)+`<div class="blk" style="left:${FL}px;top:${NH}px;width:${NW}px;height:37.33px;border-radius:18.67px"></div>`}
+]);
+
+const bD=bodyFit('download');
+figs('figsMin',[
+  {t:'A 和耳朵同高的圆',st:'推荐',k:'new',h:96,cap:'下载（80）占两耳，计时器（75）分出直径 33.5 的小圆，离肩尖 6，画剩余那一段。',
+   html:base(60)+ears('download')+circle(FR+bD+SE+GAP,sym.ring(COL.orange,.7))},
+  {t:'B 一截小刘海',st:'备选',h:96,cap:'36.67 × 33.5，顶边贴顶、底角 10.7、带肩。像硬件，但不是 HIG 写的圆或椭圆。',
+   html:base(60)+ears('download')+blk(FR+bD+SE+GAP+SE,FR+bD+SE+GAP+SE+36.67,NH,NR)+`<div class="abs" style="left:${FR+bD+SE+GAP+SE+7.33}px;top:5.75px">${sym.ring(COL.orange,.7)}</div>`},
+  {t:'C 今天的 36.67 圆',st:'今天的代码',k:'now',h:96,cap:'按耳朵中线居中，顶上被屏幕边切掉 1.58，底边比耳朵低 1.58。',
+   html:base(60)+ears('download')+`<div class="blk" style="left:${FR+bD+SE+GAP}px;top:-1.585px;width:36.67px;height:36.67px;border-radius:50%;display:flex;align-items:center;justify-content:center">${sym.ring(COL.orange,.7)}</div>`}
+]);
+
+const rowFig=W=>{const L=FC-W/2;return card(W,160,28,earsInner('music',FC)+tiles(L,W,42))};
+figs('figsRow',[
+  {t:'408 × 160',st:'推荐',k:'new',h:186,cap:'刘海左右那一条各 111.5：封面和波形还在耳朵的位置。格子 124 × 104，第三格被右边缘淡出，左右滚。',
+   html:base(150)+rowFig(408)+dim(FC-204,166,'408 × 160，底角 28')},
+  {t:'371 × 160',st:'今天的值',k:'now',h:186,cap:'左右那一条各 93，格子视口 343，比 408 少看到半格。',
+   html:base(150)+rowFig(371)+dim(FC-185.5,166,'371 × 160')}
+]);
+
+const alertFig=W=>{const L=FC-W/2;return card(W,84,24,earsInner('alert',FC)+`<div class="abs t15" style="left:${L+14}px;top:42px">妙控鼠标电量低</div><div class="abs t13" style="left:${L+14}px;top:62px">还剩 10%，记得充电</div>`)};
+figs('figsAlert',[
+  {t:'提醒 408 × 84',st:'推荐排法',k:'new',h:110,cap:'符号、状态贴在刘海两侧；主句、副句在刘海下面，左对齐到 14。底角 24。',
+   html:base(80)+alertFig(408)},
+  {t:'今天',st:'句子都在下面',k:'now',h:110,cap:'刘海两侧那一条空着，符号和句子挤在刘海下面一行。',
+   html:base(80)+card(408,84,24,`<div class="abs" style="left:${FC-204+14}px;top:46px">${sym.mouse(COL.red)}</div><div class="abs t15" style="left:${FC-204+40}px;top:42px">妙控鼠标电量低</div><div class="abs t13" style="left:${FC-204+40}px;top:62px">还剩 10%，记得充电</div>`)}
+]);
+
+const bM=bodyFit('music'),PW=NW+2*bM;
+figs('figsPeek',[
+  {t:'音乐两耳',st:'换歌前',k:'new',h:96,cap:`主体各 ${r2(bM)}，封面贴刘海左，波形贴刘海右。`,html:base(60)+ears('music')},
+  {t:'换歌一瞥',st:'推荐',k:'new',h:96,cap:'同宽往下长 30，高 63.5，底角 24。封面、波形不动，下面一行歌名。',
+   html:base(60)+blk(FC-PW/2,FC+PW/2,63.5,24)+earsInner('music',FC)+`<div class="abs" style="left:${FC-PW/2}px;width:${PW}px;top:42px;text-align:center;font:500 13px/1.2 var(--f-sys)">海边的风 <span style="color:rgba(255,255,255,.62);font-size:11px">· 林一</span></div>`}
+]);
+
+const bF=bodyFit('flash');
+figs('figsFlash',[
+  {t:'11-04 以前',st:'固定 52.33',h:96,cap:'两耳各 44.59 + 肩，整颗 289.66。',html:base(60)+ears('flash',{b:MAXB})},
+  {t:'11-04 至今',st:'不出现',k:'now',h:96,cap:'compactShape 恒为 .pill，isBusyForPowerFlash 永远为真，插电什么都看不到。',html:base(60)+dim(FR+12,NH+8,'（没有东西）')},
+  {t:'本稿',st:'按内容',k:'new',h:96,cap:`两耳各 ${r2(bF)} + 肩，整颗 ${r2(NW+2*(bF+SE))}。停 2.6 秒。`,html:base(60)+ears('flash')}
+]);
+
+figs('figsMusic',[
+  {t:'在放',st:'推荐',k:'new',h:96,cap:`封面 20、圆角 ${COVR}（同心）；波形 5 根。两耳等宽 ${r2(bM)}。`,html:base(60)+ears('music')},
+  {t:'暂停',st:'',h:96,cap:'封面 0.5，波形变白 0.45 的静止点。',html:base(60)+ears('music',{paused:true,bars:barsAt(FR+IN,NH/2,STILL,'rgba(255,255,255,.45)')})},
+  {t:'退成小圆',st:'推荐',k:'new',h:96,cap:'计时器占两耳，音乐退成小圆：圆形封面 22。',
+   html:base(60)+ears('timer')+circle(FR+bT+SE+GAP,`<div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(140deg,#e2773d,#9c2f4d)"></div>`)}
+]);
+
+/* ---------- 模拟器 ---------- */
+const W0=760,H0=200,CX=W0/2,NL=CX-NW/2,NRt=CX+NW/2;
+const wrap=$('stageWrap');
+wrap.innerHTML=`<div class="stage" id="stg" style="width:${W0}px;height:${H0}px">
+  <div class="menubar"><div class="l"><span>&#63743;</span><b>访达</b><span>文件</span><span>编辑</span><span>显示</span></div>
+    <div class="r"><span>Wi‑Fi</span><span>11月5日 周四 14:32</span></div></div>
+  <div class="win" style="left:40px;top:52px;width:${W0-80}px;height:190px"></div>
+  ${blk(NL,NRt,NH,NR)}
+  <div class="island" id="isl" role="button" tabindex="0" aria-label="刘海，按钮"></div>
+  <div class="sh" id="shL"></div><div class="sh" id="shR"></div>
+  <div id="layers"></div>
+  <div class="mc" id="mc0" role="button"></div><div class="mc" id="mc1" role="button"></div>
+</div>`;
+const stg=$('stg'),isl=$('isl'),log=$('log'),shL=$('shL'),shR=$('shR'),host=$('layers');
+fitBox(wrap,stg,W0,H0);
+const mc=[$('mc0'),$('mc1')];
+const KIND={music:{w:40,name:'音乐'},download:{w:80,name:'下载'},timer:{w:75,name:'计时器'}};
+const circleHTML={music:`<div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(140deg,#e2773d,#9c2f4d)"></div>`,
+  download:sym.ring('#fff',.58),timer:sym.ring(COL.orange,.7)};
+const sp={L:new Spring(NL),R:new Spring(NRt),H:new Spring(NH),RAD:new Spring(NR)};
+const cs=[new Spring(0),new Spring(0)];let circleKinds=[null,null];
+let cur=null,curKey='rest',seq=0,gate=null,gateFrom=null,timers={};
+
+function say(t){const s=((performance.now()-S.t0)/1000).toFixed(2).padStart(5,' ');log.textContent+=`\n${s} s  ${t}`;log.scrollTop=log.scrollHeight}
+function start(t){S.t0=performance.now();log.textContent=`0.00 s  ${t}`}
+const sorted=()=>[...S.acts].sort((a,b)=>KIND[b].w-KIND[a].w);
+
+/* 这一刻要的样子 */
+function desired(){const a=sorted(),top=a[0]||null,W=S.W;
+  const compact=k=>{const b=body(k);return {L:NL-b,R:NRt+b,H:NH,RAD:NR,tok:'settle',kind:'compact'}};
+  if(S.row){const g={L:CX-W/2,R:CX+W/2,H:160,RAD:28,tok:'expand',kind:'row'};return {g,layer:'row:'+(top||'')+':'+W,circles:[]}}
+  if(S.alert)return {g:{L:CX-W/2,R:CX+W/2,H:84,RAD:24,tok:'bloom',kind:'alert'},layer:'alert:'+W,circles:[]};
+  if(S.peek&&top==='music'){const c=compact('music');return {g:{...c,H:NH+30,RAD:24,tok:'bloom',kind:'peek'},layer:'peek',circles:[]}}
+  if(S.flash&&(!top||S.policy==='B'))return {g:compact('flash'),layer:'flash',circles:top?a.slice(1,1+S.max):[]};
+  if(top)return {g:compact(top),layer:'c:'+top,circles:a.slice(1,1+S.max)};
+  return {g:{L:NL,R:NRt,H:NH,RAD:NR,tok:'calm',kind:'rest'},layer:null,circles:[]}}
+
+function paint(key){let el=host.querySelector(`[data-l="${key}"]`);if(el)return el;
+  el=document.createElement('div');el.className='layer';el.dataset.l=key;const [k,a,b]=key.split(':');
+  if(k==='c')el.innerHTML=earsInner(a,CX,{id:'cov-'+a,bars:a==='music'?`<div class="simbars">${barsAt(NRt+IN,NH/2,STILL,PAL)}</div>`:undefined,paused:S.paused});
+  else if(k==='flash')el.innerHTML=earsInner('flash',CX);
+  else if(k==='alert'){const W=+a,L=CX-W/2;el.innerHTML=earsInner('alert',CX)+`<div class="abs t15" style="left:${L+14}px;top:42px">妙控鼠标电量低</div><div class="abs t13" style="left:${L+14}px;top:62px">还剩 10%，记得充电</div>`}
+  else if(k==='peek'){const b=body('music'),w=NW+2*b;el.innerHTML=earsInner('music',CX,{bars:`<div class="simbars">${barsAt(NRt+IN,NH/2,STILL,PAL)}</div>`,paused:S.paused})+`<div class="abs" style="left:${CX-w/2}px;width:${w}px;top:42px;text-align:center;font:500 13px/1.2 var(--f-sys)">海边的风 <span style="color:rgba(255,255,255,.62);font-size:11px">· 林一</span></div>`}
+  else if(k==='row'){const W=+b,L=CX-W/2;let s='',x=0;['访达','备忘录','Safari','邮件','预览'].forEach(n=>{s+=`<div class="tile" style="left:${x}px;top:0;width:124px;height:104px"><b>${n}</b></div>`;x+=132});
+    el.innerHTML=(a?earsInner(a,CX,{bars:a==='music'?`<div class="simbars">${barsAt(NRt+IN,NH/2,STILL,PAL)}</div>`:undefined,paused:S.paused}):'')
+      +`<div class="abs" style="left:${L+14}px;top:42px;width:${W-28}px;height:104px;overflow:hidden;-webkit-mask:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask:linear-gradient(90deg,#000 calc(100% - 24px),transparent)">${s}</div>`}
+  host.appendChild(el);return el}
+
+function setShape(g){const name=S.reduced?'reduced':g.tok;
+  gateFrom={L:sp.L.x,R:sp.R.x,H:sp.H.x};gateTo=g;
+  for(const k of ['L','R','H','RAD']){sp[k].tok(TOK[name]);sp[k].t=g[k]}}
+let gateTo=null;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const NAMES={rest:'静止',compact:'两耳',row:'展开那一排',alert:'提醒',peek:'换歌一瞥'};
+async function render(){const my=++seq,want=desired(),g=want.g;
+  const shapeKey=[g.kind,r2(g.L),r2(g.R),g.H].join();
+  const layerChange=want.layer!==cur,shapeChange=shapeKey!==curKey;
+  /* 展开、提醒、一瞥之前先并回小圆 */
+  if(!want.circles.length&&circleKinds.some(Boolean))setCircles([]);
+  if(layerChange&&cur){const el=host.querySelector(`[data-l="${cur}"]`);el&&el.classList.remove('on');say(S.reduced?'内容淡出（减少动态效果，和换形同时）':'内容淡出 0.10，停 0.04');
+    cur=null;if(!S.reduced){await wait(140);if(my!==seq)return}}
+  if(shapeChange){setShape(g);curKey=shapeKey;
+    say(S.reduced?`${NAMES[g.kind]}：直接到位（减少动态效果）`:`${g.tok} → ${NAMES[g.kind]} ${r2(g.R-g.L)} × ${g.H}`);
+    if(want.layer&&!S.reduced){await new Promise(r=>gate=r);if(my!==seq)return}}
+  if(layerChange&&want.layer){const el=paint(want.layer);void el.offsetWidth;el.classList.add('on');cur=want.layer;say(S.reduced?'内容交叉淡化 0.25':'形状到四成：内容淡入 0.18')}
+  setCircles(want.circles)}
+function setCircles(kinds){for(let i=0;i<2;i++){const k=kinds[i]||null;
+  if(k&&circleKinds[i]!==k){mc[i].innerHTML=circleHTML[k];mc[i].setAttribute('aria-label',`正在进行：${KIND[k].name}`);mc[i].dataset.kind=k}
+  if(!!k!==!!circleKinds[i]){cs[i].tok(TOK[S.reduced?'reduced':(k?'bloom':'calm')]);cs[i].t=k?1:0;say(k?`${S.reduced?'原处淡入':'bloom 分出'}小圆：${KIND[k].name}`:`${S.reduced?'原处淡出':'calm 并回'}小圆`)}
+  else if(k&&circleKinds[i]!==k)say(`小圆换成：${KIND[k].name}`);
+  circleKinds[i]=k}}
+
+/* 事件 */
+function later(name,ms,fn){clearTimeout(timers[name]);timers[name]=setTimeout(fn,ms)}
+document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{const k=b.dataset.act,on=S.acts.includes(k);
+  S.acts=on?S.acts.filter(x=>x!==k):[...S.acts,k];b.setAttribute('aria-pressed',String(!on));
+  start(`${KIND[k].name}${on?'结束':'开始'}（权重 ${KIND[k].w}）`);render()});
+$('pauseBtn').onclick=e=>{S.paused=!S.paused;e.currentTarget.setAttribute('aria-pressed',String(S.paused));
+  start(S.paused?'音乐暂停：封面 0.5，波形变静止点，0.18 秒':'音乐继续');
+  host.querySelectorAll('.cov').forEach(c=>c.style.opacity=S.paused?.5:1)};
+$('plugBtn').onclick=()=>{start('插上电源');
+  if(S.flash){say('电量正在闪：不出');return}
+  if((S.row||S.alert||S.peek)){say('展开、提醒或一瞥开着：不出（isBusyForPowerFlash）');return}
+  if(S.acts.length&&S.policy==='A'){say('已有两耳：不出，不排队，不补播（A）');return}
+  S.flash=true;say('读屏：“已接通电源，电量 82%”');render();
+  later('flash',2600,()=>{say('从开始算满 2.6 秒');S.flash=null;render()})};
+$('alertBtn').onclick=()=>{start('妙控鼠标电量低');S.alert=true;S.row=false;$('rowBtn').setAttribute('aria-pressed','false');say('读屏：“妙控鼠标电量低，还剩 10%”');render();
+  later('alert',3500,()=>{say('提醒停满 3.5 秒');S.alert=false;render()})};
+$('peekBtn').onclick=()=>{start('换歌');if(sorted()[0]!=='music'){say('音乐不在两耳上：不出一瞥，只换封面');return}
+  if(S.row||S.alert){say('展开或提醒开着：不出一瞥');return}
+  S.peek=true;render();later('peek',3000,()=>{say('一瞥停满 3 秒');S.peek=false;render()})};
+function toggleRow(on,why){S.row=on;$('rowBtn').setAttribute('aria-pressed',String(on));if(on){S.alert=false;S.peek=false}start(why);render()}
+$('rowBtn').onclick=()=>toggleRow(!S.row,S.row?'收起那一排':'长按 0.5 秒：展开那一排（第 32 条）');
+const group=(sel,fn)=>document.querySelectorAll(sel).forEach(b=>b.onclick=()=>{document.querySelectorAll(sel).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));fn(b)});
+const repaint=()=>{host.innerHTML='';cur=null};
+group('[data-ear]',b=>{S.ear=b.dataset.ear;repaint();start(S.ear==='fit'?'耳宽：按内容':'耳宽：固定 52.33');render()});
+group('[data-w]',b=>{S.W=+b.dataset.w;repaint();start(`展开宽 ${S.W}`);render()});
+group('[data-max]',b=>{S.max=+b.dataset.max;start(`小圆最多 ${S.max} 颗`);render()});
+group('[data-policy]',b=>{S.policy=b.dataset.policy;start(`电量闪撞上活动：${S.policy}`)});
+$('reducedBtn').onclick=e=>{S.reduced=!S.reduced;e.currentTarget.setAttribute('aria-pressed',String(S.reduced));stg.classList.toggle('reduced',S.reduced);
+  start(S.reduced?'减少动态效果：形状直接到位，内容交叉淡化 0.25，波形停':'减少动态效果关')};
+$('resetBtn').onclick=()=>{Object.values(timers).forEach(clearTimeout);Object.assign(S,{acts:[],flash:null,alert:false,peek:false,row:false,paused:false});
+  document.querySelectorAll('[data-act],#pauseBtn,#rowBtn').forEach(b=>b.setAttribute('aria-pressed','false'));repaint();start('重来');render()};
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.row)toggleRow(false,'Esc：收起那一排')});
+
+/* 在刘海上点、按住 */
+let holdT=null,held=false;
+function stageX(e){const r=stg.getBoundingClientRect();return (e.clientX-r.left)/(r.width/W0)}
+isl.addEventListener('pointerdown',e=>{held=false;clearTimeout(holdT);holdT=setTimeout(()=>{held=true;toggleRow(!S.row,S.row?'按住：收起那一排':'按住 0.5 秒：展开那一排（第 32 条）')},500)});
+isl.addEventListener('pointerup',e=>{clearTimeout(holdT);if(held)return;const x=stageX(e);
+  if(S.row){toggleRow(false,'点刘海：收起那一排');return}
+  const top=sorted()[0];const onEar=(x<NL||x>NRt)&&curKey.startsWith('compact');
+  start(onEar?`点耳朵：打开「${S.flash&&(!top||S.policy==='B')?'电量':KIND[top].name}」${top==='music'?'，长成正在播放大卡':''}（第 31 条）`:'点刘海本体：回到主屏幕（第 31 条）')});
+isl.addEventListener('pointerleave',()=>clearTimeout(holdT));
+isl.addEventListener('keydown',e=>{if(e.key===' '){e.preventDefault();toggleRow(!S.row,'空格：同按住')}else if(e.key==='Enter'){start('Return：同点，回到主屏幕')}});
+mc.forEach(m=>m.addEventListener('click',()=>{const k=m.dataset.kind;if(k)start(`点小圆：打开「${KIND[k].name}」`)}));
+
+/* 循环 */
+let last=performance.now(),ph=0;
+function frame(now){let dt=Math.min(.05,(now-last)/1000);last=now;
+  const all=[sp.L,sp.R,sp.H,sp.RAD,...cs];
+  const sub=Math.ceil(dt*240);for(let i=0;i<sub;i++){const h=dt/sub;
+    if(S.reduced){for(const s of all){s.x+=(s.t-s.x)*Math.min(1,h/.06);s.v=0}}else all.forEach(s=>s.step(h))}
+  const L=sp.L.x,R=sp.R.x,H=Math.max(NH,sp.H.x),RAD=Math.max(0,Math.min(sp.RAD.x,H/2));
+  isl.style.left=L+'px';isl.style.width=(R-L)+'px';isl.style.height=H+'px';isl.style.borderRadius=`0 0 ${RAD}px ${RAD}px`;
+  shL.style.cssText=`left:${L-SE}px;width:${SE}px;height:${SE}px;background:radial-gradient(circle ${SE}px at 0 100%,transparent 97%,#000 100%)`;
+  shR.style.cssText=`left:${R}px;width:${SE}px;height:${SE}px;background:radial-gradient(circle ${SE}px at 100% 100%,transparent 97%,#000 100%)`;
+  if(gate&&gateTo){const ds=['L','R','H'].map(k=>[Math.abs(gateTo[k]-gateFrom[k]),k]).sort((a,b)=>b[0]-a[0])[0];
+    const p=ds[0]<.5?1:1-Math.abs(gateTo[ds[1]]-sp[ds[1]].x)/ds[0];if(p>=.4){const g=gate;gate=null;g()}}
+  const edge=Math.max(NRt,sp.R.t);
+  cs.forEach((s,i)=>{const end=edge+SE+GAP+i*(MIN+GAP),from=edge+SE-MIN,v=Math.max(0,Math.min(1.1,s.x));
+    const x=S.reduced?end:from+(end-from)*s.x;mc[i].style.left=x+'px';mc[i].style.width=mc[i].style.height=MIN+'px';
+    mc[i].style.opacity=S.reduced?Math.max(0,Math.min(1,s.x)):Math.max(0,Math.min(1,s.x*2.5));
+    mc[i].style.transform=S.reduced?'none':`scale(${.7+.3*v})`;mc[i].style.pointerEvents=s.t>0?'auto':'none'});
+  ph+=dt;const live=!S.paused&&!S.reduced;
+  host.querySelectorAll('.simbars i').forEach((b,i)=>{i%=5;const lv=live?.5+.5*Math.sin(ph*(5.1+i*1.7)+i*1.3)*Math.sin(ph*1.9+i):0;
+    b.style.height=(2.4+11.6*Math.max(0,lv))+'px';b.style.background=S.paused?'rgba(255,255,255,.45)':PAL[i%2]});
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>

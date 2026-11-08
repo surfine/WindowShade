@@ -1,0 +1,314 @@
+{
+  "status": "BLOCKED",
+  "errors": [
+    {
+      "code": "UNAPPROVED",
+      "asset": "N1-music.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "N1-music.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "N1-music.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "N1-music.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "N2-airpods.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "N2-airpods.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "N2-airpods.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "N2-airpods.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "N3-mouse-battery.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "N3-mouse-battery.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "N3-mouse-battery.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "N3-mouse-battery.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "A1-flick-into-notch.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "A1-flick-into-notch.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "A1-flick-into-notch.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "A1-flick-into-notch.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "A2-hover-row.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "A2-hover-row.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "A2-hover-row.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "A2-hover-row.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "A3-glance.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "A3-glance.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "A3-glance.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "A3-glance.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "A4-put-back.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "A4-put-back.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "A4-put-back.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "A4-put-back.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "W1-slide-over.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "W1-slide-over.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "W1-slide-over.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "W1-slide-over.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "W2-split-handle.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "W2-split-handle.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "W2-split-handle.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "W2-split-handle.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "W3-pip.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "W3-pip.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "W3-pip.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "W3-pip.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "W4-magic-tile.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "W4-magic-tile.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "W4-magic-tile.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "W4-magic-tile.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "L1-launchpad.png"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "L1-launchpad.png"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "L1-launchpad.png"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "L1-launchpad.png"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "L2-search-wwxb.png"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "L2-search-wwxb.png"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "L2-search-wwxb.png"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "L2-search-wwxb.png"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "L3-drag-to-slide-over.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "L3-drag-to-slide-over.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "L3-drag-to-slide-over.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "L3-drag-to-slide-over.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "T1-claude.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "T1-claude.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "T1-claude.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "T1-claude.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "T2-codex.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "T2-codex.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "T2-codex.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "T2-codex.mov"
+    },
+    {
+      "code": "UNAPPROVED",
+      "asset": "T3-claude-push.mov"
+    },
+    {
+      "code": "NO_PRIVACY_REVIEW",
+      "asset": "T3-claude-push.mov"
+    },
+    {
+      "code": "NO_LICENSE",
+      "asset": "T3-claude-push.mov"
+    },
+    {
+      "code": "MISSING_FILE",
+      "asset": "T3-claude-push.mov"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "remotion-typecheck"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "landscape-render"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "portrait-render"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "audio-rights"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "audio-listen"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "loudness"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "visual-review"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "carry-review"
+    },
+    {
+      "code": "MISSING_FINAL_EVIDENCE",
+      "asset": "qc-review"
+    }
+  ],
+  "records": 17
+}

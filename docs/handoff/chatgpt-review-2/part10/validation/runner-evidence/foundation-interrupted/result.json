@@ -1,0 +1,5 @@
+{
+  "status": "INTERRUPTED",
+  "reason": "Outer container call timed out while running flow then foundation together; flow finished, foundation had no final report. No success claimed.",
+  "candidate_integrity_during_call": "NO_FINAL_RECORD"
+}

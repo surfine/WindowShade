@@ -1,0 +1,1 @@
+{"passed": true, "after_frames": 10, "zh_regression_vs_baseline": true, "en_frames_checked": 3, "same_process_rebuild": "zh→en→zh labels equal", "permission_reads": {"accessibilityTrusted": true, "calendarAccess": false, "screenRecordingPreflight": true}, "current_inputs": 519}

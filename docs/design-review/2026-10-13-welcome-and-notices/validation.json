@@ -1,0 +1,46 @@
+{
+  "status": "scoped_pass_welcome_english_notice_partial",
+  "note": "第31批：欢迎流程走向英文并在 VM 实拍；通知面只拍到 .done 那一句，拒绝/兜底两句记 not_run（README 有理由）。§9 其它表面仍中文，不写“英语已支持”。",
+  "formula": "binding_sha256 = sha256(canonical_json({source_sha256, evidence_sha256, status}))",
+  "binding_sha256": "1e87fbe5a36728dcfc923e8b8ccf6c09e190d5629c7a709df05a9749936e9be4",
+  "build": {
+    "binary_sha256_final": "4872143f4a5037938055fa97620d23a91cf0e66bceaafbe2258a9799dad5f918",
+    "binary_sha256_before_fix": "b04a991c9dc9a3661c561a58ac4894a86422903db94fc8d398b62961c6b6eb65",
+    "codesign": "Apple Development: openkams@gmail.com (G3TN2MBQ2Q)",
+    "runs": [
+      "20261013T120005-7ffee488",
+      "20261013T120624-adae7826"
+    ]
+  },
+  "source_sha256": {
+    "prototype/App/Welcome.swift": "04c2dd562273b87d829b2523d108ce30713d24d087624b1d7419b40e7427712a",
+    "prototype/App/WelcomeFlow.swift": "df384894f5b93e2f3bca95c11627aed3584b8d24e5239be2610f71cc9a2edef5",
+    "prototype/Core/SwitcherOrigin.swift": "9305ebe80e5f508480432eee20222351d0bf868520e247741808dbe32004dd68",
+    "prototype/App/HabitContext.swift": "b94a4d28e4f6271f27193dfd8f312fc66342b9e39dc0601b219369c6bacdf86f",
+    "prototype/App/NotchCoach.swift": "4768b0fff06f449bd36841b6b8c5ba3ab18ef4cf19b498a327d7cf223a7182ea",
+    "prototype/App/Preferences.swift": "0d2d68d24d6ae158b9a22103c8cee7c521f401ddb1bd93b6428f3eda2c80e36a",
+    "prototype/Resources/Localizable.xcstrings": "a06dc379c23e7ace7d3c9e5f9a7d19c87458ff92cda10ccf6758b3e39efc410d",
+    "prototype/Core/WSL10n.swift": "36c8b1677c80f49d15fd0e5cfcdccac8d436eb69f234f60af9ca108961064f7b",
+    "tests/localizable-ratchet.json": "2631b204bb626ce356e9a7fc54087caa9aebb198ffa6d9c92fb8f2c77cf13e0d",
+    "tests/SwitcherOriginTests.swift": "7b8f176cdd954fa95e021598170e024585976d7b008d152fc8a7b97721b47af6",
+    "tests/run-welcome-flow-tests.sh": "8874bd3537e05bc9663a3f3d28c59b45febc648a3b2178d198c233d6992813ec",
+    "tests/run-switcher-origin-tests.sh": "cf3adba29d87d4957ca9eb8b8123d8284d5edb60e0c7433a35360339b35c9248",
+    "tests/run-release-defaults-tests.sh": "45c2555823cfdf838efe6aa704f3d3f5ee318e4e024f4575e2b46996ed63aa0e",
+    "tests/run-quiet-defaults-tests.sh": "b700b38b2574f502513227e9974b746a1e9a7e707df2f95ca9e74423462041b8",
+    "tests/check-localizable.py": "9011337779a4c857c2a07b68276fd170e45b4c36f7485d0fde6edfed4ef5875d",
+    "prototype/App/Notch.swift": "c621555f2945f6acffba63508c0af8c12ffc0826563abcd000377dd0cb86b1b4",
+    "prototype/App/EventTap.swift": "b795a801fd1565d59dc100eb71442224d8a1caadba358c6bfdabc03d39e0fa2c"
+  },
+  "evidence_sha256": {
+    "README.md": "d5344f5e48ce8f7dd716b563b20c982401e59284ec590cee8aa03ba85b913d58",
+    "native/notice-carried-en.png": "df10a1fbe607c8836c30edb366867c8a43b7b542a169829e239799b7e90fab9e",
+    "native/restore-after-unfold.png": "f3d25700858a70a94deeab15fc6959e8a33a85368e69418c024cc05772481fec",
+    "native/settings-privacy-en.png": "40e900fb0b81972a2c354aa05b4e472c81c6e54009eaf10fd5171976fdd94fca",
+    "native/settings-rollup-en.png": "625f195876356d7b51a43ec060b788272aeea63353ea31c5264527343486662a",
+    "native/welcome-1-intro-en.png": "6c9da2cbbf5f63d98ed55ef3a11b9872dba51b51d00d55c38a4ffc76f8411613",
+    "native/welcome-2-origin-en-BEFORE-FIX-clipped.png": "292f439d4e0a2171b7f1ffdeb01ee22def3775b4870414cca380fd5257f56ea8",
+    "native/welcome-2-origin-en.png": "e5dd5f64bcbc9f3f839c57946158ae15373c0cc9e45d8276b50e7d92cbb8a68b",
+    "native/welcome-3-permissions-en.png": "e5b6795ff165fa587a4cfce2ded6cc1b0af3a7458b64d00976e1b9deb0e57d1a",
+    "native/welcome-4-finished.png": "2973c5163422ff25407951b799de25f26e1ce5cb6f1543d4082b44baba19ae1c"
+  }
+}

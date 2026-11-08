@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-11",
+  "base_commit": "5daafb22e9d5f3995743636f158160f677f9bf23",
+  "scope": "First design correction; not a complete WS2 acceptance",
+  "native_frames": {
+    "status": "pass",
+    "command": "bash tools/design-qa/render-focus-card.sh <absolute-output-directory>",
+    "before": 8,
+    "after": 8,
+    "window_visibility": "all false",
+    "source_manifests": [
+      "before/sources.json",
+      "after/sources.json"
+    ],
+    "limits": "Offline production NSView rendering; no live notch, animation, input or hardware acceptance"
+  },
+  "visual_review": {
+    "status": "pass",
+    "reviewed": [
+      "before/light-focus.png",
+      "before/dark-focus.png",
+      "after/light-idle.png",
+      "after/light-focus.png",
+      "after/light-paused.png",
+      "after/light-rest.png",
+      "after/dark-focus.png",
+      "after/dark-rest.png"
+    ],
+    "findings": [
+      "Old Aqua text invisible on black",
+      "Old focus ring fills card as ellipse",
+      "New phase/time/ordinal/actions readable and separated",
+      "Rest retains green ring and return hint"
+    ]
+  },
+  "regression": {
+    "status": "pass",
+    "exit_code": 0,
+    "command": "bash tests/run-focus-surface-tests.sh",
+    "cases": 20,
+    "assertions": 60,
+    "log": "focus-regression.log",
+    "log_sha256": "036f886a70cd4d6dbb284bd52e85d65d47b3a06ef25c32c3115bc7a5ae1f3141"
+  },
+  "full_app_build": {
+    "status": "pass",
+    "command": "bash prototype/build.sh --check",
+    "log": "build-check.log",
+    "exit_code": 0,
+    "log_sha256": "991eed258ff6db43aeb764ef113194231079ce39d3d758b90711c13949fa2028"
+  },
+  "source_card_sha256": "32de96248b335bc0c800aad330ed75b18861d7da788df68ff00206a275255b19",
+  "frame_hashes": {
+    "after/dark-focus.png": "d2b501232c895ebe0e7a187b083100d29a18ad4a8c47da276149fd97aaddf3c2",
+    "after/dark-idle.png": "4afbb1d82d733f645c419065906df58a3d179bc8e53552383e392b2624ef3445",
+    "after/dark-paused.png": "a8142a5d36a4475e67c5cd6b5565b87c640bb3e09163c079a1899f97ca3c7b72",
+    "after/dark-rest.png": "bdbe10cbbfb1e2762c7f39095fba96ce6f2133c984a1a6a6b220b53d8f3d30c8",
+    "after/light-focus.png": "d2b501232c895ebe0e7a187b083100d29a18ad4a8c47da276149fd97aaddf3c2",
+    "after/light-idle.png": "4afbb1d82d733f645c419065906df58a3d179bc8e53552383e392b2624ef3445",
+    "after/light-paused.png": "a8142a5d36a4475e67c5cd6b5565b87c640bb3e09163c079a1899f97ca3c7b72",
+    "after/light-rest.png": "bdbe10cbbfb1e2762c7f39095fba96ce6f2133c984a1a6a6b220b53d8f3d30c8",
+    "before/dark-focus.png": "c6150ac540e04f1eb9941f8d1e8712c11d1075786bfe1d95cf9a3f625d4cc8f8",
+    "before/dark-idle.png": "2d5fa86d9eabb3b7299bdfc061a96fbab137a65fa8ac38e36bc985cccc2b5298",
+    "before/dark-paused.png": "528713be09a810ab23db458344f759c741affd074c763fb70d640f3a271e73d1",
+    "before/dark-rest.png": "89b247d22e7554ede2b777105745a4555992215ad285edfe3c8d5c4d2f7ae70d",
+    "before/light-focus.png": "2a2704703180af3631119b96bdcdb68243235ee11dadc106652afc6bf0d98b26",
+    "before/light-idle.png": "39404282721b5e58181c620e9e2321ed6b66f16d2d1163aeaaf04b6082fd30aa",
+    "before/light-paused.png": "2a2704703180af3631119b96bdcdb68243235ee11dadc106652afc6bf0d98b26",
+    "before/light-rest.png": "cc41da2c95d5f3bab2eacfd102f6c04d7651215e78c3cd13db886fef8932c6f7"
+  },
+  "not_run": [
+    "Live notch shape and resize",
+    "Click/keyboard/focus",
+    "Actual VoiceOver speech",
+    "Preemption/resume",
+    "Reduce Motion/Increase Contrast",
+    "Rest breathing time series",
+    "Current hardware matrix"
+  ]
+}

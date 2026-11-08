@@ -1,0 +1,70 @@
+{
+  "audit": "WindowShade-Reality-Audit-v3",
+  "auditBaseline": "c89fe767e25c8eb8a2db393a933bf0990a465219",
+  "head": "b271fcfb843e5caeb89c4e4960c9c8524f232ed6",
+  "branch": "main",
+  "tracks": "origin/main",
+  "uncommittedKept": [
+    "tests/SilentPrepTests.swift",
+    "docs/handoff/chatgpt-review-2/part5/reference/__pycache__/srp_reference.cpython-314.pyc",
+    "tests/part7/tools/__pycache__/stage.cpython-314.pyc",
+    "tests/part8/tools/__pycache__/stage.cpython-314.pyc"
+  ],
+  "columns": ["catalog", "port", "input", "device", "qualification", "release"],
+  "rows": [
+    {
+      "item": "142 commands",
+      "catalog": "present",
+      "port": "partial",
+      "input": "pointer on the formal page",
+      "device": "not_run",
+      "qualification": "not_authorized",
+      "release": "not_releasing"
+    },
+    {
+      "item": "focus status versus start",
+      "catalog": "present",
+      "port": "split in WS2AppRuntime",
+      "input": "existing card",
+      "device": "not_run",
+      "qualification": "not_authorized",
+      "release": "not_releasing"
+    },
+    {
+      "item": "cover, glance, usage",
+      "catalog": "present",
+      "port": "no effect receipt without an observed surface",
+      "input": "none",
+      "device": "not_run",
+      "qualification": "not_authorized",
+      "release": "not_releasing"
+    },
+    {
+      "item": "face experiment D11",
+      "catalog": "present",
+      "port": "not connected to system unlock",
+      "input": "not collected",
+      "device": "not_run",
+      "qualification": "not_authorized",
+      "release": "not_releasing"
+    },
+    {
+      "item": "voiceprint",
+      "catalog": "not this march",
+      "port": "not connected",
+      "input": "not collected",
+      "device": "not_run",
+      "qualification": "not_authorized",
+      "release": "not_releasing"
+    },
+    {
+      "item": "sign and publish",
+      "catalog": "out of march",
+      "port": "out of march",
+      "input": "out of march",
+      "device": "not_run",
+      "qualification": "not_authorized",
+      "release": "not_releasing"
+    }
+  ]
+}

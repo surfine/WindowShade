@@ -1,0 +1,6 @@
+WindowShade2第十七批：窗口浏览真实图像接口与长宽比，整体高级感目标active。
+实际WindowBrowserContentView.applyThumbnail，仅独有自造CGImage诊断图案，不读真实窗口/截图服务/账号/媒体/文件。actualContentView/Card/materialHost，假PID/合成Record；横16:9/4:3/方/竖9:16/超宽3:1，窗口缩略图+已选/操作条/长标题，浅深纸面与system诊断材质。
+自有alpha0隐藏离屏NSWindow，先挂载后update，不构造Controller/Panel/输入监听/权限或动作。真正的缩略图裁切、比例、实际card/title/action/image矩形与PNG，通过真实消费者核验。若生产缺陷则只修证实项并当前完整优化；无生产改动复用16优化519逐项SHA。
+只静态缓存图/自造像素，不能冒充真实内容/实时挂载/动态材质/焦点/交互/硬件。wrapper、entry、prod构建中冻结。最终源/证据绑定、新写本批StateM回执，不沿用旧身份。不提交推送签名安装发布。DeepSeek可承担独立诊断图案/消费者，不改共享生产状态。
+
+纠正样件：实际Dock只按悬停显示操作条，不画keyboard选中环；显式在自有card调用mouseEntered(receiver only)，不post到NSApp/系统，不移动鼠标，onHoverChanged只计本地次数；全局输入事件/窗口动作0。保原40图/错误预期consumer，最终plain/hovered实际状态各20。

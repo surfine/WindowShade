@@ -1,0 +1,30 @@
+[
+  {
+    "height" : 32,
+    "mode" : 0,
+    "name" : "wrap",
+    "wraps" : true
+  },
+  {
+    "height" : 32,
+    "mode" : 0,
+    "name" : "tail-then-wrap",
+    "wraps" : true
+  },
+  {
+    "height" : 16,
+    "mode" : 4,
+    "name" : "wrap-then-tail",
+    "wraps" : false
+  },
+  {
+    "height" : 16,
+    "mode" : 0,
+    "name" : "attributed-tail",
+    "wraps" : true
+  },
+  {
+    "height" : 32,
+    "name" : "textkit"
+  }
+]

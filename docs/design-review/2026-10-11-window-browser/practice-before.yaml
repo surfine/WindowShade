@@ -1,0 +1,241 @@
+version: 1
+model: deepseek-flash
+updated: 2026-10-11
+provenance: "StateM (arXiv 2608.15089) Table 3/Table 5 + 本机 DeepSeek-Flash 残余失败分布"
+note: |
+  practices 是版本化程序性记忆：一条失败教训只在这里成为可复用的控制项。
+  字段说明：
+    states   该实践在哪几个状态入口被激活（空格分隔）
+    tags     只有当前任务的可见证据命中这些风险标签时才激活（空格分隔；空 = 总是激活）
+    strength hard = 有可执行门禁兜底；soft = 偏好，允许按证据覆盖
+  经验必须先被过滤再成为记忆：只保留后果性边界，不累积失败日志。
+
+practices:
+  - id: contract-anchor-first
+    title: 先锚定可见契约，再动手
+    states: frame
+    tags:
+    strength: hard
+    source: paper 4.6 epistemic hook / 本机适配（DeepSeek 早期指令稀释）
+    text: |
+      在第一个编辑动作之前，把可见契约写成 .statem/task.txt：目标、交付物、输出/格式约束、
+      验收方式、明确不许改的东西。然后列出要读的文件和最终要跑的对照检查命令。
+      控制信号会在长轨迹里被稀释；本状态入口就是重新锚定它的位置，不要靠记忆推断契约。
+
+  - id: preserve-before-destructive
+    title: 破坏性操作前先保底
+    states: frame solve evidence_check repair
+    tags: destructive data-recovery migration service-lifecycle
+    strength: hard
+    source: paper 4.6 db-wal-recovery / Table 3 前置保底
+    text: |
+      任何会覆盖、删除或就地改写数据的动作之前：把原始字节复制到独立路径并记录 sha256，
+      确认同伴文件（如 WAL/journal、主键文件、配置）一起保留；交付时明确说明交付的是哪一份。
+      在原始数据上直接做变异探测是这类任务翻车的主要原因。
+
+  - id: consume-through-real-interface
+    title: 用真实消费者接口取证
+    states: solve contract_check evidence_check
+    tags: service-lifecycle external-effects
+    strength: hard
+    source: paper Table 3 configure-git-webserver / verification guide
+    text: |
+      证据必须来自承诺给下游的接口本身：命令行用最终可执行文件与真实 stdout/stderr/退出码，
+      服务用真实客户端做一次读写往返，包用新环境安装后再导入调用。
+      "端口开着""文件存在""进程还在" 只是前置条件，不是通过。
+      服务类交付必须验证它在本次命令会话结束之后仍然存活。
+
+  - id: effect-manifest-and-reconcile
+    title: 多效果任务先立清单再回收对账
+    states: solve evidence_check
+    tags: external-effects bulk-write transactional
+    strength: hard
+    source: paper Table 5 缺失/重复/部分效果
+    text: |
+      有多个必达副作用（批量写、多处发布、外部系统变更）时：先由可见契约导出效果清单，
+      执行后重新读回实际状态，逐项对比声明/尝试/成功/失败，必达项必须恰好成功一次。
+      可选项必须与必达项明确区分，不能混在一起报"完成"。
+
+  - id: exact-arithmetic
+    title: 后果性算术走精确计算
+    states: solve contract_check
+    tags: arithmetic-financial
+    strength: soft
+    source: paper Table 5 算术与依赖漂移
+    text: |
+      金额、税率、计数、时间差、单位换算这类会被下游采信的数值，用精确十进制工具算，
+      把数值输入与叙述性文字分开，并在动作前对派生值做一次独立复核。
+      心算、估算、四舍五入漂移是这里最常见的错误来源。
+
+  - id: image-byte-budget
+    title: 带图任务先算字节预算
+    states: frame solve
+    tags: vision-image
+    strength: hard
+    source: 官方 Vision / Responses API 文档（2026-10-03 核对）
+    text: |
+      deepseek-flash 支持看图，但内联 base64 图片计入 48 MiB 请求体上限：多轮会话里每轮重发旧截图
+      很快就会撞上限，本机代理会丢弃旧图（那一轮模型就看不到它们）。
+      所以带图任务先决定：只发改动相关的图、把旧图换成文字描述、或走 Files API 的 file_id（不计入内联上限）。
+      交付前确认"模型看过的图"与"结论依赖的图"一致，不要用推测填补没看到的画面。
+
+  - id: complex-task-effort
+    title: 复杂任务把思考档位提到 max
+    states: frame
+    tags:
+    strength: soft
+    source: 官方 8·13 发布说明 + Models & Pricing + Claude Code 集成页
+    text: |
+      官方口径：low 用于简单任务、high 用于日常 agent 工作流（也是默认）、max 用于复杂任务；
+      官方 Claude Code 集成直接把 effort 设为 max。注意 xhigh 实际映射成 high、ultra 映射成 max，
+      真正最高档只有 max。长且后果重的任务，先把 effort 切到 max 再开 run；日常任务保持 high 省成本。
+
+  - id: retry-classification
+    title: 只重试瞬态失败
+    states: solve repair
+    tags:
+    strength: hard
+    source: paper Table 5 瞬态/确定性失败
+    text: |
+      重试前先分类：网络抖动、限流、临时锁属于瞬态，可以带次数上限重试，且每次重试都要取新状态；
+      契约不满足、校验失败、逻辑错误的确定性失败重试无用，必须改实现。
+      同一个命令连续两次同样失败，就不再重试，改为定位原因或记录阻塞。
+
+  - id: evidence-freshness
+    title: 证据必须属于当前产物
+    states: contract_check self_review evidence_check
+    tags:
+    strength: hard
+    source: paper Table 5 验证开销/重复门禁 + verification guide
+    text: |
+      收尾清理、补丁、格式化、重启之后，之前跑过的检查就失效了：要么重跑最小消费者检查，
+      要么把它明确记成残余风险。便宜的检查可以晚跑；会改状态的重检查必须在这里先做掉，
+      不能留到交接瞬间第一次执行。
+
+  - id: bounded-self-review
+    title: 有界自审，只看三个镜片
+    states: self_review
+    tags:
+    strength: hard
+    source: paper 4.6 有界自审 / verification guide
+    text: |
+      自审只回答三件事，且每件都要引用当前文件或回执里的具体证据：
+      task_contract（成品是否满足可见请求）、evidence_freshness（证据是否属于当前产物）、
+      edge_risk（最可能出问题的边界/负例/运行条件）。
+      自审不做重活、不扩范围；格式检查、能加载、能导入都不等于语义正确。
+      有具体问题就转 repair，不要开始无限自审。
+
+  - id: scope-and-stale-references
+    title: 范围内修改 + 收尾清扫旧引用
+    states: solve repair
+    tags: rename migration refactor
+    strength: soft
+    source: paper Table 5 可见契约与范围漂移
+    text: |
+      改动范围由任务本身导出，最小化只是并列取舍而不是主要目标。
+      重命名、迁移、签名变更之后，做一次仓库范围的旧引用清扫，确认没有残留调用点。
+      "兼容旧写法" 只有在可见证据要求时才保留。
+
+  - id: bounded-exploration
+    title: 有界探索，先定文件再动手
+    states: solve
+    tags:
+    strength: soft
+    source: 本机适配（DeepSeek-Flash 残余失败：探索漂移）
+    text: |
+      搜索分两段：第一段只定位入口、约束与验收方式，列出要读的文件；读完后如果计划已经具体，
+      就停止继续搜索进入实现。不要在没有明确目标的情况下连续扩大搜索半径。
+
+  - id: durable-progress
+    title: 进度写进文件，不留在轨迹里
+    states: solve contract_check repair
+    tags:
+    strength: hard
+    source: 本机适配（深引用 / 长任务上下文稀释）
+    text: |
+      每到一个状态边界就把 progress.md 更新成：契约摘要、当前交付物身份、试过的命令、
+      跑过的检查与结果、残余风险、下一步。上下文被压缩或换新会话后，
+      恢复靠的是 progress.md + statem history + cur，而不是回忆聊天记录。
+
+  - id: no-premature-summary
+    title: 非终态不许"汇报式收尾"
+    states: frame solve contract_check self_review evidence_check repair
+    tags:
+    strength: hard
+    source: 本机适配（DeepSeek-Flash 残余失败：提前停止）
+    text: |
+      只要 run 还停在非终态，就不能用一段总结结束工作：要么继续推进到下一个受检转移，
+      要么明确写下令牌 .statem/blocked.json（缺什么、谁来解、解掉后从哪个状态继续）。
+      "看起来差不多完成了" 不是终态条件，可执行证据才是。
+
+  - id: resource-hygiene
+    title: 资源与生命周期卫生
+    states: evidence_check handoff
+    tags:
+    strength: soft
+    source: paper Table 5 资源/收尾卫生
+    text: |
+      收尾前清理本次尝试产生的半成品（临时下载、缓存、临时服务、临时端口占用），
+      并确认交付所依赖的服务/进程不会随命令会话退出。磁盘、端口、凭据这类资源耗尽
+      会把本来通过的交付变成失败。
+
+  - id: report-blockers-truthfully
+    title: 阻塞要如实上报，不要硬撑
+    states: handoff
+    tags:
+    strength: hard
+    source: paper 3.4 暂停不等于完成
+    text: |
+      缺少凭据、权限、外部审批或上游依赖时，写 .statem/blocked.json 并在交付里说明：
+      当前状态、已完成部分、缺什么、下一步由谁做什么。暂停态不算成功，
+      但不能用编造的完成结论掩盖它。
+
+  - id: immutable-build-inputs
+    title: 并行构建与在途检查的输入隔离
+    states: solve evidence_check repair
+    tags:
+    strength: soft
+    source: WindowShade 2026-10-11 实际 C 对象覆写与在途 bash 脚本接续失败
+    text: |
+      激活条件：准备并行构建，或修改仍有检查进程运行的入口。
+      先确认对象文件、输出与脚本快照互不覆盖；源码已复制不代表 C 对象或运行脚本也已隔离。
+      不改在途进程正在读取的脚本。若编译已完成而接续失败，先验明现有二进制身份并执行
+      未完成的消费者检查，不盲目重编；首次失败与恢复分别保留。
+
+  - id: async-appkit-tracking-receipts
+    title: 异步 AppKit 样件的退出码与完整回执
+    states: solve evidence_check repair
+    tags: vision-image
+    strength: soft
+    source: WindowShade 2026-10-11 异步入口 performClick 后缺相位/清理回执，独立小探针与 action 派发恢复
+    text: |
+      激活条件：异步 Swift @main 原生样件使用 AppKit tracking 方法，后面还要 await。
+      本机曾观察到 performClick 后任务未走完却退出0；窗口保留并未解决，非tracking的同一
+      target/action派发可以续行。不要据此宣称产品生命周期坏了，也不把0当完整流程成功。
+      先独立复现，再检查全部约定相位、失败与清理回执；纯重排测试可派发本地action，
+      必须明确没有验证真人鼠标/键盘。直接tracking的真实交互仍需合适的应用事件循环与验收环境。
+
+  - id: native-measurements-before-layout-assertions
+    title: 原生内容尺寸与宿主测量分开判定
+    states: solve evidence_check repair
+    tags: vision-image
+    strength: soft
+    source: WindowShade 2026-10-11 两次错误尺寸判据中止播放器采样（窗框取整与三行/五行假设）
+    text: |
+      激活条件：原生样件需要比较设计稿、内容视图和实际宿主几何。
+      先查相关稿段落与当前布局常量，区分内容、相机区域和窗框包围尺寸；不要凭记忆写数字。
+      采样器先完整保留实际帧与各层尺寸，几何判断交给独立消费者，避免错误预期中止
+      其余状态并迫使重复编译。安全边界、动作守卫或清理失败仍立即失败并留回执。
+
+  - id: native-snapshot-host-and-compositor
+    title: 原生截图的宿主与合成边界
+    states: solve evidence_check repair
+    tags: vision-image
+    strength: soft
+    source: WindowShade 2026-10-11 欢迎样件漏材质宿主与缓存忽略zPosition的独立像素复现
+    text: |
+      激活条件：用离屏AppKit缓存截图验收含系统材质或不同zPosition的图层表面。
+      沿实际宿主创建材质与窗口配置；NSWindow初始坐标可能被AppKit挪回屏幕，安全条件看实际frame。
+      cacheDisplay/render不等于屏幕合成：本机红色z7先加入、蓝色z0后加入的同一树被缓存画成蓝色。
+      先以最小探针分清截图失真和产品缺陷；不为截图改变生产层叠、不把遗漏背景的透明图当失败，
+      无法覆盖的材质/层叠/焦点明确inconclusive，保留原图与探针。静态几何与真实动效分开验收。

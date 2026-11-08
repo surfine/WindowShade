@@ -1,0 +1,1 @@
+{"command": ["python3", "tools/design-qa/check-fileshelf-preview.py", ".build/design-media-feedback/fileshelf"], "exit_code": 0}

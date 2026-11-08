@@ -1,0 +1,21 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-columns/validation.json",
+  "artifact_sha256": "55131a1780ca700349330f29f9e5ece5c45b3af5e6fd111143e4fb7ac6fdee9c",
+  "lenses": {
+    "task_contract": "original4.4em/12/10gap/4 spacing with exact registered text; candidate only",
+    "evidence_freshness": "45/94 SHA independently matched;26229 native36/2inputs/consumer0;current519 reused22",
+    "edge_risk": "source interfaces come fromsites notmissing signal property; readonly selection preserved; future actualRow integration pending"
+  },
+  "findings": [
+    "Main reviewed actual ordinary/dark technical/narrow long disclosure pixels; aliases prevent one stray label glyph.",
+    "Body exact registry text; technical interfaces actual site aggregation.",
+    "Cocoa-only candidate not full production518, whole page/source not instantiated.",
+    "DeepSeek failed before editing; main implemented and actual consumer accepted.",
+    "Main initial ColorAPI and consumer selection assumptions explicitly preserved/corrected.",
+    "Next integrate proven columns into trueRow then recheck; real actions/accessibility/performance/privacy/hardware still not_run."
+  ]
+}

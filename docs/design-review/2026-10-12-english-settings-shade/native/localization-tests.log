@@ -1,0 +1,55 @@
+本地化检查通过：373 个键，中英文齐全，中文源句和代码一致
+ok   the default language is Chinese
+ok   zh copy title is unchanged
+ok   zh join spacing is unchanged
+ok   zh control-family subtitle is unchanged
+ok   zh default search shortcut is unchanged
+ok   zh bound search shortcut is unchanged
+ok   zh no-notch hide-app subtitle is unchanged
+ok   zh press hint is unchanged
+ok   zh accessibility label joins with 。
+ok   zh silent line is unchanged
+ok   an unknown id has no line
+ok   english without a bundle falls back to Chinese
+ok   english copy title follows the draft example
+ok   english falls back to the English system name
+ok   english control-family subtitle
+ok   english keeps the Finder empty subtitle
+ok   english default search shortcut
+ok   english bound search shortcut
+ok   english hide-app subtitle takes the binding
+ok   english press hint names the key
+ok   english accessibility label joins with periods
+ok   english silent line
+ok   no English habit line still contains Chinese: []
+ok   every silent line has an English translation: []
+ok   every catalog key resolves through WSL10n in English: []
+ok   no catalog English value contains Han characters: []
+ok   catalog keys checked end to end: 373
+ok   switching back to Chinese restores the source text
+PASS: localization — zh unchanged by default, en translations complete
+ok   zh overrides an English system
+ok   en overrides a Chinese system
+ok   system zh → Chinese
+ok   system zh-Hans → Chinese
+ok   system zh-Hans-CN → Chinese
+ok   system zh-Hant → Chinese
+ok   system ZH-hans → Chinese
+ok   system zh-TW → Chinese
+ok   system en → English
+ok   system en-US → English
+ok   system ja-JP → English
+ok   system de-DE → English
+ok   system fr → English
+ok   only the first preferred language decides
+ok   no preferred language → English
+ok   no stored value → system
+ok   an unknown stored value → system
+ok   set(.en) stores the choice
+ok   set(.en) applies immediately
+ok   set(.system) removes the stored key
+ok   set(.system) re-resolves against the system
+ok   set posts the change notification exactly once
+ok   applyAtLaunch reads the stored choice
+ok   applyAtLaunch re-resolves a system choice
+PASS: interface language — resolution, storage, immediate apply

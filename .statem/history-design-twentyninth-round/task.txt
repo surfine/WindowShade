@@ -1,0 +1,5 @@
+第29批（并入 1.0.16）：GitHub issue #39（双击易误操作 → 按住 Option 双击不收起 + 多道防线）+ #40（英语翻译 → 发布基线切 0-B，把已完成的英语适配与 #39 一起发）。用户 2026-10-12 定案（AskUserQuestion）：#40 走方案 A（基线改 main，Phase 1–3 用 Computer Use 重验），#39 走"加码多道防线"。
+
+范围：#39 —— EventTapCallback 修饰键放行 + EventTap 清三击 pending + Preferences 副标题（3 分支）+ xcstrings/copy-guide + 新纯测试 + 消费端逐条豁免；0-B —— 工作区（main + 第28批 + #39）--stage 重建候选 + 包级门禁九步 + Phase 1–3 Computer Use 复验（含语言切换/#39 判据两条 0-B 加验）；发布说明与 issue 回复草稿；证据归档 gate-0B-verification.md / issue39-evidence.md。
+红线：不签名安装运行产品之外的新动作；不读真实资料/系统值/持久偏好/账户/网络（QA 合成资料除外）；不发布（tag/gh release/appcast 由用户发布日执行）；未得指示不提交不推送。真机观察本轮由 Computer Use 代跑（用户当日授权，限发布关）。
+验收：纯测试（TitlebarModifierSkipTests）+ build.sh --check EXIT=0 + 包级门禁九步 PASS + VM 内 #39 判据（普通双击收起 / ⌥ 双击不收起）+ 语言切换停留当前页 + 更新器自动检查无崩溃；inconclusive/not_run 如实记录并入用户真机清单。

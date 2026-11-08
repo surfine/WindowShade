@@ -1,0 +1,167 @@
+[
+  {
+    "assertions" : 2,
+    "name" : "INPUT01 discovery does not enable or install",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT02 explicit enable and fresh release",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT03 held A before enable must become neutral",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT04 navigation uses stable item",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT05 previous at beginning is not failure",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT06 next at end is not failure",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT07 hold A then navigate does not activate new row",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT08 mouse change invalidates pending A",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT09 same-row click invalidates pending A",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT10 list reorder revokes context",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT11 page lease change cancels",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT12 backend epoch change cancels",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT13 lock revokes without auto reenabling",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT14 foreground loss revokes",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT15 sink unavailable or IME guard revokes",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT16 approvals cannot reuse list device",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT17 detach invalidates pending target",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT18 identical label is not attachment identity",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "INPUT19 enabling second device disables first",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT20 replayed end cannot select twice",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT21 repeated down does not duplicate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT22 unknown controls cannot activate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT23 cancel opens no model",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT24 mismatched release control fails closed",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT25 stop releases all resources",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT26 reentrant model action may stop host",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT27 duplicate ids revoke selection",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT28 disabled rows skipped",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "INPUT29 absent attachment cannot enable",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT30 cancelled press cannot activate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "INPUT31 armed indication tracks captured target",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT32 reentrant revoke while preparing is safe",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "INPUT33 chosen model invalidation during prepare fails closed",
+    "result" : "PASS"
+  }
+]

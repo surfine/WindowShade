@@ -1,0 +1,15 @@
+INFO glance: accessibility=true screenRecording=true
+SKIP dock-scenarios (b) Dock autohide: needs changing the Dock's autohide setting, which the probe never does (not_run)
+SKIP dock-scenarios (e) after wake: needs the machine to sleep and wake (not_run)
+SKIP dock-scenarios (f) Stage Manager: needs toggling Stage Manager, a system setting (not_run)
+INFO dock-scenarios: fixture icon (1515,1053 36x48); neighbor icon com.apple.reminders
+PASS dock-scenarios (a) rapid hover: 6 round trips between the fixture icon and its neighbor; panel hidden in 0 of 36 samples, settled on the fixture icon=true
+PASS dock-scenarios (a) rapid hover: after the sweep the panel follows a slow move to the neighbor icon and back (neighbor=true fixture=true)
+PASS dock-scenarios (c) right-click: Dock menu at (1494,910 167x143); panel hid
+PASS dock-scenarios (c) long-press: Dock menu at (1494,910 167x143); panel hid
+PASS dock-scenarios (g) closed window: a fixture window closed from the app itself left the preview list in 709 ms (listed 5 -> 4, panel visible=true)
+INFO dock-scenarios (d): the fixture now has 30 windows (opened=true)
+PASS dock-scenarios (d) many windows: 30 fixture windows (30 listed); panel (1086,57 612x458) vs visibleFrame (0,55 1710x1018); worst overflow 0 pt, panel visible=true
+PASS r46: no invisible window of ours is still catching the mouse (2 visible)
+PASS r32: no duplicate items in the main or status menu
+verdict: PASS suite

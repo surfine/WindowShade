@@ -1,0 +1,1544 @@
+{
+  "actions" : 0,
+  "frames" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-normal",
+      "ongoing" : 1,
+      "sample" : "normal",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，剩 24%",
+          "accessibilityValue" : "剩 24%",
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 36.943181682305578,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "剩 24%",
+          "renderedQuantityText" : "剩 24%",
+          "renderedQuantityWidth" : 36.943181682305578,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : null,
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 24%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 24,
+        "phase" : "quota",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 24%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-low",
+      "ongoing" : 1,
+      "sample" : "low",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 5%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 5,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 5%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-low-updated",
+      "ongoing" : 1,
+      "sample" : "low-updated",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "afterUpdateValue" : null,
+        "beforeUpdateValue" : null,
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 4%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 4,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "retainedTileIdentity" : true,
+        "samePhaseSignature" : true,
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 4%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-zero",
+      "ongoing" : 1,
+      "sample" : "zero",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 0%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 0,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 0%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-unknown",
+      "ongoing" : 1,
+      "sample" : "unknown",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "Codex在跑",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\nCodex在跑"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : null,
+        "chosenWindowMinutes" : null,
+        "compactText" : null,
+        "detail" : null,
+        "leftPercent" : null,
+        "phase" : "running",
+        "readingWindowCount" : 0,
+        "recovery" : null,
+        "subtitle" : "Codex在跑",
+        "trailing" : ""
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-expired",
+      "ongoing" : 1,
+      "sample" : "expired",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等待用量更新 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n等待用量更新 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "等待用量更新",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 5%",
+        "detail" : "等待用量更新 · 演示模型 · 深入",
+        "leftPercent" : 5,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : null,
+        "subtitle" : "等待用量更新 · 演示模型 · 深入",
+        "trailing" : "剩 5%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-weekly",
+      "ongoing" : 1,
+      "sample" : "weekly",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "周二 23:06恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n周二 23:06恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "周二 23:06恢复",
+        "chosenWindowMinutes" : 10080,
+        "compactText" : "剩 7%",
+        "detail" : "周二 23:06恢复 · 演示模型 · 深入",
+        "leftPercent" : 7,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 2,
+        "recovery" : "周二 23:06",
+        "subtitle" : "周二 23:06恢复 · 演示模型 · 深入",
+        "trailing" : "剩 7%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-long-model",
+      "ongoing" : 1,
+      "sample" : "long-model",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，剩 24%",
+          "accessibilityValue" : "剩 24%",
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 36.943181682305578,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "剩 24%",
+          "renderedQuantityText" : "剩 24%",
+          "renderedQuantityWidth" : 36.943181682305578,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : null,
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 24%",
+        "detail" : "1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入",
+        "leftPercent" : 24,
+        "phase" : "quota",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入",
+        "trailing" : "剩 24%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-waiting",
+      "ongoing" : 1,
+      "sample" : "waiting",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在等你",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "Codex在等你确认",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\nCodex在等你确认"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 5%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 5,
+        "phase" : "waiting",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "Codex在等你确认",
+        "trailing" : "等你"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-normal",
+      "ongoing" : 1,
+      "sample" : "normal",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，剩 24%",
+          "accessibilityValue" : "剩 24%",
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 36.943181682305578,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "剩 24%",
+          "renderedQuantityText" : "剩 24%",
+          "renderedQuantityWidth" : 36.943181682305578,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : null,
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 24%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 24,
+        "phase" : "quota",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 24%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-low",
+      "ongoing" : 1,
+      "sample" : "low",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 5%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 5,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 5%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-low-updated",
+      "ongoing" : 1,
+      "sample" : "low-updated",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "afterUpdateValue" : null,
+        "beforeUpdateValue" : null,
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 4%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 4,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "retainedTileIdentity" : true,
+        "samePhaseSignature" : true,
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 4%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-zero",
+      "ongoing" : 1,
+      "sample" : "zero",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 0%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 0,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型 · 深入",
+        "trailing" : "剩 0%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-unknown",
+      "ongoing" : 1,
+      "sample" : "unknown",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "Codex在跑",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\nCodex在跑"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : null,
+        "chosenWindowMinutes" : null,
+        "compactText" : null,
+        "detail" : null,
+        "leftPercent" : null,
+        "phase" : "running",
+        "readingWindowCount" : 0,
+        "recovery" : null,
+        "subtitle" : "Codex在跑",
+        "trailing" : ""
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-expired",
+      "ongoing" : 1,
+      "sample" : "expired",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "等待用量更新 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n等待用量更新 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "等待用量更新",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 5%",
+        "detail" : "等待用量更新 · 演示模型 · 深入",
+        "leftPercent" : 5,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 1,
+        "recovery" : null,
+        "subtitle" : "等待用量更新 · 演示模型 · 深入",
+        "trailing" : "剩 5%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-weekly",
+      "ongoing" : 1,
+      "sample" : "weekly",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，额度快用完了",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "周二 23:06恢复 · 演示模型 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n周二 23:06恢复 · 演示模型 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "周二 23:06恢复",
+        "chosenWindowMinutes" : 10080,
+        "compactText" : "剩 7%",
+        "detail" : "周二 23:06恢复 · 演示模型 · 深入",
+        "leftPercent" : 7,
+        "phase" : "quotaLow",
+        "readingWindowCount" : 2,
+        "recovery" : "周二 23:06",
+        "subtitle" : "周二 23:06恢复 · 演示模型 · 深入",
+        "trailing" : "剩 7%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-long-model",
+      "ongoing" : 1,
+      "sample" : "long-model",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在跑，剩 24%",
+          "accessibilityValue" : "剩 24%",
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 36.943181682305578,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "剩 24%",
+          "renderedQuantityText" : "剩 24%",
+          "renderedQuantityWidth" : 36.943181682305578,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\n1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : null,
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 24%",
+        "detail" : "1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入",
+        "leftPercent" : 24,
+        "phase" : "quota",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "1 小时后恢复 · 演示模型-跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析跨领域思考与图像分析 · 深入",
+        "trailing" : "剩 24%"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-waiting",
+      "ongoing" : 1,
+      "sample" : "waiting",
+      "tiles" : [
+        {
+          "accessibility" : "设计工作间，在等你",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 950,
+          "kind" : "session",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "Codex在等你确认",
+          "title" : "设计工作间",
+          "tooltip" : "设计工作间\nCodex在等你确认"
+        }
+      ],
+      "usage" : {
+        "bloomDetail" : "1 小时后恢复",
+        "chosenWindowMinutes" : 300,
+        "compactText" : "剩 5%",
+        "detail" : "1 小时后恢复 · 演示模型 · 深入",
+        "leftPercent" : 5,
+        "phase" : "waiting",
+        "readingWindowCount" : 1,
+        "recovery" : "1 小时后",
+        "subtitle" : "Codex在等你确认",
+        "trailing" : "等你"
+      },
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    }
+  ],
+  "sourceControllers" : 0
+}

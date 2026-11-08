@@ -1,0 +1,9 @@
+{
+  "session_id": 83303,
+  "exit_code": 0,
+  "frames": 26,
+  "consumer_first_exit": 1,
+  "review_consumer_exit": 0,
+  "design_status": "review_required",
+  "known_issue": "count full116.3219pt >104pt; actual PNG truncates total"
+}

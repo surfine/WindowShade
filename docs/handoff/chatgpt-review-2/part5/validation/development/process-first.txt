@@ -1,0 +1,16 @@
+/mnt/data/WindowShade2-round2-part5/tests/ProcessTests.swift:75:17: error: 'allowed' mutated after capture by sendable closure
+66 |         huge.stop()
+67 |         scenarios += 1; print("SCENE IO07 final write gate and stale epoch")
+68 |         var allowed = true; let gated = try make("blocked", mayWrite:{allowed}); var gatedReady = false
+   |             |                                                        |`- note: capturing use
+   |             |                                                        `- note: variable captured by sendable closure
+   |             `- note: variable defined here
+69 |         gated.onLine = { _ in gatedReady = true }; try gated.start()
+70 |         check(await wait { gatedReady },"gated ready")
+   :
+73 |             deadline:ProcessInfo.processInfo.systemUptime+1),"one line per wire frame")
+74 |         check(gated.admit([Data([1])],connection:gated.connection,deadline:ProcessInfo.processInfo.systemUptime+1),"queued before revoke")
+75 |         allowed = false
+   |                 `- error: 'allowed' mutated after capture by sendable closure
+76 |         check(await wait { gated.stopped },"revoked before actual write")
+77 |         gated.stop()

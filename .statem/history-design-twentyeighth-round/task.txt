@@ -1,0 +1,11 @@
+第28批：英语适配第二批——静音流程散句（docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md §9 顺序①，轻量档）。本契约是第27批契约（已归档 .statem/history-design-twentyseventh-round/task.txt）的延续：同一总目标（英语全量完全适配、不留手尾），本批只覆盖静音线。
+
+范围：`Core/WS2SilentGates`、`App/WS2SilentHost`、`App/WS2SilentApply`、`Core/WS2SilentExecution`、`Core/WS2SilentSecurity`、`Core/WS2SilentDraft`、`Core/WS2SilentProductPort` 7 文件的去重中文字面量迁入 `WS2SilentCopy.saying/saying2`（键 `say.*`，中文源句=稳定身份）；活动/用量读回复用既有 `activity.*`/`usage.*` 键；旧 `silent.*` 英文对齐 copy-guide（只改 en，中文身份不动）；`docs/copy-guide.md` 追加第二批英文表；§9.4 防漏网棘轮落地（tests/localizable-ratchet.json，只降不升）。
+
+红线（沿第27批，全文见该契约）：不签名/安装/运行产品；不读真实资料/系统值/持久偏好/账户/网络；不做真实权限/窗口/输入/发布操作；中文输出逐字节不变；语言读取不得藏进静态 copy 初始化；迁移不得用英文显示串做行为路由；QA 探针中文按类别②豁免；不把结构 0 写成真机可见效果；未得用户指示不提交不推送。
+
+允许改：上述 7 个静音源文件、`prototype/Core/WS2SilentCopy.swift`、`prototype/Resources/Localizable.xcstrings`、`tests/`（SilentPrepTests、LocalizationTests、check-localizable.py、copy-lint.py、localizable-ratchet.json、run-*-tests.sh）、`tools/design-qa/`（SilentPageLanguagePreview + run 脚本）、`docs/`（copy-guide、design-review 证据、CONTINUE.md）、`.statem/`。
+
+验收（轻量档，用户 2026-10-12 定案）：①静音纯测试全过（含约 120 条直接断言迁移中文句的回归网）；②本地化全目录检查（500 键逐键 en 无汉字）+ 棘轮扫描；③集成抽查 r01/r03；④夹具 2–4 帧 + PNG 实看（SilentPageLanguagePreview 4 帧：zh/en × 初始/结果句）；⑤`prototype/build.sh --check` 全优化 EXIT=0（隐私登记、文案检查含豁免记录）；⑥`cd site && npm run build && npm run check`（本地、不部署）；⑦证据目录 docs/design-review/2026-10-12-english-silent-lines/（README + validation.json binding 照第26/27批公式 + 日志/帧/图归档）+ CONTINUE.md 第二十八检查点 + 本批 contract.json/self-review.json（不沿用第27批回执）。
+
+状态（2026-10-12 深夜交接时）：实现与验收①–⑤批内已完成；本 session 补齐⑥⑦收尾（复跑测试留档、validation.json、CONTINUE.md、StateM run 20261012-english-silent-lines 推进 solve→contract_check→self_review→handoff）。

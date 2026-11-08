@@ -1,0 +1,10 @@
+{
+  "prototype/Core/WSL10n.swift": "01f535236b45eab8a46eb50fa93659236c1b89dcac76ae170a5bb1f276c88666",
+  "prototype/Core/SwitcherOrigin.swift": "5914f273cc25e05edc17aae41428091ee46332b58442cd5aa54b051b96ded08c",
+  "prototype/Core/GestureCoach.swift": "ed0306948d988da1e46fbeb088a5d16d24064e84ca8c989c595436534b5c3b7b",
+  "prototype/Core/HabitRules.swift": "429ed2c492d13a8455435629bec86a92a8dd84d2e90e83e6c5f8ab927d797df6",
+  "prototype/Core/WS2SilentCopy.swift": "910aaebbc5107d30450a74d0692ed5595eff91c7c56dea7b08a80945a2f6fd82",
+  "tests/LocalizationTests.swift": "81ca1b3a2b94a7cf99cd985b821924acee2e493c91c4c9cfdb0d3bab6b6af11f",
+  "prototype/Resources/Localizable.xcstrings": "22f89a09fb033153d5caeffd456580dce50f2545719a4c6871ccc78f822319ff",
+  "tests/check-localizable.py": "06e4cbec5dd651d182ce892fb63975294fe0d1a0fc8c1b224c244a7b3c79c91a"
+}

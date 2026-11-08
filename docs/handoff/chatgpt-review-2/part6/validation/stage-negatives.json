@@ -1,0 +1,47 @@
+[
+  {
+    "case": "existing-output",
+    "command": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part6/tools/stage.py",
+      "--base",
+      "/mnt/data/ws2-v6-base/WindowShade2-round2-handoff-v5/candidate-repo",
+      "--out",
+      "/mnt/data/ws2-v6-work/candidate-repo"
+    ],
+    "exitCode": 2,
+    "stderr": "REFUSED: output must be a new independent directory\n",
+    "outputPreexisted": true,
+    "outputExistsAfter": true
+  },
+  {
+    "case": "wrong-baseline",
+    "command": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part6/tools/stage.py",
+      "--base",
+      "/tmp/tmpis9xl0j6/badbase",
+      "--out",
+      "/tmp/tmpis9xl0j6/refused-output"
+    ],
+    "exitCode": 2,
+    "stderr": "REFUSED: baseline SHA256/file-set mismatch; use a three-way merge for a newer workspace\n",
+    "outputPreexisted": false,
+    "outputExistsAfter": false
+  },
+  {
+    "case": "inside-baseline",
+    "command": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part6/tools/stage.py",
+      "--base",
+      "/mnt/data/ws2-v6-base/WindowShade2-round2-handoff-v5/candidate-repo",
+      "--out",
+      "/mnt/data/ws2-v6-base/WindowShade2-round2-handoff-v5/candidate-repo/must-not-be-created-by-v6"
+    ],
+    "exitCode": 2,
+    "stderr": "REFUSED: output must be a new independent directory\n",
+    "outputPreexisted": false,
+    "outputExistsAfter": false
+  }
+]

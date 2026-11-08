@@ -1,0 +1,5 @@
+WindowShade2第十八批：刘海形状/换内容/收回的实际Swift6原生回调与动势基线，全目标active。
+只用自有alpha0未显示离屏NSWindow/实际NotchCanvasView、合成Core活动tiles，无Panel/Controller/系统来源/权限/输入监听/真实文件媒体或用户窗口。spring按实际Motion.notchSpring，Motion.reducedOverrideForProbe仅进程内诊断并恢复，不改系统偏好。
+原生wrapper增加显式可选Swift6严格模式（对应生产语言/并发/警告门槛；原默认Swift5保留）；运行自己的@main，不执行产品main。自有NSApplication.run MainThread事件泵，delegate/menu nil、prohibited，不orderFront/激活，不post系统输入；只回调/Timer/CA目标与自己位图。
+展开、相同身份内容更新、替换活动、退场收回、退场期间新目标打断、减少动态模式；记录真实layer动画/模型矩形/实际tile身份/惯性状态/完成回调次数与线程、当前源码与RGBA样件。没有可见合成时明确inconclusive，不把model/cache当实际动势或硬件通过。
+不得依据隐藏宿主presentation缺失误改产品。若证实生产缺陷再修和完整优化；仅QA变化复用17优化519当前SHA。先完成合法候选/消费者及本批实际回执，再受检转移（独立工具调用，不随失败链条继续）。不提交推送签名安装发布，保留已有工作。

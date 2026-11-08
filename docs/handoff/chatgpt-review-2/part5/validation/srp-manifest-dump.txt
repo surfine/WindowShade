@@ -1,0 +1,97 @@
+{
+  "cLanguageStandard" : null,
+  "cxxLanguageStandard" : null,
+  "dependencies" : [
+    {
+      "sourceControl" : [
+        {
+          "identity" : "swift-srp",
+          "location" : {
+            "remote" : [
+              {
+                "urlString" : "https://github.com/adam-fowler/swift-srp.git"
+              }
+            ]
+          },
+          "productFilter" : null,
+          "requirement" : {
+            "revision" : [
+              "1345dfeff4d1bc54fc36257325371df3d1d7a813"
+            ]
+          },
+          "traits" : [
+            {
+              "name" : "default"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "name" : "WS2SRPDependencyProbe",
+  "packageKind" : {
+    "root" : [
+      "/tmp/tmpipoyehlr/srp-probe"
+    ]
+  },
+  "pkgConfig" : null,
+  "platforms" : [
+    {
+      "options" : [
+
+      ],
+      "platformName" : "macos",
+      "version" : "14.0"
+    }
+  ],
+  "products" : [
+    {
+      "name" : "WS2SRPAdapter",
+      "settings" : [
+
+      ],
+      "targets" : [
+        "WS2SRPAdapter"
+      ],
+      "type" : {
+        "library" : [
+          "automatic"
+        ]
+      }
+    }
+  ],
+  "providers" : null,
+  "swiftLanguageVersions" : null,
+  "targets" : [
+    {
+      "dependencies" : [
+        {
+          "product" : [
+            "SRP",
+            "swift-srp",
+            null,
+            null
+          ]
+        }
+      ],
+      "exclude" : [
+
+      ],
+      "name" : "WS2SRPAdapter",
+      "packageAccess" : true,
+      "resources" : [
+
+      ],
+      "settings" : [
+
+      ],
+      "type" : "regular"
+    }
+  ],
+  "toolsVersion" : {
+    "_version" : "5.9.0"
+  },
+  "traits" : [
+
+  ]
+}

@@ -1,0 +1,43 @@
+/// @unchecked Sendable 的理由：全部可变成员只在 queue 内访问；write 只捕获不可变字符串和 Date。
+final class WindowShadeLogger: @unchecked Sendable {
+    static let shared = WindowShadeLogger()
+    private let queue = DispatchQueue(label: "WindowShade.log", qos: .utility)
+    private var writer: SecureLogFile?
+    private var disabled = false
+    private let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss.SSS"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
+    func write(_ s: String) {
+        let now = Date()
+        queue.async { [weak self] in
+            guard let self, !self.disabled else { return }
+            do {
+                if self.writer == nil { self.writer = try self.openWriter() }
+                let line = "\(self.timeFormatter.string(from: now)) \(s)\n"
+                try self.writer?.append(Data(line.utf8))
+            } catch {
+                // 不递归 wlog；不向公用位置回退，也不把这一行交给统一日志。
+                self.writer?.closeFiles(); self.writer = nil; self.disabled = true
+            }
+        }
+    }
+    func flushAndClose() {
+        // 和旧调用合同相同：只由外部非日志队列调用。关闭后不再开启文件。
+        queue.sync { writer?.closeFiles(); writer = nil; disabled = true }
+    }
+    private func openWriter() throws -> SecureLogFile {
+        if let override = getenv("WINDOWSHADE_LOG_PATH") {
+            // 开发覆盖仍支持，但必须给专用、受保护、已存在的父目录。
+            return try SecureLogFile(path: String(cString: override))
+        }
+        let directory = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs/WindowShade", isDirectory: true)
+        // 创建只保证路径存在。SecureLogFile 随后逐级用 descriptor + NOFOLLOW 验证，未验证前不写日志。
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                 attributes: [.posixPermissions: 0o700])
+        return try SecureLogFile(path: directory.appendingPathComponent("windowshade.log").path)
+    }
+}

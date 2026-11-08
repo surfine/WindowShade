@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-11",
+  "status": "verified_checkpoint",
+  "goal_status": "active",
+  "whole_goal_complete": false,
+  "checks": [
+    {
+      "command": "bash tests/run-appkit-tests.sh MenuBarObstructionTests",
+      "exit_code": 0,
+      "result": "7 checks, 0 failures; actual NSPanel visibility/alpha/orderOut",
+      "log": "obstruction-after.log"
+    },
+    {
+      "command": ".build/appkit-tests/CountdownTimerCardTests",
+      "exit_code": 0,
+      "result": "4 cases, 23 assertions, including real host dimensions/corners and revoked input",
+      "log": "countdown-execution.log",
+      "recovery": "Compile completed by runner; in-flight script edit broke continuation; executed same compiled binary without rebuilding"
+    },
+    {
+      "command": "bash tests/run-countdown-timer-tests.sh",
+      "exit_code": 0,
+      "result": "7 cases, 31 assertions"
+    },
+    {
+      "command": "bash tests/run-menubar-retry-tests.sh",
+      "exit_code": 0,
+      "result": "12 assertions; bounded retries and conservative unknown room"
+    },
+    {
+      "command": "bash tools/design-qa/render-countdown-card.sh <after>",
+      "exit_code": 0,
+      "result": "10 production frames; all windows invisible; running/alert/paused visually inspected"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "513 Swift app source files; optimized full app, update guard, hook and build gates; localization 206 keys; existing warnings/copy debt retained",
+      "log": "build-check.log"
+    },
+    {
+      "command": "bash -n tests/run-appkit-tests.sh tools/design-qa/render-countdown-card.sh tools/design-qa/render-calendar-card.sh; git diff --check",
+      "exit_code": 0,
+      "result": "Shell syntax and diff whitespace pass"
+    }
+  ],
+  "sources": {
+    "prototype/App/NotchWatch.swift": "28ad98ecad1f7403bc08825197e86bd7ec18a348d077bc9f78f3c9edabc220ac",
+    "prototype/App/NotchLeases.swift": "da57df03c261bbdd22e38c2fe82a566eb0b1ad6a960e0b5ccb53b4d364eb4d3c",
+    "prototype/App/Notch.swift": "563116c9cf302996ab211049316db350198952e4fa142f7e18fb6da89e6ca925",
+    "prototype/App/CountdownTimerCard.swift": "185c7d2ebf4389ddbe87ba55e4966c42f8071908da8e44425241fc9b04c8d816",
+    "prototype/App/NowPlayingCard.swift": "dbe4c30791d5b55409e391340c904d8bfb86947cd3ee1be0cf9a707e04c05657",
+    "prototype/App/FileShelfView.swift": "38424356ef293a8f24a0807309c3035b93cf9d92725c5e48fdbb486fdaa650bb",
+    "tests/CountdownTimerCardTests.swift": "5e6361b410d0d6e53ec1c13ab7033978d55d9d390ad189ebe23c455183e36d8d",
+    "tests/MenuBarObstructionTests.swift": "f4957a585afd60227c1887b48a5b49f71acd81baf6b284f3d351ae18ac35f24d",
+    "tests/run-appkit-tests.sh": "778f402047e084a74bf7c9233520811d15d069b7cb579d01acd564f0575ecf0a",
+    "tools/design-qa/CountdownTimerCardPreview.swift": "7308d490c826c6757b624309ef7017a56e4031457ee90c8c5161c81c1da34832",
+    "tools/design-qa/render-countdown-card.sh": "47f5396da5435389b3d5c27b779e2bce01c0057c7c71f89bad28db40b4ea7529",
+    "prototype/build.sh": "08ef94b8cf60a5f09b06874d898c81e92c2a757b47c0a54965ab0b33d17111e7",
+    "prototype/Native/WS2Child.c": "0800b71fa1f43e9037901474da2118c8af71ed4ab12eba3fdf4da48de4515183",
+    "prototype/Native/WS2Child.h": "95380850f4cbd24d868fc785978cda939307f3962640b091200068a17ea1a9da",
+    "prototype/Native/module.modulemap": "9cac42ba9402e4324e393d07c155c9375e20846e3bca84117460fdd0e6a0db8e"
+  },
+  "test_binaries": {
+    ".build/appkit-tests/MenuBarObstructionTests": "d789aec5ec4711b4452bc29874900015aff65d8fc98af01863c72eb861bfa2bc",
+    ".build/appkit-tests/CountdownTimerCardTests": "f89ffdde93f6743dd713357cef16dde396612dfd8da1e39b244bd2baa91552de"
+  },
+  "evidence_files": {
+    "countdown-runner-offset-failure.log": "fd6f3a292ae2633c1a36111b1a963b25641f03a4fc1afab2899c56a4753e0dcd",
+    "production-swift-snapshot.json": "f05fc1e7a75f156155edf78059bfde61945d2d20c86cada2b629a59d6a8354e1",
+    "build-check.log": "748cc26cc4bd1fb4c1b9484c2fcb004d45e15efcf83cad8b002b565ae6969bc2",
+    "README.md": "974586d1a21dbeb1203dc55985930d536364f72760f00eb0f61f27d2759a848a",
+    "obstruction-before.log": "cb18cff34096f7f366ae4c9d1ca210300b557d9ca49f5939efda36dd2b5c4230",
+    "countdown-fixture-compile-failure.log": "7d12616fc25a879e1928ede658c23f8c48a07567560e90aa4559a159307903d8",
+    "countdown-execution.log": "238a5fc101d5a5161de2cbb2e49eeab5c3232aab3095b4abe7bc8f1079c34058",
+    "obstruction-shared-object-failure.log": "0944b24eb8c7228c1a969e2720f3312f9d72ae3612b5b8a0225971c35e3b870a",
+    "obstruction-after.log": "6414cc4b98ae1fad0757464ad74c94c032eab9fd3dc915af72c216699ec295a9",
+    "before/light-paused.png": "52e50730c9b77afa2ab23a0acb23f2348e76274b6ff745010471713af92c3732",
+    "before/sources.json": "aa60876018c0ffbcbfc278250c892e0159d7ff61253bc5c0b2f0a83d4c7cdac3",
+    "before/dark-alert.png": "f2b9d611bff26706147ef7132dff49e2ac287b42ccfbb8ba6842387428cffd5c",
+    "before/dark-done.png": "cf24f64249577e6ebfd29ca3531d039167ec2120166066f837b1b1c401afd16f",
+    "before/light-done.png": "cf24f64249577e6ebfd29ca3531d039167ec2120166066f837b1b1c401afd16f",
+    "before/light-picker.png": "9669f7644a6a0d17214b86c4150024e54a543ead5a66209ade95e7a736301107",
+    "before/light-running.png": "a654f66250dd55c9de7a1f9985c68bc209c3000ea4bcb9584978280f23106c0c",
+    "before/frames.json": "d005f822c9d9ded6f7b12db3f354665b8e5e95ae78d1485ae24f1d3ad0b254b9",
+    "before/dark-picker.png": "9669f7644a6a0d17214b86c4150024e54a543ead5a66209ade95e7a736301107",
+    "before/light-alert.png": "f2b9d611bff26706147ef7132dff49e2ac287b42ccfbb8ba6842387428cffd5c",
+    "before/dark-running.png": "a654f66250dd55c9de7a1f9985c68bc209c3000ea4bcb9584978280f23106c0c",
+    "before/dark-paused.png": "52e50730c9b77afa2ab23a0acb23f2348e76274b6ff745010471713af92c3732",
+    "after/light-paused.png": "5b50f9e36b949bd227ee9993e6110a3aca030e9c101afd808942980e9d484769",
+    "after/sources.json": "44be79046196879f2f35e3fbe7ca673da706ae8e1c38a4ac66b1112adba40824",
+    "after/dark-alert.png": "c30f383312e72e0c820a5ba437bbc00edaa675dfd5a32aa135cdc2ba2c990aa3",
+    "after/dark-done.png": "cf24f64249577e6ebfd29ca3531d039167ec2120166066f837b1b1c401afd16f",
+    "after/light-done.png": "cf24f64249577e6ebfd29ca3531d039167ec2120166066f837b1b1c401afd16f",
+    "after/light-picker.png": "9669f7644a6a0d17214b86c4150024e54a543ead5a66209ade95e7a736301107",
+    "after/light-running.png": "2f5078f5eee120a5da55b06cb2843c62b66db773a739e6878b9a295eb4be86fd",
+    "after/frames.json": "9c1d12085daabd94e5c18ade3c8035f8edb1615020c980f00084b555422e3394",
+    "after/dark-picker.png": "9669f7644a6a0d17214b86c4150024e54a543ead5a66209ade95e7a736301107",
+    "after/light-alert.png": "c30f383312e72e0c820a5ba437bbc00edaa675dfd5a32aa135cdc2ba2c990aa3",
+    "after/dark-running.png": "2f5078f5eee120a5da55b06cb2843c62b66db773a739e6878b9a295eb4be86fd",
+    "after/dark-paused.png": "5b50f9e36b949bd227ee9993e6110a3aca030e9c101afd808942980e9d484769"
+  },
+  "first_failure": {
+    "log": "obstruction-before.log",
+    "exit_code": 1,
+    "checks": 7,
+    "failures": 4
+  },
+  "live_notch": "not_run",
+  "below_external_display": "not_run",
+  "animation": "not_run",
+  "calendar_candidate": "not_applied",
+  "remaining": "Continue conductor/session readability, calendar candidate, player/file shelf and remaining seven product lines. No commit, push, sign, install or user-window operation."
+}

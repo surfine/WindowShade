@@ -1,0 +1,1 @@
+REFUSED: baseline mismatch: .gitignore, AGENTS.md, DEVELOPMENT.md, LICENSE, README.md, README_CN.md, WS2-STAGING.json, WindowShade.md, assets/app-icon/WindowShade.icns, assets/app-icon/windowshade-app-icon.png, assets/readme-desk-dark.png, assets/readme-desk-en-dark.png

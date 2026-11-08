@@ -1,0 +1,5 @@
+UTC 2026-10-03T05:34:58.586965+00:00
+COMMAND ['python3', '/mnt/data/WindowShade2-round2-part1/contracts/privacy/check-registry.py', '--repo', '/mnt/data/ws2-registry-negative']
+EXPECTED 1
+EXIT 1
+UNREGISTERED prototype/NewRead.swift: URLSession | let unregistered = URLSession.shared

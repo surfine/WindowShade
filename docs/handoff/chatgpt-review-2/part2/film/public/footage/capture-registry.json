@@ -1,0 +1,172 @@
+{
+  "N1-music.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "N2-airpods.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "N3-mouse-battery.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "A1-flick-into-notch.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "A2-hover-row.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "A3-glance.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "A4-put-back.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "W1-slide-over.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "W2-split-handle.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "W3-pip.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "W4-magic-tile.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "L1-launchpad.png": {
+    "approved": false,
+    "kind": "image",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "L2-search-wwxb.png": {
+    "approved": false,
+    "kind": "image",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "L3-drag-to-slide-over.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "T1-claude.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "T2-codex.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  },
+  "T3-claude-push.mov": {
+    "approved": false,
+    "kind": "video",
+    "sourceInFrames": 0,
+    "sourceFrames": 0,
+    "license": "owner-recorded; pending",
+    "sha256": null,
+    "reviewer": null,
+    "containsSecrets": null
+  }
+}
