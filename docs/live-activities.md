@@ -56,6 +56,23 @@ bash tools/activity-frame-probe/run.sh
 cd prototype && ./build.sh --check
 ```
 
+## 与系统岛的关系（macOS 27.3 证据，2026-11-09）
+
+27.3 的 `CampoUIInternal` 直接链接 `/System/Library/Frameworks/ActivityKit.framework`，
+`__cstring` 的 `_symbolic` 表里有这些类型：
+
+- `CampoUIInternal.CampoUILiveActivityController`
+- `LiveActivityMonitoring` / `LiveActivityRequestMonitor` / `LiveActivityPresentationWatcher`
+- `ActivityKit.ActivityDescriptor`、`AlertConfiguration`、`ActivityDescriptorContentState`
+
+状态字段另有 `didStartLiveActivity`、`canStartLiveActivity`、`liveActivitySettleDelay`、
+`awaitingLiveActivity`。结论：**系统岛是 ActivityKit 的消费端**，第三方 Live Activity
+在基础设施层可以进岛；能不能真的开始，取决于 app 的 ActivityKit entitlement 与用户授权，
+这一层要签名构建 + 真机验证，静态分析到此为止。
+
+对 WindowShade：仍以 in-app 来源为主；系统岛让位（PROLED）时抑制重复耳朵（Aaron #39）。
+是否新增 ActivityKit 来源，等一次真机 spike 再定，不在本轮改发布路径。
+
 ## 第一方依据
 
 [Apple Live Activities HIG（中文）](https://developer.apple.com/cn/design/human-interface-guidelines/live-activities)：紧凑内容可扫读，展开延续同一信息；负一屏的大卡片提供必要操作；状态不变时不重复动画或提示，及时结束活动。这里是 WindowShade 的 macOS 活动视图，不把它宣称为 iOS ActivityKit 或系统锁屏组件。HIG 提到配对 iPhone 的活动在 Mac 菜单栏由系统呈现并打开 iPhone 镜像；这不等于第三方可以枚举全部其他 App 活动。

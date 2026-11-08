@@ -143,8 +143,11 @@ detached 視圖的動畫，不是島的展開／收合。
    目前 `/Volumes/TiPlus 7100/ws-macos-27.3/` 的 AppleArchive 索引層未解。~~
    已完成，見 §7：27.3 仍然沒有改走 AnimationKit。
 
-在 1 或 2 成立之前，`Motion.notchSpring` 不應該改：任何填入的數字都會是
-「接近」而不是「一比一」，違反本輪的硬要求。
+**§6 與 §7.5 的關係（2026-11-09 補）**：§6 說「在 1 或 2 成立之前不改
+`Motion.notchSpring`」，指的是**外層 `WindowSizingAnimation`** 那條鏈。§7 找到的是
+另一條更直接的來源：27.3 `MacAssistantIslandSessionModel` 自己的 `#islandSizing`
+token。§7.5 已用後者接進 `Motion.notchSpring`，**取代 §6 的暫緩條件**；但 §6 的
+1／2 仍是 `.hidden` 收合由誰承接的未解問題，見 §7.4 與 Phase 3。
 
 ## 7. macOS 27.3 beta（26C5035r）的複核（2026-11-09）
 
@@ -259,5 +262,45 @@ base `+0x240` 是在 jump table 之前（`0x2653ee588`）設好的交易動畫�
 
 `.minimum`（收合）在系統裡是 tag 4，**不跑尺寸動畫**；WindowShade 沒有另一個
 window 動畫承接收合，所以仍用 `islandSizing`，這是唯一一處不是直接照抄的映射。
+實時活動撐起緊湊兩耳時，活動自己也可以選：錄音與「等你」的編程會話用
+`islandPrompt`（tag 5 的 prompt 語義），其餘活動落回 `islandSizing`；
+見 `Core/NotchActivityMotion.swift` 與 `NotchController.motionState()`。
 其餘形狀到狀態的對應是「使用者注意力」＝ prompt/listening、「內容變化」＝
 thinking/response/transient，寫在 `Motion.notchSpring` 的註解裡。
+
+### 7.6 `.hidden` 的收合由誰承接（2026-11-09 追蹤結果）
+
+結論：**未證得**。`Motion.notchSpring` 的 `.hidden` 暫時保留 `islandSizing`；
+`islandHidden` 不落地，列為 residual unknown，等真機取樣再決定。
+
+27.3 的二進位證據：
+
+1. `WindowSizingAnimation`（SpotlightUIShared）不是參數化的彈簧，而是
+   `expansion / collapse / alongside / alongsideWithContext` 四個案例；
+   每個案例的 `AxisAnimation` 只存 `SwiftUI.Animation`
+   （`__swift5_reflstr` 的 `horizontal.vertical…` 與
+   `_symbolic 7SwiftUI9AnimationV`）。真正的數值在「誰造 Animation」那一層。
+2. SpotlightUIShared／SpotlightUIInternal／CampoUIInternal 三個 27.3 映像裡
+   **都掃不到** 0.4／0.7 這組 double 或 float 常數（各 0 命中；0.5、1.0、0.2
+   倒是有零星資料常數，但沒有成對出現在 `Animation.spring` 呼叫附近）。
+   → 27.3 的 sizing Animation 不是由 Spotlight 自己硬編碼的常數造的；
+   §5.2 的 27.2 token 不能直接搬到 27.3。
+3. 島的 `_windowAnimation` 在 Campo 的 `_symbolic` 表裡與
+   `SpotlightUIShared.WindowSizingAnimation`、`ResultPlatterBehavior`
+   相鄰（`0x93aa6f`／`0x93ab2f`），可確認是 optional 的這兩種型別。
+   但 Campo 只有一筆 `WindowManager.WindowManagerSpringBehavior` 的
+   `_symbolic` 參照（`0x94fb20`），且落在 ChatID／AgentCanvas 的型別鏈裡，
+   **不能**證明島的 sizing 用它。
+4. WindowManager 的 `SpringBehavior` 預設仍是
+   `response 0.38 / dampingRatio 1.0` 與 `response 0.30 / dampingRatio 1.0`
+   （`0x131a90` 靜態初始化；accessor `0x1d319dee0` 回 1.0、
+   `0x1d319dee8` 回 0.38、`0x1d319def4` 回 0.30）。這是島窗口鏈裡唯一的
+   具體彈簧數值，但沒有釘死到 `.hidden`。
+
+因此：`.hidden` 的尺寸動畫在系統裡由外層 window sizing 承接（tag 4 直接
+return），WindowShade 沒有第二層 window 動畫，只能沿用 `islandSizing`。
+
+真機 backlog（PROLED MacBook Pro）：對 `MacAssistantIslandSessionModel` 的
+`.hidden` 轉場取樣；若收合明顯不彈（dampingRatio ≈ 1.0），才新增
+`islandHidden = (response 0.38, dampingRatio 1.0)` 並把 `.hidden` 指過去。
+在那之前不改程式，也不把 0.38／0.30 寫進測試當已證值。

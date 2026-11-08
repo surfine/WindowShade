@@ -19,6 +19,10 @@
 | `fold` | 0.25 / 1.0 | 0 | 否 | 卷帘條卷起、放下；收起代理收成條（Aaron 10-31 定，代碼 `FlickMotion.swift:177`） | 1 |
 | `pop` | 0.30 / 0.75 | 0.25 | 否 | 只給小元素的確認：提示浮窗終點圖標 | 2 |
 | `reduced` | 0.25 / 1.0（劉海）；0.30 / 1.0（窗口滑行） | 0 | 否 | 減少動態效果時替換以上全部；挪位置改為原處淡出、目標處淡入 | 全部 |
+| `islandPrompt` | 0.408 / 0.27 | 0.73 | 否 | 島的 listening／prompt（WindowShade 映射為 `.interaction`） | 島 |
+| `islandSizing` | 0.3571428536916519 / 0.7500006097576885 | 0.2499993902 | 否 | 島的 thinking／response／transient；`.minimum` 收合暫用 | 島 |
+
+`islandPrompt`、`islandSizing` 是 2026-11-09 新增的**系統島令牌**：直接照 macOS 27.3 `CampoUIInternal` 的 `MacAssistantIslandSessionModel` 值，列為 §4.6 上限（Mac bounce ≤0.2）的唯一具名例外，只准用在島。來源與 tag 表見 `docs/reverse-engineering/mac-island-springs.md` §7。`.minimum`（hidden）的收合由誰承接仍未證，暫用 `islandSizing`。
 
 `expand`、`bloom`、`catch`、`pop` 的回彈是已知例外：WWDC23 10158 允許為了活潑加一點，HIG Motion 說觸控板上效果要更收斂，所以 Mac 上 bounce 上限 0.2，只有 `pop` 到 0.25（自定）。新表面不再加例外。
 

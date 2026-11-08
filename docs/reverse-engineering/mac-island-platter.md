@@ -73,8 +73,15 @@ pinsTopPlatterWidth, pinsTopPlatterHeight      ← 「貼頂」版的兩個獨�
 ## 5. 未解與界線
 
 - 底座在執行時的确切值仍要真機量（因為它由視窗尺寸算出來）；但**要改的結構**已經明確，不必等真值。
-- `pinsTopPlatterWidth/Height` 的來源函式還沒定位（需要對 `__text` 做常量＋偏移的模式掃描，或讓 Ghidra 的 `-process` 跑完）。
+- `pinsTopPlatterWidth/Height` 的來源函式還沒定位；27.3 的 `split273/` 已可用，
+  可以對 `__text` 做常量＋偏移的模式掃描，或等真機 runtime dump。
+  目前 `IslandMetrics.dropIslandSize`（340×84）是 WS2 落點小島，**不是**這兩個欄位。
 - 底座動畫的**彈簧來源**已另案處理：CampoUIInternal 沒有 `setDampingRatio:`／`setResponse:`，
-  形狀動畫是 SwiftUI `Animation`（外層傳入）。候選來源與完整掃描見
-  `docs/reverse-engineering/mac-island-springs.md`。
-- 本文所有結論都來自 27.2 正式版二進位；27.3 beta 的對應映像尚未拆（AppleArchive 索引層未解）。
+  形狀動畫是 SwiftUI `Animation`（外層傳入）。27.3 的 `MacAssistantIslandSessionModel`
+  另有兩組島彈簧，見 `docs/reverse-engineering/mac-island-springs.md` §7。
+- `.hidden` 的收合由外層 window sizing 承接，不在 `#islandSizing` 裡（tag 4 直接
+  return）。`SpotlightUIShared.WindowSizingAnimation` 只存 `SwiftUI.Animation`；
+  WindowManager `SpringBehavior` 的 0.38／0.30 仍未釘死到島，見 §7.6。
+- 本文所有結論都來自 27.2 正式版二進位；27.3 beta 的系統卷已拆
+  （`/Volumes/TiPlus 7100/tmp273/cryptex-system-arm64e.dmg`、`split273/`），
+  27.3 的島彈簧與六態 tag 已補在 `mac-island-springs.md` §7。

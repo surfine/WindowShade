@@ -57,9 +57,13 @@ DeviceClass                 = Mac
   FCS 私钥在 `__FCSKeyURL`（`wkms-public.apple.com/fcs-keys/…`），用 `ipsw fw aea --pem` 解得开。
 - 27.3 支援的主板（资产里的 `SupportedDeviceModels`，66 个资产）新增 **K114cAP / K114sAP / K116cAP / K116sAP**，
   与旧有的 J 系列（J713/J714/J716… M4 Pro/Max 世代）并列——K 系列即 2026 年这批新 MacBook Pro。
-- 未解项（诚实标注）：解开后的 19.8 GB 是 Apple Archive（`AA01`）但 entry 只有 55 个、无 `PAT`/`DAT` 栏位，
-  目前停在索引层，还没有拿到 27.3 自己的 dyld shared cache。上面的 API 证据来自 27.0.1 正式版（同一大版本，
-  27.0.1 已含完整岛 API）；等真机或拿到 27.3 系统卷时再复核一次。
+- 已解（2026-11-09）：19.8 GB 的 Apple Archive 是兩層（外層 55 個 chunk，內層
+  `AssetData/payloadv2/`）；`cryptex-system-arm64e` 是 `RIDIFF10`，用
+  `ipsw ota patch rsr --cryptex` 套成 2.7 GB APFS 映像，再 `ipsw dyld split` 得到
+  27.3 自己的 dyld shared cache（4,142 個映像）。
+  產物：`/Volumes/TiPlus 7100/tmp273/cryptex-system-arm64e.dmg`、`tmp273/split273/`。
+  27.3 的島彈簧與六態 tag 證據見 `mac-island-springs.md` §7；上面的 API 證據現在
+  可以直接用 27.3 複核，不必再等真機或 27.0.1。
 
 ## 4. 我们怎么用
 

@@ -172,11 +172,14 @@ drawsGlassPlatter                 activityContentWidth
 整檔掃過 8-byte double，**沒有** iOS 那組 36.6667 / 18.3333 / 125.0 / 94.6667；
 `CampoUIInternal` 只有 `36.0` 出現 3 次。→ **Mac 的島不是照抄 iPhone 的尺寸**，是另一組。
 
-下一步只剩一件：用 Ghidra 開 `CampoUIInternal`，把 `drawnPlatterSize`／`activityCornerRadius`／
-`activityContentDefaultSize` 的預設值讀出來（Swift 欄位名已知，定位不難）。
+**27.3 已補上（2026-11-09）**：`drawnPlatterSize` 本身仍是執行時由承載視窗算出的
+`AnimatableData`，靜態常數掃描讀不到；但 27.3 的系統卷已拆出
+（`/Volumes/TiPlus 7100/tmp273/cryptex-system-arm64e.dmg` 與 `split273/`），
+`MacAssistantIslandSessionModel` 的兩組島彈簧已取到，見 `mac-island-springs.md` §7。
+不需要再用 Ghidra 開 `CampoUIInternal`。
 
 
-## 8. 已按預設採用的四項（可一處改回）
+## 8. 已按預設採用的幾何與動效（可一處改回）
 
 2026-11-08 拍板前先照以下預設實作，全部集中在 `Core/IslandMetrics.swift`：
 
@@ -184,11 +187,23 @@ drawsGlassPlatter                 activityContentWidth
 |---|---|---|
 | 本體高／圓角 | 36 ／ 18（＝高/2） | `IslandMetrics.inertHeight` |
 | 最小形 | 36×36 的圓（Apple `minimumMinimalSize`） | `IslandMetrics.minimalSize` |
-| 展開 | 230×64 | `IslandMetrics.expandedSize` |
-| 動效（2026-11-09 更新） | 27.3 Mac 島的兩組：`interaction` 用 `islandPrompt`（0.408／0.27），其餘用 `islandSizing`（0.3571428536916519／0.7500006097576885）；`.minimum` 收合也用 `islandSizing` | `Motion.notchSpring`／`Core/FlickMotion.swift` |
+| 無劉海膠囊展開 | 230×64（只給 `NotchCapsule`，不是劉海島） | `IslandMetrics.capsuleExpandedSize` |
+| 劉海／外接屏展開上限 | 408／371、高 ≤160（Aaron #29/#83） | `notchExpandedMaxWidth`／`externalExpandedMaxWidth`／`expandedMaxHeight` |
+| 落點小島 | 340×84、圓角 22（WS2 `DropIsland`，不是系統 `pinsTopPlatterWidth/Height`） | `dropIslandSize`／`dropIslandRadius` |
+| 動效（2026-11-09 更新） | 27.3 Mac 島的兩組：`interaction` 用 `islandPrompt`（0.408／0.27），其餘用 `islandSizing`（0.3571428536916519／0.7500006097576885）；`.minimum` 收合暫用 `islandSizing`（hidden 未解，見 `mac-island-springs.md` §7.4） | `Motion.notchSpring`／`Core/FlickMotion.swift` |
 
-理由：前三項有 Mac／iOS 交叉證據且只影響幾何；第四項已從 27.3 `MacAssistantIslandSessionModel`
+理由：幾何前三項有 Mac／iOS 交叉證據；230×64 與 340×84 的血緣已分開標註；
+408／371／160 來自 Aaron #29/#83；動效已從 27.3 `MacAssistantIslandSessionModel`
 的 `#islandSizing` 分支取得精確值（見 `mac-island-springs.md` §7），不是盲調。
+
+**shelf 例外（2026-11-09）**：408／371 只約束「沒有內容排」的展開寬度。
+WindowShade 的窗口排（那一排最多 8 格）按內容寬度排版，3 格＝416、活動卡＝420，
+會超過 408；這是刻意的產品例外，不是幾何漂移。收合／展開的高度仍受
+`expandedMaxHeight = 160` 約束（142 是卡片內容高，不是島總高）。
+
+**單一來源（2026-11-09）**：落點小島的 340×84／22 只留在 `IslandMetrics`
+（`dropIslandSize`／`dropIslandRadius`）；`StripNotchExchange.landingSize`、
+`FileDropGeometry.islandSize`、`Notch.dropZone` 都改成引用，不再各寫一份。
 
 ## 3. 還沒拿到的（誠實標註）
 
@@ -199,7 +214,8 @@ drawsGlassPlatter                 activityContentWidth
    SpringBoard 太大、`class-dump` 不給 dump，沒有拿到彈簧的 damping/stiffness。
 3. **模擬器量不到**：iOS 27.0 模擬器（iPhone 17 Pro）截圖的頂部中央是純白——
    系統島是 Simulator 視窗自己畫的外框，不在 framebuffer 裡。
-4. macOS 27.3 的系統卷還沒拆到底（見 `system-island.md` §3）。
+4. macOS 27.3 的系統卷已拆（見 `mac-island-springs.md` §7.1）；仍未拿到的是
+   `drawnPlatterSize`／`pinsTopPlatterWidth/Height` 的**執行時值**，不是映像本身。
 
 ## 4. 對我們的意義
 

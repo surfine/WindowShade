@@ -8,23 +8,35 @@ WindowShade 自己的島／實時活動，**尺寸與動畫彈簧都要與 macOS
 系統靈動島（內部代號 Campo／Jindo）一比一**；在任何機型上都要接近原生體驗。
 有系統島的機型（PROLED）讓位，不與系統打架。
 
-## 二、已完成（分支 `feat/system-island`，三筆 commit）
+## 二、已完成（分支 `feat/system-island`）
 
 | commit | 內容 |
 |---|---|
 | `89242d26` | 島機讓位（`MGCopyAnswer("DeviceSupportsDynamicIsland")`）、幾何單一來源、變形容器只脹不縮 |
 | `2c0e3061` | Mac 島底座參數集與常數掃描（文件） |
 | `bbd49a0c` | 尺寸成為動畫量、貼頂兩個自由度 |
+| `fdf0cfcf` | HANDOFF（本文件） |
+| `57011fd9` | 接上 27.3 Mac 島的兩組彈簧（`islandPrompt`／`islandSizing`） |
+| `c08dc665` | 27.3 島彈簧證據、映射與 27.2 否證（文件） |
+
+**2026-11-09 追加（已提交）**：`f0926fd1` 島的六態模型
+（`Core/IslandMotionState.swift`）、活動令牌（`Core/NotchActivityMotion.swift`）、
+落點幾何單一來源；`89dc8a06` `MorphRetarget`／`Motion.spring`／活動映射測試、
+`--island-transition-probe`、`FrameRhythmProbe` 接線與 CI 快速 runner。
+`.hidden` 的追蹤結論見 §三末；完整現狀與真機 backlog 見
+`docs/reverse-engineering/island-parity-plan.md`。
 
 關鍵檔案：
 - `prototype/Core/SystemIsland.swift` — 能力判斷（三態，問不到不當有島；`Notch.systemIsland` 可覆寫）
-- `prototype/Core/IslandMetrics.swift` — 唯一幾何來源：本體 36、圓角 18（＝高/2）、最小 36²、展開 230×64、貼頂 340×84、`interpolate(from:to:progress:)`
+- `prototype/Core/IslandMetrics.swift` — 幾何單一來源：本體 36、圓角 18（＝高/2）、最小 36²、
+  無劉海膠囊展開 230×64（`capsuleExpandedSize`）、劉海展開上限 408／外接 371／高 160、
+  落點小島 340×84（`dropIslandSize`）、`interpolate(from:to:progress:)`
 - `prototype/App/Notch.swift` — `SlotKind`（notch / systemIsland / virtual）、`containerFloor`
-- 測試：`tests/run-island-metrics-tests.sh`、`test/run-system-island-tests.sh`、capsule / display-shape
+- 測試：`tests/run-island-metrics-tests.sh`、`tests/run-system-island-tests.sh`、capsule / display-shape
 
-驗證：`./build.sh --check` EXIT=0（編譯＋2700 鍵本地化＋隱私登記 759 點＋文案）；四組測試綠。
+驗證：`./build.sh --check` EXIT=0（編譯＋2700 鍵本地化＋隱私登記 759 lexical sites＋文案）；四組測試綠。
 
-## 三、還沒做（唯一缺口）——但原本的做法已被否證
+## 三、缺口現狀（selector 路徑已關閉）
 
 **每個轉場的彈簧參數**（damping / response）。原本假設 Mac 島會在 CampoUIInternal 裡呼叫
 `setDampingRatio:`／`setResponse:`。2026-11-09 的完整掃描否證了這個假設：
@@ -72,6 +84,22 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 `mac-island-springs.md` §7。selector 那條路已確認在 27.2／27.3 都不存在，
 不再追。
 
+**`.hidden` 的收合（2026-11-09 追蹤結果）**：27.3 的 `#islandSizing` 在 tag 4
+直接 return，不跑島自己的尺寸動畫；收合由外層 window sizing 承接。
+`SpotlightUIShared.WindowSizingAnimation` 只存 `SwiftUI.Animation`（不是彈簧參數），
+而 27.3 的三個映像裡都掃不到 0.4／0.7 這組常數；WindowManager 的
+`WindowManagerSpringBehavior` 預設仍是 response 0.38／0.30、dampingRatio 1.0，
+但沒有釘死到島的 `.hidden`。因此 `.hidden` 暫時保留 `islandSizing`，
+`islandHidden` 不落地，等真機取樣（見 `mac-island-springs.md` §7.6）。
+
+**ActivityKit（2026-11-09）**：27.3 `CampoUIInternal` 直接連結
+`/System/Library/Frameworks/ActivityKit.framework`，並有
+`CampoUILiveActivityController`、`LiveActivityMonitoring`、
+`LiveActivityRequestMonitor`、`LiveActivityPresentationWatcher`，以及
+`didStartLiveActivity`／`canStartLiveActivity`／`awaitingLiveActivity` 狀態。
+系統島是 ActivityKit 的消費端；第三方 Live Activity 能否真的進島，需要簽名構建＋
+真機驗證（見 `docs/live-activities.md`）。
+
 ### 已經失敗的路（不要重複）
 
 - **Ghidra `-process`**：這台機器載入這個 9 MB Swift 二進位超過 9 分鐘無輸出；中斷會留下
@@ -90,7 +118,9 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 | 27.2 SystemOS（唯讀掛載） | `/Volumes/TiPlus 7100/mnt272`（dyld cache 在 `System/Library/dyld/`） |
 | 27.2 拆分映像（4,115 個） | `/Volumes/TiPlus 7100/mac272_split/` |
 | Ghidra 專案（已匯入） | `/Volumes/TiPlus 7100/ghidra_proj`（`CampoUI:/CampoUIInternal`） |
-| 27.3 beta 安裝器＋解密資產 | `/Volumes/TiPlus 7100/ws-macos-27.3/`（AppleArchive 索引層未解，系統卷未取出） |
+| 27.3 beta 安裝器＋解密資產 | `/Volumes/TiPlus 7100/ws-macos-27.3/`（AEA → `payloadv2`；已用 `ipsw ota patch rsr --cryptex` 解出） |
+| 27.3 系統映像（已解） | `/Volumes/TiPlus 7100/tmp273/cryptex-system-arm64e.dmg`（2.7 GB APFS） |
+| 27.3 拆分映像（4,142 個） | `/Volumes/TiPlus 7100/tmp273/split273/` |
 | iOS 27.3b1 拆分映像 | `/Volumes/TiPlus 7100/ios_split/`（含模擬器版 SpringBoard 符號表） |
 
 ## 五、工程注意事項
@@ -106,8 +136,19 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 
 1. `Motion.notchSpring` 的每個轉場數值都能指回**一個已證實的 Mac 二進位來源**
    （檔案、位址、值）；若來源只到 `WindowManager`／`SpotlightUIInternal` 而不是
-   `CampoUIInternal` 的 selector，文件必須逐條寫清楚，不能假裝是 selector 配對；
-2. `IslandMetrics` 的尺寸與圓角全部由同一條模型推出，且以動畫量插值；
-3. `./build.sh --check` EXIT=0、四組測試綠；
-4. 文件更新：`docs/reverse-engineering/island-metrics.md`、`mac-island-platter.md`
-   與 `mac-island-springs.md`。
+   `CampoUIInternal` 的 selector，文件必須逐條寫清楚，不能假裝是 selector 配對。
+   目前 `.minimum`（hidden）仍是例外：27.3 tag 4 不跑尺寸動畫，收合承接未證
+   （Phase 3 已追完 `WindowManager` 鏈，見 §三末與 `mac-island-springs.md` §7.6），
+   暫用 `islandSizing`；真機取樣後再定。
+2. `IslandMetrics` 的尺寸與圓角全部由同一條模型推出，且以動畫量插值。
+   目前 36／18／36² 已收斂；230×64 只給無劉海膠囊（`capsuleExpandedSize`）；
+   340×84／22 已收斂到 `dropIslandSize`，`StripNotchExchange`／`FileDragSensor`／
+   `Notch.dropZone` 都改成引用；408／371／160 已進常數庫，`expandedMaxWidth(hasNotch:)`
+   已提供，但多窗口 shelf 刻意可以超過 408（見 `island-metrics.md` §8）。
+3. `./build.sh --check` EXIT=0（2026-11-09 05:31）；快速測試全綠：
+   island-metrics、capsule-shape、display-shape、system-island、notch-token、
+   motion-tokens、island-motion-state（C02 79）、notch-activity-motion（C03 22）、
+   island-transition（C04 31／C05 47）、file-drag、strip-notch-exchange、motion-lint。
+   真機轉場探針：`WindowShade --glance-probe --island-transition-probe`（需真劉海屏）。
+4. 文件更新：`docs/reverse-engineering/island-metrics.md`、`mac-island-platter.md`、
+   `mac-island-springs.md`、`island-parity-plan.md` 與設計系統 §4.6.1。

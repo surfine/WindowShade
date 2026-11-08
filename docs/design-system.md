@@ -361,6 +361,21 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 - **不等停稳**：后续动作不等 `settlingDuration`，它和感知时长不是一回事（10158）。
 - **位移不用贝塞尔曲线描述。**
 
+### 4.6.1 系统岛令牌（具名例外，2026-11-09）
+
+岛自己照 macOS 27.3 系统岛的值，单独列两个令牌；它们是 §4.6 上限的唯一具名例外，只准用在岛，不得外溢到其他表面。
+
+| 令牌 | response / ζ（bounce） | 何时用 | 来源 |
+|---|---|---|---|
+| `islandPrompt` | 0.408 / 0.27（0.73） | 岛的 listening／prompt（我们映射为 `.interaction`） | 27.3 `MacAssistantIslandSessionModel` global `0x274434248`，初始化 `0x2653edd94` |
+| `islandSizing` | 0.3571428536916519 / 0.7500006097576885（0.2499993902） | 岛的 thinking／response／transient；`.minimum` 收合暂用 | global `0x274434240`，mass 2.0 / stiffness 619.0216 / damping 52.7788 |
+
+- 理由：这是系统岛自己的值；Aaron #28 定「照 MacBook Pro 系统灵动岛的同一套范式」，系统优先于本地 Mac bounce ≤0.2 的手感上限。
+- 边界：只给 `Motion.notchSpring` 使用；`expand`／`bloom`／`catch`／`pop` 等其他表面仍受 §4.6 约束。
+- 活动：录音和「等你」的编程会话（紧凑两耳时）用 `islandPrompt`；其余活动仍用 `islandSizing`，见 `Core/NotchActivityMotion.swift`。
+- `.hidden`：27.3 tag 4 不跑尺寸动画；Phase 3 追完 `WindowManager`／`WindowSizingAnimation` 链后仍未证得收合弹簧，WindowShade 暂用 `islandSizing`，等真机取样再定（见 `mac-island-springs.md` §7.6）。
+- 证据与 tag 表：`docs/reverse-engineering/mac-island-springs.md` §7。
+
 ### 4.7 时序
 
 | 令牌 | 值 | 性质 |

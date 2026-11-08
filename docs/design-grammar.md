@@ -274,7 +274,7 @@
 | 没有刘海时胶囊的位置 | 《设计规范》：顶部正中浮出；[touch-id-island.md](touch-id-island.md)：菜单栏下方留 8 点 | §5.3 | **已定（Aaron 2026-10-09）**：胶囊仍画在菜单栏条内，保持现状；`Notch.capsuleBelowMenuBar` 默认关不变，稿上的“菜单栏下方”不照搬 |
 | 离开就锁的倒数 | 稿上没点名令牌 | `bloom` / `calm` | **提议（总稿）**：`bloom` 开口，数字原地换，`calm` 收回；文法不新定，等 Aaron 点头 |
 | conductor-v2 结构图 | 仍写 Rust 的 `control/remote-host`（atv-core 分支） | — | **已改（R22）**：结构图与 W4 改成 Swift 独立接收器（`prototype/Support/WS2Companion*`、`WS2PairSetupServer`，接进应用的是 `App/WS2RemoteHost`），依据 [ws2-reuse-2026-10-08](handoff/ws2-reuse-2026-10-08/CLAUDE-HANDOFF.md) |
-| 形状对应的弹簧 | 总稿令牌节：最小 `calm`；紧凑、下巴、胶囊紧凑 `settle`；短暂提醒 `bloom`；展开 `expand`；交互（认证卡、画手势、录音、倒数）`pop` | §4.6 数字不动 | **已收（C01，2026-10-09）**：`Motion.notchSpring(for:)` 按形状取令牌。认证由 `calm` 改 `pop`；落点 `catchDrop`、音量亮度 `pop` 不变 |
+| 形状对应的弹簧 | 总稿令牌节：最小 `calm`；紧凑、下巴、胶囊紧凑 `settle`；短暂提醒 `bloom`；展开 `expand`；交互（认证卡、画手势、录音、倒数）`pop` | §4.6 数字不动 | **已收（C01，2026-10-09）**：`Motion.notchSpring(for:)` 按形状取令牌。认证由 `calm` 改 `pop`；落点 `catchDrop`、音量亮度 `pop` 不变。**2026-11-09 归档**：实际改为 27.3 系统岛两令牌（`islandPrompt`／`islandSizing`，见 `design-system.md` §4.6.1 与 `mac-island-springs.md` §7），本行只作历史 |
 | 内容时序 | 总稿：形状先动，第一层在形状进度 ≥ 0.40 淡入 0.18 秒，第二层再晚 0.20 秒；退场内容淡出 0.10 秒、停 0.04 秒，再用 `calm` 收形状 | 未单列 | **已收（C01）**：常量在 `Motion.Fade`（`in` 0.18、`out` 0.10、`gap` 0.04、`secondLayerDelay` 0.20）；第二层指副句、按钮和下面一排入口 |
 | 宽形状要不要画肩 | 令牌 §5.1 S3：落点、提醒、教学、展开顶角保持直角，进出都“肩先收到 0 再长”；文法准入 6 同写 | 小样 [宽形状画肩](design-drafts/%E5%AE%BD%E5%BD%A2%E7%8A%B6%E7%94%BB%E8%82%A9.html)（[线上](https://claude.ai/artifact/QBrcgHbfyjRfcEepsBMSph)）并排画了“肩收到 0”和“肩一直在”，另并排画了留额头与内容绕刘海排 | **待看（2026-10-09，R21）**：只是小样，产品不动。Aaron 用放大镜看过再定；过了才另起实现包，且要先在进入状态时量一次空位（34 点以外没有数据），不够就退回直角 |
 | 提醒宽 | 总稿 260 | §5：`max(刘海 + 200, 400)`；教学提醒 `max(刘海 + 300, 500)` | **保留现状 400**：260 装不下“图标 + 新标题 + App 名”。总稿下次动时对齐 |
