@@ -24,7 +24,9 @@ WindowShade 自己的島／實時活動，**尺寸與動畫彈簧都要與 macOS
 落點幾何單一來源；`89dc8a06` `MorphRetarget`／`Motion.spring`／活動映射測試、
 `--island-transition-probe`、`FrameRhythmProbe` 接線與 CI 快速 runner。
 `.hidden` 的追蹤結論見 §三末；完整現狀與真機 backlog 見
-`docs/reverse-engineering/island-parity-plan.md`。
+`docs/reverse-engineering/island-parity-plan.md`；27.3 的 Swift 型別模型
+（`ResultPlatterBehavior`／`WindowSizingAnimation`／`MacIslandCutoutGlassGeometry`）
+見 `docs/reverse-engineering/mac-island-types.md`。
 
 關鍵檔案：
 - `prototype/Core/SystemIsland.swift` — 能力判斷（三態，問不到不當有島；`Notch.systemIsland` 可覆寫）

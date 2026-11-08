@@ -66,13 +66,34 @@ enum IslandMetrics {
     static let dropIslandSize = CGSize(width: 340, height: 84)
     static let dropIslandRadius: CGFloat = 22
 
-    /// 展开排的宽度：没有内容时就是系统岛的上限（408／371）；有内容时内容优先，
-    /// 上限只保证「不小于系统宽度」，不裁掉窗口格与活动卡。屏幕放不下时按可用宽度收。
-    /// `availableWidth` 由调用方扣掉屏幕两侧的 reserve（`NotchRow.screenReserve`）。
+    /// 27.3 固件里每个 platter 状态的尺寸模型（`SpotlightUIShared.ResultPlatterBehavior`
+    /// 的四个尺寸）：minSize／preferredSize／idealSize／maxSize。
+    /// `#islandSizing` 也是先算出内容尺寸，再交给这个模型；固件里没有一组固定的「展开宽」常量。
+    /// 见 docs/reverse-engineering/mac-island-types.md。
+    struct PlatterBehavior: Equatable {
+        var minWidth: CGFloat
+        var preferredWidth: CGFloat
+        var idealWidth: CGFloat
+        var maxWidth: CGFloat
+        /// 最终宽度：理想值夹在 min／max 之间；preferred 是舒适下限。
+        var resolvedWidth: CGFloat { min(max(idealWidth, minWidth), maxWidth) }
+    }
+
+    /// 展开排的行为：没有内容时理想值就是系统宽度（408／371）；有内容时内容优先，
+    /// 但不低于 preferred，也不超过可用宽度。`availableWidth` 已由调用方扣掉屏幕 reserve。
+    static func expandedBehavior(hasNotch: Bool, availableWidth: CGFloat,
+                                 contentWidth: CGFloat? = nil) -> PlatterBehavior {
+        let preferred = expandedMaxWidth(hasNotch: hasNotch)
+        let maxWidth = max(0, availableWidth)
+        return PlatterBehavior(minWidth: min(inertHeight, maxWidth),
+                               preferredWidth: min(preferred, maxWidth),
+                               idealWidth: max(contentWidth ?? preferred, preferred),
+                               maxWidth: maxWidth)
+    }
+
     static func expandedWidth(hasNotch: Bool, availableWidth: CGFloat, contentWidth: CGFloat? = nil) -> CGFloat {
-        let cap = expandedMaxWidth(hasNotch: hasNotch)
-        let desired = max(cap, contentWidth ?? 0)
-        return max(0, min(availableWidth, desired))
+        expandedBehavior(hasNotch: hasNotch, availableWidth: availableWidth,
+                         contentWidth: contentWidth).resolvedWidth
     }
 }
 

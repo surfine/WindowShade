@@ -33,6 +33,15 @@ func runTests() {
     check(M.dropIslandRadius == 22, "落点小岛圆角 22")
     check(M.dropIslandSize != M.capsuleExpandedSize, "落点与无刘海胶囊展开是两个自由度")
 
+    let behavior = M.expandedBehavior(hasNotch: true, availableWidth: 1000)
+    check(behavior.minWidth == 36 && behavior.preferredWidth == 408
+          && behavior.idealWidth == 408 && behavior.maxWidth == 1000,
+          "展开行为照固件的 min/preferred/ideal/max 四尺寸")
+    check(behavior.resolvedWidth == 408, "没有内容时解出 408")
+    let wide = M.expandedBehavior(hasNotch: true, availableWidth: 1000, contentWidth: 416)
+    check(wide.idealWidth == 416 && wide.resolvedWidth == 416, "内容 416 抬高理想值")
+    let narrow = M.expandedBehavior(hasNotch: true, availableWidth: 1000, contentWidth: 300)
+    check(narrow.idealWidth == 408 && narrow.resolvedWidth == 408, "内容比 preferred 窄时仍用 preferred")
     check(M.expandedWidth(hasNotch: true, availableWidth: 1000) == 408, "没有内容：刘海屏展开 408")
     check(M.expandedWidth(hasNotch: false, availableWidth: 1000) == 371, "没有内容：外接屏展开 371")
     check(M.expandedWidth(hasNotch: true, availableWidth: 390) == 390, "屏幕放不下时按可用宽度收")

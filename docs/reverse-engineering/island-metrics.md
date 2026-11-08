@@ -195,10 +195,14 @@ drawsGlassPlatter                 activityContentWidth
 反過來，**371 在 27.3 的任何映像裡都沒有字面量**；408 只在 SpotlightUIShared 的
 `__const` 出現一次 float，且沒有代碼引用（大概率是巧合資料）。所以：
 
-- 230／340 是 Campo 真正用到的常數，但不能證明它們就是
-  `pinsPlatterWidth`／`pinsTopPlatterWidth`，也不能證明對應 408／371；
-- 408／371 仍是 Aaron #29/#83 的產品值，現在用於「沒有內容排」的展開寬度
-  （`IslandMetrics.expandedWidth`），不再只是測試裡的死常數。
+- 230／340 已用 27.3 的 Swift 符號定位：230×30 是
+  `InlineThinkingWindowState.initialSize`，340 是
+  `AssistantFieldWindowState.defaultFieldWidth`；**都不是島的 platter 尺寸**。
+- `pinsPlatterWidth`／`pinsPlatterHeight` 的型別是 `Bool`（釘住某一軸的旗標），
+  不是寬高；真正的尺寸是 `platterSize`／`drawnPlatterSize`。
+- 408／371 仍是 Aaron #29/#83 的產品值，現在用固件的
+  `ResultPlatterBehavior` 四尺寸模型表達（`IslandMetrics.PlatterBehavior`）。
+- 完整的型別模型與取法見 `mac-island-types.md`。
 
 ## 8. 已按預設採用的幾何與動效（可一處改回）
 
