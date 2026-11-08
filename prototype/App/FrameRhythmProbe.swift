@@ -72,8 +72,8 @@ enum FrameRhythmProbe {
         }
 
         // 展开 / 收起：形状走，40% 门由显示链接帧读到后放内容淡入（与 MO-02 的目标做法一致）。
-        for (name, from, to, token) in [("expand", small, large, Motion.notchSpring(for: .expanded, reduced: false)),
-                                        ("collapse", large, small, Motion.notchSpring(for: .minimum, reduced: false))] {
+        for (name, from, to, token) in [("expand", small, large, Motion.notchSpring(for: .response, reduced: false)),
+                                        ("collapse", large, small, Motion.notchSpring(for: .hidden, reduced: false))] {
             var frames: [FrameRhythm.FrameStats] = [], gates: [FrameRhythm.GateResult] = []
             for _ in 0..<runs {
                 reset(width: from); await settle(0.1)
@@ -145,7 +145,7 @@ enum FrameRhythmProbe {
         // 打断：展开途中每 50 ms 反向换目标，读呈现层位置的二阶差分。
         do {
             var frames: [FrameRhythm.FrameStats] = [], conts: [FrameRhythm.ContinuityResult] = []
-            let token = Motion.notchSpring(for: .expanded, reduced: false)
+            let token = Motion.notchSpring(for: .response, reduced: false)
             for _ in 0..<runs {
                 reset(width: small); await settle(0.1)
                 sampler.start { _ in Double((shape.presentation() ?? shape).bounds.width) }

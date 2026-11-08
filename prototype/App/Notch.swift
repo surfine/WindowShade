@@ -4191,13 +4191,23 @@ final class NotchPanel: NSPanel {
         }
         if isExpanded {
             // 半岛：从刘海顶边往下鼓（y = notch.maxY - height），内容绕传感器，不另加空白额头。
-            let screenWidth = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }?.frame.width ?? 1000
+            // 面板自己的 screen 就是这块屏（NSWindow.screen），和认证分支用同一个来源，不再每次遍历 NSScreen.screens。
+            let screenWidth = screen?.frame.width ?? 1000
             // 合成一排（M11）：活动不再另起一张卡叠在窗口上面，右段的格子和窗口格同高、同一排。
             let stacksActivityCard = !mergedRow && !cardItems.isEmpty
-            let width = min(screenWidth - CGFloat(NotchRow.screenReserve),
-                            max(stacksActivityCard ? 420 : notch.width + 120, CGFloat(rowIslandWidth)))
+            let contentWidth = max(stacksActivityCard ? 420 : notch.width + 120, CGFloat(rowIslandWidth))
+            let hasContent = !tiles.isEmpty || !cardItems.isEmpty
+            // 没有内容排时用系统岛的 408／371；有内容时内容优先，可以更宽（island-metrics §8）。
+            let width = IslandMetrics.expandedWidth(
+                hasNotch: !isVirtual,
+                availableWidth: screenWidth - CGFloat(NotchRow.screenReserve),
+                contentWidth: hasContent ? contentWidth : nil)
             let rawBelow: CGFloat = stacksActivityCard ? (tiles.isEmpty ? 144 : 286) : (tiles.isEmpty ? 56 : 142)
-            let below = NotchIsland.peninsulaContentHeight(rawBelow)
+            let shapedBelow = NotchIsland.peninsulaContentHeight(rawBelow)
+            // 单层内容不超过系统岛的 160；活动卡 + 窗口排的两层叠放是 WindowShade 自己的组合，保留 286。
+            let below = rawBelow > IslandMetrics.expandedMaxHeight
+                ? shapedBelow
+                : min(shapedBelow, IslandMetrics.expandedMaxHeight)
             let height = notch.height + below
             // 无刘海：S4 四角全圆、不画肩；真刘海仍从硬件肩长出。
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),

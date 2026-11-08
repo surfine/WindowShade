@@ -66,12 +66,13 @@ enum IslandMetrics {
     static let dropIslandSize = CGSize(width: 340, height: 84)
     static let dropIslandRadius: CGFloat = 22
 
-    /// 两个状态之间只插值尺寸，不在边界换一组常数。
-    /// Apple 的 `drawnPlatterSize` 本身就是动画量（见 docs/reverse-engineering/mac-island-platter.md）。
-    static func interpolate(from: CGSize, to: CGSize, progress: CGFloat) -> CGSize {
-        let t = max(0, min(1, progress))
-        return CGSize(width: from.width + (to.width - from.width) * t,
-                      height: from.height + (to.height - from.height) * t)
+    /// 展开排的宽度：没有内容时就是系统岛的上限（408／371）；有内容时内容优先，
+    /// 上限只保证「不小于系统宽度」，不裁掉窗口格与活动卡。屏幕放不下时按可用宽度收。
+    /// `availableWidth` 由调用方扣掉屏幕两侧的 reserve（`NotchRow.screenReserve`）。
+    static func expandedWidth(hasNotch: Bool, availableWidth: CGFloat, contentWidth: CGFloat? = nil) -> CGFloat {
+        let cap = expandedMaxWidth(hasNotch: hasNotch)
+        let desired = max(cap, contentWidth ?? 0)
+        return max(0, min(availableWidth, desired))
     }
 }
 

@@ -14,18 +14,16 @@ struct NotchTokenTests {
     static func main() {
         var t = TestSuite("C01")
 
-        t.section("C01-01", "形状 → 弹簧令牌：27.3 Mac 岛 #islandSizing 两组（interaction＝prompt/listening，其余＝内容尺寸）")
-        let table: [(Motion.NotchShape, Motion.Spring, String)] = [
-            (.minimum, .islandSizing, "islandSizing"), (.compact, .islandSizing, "islandSizing"),
-            (.chin, .islandSizing, "islandSizing"), (.capsuleCompact, .islandSizing, "islandSizing"),
-            (.alert, .islandSizing, "islandSizing"), (.expanded, .islandSizing, "islandSizing"),
-            (.interaction, .islandPrompt, "islandPrompt"), (.meter, .islandSizing, "islandSizing"),
-            (.drop, .islandSizing, "islandSizing"),
+        t.section("C01-01", "状态 → 弹簧令牌：27.3 Mac 岛 #islandSizing 两组（listening／prompt 用 islandPrompt，其余用 islandSizing）")
+        let table: [(IslandMotionState, Motion.Spring, String)] = [
+            (.listening, .islandPrompt, "islandPrompt"), (.prompt, .islandPrompt, "islandPrompt"),
+            (.thinking, .islandSizing, "islandSizing"), (.response, .islandSizing, "islandSizing"),
+            (.transient, .islandSizing, "islandSizing"), (.hidden, .islandSizing, "islandSizing"),
         ]
-        t.expect(table.count == Motion.NotchShape.allCases.count, "映射表覆盖每一种形状")
-        for (shape, token, name) in table {
-            t.expect(Motion.notchSpring(for: shape, reduced: false) == token, "\(shape) 用 \(name)")
-            t.expect(Motion.notchSpring(for: shape, reduced: true) == .reducedNotch, "\(shape) 在减少动态效果时用 reducedNotch")
+        t.expect(table.count == IslandMotionState.allCases.count, "映射表覆盖每一种状态")
+        for (state, token, name) in table {
+            t.expect(Motion.notchSpring(for: state, reduced: false) == token, "\(state) 用 \(name)")
+            t.expect(Motion.notchSpring(for: state, reduced: true) == .reducedNotch, "\(state) 在减少动态效果时用 reducedNotch")
         }
         t.expect(Motion.Spring.islandPrompt.response == 0.408 && Motion.Spring.islandPrompt.dampingRatio == 0.27,
                  "islandPrompt 0.408 / 0.27（27.3 Mac #islandSizing tag 0/5）")
@@ -37,7 +35,7 @@ struct NotchTokenTests {
         t.expect(Motion.Spring.bloom.response == 0.42 && Motion.Spring.bloom.dampingRatio == 0.84, "bloom 0.42 / 0.84")
         t.expect(Motion.Spring.expand.response == 0.4 && Motion.Spring.expand.dampingRatio == 0.92, "expand 0.40 / 0.92")
         t.expect(Motion.Spring.pop.response == 0.3 && Motion.Spring.pop.dampingRatio == 0.75, "pop 0.30 / 0.75")
-        t.expect(Motion.notchSpring(for: .interaction, reduced: false) != .calm, "认证卡不再用 calm")
+        t.expect(Motion.notchSpring(for: .prompt, reduced: false) != .calm, "认证卡不再用 calm")
 
         t.section("C01-02", "内容时序常量：淡入 0.18、淡出 0.10、停 0.04、第二层晚 0.20、形状四成")
         t.expect(Motion.Fade.in == 0.18 && Motion.Fade.out == 0.10, "淡入 0.18 / 淡出 0.10")

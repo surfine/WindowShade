@@ -179,6 +179,27 @@ drawsGlassPlatter                 activityContentWidth
 不需要再用 Ghidra 開 `CampoUIInternal`。
 
 
+### 27.3 的幾何常數掃描（2026-11-09）
+
+27.3（`split273/`）的 `CampoUIInternal` 裡有真正的幾何字面量，但還沒釘到欄位：
+
+| 值 | 位置（VM） | 代碼引用 |
+|---|---|---|
+| 230.0 | `0x265481ef0`（`__TEXT,__const`） | `0x2654130c4`：`d0=230`、`d1=30`，尾呼叫 `0x2680b98f0`（回一對尺寸）；唯一 caller `0x26541361c` |
+| 340.0 | `0x265482220`（`__TEXT,__const`） | `0x26541bdc` 直接回 340；`0x26542f228` 在某個旗標為 1 時用 340，否則用兩個 CGSize 的 min/max |
+| 160.0 | `0x2654692b8`（`__TEXT,__const`） | 沒有直接的 `adrp+ldr` 引用（可能走向量載入或字面量表） |
+
+另有 `0x5b8e60`–`0x5b8fa0` 一串 18／16／19／14／28／36／24 的常數簇，但掃不到
+`adrp+ldr` 的直接引用，還不能說它是島的度量表。
+
+反過來，**371 在 27.3 的任何映像裡都沒有字面量**；408 只在 SpotlightUIShared 的
+`__const` 出現一次 float，且沒有代碼引用（大概率是巧合資料）。所以：
+
+- 230／340 是 Campo 真正用到的常數，但不能證明它們就是
+  `pinsPlatterWidth`／`pinsTopPlatterWidth`，也不能證明對應 408／371；
+- 408／371 仍是 Aaron #29/#83 的產品值，現在用於「沒有內容排」的展開寬度
+  （`IslandMetrics.expandedWidth`），不再只是測試裡的死常數。
+
 ## 8. 已按預設採用的幾何與動效（可一處改回）
 
 2026-11-08 拍板前先照以下預設實作，全部集中在 `Core/IslandMetrics.swift`：
@@ -200,6 +221,12 @@ drawsGlassPlatter                 activityContentWidth
 WindowShade 的窗口排（那一排最多 8 格）按內容寬度排版，3 格＝416、活動卡＝420，
 會超過 408；這是刻意的產品例外，不是幾何漂移。收合／展開的高度仍受
 `expandedMaxHeight = 160` 約束（142 是卡片內容高，不是島總高）。
+
+**生產消費（2026-11-09）**：`IslandMetrics.expandedWidth(hasNotch:availableWidth:contentWidth:)`
+是 `legacyBaseTarget()` 展開分支的唯一寬度來源：沒有內容排時回 408／371，
+有內容排時取 `max(408, 內容寬)` 再按可用寬度收。`interpolate(from:to:progress:)`
+已移除——尺寸插值由 `NotchCanvasView` 的 CASpringAnimation 做，沒有一個
+生產呼叫點的純函式不留在度量層。
 
 **單一來源（2026-11-09）**：落點小島的 340×84／22 只留在 `IslandMetrics`
 （`dropIslandSize`／`dropIslandRadius`）；`StripNotchExchange.landingSize`、

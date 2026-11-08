@@ -34,7 +34,8 @@
 ## 2. 已落地的改動（`f0926fd1` 程式／`89dc8a06` 測試與探針）
 
 - **六態模型**：`Core/IslandMotionState.swift`；`Motion.notchSpring(for:transition:)`
-  以狀態取令牌，`notchSpring(for shape:)` 只留作 shape adapter。
+  以狀態取令牌；`notchSpring(for shape:)` 已移除（生產沒有呼叫點），
+  形狀 → 狀態的鏡像只留給 `NotchController.spring()` 的斷言。
   `Notch.swift` 的 `spring()` 改走狀態，並用 assert 守住 `motionShape()` 的等價性。
 - **幾何單一來源**：`dropIslandSize`／`dropIslandRadius` 收斂
   `StripNotchExchange`、`FileDragSensor.FileDropGeometry`、`Notch.dropZone`；

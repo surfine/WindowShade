@@ -32,12 +32,15 @@ func runTests() {
     check(M.dropIslandSize == CGSize(width: 340, height: 84), "落点小岛 340×84（WS2 DropIsland）")
     check(M.dropIslandRadius == 22, "落点小岛圆角 22")
     check(M.dropIslandSize != M.capsuleExpandedSize, "落点与无刘海胶囊展开是两个自由度")
-    check(M.interpolate(from: M.minimalSize, to: M.capsuleExpandedSize, progress: 0) == M.minimalSize, "t=0 是起点")
-    check(M.interpolate(from: M.minimalSize, to: M.capsuleExpandedSize, progress: 1) == M.capsuleExpandedSize, "t=1 是终点")
-    check(M.interpolate(from: M.minimalSize, to: M.capsuleExpandedSize, progress: -5) == M.minimalSize, "负进度夹到 0")
-    check(M.interpolate(from: M.minimalSize, to: M.capsuleExpandedSize, progress: 9) == M.capsuleExpandedSize, "超过 1 夹到终点")
-    let mid = M.interpolate(from: M.minimalSize, to: M.capsuleExpandedSize, progress: 0.5)
-    check(mid.width == (36 + 230) / 2 && mid.height == (36 + 64) / 2, "中点线性")
+
+    check(M.expandedWidth(hasNotch: true, availableWidth: 1000) == 408, "没有内容：刘海屏展开 408")
+    check(M.expandedWidth(hasNotch: false, availableWidth: 1000) == 371, "没有内容：外接屏展开 371")
+    check(M.expandedWidth(hasNotch: true, availableWidth: 390) == 390, "屏幕放不下时按可用宽度收")
+    check(M.expandedWidth(hasNotch: true, availableWidth: 1000, contentWidth: 416) == 416, "3 格窗口 416 不被 408 裁掉")
+    check(M.expandedWidth(hasNotch: true, availableWidth: 1000, contentWidth: 300) == 408, "内容比系统窄时仍用 408")
+    check(M.expandedWidth(hasNotch: false, availableWidth: 1000, contentWidth: 420) == 420, "外接屏内容可超 371")
+    check(M.expandedWidth(hasNotch: true, availableWidth: 420, contentWidth: 500) == 420, "内容再宽也不出可用宽度")
+    check(M.expandedWidth(hasNotch: true, availableWidth: 0) == 0, "可用宽度为 0 时不返回负值")
 
     if failures == 0 { print("PASS island-metrics") } else { print("FAILED \(failures)"); exit(1) }
 }

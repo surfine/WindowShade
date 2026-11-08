@@ -30,7 +30,8 @@ WindowShade 自己的島／實時活動，**尺寸與動畫彈簧都要與 macOS
 - `prototype/Core/SystemIsland.swift` — 能力判斷（三態，問不到不當有島；`Notch.systemIsland` 可覆寫）
 - `prototype/Core/IslandMetrics.swift` — 幾何單一來源：本體 36、圓角 18（＝高/2）、最小 36²、
   無劉海膠囊展開 230×64（`capsuleExpandedSize`）、劉海展開上限 408／外接 371／高 160、
-  落點小島 340×84（`dropIslandSize`）、`interpolate(from:to:progress:)`
+  落點小島 340×84（`dropIslandSize`）、`expandedWidth(hasNotch:availableWidth:contentWidth:)`
+  （沒有內容排時 408／371，有內容時內容優先）
 - `prototype/App/Notch.swift` — `SlotKind`（notch / systemIsland / virtual）、`containerFloor`
 - 測試：`tests/run-island-metrics-tests.sh`、`tests/run-system-island-tests.sh`、capsule / display-shape
 

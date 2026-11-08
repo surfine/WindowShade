@@ -111,7 +111,8 @@ enum Motion {
     /// 形状 → 弹簧令牌。减少动态效果时一律 `reducedNotch`（岛的外框本身直接到位，见 `NotchCanvasView.morph`）。
     /// 27.3 Mac 岛的 `#islandSizing` 只分两组：listening／prompt 用 bouncy（0.408／0.27），
     /// thinking／response／transient 用同一个尺寸弹簧（≈0.3571／0.75）；hidden 不跑尺寸动画。
-    /// 现在按「动作状态＋方向」取令牌；形状只作为过渡 adapter，映射见文件末尾的 `IslandMotionState(shape:)`。
+    /// 现在按「动作状态＋方向」取令牌；形状只保留为断言用的镜像（`IslandMotionState(shape:)`），
+    /// 不再有「形状取弹簧」的生产入口。`transition` 目前不改令牌，留给 `.hidden` 的真机结论。
     /// 来源见 docs/reverse-engineering/mac-island-springs.md §7。
     static func notchSpring(for state: IslandMotionState,
                             transition: IslandMotionTransition = .update,
@@ -126,13 +127,6 @@ enum Motion {
             // 27.3 tag 4 不跑尺寸动画；系统收合由谁承接还没证。Phase 3 追 WindowManager 链后再换。
             return .islandSizing
         }
-    }
-
-    /// 过渡 adapter：形状 → 状态。等几何与状态合流后，调用点改传 `IslandMotionState`。
-    static func notchSpring(for shape: NotchShape, reduced: Bool = Motion.reduced) -> Spring {
-        let state = IslandMotionState(shape: shape)
-        let transition: IslandMotionTransition = shape == .minimum ? .collapse : .update
-        return notchSpring(for: state, transition: transition, reduced: reduced)
     }
 }
 

@@ -44,7 +44,6 @@ struct IslandMotionStateTests {
         t.expect(table.count == Motion.NotchShape.allCases.count, "映射表覆盖每一种形状")
         for (shape, state, token, name) in table {
             t.expect(IslandMotionState(shape: shape) == state, "\(shape) → \(name)")
-            t.expect(Motion.notchSpring(for: shape, reduced: false) == token, "\(shape) 用 \(name) 令牌")
             t.expect(Motion.notchSpring(for: state, reduced: false) == token, "\(name) 用 \(name) 令牌")
         }
 
@@ -60,9 +59,6 @@ struct IslandMotionStateTests {
         t.section("C02-04", "减少动态效果：六态一律 reducedNotch")
         for state in IslandMotionState.allCases {
             t.expect(Motion.notchSpring(for: state, reduced: true) == .reducedNotch, "\(state) → reducedNotch")
-        }
-        for shape in Motion.NotchShape.allCases {
-            t.expect(Motion.notchSpring(for: shape, reduced: true) == .reducedNotch, "\(shape) → reducedNotch")
         }
 
         t.section("C02-05", "resolve：认证卡／拖放／提醒／音量／展开／紧凑／静止")
