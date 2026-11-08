@@ -109,15 +109,16 @@ enum Motion {
     }
 
     /// 形状 → 弹簧令牌。减少动态效果时一律 `reducedNotch`（岛的外框本身直接到位，见 `NotchCanvasView.morph`）。
+    /// 27.3 Mac 岛的 `#islandSizing` 只分两组：listening／prompt 用 bouncy（0.408／0.27），
+    /// thinking／response／transient 用同一个尺寸弹簧（≈0.3571／0.75）；hidden 不跑尺寸动画。
+    /// 我们按状态角色映射：`interaction`（认证卡、画手势、录音、倒数）＝ prompt/listening；
+    /// 其余形状＝内容尺寸。来源见 docs/reverse-engineering/mac-island-springs.md §7。
     static func notchSpring(for shape: NotchShape, reduced: Bool = Motion.reduced) -> Spring {
         if reduced { return .reducedNotch }
         switch shape {
-        case .minimum: return .calm
-        case .compact, .chin, .capsuleCompact: return .settle
-        case .alert: return .bloom
-        case .expanded: return .expand
-        case .interaction, .meter: return .pop
-        case .drop: return .catchDrop
+        case .interaction: return .islandPrompt
+        case .minimum, .compact, .chin, .capsuleCompact, .alert, .expanded, .meter, .drop:
+            return .islandSizing
         }
     }
 }
