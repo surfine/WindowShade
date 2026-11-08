@@ -22,6 +22,15 @@ func runTests() {
     check(M.expandedSize.width > M.inertHeight && M.expandedSize.height > M.inertHeight, "展开比本体大")
     check(M.horizontalMinimalViewWidth == 45, "最小形旁 45（Apple maximumHorizontalMinimalViewSize）")
 
+    check(M.pinnedTopSize.width > M.pinnedTopSize.height, "贴顶版是横的长方形")
+    check(M.pinnedTopSize != M.expandedSize, "贴顶与展开是两个自由度")
+    check(M.interpolate(from: M.minimalSize, to: M.expandedSize, progress: 0) == M.minimalSize, "t=0 是起点")
+    check(M.interpolate(from: M.minimalSize, to: M.expandedSize, progress: 1) == M.expandedSize, "t=1 是终点")
+    check(M.interpolate(from: M.minimalSize, to: M.expandedSize, progress: -5) == M.minimalSize, "负进度夹到 0")
+    check(M.interpolate(from: M.minimalSize, to: M.expandedSize, progress: 9) == M.expandedSize, "超过 1 夹到终点")
+    let mid = M.interpolate(from: M.minimalSize, to: M.expandedSize, progress: 0.5)
+    check(mid.width == (36 + 230) / 2 && mid.height == (36 + 64) / 2, "中点线性")
+
     if failures == 0 { print("PASS island-metrics") } else { print("FAILED \(failures)"); exit(1) }
 }
 

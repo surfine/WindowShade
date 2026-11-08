@@ -42,4 +42,16 @@ enum IslandMetrics {
 
     /// 圆角一律由高度推，并且不超过状态尺寸允许的半高。
     static func radius(forHeight height: CGFloat) -> CGFloat { max(1, height / 2) }
+
+    /// 贴顶版（`pinsTopPlatterWidth` / `pinsTopPlatterHeight`）：和展开分开的两个自由度。
+    /// Apple 把贴顶宽高做成两个独立量，而不是复用展开尺寸。
+    static let pinnedTopSize = CGSize(width: 340, height: 84)
+
+    /// 两个状态之间只插值尺寸，不在边界换一组常数。
+    /// Apple 的 `drawnPlatterSize` 本身就是动画量（见 docs/reverse-engineering/mac-island-platter.md）。
+    static func interpolate(from: CGSize, to: CGSize, progress: CGFloat) -> CGSize {
+        let t = max(0, min(1, progress))
+        return CGSize(width: from.width + (to.width - from.width) * t,
+                      height: from.height + (to.height - from.height) * t)
+    }
 }
