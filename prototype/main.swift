@@ -11,6 +11,19 @@ CrashReporting.crashForProbeIfRequested()
 // 界面语言（第27批）：跟随系统或用户在设置里的选择；只在启动时读这一次，切换由设置里的语言行即时生效。
 InterfaceLanguagePreference.applyAtLaunch()
 
+// ActivityKit 能力探针（Phase 4 骨架）：不需要 AppKit，也不需要 entitlement；只读。
+if CommandLine.arguments.contains("--activitykit-probe") {
+    let publish = ActivityKitBridge.shouldPublishOwnEars(
+        systemIslandPresent: SystemIsland.present,
+        activityKitAvailable: ActivityKitBridge.frameworkPresent,
+        mode: ActivityKitBridge.sourceMode)
+    print("activitykit: sdkCanImport=\(ActivityKitBridge.sdkCanImportFramework) "
+        + "apiOnMac=\(ActivityKitBridge.apiAvailableOnMac) framework=\(ActivityKitBridge.frameworkPresent) "
+        + "systemIslandRaw=\(SystemIsland.raw) present=\(SystemIsland.present) "
+        + "mode=\(ActivityKitBridge.sourceMode.rawValue) publishOwnEars=\(publish)")
+    exit(0)
+}
+
 if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-") || $0 == "--silent-milestone" || $0 == "--silent-cover-probe" || $0 == "--sls-offscreen-check"}) {
     // 外面已经指定了日志路径（例如在虚拟机里经 open 启动，工作目录是只读的 /）就照用。
     if getenv("WINDOWSHADE_LOG_PATH") == nil {

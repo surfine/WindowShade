@@ -97,8 +97,12 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 `CampoUILiveActivityController`、`LiveActivityMonitoring`、
 `LiveActivityRequestMonitor`、`LiveActivityPresentationWatcher`，以及
 `didStartLiveActivity`／`canStartLiveActivity`／`awaitingLiveActivity` 狀態。
-系統島是 ActivityKit 的消費端；第三方 Live Activity 能否真的進島，需要簽名構建＋
-真機驗證（見 `docs/live-activities.md`）。
+系統島是 ActivityKit 的消費端。但 macOS SDK 的 `Activity`／`ActivityAuthorizationInfo`
+全部標了 `@available(macOS, unavailable)`：能 `import ActivityKit`，不能在 macOS 上
+發或收 Live Activity（不是 entitlement 問題）。WindowShade 的骨架
+`Core/ActivityKitBridge.swift` 只做運行時探測＋讓位策略（預設 `.inAppOnly`，
+真機 spike 才切 `.yieldToSystem`）；探針 `--activitykit-probe`。見
+`docs/live-activities.md` 與 C06。
 
 ### 已經失敗的路（不要重複）
 

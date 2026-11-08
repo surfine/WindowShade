@@ -27,7 +27,8 @@
 | 劉海／外接展開上限 408／371、高 160 | Aaron #29/#83；shelf 內容排可超 408 | **provisional（產品決定）** | `island-metrics.md` §8 |
 | 13 種實時活動 → 六態 | 已接進 `resolve`：錄音／等你的會話用 `islandPrompt`，其餘按種類 | **inferred（語義）** | `Core/NotchActivityMotion.swift`、C02-06／C03 |
 | macOS 27.3 系統島消費 ActivityKit | 已證（連結＋Controller＋Watcher） | **proven（基礎設施）** | `docs/live-activities.md` |
-| 第三方 Live Activity 在 Mac 島上的可見性 | 需要簽名構建＋真機 | **blocked** | 同上 |
+| macOS 第三方發／收 Live Activity | SDK 的 Activity API 標了 `@available(macOS, unavailable)` | **blocked（API 未開放）** | `Core/ActivityKitBridge.swift`、C06 |
+| 系統島呈現時抑制重複耳朵 | 策略已落地，預設 `.inAppOnly` | **provisional** | `ActivityKitBridge.shouldPublishOwnEars` |
 | `drawnPlatterSize`／`pinsTopPlatterWidth/Height` 執行時值 | 需要真機或 runtime | **blocked** | `mac-island-platter.md` §5 |
 
 ## 2. 已落地的改動（`f0926fd1` 程式／`89dc8a06` 測試與探針）

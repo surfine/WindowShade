@@ -42,4 +42,5 @@ jobs:
           bash tests/run-island-motion-state-tests.sh
           bash tests/run-notch-activity-motion-tests.sh
           bash tests/run-island-transition-tests.sh
+          bash tests/run-activitykit-bridge-tests.sh
           bash tests/run-motion-lint.sh

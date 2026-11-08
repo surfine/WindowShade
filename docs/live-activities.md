@@ -66,12 +66,21 @@ cd prototype && ./build.sh --check
 - `ActivityKit.ActivityDescriptor`、`AlertConfiguration`、`ActivityDescriptorContentState`
 
 状态字段另有 `didStartLiveActivity`、`canStartLiveActivity`、`liveActivitySettleDelay`、
-`awaitingLiveActivity`。结论：**系统岛是 ActivityKit 的消费端**，第三方 Live Activity
-在基础设施层可以进岛；能不能真的开始，取决于 app 的 ActivityKit entitlement 与用户授权，
-这一层要签名构建 + 真机验证，静态分析到此为止。
+`awaitingLiveActivity`。结论：**系统岛是 ActivityKit 的消费端**。
 
-对 WindowShade：仍以 in-app 来源为主；系统岛让位（PROLED）时抑制重复耳朵（Aaron #39）。
-是否新增 ActivityKit 来源，等一次真机 spike 再定，不在本轮改发布路径。
+但 macOS SDK 这一层要分清两件事：`canImport(ActivityKit)` 为 true（模块在），
+而 `Activity`／`ActivityAuthorizationInfo` 等 API 全部标了 `@available(macOS, unavailable)`。
+所以第三方 app 在 macOS 上**不能编译期发或收 Live Activity**，不是 entitlement 问题，
+是 API 不在 macOS 上开放。WindowShade 的骨架因此只做现在能做对的两件事：
+
+- 运行时能力探测：`ActivityKitBridge.frameworkPresent`（/System/Library/Frameworks/ActivityKit.framework）；
+- 让位策略：`shouldPublishOwnEars(systemIslandPresent:activityKitAvailable:mode:)`，
+  默认 `.inAppOnly`（一律自己画），真机 spike 才切 `.yieldToSystem`（系统岛 + ActivityKit
+  都在时不画重复耳朵，Aaron #39）。
+
+探针：`WindowShade --activitykit-probe`，打印 `sdkCanImport / apiOnMac / framework /
+systemIsland / mode / publishOwnEars`。实现见 `prototype/Core/ActivityKitBridge.swift`，
+测试 C06（`tests/run-activitykit-bridge-tests.sh`）。
 
 ## 第一方依据
 
