@@ -15,13 +15,13 @@ import Foundation
 enum StripNotchExchange {
     // MARK: 落点
 
-    /// 刘海下沿往下多远还算在落点范围里（点）。
-    static let reachBelow: CGFloat = 84
-    /// 刘海正中往左右多远还算在落点范围里（点）。
-    static let reachSide: CGFloat = 170
-    /// 落点小岛：宽 340、高 84，圆角 22（稿里的数字）。
-    static let landingSize = CGSize(width: 340, height: 84)
-    static let landingRadius: CGFloat = 22
+    /// 落点小岛：宽 340、高 84，圆角 22（数字收在 IslandMetrics.dropIslandSize）。
+    static let landingSize = IslandMetrics.dropIslandSize
+    static let landingRadius = IslandMetrics.dropIslandRadius
+    /// 刘海下沿往下多远还算在落点范围里（点）：就是落点小岛的高。
+    static let reachBelow: CGFloat = IslandMetrics.dropIslandSize.height
+    /// 刘海正中往左右多远还算在落点范围里（点）：就是落点小岛的一半宽。
+    static let reachSide: CGFloat = IslandMetrics.dropIslandSize.width / 2
     /// 刘海那一排展开时的外框圆角和左段格子的宽与圆角（同 NotchRow，稿里 28 / 124 / 14）。
     static let expandedRadius: CGFloat = 28
     static let rowCellWidth: CGFloat = 124

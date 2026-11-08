@@ -2952,7 +2952,9 @@ final class NotchPanel: NSPanel {
 
     /// 落点小岛（Cocoa 坐标）：刘海正下方、菜单栏下面，横着排五个去处。
     var dropZone: NSRect {
-        NSRect(x: notch.midX - 170, y: notch.minY - 84, width: 340, height: 84)
+        let size = IslandMetrics.dropIslandSize
+        return NSRect(x: notch.midX - size.width / 2, y: notch.minY - size.height,
+                      width: size.width, height: size.height)
     }
 
     /// 正在拖的那扇窗的最小尺寸；nil 按 200×150。
@@ -3276,6 +3278,11 @@ final class NotchPanel: NSPanel {
     }
 
     /// 探针用：岛（屏幕坐标，模型值）、底角、面板外框、两个肩（尖角在屏幕上的位置、长出多少）、肩那层窗口。
+    /// 探针用：呈现层上的岛外框（面板坐标 → 屏幕坐标）。
+    var islandPresentationForProbe: NSRect? {
+        canvas.islandPresentationFrameForProbe?.offsetBy(dx: frame.minX, dy: frame.minY)
+    }
+
     var shapeForProbe: (island: NSRect, radius: CGFloat, panel: NSRect, shoulders: NotchShoulders.Probe?)? {
         guard let island = canvas.islandFrameForProbe else { return nil }
         return (island.offsetBy(dx: frame.minX, dy: frame.minY), canvas.islandRadiusForProbe, frame, shoulderWindow?.probe)
@@ -4164,12 +4171,12 @@ final class NotchPanel: NSPanel {
                     IslandStyle(cornerRadius: radius, allCorners: isVirtual, fill: .black, border: 0.5))
         }
         if stripLanding, dropState != .none {
-            // 卷轴概览拖来的一扇：340 × 84，圆角 22，顶边贴着屏幕顶，横向居中在刘海上（稿 SS-04，数字在 StripNotchExchange）。
+            // 卷轴概览拖来的一扇：落点 340 × 84、圆角 22（IslandMetrics.dropIslandSize），顶边贴着屏幕顶，横向居中在刘海上。
             return (StripNotchExchange.landingFrame(notch: notch),
                     IslandStyle(cornerRadius: StripNotchExchange.landingRadius, allCorners: false, fill: .black, border: 1))
         }
         if dropState != .none, fileDrop != nil {
-            // 文件那一种：340 × 84，圆角 22，顶边贴着屏幕顶，上面一条绕着刘海排，下面一排三格（稿“拖近刘海”）。
+            // 文件那一种：同样的落点尺寸与圆角，顶边贴着屏幕顶，上面一条绕着刘海排，下面一排三格（稿“拖近刘海”）。
             let rect = FileDropGeometry.island(notchMidX: notch.midX, screenTop: notch.maxY)
             return (rect, IslandStyle(cornerRadius: FileDropGeometry.islandCorner, allCorners: false, fill: .black, border: 1))
         }
@@ -4310,10 +4317,49 @@ final class NotchPanel: NSPanel {
         }
     }
 
-    /// 这一下该用的弹簧：按形状取令牌；没有动量的（指针停上来、收回）不回弹，提醒带一点弹性，
-    /// 要手指介入的用 `pop`；减少动态效果时岛直接到位（`morph` 不挂弹簧），这里只剩内容淡化的时长。
+    /// 这一刻的动作状态（六态）。优先序与 `motionShape()` 一致；`assert` 防止两套 adapter 漂移。
+    private func motionState() -> IslandMotionState {
+        let compact = displayCompact() != nil
+        return IslandMotionState.resolve(
+            isAuthenticating: isAuthenticating,
+            authenticationIsExpandedCard: authenticationView is NowPlayingCard || authenticationView is FileShelfView,
+            isExpanded: isExpanded,
+            hasAlert: alertInfo != nil,
+            hasMeter: meter != nil,
+            isDragging: dropState != .none,
+            compactKind: compact ? motionCompactKind : nil,
+            compactActivity: compact ? compactActivityMotionState : nil
+        )
+    }
+
+    /// 撑起紧凑两耳的那条活动（音量／电量／窗口紧凑时 nil）。与 `displayCompact()` 同一条选择。
+    private var compactActivity: NotchActivity? {
+        guard meter == nil, powerFlashState == nil, !isExpanded, dropState == .none,
+              alertInfo == nil, !isAuthenticating else { return nil }
+        return activityItems.first(where: { $0.id == activitySelection }) ?? activityItems.first
+    }
+
+    private var compactActivityMotionState: IslandMotionState? { compactActivity?.motionState }
+
+    private var motionCompactKind: IslandCompactKind {
+        switch compactShape {
+        case .sides: return .sides
+        case .chin: return .chin
+        case .pill: return .pill
+        case .pending: return .pending
+        }
+    }
+
+    /// 这一下该用的弹簧：按动作状态取令牌；hidden 暂用尺寸弹簧，等 Phase 3 追完 WindowManager 链。
     private func spring() -> NotchCanvasView.Spring {
-        let token = Motion.notchSpring(for: motionShape())
+        let state = motionState()
+        // 活动可以给紧凑状态换令牌（录音／等你的会话 → prompt）：形状仍是紧凑，
+        // 所以只在 shape 推出 thinking 时允许活动覆盖。
+        let shapeState = IslandMotionState(shape: motionShape())
+        assert(state == shapeState || (shapeState == .thinking && state == compactActivityMotionState),
+               "motionState and motionShape drifted")
+        let transition: IslandMotionTransition = state == .hidden ? .collapse : .update
+        let token = Motion.notchSpring(for: state, transition: transition)
         return NotchCanvasView.Spring(response: token.response, bounce: token.bounce)
     }
 
@@ -4777,6 +4823,8 @@ final class NotchCanvasView: NSView {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     var islandFrameForProbe: NSRect? { island.frame }
+    /// 呈现层上的岛外框：动画中途读到的是这一帧真正画出来的位置，不是已经设好的目标。
+    var islandPresentationFrameForProbe: NSRect? { (island.presentation() ?? island).frame }
     var islandRadiusForProbe: CGFloat { island.cornerRadius }
     var isBare: Bool { island.opacity == 0 }
 

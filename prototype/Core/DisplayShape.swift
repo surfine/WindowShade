@@ -562,7 +562,7 @@ enum NotchCapsule {
     /// 胶囊和菜单栏下沿的间距（与认证态的 notch.minY - 8 一致）。
     static let menuBarGap: CGFloat = 8
     static let minimalSize = IslandMetrics.minimalSize
-    static let expandedSize = IslandMetrics.expandedSize
+    static let capsuleExpandedSize = IslandMetrics.capsuleExpandedSize
 
     enum State: CaseIterable { case minimal, compact, alert, expanded, interaction }
 
@@ -572,7 +572,7 @@ enum NotchCapsule {
         case .minimal: return minimalSize
         case .compact: return compact
         case .alert: return alert
-        case .expanded: return expandedSize
+        case .expanded: return capsuleExpandedSize
         case .interaction: return interaction
         }
     }

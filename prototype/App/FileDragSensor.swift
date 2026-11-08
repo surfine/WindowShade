@@ -187,10 +187,10 @@ enum FileDropPlan {
 
 // MARK: - 几何
 
-/// 落点小岛（文件那一种）的数字，照稿：340 × 84，圆角 22，格 100.7 × 34.5、圆角 12，格间 6，边距 10。
+/// 落点小岛（文件那一种）：尺寸与圆角收在 IslandMetrics，格子 100.7 × 34.5、圆角 12、格间 6、边距 10 照稿。
 enum FileDropGeometry {
-    static let islandSize = CGSize(width: 340, height: 84)
-    static let islandCorner: CGFloat = 22
+    static let islandSize = IslandMetrics.dropIslandSize
+    static let islandCorner = IslandMetrics.dropIslandRadius
     static let cellSize = CGSize(width: 100.7, height: 34.5)
     static let cellCorner: CGFloat = 12
     static let cellGap: CGFloat = 6
