@@ -24,7 +24,7 @@
 | WindowManager `SpringBehavior` 預設 response 0.38／0.30、damping 1.0 | 已讀出 accessor | **proven（值）／未接（用途）** | §7.6 第 4 點 |
 | 無劉海膠囊展開 230×64 | WS2 設計值，不是 Mac 系統島值 | **provisional** | `island-metrics.md` §8 |
 | 落點小島 340×84／22 | WS2 `DropIsland`，已收單一來源 | **provisional（血緣）** | `IslandMetrics.dropIslandSize` |
-| 劉海／外接展開上限 408／371、高 160 | Aaron #29/#83；shelf 內容排可超 408 | **provisional（產品決定）** | `island-metrics.md` §8 |
+| 劉海／外接展開上限 408／371、高 160 | 已接進展開寬度與單層內容高；shelf 內容排可超 408 | **provisional（產品決定）** | `IslandMetrics.expandedWidth`、`island-metrics.md` §8 |
 | 13 種實時活動 → 六態 | 已接進 `resolve`：錄音／等你的會話用 `islandPrompt`，其餘按種類 | **inferred（語義）** | `Core/NotchActivityMotion.swift`、C02-06／C03 |
 | macOS 27.3 系統島消費 ActivityKit | 已證（連結＋Controller＋Watcher） | **proven（基礎設施）** | `docs/live-activities.md` |
 | macOS 第三方發／收 Live Activity | SDK 的 Activity API 標了 `@available(macOS, unavailable)` | **blocked（API 未開放）** | `Core/ActivityKitBridge.swift`、C06 |

@@ -148,8 +148,9 @@ selector 路徑不再是唯一選項：27.3 的 `MacAssistantIslandSessionModel`
 2. `IslandMetrics` 的尺寸與圓角全部由同一條模型推出，且以動畫量插值。
    目前 36／18／36² 已收斂；230×64 只給無劉海膠囊（`capsuleExpandedSize`）；
    340×84／22 已收斂到 `dropIslandSize`，`StripNotchExchange`／`FileDragSensor`／
-   `Notch.dropZone` 都改成引用；408／371／160 已進常數庫，`expandedMaxWidth(hasNotch:)`
-   已提供，但多窗口 shelf 刻意可以超過 408（見 `island-metrics.md` §8）。
+   `Notch.dropZone` 都改成引用；408／371 已接進 `legacyBaseTarget()` 的展開寬度
+   （`expandedWidth(hasNotch:availableWidth:contentWidth:)`，沒有內容排時 408／371），
+   160 約束單層內容高度；多窗口 shelf 刻意可以超過 408（見 `island-metrics.md` §8）。
 3. `./build.sh --check` EXIT=0（2026-11-09 05:31）；快速測試全綠：
    island-metrics、capsule-shape、display-shape、system-island、notch-token、
    motion-tokens、island-motion-state（C02 79）、notch-activity-motion（C03 22）、
