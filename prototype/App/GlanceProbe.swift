@@ -81,6 +81,10 @@ final class GlanceProbe {
     for flag in ["--other-space", "--minimize", "--fullscreen"] where CommandLine.arguments.contains(flag) {
       fixtureArguments.append(flag)
     }
+    // 側拉換桌面要臨時窗自己挪到另一張桌面。沒帶這個旗標時窗口一直在這張桌面上，等不到離屏。
+    if CommandLine.arguments.contains("--slide-over-desktops"), !fixtureArguments.contains("--other-space") {
+      fixtureArguments.append("--other-space")
+    }
     // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
     if CommandLine.arguments.contains("--restore-guard") { fixtureArguments.append("--minimizable-other") }
     // 规格 R20：--window-classes 让临时 App 额外开出 PiP／弹出条／刘海浮层／遮蔽／搜索条几类窗，编号写进这个文件。
@@ -132,7 +136,7 @@ final class GlanceProbe {
       id = element.flatMap(windowID(of:)) ?? 0
       return id != 0 && onscreen(id)
     }
-    guard let element, let original = bounds(id) else { throw EffectError.unavailable("no fixture") }
+    guard let element, let original = await settledBounds(id) else { throw EffectError.unavailable("no fixture") }
     try await Task.sleep(for: .milliseconds(300), clock: .suspending)
     // 空闲唤醒基线：摆好一个功能场景，确认它的定时器在跑，一动不动撑 N 秒（App/HubHoldProbe.swift）。
     if let kind = Self.requestedHoldKind {
@@ -928,13 +932,20 @@ final class GlanceProbe {
     try await Task.sleep(for: .seconds(2), clock: .suspending)
     let otherStillFolded = owner.shaded[otherID] != nil
     let otherVisible = cgWindowIsVisible(id: otherID, fallbackSize: .zero) == true && onscreen(otherID)
+    // 台前调度开着时，收起的兄弟窗被缩成侧条里的一张卡片：CG 仍报它在屏上（所以 otherVisible 为 true），
+    // 但外框已经缩到 AX 尺寸的七成以下、贴着屏幕边。那不是「冒出来了」，正是 R19 要的结果。
+    // 只有外框还是原尺寸才算真回到舞台。
+    let otherParked = axSize(other).map { owner.windowParkedInStageStrip(id: otherID, axSize: $0) } ?? false
     // 这个 App 在屏上的窗口里，最前面的应当是刚展开的那扇（CG 列表按前后排）。
     let ordered = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? [])
       .filter { ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid && ($0[kCGWindowLayer as String] as? NSNumber)?.intValue == 0 }
       .compactMap { ($0[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) } }
     print("INFO restore-guard: hide strategies \(strategies); app windows front to back \(ordered)")
-    print(otherStillFolded && !otherVisible ? "PASS restore-guard: the other folded window stays folded while one is restored"
-      : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible))")
+    print("INFO restore-guard: other window after restore cg=\(bounds(otherID).map { "\($0)" } ?? "-") ax=\(axSize(other).map { "\($0)" } ?? "-") stageManager=\(stageManagerEnabled) parkedInStrip=\(otherParked)")
+    let otherCameBackWhole = otherVisible && !otherParked
+    print(otherStillFolded && !otherCameBackWhole
+      ? "PASS restore-guard: the other folded window stays folded while one is restored\(otherParked ? " (parked as a Stage Manager strip card)" : "")"
+      : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible) parkedInStrip=\(otherParked))")
     print(ordered.first == id ? "PASS restore-guard: the restored window is the app's front window"
       : "FAIL restore-guard: the app's front window is \(ordered.first.map(String.init) ?? "none"), not the restored one")
     _ = owner.unshade(otherID)
@@ -1427,6 +1438,26 @@ final class GlanceProbe {
   }
 
   func bounds(_ id: CGWindowID) -> CGRect? { cgWindowInfo(id).flatMap(cgWindowBounds) }
+
+  /// 等窗口的框停稳再取：台前调度把刚叫到前面的窗口滑进场、还会做一次取整，
+  /// 落地时会挪 1–2 点。窗口一亮就量「原位」，之后任何手势都像把窗口挪动了。
+  /// 连续这么多毫秒不变才算原位；返回最后一次读到的框。
+  func settledBounds(_ id: CGWindowID, quiet: Double = 0.35, timeout: Double = 3) async -> CGRect? {
+    let started = CACurrentMediaTime()
+    var last = bounds(id)
+    var since = CACurrentMediaTime()
+    while CACurrentMediaTime() - started < timeout {
+      try? await Task.sleep(for: .milliseconds(40), clock: .suspending)
+      let now = bounds(id)
+      if let now, let last, now.equalTo(last) {
+        if CACurrentMediaTime() - since >= quiet { return now }
+      } else {
+        since = CACurrentMediaTime()
+      }
+      last = now
+    }
+    return last
+  }
 
   func closeTo(_ a: CGRect, _ b: CGRect) -> Bool {
     abs(a.minX - b.minX) < 2 && abs(a.minY - b.minY) < 2

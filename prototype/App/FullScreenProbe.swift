@@ -1,7 +1,7 @@
 import Cocoa
 
-/// 全屏 App 的桌面（--fullscreen）：带到每张桌面的卷帘条、侧拉的把手、刘海都设成在全屏 App 的桌面上也挂着
-/// （.fullScreenAuxiliary），这里真的进一次全屏看看。
+/// 全屏 App 的桌面（--fullscreen）：带到每张桌面的卷帘条、侧拉的把手设成在全屏 App 的桌面上也挂着
+/// （.fullScreenAuxiliary）。刘海同样挂着，但原生全屏桌面上让开、不画（NotchSpaceGate）；退出后要回来。
 /// 临时 App 把它自己的一扇窗进系统全屏（它自己调 toggleFullScreen，和点绿色按钮一样），WindowShade 这边看
 /// 三样东西在不在那张全屏桌面上（窗口服务器说它此刻就在屏幕上）；退出全屏回来，卷帘条和把手照旧藏好。
 /// 卷帘条只挂在主屏幕上，刘海只在带刘海的屏上：在主屏幕上进一次全屏；带刘海的屏不是主屏幕时，再在那块屏上进一次。
@@ -189,14 +189,18 @@ extension GlanceProbe {
           }) != nil
           print("\(shown ? "PASS" : "FAIL") fullscreen: the Slide Over handle shows on a full-screen app's desktop on the \(name) (\(describe(tabPanel())))")
         }
-        if notchHere {
-          func notchPanel() -> NotchPanel? {
-            NSApp.windows.compactMap { $0 as? NotchPanel }.first {
-              target.frame.contains(NSPoint(x: $0.notch.midX, y: $0.notch.midY))
-            }
+        func notchPanel() -> NotchPanel? {
+          NSApp.windows.compactMap { $0 as? NotchPanel }.first {
+            target.frame.contains(NSPoint(x: $0.notch.midX, y: $0.notch.midY))
           }
-          let shown = (try? await wait("notch on the full-screen desktop", timeout: 4) { onScreenNow(notchPanel()) }) != nil
-          print("\(shown ? "PASS" : "FAIL") fullscreen: the notch panel is there on a full-screen app's desktop (\(describe(notchPanel())))")
+        }
+        if notchHere {
+          // 原生全屏桌面：刘海让开，不画在全屏 App 上。面板还在，只是不可见。
+          let yielded = (try? await wait("notch yields on the full-screen desktop", timeout: 4) {
+            guard let panel = notchPanel() else { return false }
+            return panel.yieldsToSystem && !onScreenNow(panel)
+          }) != nil
+          print("\(yielded ? "PASS" : "FAIL") fullscreen: the notch yields on a full-screen desktop and is not drawn over the app (\(describe(notchPanel())) yielded=\(notchPanel()?.yieldsToSystem == true))")
         } else if round == targets.count - 1, NotchController.notchScreen() == nil || !NotchController.isEnabled {
           print("INFO fullscreen: no notch showing on this Mac (or the notch is off in Settings); notch check skipped")
         }
@@ -220,6 +224,13 @@ extension GlanceProbe {
         if slideReady { tabAway = (try? await wait("handle put away again", timeout: 4) { !slide.tabVisible }) != nil }
         if strip != nil || slideReady {
           print("\(stripAway && tabAway ? "PASS" : "FAIL") fullscreen: back on the windows' own desktop, the strip and the Slide Over handle are put away again (strip hidden=\(stripAway) handle hidden=\(tabAway))")
+        }
+        if notchHere {
+          let back = (try? await wait("notch back after full screen", timeout: 4) {
+            guard let panel = notchPanel() else { return false }
+            return !panel.yieldsToSystem && onScreenNow(panel)
+          }) != nil
+          print("\(back ? "PASS" : "FAIL") fullscreen: leaving full screen brings the notch back (\(describe(notchPanel())) yielded=\(notchPanel()?.yieldsToSystem == true))")
         }
       } catch {
         await putBack()

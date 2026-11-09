@@ -14,6 +14,14 @@ extension GlanceProbe {
     gestureFixturePID = pid
   }
 
+  /// 收起之后窗口是不是真离开了桌面。台前调度把最小化做成侧条上的卡片：卡片在窗口表里
+  /// 仍算「屏上」，但它和离屏一样是被系统收起来了（`windowParkedInStageStrip` 是生产用的同一判据）。
+  func putAway(_ id: CGWindowID, element: AXUIElement) -> Bool {
+    if !windowIsOnScreenNow(id) { return true }
+    guard let size = axSize(element), size.width > 0, size.height > 0 else { return false }
+    return owner.windowParkedInStageStrip(id: id, axSize: size)
+  }
+
   /// 真实的滚动只会落在指针下最上面那扇窗：做手势前确认临时 App 在最前面。
   func keepFixtureInFront() async {
     guard gestureFixturePID != 0,
@@ -105,7 +113,9 @@ extension GlanceProbe {
     try await swipe(at: content, finger: CGVector(dx: 0, dy: 5), steps: 14)
     try await Task.sleep(for: .milliseconds(150), clock: .suspending)
     guard gestures.lastPerformed == nil, !hud.isVisible, let now = bounds(id), closeTo(now, original) else {
-      throw EffectError.unavailable("content swipe did something (performed=\(String(describing: gestures.lastPerformed)))")
+      let seen = String(describing: bounds(id))
+      let performed = String(describing: gestures.lastPerformed)
+      throw EffectError.unavailable("content swipe did something (performed=\(performed) hud=\(String(describing: hud.isVisible)) hudAt=\(String(describing: hud.frame)) bounds=\(seen) original=\(String(describing: original)))")
     }
     print("PASS gesture: swiping in the window's content does nothing")
 
@@ -348,7 +358,10 @@ extension GlanceProbe {
     try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14)
     try await wait("folded again", timeout: 3) { self.owner.currentOperationState(self.id) == .folded }
     try await Task.sleep(for: .milliseconds(800), clock: .suspending)
-    guard let strip = owner.shaded[id]?.overlay?.frame else { throw EffectError.unavailable("no strip") }
+    guard let strip = owner.shaded[id]?.overlay?.frame else {
+      let state = owner.shaded[id]
+      throw EffectError.unavailable("no strip after folding again (shaded=\(state != nil) hide=\(state?.hide.rawValue ?? "-") op=\(owner.currentOperationState(id).rawValue) effects=\(effects.activeCount) onscreen=\(onscreen(id)) bounds=\(bounds(id).map { "\($0)" } ?? "-") minimized=\(axObservedBoolAttribute(element, kAXMinimizedAttribute as String).map(String.init) ?? "-")")
+    }
     gestures.doubleTap(at: CGPoint(x: strip.midX, y: coordinateBaselineY() - strip.midY))
     try await wait("double tap expands", timeout: 3) {
       self.owner.shaded[self.id] == nil && self.onscreen(self.id)
@@ -1199,6 +1212,8 @@ extension GlanceProbe {
     owner.gestures.setFrame(wins[0], ScreenTile.leftHalf.frame(in: area))
     owner.gestures.setFrame(wins[1], ScreenTile.rightHalf.frame(in: area))
     try await raise([wins[0], wins[1]])
+    // refresh 在背景認縫，回來才寫 seams。立刻讀一定是 0。
+    try await wait("split seam", timeout: 3) { split.seamsForProbe.count == 1 }
     let pair = split.seamsForProbe.first
     let bar = split.dividerFramesForProbe.first
     let centered = bar.map { abs(axPosition(fromCocoaFrame: $0).x + $0.width / 2 - area.midX) < 2 } == true
@@ -1217,7 +1232,10 @@ extension GlanceProbe {
     await split.dragForProbe(0, to: area.minX + area.width * 0.55, velocity: 3000)
     try await wait("right window into slide over", timeout: 4) { self.owner.slideOver.isSlideOver(idb) }
     let filled = ArrangeGap.apply(area, in: area)
-    try await wait("left window fills", timeout: 3) { self.bounds(ida).map { self.closeTo($0, filled) } == true }
+    // 鋪滿後外框和可用區域差幾點（程式塢、取整）。產品把 4 點以內當成同一格。
+    try await wait("left window fills", timeout: 3) {
+      self.bounds(ida).map { ArrangementRules.sameFrame($0, filled) } == true
+    }
     print("PASS split: flinging the bar to the right sends the right window into Slide Over and the left one fills the screen")
     owner.slideOver.exit(reason: "probe")
     try await wait("slide over gone", timeout: 3) { !self.owner.slideOver.isSlideOver(idb) }
@@ -1228,6 +1246,7 @@ extension GlanceProbe {
     owner.gestures.setFrame(wins[1], ScreenTile(x: 3, width: 3, row: .top).frame(in: area))
     owner.gestures.setFrame(wins[2], ScreenTile(x: 3, width: 3, row: .bottom).frame(in: area))
     try await raise([wins[0], wins[1], wins[2]])
+    try await wait("split seams", timeout: 3) { split.seamsForProbe.count == 2 }
     let found = split.seamsForProbe
     let vertical = found.firstIndex { $0.axis == .vertical }
     let horizontal = found.first { $0.axis == .horizontal }
@@ -1530,7 +1549,7 @@ extension GlanceProbe {
     // 这种窗口晃不走是对的：收起会安全地退回原样。）
     if NotchController.isEnabled, owner.notch.isAvailable {
       gestures.shake(keeping: smallID, pid: pid)
-      try await wait("shaken away", timeout: 5) { self.owner.notch.isTucked(self.id) && !windowIsOnScreenNow(self.id) }
+      try await wait("shaken away", timeout: 5) { self.owner.notch.isTucked(self.id) && self.putAway(self.id, element: element) }
       let keeperStays = windowIsOnScreenNow(smallID)
       try await Task.sleep(for: .milliseconds(900), clock: .suspending)
       gestures.shake(keeping: smallID, pid: pid)
@@ -1633,6 +1652,11 @@ extension GlanceProbe {
   /// 侧拉带到每张桌面（--slide-over-desktops，配 --other-space）：窗口在另一张桌面时，这张桌面上挂着把手；
   /// 拉出来的是它的实时画面（从边上滑进来、画面在更新）；往边上推回去，把手又挂回来。不切换你的桌面。
   func exerciseSlideOverAcrossDesktops(element: AXUIElement, pid: pid_t) async throws {
+    if let original = bounds(id), let screen = screenForAXWindow(pos: original.origin, size: original.size),
+       let display = displayID(for: screen), gapDesktops(on: display).count < 2 {
+      print("INFO slide-over desktops: only one desktop on this screen; skipped (add a desktop in Mission Control to run it)")
+      return
+    }
     try await wait("window on another desktop", timeout: 6) { !cgWindowIsCurrentlyOnScreen(self.id) }
     let slide = owner.slideOver
     slide.enter(element, id: id, pid: pid)
@@ -1882,7 +1906,7 @@ extension GlanceProbe {
 
     guard let home = bounds(id) else { throw EffectError.unavailable("no fixture frame") }
     notch.tuck(element, id: id, pid: pid, landed: home, home: home, velocity: .zero)
-    try await wait("tucked away", timeout: 5) { !windowIsOnScreenNow(self.id) && self.owner.shaded[self.id] != nil }
+    try await wait("tucked away", timeout: 5) { self.putAway(self.id, element: element) && self.owner.shaded[self.id] != nil }
     try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     try await Task.sleep(for: .milliseconds(800), clock: .suspending)
     let alpha = owner.shaded[id]?.overlay?.alphaValue ?? -1
@@ -1962,7 +1986,7 @@ extension GlanceProbe {
     let stillTucked = notch.isTucked(id) && owner.shaded[id] != nil
     notch.endPeekForProbe()
     let closed = (try? await wait("peek rolled back", timeout: 5) {
-      !self.owner.glance.hasSession(self.id) && !windowIsOnScreenNow(self.id)
+      !self.owner.glance.hasSession(self.id) && self.putAway(self.id, element: element)
         && (self.owner.shaded[self.id]?.overlay?.alphaValue ?? -1) == 0
     }) != nil
     print("\(peeking && live && stillTucked && closed && !notch.isPeeking ? "PASS" : "FAIL") notch: resting on it in the notch shows it live, in its own place, without taking it out; moving off rolls it back and hides its strip again (peek=\(peeking) shown=\(live) live=\(owner.glance.isLive(id)) tucked=\(stillTucked) closed=\(closed))")
@@ -1977,7 +2001,7 @@ extension GlanceProbe {
     let savedSetting = UserDefaults.standard.object(forKey: NotchController.enabledKey)
     try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     notch.tuck(element, id: id, pid: pid, landed: home, home: home, velocity: .zero)
-    try await wait("tucked for the switch", timeout: 5) { !windowIsOnScreenNow(self.id) && notch.isTucked(self.id) }
+    try await wait("tucked for the switch", timeout: 5) { self.putAway(self.id, element: element) && notch.isTucked(self.id) }
     try await Task.sleep(for: .milliseconds(500), clock: .suspending)
     notch.setEnabled(false)
     try await wait("back when switched off", timeout: 5) { windowIsOnScreenNow(self.id) && self.owner.shaded[self.id] == nil }
@@ -2020,7 +2044,7 @@ extension GlanceProbe {
     for i in 0..<8 { samples.append((t0 - Double(7 - i) * 0.008, NSPoint(x: release.x, y: release.y - CGFloat(7 - i) * 0.008 * 2600))) }
     let outcome = owner.gestures.simulateFlick(windowID: id, pid: pid, frameAtDown: start, down: down,
                                                samples: samples, release: release, at: t0)
-    try await wait("flicked into the notch", timeout: 5) { !windowIsOnScreenNow(self.id) && notch.isTucked(self.id) }
+    try await wait("flicked into the notch", timeout: 5) { self.putAway(self.id, element: element) && notch.isTucked(self.id) }
     print("PASS notch: flicking the title bar up at the notch flies the window into it (\(outcome ?? "taken"))")
     notch.release(id, reason: "probe done")
     try await wait("back again", timeout: 5) { windowIsOnScreenNow(self.id) }
@@ -2078,10 +2102,15 @@ extension GlanceProbe {
     ]
     for cell in cells {
       try await dropOnIsland(cell.choice)
+      // 落點按松手當下的可用區域算。可用區域會跟著程式塢顯隱變幾點；產品把 4 點以內當成同一格。
+      var want = cell.want
       let placed = (try? await wait("\(cell.name) from the island", timeout: 3) {
-        self.bounds(self.id).map { self.closeTo($0, cell.want) } == true
+        let live = screen.visibleFrame
+        let liveArea = CGRect(origin: axPosition(fromCocoaFrame: live), size: live.size)
+        want = cell.choice == .fill ? RefitLayout.fill.frame(in: liveArea) : ScreenTile.rightHalf.frame(in: liveArea)
+        return self.bounds(self.id).map { ArrangementRules.sameFrame($0, want) } == true
       }) != nil
-      print("\(placed ? "PASS" : "FAIL") notch: dropping a title bar on the \(cell.name) square of the landing island puts the window there (\(bounds(id).map { "\($0)" } ?? "-") want \(cell.want))")
+      print("\(placed ? "PASS" : "FAIL") notch: dropping a title bar on the \(cell.name) square of the landing island puts the window there (\(bounds(id).map { "\($0)" } ?? "-") want \(want))")
       try await putHome()
     }
     // 魔法平铺那一格：和 --magic 一样先摆好（大的在左边一点、在最前，小的在右边）；松手后拖着的那扇做主窗口靠左，小的在另一边。
