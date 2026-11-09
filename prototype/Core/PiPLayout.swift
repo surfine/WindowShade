@@ -144,11 +144,18 @@ enum PiPLayout {
     /// 那一边外面有别的屏幕（others，整块屏）、推过去会露在那块屏上，就换另一边；两边都会露出来返回 nil。
     /// y 夹在这块屏的上下之间，露着的那 peek 点始终落在这块屏上。
     static func parked(_ window: CGRect, screenAX: CGRect, others: [CGRect] = [], peek: CGFloat = 2) -> CGRect? {
+        parkCandidates(window, screenAX: screenAX, others: others, peek: peek).first
+    }
+
+    /// 让开的落点：近的那条边在前、另一边在后；两边都挨着别的屏幕时没有。
+    /// 台前调度会把推到侧条那一边的窗口拉回舞台（见 StagePark），所以调用方可能需要换另一边再试。
+    static func parkCandidates(_ window: CGRect, screenAX: CGRect, others: [CGRect] = [],
+                               peek: CGFloat = 2) -> [CGRect] {
         let y = min(max(window.minY, screenAX.minY), max(screenAX.minY, screenAX.maxY - window.height))
         let left = CGRect(x: screenAX.minX - window.width + peek, y: y, width: window.width, height: window.height)
         let right = CGRect(x: screenAX.maxX - peek, y: y, width: window.width, height: window.height)
         let sides = window.midX < screenAX.midX ? [left, right] : [right, left]
-        return sides.first { spot in
+        return sides.filter { spot in
             !others.contains { other in
                 let hit = other.intersection(spot)
                 return !hit.isNull && hit.width > 2 && hit.height > 2

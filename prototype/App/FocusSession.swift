@@ -164,7 +164,7 @@ extension AppDelegate {
         }
         overlay.level = max(overlayLevel, .floating)
         overlay.orderFrontRegardless()
-        syncRestoreJournal(id: id, fromOverlayFrame: pulled.overlay, restoredSize: pulled.restore.size)
+        syncRestoreJournal(id: id, fromOverlayFrame: pulled.overlay, restoredSize: pulled.restore.size, reason: "focus-pull")
         arrangeCurrentFocusShelf(excluding: [id])
         wlog("focus: pull-out stage id=\(id) app=\(state.appName) deltaY=\(Int(deltaY)) overlay=(\(Int(pulled.overlay.minX)),\(Int(pulled.overlay.minY)) \(Int(pulled.overlay.width))x\(Int(pulled.overlay.height))) restore=(\(Int(pulled.restore.minX)),\(Int(pulled.restore.minY)) \(Int(pulled.restore.width))x\(Int(pulled.restore.height)))")
         quietNotice(WSL10n.text("notice.focus.pulledOut", zh: "已拉出，可拖动或调整宽度"), kind: .done,
@@ -297,14 +297,14 @@ extension AppDelegate {
                 focusPulledOutRestoreFrames[id] = focusRestoreFrame(fromOverlayFrame: frame,
                                                                      restoredSize: state.originalSize)
             }
-            syncRestoreJournal(id: id, fromOverlayFrame: frame)
+            syncRestoreJournal(id: id, fromOverlayFrame: frame, reason: "focus-pulled-drag")
             return
         }
         if maybeStageFocusPullOut(id: id, frame: frame) {
             return
         }
         let hadArrangedFrame = arrangedOverlayFrames[id] != nil
-        syncRestoreJournal(id: id, fromOverlayFrame: frame)
+        syncRestoreJournal(id: id, fromOverlayFrame: frame, reason: "focus-overlay-moved")
         arrangedOverlayFrames.removeValue(forKey: id)
         if hadArrangedFrame {
             rebuildMenu()

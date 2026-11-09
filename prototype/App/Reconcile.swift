@@ -112,6 +112,9 @@ extension AppDelegate {
             // AX 快照读取在后台工作队列；没有快照时保守地认为仍不可见，
             // 不能为了确认菜单/定时器状态回到主线程同步 IPC。
             guard sourceIsMinimized == false else { return false }
+            // 收起刚装好、隐藏还没被验证的那一会儿不判「回来了」：台前调度把最小化做成
+            // 往侧条缩的动画，动画途中外框还是大窗、也不在侧条带上（见 FoldVerifier 的迟到观察窗）。
+            guard Date() >= state.ignoreAppRevealUntil else { return false }
             // 停在台前调度侧条里的卡片外框也算“在屏上”，但用户没把它叫回来（规格 R19）。
             return !windowParkedInStageStrip(id: state.sourceWindowID, axSize: size)
         case .ownWindowOrderedOut:
@@ -334,12 +337,14 @@ extension AppDelegate {
                 continue
             }
             let oldFrame = overlay.frame
-            let newFrame = clampedFrame(oldFrame, margin: 8, preferredDisplayID: state.sourceDisplayID)
+            // 卷帘条本来就贴在那扇窗的标题栏上，顶到屏幕边是它的正常位置：
+            // 留 8 点边距会把它从 (0,1041) 压成 (215,1033)，既离开标题栏，又把恢复位置也带跑。
+            let newFrame = clampedFrame(oldFrame, margin: 0, preferredDisplayID: state.sourceDisplayID)
             if !framesAlmostEqual(oldFrame, newFrame) {
                 overlay.setFrame(newFrame, display: true)
                 applyOverlayPresentation(overlay, bringForward: false)
                 if foldCallbackIsCurrent(snapshot.stamp), arrangedOverlayFrames[snapshot.id] == nil {
-                    syncRestoreJournal(id: snapshot.id, fromOverlayFrame: newFrame)
+                    syncRestoreJournal(id: snapshot.id, fromOverlayFrame: newFrame, reason: "reconcile-clamp")
                 }
                 wlog("reconcile: clamped overlay id=\(snapshot.id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
             }

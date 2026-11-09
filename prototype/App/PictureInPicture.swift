@@ -305,13 +305,31 @@ final class PictureInPictureController {
 
     /// 原窗口推到离它近的那条屏幕边外，只留两点：画面照样截得到，桌面上不挡东西。
     /// 两边都挨着别的屏幕（推过去会露在那块屏上）时不动，返回 false。已经停在该停的地方就不再写。
+    /// 台前调度会把推到侧条那一边的窗口拉回舞台（真机实测目标 x=-518 落在 -265，见 StagePark），
+    /// 所以写要盯住读回：近的那条边站不住就换另一边；两条都站不住就把窗口放回原处，让它留在桌面上。
     private func park(_ s: PiPSession, screen: NSScreen) -> Bool {
-        guard let parked = parkedFrame(CGRect(origin: s.original.origin, size: s.windowSize), on: screen) else { return false }
+        let window = CGRect(origin: s.original.origin, size: s.windowSize)
+        guard let parked = parkedFrame(window, on: screen) else { return false }
         if s.parked, s.parkedFrame?.equalTo(parked) == true { return true }
         s.parkedFrame = parked
         s.parked = true
-        let element = s.element
-        DispatchQueue.global(qos: .userInitiated).async { setAXPosition(element, parked.origin) }
+        let element = s.element, id = s.id
+        let others = NSScreen.screens.filter { $0 != screen }.map { axRect($0.frame) }
+        let spots = PiPLayout.parkCandidates(window, screenAX: axRect(screen.frame), others: others)
+        DispatchQueue.global(qos: .userInitiated).async {
+            for (index, spot) in spots.enumerated() {
+                if StagePark.settle(element, to: spot.origin) {
+                    if index > 0 {
+                        wlog("pip: stepped aside on the other edge id=\(id) at=(\(Int(spot.minX)),\(Int(spot.minY)))")
+                    }
+                    return
+                }
+                wlog("pip: step aside pushed back id=\(id) edge=\(index == 0 ? "near" : "far") want=(\(Int(spot.minX)),\(Int(spot.minY)))")
+            }
+            // 两条边都站不住：不要把窗口丢在半个屏外，放回原处，画面照常。
+            wlog("pip: cannot step aside id=\(id); leaving the window where it was")
+            setAXPosition(element, window.origin)
+        }
         return true
     }
 
@@ -595,7 +613,10 @@ final class PictureInPictureController {
 
     /// 面板走到 target：带着松手的速度（Cocoa 坐标，点/秒），临界阻尼的弹簧；和窗口滑行同一套路径。
     private func animate(_ panel: NSPanel, to target: NSRect, velocity: CGVector, duration: TimeInterval? = nil, done: (@MainActor () -> Void)? = nil) {
+        // 退出時會先把會話從 sessions 挪到 exiting。只在 sessions 裡找，計時器存不進去，
+        // 完成回調不會跑，真窗口就停在屏幕外（--pip 的 both back）。
         let session = sessions.values.first { $0.panel === panel }
+            ?? exiting.values.first { $0.panel === panel }
         session?.animation?.invalidate()
         let fromAX = CGRect(origin: axPosition(fromCocoaFrame: panel.frame), size: panel.frame.size)
         let toAX = CGRect(origin: axPosition(fromCocoaFrame: target), size: target.size)

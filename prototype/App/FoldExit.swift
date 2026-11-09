@@ -79,6 +79,8 @@ extension AppDelegate {
         // 健康的 App 几十毫秒，等满两次 0.4 秒预算才会超过 0.5 秒。
         let restoreStartedAt = axMonotonicNow()
         let restoredElement = restoreWindow(state, to: pos)
+        // .hidden 的 unhide 发生在叫回前台之前，兄弟窗这一刻就已经露出来了。
+        reapplySiblingHides(pid: state.pid)
         if state.hide != .ownWindowOrderedOut {   // 自己的窗口不走 AX，不计
             AXStallBreaker.shared.record(pid: state.pid, duration: axMonotonicNow() - restoreStartedAt)
         }

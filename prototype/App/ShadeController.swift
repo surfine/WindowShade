@@ -355,6 +355,8 @@ extension AppDelegate {
                 completeFold(success: false); return
             }
             let installStartedAt = CFAbsoluteTimeGetCurrent()
+            // 卷帘条落下时应该在的位置：系统（台前调度）可能在我们排好之后再挪它。
+            let intendedOverlayFrame = overlay.frame
             // 逐步打点（只记时间戳，慢的时候才拼成一行）：VM 重负载下见过 install=9521ms、
             // 已知分段却只有 ~1.5 s——差额落在哪一步，下一次日志直接写出来。
             var installSteps: [(name: String, at: CFAbsoluteTime)] = []
@@ -483,6 +485,9 @@ extension AppDelegate {
                     wlog("space: overlay reassociated by geometry id=\(oid) source=\(id) sid=-")
                 }
             }
+            // 台前调度会把贴着屏幕边的辅助窗挪开（实测把 (0,1041) 的卷帘条挪到 (215,1041)）。
+            // 卷帘条的位置就是那扇窗收起后回来的位置，被挪走就等于窗口搬了家：落定后对一次位。
+            reassertOverlayFrame(overlay, intended: intendedOverlayFrame)
             // 观察者只用来发现「窗口被外部唤回」：⌘Tab 取消隐藏、点 Dock 恢复、
             // 窗口被关闭。这些在刚折叠完的那一瞬间都不可能发生，而注册它是
             // AXObserverCreate + 3 次 AXObserverAddNotification 共四次同步 IPC，
@@ -492,6 +497,13 @@ extension AppDelegate {
             installStep("space-move")
             let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut) && !stalled
             let observer: AXObserver? = nil
+            // 台前调度下的最小化是「缩进侧条」的动画（规格 R19）：装好之后头一两秒，
+            // 外框还是原尺寸或正在缩，既不在侧条带上、AXMinimized 也仍是 false——
+            // 单看这一帧和「用户刚把它叫回来」一模一样。这段时间的判断权交给验证链，
+            // 它会读到底并在真的没藏住时回滚；对账不要抢在它前面把这次收起清掉。
+            let stageManagerMinimize = hide == .minimized && stageManagerGloballyEnabled()
+            let revealGrace: TimeInterval = stageManagerMinimize
+                ? FoldVerifier.stageManagerMinimizeLateWindow : 1.0
             let state = ShadeState(element: win, sourceWindowID: id,
                                    originalPosition: recordedPosition ?? pos, originalSize: size,
                                    sourceDisplayID: sourceDisplayID,
@@ -502,7 +514,7 @@ extension AppDelegate {
                                    lifecycleStage: .folded,
                                    previewImage: previewImage ?? preparedImage.map { NSImage(cgImage: $0, size: size) },
                                    quickLookReopenURL: quickLookReopenURL,
-                                   ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
+                                   ignoreAppRevealUntil: Date().addingTimeInterval(revealGrace),
                                    observer: observer)
             shaded[id] = state
             MainActor.assumeIsolated {

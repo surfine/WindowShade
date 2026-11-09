@@ -1,7 +1,7 @@
 import CoreGraphics
 import Foundation
 
-/// 台前调度的左（或右）侧条（规格 R19）。台前调度开着时，对窗口下 AX 最小化不会进程序坞：
+/// 台前调度的侧条（规格 R19）。台前调度开着时，对窗口下 AX 最小化不会进程序坞：
 /// WindowManager 把它缩成侧条里的一张小卡片——窗口服务器报的外框变成卡片那么大、贴着屏幕边，
 /// AXMinimized 仍是 false，AX 位置与尺寸仍是原来的（VM 实测 2026-10-17：AX 320x232 @ (900,448)，
 /// 外框 82x100 @ (16,427)）。这里只做几何判断，不读系统状态；台前调度开没开由调用方先判。
@@ -9,7 +9,8 @@ enum StageStrip {
     /// 外框每一边都不超过 AX 尺寸的这个比例，才算“被缩成了卡片”。用户自己把窗口拖小，
     /// AX 尺寸会跟着变小，比例不会掉到这里。
     static let maximumThumbnailScale: CGFloat = 0.7
-    /// 卡片要贴着所在屏幕的左缘或右缘：离边不超过屏宽的这个比例。
+    /// 卡片要贴着所在屏幕的左缘、右缘或下缘：离边不超过屏幕宽（下缘用屏高）的这个比例。
+    /// 下缘那一档是给 `StageManagerMinimizationBehavior = stripBottom` 备的，和左右同一套判据。
     static let edgeBandFraction: CGFloat = 0.2
 
     /// 窗口服务器外框（左上原点的全局坐标）相对 AX 尺寸缩成了侧条卡片吗。
@@ -20,9 +21,10 @@ enum StageStrip {
         guard cg.width <= axSize.width * maximumThumbnailScale,
               cg.height <= axSize.height * maximumThumbnailScale else { return false }
         let center = CGPoint(x: cg.midX, y: cg.midY)
-        guard let display = displays.first(where: { $0.contains(center) }), display.width > 0 else { return false }
-        let band = display.width * edgeBandFraction
-        return cg.minX - display.minX <= band || display.maxX - cg.maxX <= band
+        guard let display = displays.first(where: { $0.contains(center) }), display.width > 0, display.height > 0 else { return false }
+        return cg.minX - display.minX <= display.width * edgeBandFraction
+            || display.maxX - cg.maxX <= display.width * edgeBandFraction
+            || display.maxY - cg.maxY <= display.height * edgeBandFraction
     }
 
     /// 展开后把窗口从侧条请回来：每一档检查之后做什么。
@@ -38,5 +40,13 @@ enum StageStrip {
         guard parked else { return .done }
         guard attempt < attempts - 1 else { return .giveUp }
         return .nudge(escalated: attempt >= 1)
+    }
+
+    /// 展开一扇兄弟窗之后，还要不要再把它最小化收起来。
+    /// 台前调度开着时，缩在侧条里的卡片 AXMinimized 也是 false：已经停车就不要再下最小化，
+    /// 再最小化会把卡片从侧条拉回舞台。已经最小化的也不重复写（重复写会让程序坞缩略图闪一下）。
+    static func shouldMinimizeAgain(stageManagerOn: Bool, parked: Bool, axMinimized: Bool) -> Bool {
+        if stageManagerOn, parked { return false }
+        return !axMinimized
     }
 }

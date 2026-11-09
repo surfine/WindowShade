@@ -197,7 +197,7 @@ extension AppDelegate {
     }
 
     func syncRestoreJournal(id: CGWindowID, fromOverlayFrame frame: NSRect,
-                                    restoredSize: CGSize? = nil) {
+                                    restoredSize: CGSize? = nil, reason: String = "-") {
         var entries = shadeJournalEntries()
         guard let index = entries.firstIndex(where: { journalID($0) == id }) else { return }
 
@@ -212,7 +212,7 @@ extension AppDelegate {
         entry["updatedAt"] = Date().timeIntervalSince1970
         entries[index] = entry
         saveShadeJournalEntries(entries)
-        wlog("journal: sync id=\(id) restore=\(JournalNumeric.formatPoint(pos))")
+        wlog("journal: sync id=\(id) restore=\(JournalNumeric.formatPoint(pos)) reason=\(reason)")
     }
 
     nonisolated func journalMatches(_ entry: [String: Any], app: NSRunningApplication,

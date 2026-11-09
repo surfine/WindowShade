@@ -297,6 +297,13 @@ final class NativeProxyOverlayWindow: NSWindow, NSWindowDelegate {
     }
 
     func windowDidMove(_ notification: Notification) {
+        // 台前调度会自己把贴着屏幕边的卷帘条往里挪（实测 (0,1041) → (215,1041)）：
+        // 那不是用户把窗口搬过去，恢复位置不该跟着变。只有按着鼠标拖的时候才认；
+        // 松手那一下另有 onDragEnded。系统自己的挪动只留一行，用来对照恢复位置为什么变了。
+        guard NSEvent.pressedMouseButtons & 1 != 0 else {
+            wlog("overlay: moved without a drag #\(windowNumber) → (\(Int(frame.minX)),\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height)))")
+            return
+        }
         onFrameMoved?(frame)
     }
 

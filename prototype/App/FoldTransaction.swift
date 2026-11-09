@@ -342,14 +342,70 @@ extension AppDelegate {
             }
             raiseAXWindow(win)
             focusAXWindow(win, pid: pid)
+            // unhide / activate 会把同一 App 里仍收着的窗一起摆回屏幕。记录不动，只把藏法再套一次。
+            reapplySiblingHides(pid: pid)
             wlog("front: \(reason) \(label)")
         }
 
         attempt("immediate")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { attempt("after-80ms") }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { attempt("after-250ms") }
+        // 有的 App 要等前台落定后才把窗口摆出来。这一拍只再藏，不再 activate，免得菜单栏交叉淡入重来。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.reapplySiblingHides(pid: pid)
+        }
         DispatchQueue.main.asyncAfter(deadline: .now()+0.3) { [weak self] in
             if let id,self?.restoreFocusTokens[id] == token { self?.restoreFocusTokens.removeValue(forKey:id) }
+        }
+    }
+
+    /// 展开一扇窗之后，同一个 App 里其余仍在 `shaded` 的窗再藏一次。不改它们的记录。
+    func reapplySiblingHides(pid: pid_t) {
+        for state in shaded.values where state.pid == pid && state.lifecycleStage == .folded {
+            reapplyShadeHide(state)
+        }
+    }
+
+    func reapplyShadeHide(_ state: ShadeState) {
+        let win = resolvedWindowElement(for: state)
+        switch state.hide {
+        case .minimized:
+            // 台前调度开着时，侧条卡片的 AXMinimized 仍是 false。已经缩在侧条里就不要再最小化，
+            // 再最小化会把卡片拉回舞台。只有回到舞台上的兄弟窗才重新最小化。
+            let stageOn = stageManagerGloballyEnabled()
+            let parked = stageOn
+                ? axSize(win).map { windowParkedInStageStrip(id: state.sourceWindowID, axSize: $0) } ?? false
+                : false
+            guard StageStrip.shouldMinimizeAgain(stageManagerOn: stageOn,
+                                                 parked: parked,
+                                                 axMinimized: axObservedBoolAttribute(win, kAXMinimizedAttribute as String) == true) else { return }
+            setAXMinimized(win, true)
+            wlog("restore: re-hide sibling id=\(state.sourceWindowID) hide=minimized")
+        case .cornerParked:
+            guard windowIsOnScreenNow(state.sourceWindowID)
+                    || cgWindowIsVisible(id: state.sourceWindowID, fallbackSize: state.originalSize) == true,
+                  let spot = cornerParkingTarget(for: state.originalPosition, size: state.originalSize) else { return }
+            setAXPosition(win, spot)
+            wlog("restore: re-hide sibling id=\(state.sourceWindowID) hide=cornerParked")
+        case .offscreen:
+            guard windowIsOnScreenNow(state.sourceWindowID)
+                    || cgWindowIsVisible(id: state.sourceWindowID, fallbackSize: state.originalSize) == true else { return }
+            setAXPosition(win, offscreen)
+            wlog("restore: re-hide sibling id=\(state.sourceWindowID) hide=offscreen")
+        case .privateOffscreen:
+            // 私有停车不更新 kCGWindowIsOnscreen。只看窗口服务器的外框还在不在屏上。
+            guard cgWindowIsVisible(id: state.sourceWindowID, fallbackSize: state.originalSize) == true else { return }
+            if PrivateSLSWindowMover.shared.moveWindow(id: state.sourceWindowID, to: offscreen) {
+                wlog("restore: re-hide sibling id=\(state.sourceWindowID) hide=privateOffscreen")
+            }
+        case .privateAlpha:
+            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
+            guard alpha == nil || (alpha ?? 1) > 0.05 else { return }
+            if PrivateSLSWindowMover.shared.setAlpha(id: state.sourceWindowID, alpha: 0) {
+                wlog("restore: re-hide sibling id=\(state.sourceWindowID) hide=privateAlpha")
+            }
+        case .none, .hidden, .ownWindowOrderedOut, .quickLookClosed:
+            break
         }
     }
 
@@ -798,6 +854,16 @@ extension AppDelegate {
         return appCurrentUserWindowCount(pid) > 1
     }
 
+    /// 角落停放必须让窗口服务器不再把它算在屏上。只留 1 像素时 `kCGWindowIsOnscreen` 仍为真。
+    func cornerParkLeavesTheScreen(id: CGWindowID?, pos: CGPoint, size: CGSize) -> Bool {
+        guard !windowIsVisible(pos: pos, size: size, minimumVisible: minimumVisibleExtent) else { return false }
+        guard let id else {
+            return !windowIsVisible(pos: pos, size: size, minimumVisible: 1)
+        }
+        if windowIsOnScreenNow(id) { return false }
+        return cgWindowIsVisible(id: id, fallbackSize: size) == false
+    }
+
     func fallbackHide(_ win: AXUIElement, pid: pid_t, id: CGWindowID?,
                               originalPosition pos: CGPoint, size: CGSize,
                               allowAppHide: Bool) -> HideMethod {
@@ -823,12 +889,12 @@ extension AppDelegate {
            let hide = privateSLSAlphaHide(id: id, pid: pid, reason: "fallback") {
             return hide
         }
-        // 最小化是最后手段：它会带出 Dock 缩进动画。先把窗口停到屏幕下角外，只留 1 像素；
-        // 系统把窗口钳回可见区时再退回最小化。
+        // 最小化是最后手段：它会带出 Dock 缩进动画。先把窗口停到屏幕下角外，只留 1 像素。
+        // 1 像素对我们自己的 8 点标准不算看得见，但窗口服务器仍把它标成在屏上，
+        // 看一眼和「只展开一扇」都会当成真窗口冒回来。停放后仍在屏上，就退回最小化。
         if let spot = cornerParkingTarget(for: pos, size: size) {
             setAXPosition(win, spot)
-            if let p2 = axPosition(win),
-               !windowIsVisible(pos: p2, size: size, minimumVisible: minimumVisibleExtent) {
+            if let p2 = axPosition(win), cornerParkLeavesTheScreen(id: id, pos: p2, size: size) {
                 wlog("    fallback → corner parked（pid=\(pid), pos=(\(Int(p2.x)),\(Int(p2.y)))）")
                 return .cornerParked
             }
@@ -1065,7 +1131,7 @@ extension AppDelegate {
         if !focusPulledOutOverlayIDs.contains(id) {
             arrangedOverlayFrames.removeValue(forKey: id)
         }
-        syncRestoreJournal(id: id, fromOverlayFrame: state.overlay?.frame ?? proxyFrame, restoredSize: newSize)
+        syncRestoreJournal(id: id, fromOverlayFrame: state.overlay?.frame ?? proxyFrame, restoredSize: newSize, reason: "proxy-resize")
         wlog("resize: proxy id=\(id) width=\(Int(newWidth)) restoredSize=(\(Int(newSize.width))x\(Int(newSize.height)))")
     }
 
@@ -1221,11 +1287,12 @@ extension AppDelegate {
         for (id, state) in shaded {
             guard let overlay = state.overlay else { continue }
             let oldFrame = overlay.frame
-            let newFrame = clampedFrame(oldFrame, margin: 8, preferredDisplayID: state.sourceDisplayID)
+            // 同 reconcile：卷帘条贴着标题栏，顶到屏幕边是正常位置，不留 8 点边距。
+            let newFrame = clampedFrame(oldFrame, margin: 0, preferredDisplayID: state.sourceDisplayID)
             if !framesAlmostEqual(oldFrame, newFrame) {
                 overlay.setFrame(newFrame, display: true)
                 if arrangedOverlayFrames[id] == nil {
-                    syncRestoreJournal(id: id, fromOverlayFrame: newFrame)
+                    syncRestoreJournal(id: id, fromOverlayFrame: newFrame, reason: "screen-clamp")
                 }
                 wlog("screen: clamped overlay id=\(id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
             }

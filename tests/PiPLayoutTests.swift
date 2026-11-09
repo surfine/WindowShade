@@ -210,6 +210,23 @@ struct PiPLayoutTests {
                    "a window on the right half is pushed past the right edge leaving 2 points (\(String(describing: parkedRight)))")
         }
 
+        // 台前调度会把推到侧条那一边的窗口拉回舞台，所以要按顺序拿到两条边：近的在前，另一条在后。
+        do {
+            let screenAX = CGRect(x: 0, y: 0, width: 1728, height: 1117)
+            let left = CGRect(x: 100, y: 200, width: 400, height: 300)
+            let spots = PiPLayout.parkCandidates(left, screenAX: screenAX)
+            expect(spots.count == 2 && spots[0].maxX == 2 && screenAX.maxX - spots[1].minX == 2,
+                   "the near edge comes first and the opposite edge second (\(String(describing: spots)))")
+            let right = CGRect(x: 1200, y: 200, width: 400, height: 300)
+            let flipped = PiPLayout.parkCandidates(right, screenAX: screenAX)
+            expect(flipped.count == 2 && screenAX.maxX - flipped[0].minX == 2 && flipped[1].maxX == 2,
+                   "a window on the right half tries the right edge first and keeps the left edge as the fallback (\(String(describing: flipped)))")
+            let external = CGRect(x: 1728, y: -200, width: 2560, height: 1440)
+            let only = PiPLayout.parkCandidates(right, screenAX: screenAX, others: [external])
+            expect(only.count == 1 && only[0].maxX == 2,
+                   "an edge that would show the window on another display is dropped, the free one stays (\(String(describing: only)))")
+        }
+
         // 旁边还有别的屏幕：推过去会整扇露在那块屏上，换另一边；两边都挨着就不让开（返回 nil）。
         do {
             let laptop = CGRect(x: 0, y: 0, width: 1728, height: 1117)

@@ -352,6 +352,12 @@ import Foundation
     // 程序坞在左时侧条在右缘。
     precondition(StageStrip.looksParked(windowServerBounds: CGRect(x: 1180, y: 300, width: 82, height: 100),
                                         axSize: ax, displays: [screen]))
+    // 缩到屏幕下缘（StageManagerMinimizationBehavior = stripBottom）：同样算侧条卡片。
+    precondition(StageStrip.looksParked(windowServerBounds: CGRect(x: 500, y: 690, width: 82, height: 100),
+                                        axSize: ax, displays: [screen]))
+    // 缩小了但悬在屏幕中段（离三条边都远）：不是。
+    precondition(!StageStrip.looksParked(windowServerBounds: CGRect(x: 500, y: 300, width: 82, height: 100),
+                                         axSize: ax, displays: [screen]))
     // 第二块屏（全局坐标偏移）上贴左缘同样成立：判据跟着所在屏走，不是写死的坐标。
     let second = CGRect(x: 1280, y: -200, width: 1920, height: 1080)
     precondition(StageStrip.looksParked(windowServerBounds: CGRect(x: 1296, y: 100, width: 90, height: 110),
@@ -392,6 +398,17 @@ import Foundation
       precondition(StageStrip.restoreStep(parked: true, attempt: attempt) == .nudge(escalated: true))
     }
     precondition(StageStrip.restoreStep(parked: true, attempt: n - 1) == .giveUp, "Bounded: the last check only reports")
+
+    // 展开兄弟窗之后要不要再最小化。台前调度开着、窗外框已缩成侧条卡片：不要，再最小化会把卡片拉回舞台。
+    precondition(!StageStrip.shouldMinimizeAgain(stageManagerOn: true, parked: true, axMinimized: false),
+                 "a sibling parked in the Stage Manager strip is left alone")
+    // 台前调度开着、兄弟窗确实回到舞台上了：重新最小化（收进侧条）。
+    precondition(StageStrip.shouldMinimizeAgain(stageManagerOn: true, parked: false, axMinimized: false),
+                 "a sibling back on the stage is minimized again")
+    // 台前调度关着：和外框无关，只看 AXMinimized。
+    precondition(StageStrip.shouldMinimizeAgain(stageManagerOn: false, parked: true, axMinimized: false))
+    precondition(!StageStrip.shouldMinimizeAgain(stageManagerOn: false, parked: false, axMinimized: true),
+                 "already minimized: no second write")
     print("PASS: stage strip thumbnail classification and bounded restore nudges (R19)")
   }
   static func deferredRestoreCompletionTests() {

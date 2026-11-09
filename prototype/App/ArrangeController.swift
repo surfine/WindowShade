@@ -56,7 +56,7 @@ extension AppDelegate {
                 moves.append((overlay, frame))
             }
             applyOverlayPresentation(overlay, bringForward: true)
-            syncRestoreJournal(id: id, fromOverlayFrame: frame)
+            syncRestoreJournal(id: id, fromOverlayFrame: frame, reason: "arrange")
             focusPulledOutOverlayIDs.remove(id)
             focusSideStackFrames.removeValue(forKey: id)
             focusPulledOutRestoreFrames.removeValue(forKey: id)

@@ -218,7 +218,22 @@ final class SlideOverController {
         wlog("slide-over: hide id=\(current.id) reason=\(reason)")
         move(to: parked, from: now, velocity: velocity) { [weak self] in
             guard let self, let d = self.docked, d.id == current.id, d.hidden else { return }
+            self.checkParked(d, screen: screen)
             self.tab.show(for: d.frame, side: d.side, screen: screen)
+        }
+    }
+
+    /// 台前调度会把推到侧条那一边的窗口拉回舞台里（真机实测，见 StagePark）：收好之后读回一次，
+    /// 没站住就只记日志，不再反复写——和系统拉扯只会让窗口抖。换边会让把手和窗口分在两边、
+    /// 拖着把手往里划的那条换算也跟着错，所以这件事要单独决定（见 docs/known-failures.md）。
+    private func checkParked(_ d: Docked, screen: NSScreen) {
+        let parked = Self.parkedFrame(d.frame, side: d.side, on: screen)
+        let element = d.element, id = d.id, side = d.side
+        DispatchQueue.global(qos: .userInitiated).async {
+            Thread.sleep(forTimeInterval: 0.3)
+            guard let now = axPosition(element) else { return }
+            guard hypot(now.x - parked.origin.x, now.y - parked.origin.y) >= StagePark.tolerance else { return }
+            wlog("slide-over: parked window pulled back id=\(id) side=\(side.rawValue) want=(\(Int(parked.minX)),\(Int(parked.minY))) now=(\(Int(now.x)),\(Int(now.y)))")
         }
     }
 
@@ -910,6 +925,7 @@ private final class ResizeMemory: @unchecked Sendable {
 
 /// 收起后留在屏幕边上的把手：贴着屏幕边的一小片玻璃，中间一个朝里的箭头（iPadOS 的样子）。
 /// 点一下、或者在上面往里划，窗口就拉出来。
+/// 尺寸是 iPadOS 27.2（24B119）`SBSlideOverTongueView` 初始化时写入 `_tongueSize` 的 28×88。
 @MainActor
 final class SlideOverTab {
     var onReveal: (() -> Void)?
@@ -917,7 +933,7 @@ final class SlideOverTab {
     var onDrag: ((CGFloat) -> Void)?
     var onEnd: ((CGFloat, Bool) -> Void)?
     private var panel: NSPanel?
-    static let size = CGSize(width: 16, height: 76)
+    static let size = CGSize(width: 28, height: 88)
 
     /// frame：窗口靠边时的外框（AX 坐标）；把手挂在那一边、对着窗口的中间。
     func show(for frame: CGRect, side: SlideOverController.Side, screen: NSScreen) {

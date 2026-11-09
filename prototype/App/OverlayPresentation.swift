@@ -226,6 +226,29 @@ extension AppDelegate {
         }
     }
 
+    /// 台前调度会把贴着屏幕边的辅助窗往里挪（实测把 (0,1041) 的卷帘条挪到 (215,1041)）。
+    /// 卷帘条的位置就是那扇窗收起后回来的位置：被挪走就等于窗口搬了家，所以排好后对一次位。
+    /// 只认这一件事：本来贴着某块屏的左右边、却被往里推。刘海把卷帘条摆到拖之前的位置
+    /// （`parkOnInstall`）、整理、看一眼拉出来、用户拖动都会改这个位置，那些是有意为之，不能拉回去。
+    func reassertOverlayFrame(_ overlay: NSWindow, intended: NSRect, checkAfter: TimeInterval = 0.05) {
+        guard let screen = NSScreen.screens.first(where: {
+            $0.frame.contains(NSPoint(x: intended.midX, y: intended.midY))
+        }) ?? NSScreen.main else { return }
+        let huggingLeft = intended.minX <= screen.frame.minX + 1
+        let huggingRight = intended.maxX >= screen.frame.maxX - 1
+        guard huggingLeft || huggingRight else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + checkAfter) { [weak self, weak overlay] in
+            guard let self, let overlay, NSEvent.pressedMouseButtons & 1 == 0 else { return }
+            guard self.shaded.values.contains(where: { $0.overlay === overlay }) else { return }
+            let drifted = overlay.frame
+            guard !framesAlmostEqual(drifted, intended) else { return }
+            // 只认「被往里推」：往外挪不是这件事（换屏、整理之后的位置也不该按老位置算）。
+            guard huggingLeft ? drifted.minX > intended.minX + 1 : drifted.maxX < intended.maxX - 1 else { return }
+            overlay.setFrame(intended, display: true)
+            wlog("overlay: system moved #\(overlay.windowNumber) to (\(Int(drifted.minX)),\(Int(drifted.minY)) \(Int(drifted.width))x\(Int(drifted.height))) — put back to (\(Int(intended.minX)),\(Int(intended.minY)))")
+        }
+    }
+
     func dismissOverlay(_ overlay: NSWindow) {
         let windowNumber = overlay.windowNumber
         overlay.ignoresMouseEvents = true
