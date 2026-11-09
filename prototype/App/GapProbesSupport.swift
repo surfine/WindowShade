@@ -5,18 +5,25 @@ import Cocoa
 
 extension GlanceProbe {
   /// 真的在 point（Cocoa 坐标）点一下会落到哪扇窗：从前往后第一扇接鼠标的。
-  /// 跳过本进程里不接鼠标的面板（侧拉那圈玻璃边框只画不接）和全透明的窗。
+  /// 跳过本进程里不接鼠标的面板（侧拉那圈玻璃边框只画不接）和全透明的窗，
+  /// 以及系统自己那层铺满整屏、只做悬停跟踪的窗（台前调度开着时实测：Dock 有一扇
+  /// layer 20、1710×1107 的跟踪窗盖住一切，点一下其实穿过去，落到下面的窗上）。
   func gapTopWindow(at point: NSPoint) -> (number: Int, owner: String)? {
     let cgPoint = CGPoint(x: point.x, y: coordinateBaselineY() - point.y)
     let ignoring = Set(NSApp.windows.filter { $0.ignoresMouseEvents }.map(\.windowNumber))
+    let systemTracking: Set<String> = ["Dock", "Window Server"]
     let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
       as? [[String: Any]] ?? []
     for info in list {
       guard let frame = cgWindowBounds(info), frame.contains(cgPoint) else { continue }
       let number = (info[kCGWindowNumber as String] as? Int) ?? 0
+      let owner = (info[kCGWindowOwnerName as String] as? String) ?? "?"
       if ignoring.contains(number) { continue }
       if ((info[kCGWindowAlpha as String] as? Double) ?? 1) <= 0.001 { continue }
-      return (number, (info[kCGWindowOwnerName as String] as? String) ?? "?")
+      let layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
+      if layer >= NSWindow.Level.floating.rawValue, systemTracking.contains(owner),
+         frame.width >= 800, frame.height >= 800 { continue }
+      return (number, owner)
     }
     return nil
   }
