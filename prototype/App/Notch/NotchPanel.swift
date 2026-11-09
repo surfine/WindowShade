@@ -1892,8 +1892,13 @@ final class NotchPanel: NSPanel {
                 width = min(IslandMetrics.expandedWidth(virtual: isVirtual), screenWidth)
                 height = IslandMetrics.rowHeight
             } else {
-                // 没有格子的空岛、活动卡叠在窗口上的旧样子：照旧。
-                width = min(screenWidth - 44, max(stacksActivityCard ? 420 : notch.width + 120, CGFloat(rowIslandWidth)))
+                // 没有内容排的空岛：照系统的岛用 408／371；有活动卡叠放时按内容宽。
+                let hasContent = !tiles.isEmpty || !cardItems.isEmpty
+                if !hasContent {
+                    width = min(IslandMetrics.expandedWidth(virtual: isVirtual), screenWidth - 44)
+                } else {
+                    width = min(screenWidth - 44, max(stacksActivityCard ? 420 : notch.width + 120, CGFloat(rowIslandWidth)))
+                }
                 let rawBelow: CGFloat = stacksActivityCard ? (tiles.isEmpty ? 144 : 286) : (tiles.isEmpty ? 56 : 142)
                 height = notch.height + NotchIsland.peninsulaContentHeight(rawBelow)
             }
@@ -2036,10 +2041,48 @@ final class NotchPanel: NSPanel {
         }
     }
 
-    /// 这一下该用的弹簧：按形状取令牌；没有动量的（指针停上来、收回）不回弹，提醒带一点弹性，
-    /// 要手指介入的用 `pop`；减少动态效果时岛直接到位（`morph` 不挂弹簧），这里只剩内容淡化的时长。
+    /// 这一刻的动作状态（六态）。优先序与 `motionShape()` 一致；`assert` 防止两套 adapter 漂移。
+    private func motionState() -> IslandMotionState {
+        let compact = displayCompact() != nil
+        return IslandMotionState.resolve(
+            isAuthenticating: isAuthenticating,
+            authenticationIsExpandedCard: authenticationView is NowPlayingCard || authenticationView is FileShelfView,
+            isExpanded: isExpanded,
+            hasAlert: alertInfo != nil,
+            hasMeter: meter != nil,
+            isDragging: dropState != .none,
+            compactKind: compact ? motionCompactKind : nil,
+            compactActivity: compact ? compactActivityMotionState : nil
+        )
+    }
+
+    /// 撑起紧凑两耳的那条活动（音量／电量／窗口紧凑时 nil）。与 `displayCompact()` 同一条选择。
+    private var compactActivity: NotchActivity? {
+        guard meter == nil, powerFlashState == nil, !isExpanded, dropState == .none,
+              alertInfo == nil, !isAuthenticating else { return nil }
+        return activityItems.first(where: { $0.id == activitySelection }) ?? activityItems.first
+    }
+
+    private var compactActivityMotionState: IslandMotionState? { compactActivity?.motionState }
+
+    private var motionCompactKind: IslandCompactKind {
+        switch compactShape {
+        case .sides: return .sides
+        case .chin: return .chin
+        case .pill: return .pill
+        case .pending: return .pending
+        }
+    }
+
+    /// 这一下该用的弹簧：按「动作状态＋方向」取令牌。活动可以给紧凑状态换令牌
+    /// （录音／等你的会话 → prompt），所以只在 shape 推出 thinking 时允许活动覆盖。
     private func spring() -> NotchCanvasView.Spring {
-        let token = Motion.notchSpring(for: motionShape())
+        let state = motionState()
+        let shapeState = IslandMotionState(shape: motionShape())
+        assert(state == shapeState || (shapeState == .thinking && state == compactActivityMotionState),
+               "motionState and motionShape drifted")
+        let transition: IslandMotionTransition = state == .hidden ? .collapse : .update
+        let token = Motion.notchSpring(for: state, transition: transition)
         return NotchCanvasView.Spring(response: token.response, bounce: token.bounce)
     }
 

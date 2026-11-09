@@ -14,17 +14,26 @@ struct NotchTokenTests {
     static func main() {
         var t = TestSuite("C01")
 
-        t.section("C01-01", "形状 → 弹簧令牌：最小 calm，紧凑三种 settle，提醒 bloom，展开 expand，交互与音量亮度 pop，落点 catchDrop")
+        t.section("C01-01", "形状 → 状态 → 27.3 岛令牌：最小 hidden，交互 prompt，其余 sizing")
         let table: [(Motion.NotchShape, Motion.Spring, String)] = [
-            (.minimum, .calm, "calm"), (.compact, .settle, "settle"), (.chin, .settle, "settle"),
-            (.capsuleCompact, .settle, "settle"), (.alert, .bloom, "bloom"), (.expanded, .expand, "expand"),
-            (.interaction, .pop, "pop"), (.meter, .pop, "pop"), (.drop, .catchDrop, "catchDrop"),
+            (.minimum, .islandHidden, "islandHidden"), (.compact, .islandSizing, "islandSizing"),
+            (.chin, .islandSizing, "islandSizing"), (.capsuleCompact, .islandSizing, "islandSizing"),
+            (.alert, .islandSizing, "islandSizing"), (.expanded, .islandSizing, "islandSizing"),
+            (.interaction, .islandPrompt, "islandPrompt"), (.meter, .islandSizing, "islandSizing"),
+            (.drop, .islandSizing, "islandSizing"),
         ]
         t.expect(table.count == Motion.NotchShape.allCases.count, "映射表覆盖每一种形状")
         for (shape, token, name) in table {
             t.expect(Motion.notchSpring(for: shape, reduced: false) == token, "\(shape) 用 \(name)")
             t.expect(Motion.notchSpring(for: shape, reduced: true) == .reducedNotch, "\(shape) 在减少动态效果时用 reducedNotch")
         }
+        t.expect(Motion.Spring.islandPrompt.response == 0.408 && Motion.Spring.islandPrompt.dampingRatio == 0.27,
+                 "islandPrompt 0.408 / 0.27")
+        t.expect(Motion.Spring.islandSizing.response == 0.3571428536916519
+                 && Motion.Spring.islandSizing.dampingRatio == 0.7500006097576885,
+                 "islandSizing 0.3571428536916519 / 0.7500006097576885")
+        t.expect(Motion.Spring.islandHidden.response == 0.3 && Motion.Spring.islandHidden.bounce == 0.2,
+                 "islandHidden 0.3 / bounce 0.2")
         t.expect(Motion.Spring.calm.response == 0.34 && Motion.Spring.calm.bounce == 0, "calm 0.34 / 不回弹")
         t.expect(Motion.Spring.settle.response == 0.38 && Motion.Spring.settle.bounce == 0, "settle 0.38 / 不回弹")
         t.expect(Motion.Spring.bloom.response == 0.42 && Motion.Spring.bloom.dampingRatio == 0.84, "bloom 0.42 / 0.84")

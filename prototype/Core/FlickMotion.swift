@@ -180,6 +180,18 @@ struct MotionSpring: Equatable {
     /// 减少动态效果时的窗口滑行。
     static let reducedWindow = MotionSpring(response: 0.3, dampingRatio: 1, bounce: 0)
 
+    /// 27.3 Mac 岛的 prompt／listening 弹簧：`MacAssistantIslandSessionModel.swift`
+    /// 的 `0x274434248`（response 0.408 / dampingRatio 0.27）。
+    static let islandPrompt = MotionSpring(response: 0.408, dampingRatio: 0.27, bounce: 0.73)
+    /// 27.3 Mac 岛的 thinking／response／transient 尺寸弹簧：`0x274434240`
+    /// （mass 2.0 / stiffness 619.0216 / damping 52.7788；response ≈ 0.3571、dampingRatio 0.75）。
+    static let islandSizing = MotionSpring(response: 0.3571428536916519,
+                                           dampingRatio: 0.7500006097576885,
+                                           bounce: 0.2499993902423115)
+    /// 27.3 Mac 岛收合（`.hidden`）：`WindowSizingAnimation.default` 的
+    /// `AxisAnimation.default` 用 `Spring(duration: 0.3, bounce: 0.2)`。
+    static let islandHidden = MotionSpring(response: 0.3, dampingRatio: 0.8, bounce: 0.2)
+
     /// 临界阻尼角频率：约在 `response` 秒内落到目标 2% 内（与 `FoldSpring` 同口径）。
     var angularFrequency: Double { 5.83 / response }
 
