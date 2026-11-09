@@ -249,9 +249,9 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 | 令牌 | 现值 | 目标 | 状态 |
 |---|---|---|---|
-| `island.hug` | 10（第一帧、下巴、悬停、下拉起步）；紧凑样式同底角（`NotchIsland.compactRadius`，知道硬件 = 真实刘海底角，不知道退 12） | = `hw.notchBottom` | [改值 §6-3] |
-| `island.shoulder` | 无 | = `hw.notchShoulder`，按 §5.1 的 S1–S5 | [改值 §6-3] |
-| `island.pull` | 10 + 下拉量/4，最大 22（现值见 `App/Notch/NotchPanel.swift` 的岛装配） | 起点改为 `island.hug`，上限不变 | [改值 §6-3] |
+| `island.hug` | `NotchIsland.hug(curves)` = 刘海自己的底角（本机 1710 pt 屏上 10.71）；不知道硬件时退 10。紧凑样式同底角（`NotchIsland.compactRadius`，不知道硬件退 12） | = `hw.notchBottom` | [已落地 2026-11-09，`--notch-shape`] |
+| `island.shoulder` | `hw.notchShoulder`（本机 r 5.05、e 7.73），按 §5.1 的 S1–S3 画；不知道硬件时不画 | = `hw.notchShoulder`，按 §5.1 的 S1–S5 | [已落地 2026-11-09，`--notch-shape`] |
+| `island.pull` | 从 `island.hug` 起，每拉 4 点大 1 点，最大 22（`NotchIsland.pullRadius`） | 起点改为 `island.hug`，上限不变 | [已落地] |
 | `island.drop` | 22 | 不变 | [现值] |
 | `island.alert` | 24 | 不变 | [现值] |
 | `island.expanded` | 28 | 不变 | [现值] |
@@ -402,8 +402,8 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 | 令牌或数值 | 现值 | 目标 | 条目 |
 |---|---|---|---|
 | `notch.fill`（已对准、隐形刘海） | 已对准：填充白 0.12，边线 `accent` 0.9、2 pt；隐形刘海：黑 0.88 | 纯黑；已对准的边线不变 | §6-2 |
-| `island.hug` | 10；12 | `hw.notchBottom`（1710 下 10.7，1440 下 9.0–9.2） | §6-3 |
-| `island.shoulder` | 无 | `hw.notchShoulder`，只给悬停、下拉、紧凑样式（§5.1 S3） | §6-3 |
+| `island.hug` | `NotchIsland.hug`（1710 上 10.71，1440 上 9.0–9.2）；不知道硬件退 10 | = `hw.notchBottom` | §6-3 已落地 |
+| `island.shoulder` | `hw.notchShoulder`（r 5.05、e 7.73），只给悬停、下拉、紧凑样式（§5.1 S1–S3）；不知道硬件不画 | = `hw.notchShoulder` | §6-3 已落地 |
 | 岛宽度上限 | 不是一个上限：格子数 = floor((屏宽 − 44) / 132)，岛宽 = max(刘海 + 120, min(格子数, 8) × 132 + 20)（`App/Notch/NotchPanel.swift` 的岛宽装配） | 屏宽 − 2 ×（顶角延伸 + e + 8），只在画肩时生效，所以只随 §6-3 的可选项（宽状态画肩）落地；守卫：任何屏宽下格子数不少于现版本 | §6-3 |
 | 截图飞进的终点 | 40×26，在刘海底上 2 pt（`App/Notch/NotchController.swift:1040`） | `notch.rect` 中心，大小不超过刘海高 | §6-3 |
 | 提醒图标 | 30，上下 11、左右 14 | 24，四周 14，高度不变；加高 6 pt 只作备选 | §6-4 |
@@ -643,8 +643,21 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 还等视觉确认的：上面这几项的眼睛检查（要和改前的截屏对比）——2026-09-30 那次屏幕锁着，
 探针截图要等解锁后补；`--settings-shots` / `--notch-shape` / `--gesture` 都能出图。
 
-仍未做：§6-1 之外的几何（§6-2/3/4 要先做小样）、§6-7/8 玻璃审计、
-§6-13 欢迎窗口标题（要 Aaron 挑）、§6-16 App 图标（要 Aaron 认概念）。
+**落代码进度（2026-11-09）：§6-3 岛的几何已落地，上面那句「§6-2/3/4 要先做小样」对 §6-3 不再成立。**
+
+依据是本机 `DisplayShape` 量到的硬件形状 + `--notch-shape` 探针，不是推测：
+
+- **`island.hug` = `hw.notchBottom`**：`NotchIsland.hug(_:)` 直接返回 `curves?.bottomRadius`；不知道硬件时退
+  `legacyHug` 10。紧凑样式同底角（`compactRadius`，退 `legacyCompact` 12）。本机 1710 pt 屏上量到
+  10.71 pt，探针报「hugged with its own 10.71 pt corners」，`bezelPath` 与机型表差 +0.03 px。
+- **`island.shoulder`**：S1（紧凑两侧从 `sideWidth` 里扣肩，扣完不够就不画）、S3（比刘海宽的状态肩落在顶边
+  外沿，量到的空位不够这一侧就不画）都已在 `NotchIsland` 里；本机 r 5.05、e 7.73。既有 `--notch-shape`
+  逐条验过：静止时肩和硬件的肩重合、60 pt 空位下两侧各让出 7.73、只剩 30 pt 时不画、展开一排的肩跟着走、
+  不知道形状时一律无肩。S5 的描边收尾还没做。
+- **`island.pull`**：`pullRadius` 从 hug 起、每 4 点 +1、上限 22，起点不再是写死的 10。
+
+剩下没做的仍是 §6-2/4 的视觉小样、§6-7/8 玻璃审计、§6-13 欢迎窗口标题（要 Aaron 挑）、
+§6-16 App 图标（要 Aaron 认概念），以及这些状态的眼睛检查（要 Aaron 看图对比）。
 
 **1. 建 `DisplayShape`（地基，不改外观）**
 - 改什么：来源顺序、`bezelPath` 守卫（问题 1 定之前只在探针里用）、机型表（按 px 存）、pxPerPt 换算；加 `hardware-fit` dump 探针；离线比较 CALayer 与 SwiftUI 的 `.continuous`。
