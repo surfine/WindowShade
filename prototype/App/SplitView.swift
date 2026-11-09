@@ -702,7 +702,7 @@ final class SplitViewController {
 // MARK: - 中间那根把手
 
 /// 一根小胶囊：竖着分的时候是 6×56 点的竖条，上下分的时候横过来；指针移上去变粗变亮。
-/// 面板比胶囊大一圈（28×160），好抓。
+/// 能抓住的范围是 44×128，iPadOS 27.2（24B119）`+[SBSplitViewHandleNubView nubHitTestSize]`。
 @MainActor
 final class SplitDivider {
     var onBegin: (() -> Void)?
@@ -710,7 +710,7 @@ final class SplitDivider {
     var onEnd: ((CGVector) -> Void)?
     private var panel: NSPanel?
     private var animation: FrameTicker?
-    static let grab = CGSize(width: 28, height: 160)
+    static let grab = CGSize(width: 44, height: 128)
 
     var isVisible: Bool { panel?.isVisible ?? false }
     var frame: NSRect { panel?.frame ?? .zero }

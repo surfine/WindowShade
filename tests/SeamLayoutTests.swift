@@ -273,8 +273,8 @@ struct SeamLayoutTests {
                 return
             }
             let held = SeamLayout.dragged(narrow.minX, seam: seam, gap: 0)
-            expect(held > narrow.minX + narrow.width * SeamLayout.dismissFraction,
-                   "on a 1280-point screen the rubber band holds the bar short of the edge zone (bar at \(held))")
+            expect(held > narrow.minX + SeamLayout.dismissGutter,
+                   "on a 1280-point screen the rubber band holds the bar short of the 90-point gutter (bar at \(held))")
             expect(SeamLayout.landing(position: narrow.minX, velocity: 0, seam: seam, gap: 0) == .beforeLeaves,
                    "pushing slowly all the way to the left edge of a 1280-point screen sends the left window away")
             expect(SeamLayout.landing(position: narrow.maxX, velocity: 0, seam: seam, gap: 0) == .afterLeaves,
@@ -293,8 +293,8 @@ struct SeamLayoutTests {
                 return
             }
             let held = SeamLayout.dragged(0, seam: seam, gap: 0)
-            expect(held > wide.minY + wide.height * SeamLayout.dismissFraction,
-                   "stacked, the rubber band alone never reaches the edge zone (bar at \(held))")
+            expect(held > wide.minY + SeamLayout.dismissGutter,
+                   "stacked, the rubber band alone never reaches the 90-point gutter (bar at \(held))")
             expect(SeamLayout.landing(position: 0, velocity: 0, seam: seam, gap: 0) == .beforeLeaves,
                    "pushing the bar up into the menu bar sends the upper window away")
             expect(SeamLayout.landing(position: wide.maxY, velocity: 0, seam: seam, gap: 0) == .afterLeaves,

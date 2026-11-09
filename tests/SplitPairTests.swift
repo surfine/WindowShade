@@ -133,8 +133,12 @@ struct SplitPairTests {
                    "a fast fling from the middle carries the right window off screen")
             expect(SplitLayout.landing(seam: 864, velocity: -3000, pair: pair) == .leadingLeaves,
                    "a fast fling the other way carries the left window off screen")
-            expect(SplitLayout.landing(seam: 0.1 * 1728, velocity: 0, pair: pair) == .leadingLeaves,
-                   "released at 0.1 the left window leaves")
+            expect(SplitLayout.landing(seam: 0.1 * 1728, velocity: 0, pair: pair) == .seam(576),
+                   "released at 0.1 of a wide screen is still outside the 90-point gutter, so it snaps to one third")
+            expect(SplitLayout.landing(seam: 40, velocity: 0, pair: pair) == .leadingLeaves,
+                   "released inside the 90-point gutter the left window leaves")
+            expect(SplitLayout.landing(seam: 1728 - 40, velocity: 0, pair: pair) == .trailingLeaves,
+                   "released inside the gutter on the right the right window leaves")
         }
 
         // 竖着分的屏：落点按 y 算。
@@ -149,8 +153,11 @@ struct SplitPairTests {
                    "on a portrait screen the landing is measured down the screen")
             expect(SplitLayout.landing(seam: pair.seam, velocity: 3000, pair: pair) == .trailingLeaves,
                    "a downward fling sends the bottom window away")
-            expect(SplitLayout.landing(seam: portrait.minY + 0.1 * 1895, velocity: 0, pair: pair) == .leadingLeaves,
-                   "released near the top the top window leaves")
+            expect(SplitLayout.landing(seam: portrait.minY + 0.1 * 1895, velocity: 0, pair: pair)
+                   == .seam(portrait.minY + 1895 / 3),
+                   "released at 0.1 of a tall screen is outside the gutter, so it snaps to one third")
+            expect(SplitLayout.landing(seam: portrait.minY + 40, velocity: 0, pair: pair) == .leadingLeaves,
+                   "released inside the gutter at the top the top window leaves")
         }
 
         if failures == 0 { print("PASS: split pair — recognition (halves, 6:4 with gaps, portrait stacking, dialogs, other screens, short frames, gap mismatch), seams and frames, dragging with rubber band, release landing (snapping, flinging away)") }

@@ -28,8 +28,9 @@ enum SeamLayout {
     static let tolerance: CGFloat = 6
     /// 最窄一边（点）：拖到比这还窄就有阻力。
     static let minimumSide: CGFloat = 240
-    /// 松手时推算的落点离屏幕边不到这么多（占整块的比例），可以离开的那种缝就让一扇走。
-    static let dismissFraction: CGFloat = 0.15
+    /// 松手时推算的落点离屏幕边不到这么多点，可以离开的那种缝就让一扇走。
+    /// 和两扇拼满用的是同一条沟：iPadOS 27.2（24B119）`windowSplitViewDismissalGutterWidth`。
+    static let dismissGutter: CGFloat = 90
 
     /// windows 按前后排列（0 是最前面），里面可能还有别的屏上的窗、压在上面的浮窗。
     /// 先认出这块屏上排好的那几扇（T），再从每扇窗的远侧边往外找对面贴着的一排：凑成一条缝就算。
@@ -100,8 +101,8 @@ enum SeamLayout {
         let length = end - start
         let projected = position + CGFloat(FluidMotion.projection(velocity: Double(velocity)))
         if seam.isPair {
-            if projected < start + length * dismissFraction { return .beforeLeaves }
-            if projected > end - length * dismissFraction { return .afterLeaves }
+            if projected < start + dismissGutter { return .beforeLeaves }
+            if projected > end - dismissGutter { return .afterLeaves }
         }
         let limits = limits(seam, gap: gap)
         let shares: [CGFloat] = [1.0 / 6, 1.0 / 4, 1.0 / 3, 1.0 / 2, 2.0 / 3, 3.0 / 4, 5.0 / 6]

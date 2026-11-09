@@ -26,8 +26,9 @@ enum SplitLayout {
     static let tolerance: CGFloat = 6
     /// 最窄一边（点）：拖中间那条时再往里就有阻力。
     static let minimumSide: CGFloat = 320
-    /// 松手时推算的落点离屏幕边不到这么多（占整块的比例），那一扇就离开。
-    static let dismissFraction: CGFloat = 0.15
+    /// 松手时推算的落点离屏幕边不到这么多点，那一扇就离开。
+    /// iPadOS 27.2（24B119）SpringBoard `SBMedusaSettings.windowSplitViewDismissalGutterWidth` 的出厂值。
+    static let dismissGutter: CGFloat = 90
 
     /// windows 按前后排列（0 是最前面），里面可能还有别的屏上的窗。
     /// 取头两扇盖住自己一半以上、落在这块屏里的窗：正好占满两半才算一对，先试左右再试上下。
@@ -71,8 +72,8 @@ enum SplitLayout {
         let start = start(pair), end = end(pair)
         let length = end - start
         let projected = seam + CGFloat(FluidMotion.projection(velocity: Double(velocity)))
-        if projected < start + length * dismissFraction { return .leadingLeaves }
-        if projected > end - length * dismissFraction { return .trailingLeaves }
+        if projected < start + dismissGutter { return .leadingLeaves }
+        if projected > end - dismissGutter { return .trailingLeaves }
         let snaps = [1.0 / 3, 0.5, 2.0 / 3].map { start + length * CGFloat($0) }
         let nearest = snaps.min { abs($0 - projected) < abs($1 - projected) } ?? start + length / 2
         return .seam(nearest)
