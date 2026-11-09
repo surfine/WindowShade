@@ -11,7 +11,7 @@
 
 <!-- status:start -->
 
-**当前版本：1.0.20** · build 20 · 2026-11-02 · [发布说明](https://github.com/surfine/WindowShade/releases/tag/v1.0.20)
+**当前版本：1.0.21** · build 21 · 2026-11-09 · [发布说明](https://github.com/surfine/WindowShade/releases/tag/v1.0.21)
 
 <!-- status:end -->
 
@@ -49,7 +49,7 @@
 
 - **要 macOS 15 以上。** 主力是 Apple Silicon 版。
 - **Intel Mac（实验，1.0.21 起）。** Releases 里另有一个文件名以 `-intel.zip` 结尾的 ZIP。它没有在真实的 Intel Mac 上试过，只在 Rosetta 下做过冒烟测试，难免有毛病。刷脸解锁、声纹和合盖桌面效果在 Intel 上是关的，设置里也不显示；置顶预览、画中画和其余功能照常。Intel 版从自己的更新清单取更新，不会收到 Apple Silicon 的包，Apple Silicon 的 Mac 也不会收到 Intel 的包。遇到问题，请[提一个 issue](https://github.com/surfine/WindowShade/issues/new)。
-- **1.0.20 下载包（十进制）：** ZIP 22.19 MB；第一次安装也可以下 DMG（23.25 MB）。
+- **1.0.21 下载包（十进制）：** ZIP 22.39 MB；第一次安装也可以下 DMG（23.46 MB）。Intel 实验版 ZIP 11.12 MB。
 - **已通过 Apple 公证。** 第一次打开时系统会自己检查，不用再手动放行。
 - **从 1.0.16 及以前升级：** 这一版要手动下载一次，装好后在“系统设置 → 隐私与安全性”里重新打开辅助功能（开过屏幕录制的，也重新打开）。之后就能在菜单里更新。
 - **用 Homebrew：** `brew install --cask surfine/tap/windowshade`。
@@ -123,7 +123,7 @@ WindowShade 只改过一项系统设置：程序坞的「最小化效果」。�
 
 ## 开发中
 
-当前下载版是 **1.0.20**。上面写的都在里面；这一版把功能收进 设置 → 功能：核心始终开启，8 个功能可整块开关，升级保持原样。另修好 macOS 26 双击缩放、收起闪屏、刘海尺寸与角落停车。[发布说明](docs/releases/v1.0.20.md)
+当前下载版是 **1.0.21**。上面写的都在里面；这一版另有 Intel 实验包，并把刘海的转场弹簧和空展开宽度对齐 macOS 27.3 的系统岛。Intel 包没有在真 Intel Mac 上试过。[发布说明](docs/releases/v1.0.21.md)
 
 接下来的方向是 **WindowShade 2**：让 Mac 的窗口听你指挥，也能被手边的设备遥控。刘海的新样子和新手势已在 1.0.19 里；指挥模式、遥控和编程会话仍在预览开关后面——设置里看不到，也不会运行：
 

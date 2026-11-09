@@ -126,7 +126,7 @@ else
   else
     pass "7 架构 $archs 与 ${KIND} 清单一致（hardwareRequirements：${c_hw:-无}）"
   fi
-  [ "$c_url" = "$(basename "$ZIP")" ] && pass "7a 清单条目指向的文件名就是这个 zip（$c_url）" \
+  [ "$c_url" = "$(basename "$ZIP")" ] && pass "7a 清单条目指向的文件名就是这个 zip（${c_url}）" \
     || fail "7a 清单条目指向 ${c_url}，不是这个 zip（$(basename "$ZIP")）：两份清单不能指到对方的包"
   size=$(stat -f %z "$ZIP")
   [ "$size" = "$c_len" ] && pass "7b 清单里的包大小 $c_len 就是这个 zip" || fail "7b 清单里的包大小 $c_len ≠ zip ${size}（换包后要重签清单）"
