@@ -70,7 +70,7 @@ final class GlanceProbe {
     let pipRun = CommandLine.arguments.contains("--pip") || holdKind == "pip"
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
     let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit", "--hitch",
-                      "--dock-autohide-frames", "--reduce-transparency", "--overlay-input", "--display-hotplug"]
+                      "--dock-autohide-frames", "--reduce-transparency", "--overlay-input", "--display-hotplug", "--fold-desktops"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     // --hold：多数场景只要一扇窗；pins 要两扇（默认的参考窗加另一扇）。
@@ -85,6 +85,8 @@ final class GlanceProbe {
     if CommandLine.arguments.contains("--slide-over-desktops"), !fixtureArguments.contains("--other-space") {
       fixtureArguments.append("--other-space")
     }
+    // 多桌面摺叠同理：临时窗自己挪到另一张桌面，探针不切你的桌面。
+    // （挪的时机由 --fold-desktops 自己发通知定，这里不加 --other-space。）
     // 临时 App 默认 90 秒后自己退出；长会话跑几分钟，给 30 分钟（200 轮约 2 分半）。
     if CommandLine.arguments.contains("--restore-guard") { fixtureArguments.append("--minimizable-other") }
     // 规格 R20：--window-classes 让临时 App 额外开出 PiP／弹出条／刘海浮层／遮蔽／搜索条几类窗，编号写进这个文件。
@@ -372,6 +374,16 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--display-hotplug") {
       try await exerciseDisplayHotplug(element: element)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--fold-desktops") {
+      try await exerciseFoldDesktops(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--slide-over-unminimizable") {
+      try await exerciseSlideOverUnminimizable(pid: process.processIdentifier)
       finish(nil)
       return
     }
@@ -1107,6 +1119,8 @@ final class GlanceProbe {
       let cocoa = CGRect(x: frame.minX, y: mainHeight - frame.maxY, width: frame.width, height: frame.height)
       return other.frame.intersects(cocoa) && !(main?.frame.intersects(cocoa) ?? false)
     }
+    // 停下来之后的外框：展开时要比对它，而不是比挪屏之前那个位置。
+    let placed = bounds(id)
     try await Task.sleep(for: .milliseconds(400), clock: .suspending)
     owner.shade(element, id)
     try await wait("strip shown") {
@@ -1129,9 +1143,19 @@ final class GlanceProbe {
       self.onscreen(self.id) && self.owner.shaded[self.id] == nil
         && self.owner.duoController.windowEffects.activeCount == 0
     }
+    // 台前调度下解最小化 / 解隐藏要先从侧条卡片长回原尺寸：窗口服务器一露头就报 onscreen，
+    // 但这时外框还是卡片大小（实测 94×97）。等它长回挪过去的样子再量，否则量到的是卡片。
+    if let placed {
+      let settled = (try? await wait("window grown back to its placed frame", timeout: 6) {
+        self.bounds(self.id).map { self.closeTo($0, placed) } == true
+      }) != nil
+      print("INFO second-display: frame settled=\(settled) now \(bounds(id).map { "\($0)" } ?? "-") want \(placed)")
+    }
     let back = bounds(id).map { CGRect(x: $0.minX, y: mainHeight - $0.maxY, width: $0.width, height: $0.height) }
-    print(back.map { other.frame.intersects($0) } == true ? "PASS second-display: the window comes back on that display"
-      : "FAIL second-display: the window came back at \(String(describing: back))")
+    let grownBack = placed.map { want in bounds(id).map { self.closeTo($0, want) } == true } ?? true
+    print(back.map { other.frame.intersects($0) && grownBack } == true
+      ? "PASS second-display: the window comes back on that display at the size it was folded"
+      : "FAIL second-display: the window came back at \(String(describing: back)) (grown back: \(grownBack))")
   }
 
   /// 本进程到目前为止用掉的 CPU 时间（用户态＋内核态，毫秒）。

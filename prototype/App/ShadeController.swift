@@ -344,6 +344,12 @@ extension AppDelegate {
             resolvedSourceSpaceID(windowID: id, sourceDisplayID: sourceDisplayID, profile: profile)
         }
         let sourceSpaceMode = profile.isQuickLook ? "active-display" : "window"
+        // 折叠那一刻用户在看哪张桌面。窗口在别的桌面时它不同于源 Space：收起不该把用户带过去，
+        // 万一被系统带走了，兜底回切也要送回这里（2026-11-09 实测：收起别的桌面上的窗，屏会跳到那张）。
+        let userSpaceAtFold = foldPhase("折叠前桌面") {
+            sourceDisplayID.flatMap { PrivateSLSWindowMover.shared.currentSpace(displayID: $0) }
+        }
+        let windowInActiveSpace = sourceSpaceID == nil || userSpaceAtFold == nil || userSpaceAtFold == sourceSpaceID
         wlog(">>> shade id=\(id) app=\(appName) bundle=\(bundleID) mode=\(mode.rawValue) plan=\(plan.reason) policy=\(policy) frame=(\(Int(pos.x)),\(Int(pos.y)) \(Int(size.width))x\(Int(size.height))) sourceDisplay=\(sourceDisplayID.map { String($0) } ?? "-") sourceSpace=\(sourceSpaceID.map { String($0) } ?? "-") sourceSpaceMode=\(sourceSpaceMode) hasToolbar=\(profile.hasToolbar) adobe=\(profile.adobeProfile.kind.rawValue):\(profile.adobeProfile.reason) standardTitleBarOnly=\(profile.standardTitleBarOnly) toolbarlessStandard=\(profile.toolbarlessStandardTitleBar) preciseChrome=\(profile.preciseChrome) contentBelowTitleBar=\(profile.hasContentBelowTitleBar) axBarH=\(Int(profile.axBarHeight)) hitBarH=\(Int(profile.hitBarHeight))")
 
         // 整体包住安装阶段：它与已知子项（隐藏窗口/建 overlay/落盘…）的差额
@@ -390,10 +396,12 @@ extension AppDelegate {
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
             // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
+            // 窗口在别的桌面时同理：隐藏前台 App，macOS 自己挑继承人会把屏带过去
+            // （2026-11-09 真机实测：在桌面 7 收起挂在桌面 5 的窗，屏直接滑到 5）。
             // App 卡住时不做焦点交接（要枚举它的窗口）；私有 SkyLight 停车本来就不触发焦点级联。
             let appHideSafe = foldPhase("焦点交接") {
                 stalled ? false : handOffFocusBeforeHiding(win: win, pid: pid, id: id)
-            }
+            } && windowInActiveSpace
             installStep("focus-handoff")
             // crash consistency：先把 durable recovery intent 落盘，再执行任何
             // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
@@ -487,6 +495,7 @@ extension AppDelegate {
             }
             // 台前调度会把贴着屏幕边的辅助窗挪开（实测把 (0,1041) 的卷帘条挪到 (215,1041)）。
             // 卷帘条的位置就是那扇窗收起后回来的位置，被挪走就等于窗口搬了家：落定后对一次位。
+            overlayHomeFrames[id] = intendedOverlayFrame
             reassertOverlayFrame(overlay, intended: intendedOverlayFrame)
             // 观察者只用来发现「窗口被外部唤回」：⌘Tab 取消隐藏、点 Dock 恢复、
             // 窗口被关闭。这些在刚折叠完的那一瞬间都不可能发生，而注册它是
@@ -544,7 +553,10 @@ extension AppDelegate {
                     self.shaded[id]?.observer = registered
                 }
             }
-            foldPhase("Space 回归调度") { scheduleSourceSpaceReturnIfNeeded(id: id, state: state) }
+            foldPhase("Space 回归调度") {
+                scheduleSourceSpaceReturnIfNeeded(id: id, state: state,
+                                                  returnSpaceID: userSpaceAtFold ?? sourceSpaceID)
+            }
             installStep("space-return")
             if hideVerifiedNow, shaded[id]?.foldTransactionID == state.foldTransactionID, admissionCurrent() {
                 let spaceInvariantHeld = foldPhase("Space 不变量") {

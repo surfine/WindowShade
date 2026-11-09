@@ -80,7 +80,7 @@ extension AppDelegate {
         if focusPulledOutOverlayIDs.contains(id) {
             return focusPulledOutRestoreFrames[id] ?? overlay.frame
         }
-        return arrangedOverlayFrames[id] ?? overlay.frame
+        return arrangedOverlayFrames[id] ?? overlayHomeFrames[id] ?? overlay.frame
     }
 
     func arrangedDisplayWidth(for state: ShadeState, overlay: NSWindow,

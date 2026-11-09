@@ -306,6 +306,8 @@ extension AppDelegate {
         let hadArrangedFrame = arrangedOverlayFrames[id] != nil
         syncRestoreJournal(id: id, fromOverlayFrame: frame, reason: "focus-overlay-moved")
         arrangedOverlayFrames.removeValue(forKey: id)
+        // 用户亲手拖的卷帘条就是新的落点：展开时窗口在这里回来。
+        overlayHomeFrames[id] = frame
         if hadArrangedFrame {
             rebuildMenu()
         }

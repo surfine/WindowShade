@@ -107,6 +107,7 @@ final class SlideOverController {
     var mirrorFrames: UInt64 { mirror?.deliveredFrames ?? 0 }
     var mirrorFrame: NSRect? { mirror?.frame }
     var dockedFrame: CGRect? { docked?.frame }
+    var dockedSideForProbe: Side? { docked?.side }
     var chromeVisible: Bool { chrome.isVisible }
     var chromeFrameAX: CGRect? { chrome.frameAX }
     var chromeHandleFrame: NSRect? { chrome.handleFrame }
@@ -269,7 +270,7 @@ final class SlideOverController {
             wlog("slide-over: hide id=\(current.id) reason=\(reason) into the stage strip")
             setAXMinimized(current.element, true)
             refreshTab()
-            verifyStageStripPark(current, parked: parked, from: now, screen: screen, velocity: velocity)
+            verifyStageStripPark(current, screen: screen, velocity: velocity)
             return
         }
         wlog("slide-over: hide id=\(current.id) reason=\(reason)")
@@ -283,8 +284,8 @@ final class SlideOverController {
     /// 收起交给系统之后确认它真的进了侧条。刚下最小化时系统可能还在动画里（或这次写入被丢掉）：
     /// 再看一次、补写一次，仍然收不起（App 不让最小化）才退回推到屏外那条老路，
     /// 免得窗口明明在舞台上、把手却说自己收起来了。
-    private func verifyStageStripPark(_ d: Docked, parked: CGRect, from now: CGRect,
-                                      screen: NSScreen, velocity: CGVector, attempt: Int = 0) {
+    private func verifyStageStripPark(_ d: Docked, screen: NSScreen,
+                                      velocity: CGVector, attempt: Int = 0) {
         let element = d.element, id = d.id, stamp = d.minimizedAt
         DispatchQueue.main.asyncAfter(deadline: .now() + (attempt == 0 ? 0.7 : 0.6)) { [weak self] in
             MainActor.assumeIsolated {
@@ -296,18 +297,47 @@ final class SlideOverController {
                 if attempt == 0 {
                     // 解最小化还没落定就又被收起时，这一次写入会被丢掉：补一次。
                     setAXMinimized(element, true)
-                    self.verifyStageStripPark(d, parked: parked, from: now, screen: screen,
+                    self.verifyStageStripPark(d, screen: screen,
                                               velocity: velocity, attempt: 1)
                     return
                 }
-                wlog("slide-over: the app did not put the window away (id=\(id)); sliding it past the edge instead")
+                wlog("slide-over: the app did not put the window away (id=\(id)); moving to the other edge")
                 current.hiddenByMinimize = false
                 self.docked = current
-                self.move(to: parked, from: now, velocity: velocity) { [weak self] in
-                    guard let self, let d = self.docked, d.id == id, d.hidden else { return }
-                    self.checkParked(d, screen: screen)
-                    self.refreshTab()
-                }
+                // 台前调度只守着侧条那一边；换到对面那条边，窗口才收得干净，不用和系统拉扯。
+                self.flipToFreeEdge(current, screen: screen, velocity: velocity)
+            }
+        }
+    }
+
+    /// App 不让最小化（台前调度那一侧推不出去）：换到没被系统守着的对面那条边，
+    /// 先把它滑过去、再推到屏外，把手也跟着换边。对面也挨着别的屏幕时退回老路（推原边，系统可能拉回）。
+    private func flipToFreeEdge(_ d: Docked, screen: NSScreen, velocity: CGVector) {
+        let other: Side = d.side == .left ? .right : .left
+        let now = frameNow(d)
+        guard Self.neighborFree(other, screen), let position = now else {
+            let parked = Self.parkedFrame(d.frame, side: d.side, on: screen)
+            wlog("slide-over: no free edge to flip to (id=\(d.id)); pushing past the original edge instead")
+            move(to: parked, from: now ?? d.frame, velocity: velocity) { [weak self] in
+                guard let self, let cur = self.docked, cur.id == d.id, cur.hidden else { return }
+                self.checkParked(cur, screen: screen)
+                self.tab.show(for: cur.frame, side: cur.side, screen: screen)
+            }
+            return
+        }
+        let frame = Self.dockedFrame(width: d.frame.width, height: d.frame.height, side: other, on: screen)
+        tab.hide()
+        wlog("slide-over: flipping id=\(d.id) from \(d.side.rawValue) to \(other.rawValue) frame=\(frame)")
+        move(to: frame, from: position, velocity: .zero) { [weak self] in
+            guard let self, var current = self.docked, current.id == d.id, current.hidden else { return }
+            current.side = other
+            current.frame = frame
+            self.docked = current
+            let parked = Self.parkedFrame(frame, side: other, on: screen)
+            self.move(to: parked, from: frame, velocity: velocity) { [weak self] in
+                guard let self, let cur = self.docked, cur.id == d.id, cur.hidden else { return }
+                self.checkParked(cur, screen: screen)
+                self.tab.show(for: cur.frame, side: cur.side, screen: screen)
             }
         }
     }

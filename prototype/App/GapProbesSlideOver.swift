@@ -219,4 +219,66 @@ extension GlanceProbe {
     print("\(restored && !slide.tabVisible && !slide.isSlideOver(id) && spacesKept() ? "PASS" : "FAIL") slide-over spaces: quitting WindowShade while it is tucked away on another desktop puts the real window back from the edge and clears its record (was past the edge: \(parkedAgain ? "yes" : "no"); now \(bounds(id).map { "\($0)" } ?? "-"))")
     print("\(spacesKept() ? "PASS" : "FAIL") slide-over spaces: your desktop never changed (still \(mover.currentSpace(displayID: display) ?? 0))")
   }
+
+  /// 不能最小化的窗口（--slide-over-unminimizable，台前调度开着）：
+  /// 左边缘是系统守着的那一侧，收起交给系统会失败；此时换到右边缘收（那边系统不守），
+  /// 把手跟过去、窗口不留在舞台上，拉出来回到右边靠边处。
+  func exerciseSlideOverUnminimizable(pid: pid_t) async throws {
+    NotchController.probeSilence = true
+    let slide = owner.slideOver
+    guard owner.stageManagerGloballyEnabled() else {
+      print("INFO slide-over unminimizable: Stage Manager is off; the other edge is not needed, skipped")
+      return
+    }
+    // 临时 App 的第二扇窗（320×200）默认没有最小化按钮：正好是需要换边的那一类。
+    guard let other = appWindows(pid: pid).first(where: { windowID(of: $0) != id }),
+          let otherID = windowID(of: other), let original = bounds(otherID),
+          let screen = screenForAXWindow(pos: original.origin, size: original.size) else {
+      throw EffectError.unavailable("slide-over unminimizable: no second fixture window")
+    }
+    guard !isAXButtonEnabled(other, kAXMinimizeButtonAttribute as String) else {
+      print("INFO slide-over unminimizable: the second window can minimize; nothing to flip, skipped")
+      return
+    }
+    let screenAX = CGRect(origin: axPosition(fromCocoaFrame: screen.frame), size: screen.frame.size)
+    defer {
+      slide.exit(reason: "probe done")
+      setAXPosition(other, original.origin)
+      _ = setAXSize(other, original.size)
+    }
+    func parkedPastEdge() -> Bool {
+      guard let b = bounds(otherID) else { return false }
+      return gapVisibleWidth(b) <= 64 && b.midX > screenAX.midX
+    }
+    func windowParkedInStrip() -> Bool {
+      owner.windowParkedInStageStrip(id: otherID, axSize: bounds(otherID)?.size ?? original.size)
+    }
+    func minimized() -> Bool { axObservedBoolAttribute(other, kAXMinimizedAttribute as String) == true }
+
+    // 1. 从左边缘侧拉、收起：系统收不起它，窗口换到右边缘，把手也过去。
+    slide.enter(other, id: otherID, pid: pid, side: .left)
+    let dockedLeft = (try? await wait("docked on the left edge", timeout: 5) {
+      slide.isSlideOver(otherID) && slide.dockedSideForProbe == .left && self.bounds(otherID) != nil
+    }) != nil
+    guard dockedLeft else {
+      print("FAIL slide-over unminimizable: an unminimizable window could not be pulled into Slide Over from the left edge")
+      return
+    }
+    slide.hide(velocity: .zero, reason: "probe")
+    let flipped = (try? await wait("flipped to the right edge", timeout: 8) {
+      slide.dockedSideForProbe == .right && self.owner.slideOver.isHidden
+    }) != nil
+    let handleBack = (try? await wait("handle on the right edge", timeout: 6) { slide.tabVisible }) != nil
+    let parked = (try? await wait("parked past the right edge", timeout: 4) { parkedPastEdge() }) != nil
+    print("\(flipped && handleBack && parked ? "PASS" : "FAIL") slide-over unminimizable: a window the app will not minimize is tucked past the other edge with its handle there (flipped=\(flipped), handle=\(handleBack), parked=\(parked), now \(bounds(otherID).map { "\($0)" } ?? "-"))")
+    print("\(!minimized() && !windowParkedInStrip() ? "PASS" : "FAIL") slide-over unminimizable: nothing was left on the stage (minimized=\(minimized()), strip card=\(windowParkedInStrip()))")
+
+    // 2. 拉出来：回到右边靠边处，置顶。
+    slide.show(reason: "probe")
+    let shown = (try? await wait("back on the right edge", timeout: 6) {
+      guard let docked = slide.dockedFrame else { return false }
+      return !slide.isHidden && self.bounds(otherID).map { self.near($0, docked) } == true
+    }) != nil
+    print("\(shown ? "PASS" : "FAIL") slide-over unminimizable: pulling the handle brings it back to the right edge where it was docked (\(bounds(otherID).map { "\($0)" } ?? "-"))")
+  }
 }

@@ -50,11 +50,16 @@ extension AppDelegate {
         removeObserver(state)                          // 先停掉监听，避免下面的恢复动作反过来触发自己
         // 下面每次碰这扇窗最多等 0.4 秒：App 卡住时不再按全局 2 秒一次一次地停主线程。
         prepareBudgeted(state.element)
-        // 折叠条可能被拖动过 → 窗口在折叠条「当前」位置展开（标题栏带着窗口走）
+        // 折叠条可能被拖动过 → 窗口在折叠条「当前」位置展开（标题栏带着窗口走）；
+        // 只有台前调度自己挪过的那一下不算，用落下时的位置（overlayHomeFrames）。
         let pos: CGPoint
         if let overlay = state.overlay {
+            if let home = overlayHomeFrames[id], !framesAlmostEqual(home, overlay.frame) {
+                wlog("restore: strip drifted id=\(id) live=(\(Int(overlay.frame.minX)),\(Int(overlay.frame.minY))) home=(\(Int(home.minX)),\(Int(home.minY))); restoring to home")
+            }
             pos = axPosition(fromCocoaFrame: thumbnailHome ?? restoreReferenceFrame(id: id, overlay: overlay))
             dismissOverlay(overlay)
+            overlayHomeFrames.removeValue(forKey: id)
         } else {
             pos = timedRead(pid: state.pid) { axPosition(state.element) } ?? state.originalPosition
         }
@@ -145,6 +150,7 @@ extension AppDelegate {
         focusRejoinStackFrames.removeValue(forKey: id)
         focusRejoinEntries.removeValue(forKey: id)
         arrangedOverlayFrames.removeValue(forKey: id)
+        overlayHomeFrames.removeValue(forKey: id)
         if !preserveFocusEntry {
             removeFocusSessionEntry(id)
         }
@@ -174,6 +180,7 @@ extension AppDelegate {
         focusRejoinStackFrames.removeValue(forKey: id)
         focusRejoinEntries.removeValue(forKey: id)
         arrangedOverlayFrames.removeValue(forKey: id)
+        overlayHomeFrames.removeValue(forKey: id)
         removeFocusSessionEntry(id)
         accessibilityActionTargets.removeValue(forKey: id)
         shaded.removeValue(forKey: id)

@@ -104,6 +104,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     struct PendingSpaceReturn {
         let displayID: CGDirectDisplayID
         let sourceSpaceID: UInt64
+        /// 折叠那一刻用户在看的那张桌面。窗口在别的桌面时它不等于 `sourceSpaceID`：
+        /// 收起把用户带走了要送回这里，而不是送回窗口自己那张。
+        let returnSpaceID: UInt64
         let deadline: Date
     }
 
@@ -135,6 +138,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var shaded: [CGWindowID: ShadeState] = [:]
     var overlayIDs: Set<CGWindowID> = []      // 我们自己的覆盖层，tap 里要跳过它们
     var arrangedOverlayFrames: [CGWindowID: NSRect] = [:]
+    /// 卷帘条刚落下来时该待的位置（Cocoa 外框）。台前调度会把辅助窗往里挪一下
+    /// （2026-11-09 实测：副屏上卷帘条被挪了 164 点），那不算用户挪的；
+    /// 展开时窗口要回到这里，否则窗口会横着跳一段。
+    var overlayHomeFrames: [CGWindowID: NSRect] = [:]
     var focusSideStackFrames: [CGWindowID: NSRect] = [:]
     var focusPulledOutOverlayIDs: Set<CGWindowID> = []
     var focusPulledOutRestoreFrames: [CGWindowID: NSRect] = [:]

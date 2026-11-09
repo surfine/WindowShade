@@ -147,6 +147,13 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       // AXWindows 随后只列出当前桌面的另一扇窗，测试会卡在初始化而非携带逻辑。
       DispatchQueue.main.asyncAfter(deadline: .now() + 2) { moveToAnotherDesktop(window) }
     }
+    // 要按探针的节奏挪（而不是按上面的固定 2 秒）：取得句柄、摆好场景之后再挪。
+    // --fold-desktops 走这条，避免和台前调度激活 App 抢先后。
+    DistributedNotificationCenter.default().addObserver(
+      forName: Notification.Name("com.windowshade.fixture.to-other-desktop"), object: nil, queue: .main
+    ) { _ in
+      MainActor.assumeIsolated { moveToAnotherDesktop(window) }
+    }
     // 全屏探针要进出两次全屏（主屏幕、带刘海的屏各一次），多留一点时间。
     // 到点自己退出：还在全屏也没关系，那张全屏桌面随窗口一起消失，系统回到原来的桌面。
     // 长会话探针（--soak）要跑几分钟，用 --lifetime <秒> 延长；默认 90 秒后自己退出，免得留下孤儿进程。

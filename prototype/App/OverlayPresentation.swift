@@ -59,7 +59,8 @@ extension AppDelegate {
         return activeSpaceID == sourceSpaceID
     }
 
-    func scheduleSourceSpaceReturnIfNeeded(id: CGWindowID, state: ShadeState) {
+    func scheduleSourceSpaceReturnIfNeeded(id: CGWindowID, state: ShadeState,
+                                           returnSpaceID: UInt64? = nil) {
         guard hideMethodCanTriggerSpaceJump(state.hide),
               let displayID = state.sourceDisplayID,
               let sourceSpaceID = state.sourceSpaceID else { return }
@@ -70,10 +71,12 @@ extension AppDelegate {
         // 滑回来"的双重闪动压缩成一瞬。每次检查只是一个 WindowServer 读，极廉价。
         // 只覆盖系统级联跳变的窗口期：超过 ~0.55s 的 Space 差异更可能是用户自己
         // 的切换动作（折叠后主动去别的 Space），旧实现 2.5s 内会把用户切走拽回。
+        // 送回的是「折叠那一刻用户所在的那张」：窗口在别的桌面时，它不是源 Space。
         pendingSpaceReturns[id] = PendingSpaceReturn(displayID: displayID,
                                                      sourceSpaceID: sourceSpaceID,
+                                                     returnSpaceID: returnSpaceID ?? sourceSpaceID,
                                                      deadline: Date().addingTimeInterval(0.8))
-        wlog("space: scheduled return guard id=\(id) sid=\(sourceSpaceID)")
+        wlog("space: scheduled return guard id=\(id) source=\(sourceSpaceID) return=\(returnSpaceID ?? sourceSpaceID)")
 
         for delay in [0.05, 0.1, 0.15, 0.22, 0.3, 0.42, 0.55] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
@@ -95,8 +98,8 @@ extension AppDelegate {
               state.lifecycleStage == .folded,
               hideMethodCanTriggerSpaceJump(state.hide) else {
             if let activeSpaceID = PrivateSLSWindowMover.shared.currentSpace(displayID: request.displayID),
-               activeSpaceID != request.sourceSpaceID {
-                wlog("space: return guard expired id=\(id) active=\(activeSpaceID) source=\(request.sourceSpaceID) reason=\(reason)")
+               activeSpaceID != request.returnSpaceID {
+                wlog("space: return guard expired id=\(id) active=\(activeSpaceID) return=\(request.returnSpaceID) source=\(request.sourceSpaceID) reason=\(reason)")
             }
             pendingSpaceReturns.removeValue(forKey: id)
             return
@@ -104,15 +107,15 @@ extension AppDelegate {
 
         let mover = PrivateSLSWindowMover.shared
         guard let activeSpaceID = mover.currentSpace(displayID: request.displayID) else {
-            wlog("space: return guard cannot read active space id=\(id) sid=\(request.sourceSpaceID) reason=\(reason)")
+            wlog("space: return guard cannot read active space id=\(id) return=\(request.returnSpaceID) reason=\(reason)")
             return
         }
-        guard activeSpaceID != request.sourceSpaceID else { return }
+        guard activeSpaceID != request.returnSpaceID else { return }
 
-        if mover.setCurrentSpace(displayID: request.displayID, sid: request.sourceSpaceID) {
+        if mover.setCurrentSpace(displayID: request.displayID, sid: request.returnSpaceID) {
             // parking 策略（空 Space 折叠）下系统级联仍可能跳变，此处兜回属预期；
             // 若前面的 handoff 日志是 same-app/top-window 策略则需排查预防为何失效。
-            wlog("space: return guard fired sid=\(request.sourceSpaceID) from=\(activeSpaceID) id=\(id) reason=\(reason)")
+            wlog("space: return guard fired return=\(request.returnSpaceID) source=\(request.sourceSpaceID) from=\(activeSpaceID) id=\(id) reason=\(reason)")
             // 与 overlay 可见性绑定：跳回后立即校正 overlay 归属与显隐。
             if let state = shaded[id] {
                 _ = enforceOverlaySpaceInvariant(id: id, state: state, reason: "space-return-guard")
@@ -121,7 +124,7 @@ extension AppDelegate {
                 self?.refreshOverlayPresentation(bringForward: false)
             }
         } else {
-            wlog("space: return failed id=\(id) from=\(activeSpaceID) to=\(request.sourceSpaceID) reason=\(reason)")
+            wlog("space: return failed id=\(id) from=\(activeSpaceID) to=\(request.returnSpaceID) reason=\(reason)")
         }
     }
 
