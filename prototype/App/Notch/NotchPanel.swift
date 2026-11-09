@@ -423,10 +423,11 @@ final class NotchPanel: NSPanel {
             earCoverVisible: !isVirtual && displayCompact()?.music != nil && musicArtwork != nil)
     }
 
-    /// 卡的高度变了（输出设备列表开、收）：岛按新高度长。开用 expand，收用 calm（稿）。
-    func interactionSizeChanged(opening: Bool) {
+    /// 卡的高度变了（输出设备列表开、收）：岛还在，只是内容变高变矮。
+    /// 跟这一刻的动作状态走尺寸弹簧（展开的卡是 response → islandSizing），不收到 hidden。
+    func interactionSizeChanged(opening _: Bool) {
         guard isAuthenticating else { return }
-        let token = opening ? Motion.Spring.expand : Motion.Spring.calm
+        let token = Motion.notchSpring(for: motionState(), transition: .update)
         apply(animated: true, spring: NotchCanvasView.Spring(response: token.response, bounce: token.bounce))
     }
 
@@ -1233,7 +1234,8 @@ final class NotchPanel: NSPanel {
             || isVirtual || compactShape != .sides
     }
 
-    /// 电量那一下：settle 长出两耳（按内容定宽、高同刘海），停 2.6 秒，calm 收回；闪着时点击穿透。返回有没有出。
+    /// 电量那一下：按这一刻的动作状态长出两耳（紧凑 → islandSizing），停 2.6 秒。
+    /// 收回时若回到刘海本身走 islandHidden，底下还有紧凑内容则仍用那一态的尺寸弹簧。闪着时点击穿透。返回有没有出。
     @discardableResult
     func presentPowerFlash(_ flash: PowerFlash) -> Bool {
         guard !isBusyForPowerFlash else { return false }
@@ -1241,7 +1243,7 @@ final class NotchPanel: NSPanel {
         if let leases, let displayID, !leases.remind(on: displayID) { return false }
         powerFlashState = flash
         updateVisibility()
-        apply(animated: true, spring: NotchCanvasView.Spring(response: Motion.Spring.settle.response, bounce: Motion.Spring.settle.bounce))
+        apply(animated: true)
         powerFlashTimer?.invalidate()
         let timer = Timer(timeInterval: PowerFlashPolicy.holdSeconds, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.dismissPowerFlash() }
@@ -1259,7 +1261,7 @@ final class NotchPanel: NSPanel {
         powerFlashTimer = nil
         guard powerFlashState != nil else { return }
         powerFlashState = nil
-        apply(animated: true, spring: NotchCanvasView.Spring(response: Motion.Spring.calm.response, bounce: Motion.Spring.calm.bounce))
+        apply(animated: true)
     }
 
     /// 最后一下之后 1.2 秒：内容先淡出，再沿 calm 收形状。
