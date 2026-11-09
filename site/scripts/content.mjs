@@ -32,7 +32,7 @@ export const copy = {
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
     video: '看介绍视频',
-    facts: ['macOS 15 及以上', 'Apple Silicon', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.20 · ZIP 22.19 MB'],
+    facts: ['macOS 15 及以上', 'Apple Silicon；Intel 实验版', '免费 · MIT 开源', '简体、繁體与英文界面', '1.0.21 · ZIP 22.39 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -219,7 +219,7 @@ export const copy = {
 
     faqTitle: '下载之前，你可能会问',
     faqs: [
-      ['我的 Mac 能用吗？', '要 macOS 15 以上，Apple Silicon，没有 Intel 版；还在 macOS 14 的，继续用 1.0.16。收起、看一眼和手势都不用特别的硬件；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
+      ['我的 Mac 能用吗？', '要 macOS 15 以上。Apple Silicon 用主下载包。Intel 从 1.0.21 起有单独的实验包，只在 Rosetta 下冒烟过，没在真 Intel Mac 上试过；刷脸解锁、声纹和合盖效果在 Intel 上关闭。还在 macOS 14 的，继续用 1.0.16。收起、看一眼和手势都不用特别的硬件；合盖效果需要带铰链传感器的 MacBook。'],
       ['要什么权限？', '两项，一项必需、一项可选。辅助功能（必需）：找到、移动、恢复窗口。屏幕录制（可选）：开了，看一眼、窗口浏览和置顶预览里能看到窗口的实时画面；不开也能用，预览会改成图标和标题。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。用着用着辅助功能被关掉了，它会提醒你。'],
       ['看一眼和手势会动我的窗口吗？', '看一眼不会。手势只在你松手、而且小浮窗的进度条走满时才动窗口；往回拉就取消。'],
       ['窗口浏览会动我的窗口吗？', '不会，除非你按下卡片上的按钮。动手之前，它还会再确认一次“就是这一扇窗口”，确认不了就不做。'],
@@ -230,11 +230,11 @@ export const copy = {
       ['刘海会换掉系统的音量和亮度提示吗？', '默认不会。在设置里打开“音量和亮度”，按这些键时刘海里才显示。之后想看回系统自己的提示，再打开“改回用系统的提示”：WindowShade 只旁听、不拦按键，系统的提示照常出现，刘海里也跟着显示。'],
       ['出了问题，怎么告诉你们？', '在“设置 → 高级 → 关于”里点“报告问题”。也可以先“导出诊断信息”：它只存在你的电脑上，不会上传，发不发给我们由你决定。同一处还能导出、导入设置，导入前会先留一份备份。'],
       ['所有窗口都能收起来吗？', '普通窗口都可以。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。'],
-      ['怎么装？', '下载 DMG 打开，把 WindowShade.app 拖进“应用程序”；也可以下 ZIP 解压。安装包已通过 Apple 公证。从 1.0.17 升级在菜单里点“检查更新”就行；从 1.0.16 及以前升级要手动下载一次，装好后重新打开辅助功能（开过屏幕录制的，也重新打开）。'],
+      ['怎么装？', '下载 DMG 打开，把 WindowShade.app 拖进“应用程序”；也可以下 ZIP 解压。Intel 实验版只有 ZIP，没有 DMG。安装包已通过 Apple 公证。1.0.21 请先到 Releases 下载。从 1.0.16 及以前升级，装好后重新打开辅助功能（开过屏幕录制的，也重新打开）。'],
     ],
 
     endTitle: '下次窗口挤成一团，<br>先别急着关。',
-    endBody: 'macOS 15 及以上 · Apple Silicon · 免费，MIT 开源',
+    endBody: 'macOS 15 及以上 · Apple Silicon，Intel 为实验版 · 免费，MIT 开源',
     footer: '收起窗口，留下位置。一个从九十年代走来的小动作。',
   },
 
@@ -253,7 +253,7 @@ export const copy = {
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
     video: 'Watch the intro (in Chinese)',
-    facts: ['macOS 15 or later', 'Apple Silicon', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.20 · ZIP 22.19 MB'],
+    facts: ['macOS 15 or later', 'Apple Silicon; Intel experimental', 'Free · MIT licensed', 'Simplified, Traditional and English', '1.0.21 · ZIP 22.39 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],
@@ -440,7 +440,7 @@ export const copy = {
 
     faqTitle: 'Before you download',
     faqs: [
-      ['Will it work on my Mac?', 'You need macOS 15 or later and Apple Silicon — there’s no Intel build. If you’re still on macOS 14, stay on 1.0.16. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
+      ['Will it work on my Mac?', 'You need macOS 15 or later. Apple Silicon uses the main download. From 1.0.21, Intel has its own experimental package: smoked under Rosetta, not tried on a real Intel Mac. Face unlock, voiceprint and the lid effect are off on Intel. If you’re still on macOS 14, stay on 1.0.16. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
       ['What permissions does it need?', 'Two: one required, one optional. Accessibility (required): finding, moving and restoring windows. Screen Recording (optional): turn it on to see live window pictures in Glance, in window browsing and in pinned previews; leave it off and WindowShade still works, with previews showing icons and titles instead. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac. If Accessibility gets turned off while the app is running, it tells you.'],
       ['Do glances and gestures move my windows?', 'A glance never does. A gesture moves a window only when you let go with the panel’s track full; pull back to cancel.'],
       ['Can I use the notch without a notch?', 'Yes. On an external display there’s an invisible notch in the middle of the menu bar: it stays out of sight until a window is tucked into it, and flicking toward it works the same.'],
@@ -451,11 +451,11 @@ export const copy = {
       ['Does the notch replace the volume and brightness display?', 'Not by default. Turn on Volume & brightness in Settings and the notch shows them when you press those keys. If you’d rather keep the system’s own display, also turn on Use the System’s Volume and Brightness Pop-ups: WindowShade only listens, the keys go through, the system shows its own display and the notch follows along.'],
       ['Something’s wrong. How do I tell you?', 'In Settings → Advanced → About, click Report a Problem. You can also Export Diagnostics first: the file stays on your Mac, nothing is uploaded, and you decide whether to send it. The same place exports and imports settings; importing makes a backup first.'],
       ['Does it work with every window?', 'With regular windows, yes. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use.'],
-      ['How do I install it?', 'Download the DMG, open it and drag WindowShade.app into Applications; a ZIP works too. The app is notarized by Apple. From 1.0.17, Check for Updates in the menu is enough; from 1.0.16 or earlier, download by hand once, then reopen Accessibility (and Screen Recording, if you had turned it on).'],
+      ['How do I install it?', 'Download the DMG, open it and drag WindowShade.app into Applications; a ZIP works too. The experimental Intel build is a ZIP only, with no DMG. The app is notarized by Apple. For 1.0.21, download it from Releases first. From 1.0.16 or earlier, after installing, reopen Accessibility (and Screen Recording, if you had turned it on).'],
     ],
 
     endTitle: 'Next time windows pile up,<br>don’t close them just yet.',
-    endBody: 'macOS 15 or later · Apple Silicon · Free and MIT licensed',
+    endBody: 'macOS 15 or later · Apple Silicon, Intel experimental · Free and MIT licensed',
     footer: 'Roll it up, keep its place. A small gesture, carried over from the ’90s.',
   },
 };

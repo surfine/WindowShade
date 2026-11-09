@@ -11,7 +11,7 @@ A free, open-source window utility for Mac.
 
 <!-- status:start -->
 
-**Current release: 1.0.20** · build 20 · 2026-11-02 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.20)
+**Current release: 1.0.21** · build 21 · 2026-11-09 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.21)
 
 <!-- status:end -->
 
@@ -49,7 +49,7 @@ Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releas
 
 - **Needs macOS 15 or later.** Apple Silicon is the main build.
 - **Intel Macs (experimental, from 1.0.21).** Releases also has a separate ZIP whose name ends in `-intel.zip`. It has not been tried on a real Intel Mac, only in a Rosetta smoke test, so expect rough edges. Face unlock, voiceprint and the lid-close desktop effect are off and hidden on Intel; pinned previews, Picture in Picture and everything else work the same. The Intel build updates from its own feed, so it is never offered the Apple Silicon ZIP, and Apple Silicon Macs are never offered the Intel one. If something goes wrong, please [open an issue](https://github.com/surfine/WindowShade/issues/new).
-- **1.0.20 download (decimal MB):** 22.19 MB ZIP, or a 23.25 MB DMG for a first install.
+- **1.0.21 download (decimal MB):** 22.39 MB ZIP, or a 23.46 MB DMG for a first install. The experimental Intel ZIP is 11.12 MB.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
@@ -123,7 +123,7 @@ WindowShade changes one system setting: the Dock’s minimize effect. When it ne
 
 ## In development
 
-The current download is **1.0.20**. Everything described above is in it; this version adds Settings → Features with eight switches, keeps your current setup on upgrade, and fixes macOS 26 double-click zoom, a desktop flash after folding, the notch dimensions and corner parking. [Release notes](docs/releases/v1.0.20.md)
+The current download is **1.0.21**. Everything described above is in it; this version adds an experimental Intel package and aligns the notch’s transition springs and empty expanded width with the macOS 27.3 system island. The Intel package has not been tried on a real Intel Mac. [Release notes](docs/releases/v1.0.21.md)
 
 What comes next is **WindowShade 2**: your Mac’s windows taking direction, and answering to the devices at hand. The notch's new look and gestures ship in 1.0.19; the conductor, remote and coding sessions remain behind a preview switch — not shown in Settings and not running:
 

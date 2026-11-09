@@ -8,6 +8,21 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <language>zh-Hans</language>
 
     <item>
+      <title>1.0.21</title>
+      <pubDate>Mon, 09 Nov 2026 00:56:00 +0000</pubDate>
+      <sparkle:channel>beta</sparkle:channel>
+      <sparkle:version>21</sparkle:version>
+      <sparkle:shortVersionString>1.0.21</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.21</link>
+      <description><![CDATA[1.0.21 首次提供 Intel 实验版（单独下载包，Rosetta 冒烟，未在真 Intel Mac 上测过），同时把刘海的转场弹簧与展开几何对齐 macOS 27.3 系统灵动岛：六种动作状态各有自己的弹簧，录音和「等你」的编程会话更弹，收合更快。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.21/WindowShade-v1.0.21.zip" length="22390617" type="application/octet-stream" sparkle:edSignature="Vfbo4n0g24eJ4WxfbE0YSX6eEHA+zIN1Hg/tMwXxJaOZjlXDFY3NIbntUml3yet93S12ZkpoekzS+X2p/K3tBw=="></enclosure>
+    </item>
+    <item>
       <title>1.0.20</title>
       <pubDate>Mon, 02 Nov 2026 07:25:00 +0000</pubDate>
       <sparkle:version>20</sparkle:version>
@@ -35,37 +50,8 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
       <description><![CDATA[刘海照系统灵动岛重做：停上去不再展开，长按或两指张开展开；上推一下把整屏窗口收进刘海，还能整批撤销；左右半屏和甩一下先由一层代理跟手；整理菜单多一步撤销；收起动画默认开。需要 macOS 15 或更新版本。]]></description>
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.19/WindowShade-v1.0.19.zip" length="22178724" type="application/octet-stream" sparkle:edSignature="s6VLn1QvaHT5uQCFxzRf/vZnqbJ7wc+FBaDW8Ga2P2IsxNMcT0V8J45hEJv0vV9PoKAvrx1hRqEsl5+pTr6PAA=="></enclosure>
     </item>
-    <item>
-      <title>1.0.18</title>
-      <pubDate>Sun, 18 Oct 2026 06:00:00 +0000</pubDate>
-      <sparkle:version>18</sparkle:version>
-      <sparkle:shortVersionString>1.0.18</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
-      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <sparkle:informationalUpdate>
-        <sparkle:belowVersion>17</sparkle:belowVersion>
-      </sparkle:informationalUpdate>
-      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.18</link>
-      <description><![CDATA[设置里每一页都带一段演示，指到哪一行就演哪一行，侧栏还能搜索；刘海、刘海里的实时活动、文件架、Dock 悬停查看窗口这一版起默认打开（自己改过开关的不动），升级后会告诉你新开了什么。需要 macOS 15 或更新版本。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.18/WindowShade-v1.0.18.zip" length="9347836" type="application/octet-stream" sparkle:edSignature="N2TcJaO1F5g3FsqdIqg6Hjn/pUihlTvFtmhUnV3erJR1T/HVVZDQUfkqDuFaTYDEhx48jl8FDtXo62ES0btTAQ=="></enclosure>
-    </item>
-    <item>
-      <title>1.0.17</title>
-      <pubDate>Sat, 17 Oct 2026 15:24:34 +0000</pubDate>
-      <sparkle:version>17</sparkle:version>
-      <sparkle:shortVersionString>1.0.17</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
-      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <sparkle:informationalUpdate>
-        <sparkle:belowVersion>17</sparkle:belowVersion>
-      </sparkle:informationalUpdate>
-      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.17</link>
-      <description><![CDATA[这一版换了签名证书并通过 Apple 公证，从 1.0.16 升级要手动下载一次、重新打开两项授权；另外让收起更稳，设置里多了导出诊断信息、导出／导入设置，也多了 7 个捷径动作。需要 macOS 15 或更新版本。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.17/WindowShade-v1.0.17.zip" length="10647571" type="application/octet-stream" sparkle:edSignature="clpfgz4O+hHJoZkEAzTAZOA5MIXl371V5ET0pfeMbussS7AKmXIdq3v6TX831SOGEKooziKLL1l6wNxmD9LRAQ=="></enclosure>
-    </item>
   </channel>
-</rss>
-<!-- sparkle-signatures:
-edSignature: gEDL36OOJ1nedf08TW7WyJlKYVqgjX2iQE34B1LAFacDXoEXPX3GQOnRRlJqHHwoKZAeIYq9yqK0nqjEngyHAA==
-length: 5502
+</rss><!-- sparkle-signatures:
+edSignature: EaATIHH//OzlOg6k5PeMLH7dat1gsRcmzRDe4tIIcMh7nsUpMb6gj43WQBuKSFVSohq5CuZLwSrxCZcIcMihAQ==
+length: 4399
 -->

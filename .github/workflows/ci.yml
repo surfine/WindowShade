@@ -34,8 +34,16 @@ jobs:
         working-directory: prototype
         run: ./build.sh --check
 
+      # 岛的快速回归：令牌、六态、活动映射、形变接力。
+      - name: island motion and geometry
+        run: |
+          bash tests/run-notch-token-tests.sh
+          bash tests/run-island-motion-state-tests.sh
+          bash tests/run-notch-activity-motion-tests.sh
+          bash tests/run-island-transition-tests.sh
+
       # 2026-11-04 起支持交叉编译 Intel 包（Diagnostics 采样器已加 arch 分支）；
-      # 发布仍 arm64-only，这一步只保证 x86_64 路径不烂掉。
+      # 1.0.21 起 Intel 包随版发布，这一步保证 x86_64 路径不烂掉。
       - name: build.sh --check (x86_64 cross)
         working-directory: prototype
         run: WINDOWSHADE_ARCH=x86_64 ./build.sh --check

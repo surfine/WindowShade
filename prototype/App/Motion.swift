@@ -114,16 +114,36 @@ enum Motion {
         case drop
     }
 
-    /// 形状 → 弹簧令牌。减少动态效果时一律 `reducedNotch`（岛的外框本身直接到位，见 `NotchCanvasView.morph`）。
-    static func notchSpring(for shape: NotchShape, reduced: Bool = Motion.reduced) -> Spring {
+    /// 动作状态 → 弹簧令牌（27.3 Mac 岛的两组 + 收合默认值）。
+    /// 减少动态效果时一律 `reducedNotch`（岛的外框本身直接到位，见 `NotchCanvasView.morph`）。
+    static func notchSpring(for state: IslandMotionState,
+                            transition: IslandMotionTransition = .update,
+                            reduced: Bool = Motion.reduced) -> Spring {
         if reduced { return .reducedNotch }
+        switch state {
+        case .listening, .prompt: return .islandPrompt
+        case .thinking, .response, .transient: return .islandSizing
+        case .hidden: return .islandHidden
+        }
+    }
+
+    /// 形状 → 状态 → 令牌：给旧调用点与测试的过渡 adapter。
+    static func notchSpring(for shape: NotchShape, reduced: Bool = Motion.reduced) -> Spring {
+        let state = IslandMotionState(shape: shape)
+        let transition: IslandMotionTransition = shape == .minimum ? .collapse : .update
+        return notchSpring(for: state, transition: transition, reduced: reduced)
+    }
+}
+
+extension IslandMotionState {
+    /// 形状 → 动作状态。优先序与 `NotchPanel.motionShape()` 一致。
+    init(shape: Motion.NotchShape) {
         switch shape {
-        case .minimum: return .calm
-        case .compact, .chin, .capsuleCompact: return .settle
-        case .alert: return .bloom
-        case .expanded: return .expand
-        case .interaction, .meter: return .pop
-        case .drop: return .catchDrop
+        case .minimum: self = .hidden
+        case .interaction: self = .prompt
+        case .expanded: self = .response
+        case .compact, .chin, .capsuleCompact: self = .thinking
+        case .alert, .meter, .drop: self = .transient
         }
     }
 }
