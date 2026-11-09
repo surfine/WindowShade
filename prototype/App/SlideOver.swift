@@ -26,6 +26,10 @@ final class SlideOverController {
         /// 靠边时的外框（AX 坐标）。
         var frame: CGRect
         var hidden: Bool
+        /// 收起是交给系统的收起（台前调度：窗口缩进侧条卡片），不是推到屏外。
+        var hiddenByMinimize: Bool = false
+        /// 交给系统收起的那一刻（systemUptime）：刚下最小化时外框还是原尺寸，验证要等它落定。
+        var minimizedAt: TimeInterval = 0
         let display: CGDirectDisplayID?
         let restorePin: Bool
     }
@@ -56,6 +60,11 @@ final class SlideOverController {
     private var maintenance: SlideOverMaintenanceTicker?
     private var dragWriter: SlideOverDragWriter?
     private var draggingMirror = false
+    /// 正在把侧条卡片叫回舞台（解最小化之后、滑到靠边处之前）。这期间它还不是侧拉里的窗口。
+    private var leavingStrip = false
+    /// 拖的是「已经收进侧条」的窗口的画面：松手够往里就解掉最小化、让窗口现身。
+    private var minimizedDrag = false
+    private var minimizedDragInward: CGFloat = 0
     /// 正按着标题栏拖着的那扇（dragMoved 起，到松手）：这期间边框收着，维护检查不把它挂回来。
     private var titleDragging: CGWindowID?
     private var edgeDrag: (start: CGRect, latest: CGRect, wasHidden: Bool)?
@@ -102,6 +111,8 @@ final class SlideOverController {
     var chromeFrameAX: CGRect? { chrome.frameAX }
     var chromeHandleFrame: NSRect? { chrome.handleFrame }
     var chromeCornerRadius: CGFloat { chrome.cornerRadius }
+    /// 探针用：滑、拖、改大小还在进行（这时写窗口位置会和它抢）。
+    var busyForProbe: Bool { glide != nil || edgeDrag != nil || chromeDrag != nil || resizing != nil }
     var menuTitle: String {
         docked == nil
             ? WSL10n.text("slideOver.menu.start", zh: "侧拉当前窗口")
@@ -148,11 +159,26 @@ final class SlideOverController {
 
     /// 把这扇窗口侧拉：滑到靠边的位置，置顶。
     /// side：想靠哪边（从启动台拖到哪一边）；那边挨着别的屏幕时照常自己挑。
-    func enter(_ win: AXUIElement, id: CGWindowID, pid: pid_t, side preferred: Side? = nil, on targetScreen: NSScreen? = nil) {
+    func enter(_ win: AXUIElement, id: CGWindowID, pid: pid_t, side preferred: Side? = nil,
+               on targetScreen: NSScreen? = nil, unminimizeAttempt: Int = 0) {
         dropHint.cancel()
         guard let info = cgWindowInfo(id), let current = cgWindowBounds(info),
               let screen = targetScreen ?? screenForAXWindow(pos: current.origin, size: current.size) else { return }
         guard (info[kCGWindowOwnerPID as String] as? pid_t) == pid else { return }
+        // 窗口还缩在台前调度侧条里（上一次退出侧拉刚解最小化、或它本来就是缩着的）：
+        // 先把它叫回舞台再按它真正的大小靠边，否则会把卡片的大小当成侧拉尺寸。
+        let inStrip = axSize(win).map { owner.windowParkedInStageStrip(id: id, axSize: $0) } ?? false
+        let minimized = axObservedBoolAttribute(win, kAXMinimizedAttribute as String) == true
+        if owner.stageManagerGloballyEnabled(), unminimizeAttempt < 20, inStrip || minimized {
+            if unminimizeAttempt == 0 { setAXMinimized(win, false) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.enter(win, id: id, pid: pid, side: preferred, on: targetScreen,
+                                unminimizeAttempt: unminimizeAttempt + 1)
+                }
+            }
+            return
+        }
         let size = current.size
         let chosen = preferred.flatMap { Self.neighborFree($0, screen) ? $0 : nil } ?? Self.side(for: current, on: screen)
         guard let side = chosen else {
@@ -204,6 +230,23 @@ final class SlideOverController {
     /// 收到屏幕边外，边上留一个把手。velocity：甩出去的速度（AX 坐标，点/秒）。
     func hide(velocity: CGVector, reason: String) {
         guard var current = docked, !current.hidden else { return }
+        // 正在从侧条把它叫回舞台（解最小化还没落定）：再收起就是让它留在侧条里，不必重算外框
+        //（这一刻读到的还是卡片的大小，拿它当靠边处会把原位弄丢）。
+        if leavingStrip {
+            leavingStrip = false
+            generation &+= 1
+            current.hidden = true
+            current.hiddenByMinimize = true
+            current.minimizedAt = ProcessInfo.processInfo.systemUptime
+            docked = current
+            chrome.hide()
+            glide?.cancel(); glide = nil
+            wlog("slide-over: hide id=\(current.id) reason=\(reason) while it was coming out of the stage strip")
+            setAXMinimized(current.element, true)
+            reassertStageStripPark(current)
+            refreshTab()
+            return
+        }
         guard let now = frameNow(current), let screen = screenForDisplayID(current.display) else { return }
         // 被人挪过、改过大小：按现在的样子重新记下靠边的位置，拉出来时回到这里。
         if glide == nil, edgeDrag == nil {
@@ -215,6 +258,20 @@ final class SlideOverController {
         let parked = Self.parkedFrame(current.frame, side: current.side, on: screen)
         current.hidden = true
         docked = current
+        // 台前调度守着侧条那一侧：舞台上的窗口推到那里会被拉回舞台（右缘停在 255，见 StagePark）。
+        // 收起改走系统自己的收起——窗口缩进侧条卡片，把手留在原来那一侧。
+        // 只看当前桌面上的窗口：别的桌面不归这台「舞台」管，那边照旧推到屏外（也不会把窗口带到这张桌面）。
+        if owner.stageManagerGloballyEnabled(), windowIsOnScreenNow(current.id) {
+            current.hiddenByMinimize = true
+            current.minimizedAt = ProcessInfo.processInfo.systemUptime
+            docked = current
+            chrome.hide()
+            wlog("slide-over: hide id=\(current.id) reason=\(reason) into the stage strip")
+            setAXMinimized(current.element, true)
+            refreshTab()
+            verifyStageStripPark(current, parked: parked, from: now, screen: screen, velocity: velocity)
+            return
+        }
         wlog("slide-over: hide id=\(current.id) reason=\(reason)")
         move(to: parked, from: now, velocity: velocity) { [weak self] in
             guard let self, let d = self.docked, d.id == current.id, d.hidden else { return }
@@ -223,9 +280,67 @@ final class SlideOverController {
         }
     }
 
-    /// 台前调度会把推到侧条那一边的窗口拉回舞台里（真机实测，见 StagePark）：收好之后读回一次，
-    /// 没站住就只记日志，不再反复写——和系统拉扯只会让窗口抖。换边会让把手和窗口分在两边、
-    /// 拖着把手往里划的那条换算也跟着错，所以这件事要单独决定（见 docs/known-failures.md）。
+    /// 收起交给系统之后确认它真的进了侧条。刚下最小化时系统可能还在动画里（或这次写入被丢掉）：
+    /// 再看一次、补写一次，仍然收不起（App 不让最小化）才退回推到屏外那条老路，
+    /// 免得窗口明明在舞台上、把手却说自己收起来了。
+    private func verifyStageStripPark(_ d: Docked, parked: CGRect, from now: CGRect,
+                                      screen: NSScreen, velocity: CGVector, attempt: Int = 0) {
+        let element = d.element, id = d.id, stamp = d.minimizedAt
+        DispatchQueue.main.asyncAfter(deadline: .now() + (attempt == 0 ? 0.7 : 0.6)) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, var current = self.docked, current.id == id, current.hidden,
+                      current.minimizedAt == stamp else { return }
+                let size = axSize(element) ?? d.frame.size
+                let minimized = axObservedBoolAttribute(element, kAXMinimizedAttribute as String) == true
+                if minimized || self.owner.windowParkedInStageStrip(id: id, axSize: size) { return }
+                if attempt == 0 {
+                    // 解最小化还没落定就又被收起时，这一次写入会被丢掉：补一次。
+                    setAXMinimized(element, true)
+                    self.verifyStageStripPark(d, parked: parked, from: now, screen: screen,
+                                              velocity: velocity, attempt: 1)
+                    return
+                }
+                wlog("slide-over: the app did not put the window away (id=\(id)); sliding it past the edge instead")
+                current.hiddenByMinimize = false
+                self.docked = current
+                self.move(to: parked, from: now, velocity: velocity) { [weak self] in
+                    guard let self, let d = self.docked, d.id == id, d.hidden else { return }
+                    self.checkParked(d, screen: screen)
+                    self.refreshTab()
+                }
+            }
+        }
+    }
+
+    /// 从侧条叫回来的半路又被收起时，最小化那一次写入可能被丢掉：补写一次；仍收不起（App 不让最小化）
+    /// 就当作它其实还在舞台上，按「没收起」恢复，别让把手骗人。
+    private func reassertStageStripPark(_ d: Docked, attempt: Int = 0) {
+        let element = d.element, id = d.id, stamp = d.minimizedAt
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, var current = self.docked, current.id == id, current.hidden,
+                      current.minimizedAt == stamp else { return }
+                let size = axSize(element) ?? d.frame.size
+                if axObservedBoolAttribute(element, kAXMinimizedAttribute as String) == true
+                    || self.owner.windowParkedInStageStrip(id: id, axSize: size) { return }
+                if attempt == 0 {
+                    setAXMinimized(element, true)
+                    self.reassertStageStripPark(d, attempt: 1)
+                    return
+                }
+                wlog("slide-over: the app kept the window on the stage (id=\(id)); showing it as docked again")
+                current.hidden = false
+                current.hiddenByMinimize = false
+                self.docked = current
+                self.pin()
+                self.refreshTab()
+            }
+        }
+    }
+
+    /// 推到屏外之后读回一次：台前调度会把推到侧条那一边的窗口拉回舞台，没站住就只记日志，
+    /// 不再反复写——和系统拉扯只会让窗口抖。台前调度开着时收起走的是系统收起（`hide` 里先分过流），
+    /// 走到这里只有 App 不让最小化的那种窗口（见 docs/known-failures.md）。
     private func checkParked(_ d: Docked, screen: NSScreen) {
         let parked = Self.parkedFrame(d.frame, side: d.side, on: screen)
         let element = d.element, id = d.id, side = d.side
@@ -240,11 +355,36 @@ final class SlideOverController {
     /// 从屏幕边滑回来，交到最前面，置顶。
     func show(velocity: CGVector = .zero, reason: String) {
         guard var current = docked, current.hidden else { return }
-        guard let now = frameNow(current) else { return }
+        guard current.hiddenByMinimize || frameNow(current) != nil else { return }
         tab.hide()
+        let fromStrip = current.hiddenByMinimize
         current.hidden = false
+        current.hiddenByMinimize = false
         docked = current
-        wlog("slide-over: show id=\(current.id) reason=\(reason)")
+        wlog("slide-over: show id=\(current.id) reason=\(reason)\(fromStrip ? " from the stage strip" : "")")
+        if fromStrip {
+            // 侧条卡片回到舞台要几帧：先解掉最小化，等它站好（外框不再是卡片）再滑到靠边处。
+            let element = current.element, id = current.id
+            leavingStrip = true
+            setAXMinimized(element, false)
+            afterLeavingStageStrip(id: id, element: element, attempt: 0) { [weak self] in
+                guard let self else { return }
+                guard let d = self.docked, d.id == id, !d.hidden else { self.leavingStrip = false; return }
+                self.leavingStrip = false
+                guard let now = self.frameNow(d) else { return }
+                self.move(to: d.frame, from: now, velocity: velocity) { [weak self] in
+                    guard let self, let d = self.docked, d.id == id, !d.hidden else { return }
+                    let element = d.element
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        AXUIElementPerformAction(element, kAXRaiseAction as CFString)
+                    }
+                    NSRunningApplication(processIdentifier: d.pid)?.activate()
+                    self.pin()
+                }
+            }
+            return
+        }
+        guard let now = frameNow(current) else { return }
         move(to: current.frame, from: now, velocity: velocity) { [weak self] in
             guard let self, let d = self.docked, d.id == current.id, !d.hidden else { return }
             let element = d.element
@@ -256,10 +396,29 @@ final class SlideOverController {
         }
     }
 
+    /// 侧条卡片回到舞台要几帧。等到外框不再是卡片、也不再是最小化（或超时）再接着滑。
+    private func afterLeavingStageStrip(id: CGWindowID, element: AXUIElement, attempt: Int,
+                                        then: @escaping () -> Void) {
+        let size = axSize(element) ?? .zero
+        let stillCard = size.width > 0 && owner.windowParkedInStageStrip(id: id, axSize: size)
+        let minimized = axObservedBoolAttribute(element, kAXMinimizedAttribute as String) == true
+        if (!stillCard && !minimized) || attempt >= 20 {
+            then()
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.docked?.id == id, self.docked?.hidden == false else { return }
+                self.afterLeavingStageStrip(id: id, element: element, attempt: attempt + 1, then: then)
+            }
+        }
+    }
+
     /// 退出侧拉：窗口留下（收着的先拉回来），不再置顶。
     /// backTo：收着的那扇拉回到这里（排布历史撤销侧拉：回到侧拉之前），不给就拉回靠边处。
     func exit(reason: String, restoringPosition: Bool = true, backTo: CGRect? = nil) {
         guard let current = docked else { return }
+        let wasLeavingStrip = leavingStrip
         let needsRestore = current.hidden || edgeDrag != nil || (restoringPosition && glide != nil)
         generation &+= 1
         dragWriter?.stopAndWait()
@@ -268,6 +427,7 @@ final class SlideOverController {
         let previousGlide = glide
         previousGlide?.cancel()
         glide = nil
+        leavingStrip = false
         tab.hide()
         chrome.hide()
         endChromeGestures()
@@ -277,6 +437,13 @@ final class SlideOverController {
         if !current.restorePin { unpin() }
         docked = nil
         wlog("slide-over: exit id=\(current.id) reason=\(reason)")
+        if current.hiddenByMinimize || wasLeavingStrip {
+            // 收起是交给系统的：退出侧拉就把最小化解掉，窗口在它靠边的位置回来，不再滑（卡片位置不是它的原位）。
+            setAXMinimized(current.element, false)
+            SlideOverRecovery.clear(id: current.id)
+            if current.restorePin { restoreOriginalPin(current) }
+            return
+        }
         if needsRestore, let now = frameNow(current) {
             let target = backTo ?? current.frame
             let g = WindowGlide(id: current.id, element: current.element,
@@ -506,8 +673,12 @@ final class SlideOverController {
 
     func beginEdgeDrag() {
         guard edgeDrag == nil, let d = docked else { return }
-        if !windowHere(d) {
+        // 台前调度里收起的窗口是侧条卡片：真窗口滑不进来（系统守着那条边），
+        // 先拿它的实时画面跟着手，松手够往里再把最小化解掉。
+        if !windowHere(d) || d.hiddenByMinimize {
             draggingMirror = true
+            minimizedDrag = d.hiddenByMinimize
+            minimizedDragInward = 0
             showMirror(reason: "edge drag", interactive: true)
             return
         }
@@ -526,7 +697,11 @@ final class SlideOverController {
     }
 
     func updateEdgeDrag(inward: CGFloat) {
-        if draggingMirror { mirror?.edgeProgress(inward: inward); return }
+        if draggingMirror {
+            if minimizedDrag { minimizedDragInward = inward }
+            mirror?.edgeProgress(inward: inward)
+            return
+        }
         guard let d = docked, var drag = edgeDrag, let screen = screenForDisplayID(d.display) else { return }
         let parked = Self.parkedFrame(d.frame, side: d.side, on: screen)
         drag.latest.origin.x = SlideOverMotion.position(start: drag.start.minX, inward: inward,
@@ -538,6 +713,20 @@ final class SlideOverController {
     func endEdgeDrag(inwardVelocity: CGFloat, cancelled: Bool) {
         if draggingMirror {
             draggingMirror = false
+            if minimizedDrag {
+                minimizedDrag = false
+                // 真窗口在台前调度里滑不进来：够往里（或往里甩）就把最小化解掉，让它在靠边处现身。
+                let width = docked?.frame.width ?? 0
+                if !cancelled, SlideOverMotion.revealsFromStrip(inward: minimizedDragInward,
+                                                                velocity: inwardVelocity, width: width) {
+                    mirror?.close()
+                    mirror = nil
+                    show(reason: "edge drag")
+                } else {
+                    dismissMirror(velocity: 0)
+                }
+                return
+            }
             tab.hide()
             mirror?.edgeReleased(inwardVelocity: inwardVelocity, cancelled: cancelled)
             return
@@ -572,13 +761,29 @@ final class SlideOverController {
     /// 侧拉窗口有变化（WindowStateHub 的事件或 1 秒心跳）时核对一遍。返回 false 表示这次被跳过
     /// （正在滑、拖、改大小，或按着标题栏）：维护会每 0.25s 复查，直到不再跳过。
     private func validateWindow() -> Bool {
-        guard let d = docked else { return true }
+        guard var d = docked else { return true }
         guard let info = cgWindowInfo(d.id), (info[kCGWindowOwnerPID as String] as? pid_t) == d.pid else {
             windowGone(d.id)
             return true
         }
         if screenForDisplayID(d.display) == nil { screensChanged(); return true }
         guard glide == nil, edgeDrag == nil, chromeDrag == nil, resizing == nil else { return false }
+        // 收起是交给系统的（台前调度侧条卡片）时，用户可能从侧条卡片或程序坞把窗口叫回来。
+        // 那就不再是「收着」：按拉出来的样子置顶、收掉把手，不然窗口看得见却不浮。
+        if d.hidden, d.hiddenByMinimize,
+           ProcessInfo.processInfo.systemUptime - d.minimizedAt > 1.2,
+           axObservedBoolAttribute(d.element, kAXMinimizedAttribute as String) != true,
+           let size = axSize(d.element), !owner.windowParkedInStageStrip(id: d.id, axSize: size),
+           let now = cgWindowBounds(info), now.width > d.frame.width * StageStrip.maximumThumbnailScale,
+           (info[kCGWindowIsOnscreen as String] as? Bool) == true {
+            d.hidden = false
+            d.hiddenByMinimize = false
+            docked = d
+            wlog("slide-over: the window came back from the stage strip by itself id=\(d.id)")
+            pin()
+            refreshTab()
+            return true
+        }
         // 窗口被最小化、App 被隐藏，或窗口关了进程还留着它：边框、拖动带和把手不能围着一块空处挡别的 App 的点击。
         // 窗口回来了再挂上（置顶要是跟着断了也接上）；标题栏上还按着（正拖着它）时不挂，松手后 dragEnded、released 会挂。
         let onScreen = (info[kCGWindowIsOnscreen as String] as? Bool) == true
@@ -618,8 +823,11 @@ final class SlideOverController {
         generation &+= 1
         dragWriter?.stopAndWait(); dragWriter = nil; edgeDrag = nil
         glide?.cancelAndWait(); glide = nil
+        leavingStrip = false
         unpin(); tab.hide(); chrome.hide(); endChromeGestures(); mirror?.close(); mirror = nil; openingAtHome = false
         docked = nil
+        // 收起交给系统收起的（台前调度）：先解最小化，窗口才会在它靠边处现身。
+        if d.hiddenByMinimize { setAXMinimized(d.element, false) }
         let cocoa = cocoaFrame(fromAXPosition: d.frame.origin, size: d.frame.size)
         let target = SlideOverRecovery.clamped(cocoa)
         let destination = axPosition(fromCocoaFrame: target)

@@ -15,7 +15,7 @@
 | 跨桌面携带依赖 SkyLight 内部符号 | 任意构建 | `SLSPerformAsynchronousBridgedWindowManagementOperation` 或 `SLSBridgedMoveWindowsToManagedSpaceOperation` 缺失 | 2026-11-02 | 静默回退到“窗口留在原桌面”，日志 `method=fallback`；每个 macOS 大版本复核一次 | 2026-11-02 | `run-bridged-space-move-tests.sh` |
 | `release-gate.sh` 默认联网取上一版 | 离线 | 不传 `--previous` 时调用 `gh release download` | 2026-11-02 | 离线门禁显式传 `--previous <zip>`；`local-gate.sh release` 已强制 | 2026-11-02 | `scripts/release-gate.sh` |
 | 蓝牙在场：连着时不再每 5 秒送探针回执 | 任意构建（11-06 起） | `WS2BluetoothPresenceSource` 改成通知驱动后，只在连上那一次送 `readStarted/readSucceeded`；5 秒保底只读 `isConnected()` | 2026-11-06 | 眼下无影响：`PresenceLock` 里靠探针回执续上 `cancelCountdown` 的分支只在 `cameraEnabled` 打开时才走，这个开关目前没有入口。将来打开相机在场（或“回来自动解锁”的 RSSI 判定）时，要在那段时间重新周期送探针 / RSSI | 2026-11-06 | `run-presence-bluetooth-source-tests.sh` |
-| 台前调度下侧拉收起被系统拉回舞台 | 本机 M5（macOS 27），台前调度开，签名 stage 构建 | `bash tests/run-glance-probe.sh --slide-over` → `FAIL timeout: direct edge drag follows pointer`；日志 `slide-over: parked window pulled back id=… side=left want=(-636,…) now=(-385,…)` | 2026-11-09 | 系统不让窗口藏在侧条后面（窗口右边停在 255），另一条边站得住（`--pip` 已改成换边）。侧拉换边会让把手和窗口分在两边、拖着往里划的换算要重写，做法待定；现在只记日志，不反复写 | 2026-11-09 | `--slide-over` |
+| 台前调度下不能最小化的窗口收起仍会被拉回 | 本机 M5（macOS 27），台前调度开，`--restore-guard` 用的那种不给最小化的临时窗 | `slide.hide` 走系统收起失败（补写一次仍收不起）→ 退回推到屏外的老路，窗口右边被系统钳在 255 | 2026-11-09 | 侧拉收起现在优先交给系统收起（侧条卡片）；只有 App 自己不让最小化的窗口走老路，这种窗口在这一侧收不干净。真遇到再定：要么换边，要么按住不动只记日志 | 2026-11-09 | `--slide-over`（标准窗口）、`--restore-guard`（不可最小化窗口） |
 
 ## 登记模板
 

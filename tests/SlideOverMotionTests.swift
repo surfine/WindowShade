@@ -22,6 +22,13 @@ import CoreGraphics
         precondition(SlideOverMotion.willHide(position: 1001, velocity: 0, open: 800, parked: 1200))
         precondition(SlideOverMotion.willHide(position: 950, velocity: 900, open: 800, parked: 1200))
         precondition(!SlideOverMotion.willHide(position: 1050, velocity: -900, open: 800, parked: 1200))
+        // 台前调度：卡片够往里拖（或往里甩）才解最小化；拖得少就留在侧条里。
+        precondition(!SlideOverMotion.revealsFromStrip(inward: 119, velocity: 0, width: 300))
+        precondition(SlideOverMotion.revealsFromStrip(inward: 120, velocity: 0, width: 300))
+        precondition(!SlideOverMotion.revealsFromStrip(inward: 200, velocity: 0, width: 640))
+        precondition(SlideOverMotion.revealsFromStrip(inward: 224, velocity: 0, width: 640))
+        precondition(SlideOverMotion.revealsFromStrip(inward: 10, velocity: 600, width: 640))
+        precondition(!SlideOverMotion.revealsFromStrip(inward: 10, velocity: 500, width: 640))
 
         let lock = NSLock()
         var values: [CGFloat] = []

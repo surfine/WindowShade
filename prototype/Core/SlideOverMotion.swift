@@ -21,6 +21,12 @@ enum SlideOverMotion {
         let projected = (position - open) * sign + CGFloat(FluidMotion.projection(velocity: Double(velocity * sign)))
         return projected > abs(parked - open) / 2
     }
+
+    /// 台前调度里收着的那扇（侧条卡片）真窗口滑不进来：拖把手时先放实时画面，松手够往里才解最小化。
+    /// 够往里 = 拖过至少 120 点、或窗口宽的三分之一（宽窗口不至于要拖半屏），或者往里甩得快。
+    static func revealsFromStrip(inward: CGFloat, velocity: CGFloat, width: CGFloat) -> Bool {
+        inward >= max(120, width * 0.35) || velocity > 500
+    }
 }
 
 /// 指针事件只覆盖最新目标，慢窗口不会积累一长串过时位置。结束回调在最后一次写入停止之后。

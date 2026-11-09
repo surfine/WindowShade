@@ -532,12 +532,15 @@ extension GlanceProbe {
     // iPadOS 的外框：一圈玻璃边框贴着窗口，靠屏幕里面的那个下角有调整大小的把手。
     try await wait("border shown", timeout: 3) { slide.chromeVisible }
     let rightSide = docked.maxX > edge.midX
-    let dockedCocoa = cocoaFrame(fromAXPosition: docked.origin, size: docked.size)
-    let hugs = slide.chromeFrameAX.map { closeTo($0, docked) } == true
-    let handleInside = slide.chromeHandleFrame.map {
-      abs($0.minY - dockedCocoa.minY) < 1 && (rightSide ? abs($0.minX - dockedCocoa.minX) < 1 : abs($0.maxX - dockedCocoa.maxX) < 1)
-    } == true
-    print("\(hugs && handleInside ? "PASS" : "FAIL") slide-over: a glass border hugs the window and the resize handle sits in the inner bottom corner (window corner radius \(Int(slide.chromeCornerRadius.rounded())))")
+    // 边框跟着窗口一起滑，滑完才和窗口对齐：等它贴上再量，别在第一帧和窗口比。
+    let hugged = (try? await wait("border hugs the window", timeout: 2) {
+      guard let now = self.bounds(self.id), let chrome = slide.chromeFrameAX,
+            let handle = slide.chromeHandleFrame, self.closeTo(chrome, now) else { return false }
+      let cocoa = cocoaFrame(fromAXPosition: now.origin, size: now.size)
+      return abs(handle.minY - cocoa.minY) < 1
+        && (rightSide ? abs(handle.minX - cocoa.minX) < 1 : abs(handle.maxX - cocoa.maxX) < 1)
+    }) != nil
+    print("\(hugged ? "PASS" : "FAIL") slide-over: a glass border hugs the window and the resize handle sits in the inner bottom corner (window corner radius \(Int(slide.chromeCornerRadius.rounded())))")
     slide.resizeForProbe(by: CGVector(dx: rightSide ? -80 : 80, dy: 0))
     try await wait("wider from the handle", timeout: 3) { self.bounds(self.id).map { abs($0.width - (docked.width + 80)) < 3 } == true }
     let wider = bounds(id) ?? .zero
@@ -549,32 +552,59 @@ extension GlanceProbe {
     print("\(edgeKept && abs(wider.minY - docked.minY) < 3 ? "PASS" : "FAIL") slide-over: dragging the handle makes it wider toward the middle; the edge side and the top stay put and the border follows")
 
     func parkedX() -> CGFloat { docked.maxX > edge.midX ? edge.maxX - SlideOverController.peek : edge.minX - docked.width + SlideOverController.peek }
+    // 台前调度守着侧条那一侧，窗口藏不到屏幕边外（会被拉回舞台，右缘停在 255）。
+    // 这时候收起交给系统：窗口缩进侧条卡片，把手留在原来那一侧。
+    let stagePark = owner.stageManagerGloballyEnabled()
+    func awayInStrip() -> Bool {
+      guard let ax = axSize(element) else { return false }
+      return owner.windowParkedInStageStrip(id: id, axSize: ax)
+        || axObservedBoolAttribute(element, kAXMinimizedAttribute as String) == true
+    }
     slide.hide(velocity: .zero, reason: "probe")
-    try await wait("parked off the edge", timeout: 3) { self.bounds(self.id).map { abs($0.minX - parkedX()) <= 3 } == true }
-    try await wait("tab shown", timeout: 2) { slide.tabVisible }
-    print("\(!pinned() ? "PASS" : "FAIL") slide-over: hiding slides it past the screen edge (x=\(Int(bounds(id)?.minX ?? -1))), leaves a handle and stops floating")
+    if stagePark {
+      try await wait("put away in the stage strip", timeout: 5) { awayInStrip() }
+      try await wait("tab shown", timeout: 2) { slide.tabVisible }
+      print("\(!pinned() ? "PASS" : "FAIL") slide-over: with Stage Manager on, hiding puts it away in the stage strip, leaves a handle and stops floating")
+    } else {
+      try await wait("parked off the edge", timeout: 3) { self.bounds(self.id).map { abs($0.minX - parkedX()) <= 3 } == true }
+      try await wait("tab shown", timeout: 2) { slide.tabVisible }
+      print("\(!pinned() ? "PASS" : "FAIL") slide-over: hiding slides it past the screen edge (x=\(Int(bounds(id)?.minX ?? -1))), leaves a handle and stops floating")
+    }
     print("\(!slide.chromeVisible ? "PASS" : "FAIL") slide-over: the border goes with the window when it is tucked away")
 
-    // 真正移动中间帧，不只检查松手后的终点。拖出100点、回退到30点，再取消。
-    let inward: CGFloat = docked.maxX > edge.midX ? -1 : 1
-    slide.beginEdgeDrag()
-    slide.updateEdgeDrag(inward: 100)
-    try await wait("direct edge drag follows pointer", timeout: 2) {
-      self.bounds(self.id).map { abs($0.minX - (parkedX() + inward * 100)) < 5 } == true
+    if stagePark {
+      // 侧条卡片滑不进来：拖把手先让实时画面跟着手，松手不够往里就留在侧条里。
+      slide.beginEdgeDrag()
+      slide.updateEdgeDrag(inward: 100)
+      try await wait("the handle previews it", timeout: 3) { slide.mirrorVisible }
+      slide.updateEdgeDrag(inward: 30)
+      slide.endEdgeDrag(inwardVelocity: 0, cancelled: true)
+      try await wait("cancel keeps it away", timeout: 3) {
+        !slide.mirrorVisible && slide.isHidden && slide.tabVisible
+      }
+      print("PASS slide-over: across the stage strip a short pull only previews it; letting go leaves it away")
+    } else {
+      // 真正移动中间帧，不只检查松手后的终点。拖出100点、回退到30点，再取消。
+      let inward: CGFloat = docked.maxX > edge.midX ? -1 : 1
+      slide.beginEdgeDrag()
+      slide.updateEdgeDrag(inward: 100)
+      try await wait("direct edge drag follows pointer", timeout: 2) {
+        self.bounds(self.id).map { abs($0.minX - (parkedX() + inward * 100)) < 5 } == true
+      }
+      slide.updateEdgeDrag(inward: 30)
+      try await wait("direct edge drag reverses", timeout: 2) {
+        self.bounds(self.id).map { abs($0.minX - (parkedX() + inward * 30)) < 5 } == true
+      }
+      slide.endEdgeDrag(inwardVelocity: 0, cancelled: true)
+      try await wait("cancel returns to parked", timeout: 3) {
+        self.bounds(self.id).map { abs($0.minX - parkedX()) < 5 } == true && slide.isHidden
+      }
+      print("PASS slide-over: real intermediate positions follow, reverse, and cancel without committing")
     }
-    slide.updateEdgeDrag(inward: 30)
-    try await wait("direct edge drag reverses", timeout: 2) {
-      self.bounds(self.id).map { abs($0.minX - (parkedX() + inward * 30)) < 5 } == true
-    }
-    slide.endEdgeDrag(inwardVelocity: 0, cancelled: true)
-    try await wait("cancel returns to parked", timeout: 3) {
-      self.bounds(self.id).map { abs($0.minX - parkedX()) < 5 } == true && slide.isHidden
-    }
-    print("PASS slide-over: real intermediate positions follow, reverse, and cancel without committing")
     slide.beginEdgeDrag()
     slide.updateEdgeDrag(inward: docked.width * 0.85)
     slide.endEdgeDrag(inwardVelocity: 0, cancelled: false)
-    try await wait("back from the edge", timeout: 3) { self.bounds(self.id).map { self.closeTo($0, docked) } == true }
+    try await wait("back from the edge", timeout: 5) { self.bounds(self.id).map { self.closeTo($0, docked) } == true }
     try await wait("pinned again", timeout: 4) { pinned() }
     print("\(!slide.tabVisible ? "PASS" : "FAIL") slide-over: the handle brings it back to where it was docked, floating again")
 
@@ -589,12 +619,15 @@ extension GlanceProbe {
     let away = owner.gestures.simulateFlick(windowID: id, pid: pid, frameAtDown: docked, down: down,
                                             samples: throwSamples(ending: release, at: t0, speeds: Array(repeating: 2600 * outward, count: 8)),
                                             release: release, at: t0)
-    try await wait("flicked off the edge", timeout: 3) { self.bounds(self.id).map { abs($0.minX - parkedX()) <= 3 } == true && slide.tabVisible }
+    try await wait("flicked off the edge", timeout: 4) {
+      stagePark ? (slide.tabVisible && awayInStrip())
+        : (self.bounds(self.id).map { abs($0.minX - parkedX()) <= 3 } == true && slide.tabVisible)
+    }
     print("PASS slide-over: flicking it toward its edge tucks it away (\(away ?? "taken"))")
 
     // 拉回来，再朝另一边甩：按 iPadOS 26 语义换边，保持侧拉和窗口尺寸。
     slide.show(reason: "probe")
-    try await wait("back again", timeout: 3) { self.bounds(self.id).map { self.closeTo($0, docked) } == true }
+    try await wait("back again", timeout: 5) { self.bounds(self.id).map { self.closeTo($0, docked) } == true }
     try await Task.sleep(for: .milliseconds(600), clock: .suspending)
     setAXPosition(element, docked.offsetBy(dx: -120 * outward, dy: 0).origin)
     try await Task.sleep(for: .milliseconds(200), clock: .suspending)
@@ -614,6 +647,7 @@ extension GlanceProbe {
     }
     // 慢拖标题栏到中间后松手：走生产手势判定，退出但不改变用户落下的位置和尺寸。
     try await wait("side switch pin settled", timeout: 4) { pinned() }
+    try await wait("docked motion settled", timeout: 3) { !slide.busyForProbe }
     guard let beforeMiddle = bounds(id) else { throw EffectError.unavailable("missing side window") }
     slide.grabbed(id)
     let middleArea = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame), size: screen.visibleFrame.size)
@@ -652,6 +686,10 @@ extension GlanceProbe {
     }
     print("PASS slide-over: hide/show/hide keeps latest intent; shutdown restores real window and removes handle/pin")
     // 用独立临时恢复记录模拟上一次 WindowShade 已退出，目标仍是测试窗口。
+    // 台前调度下窗口藏不到屏外，这条「离屏窗口被捡回来」的路走不到（收起是侧条卡片），只记一条 INFO。
+    if stagePark {
+      print("INFO slide-over: skipped the abandoned-owner recovery walk; with Stage Manager the window is never left off-screen")
+    } else {
     let recoveryDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("slide-recovery-\(UUID().uuidString)")
     let recovery = DurableShadeJournal(url: recoveryDir.appendingPathComponent("SlideOver-fixture.plist"))
     guard let launched = SlideOverRecovery.processBirth(pid) else { throw EffectError.unavailable("fixture launch identity missing") }
@@ -667,6 +705,7 @@ extension GlanceProbe {
       !FileManager.default.fileExists(atPath: recovery.url.path) || (try? recovery.load()?.isEmpty) == true
     }
     print("PASS slide-over: abandoned-owner recovery restores only the identified fixture and clears verified record")
+    }
     owner.pinnedPreviewController.startPreview(targetWindowID: id, pid: pid, axWindow: element) { _ in }
     try await wait("original user pin", timeout: 4) { pinned() }
     slide.enter(element, id: id, pid: pid)

@@ -10,7 +10,9 @@ enum StageStrip {
     /// AX 尺寸会跟着变小，比例不会掉到这里。
     static let maximumThumbnailScale: CGFloat = 0.7
     /// 卡片要贴着所在屏幕的左缘、右缘或下缘：离边不超过屏幕宽（下缘用屏高）的这个比例。
-    /// 下缘那一档是给 `StageManagerMinimizationBehavior = stripBottom` 备的，和左右同一套判据。
+    /// 下缘那一档是防御性的：macOS 27 的台前调度只把卡片摆在左右侧条（系统设置里只有
+    /// 开／关、显示最近使用的 App、显示桌面项目、显示小组件，没有侧条位置这一项，
+    /// `com.apple.WindowManager` 里也没有 stripBottom 之类的键）。判据与左右同一套，将来真出现下缘侧条也不用改。
     static let edgeBandFraction: CGFloat = 0.2
 
     /// 窗口服务器外框（左上原点的全局坐标）相对 AX 尺寸缩成了侧条卡片吗。
