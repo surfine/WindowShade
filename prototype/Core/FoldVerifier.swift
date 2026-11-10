@@ -45,6 +45,25 @@ final class FoldVerifier {
     /// 锁屏等多久（次数 × 间隔）后不再等，改成保留恢复入口。
     static let expiredUnlockRecheckLimit = 1800
 
+    /// App 卡住时不能再问它。窗口服务器自己就能证明的藏法，才算这次收起已经做成；
+    /// 读不到、还看得见、或这种藏法只能问那个 App，都不算做成（调用方保留「未确认」的恢复入口）。
+    enum StalledHideReading: Equatable, Sendable {
+        /// 窗口服务器的外框：true 还在可见区，false 已经停到外面。读不到是 nil。
+        case offscreen(Bool?)
+        /// 窗口服务器的不透明度。读不到是 nil。
+        case alpha(Float?)
+        /// 最小化、整 App 隐藏、靠辅助功能挪走：只能问那个 App。
+        case needsApp
+    }
+
+    static func stalledHideConfirmed(_ reading: StalledHideReading) -> Bool {
+        switch reading {
+        case .offscreen(false): return true
+        case .alpha(let value?): return value <= 0.05
+        case .offscreen, .alpha, .needsApp: return false
+        }
+    }
+
     /// 过期之后的裁决只看“还是不是同一次收起”（事务号，不看年龄）和重新读到的真实状态。
     static func expiredVerdict(sameFold: Bool, unlocked: Bool, observation: Observation,
                                unlockRechecks: Int) -> ExpiredVerdict {

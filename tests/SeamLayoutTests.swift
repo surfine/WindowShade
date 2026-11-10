@@ -37,6 +37,22 @@ struct SeamLayoutTests {
          CGRect(x: screen.minX, y: screen.midY, width: screen.width, height: screen.height / 2)]
     }
 
+    /// 系统半屏自己留一道空档，ArrangeGap 仍是 0：左右、上下都要认得出缝，缝在空档正中。
+    static func checkSystemHalves(gutter: CGFloat) {
+        let left = CGRect(x: area.minX, y: area.minY, width: area.width / 2 - gutter / 2, height: area.height)
+        let right = CGRect(x: area.midX + gutter / 2, y: area.minY, width: area.width / 2 - gutter / 2, height: area.height)
+        let sideBySide = [SplitWindow(id: 1, frame: left), SplitWindow(id: 2, frame: right)]
+        let vertical = SeamLayout.seams(frontToBack: sideBySide, area: area, gap: 0)
+        expect(vertical.count == 1 && vertical[0].axis == .vertical && near(vertical[0].position, area.midX),
+               "system left/right halves with a \(gutter) pt gutter still have a seam in the middle (got \(vertical.map(\.position)))")
+        let lower = CGRect(x: area.minX, y: area.minY, width: area.width, height: area.height / 2 - gutter / 2)
+        let upper = CGRect(x: area.minX, y: area.midY + gutter / 2, width: area.width, height: area.height / 2 - gutter / 2)
+        let stacked = [SplitWindow(id: 1, frame: lower), SplitWindow(id: 2, frame: upper)]
+        let horizontal = SeamLayout.seams(frontToBack: stacked, area: area, gap: 0)
+        expect(horizontal.count == 1 && horizontal[0].axis == .horizontal && near(horizontal[0].position, area.midY),
+               "system top/bottom halves with a \(gutter) pt gutter still have a seam in the middle (got \(horizontal.map(\.position)))")
+    }
+
     /// 左边六成，右边上下两扇。
     static func shareStacked() -> [CGRect] {
         let leftWidth = area.width * 0.6
@@ -151,6 +167,7 @@ struct SeamLayoutTests {
         // 两半（不留缝、留 8 点的缝）。
         checkHalves(0)
         checkHalves(8)
+        checkSystemHalves(gutter: 10)
         checkShareStacked(0)
         checkShareStacked(8)
         checkCorners(0)

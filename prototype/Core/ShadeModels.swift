@@ -137,6 +137,8 @@ struct ShadeState {
     let quickLookReopenURL: URL?
     let ignoreAppRevealUntil: Date
     var observer: AXObserver?    // 监听窗口被外部唤回（折叠后下一轮 runloop 才注册）
+    /// 收在别的桌面时要不要说一句它去了哪（批量整理走 `emitFoldFeedback: false`，不逐扇报）。
+    var announcesElsewhere = true
 }
 
 struct ShadePlan {

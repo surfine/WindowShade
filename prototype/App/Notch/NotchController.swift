@@ -720,6 +720,8 @@ final class NotchController {
     /// 正在拖的那扇窗的最小尺寸（AX 读到的；读不到就是 nil，按 200×150 算）。落点小岛用它把放不下的格子灰掉。
     var dragMinimumSize: CGSize?
 
+    private var lastDragSample: (point: CGPoint, time: CFTimeInterval)?
+
     func dragMoved(to point: CGPoint, downAt: CGPoint? = nil) {
         // 系统里拖着文件（或标题栏上的文稿小图标）时，小岛是文件那一种；窗口那一种让位。
         if fileDragKind != nil { return }
@@ -727,13 +729,22 @@ final class NotchController {
             cancelDrag()
             return
         }
+        let now = CACurrentMediaTime()
+        var carried: CGFloat = 0
+        if let last = lastDragSample {
+            let dt = now - last.time
+            if dt > 0.001, dt < 0.2 {
+                // 岛长出来大约几十点：点/秒除以这段，得到弹簧要的「每秒走完全程的几倍」。
+                carried = (point.y - last.point.y) / CGFloat(dt) / 40
+            }
+        }
+        lastDragSample = (point, now)
         let current = panel(containing: point)
         for (_, other) in panels where other !== current { other.setDropState(.none) }
         guard let panel = current else { return }
         panel.dragMinimumSize = dragMinimumSize
         let near = panel.dropZone.insetBy(dx: -140, dy: -160)
         // 进了落点区要停满 MotionHold.dropDwellSeconds 才亮起；快速划过只垂着小岛（.offered），不亮。
-        let now = CACurrentMediaTime()
         let inside = panel.dropZone.contains(point)
         let armed = windowArmGate.update(inside: inside, now: now)
         windowArmRecheck?.cancel(); windowArmRecheck = nil
@@ -746,9 +757,9 @@ final class NotchController {
             DispatchQueue.main.asyncAfter(deadline: .now() + wait + 0.005, execute: work)
         }
         if armed {
-            panel.setDropState(.armed, choice: panel.choice(at: point))
+            panel.setDropState(.armed, choice: panel.choice(at: point), velocity: carried)
         } else if inside || near.contains(point) {
-            panel.setDropState(.offered)
+            panel.setDropState(.offered, velocity: carried)
         } else {
             panel.setDropState(.none)
         }
@@ -881,6 +892,7 @@ final class NotchController {
     /// 拖动没落在小岛上（或者这一下被别的判定接走了）：收起落点提示。
     func cancelDrag() {
         dragMinimumSize = nil
+        lastDragSample = nil
         windowArmGate.reset(); windowArmRecheck?.cancel(); windowArmRecheck = nil
         panels.values.forEach { $0.setDropState(.none) }
     }
@@ -894,6 +906,7 @@ final class NotchController {
         // 松手在灰掉的格子上等于取消。
         if let picked = choice, target?.isDisabled(picked) == true { choice = nil }
         dragMinimumSize = nil
+        lastDragSample = nil
         for panel in panels.values where !(choice != nil && panel === target) { panel.setDropState(.none) }
         if choice != nil { target?.confirmDrop() }
         return choice
@@ -1078,7 +1091,8 @@ final class NotchController {
         if let snapshot = item.snapshot,
            let screen = screenForAXWindow(pos: landing.origin, size: landing.size) ?? Self.notchScreen() ?? NSScreen.main {
             let notch = Self.slotRect(on: screen).rect
-            let from = origin ?? NSRect(x: notch.midX - 20, y: notch.minY - 6, width: 40, height: 26)
+            let curves = panel(containing: CGPoint(x: notch.midX, y: notch.midY))?.hardware
+            let from = origin ?? NotchIsland.tuckTarget(notch: notch, curves: curves)
             let to = cocoaFrame(fromAXPosition: landing.origin, size: landing.size)
             fly(snapshot, from: from, to: to, velocity: .zero, style: .out) { [weak self] in
                 self?.restore(item, landing: landing)

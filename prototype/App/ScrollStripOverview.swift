@@ -367,8 +367,18 @@ final class StripOverviewView: NSView {
         seamBar.layer?.cornerRadius = ScrollStrip.seamThickness / 2
         seamBar.layer?.zPosition = 5
         content.addSubview(seamBar)
+        content.frame = background.bounds
         content.autoresizingMask = [.width, .height]
-        addSubview(content)
+        // 玻璃是这一层的底，内容放进它的 contentView，不另垫一层兄弟视图。磨砂和不透明底没有 contentView，内容就挂在底上。
+        #if WINDOWSHADE_SDK_HAS_GLASS
+        if #available(macOS 26.0, *), let glass = background as? NSGlassEffectView {
+            glass.contentView = content
+        } else {
+            background.addSubview(content)
+        }
+        #else
+        background.addSubview(content)
+        #endif
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
         setAccessibilityLabel(WSL10n.text("silent.window.stripOverview", zh: "卷轴概览"))

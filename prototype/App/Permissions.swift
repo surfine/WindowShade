@@ -36,5 +36,14 @@ func openPrivacySettings(_ pane: String) {
     wlog("permissions: could not open privacy pane \(pane)")
 }
 
-func openAccessibilityPrivacySettings() { openPrivacySettings("Privacy_Accessibility") }
-func openScreenRecordingPrivacySettings() { openPrivacySettings("Privacy_ScreenCapture") }
+func openAccessibilityPrivacySettings() {
+    openPrivacySettings("Privacy_Accessibility")
+    guard !hasAccessibilityPermission() else { return }
+    MainActor.assumeIsolated { PermissionDragHelper.shared.show(.accessibility) }
+}
+
+func openScreenRecordingPrivacySettings() {
+    openPrivacySettings("Privacy_ScreenCapture")
+    guard !hasScreenRecordingPermission() else { return }
+    MainActor.assumeIsolated { PermissionDragHelper.shared.show(.screenRecording) }
+}

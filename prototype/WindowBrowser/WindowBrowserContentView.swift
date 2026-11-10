@@ -14,6 +14,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     var onPin: ((WindowKey) -> Void)?
     var onClose: ((WindowKey) -> Void)?
     var onRequestAction: ((WindowKey, WindowBrowserAction) -> Void)?
+    /// 卡片绿灯：把指针放到真窗口的绿灯上，让系统弹出窗口选单。
+    var onShowSystemWindowMenu: ((WindowKey) -> Void)?
     /// 紧凑操作条的“更多”入口：交给控制器弹出与右键相同的菜单。
     var onMoreActions: ((WindowKey, NSView) -> Void)?
     /// Space：对当前选中项打开只读大图预览（Quick Look 习惯）。
@@ -1312,6 +1314,12 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         case .minimize, .fullScreen, .newWindow, .hideApp, .quitApp:
             onRequestAction?(key, action)
         }
+    }
+
+    func browserItem(_ sender: NSView, showSystemWindowMenu key: WindowKey) {
+        select(key)
+        onSelect?(key)
+        onShowSystemWindowMenu?(key)
     }
 
     func browserItem(_ sender: NSView, contextMenu key: WindowKey, event: NSEvent) {

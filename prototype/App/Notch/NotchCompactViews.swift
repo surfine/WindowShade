@@ -648,12 +648,12 @@ final class NotchCompactView: NSView {
             shelfText.add(slide(from: -travel, to: 0, fadeFrom: 0, fadeTo: 1), forKey: "roll")
         }
         if NotchShelfEars.pops(from: Int(old), to: Int(text) ?? 0) {
-            let stiffness = pow(2 * Double.pi / NotchShelfEars.popResponse, 2)
             let spring = CASpringAnimation(keyPath: "transform.scale")
-            spring.fromValue = 1.28; spring.toValue = 1
+            spring.fromValue = 1.12
+            spring.toValue = 1
             spring.mass = 1
-            spring.stiffness = stiffness
-            spring.damping = 2 * NotchShelfEars.popDamping * stiffness.squareRoot()
+            spring.stiffness = pow(2 * Double.pi / NotchShelfEars.popResponse, 2)
+            spring.damping = 4 * Double.pi * NotchShelfEars.popDamping / NotchShelfEars.popResponse
             spring.duration = spring.settlingDuration
             shelfText.add(spring, forKey: "pop")
         }
@@ -737,7 +737,7 @@ final class NotchCompactView: NSView {
             x += face.textWidth + gap
             switch face.mark {
             case .amberDot?: dot(at: x, .systemOrange)
-            case .quietDot?: dot(at: x, NSColor.white.withAlphaComponent(0.55))
+            case .quietDot?: dot(at: x, NSColor.white.withAlphaComponent(0.6))
             default: break
             }
             return

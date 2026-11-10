@@ -379,10 +379,31 @@ func moveToAnotherDesktop(_ window: NSWindow) {
   }
   typealias Main = @convention(c) () -> Int32
   typealias Spaces = @convention(c) (Int32) -> CFArray?
+  typealias WindowSpaces = @convention(c) (Int32, Int32, CFArray) -> CFArray?
   typealias Move = @convention(c) (Int32, CFArray, UInt64) -> Void
   let cid = unsafeBitCast(mainSym, to: Main.self)()
   let displays = (unsafeBitCast(spacesSym, to: Spaces.self)(cid) as? [[String: Any]]) ?? []
-  for display in displays {
+  // 先问这扇窗现在在哪张桌面：多屏各有一套桌面，「第一块屏的另一张桌面」可能在另一块屏上，
+  // 窗口会被一起搬过去 —— 那样就不是同一块屏的换桌面了（副屏＋跨桌面的探针会当场失义）。
+  var homeSpace: UInt64?
+  if let sym = dlsym(handle, "SLSCopySpacesForWindows") {
+    let windowSpaces = unsafeBitCast(sym, to: WindowSpaces.self)
+    let query = [NSNumber(value: window.windowNumber)] as CFArray
+    if let found = windowSpaces(cid, 0x7, query) as? [NSNumber] {
+      homeSpace = found.first?.uint64Value
+    }
+  }
+  // 窗口所在的那套桌面排在前面；找不到（读不到窗口的桌面）就按老办法逐块屏试。
+  let ordered = displays.sorted { a, b in
+    func has(_ display: [String: Any]) -> Bool {
+      guard let homeSpace else { return false }
+      return ((display["Spaces"] as? [[String: Any]]) ?? []).contains {
+        ($0["ManagedSpaceID"] as? NSNumber)?.uint64Value == homeSpace
+      }
+    }
+    return has(a) && !has(b)
+  }
+  for display in ordered {
     let current = ((display["Current Space"] as? [String: Any])?["ManagedSpaceID"] as? NSNumber)?.uint64Value
     let spaces = (display["Spaces"] as? [[String: Any]]) ?? []
     guard let target = spaces.first(where: {
@@ -390,7 +411,7 @@ func moveToAnotherDesktop(_ window: NSWindow) {
         && ($0["ManagedSpaceID"] as? NSNumber)?.uint64Value != current
     }), let sid = (target["ManagedSpaceID"] as? NSNumber)?.uint64Value else { continue }
     unsafeBitCast(moveSym, to: Move.self)(cid, [NSNumber(value: window.windowNumber)] as CFArray, sid)
-    print("FIXTURE other-space: moved to space \(sid) (current \(current ?? 0))"); fflush(stdout)
+    print("FIXTURE other-space: moved to space \(sid) (current \(current ?? 0), home \(homeSpace ?? 0))"); fflush(stdout)
     return
   }
   print("FIXTURE other-space: no other desktop"); fflush(stdout)

@@ -109,6 +109,7 @@ import Foundation
     try restorationTests()
     deferredRestoreCompletionTests()
     foldVerificationTests()
+    stalledHideConfirmationTests()
     expiredFoldVerificationTests()
     titlebarIntentTests()
     print(
@@ -261,6 +262,19 @@ import Foundation
                    "Old verification must never mutate, acknowledge or roll back its replacement")
     }
   }
+    // App 卡住时：窗口服务器已经证明藏好了才算做成，不再一律说「未确认」。
+  static func stalledHideConfirmationTests() {
+    typealias V = FoldVerifier
+    precondition(V.stalledHideConfirmed(.offscreen(false)), "parked off screen is a finished fold")
+    precondition(!V.stalledHideConfirmed(.offscreen(true)), "still on screen is not finished")
+    precondition(!V.stalledHideConfirmed(.offscreen(nil)), "an unreadable frame is not finished")
+    precondition(V.stalledHideConfirmed(.alpha(0)), "fully transparent is a finished fold")
+    precondition(V.stalledHideConfirmed(.alpha(0.05)), "the same 0.05 cutoff as the alpha hide")
+    precondition(!V.stalledHideConfirmed(.alpha(0.06)), "alpha that did not take is not finished")
+    precondition(!V.stalledHideConfirmed(.alpha(nil)), "an unreadable alpha is not finished")
+    precondition(!V.stalledHideConfirmed(.needsApp), "minimize and app-hide still need the app itself")
+  }
+
   // 验证回调过期（主线程被堵过 maxAge）：不再静默丢掉，按“是不是同一次收起 + 真实状态”收尾。
   static func expiredFoldVerificationTests() {
     typealias V = FoldVerifier

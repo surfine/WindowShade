@@ -47,6 +47,7 @@ extension GlanceProbe {
     }
 
     // 1. 收起挂在别的桌面上的窗：这张桌面不该多出卷帘条，你的桌面也不该被带走。
+    owner.statusItem?.button?.toolTip = nil
     owner.shade(element, id)
     let folded = (try? await wait("folded", timeout: 8) { self.owner.shaded[self.id] != nil }) != nil
     guard folded else {
@@ -64,6 +65,21 @@ extension GlanceProbe {
     let foldedHide = owner.shaded[id]?.hide.rawValue ?? "-"
     let foldedSpace = owner.shaded[id]?.sourceSpaceID
     print("INFO fold desktops: hide=\(foldedHide) recorded source desktop=\(foldedSpace.map(String.init) ?? "-") window desktop=\(home)")
+    // 这张桌面上看不到卷帘条，所以要说一句它去了哪。隐藏验证是异步的，菜单栏标题 1.4 秒后会清掉。
+    func spokenNotice() -> String {
+      let tip = self.owner.statusItem?.button?.toolTip ?? ""
+      return tip == "WindowShade" ? "" : tip
+    }
+    _ = (try? await wait("it says where the window went", timeout: 3) { !spokenNotice().isEmpty })
+    let spoken = spokenNotice()
+    if case .desktop(let number)? = ElsewhereWindows.place(of: home, desktops: mover.desktopRows()) {
+      let expected = WSL10n.text("notice.shade.foldedOnDesktop", zh: "已收起到桌面 %@", String(number))
+      print("\(spoken == expected ? "PASS" : "FAIL") fold desktops: it says where the window went (\(spoken.isEmpty ? "nothing was said" : spoken), want \(expected))")
+    } else {
+      print(spoken.isEmpty
+        ? "FAIL fold desktops: it says nothing about where the window went"
+        : "PASS fold desktops: it says where the window went (\(spoken))")
+    }
 
     // 2. 兜底回切只在收起后 0.8 秒内工作：这段时间过去，桌面仍然不动。
     try await Task.sleep(for: .milliseconds(900), clock: .suspending)

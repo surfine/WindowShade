@@ -1577,17 +1577,26 @@ final class NotchPanel: NSPanel {
         return FileDropPlan.release(at: model.hit, kind: model.kind, env: model.env)
     }
 
-    func setDropState(_ state: DropState, choice: DropChoice? = nil) {
+    func setDropState(_ state: DropState, choice: DropChoice? = nil, velocity: CGFloat = 0) {
         guard !isAuthenticating else { return }
         let nextChoice = choice ?? dropChoice
         guard state != dropState || (state == .armed && nextChoice != dropChoice) else { return }
+        let entering = dropState == .none && state != .none
         // 落点点亮、换到另一格的那一下，触控板轻轻“咔”一下（有压感触控板时）。
         if state == .armed { NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now) }
         dropChoice = nextChoice
         dropState = state
         noteDropInteraction(state != .none)
         updateVisibility()
-        apply(animated: true)
+        if entering, !Motion.reduced {
+            // 落点小岛用 catch：接上拖动的速度，位置和速度都连续。速度是「每秒走完全程的几倍」，夹在 ±30。
+            let token = Motion.Spring.catchDrop
+            let carried = max(-30, min(30, velocity))
+            apply(animated: true, spring: NotchCanvasView.Spring(response: token.response, bounce: token.bounce,
+                                                                initialVelocity: carried))
+        } else {
+            apply(animated: true)
+        }
     }
 
     /// 落点进行与否报给协调器（面板本地的输入，不占租约，但提醒要让）。

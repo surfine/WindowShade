@@ -2715,6 +2715,29 @@
         }
       }
     },
+    "browser.traffic.windowMenu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the system window menu"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开系统的窗口菜单"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開系統的視窗選單"
+          }
+        }
+      }
+    },
     "browser.action.hideApp": {
       "extractionState": "manual",
       "localizations": {
@@ -26838,6 +26861,75 @@
           "stringUnit": {
             "state": "translated",
             "value": "沒能收起這個視窗"
+          }
+        }
+      }
+    },
+    "notice.shade.foldedElsewhere": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rolled up on another desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收起到另一个桌面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收起到另一個桌面"
+          }
+        }
+      }
+    },
+    "notice.shade.foldedFullScreen": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rolled up in a full-screen space"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收起到全屏窗口"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收起到全螢幕視窗"
+          }
+        }
+      }
+    },
+    "notice.shade.foldedOnDesktop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rolled up on desktop %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收起到桌面 %@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已收起到桌面 %@"
           }
         }
       }
@@ -64983,6 +65075,29 @@
         }
       }
     },
+    "system.privacyPane.screenCapture": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen & System Audio Recording"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录屏与系统录音"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "螢幕與系統錄音"
+          }
+        }
+      }
+    },
     "system.privacyPane.legacy": {
       "extractionState": "manual",
       "localizations": {
@@ -65002,6 +65117,75 @@
           "stringUnit": {
             "state": "translated",
             "value": "輔助使用"
+          }
+        }
+      }
+    },
+    "permission.drag.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If it isn’t there, drag the row below into the list."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有的话，把下面这一行拖进去。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有的話，把下面這一行拖進去。"
+          }
+        }
+      }
+    },
+    "permission.drag.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on %@ in the list above."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在上面的清单里打开 %@。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在上面的清單裡打開 %@。"
+          }
+        }
+      }
+    },
+    "permission.drag.row": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag into the list above: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖到上面的清单里：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖到上面的清單裡：%@"
           }
         }
       }

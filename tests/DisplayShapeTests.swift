@@ -75,6 +75,7 @@ struct DisplayShapeTests {
 
     static func main() {
         continuousCorner()
+        continuousRoundedRect()
         thisMac()
         guards()
         table()
@@ -89,6 +90,18 @@ struct DisplayShapeTests {
     }
 
     // MARK: - 连续曲率角就是系统那一条
+
+    static func continuousRoundedRect() {
+        let rect = CGRect(x: 10, y: 20, width: 200, height: 120)
+        let path = ContinuousCorner.roundedRect(rect, radius: 16)
+        let box = path.boundingBox
+        expect(near(box.minX, rect.minX, 0.05) && near(box.minY, rect.minY, 0.05)
+               && near(box.maxX, rect.maxX, 0.05) && near(box.maxY, rect.maxY, 0.05),
+               "a continuous rounded rect stays inside its frame (box \(box))")
+        expect(path.contains(CGPoint(x: rect.midX, y: rect.midY)), "the middle of the rect is inside")
+        expect(!path.contains(CGPoint(x: rect.minX + 0.2, y: rect.minY + 0.2)),
+               "the sharp corner outside the continuous curve is outside")
+    }
 
     static func continuousCorner() {
         // 常数和 SwiftUI 的 .continuous 路径逐项一致（尖角在原点那个角：从 (0, 1.5287r) 走到 (1.5287r, 0)）。

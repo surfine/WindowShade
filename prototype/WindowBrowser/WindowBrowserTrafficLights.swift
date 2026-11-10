@@ -132,10 +132,13 @@ final class WindowBrowserTrafficLights: NSView {
                 continue
             }
             button.isEnabled = item.isEnabled
-            let named = WindowBrowserActionPresentation.macShortcut(for: item.action)
-                .map { "\(item.title) \($0.label)" } ?? item.title
+            let title = item.action == .fullScreen
+                ? WSL10n.text("browser.traffic.windowMenu", zh: "打开系统的窗口菜单")
+                : item.title
+            let named = item.action == .fullScreen ? title
+                : (WindowBrowserActionPresentation.macShortcut(for: item.action).map { "\(title) \($0.label)" } ?? title)
             button.toolTip = item.disabledReason.map { "\(named)（\($0)）" } ?? named
-            button.setAccessibilityLabel(item.title)
+            button.setAccessibilityLabel(title)
             button.setAccessibilityHelp(item.disabledReason)
             button.needsDisplay = true
         }

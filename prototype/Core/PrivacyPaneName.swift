@@ -11,6 +11,18 @@ enum PrivacyPaneName {
     static var legacyName: String { WSL10n.text("system.privacyPane.legacy", zh: "辅助功能") }
     static var renamedName: String { WSL10n.text("system.privacyPane.renamed", zh: "设备控制和数据访问") }
 
+    /// 这一栏在系统设置里现在的名字。macOS 27 起辅助功能改名；录屏那一栏也改成「录屏与系统录音」
+    /// （本机 SecurityPrivacyExtension 的 SCREENANDAUDIOCAPTURE）。26 及以前仍是原来的两个名字。
+    static func accessibilityName(renamed: Bool = isRenamed) -> String {
+        renamed ? renamedName : legacyName
+    }
+
+    static func screenCaptureName(renamed: Bool = isRenamed) -> String {
+        renamed
+            ? WSL10n.text("system.privacyPane.screenCapture", zh: "录屏与系统录音")
+            : WSL10n.text("settings.common.screenRecording", zh: "屏幕录制")
+    }
+
     static func adjust(_ text: String, renamed: Bool = isRenamed) -> String {
         adjust(text, renamed: renamed, from: legacyName, to: renamedName)
     }

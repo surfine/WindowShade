@@ -1065,6 +1065,9 @@ final class WindowBrowserController: NSObject {
         content.onRequestAction = { [weak self] key, action in
             self?.submit(action: action, key: key)
         }
+        content.onShowSystemWindowMenu = { [weak self] key in
+            self?.showSystemWindowMenu(key)
+        }
         content.onContextMenu = { [weak self] key, view, event in
             self?.presentContextMenu(for: key, in: view)
         }
@@ -1898,6 +1901,21 @@ final class WindowBrowserController: NSObject {
     }
 
     // MARK: 动作提交
+
+    /// 卡片绿灯不直接进入全屏：把指针放到这扇窗真正的绿灯上，系统弹出和绿按钮一样的窗口选单。
+    /// 菜单里的「进入全屏」仍走 `performFullScreen`。
+    private func showSystemWindowMenu(_ key: WindowKey) {
+        resolveTarget(key, options: [], batch: nil) { resolved in
+            guard let resolved else { return }
+            let win = resolved.element
+            let attrs = [kAXFullScreenButtonAttribute as String, kAXZoomButtonAttribute as String]
+            guard let attr = attrs.first(where: { axButtonFrame(win, $0) != nil }) else {
+                wlog("window-browser: no green button for the system window menu key=\(key)")
+                return
+            }
+            _ = hoverAXButtonForWindowManagement(win, attr)
+        }
+    }
 
     private func submit(action: WindowBrowserAction, key: WindowKey) {
         dispatchPrecondition(condition: .onQueue(.main))

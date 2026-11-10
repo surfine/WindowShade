@@ -363,6 +363,8 @@ cd prototype
    **输出里出现“更新器没接齐，这个包不能发布”就停下**：少了 `main.swift` 里的 `UpdateLaunch.handleEarlyArguments()` /
    `UpdateLaunch.recordLaunch()` 或 `WindowShade.swift` 里的 `UpdaterController.shared.start()` 等，安装前的试跑会拉起整个 App、
    新版写不了 healthy，每次更新都会被换回。然后运行相关回归检查（真机探针、虚拟机回归都用这个开发证书签的包）。
+   **台前调度门禁** `bash scripts/stage-manager-gate.sh` 必须 PASS 才能发布：跨桌面收起、侧拉、不能最小化时换边、副屏收起、副屏加跨桌面、展开时另一扇还收着。
+   有一项 FAIL，或因为没开台前调度、只有一块屏、副屏只有一张桌面而整项被跳过，都算没过。它会短暂占用屏幕，只动临时 App 的窗口。
 3. **发布包用 Developer ID 签、公证、钉票据**（2026-10-16 起；账号 Team `DQ45KFVHJ8`）：
    `./build.sh --release` 做和 `--stage` 同样的检查（idle-budget 除外，同源由 `--stage` 把关），产物在 `.build/release/WindowShade.app`，
    所有嵌套代码用同一张 Developer ID 签、带 Apple 时间戳。`--release` 另外带 `-g` 编译（只多调试信息，优化不变）、

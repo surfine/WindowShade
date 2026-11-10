@@ -447,7 +447,7 @@ final class GestureHUDView: NSView {
         spring.mass = 1
         spring.stiffness = pow(2 * .pi / response, 2)
         spring.damping = 4 * .pi * dampingRatio / response
-        spring.fromValue = 1.22
+        spring.fromValue = 1.12
         spring.toValue = 1
         spring.duration = spring.settlingDuration
         layer.add(spring, forKey: "pop")

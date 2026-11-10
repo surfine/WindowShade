@@ -233,8 +233,8 @@ final class SlideOverRingLayer: CALayer {
         let inner = outer.insetBy(dx: t, dy: t)
         guard inner.width > 0, inner.height > 0 else { return }
         let outerRadius = innerRadius + t
-        let outerPath = CGPath(roundedRect: outer, cornerWidth: outerRadius, cornerHeight: outerRadius, transform: nil)
-        let innerPath = CGPath(roundedRect: inner, cornerWidth: innerRadius, cornerHeight: innerRadius, transform: nil)
+        let outerPath = ContinuousCorner.roundedRect(outer, radius: outerRadius)
+        let innerPath = ContinuousCorner.roundedRect(inner, radius: innerRadius)
         let ring = CGMutablePath()
         ring.addPath(outerPath)
         ring.addPath(innerPath)
@@ -307,10 +307,10 @@ final class SlideOverRingHost: NSView {
         material?.frame = clip.bounds
         let outerRadius = innerRadius + t
         let path = CGMutablePath()
-        path.addPath(CGPath(roundedRect: clip.bounds, cornerWidth: outerRadius, cornerHeight: outerRadius, transform: nil))
+        path.addPath(ContinuousCorner.roundedRect(clip.bounds, radius: outerRadius))
         let inner = clip.bounds.insetBy(dx: t, dy: t)
         if inner.width > 0, inner.height > 0 {
-            path.addPath(CGPath(roundedRect: inner, cornerWidth: innerRadius, cornerHeight: innerRadius, transform: nil))
+            path.addPath(ContinuousCorner.roundedRect(inner, radius: innerRadius))
         }
         mask.frame = clip.bounds
         mask.path = path

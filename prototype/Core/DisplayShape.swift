@@ -34,6 +34,34 @@ enum ContinuousCorner {
     }
 
     /// 半径 r 的角拆成折线（尖角在原点，从 (0, extent·r) 走到 (extent·r, 0)）。
+    /// 连续曲率的圆角矩形。半径大到拐角沿边的长度会重叠时，先把半径缩小。
+    static func roundedRect(_ rect: CGRect, radius: CGFloat) -> CGPath {
+        let path = CGMutablePath()
+        let limit = min(rect.width, rect.height) / (2 * extent)
+        let r = min(max(0, radius), max(0, limit))
+        guard r > 0.01, rect.width > 0, rect.height > 0 else {
+            if rect.width > 0, rect.height > 0 { path.addRect(rect) }
+            return path
+        }
+        let e = extent * r
+        func at(_ p: CGPoint, _ map: (CGFloat, CGFloat) -> CGPoint) -> CGPoint { map(p.x * r, p.y * r) }
+        func corner(_ map: (CGFloat, CGFloat) -> CGPoint) {
+            for segment in unit {
+                path.addCurve(to: at(segment.to, map), control1: at(segment.c1, map), control2: at(segment.c2, map))
+            }
+        }
+        path.move(to: CGPoint(x: rect.maxX - e, y: rect.minY))
+        corner { x, y in CGPoint(x: rect.maxX - y, y: rect.minY + x) }
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - e))
+        corner { x, y in CGPoint(x: rect.maxX - x, y: rect.maxY - y) }
+        path.addLine(to: CGPoint(x: rect.minX + e, y: rect.maxY))
+        corner { x, y in CGPoint(x: rect.minX + y, y: rect.maxY - x) }
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + e))
+        corner { x, y in CGPoint(x: rect.minX + x, y: rect.minY + y) }
+        path.closeSubpath()
+        return path
+    }
+
     static func polyline(radius r: CGFloat, samplesPerSegment n: Int = 16) -> [CGPoint] {
         var points = [CGPoint(x: start.x * r, y: start.y * r)]
         var from = start

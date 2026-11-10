@@ -45,7 +45,8 @@ final class NotchDemoView: NSView {
         wantsLayer = true
         layer?.addSublayer(stage)
         stage.frame = bounds
-        stage.cornerRadius = 8
+        // 和提醒岛同心：底角 24 减去岛内边距 14。
+        stage.cornerRadius = NowPlayingPeek.cornerRadius - NowPlayingPeek.sideMargin
         stage.cornerCurve = .continuous
         stage.masksToBounds = true
         stage.backgroundColor = NSColor.white.withAlphaComponent(0.08).cgColor
@@ -537,7 +538,10 @@ final class NotchDemoView: NSView {
         notch.backgroundColor = NSColor.black.cgColor
         notch.borderColor = NSColor.white.withAlphaComponent(0.5).cgColor
         notch.borderWidth = 1
-        notch.cornerRadius = 3
+        // 顶边贴着示意屏的顶，只圆下面两个角，不画成四角都圆的胶囊。
+        notch.cornerRadius = 2
+        notch.cornerCurve = .continuous
+        notch.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         stage.addSublayer(notch)
         let icons = (0..<6).map { index -> CALayer in
             let icon = CALayer()

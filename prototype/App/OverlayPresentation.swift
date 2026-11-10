@@ -59,6 +59,29 @@ extension AppDelegate {
         return activeSpaceID == sourceSpaceID
     }
 
+    /// 窗口在别的桌面上时，收起动作在当前这张桌面上不留下任何卷帘条——安静得像没反应。
+    /// 折好之后在刘海（刘海不在时退回菜单栏标题）上说一句它去了哪：「已收起到桌面 5」。
+    /// 只在真的折在别处时才说；同一张桌面上收起保持安静。
+    func announceFoldOnAnotherDesktopIfNeeded(id: CGWindowID, state: ShadeState) {
+        guard state.announcesElsewhere,
+              let sourceSpaceID = state.sourceSpaceID,
+              let displayID = state.sourceDisplayID,
+              let activeSpaceID = PrivateSLSWindowMover.shared.currentSpace(displayID: displayID),
+              activeSpaceID != sourceSpaceID else { return }
+        let rows = PrivateSLSWindowMover.shared.desktopRows()
+        let message: String
+        switch ElsewhereWindows.place(of: sourceSpaceID, desktops: rows) {
+        case .desktop(let number)?:
+            message = WSL10n.text("notice.shade.foldedOnDesktop", zh: "已收起到桌面 %@", String(number))
+        case .fullScreen?:
+            message = WSL10n.text("notice.shade.foldedFullScreen", zh: "已收起到全屏窗口")
+        case nil:
+            message = WSL10n.text("notice.shade.foldedElsewhere", zh: "已收起到另一个桌面")
+        }
+        quietNotice(message, kind: .done,
+                    log: "shade: folded on another desktop id=\(id) source=\(sourceSpaceID) active=\(activeSpaceID) display=\(displayID)")
+    }
+
     func scheduleSourceSpaceReturnIfNeeded(id: CGWindowID, state: ShadeState,
                                            returnSpaceID: UInt64? = nil) {
         guard hideMethodCanTriggerSpaceJump(state.hide),

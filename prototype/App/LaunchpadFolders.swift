@@ -925,9 +925,8 @@ extension LaunchpadView {
         if creating {
             // 新文件夹在落点那格长出来，稍后自己打开（照 iOS）。
             if !reduced {
-                let grow = Motion.spring(.catchDrop, keyPath: "transform.scale")
-                grow.keyPath = "transform.scale"
-                grow.fromValue = 1.2
+                let grow = Motion.spring(.pop, keyPath: "transform.scale")
+                grow.fromValue = 1.12
                 grow.toValue = 1
                 grow.duration = grow.settlingDuration
                 folderCell.icon.add(grow, forKey: "created")

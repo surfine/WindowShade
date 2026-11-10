@@ -285,6 +285,9 @@ extension AppDelegate {
             revealPreparedOverlay(overlay)
             duoController.windowEffects.didVerifyFold(id: id, state: state)
         }
+        // 窗口在别的桌面时，上面会把卷帘条藏起来（这张桌面不该冒出一条），返回 false。
+        // 收起仍然算做成了：正是这种时候要说一句它去了哪，否则当前桌面像没反应。
+        announceFoldOnAnotherDesktopIfNeeded(id: id, state: shaded[id] ?? state)
         // The exact transaction settles even when its proxy is on another Space.
         MainActor.assumeIsolated {
             settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: true)

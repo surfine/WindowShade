@@ -524,7 +524,8 @@ extension AppDelegate {
                                    previewImage: previewImage ?? preparedImage.map { NSImage(cgImage: $0, size: size) },
                                    quickLookReopenURL: quickLookReopenURL,
                                    ignoreAppRevealUntil: Date().addingTimeInterval(revealGrace),
-                                   observer: observer)
+                                   observer: observer,
+                                   announcesElsewhere: options.emitFoldFeedback)
             shaded[id] = state
             MainActor.assumeIsolated {
                 bindFoldWaiters(id: id, tokens: completionTokens, transaction: state.foldTransactionID)
@@ -568,11 +569,12 @@ extension AppDelegate {
                 }
                 // Hiding is committed even if the user switched away from its Space.
                 completeFold(success: true, transaction: state.foldTransactionID)
+                announceFoldOnAnotherDesktopIfNeeded(id: id, state: shaded[id] ?? state)
                 installStep("reveal")
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
                 if stalled, admissionCurrent() {
-                    // 卡住的 App 不回验证要问的那几次 AX：记“未确认”，保留恢复入口，不报成功。
+                    // 到这里说明窗口服务器没能证明已经藏好。不再问这个卡住的 App，记「未确认」。
                     retainUnconfirmedFold(id: id, state: state)
                 } else if admissionCurrent() { scheduleFoldVerification(id: id) }
                 else {
@@ -948,9 +950,26 @@ extension AppDelegate {
         return .none
     }
 
-    /// 卡住的 App 的验证不问 AX：直接当作没确认（调用方转去 retainUnconfirmedFold）。
+    /// 卡住的 App 不再问。窗口服务器已经证明停到屏外、或透明度落到看不见，这次收起算做成；
+    /// 其余（读不到、还在、或这种藏法只能问那个 App）交给调用方记「未确认」。
     func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,
                         id: CGWindowID, size: CGSize, stalled: Bool) -> Bool {
-        stalled ? false : hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
+        guard stalled else { return hideTookEffect(hide, win: win, pid: pid, id: id, size: size) }
+        let reading: FoldVerifier.StalledHideReading
+        switch hide {
+        case .privateOffscreen:
+            reading = .offscreen(cgWindowIsVisible(id: id, fallbackSize: size))
+        case .privateAlpha:
+            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: id)
+                ?? (cgWindowInfo(id)?[kCGWindowAlpha as String] as? NSNumber).map { Float($0.doubleValue) }
+            reading = .alpha(alpha)
+        default:
+            reading = .needsApp
+        }
+        let confirmed = FoldVerifier.stalledHideConfirmed(reading)
+        if confirmed {
+            wlog("shade: stalled app parked without asking it id=\(id) hide=\(hide.rawValue)")
+        }
+        return confirmed
     }
 }

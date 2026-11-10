@@ -479,7 +479,7 @@ final class NotchTileView: NSView {
             let left = card.minX + (key == nil ? 8 : 12)
             let right = key.map { $0.minX - 6 } ?? card.maxX - 8
             NSAttributedString(string: ongoing.subtitle, attributes: [
-                .font: NSFont.systemFont(ofSize: 10.5), .foregroundColor: NSColor.white.withAlphaComponent(0.6),
+                .font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.white.withAlphaComponent(0.6),
                 .paragraphStyle: paragraph,
             ]).draw(with: NSRect(x: left, y: card.minY + 8, width: max(0, right - left), height: 14),
                     options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
@@ -500,7 +500,7 @@ final class NotchTileView: NSView {
         case .countText, .none: break
         }
         if let text = ongoing.quantityText, !text.isEmpty {
-            let font = NSFont.monospacedDigitSystemFont(ofSize: 10.5, weight: .semibold)
+            let font = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .semibold)
             let rounded = font.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: font.pointSize) } ?? font
             let available = max(0, quantityLeft - card.minX - 10)
             let label = Self.quantityLabel(ongoing.quantity, text: text, font: rounded, availableWidth: available, color: ongoing.phase == .quotaLow ? .systemOrange : nil)
@@ -573,7 +573,7 @@ final class NotchTileView: NSView {
                 top -= 18
                 draw(big, size: 26, weight: .semibold, alpha: 0.95, in: NSRect(x: inner.minX, y: top - 32, width: inner.width, height: 32), rounded: true)
                 top -= 32
-                draw(away.subtitle, size: 10.5, alpha: 0.6, in: NSRect(x: inner.minX, y: top - 14, width: inner.width, height: 14))
+                draw(away.subtitle, size: 11, alpha: 0.6, in: NSRect(x: inner.minX, y: top - 14, width: inner.width, height: 14))
             } else {
                 let side: CGFloat = 24
                 let slot = NSRect(x: card.midX - side / 2, y: top - side, width: side, height: side)
@@ -589,11 +589,11 @@ final class NotchTileView: NSView {
                 top -= side + 4
                 let isSentence = tile.away?.item?.kind == .intrusion
                 if isSentence {
-                    draw(away.title, size: 10.5, alpha: 0.85, in: NSRect(x: inner.minX, y: card.minY + 4, width: inner.width, height: top - card.minY - 4))
+                    draw(away.title, size: 11, alpha: 0.85, in: NSRect(x: inner.minX, y: card.minY + 4, width: inner.width, height: top - card.minY - 4))
                 } else {
                     draw(away.title, size: 11, weight: .semibold, alpha: 0.92, in: NSRect(x: inner.minX, y: top - 14, width: inner.width, height: 14))
                     top -= 16
-                    draw(away.subtitle, size: 10.5, alpha: 0.6, in: NSRect(x: inner.minX, y: card.minY + 3, width: inner.width, height: top - card.minY - 3))
+                    draw(away.subtitle, size: 11, alpha: 0.6, in: NSRect(x: inner.minX, y: card.minY + 3, width: inner.width, height: top - card.minY - 3))
                 }
             }
             if let verb = away.verb {

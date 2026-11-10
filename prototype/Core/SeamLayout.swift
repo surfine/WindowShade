@@ -26,6 +26,9 @@ struct Seam: Equatable {
 
 enum SeamLayout {
     static let tolerance: CGFloat = 6
+    /// 系统「左右半屏 / 上下半屏」自己留的空档，比 ArrangeGap 宽、也比 6 点容差宽（大约 8–10 点）。
+    /// 只用来认面对面的那两条边，不放宽贴屏幕边的判断。
+    static let systemGutter: CGFloat = 12
     /// 最窄一边（点）：拖到比这还窄就有阻力。
     static let minimumSide: CGFloat = 240
     /// 松手时推算的落点离屏幕边不到这么多点，可以离开的那种缝就让一扇走。
@@ -178,13 +181,14 @@ enum SeamLayout {
         let edge = axis == .vertical ? w.frame.maxX : w.frame.maxY
         let far = axis == .vertical ? area.maxX : area.maxY
         guard edge < far - gap - tolerance else { return nil }
-        let position = edge + gap / 2
         let before = tiling.filter { near(facingEdge($0, axis: axis, leading: false), edge) }
             .sorted { alongStart($0, axis: axis) < alongStart($1, axis: axis) }
-        let after = tiling.filter { near(facingEdge($0, axis: axis, leading: true), edge + gap) }
+        let after = tiling.filter { meets(edge, facingEdge($0, axis: axis, leading: true), gap: gap) }
             .sorted { alongStart($0, axis: axis) < alongStart($1, axis: axis) }
         guard !before.isEmpty, !after.isEmpty,
-              let above = run(before, axis: axis, gap: gap), let below = run(after, axis: axis, gap: gap),
+              let afterEdge = after.map({ facingEdge($0, axis: axis, leading: true) }).min() else { return nil }
+        let position = (edge + afterEdge) / 2
+        guard let above = run(before, axis: axis, gap: gap), let below = run(after, axis: axis, gap: gap),
               near(above.lowerBound, below.lowerBound), near(above.upperBound, below.upperBound) else { return nil }
         let span = max(above.lowerBound, below.lowerBound)...min(above.upperBound, below.upperBound)
         guard span.lowerBound <= span.upperBound else { return nil }
@@ -245,6 +249,12 @@ enum SeamLayout {
     }
 
     private static func near(_ a: CGFloat, _ b: CGFloat) -> Bool { abs(a - b) <= tolerance }
+
+    /// 对面那条边可以贴着 ArrangeGap，也可以再空出系统半屏自己的那一段。
+    private static func meets(_ edge: CGFloat, _ facing: CGFloat, gap: CGFloat) -> Bool {
+        let delta = facing - (edge + gap)
+        return delta >= -tolerance && delta <= max(tolerance, systemGutter)
+    }
 
     /// 盖住自己一半以上，才算“落在这块屏上”。
     private static func mostlyOnScreen(_ w: SplitWindow, area: CGRect) -> Bool {

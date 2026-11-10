@@ -206,4 +206,21 @@ enum ElsewhereWindows {
         case .fullScreen: return "全屏"
         }
     }
+
+    /// 某张桌面在调度中心里的叫法。编号跨屏连续（见 `plan` 的说明），全屏桌面不编号。
+    /// 读不到（桌面刚变过、或这张桌面是全屏 App 的而调用方没列出全屏桌面）时返回 nil，调用方退回通用说法。
+    static func place(of spaceID: UInt64, desktops: [DesktopRow]) -> ElsewhereWindow.Place? {
+        var number = 0
+        for row in desktops {
+            for space in row.spaces {
+                if space.isFullScreen {
+                    if space.id == spaceID { return .fullScreen }
+                } else {
+                    number += 1
+                    if space.id == spaceID { return .desktop(number) }
+                }
+            }
+        }
+        return nil
+    }
 }
