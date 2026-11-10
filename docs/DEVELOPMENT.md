@@ -356,6 +356,10 @@ cd prototype
 
 1. **每个公开的包都升 `CFBundleVersion`**（`prototype/Info.plist`，同时升 `CFBundleShortVersionString`）。不再移动已发布的 tag，不再 `--clobber`；
    换包就升一个小版本。以前的“同一版本重新发布”一节作废。
+   **`CFBundleVersion` 用日期制：`YYYYMMDDNN`**（2026-11-10 起）。`NN` 是当天的第几个包，从 `01` 数；同一天要出第二个包就 `02`。
+   它和 `CFBundleShortVersionString`（对外叫的 1.0.21）是两套东西：对外版本号说“这一版有什么”，build 号只回答“谁的包更新”。
+   实例子：2026-11-10 的第一个包是 `2026111001`。Sparkle 按数字比大小，所以日期制永远大于旧的一位数 build（`21`、`22`）。
+   小版本号（1.0.21 → 1.0.22）仍然是**功能变化**时才动；同一个功能范围内重发包，只动日期 build。
    **`bash scripts/check-release-version.sh` 必须先 PASS**：`CFBundleVersion` 不大于 appcast 里已发过的最高 build 号就失败。
    `--stage` 遇到同样情形只警告（验证用的 `--stage` 照常能跑），但那个包不能发布。
 2. `./build.sh --stage` 隔离构建并签名，产物为 `.build/duo-validation/WindowShade.app`，不会停止或覆盖日常运行的应用。

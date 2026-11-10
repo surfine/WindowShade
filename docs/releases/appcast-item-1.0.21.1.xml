@@ -1,0 +1,14 @@
+    <item>
+      <title>1.0.21</title>
+      <pubDate>Tue, 10 Nov 2026 12:00:00 +0000</pubDate>
+      <sparkle:version>2026111001</sparkle:version>
+      <sparkle:shortVersionString>1.0.21</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.21.1</link>
+      <description><![CDATA[台前调度下的三处边界修好了：在别的桌面收起窗口不会把你带走、不能最小化的窗口收起时换到另一侧停靠、副屏上的卷帘条被系统挪位后展开仍回到原处。另外，卡住的 App 只要窗口服务器能证明已经藏好，收起就算做成；分屏把手认得出系统自己的左右、上下半屏。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="TODO" length="0" type="application/octet-stream" sparkle:edSignature="TODO"></enclosure>
+    </item>
