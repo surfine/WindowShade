@@ -225,6 +225,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 最近一次那句提醒的原文（quietNotice 写的）。刘海不在、或菜单栏标题随后被菜单重建
     /// 改回「N 个收起的窗口」时，探针仍读得到真正发出去的那一句。
     var probeLastNotice: String?
+    /// 每扇窗最近一次收起生命周期的阶段与理由（markShadeLifecycle 写的）。探针用它分辨
+    /// 「收起记录被设计性地交给系统」和「记录莫名其妙没了」——两者在屏上的样子可能一样。
+    /// 只在内存里，容量有上限；不是给用户看的状态。
+    var probeLifecycleNotes: [CGWindowID: String] = [:]
     var onboardingWindow: NSWindow?
     // 窗口浏览入口的折叠终态等待者：键 = 原窗口 ID，值 = token -> 回调。
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态

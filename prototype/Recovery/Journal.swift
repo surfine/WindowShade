@@ -173,6 +173,7 @@ extension AppDelegate {
 
     func markShadeLifecycle(id: CGWindowID, _ stage: ShadeLifecycleStage,
                                     reason: String) {
+        recordProbeLifecycleNote(id: id, stage: stage, reason: reason)
         if var state = shaded[id] {
             if state.lifecycleStage == stage {
                 markShadeJournalStage(id: id, stage, reason: reason)
@@ -186,6 +187,12 @@ extension AppDelegate {
             wlog("lifecycle: id=\(id) -> \(stage.rawValue) reason=\(reason)")
         }
         markShadeJournalStage(id: id, stage, reason: reason)
+    }
+
+    /// 探针用：记下这扇窗最近一次生命周期变化。只为回答「收起记录没了是设计如此，还是丢了」。
+    private func recordProbeLifecycleNote(id: CGWindowID, stage: ShadeLifecycleStage, reason: String) {
+        if probeLifecycleNotes.count > 512 { probeLifecycleNotes.removeAll(keepingCapacity: true) }
+        probeLifecycleNotes[id] = "\(stage.rawValue):\(reason)"
     }
     func clearShadeJournal(id: CGWindowID) {
         let entries = shadeJournalEntries()

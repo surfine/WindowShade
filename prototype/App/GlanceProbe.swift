@@ -968,12 +968,19 @@ final class GlanceProbe {
     let otherCameBackWhole = otherVisible && !otherParked
     // R9 要防的是「另一扇冒出来挡在前面」：外框回到原尺寸、不在侧条里。
     // 台前调度偶尔会由 App 自己把兄弟窗叫回侧条卡片（这时我们的收起记录可能已经清掉），
-    // 那不是冒出来——用户还是得点卡片才看得到，所以按「没回来」算，并把记账状态写进 INFO。
+    // 那不是冒出来——用户还是得点卡片才看得到。
+    // 但「记录被清」本身要能解释：设计性的交接（转发操作、系统接管）都会先经过
+    // markShadeLifecycle 记下阶段与理由（probeLifecycleNotes）。记录没了却没有任何
+    // 生命周期记录，说明是我们自己丢的状态，不能拿「反正它停在侧条里」混过去。
+    let clearedBy = otherStillFolded ? nil : owner.probeLifecycleNotes[otherID]
+    let unexplainedClear = !otherStillFolded && (clearedBy ?? "").isEmpty
     print(otherStillFolded && !otherCameBackWhole
       ? "PASS restore-guard: the other folded window stays folded while one is restored\(otherParked ? " (parked as a Stage Manager strip card)" : "")"
-      : (!otherCameBackWhole
-         ? "PASS restore-guard: the other window is not back on the stage (still folded=\(otherStillFolded), visible=\(otherVisible), parked in the strip=\(otherParked))"
-         : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible) parkedInStrip=\(otherParked))"))
+      : (unexplainedClear
+         ? "FAIL restore-guard: the other window's folded record disappeared with no lifecycle entry (visible=\(otherVisible) parkedInStrip=\(otherParked)); our own state was lost"
+         : (!otherCameBackWhole
+            ? "PASS restore-guard: the other window is not back on the stage (still folded=\(otherStillFolded), visible=\(otherVisible), parked in the strip=\(otherParked), record cleared by \(clearedBy ?? "lifecycle"))"
+            : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible) parkedInStrip=\(otherParked) clearedBy=\(clearedBy ?? "-"))")))
     print(ordered.first == id ? "PASS restore-guard: the restored window is the app's front window"
       : "FAIL restore-guard: the app's front window is \(ordered.first.map(String.init) ?? "none"), not the restored one")
     _ = owner.unshade(otherID)
