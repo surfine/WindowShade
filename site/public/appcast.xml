@@ -9,8 +9,21 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
 
     <item>
       <title>1.0.21</title>
+      <pubDate>Tue, 10 Nov 2026 05:00:00 +0000</pubDate>
+      <sparkle:version>20261110.01</sparkle:version>
+      <sparkle:shortVersionString>1.0.21</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.21.1</link>
+      <description><![CDATA[台前调度下的三处边界修好了：在别的桌面收起窗口不会把你带走、不能最小化的窗口收起时换到另一侧停靠、副屏上的卷帘条被系统挪位后展开仍回到原处。另外，卡住的 App 只要窗口服务器能证明已经藏好，收起就算做成；分屏把手认得出系统自己的左右、上下半屏。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.21.1/WindowShade-v1.0.21.zip" length="22491314" type="application/octet-stream" sparkle:edSignature="QoMAvSMX6FdUGEqFjj5lKCN5VJpQGTF/YFVq5FEXvT0CUqUnmRywh6VuIKPVjgA2hHPLYOkDq9/iNEboPo3ECA=="></enclosure>
+    </item>
+    <item>
+      <title>1.0.21</title>
       <pubDate>Mon, 09 Nov 2026 00:56:00 +0000</pubDate>
-      <sparkle:channel>beta</sparkle:channel>
       <sparkle:version>21</sparkle:version>
       <sparkle:shortVersionString>1.0.21</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
@@ -36,22 +49,8 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
       <description><![CDATA[设置里新增「功能」页：核心的卷帘、看一眼、带到每张桌面始终开启，刘海、窗口浏览、启动台、画中画等 8 个功能可以整块开关，关掉后菜单、快捷键和后台工作一起停；新装只默认打开常用的几项，升级用户保持原样。另修好 macOS 26 双击缩放、收起后闪一下桌面、刘海尺寸与角落停车等问题。需要 macOS 15 或更新版本。]]></description>
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.20/WindowShade-v1.0.20.zip" length="22192888" type="application/octet-stream" sparkle:edSignature="NMcF7iNwZQppUZjILUp5L16hHtwEHWjbM6rhnHpu8Bp8piQQaVBAyRQOPnKIPU/XJksUad6taAODtoQ0EgX6Bw=="></enclosure>
     </item>
-    <item>
-      <title>1.0.19</title>
-      <pubDate>Sun, 01 Nov 2026 15:40:00 +0000</pubDate>
-      <sparkle:version>19</sparkle:version>
-      <sparkle:shortVersionString>1.0.19</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
-      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <sparkle:informationalUpdate>
-        <sparkle:belowVersion>17</sparkle:belowVersion>
-      </sparkle:informationalUpdate>
-      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.19</link>
-      <description><![CDATA[刘海照系统灵动岛重做：停上去不再展开，长按或两指张开展开；上推一下把整屏窗口收进刘海，还能整批撤销；左右半屏和甩一下先由一层代理跟手；整理菜单多一步撤销；收起动画默认开。需要 macOS 15 或更新版本。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.19/WindowShade-v1.0.19.zip" length="22178724" type="application/octet-stream" sparkle:edSignature="s6VLn1QvaHT5uQCFxzRf/vZnqbJ7wc+FBaDW8Ga2P2IsxNMcT0V8J45hEJv0vV9PoKAvrx1hRqEsl5+pTr6PAA=="></enclosure>
-    </item>
   </channel>
 </rss><!-- sparkle-signatures:
-edSignature: EaATIHH//OzlOg6k5PeMLH7dat1gsRcmzRDe4tIIcMh7nsUpMb6gj43WQBuKSFVSohq5CuZLwSrxCZcIcMihAQ==
-length: 4399
+edSignature: tvvE+o3fG/HqJ7rApRir85tFm9wIKv90oJdngKVs59LC9blQttwAASuBXtr2Zpxv/IhQShTOeBeaWZkw5tdBCA==
+length: 4470
 -->
