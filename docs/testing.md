@@ -59,7 +59,6 @@
 
 两台机器在外置 QA 盘：`wsqa-manual`（macOS 26）与 `wsqa-15`（macOS 15）。
 前置：`--stage` 构建、本机跑过一次 `run-glance-probe.sh` 生成夹具、SSH 免密、来宾已授权。
-
 ```sh
 tests/vm/run-core-probes.sh lume@<wsqa-manual 地址>
 tests/vm/run-core-probes.sh lume@<wsqa-15 地址>
@@ -68,6 +67,28 @@ tests/vm/run-core-probes.sh lume@<wsqa-15 地址>
 默认组：`fold-timing restore-guard fold-unminimizable orphan wins browser-more`。
 虚拟机只有 2–4 核，计时只看是否跑通，不和本机比；`browser-more` 的 5 秒等待偶发不够，
 失败先重跑一次，仍失败记 `inconclusive` 并写入已知失败。
+
+**跑之前先看客体的图形会话有没有锁屏**（2026-11-10 踩到）：
+
+```sh
+ssh lume@<地址> 'ioreg -n Root -d1 -a | grep -A1 CGSSessionScreenIsLocked'
+```
+
+`true` 时六组会一起红，报 `timeout: fixture window … posErr=-25205`，夹具窗口列出来了但没有位置/尺寸。
+这**不是代码回归**，也不是负载问题（负载降到 4 也一样）：锁屏会话里新起的 App 建不出真窗口。
+解锁（VM 窗口或 VNC）后重跑即可；重启不会绕过它，自动登录后仍停在锁屏。
+
+`wins` 组的两条（⌥Tab 切换、Dock 图标收起前台 App）在虚拟机上会红着跑完：虚拟机里临时 App 抢不到前台、
+Dock 图标的热区也拿不到，探针按设计打成 FAIL 但组 verdict 仍 PASS（verdict 只看有没有抛异常）。
+判性质的办法是本机跑同一组：本机 2026-11-10 全项 PASS。虚拟机上的这两条 FAIL 不作为回归，也不要删断言。
+
+## L4b：台前调度门禁的机器前置
+
+`scripts/stage-manager-gate.sh` 六项里有一条（`--second-display-desktops`）要求
+**外接屏上至少两张桌面**。缺这一项时门禁判失败，这是有意的：没跑到的边界不能算过关。
+发版机因此有一条固定前置——接一块外接屏，并在调度中心给那块屏加一张桌面；换机器先配好，别在发布当天撞到。
+不采用「门禁自己建桌面」（要动用户的调度中心状态、走私有 API），也不采用「SKIP 记成不予验证」（等于放水）。
+判断记录见 [decisions-2026-11-10.md](decisions-2026-11-10.md) 的 A4。
 
 ## L5：发布关
 

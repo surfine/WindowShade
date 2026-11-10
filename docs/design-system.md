@@ -284,6 +284,7 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 - **显隐**：AppKit 没有 Liquid Glass 的“显形”API，淡入淡出要短（`fade`），不让玻璃停在半透明状态。
 - **外观**：深浅色和辅助设置都要**持续监听**（`NSWorkspace.accessibilityDisplayOptionsDidChangeNotification`、`effectiveAppearance` 变化），不能只在挂上时取一次。
 - **不自己仿**（V4）：自绘的灰色“玻璃”、手画高光、合盖和倾斜效果都属于仿造或装饰。合盖 / 倾斜效果已定默认关（lost-notes.md（原 direction.md）），其余在 §6-8 逐个过。
+- **内容层磨砂与仿玻璃的分界（2026-11-10 定）**：文件夹底板、App 资料库底板、遮罩这类**内容**可以按系统自己的样子磨砂（`App/Launchpad.swift` 的 `LaunchpadGlass`，CIGaussianBlur + 提饱和度 + 一层白）；这不算仿玻璃，因为系统自己的文件夹底板就是磨砂，它没有假冒控件层材质。三条守卫：① 控件层一律系统玻璃（启动台搜索胶囊、完成、页码走 `LaunchpadCapsule` → `NSGlassEffectView`），不许拿自绘磨砂替换；② 减少透明度或增强对比度时转不透明底，不硬撑模糊；③ 不加手画高光。判断记录见 [decisions-2026-11-10.md](decisions-2026-11-10.md) 的 A5。
 
 ### 4.3 颜色
 
