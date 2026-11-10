@@ -11,11 +11,11 @@
 | 更新自检与 `Duo.metallib` 耦合 | 任意构建 | `UpdaterLaunch.selfCheck` 要求 bundle 里有 `Duo.metallib` | 2026-11-02 | 资源还在，暂不触发；若清理 Metal 效果，必须同步改自检，否则每次更新被否决 | 2026-11-02 | `run-update-integration.sh` |
 | 声纹模型缺失时产物不同 | 干净检出、没有 `../WindowShade-models` | `build.sh --check` 跳过 `SpeakerEmbedding.mlpackage` | 2026-11-02 | 不阻塞编译；发版前必须确认包内有 `SpeakerEmbedding.mlmodelc` | 2026-11-02 | `build.sh` / 发布关 |
 | AppKit 套件依赖 `rg` | 干净 macOS | 没有 `rg` 时套件发现为空 | 2026-11-02 | 预检会提示；装 `ripgrep` 后重跑 | 2026-11-02 | `run-appkit-tests.sh` |
-| 1.0.20 未跑虚拟机回归 | 发布机 | `tests/vm/run-core-probes.sh` 未在 wsqa-15 / wsqa-manual 上执行 | 2026-11-02 | 按发布决定跳过；1.0.21 补两台各一轮 | 2026-11-02 | `tests/vm/run-core-probes.sh` |
+| 1.0.20 未跑虚拟机回归 | 发布机 | `tests/vm/run-core-probes.sh` 未在 wsqa-15 / wsqa-manual 上执行 | 2026-11-02 | 1.0.20 按发布决定跳过；**1.0.21.1 补跑：wsqa-manual（macOS 26）六组 suite 全过（2026-11-10）**；wsqa-15（macOS 15）同日**没能跑成**——图形会话锁屏，六组一起报 `posErr=-25205`（夹具窗口拿不到位置），不是代码回归，见 [testing.md](testing.md) L4 的锁屏前置；下次解锁后补跑 | 2026-11-10 | `tests/vm/run-core-probes.sh` |
 | 跨桌面携带依赖 SkyLight 内部符号 | 任意构建 | `SLSPerformAsynchronousBridgedWindowManagementOperation` 或 `SLSBridgedMoveWindowsToManagedSpaceOperation` 缺失 | 2026-11-02 | 静默回退到“窗口留在原桌面”，日志 `method=fallback`；每个 macOS 大版本复核一次 | 2026-11-02 | `run-bridged-space-move-tests.sh` |
 | `release-gate.sh` 默认联网取上一版 | 离线 | 不传 `--previous` 时调用 `gh release download` | 2026-11-02 | 离线门禁显式传 `--previous <zip>`；`local-gate.sh release` 已强制 | 2026-11-02 | `scripts/release-gate.sh` |
 | 蓝牙在场：连着时不再每 5 秒送探针回执 | 任意构建（11-06 起） | `WS2BluetoothPresenceSource` 改成通知驱动后，只在连上那一次送 `readStarted/readSucceeded`；5 秒保底只读 `isConnected()` | 2026-11-06 | 眼下无影响：`PresenceLock` 里靠探针回执续上 `cancelCountdown` 的分支只在 `cameraEnabled` 打开时才走，这个开关目前没有入口。将来打开相机在场（或“回来自动解锁”的 RSSI 判定）时，要在那段时间重新周期送探针 / RSSI | 2026-11-06 | `run-presence-bluetooth-source-tests.sh` |
-| 台前调度下不能最小化的窗口收起仍会被拉回 | 本机 M5（macOS 27），台前调度开，`--restore-guard` 用的那种不给最小化的临时窗 | `slide.hide` 走系统收起失败（补写一次仍收不起）→ 退回推到屏外的老路，窗口右边被系统钳在 255 | 2026-11-09 | 侧拉收起现在优先交给系统收起（侧条卡片）；只有 App 自己不让最小化的窗口走老路，这种窗口在这一侧收不干净。真遇到再定：要么换边，要么按住不动只记日志 | 2026-11-09 | `--slide-over`（标准窗口）、`--restore-guard`（不可最小化窗口） |
+| 收起条绿灯的悬停转发只能手验 | 本机 M5（macOS 27），收起条上的绿灯 | `hoverAXButtonForWindowManagement`（`Window/AXWindow.swift`）把指针移到真窗口绿灯上，靠系统自己的悬停弹出「移动与调整大小」菜单；合成输入叫不出这张菜单，所以探针无法判定 | 2026-11-10 | **登记为只能手验，不再找可验路径**：AX 侧实验（`AXShowMenu` 返回 err=0 但窗口集合零变化）与合成悬停实验（对 Finder 绿灯也一样）都失败，见 `docs/decisions-2026-11-10.md` A1。每次改到 `AXWindow.swift` 的悬停转发，必须人工把指针放上绿灯看一眼 | 2026-11-10 | 无（手工步骤见 decisions A1） |
 
 ## 登记模板
 

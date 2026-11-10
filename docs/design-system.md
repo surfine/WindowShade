@@ -656,8 +656,22 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
   不知道形状时一律无肩。S5 的描边收尾还没做。
 - **`island.pull`**：`pullRadius` 从 hug 起、每 4 点 +1、上限 22，起点不再是写死的 10。
 
-剩下没做的仍是 §6-2/4 的视觉小样、§6-7/8 玻璃审计、§6-13 欢迎窗口标题（要 Aaron 挑）、
-§6-16 App 图标（要 Aaron 认概念），以及这些状态的眼睛检查（要 Aaron 看图对比）。
+**落代码进度（2026-11-10，随 1.0.21 build 20261110.01 发布）：§6-2、§6-4、§6-10、§6-11、§6-12 已落地。**
+
+- **§6-2 已对准纯黑**：去掉灰色填充，硬件层统一纯黑，已对准只靠更粗的强调色边线
+  （`App/Notch/NotchPanel.swift` 的 `target()` 边线段，注释标了 §6-2）；隐形刘海那两处 0.88 黑一并清掉。
+- **§6-4 提醒不留额头**：提醒图标 30 → 24、四周 14、高度不变，不加 6 pt 备选
+  （`App/NotchAlert.swift:144`，注释标了 §6-4）。
+- **§6-10 改值清单其余项**：`pop` 起始缩放 1.12（`Overlay/GestureHUD.swift:450`）；
+  `catch` 接上拖动速度（`Motion.Spring.catchDrop` + `NotchPanel` 落点段，速度夹在 ±30）；
+  `notch.textSecondary` 0.6、`notch.detail` 11、`notch.count` 等宽数字（教学副句同批改）。
+- **§6-11 提示浮窗不透明底的边**：`separatorColor` → `labelColor`（`Overlay/GestureHUD.swift:533`）。
+- **§6-12 教学台面与提醒岛同心**：底角 = 24 − 岛内边距 14（`App/NotchCoach.swift:48`）。
+
+这五项只有代码与 lint，逐项截图对比（改前 / 改后）还没做，眼睛检查仍欠着。
+
+剩下没做的：§6-7/8 玻璃审计、§6-13 欢迎窗口标题（要 Aaron 挑）、§6-16 App 图标（要 Aaron 认概念）、
+S5 描边收尾，以及 §6-3 与上面五项的眼睛检查（要 Aaron 看图对比）。
 
 **1. 建 `DisplayShape`（地基，不改外观）**
 - 改什么：来源顺序、`bezelPath` 守卫（问题 1 定之前只在探针里用）、机型表（按 px 存）、pxPerPt 换算；加 `hardware-fit` dump 探针；离线比较 CALayer 与 SwiftUI 的 `.continuous`。
@@ -701,8 +715,9 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 - 守卫：只删叠层和仿造，不删功能；设置里还能打开合盖 / 倾斜效果。
 
 **9. 启动台从刘海长出**
-- 改什么：遮罩和落点高亮都改用刘海轮廓；弹簧和贝塞尔曲线改成令牌（bounce 0.3 和控制点 1.05 的过冲属于改值）。
-- 文件：App/LaunchpadOpenWith.swift:119–162；App/LaunchpadController.swift:152–160、243–245；App/LaunchpadView.swift:1371–1410。弹簧和曲线共 14 组 + 11 条，清单用 `rg -n "perceptualDuration|controlPoints" App/Launchpad*.swift` 生成，不抄行号。
+- 改什么：遮罩和落点高亮都改用刘海轮廓（依赖 §6-3 的 `DisplayShape`，还没做）。
+  弹簧和贝塞尔曲线改成令牌这半句**已经做完**（2026-10-05，commit `5a2c2a60`：Launchpad 全部动画收口到 `Motion.Spring` 令牌）；原文写的「bounce 0.3」和「控制点 1.05」是令牌化之前的旧代码，现在代码里已经不存在（`rg "controlPoints"` 零命中，`bounce` 一律引用 `Motion.Spring.pop.bounce`）。残留在 Launchpad 里的 `CAKeyframeAnimation` / `CABasicAnimation` 只有 wiggle、shake 和淡入淡出，没有过冲曲线。
+- 文件：App/LaunchpadOpenWith.swift:119–162；App/LaunchpadController.swift:152–160、243–245；App/LaunchpadView.swift:1371–1410。
 - 守卫：槽位和命中范围不变（LaunchpadController.swift:153 用 `slotRect`）；打开、收回的感知时长不变长。
 
 **10. 改值清单（§4.10 里除 §6-2、3、4、11、12 以外的项）**
