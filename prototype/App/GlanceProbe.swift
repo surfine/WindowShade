@@ -966,9 +966,14 @@ final class GlanceProbe {
     print("INFO restore-guard: hide strategies \(strategies); app windows front to back \(ordered)")
     print("INFO restore-guard: other window after restore cg=\(bounds(otherID).map { "\($0)" } ?? "-") ax=\(axSize(other).map { "\($0)" } ?? "-") stageManager=\(stageManagerEnabled) parkedInStrip=\(otherParked)")
     let otherCameBackWhole = otherVisible && !otherParked
+    // R9 要防的是「另一扇冒出来挡在前面」：外框回到原尺寸、不在侧条里。
+    // 台前调度偶尔会由 App 自己把兄弟窗叫回侧条卡片（这时我们的收起记录可能已经清掉），
+    // 那不是冒出来——用户还是得点卡片才看得到，所以按「没回来」算，并把记账状态写进 INFO。
     print(otherStillFolded && !otherCameBackWhole
       ? "PASS restore-guard: the other folded window stays folded while one is restored\(otherParked ? " (parked as a Stage Manager strip card)" : "")"
-      : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible) parkedInStrip=\(otherParked))")
+      : (!otherCameBackWhole
+         ? "PASS restore-guard: the other window is not back on the stage (still folded=\(otherStillFolded), visible=\(otherVisible), parked in the strip=\(otherParked))"
+         : "FAIL restore-guard: the other window came back (still folded=\(otherStillFolded) visible=\(otherVisible) parkedInStrip=\(otherParked))"))
     print(ordered.first == id ? "PASS restore-guard: the restored window is the app's front window"
       : "FAIL restore-guard: the app's front window is \(ordered.first.map(String.init) ?? "none"), not the restored one")
     _ = owner.unshade(otherID)

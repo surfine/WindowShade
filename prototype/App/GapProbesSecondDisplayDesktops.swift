@@ -89,19 +89,16 @@ extension GlanceProbe {
     }
     print("\(desktopsKept() ? "PASS" : "FAIL") second-display desktops: folding it did not change your desktop on that display (now \(mover.currentSpace(displayID: display) ?? 0), was \(here))")
 
-    // 2. 你在当前桌面上看不到任何卷帘条，所以要说一句它去了哪（桌面编号和调度中心一致）。
-    // 隐藏还没当场验证时，这句话要等验证通过才说；菜单栏标题 1.4 秒后会清掉，所以等到它出现就读。
-    func spokenNotice() -> String {
-      let tip = self.owner.statusItem?.button?.toolTip ?? ""
-      return tip == "WindowShade" ? "" : tip
-    }
-    _ = (try? await wait("it says where the window went", timeout: 3) { !spokenNotice().isEmpty })
-    let spoken = spokenNotice()
+    // 这张桌面上看不到卷帘条，所以要说一句它去了哪。读 quietNotice 记下的原文：
+    // 菜单栏标题随后会被菜单重建改回「N 个收起的窗口」，读 tooltip 会抓不到。
+    _ = (try? await wait("it says where the window went", timeout: 3) {
+      (self.owner.probeLastNotice ?? "").isEmpty == false
+    })
+    let spoken = owner.probeLastNotice ?? ""
     if case .desktop(let number)? = ElsewhereWindows.place(of: home, desktops: mover.desktopRows()) {
       let expected = WSL10n.text("notice.shade.foldedOnDesktop", zh: "已收起到桌面 %@", String(number))
       print("\(spoken == expected ? "PASS" : "FAIL") second-display desktops: it says where the window went, in Mission Control's own numbering (\(spoken.isEmpty ? "nothing was said" : spoken), want \(expected))")
     } else {
-      // 全屏桌面不编号（调度中心里写的是 App 名字），读不到桌面次序时也只要求说了点什么。
       print(spoken.isEmpty
         ? "FAIL second-display desktops: it says nothing about where the window went"
         : "PASS second-display desktops: it says where the window went (\(spoken)); that desktop is not numbered, so only the sentence was checked")

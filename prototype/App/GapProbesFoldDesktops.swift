@@ -65,13 +65,11 @@ extension GlanceProbe {
     let foldedHide = owner.shaded[id]?.hide.rawValue ?? "-"
     let foldedSpace = owner.shaded[id]?.sourceSpaceID
     print("INFO fold desktops: hide=\(foldedHide) recorded source desktop=\(foldedSpace.map(String.init) ?? "-") window desktop=\(home)")
-    // 这张桌面上看不到卷帘条，所以要说一句它去了哪。隐藏验证是异步的，菜单栏标题 1.4 秒后会清掉。
-    func spokenNotice() -> String {
-      let tip = self.owner.statusItem?.button?.toolTip ?? ""
-      return tip == "WindowShade" ? "" : tip
-    }
-    _ = (try? await wait("it says where the window went", timeout: 3) { !spokenNotice().isEmpty })
-    let spoken = spokenNotice()
+    // 这张桌面上看不到卷帘条，所以要说一句它去了哪。读 quietNotice 记下的原文。
+    _ = (try? await wait("it says where the window went", timeout: 3) {
+      (self.owner.probeLastNotice ?? "").isEmpty == false
+    })
+    let spoken = owner.probeLastNotice ?? ""
     if case .desktop(let number)? = ElsewhereWindows.place(of: home, desktops: mover.desktopRows()) {
       let expected = WSL10n.text("notice.shade.foldedOnDesktop", zh: "已收起到桌面 %@", String(number))
       print("\(spoken == expected ? "PASS" : "FAIL") fold desktops: it says where the window went (\(spoken.isEmpty ? "nothing was said" : spoken), want \(expected))")

@@ -222,6 +222,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var previewCapturePendingIDs: Set<CGWindowID> = []
     var hoverPreviewSuppressedUntil: [CGWindowID: Date] = [:]
     var statusNoticeWorkItem: DispatchWorkItem?
+    /// 最近一次那句提醒的原文（quietNotice 写的）。刘海不在、或菜单栏标题随后被菜单重建
+    /// 改回「N 个收起的窗口」时，探针仍读得到真正发出去的那一句。
+    var probeLastNotice: String?
     var onboardingWindow: NSWindow?
     // 窗口浏览入口的折叠终态等待者：键 = 原窗口 ID，值 = token -> 回调。
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态

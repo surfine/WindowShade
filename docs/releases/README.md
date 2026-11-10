@@ -7,7 +7,7 @@
 
 | Tag | 主题 |
 | --- | --- |
-| v1.0.21.1 | 1.0.21 的第二个包（build `2026111001`，日期制）：台前调度三处边界 + 卡住 App 的收起 + 分屏认系统半屏。见 [v1.0.21.1.md](v1.0.21.1.md)、[发布关 runbook](v1.0.21.1-release-gate-runbook.md)、清单条目草稿 [arm64](appcast-item-1.0.21.1.xml) / [Intel](appcast-item-1.0.21.1-intel.xml) |
+| v1.0.21.1 | 1.0.21 的第二个包（build `20261110.01`，日期制）：台前调度三处边界 + 卡住 App 的收起 + 分屏认系统半屏。见 [v1.0.21.1.md](v1.0.21.1.md)、[发布关 runbook](v1.0.21.1-release-gate-runbook.md)、清单条目草稿 [arm64](appcast-item-1.0.21.1.xml) / [Intel](appcast-item-1.0.21.1-intel.xml) |
 
 ## 已发布
 

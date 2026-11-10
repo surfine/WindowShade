@@ -126,6 +126,7 @@ extension AppDelegate {
 
     func quietNotice(_ message: String, kind: NoticeKind = .info, log: String? = nil) {
         wlog(log ?? "notice: \(message)")
+        probeLastNotice = message
         // 在刘海上说（灵动岛那样），人一眼看得到；刘海关着、正展开着时才退回菜单栏标题。
         let tone: NotchPanel.Tone
         switch kind {

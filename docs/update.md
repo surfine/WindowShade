@@ -550,7 +550,8 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
 ## 发布流程（写进 docs/DEVELOPMENT.md）
 
 1. **每个公开的包都升 `CFBundleVersion`。** 不再移动已发布的 tag，不再 `--clobber`。
-   `CFBundleVersion` 用日期制 `YYYYMMDDNN`（`NN` 是当天的第几个包，从 `01` 数）；对外版本号 `CFBundleShortVersionString` 只在小版本有功能变化时动。
+   `CFBundleVersion` 用日期制 `YYYYMMDD.NN`（`NN` 是当天的第几个包，从 `01` 数）；对外版本号 `CFBundleShortVersionString` 只在小版本有功能变化时动。
+   只能用「数字与点」：连字号会让 Sparkle 把同一天的包判成同一个版本（证据见 `tests/run-build-version-tests.sh`）。
    同一个对外版本重发包，只动日期 build，tag 用 `v<对外版本>.<当天第几个>`（例如 `v1.0.21.2`）。
 2. `./build.sh --stage`，跑回归检查。
 3. 打包：仍用 `ditto -c -k --sequesterRsrc --keepParent`，它保留框架里的符号链接。

@@ -90,9 +90,11 @@ fi
 if out=$(perl -e 'alarm 5; exec @ARGV' "$APP/Contents/MacOS/WindowShade" --self-check 2>&1) && [[ "$out" == *"build=$BUILD"* ]]; then
   pass "4 --self-check：$out"; else fail "4 --self-check 没返回 0 或没有 build=${BUILD}：${out:-无输出}"; fi
 
-# 5. build 号比上一版大，也比清单里已发过的大
+# 5. build 号比上一版大，也比清单里已发过的大（比较规则和 Sparkle 一致，点数制）
 PREV_BUILD=$(plist "$PREV_APP" CFBundleVersion)
-[ "$BUILD" -gt "$PREV_BUILD" ] 2>/dev/null && pass "5 build $BUILD > 上一版 $PREV_BUILD" || fail "5 build $BUILD 不大于上一版 $PREV_BUILD"
+if [ "$(python3 -I scripts/build-version-compare.py "$BUILD" "$PREV_BUILD" 2>/dev/null)" = "1" ]; then
+  pass "5 build $BUILD > 上一版 $PREV_BUILD"
+else fail "5 build $BUILD 不大于上一版 $PREV_BUILD"; fi
 
 # 6–7、清单：这一版的条目、最低系统、架构、包大小、换证书标记
 item=$(python3 -I - "$APPCAST" "$BUILD" <<'PY'
