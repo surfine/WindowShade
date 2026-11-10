@@ -77,14 +77,7 @@ final class WindowBrowserCardView: NSView {
         actionBar.buttonPointSize = WindowBrowserTypography.detailSize
         actionBar.overlayStyle = true
         trafficLights.isHidden = true
-        trafficLights.onPress = { [weak self] action in
-            guard let self, let key = self.windowKey else { return }
-            if action == .fullScreen {
-                self.delegate?.browserItem(self, showSystemWindowMenu: key)
-                return
-            }
-            self.perform(action: action)
-        }
+        trafficLights.onPress = { [weak self] action in self?.perform(action: action) }
         // 红黄绿排在操作条前面（读屏顺序）。
         for view in [placeholderView, thumbnailHost, titleField, statusIconView,
                      statusField, trafficLights, actionBar] {

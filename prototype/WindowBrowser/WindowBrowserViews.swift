@@ -27,8 +27,6 @@ extension WindowBrowserItemDelegate {
     func browserItem(_ sender: NSView, dragBegan key: WindowKey, at point: NSPoint) -> Bool { false }
     func browserItem(_ sender: NSView, dragMoved key: WindowKey, to point: NSPoint) {}
     func browserItem(_ sender: NSView, dragEnded key: WindowKey, at point: NSPoint) {}
-    /// 卡片绿灯：叫出系统的窗口选单，不在这里直接进入全屏。
-    func browserItem(_ sender: NSView, showSystemWindowMenu key: WindowKey) {}
 }
 
 /// 实时预览的明确挂载目标：同一租约只能有一个可见父视图。

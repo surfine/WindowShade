@@ -2715,29 +2715,6 @@
         }
       }
     },
-    "browser.traffic.windowMenu": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open the system window menu"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开系统的窗口菜单"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打開系統的視窗選單"
-          }
-        }
-      }
-    },
     "browser.action.hideApp": {
       "extractionState": "manual",
       "localizations": {

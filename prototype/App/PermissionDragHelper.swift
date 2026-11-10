@@ -32,9 +32,21 @@ final class PermissionDragHelper: NSObject {
     private var polling = false
     private var kind: PermissionDragKind?
     private var watchingAppearance = false
+    /// 探针放着看外观：不轮询授权状态，卡片不会自己收。
+    private var forProbe = false
+
+    /// 探针用：卡片窗口号、关掉它。
+    var probeWindowNumber: Int? { panel?.windowNumber }
+    func probeHide() { hide() }
 
     func show(_ kind: PermissionDragKind) {
+        show(kind, forProbe: false)
+    }
+
+    /// 探针用：不看授权状态、也不因为已经允许就自己收起，好把这张卡片截下来看外观。
+    func show(_ kind: PermissionDragKind, forProbe: Bool) {
         self.kind = kind
+        self.forProbe = forProbe
         let panel = panel ?? makePanel()
         self.panel = panel
         let title = WSL10n.text("permission.drag.title", zh: "在上面的清单里打开 %@。", Self.appName)
@@ -46,7 +58,7 @@ final class PermissionDragHelper: NSObject {
         watchAppearanceIfNeeded()
         place(panel)
         panel.orderFrontRegardless()
-        poll()
+        if !forProbe { poll() }
     }
 
     @objc func closeFromButton() { hide() }

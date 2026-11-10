@@ -70,7 +70,8 @@ final class GlanceProbe {
     let pipRun = CommandLine.arguments.contains("--pip") || holdKind == "pip"
     // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
     let foldTiming = ["--fold-timing", "--orphan", "--soak", "--menubar-owner", "--focus-steal", "--switch-cpu", "--idle-first-op", "--second-display", "--capsule-color", "--close-quit", "--hitch",
-                      "--dock-autohide-frames", "--reduce-transparency", "--overlay-input", "--display-hotplug", "--fold-desktops", "--second-display-desktops"]
+                      "--dock-autohide-frames", "--reduce-transparency", "--overlay-input", "--display-hotplug", "--fold-desktops", "--second-display-desktops",
+                      "--permission-card"]
       .contains { CommandLine.arguments.contains($0) }
     var fixtureArguments: [String] = []
     // --hold：多数场景只要一扇窗；pins 要两扇（默认的参考窗加另一扇）。
@@ -384,6 +385,11 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--second-display-desktops") {
       try await exerciseSecondDisplayDesktops(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--permission-card") {
+      try await exercisePermissionCard()
       finish(nil)
       return
     }

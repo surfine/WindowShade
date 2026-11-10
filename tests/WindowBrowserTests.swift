@@ -3427,6 +3427,22 @@ enum WindowBrowserTests {
         expect(!group2.press(.minimize, now: t0 + 0.3),
                "a greyed light does not respond")
         group2.configure(items: lights)
+        // 绿灯交给系统：不在这里直接进全屏，而是让卡片请面板去叫出系统的窗口选单。
+        // 用卡片自己的 onPress（init 里装的那一条），不覆盖 group2.onPress。
+        MainActor.assumeIsolated {
+            let wiring = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 186))
+            configure(card: wiring, record: record, selected: true, busy: false)
+            let recorder = RecordingItemDelegate()
+            wiring.delegate = recorder
+            let wired = wiring.trafficLightsForTesting
+            wired.setRevealed(true)
+            let wiredAt = wired.shownAt ?? 0
+            expect(wired.press(.fullScreen, now: wiredAt + 0.25),
+                   "the green light is enabled so the press reaches the card")
+            expect(recorder.performed.map(\.action) == [.fullScreen],
+                   "the green light performs its own action (asked=\(recorder.performed.map(\.action.rawValue)))")
+            wiring.delegate = nil
+        }
         // 窄卡片：操作条先从尾巴上收，红黄绿不收。
         let narrow = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 150, height: 186))
         configure(card: narrow, record: record, selected: true, busy: false)
