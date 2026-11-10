@@ -16,10 +16,6 @@ struct PrivacyPaneNameTests {
               == "Turn On Device Control and Data Access…", "英文")
         check(PrivacyPaneName.adjust("屏幕录制", renamed: true, from: "辅助功能", to: "设备控制和数据访问") == "屏幕录制", "不相干的句子不变")
         check(PrivacyPaneName.legacyName == "辅助功能" && PrivacyPaneName.renamedName == "设备控制和数据访问", "简体界面下取到的两个名字")
-        check(PrivacyPaneName.screenCaptureName(renamed: false) == "屏幕录制", "26 的录屏栏仍叫屏幕录制")
-        check(PrivacyPaneName.screenCaptureName(renamed: true) == "录屏与系统录音", "27 的录屏栏跟系统设置同一句")
-        check(PrivacyPaneName.accessibilityName(renamed: false) == "辅助功能", "26 的辅助功能栏")
-        check(PrivacyPaneName.accessibilityName(renamed: true) == "设备控制和数据访问", "27 的辅助功能栏")
         if failures > 0 { exit(1) }
         print("PASS privacy-pane-name: unchanged through macOS 26, renamed in all three languages on 27")
     }

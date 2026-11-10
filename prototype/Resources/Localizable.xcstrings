@@ -65052,29 +65052,6 @@
         }
       }
     },
-    "system.privacyPane.screenCapture": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Screen & System Audio Recording"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "录屏与系统录音"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "螢幕與系統錄音"
-          }
-        }
-      }
-    },
     "system.privacyPane.legacy": {
       "extractionState": "manual",
       "localizations": {
