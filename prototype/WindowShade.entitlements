@@ -7,6 +7,7 @@
   - device.camera: NSCameraUsageDescription (face scan, presence).
   - device.audio-input: NSAudioCaptureUsageDescription (AudioLevelTap process tap).
   - personal-information.calendars: NSCalendarsFullAccessUsageDescription (CalendarSource).
+  - device.bluetooth: NSBluetoothAlwaysUsageDescription (WS2BluetoothPresenceSource, 离开就锁的随身设备).
   No library-validation or JIT exceptions: everything loaded in-process is a system framework
   or signed by the same team (Sparkle). MediaRemoteAdapter runs inside /usr/bin/perl, not here.
 -->
@@ -19,6 +20,8 @@
 	<key>com.apple.security.device.audio-input</key>
 	<true/>
 	<key>com.apple.security.personal-information.calendars</key>
+	<true/>
+	<key>com.apple.security.device.bluetooth</key>
 	<true/>
 </dict>
 </plist>

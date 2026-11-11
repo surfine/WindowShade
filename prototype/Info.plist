@@ -32,6 +32,8 @@
 		<string>_mediaremotetv._tcp</string>
 		<string>_airplay._tcp</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>开着「离开就锁」时，看你选的那台蓝牙设备还连不连着这台 Mac。</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>快开会时，刘海提醒你。</string>
 	<key>NSCameraUsageDescription</key>

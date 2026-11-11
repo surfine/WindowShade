@@ -477,8 +477,12 @@ for version_key in CFBundleShortVersionString CFBundleVersion; do
   /usr/libexec/PlistBuddy -c "Set :$version_key $release_value" "$APP/Contents/Info.plist"
 done
 # 更新器的设置同样以源码树为准（SUFeedURL 除外：只有 --stage 写，开发版不写就不启动更新器）。
-music_usage=$(plutil -extract NSAppleEventsUsageDescription xml1 -o - Info.plist)
-plutil -replace NSAppleEventsUsageDescription -xml "$music_usage" "$APP/Contents/Info.plist"
+# 用途说明（NS…UsageDescription）全部以源码树为准：以前只同步 Apple Events 那一条，
+# 后来加进 Info.plist 的键进不了已经存在的 bundle，系统在请求权限时会直接结束进程。
+for usage_key in $(/usr/libexec/PlistBuddy -c "Print" Info.plist | sed -n 's/^ *\(NS[A-Za-z]*UsageDescription\) = .*/\1/p'); do
+  usage_value=$(plutil -extract "$usage_key" xml1 -o - Info.plist)
+  plutil -replace "$usage_key" -xml "$usage_value" "$APP/Contents/Info.plist"
+done
 for su_key in SUPublicEDKey SUVerifyUpdateBeforeExtraction SURequireSignedFeed SUEnableAutomaticChecks \
   SUScheduledCheckInterval SUAllowsAutomaticUpdates SUAutomaticallyUpdate SUEnableSystemProfiling; do
   su_value=$(plutil -extract "$su_key" xml1 -o - Info.plist)
