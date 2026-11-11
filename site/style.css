@@ -6,7 +6,7 @@
 
 :root{
   color-scheme:light dark;
-  --bg:#f6f7f9;--ink:#1d1f23;--muted:#61656e;--faint:#8b9099;--line:#dfe2e7;--hair:rgba(20,26,38,.1);
+  --bg:#f6f7f9;--ink:#1d1f23;--muted:#61656e;--faint:#666b74;--line:#dfe2e7;--hair:rgba(20,26,38,.1);
   --surface:#fff;--soft:#eceef2;--paper:#f2efe9;--paper-line:#e2ddd3;
   --accent:#245eea;--accent-hover:#1c4fd0;--accent-ink:#fff;--blue-soft:#e9effc;--blue-text:#214884;
   --chip:rgba(20,26,38,.06);--chip-hover:rgba(20,26,38,.1);
@@ -71,11 +71,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 /* Type. Latin display type tracks tighter as it grows; CJK keeps its full-width boxes. */
 h1,h2{font-weight:650;text-wrap:balance}
 h2{font-size:clamp(34px,4.1vw,54px);line-height:1.1;letter-spacing:-.018em}
-html[lang=zh-CN] h2{line-height:1.24;letter-spacing:-.012em;font-weight:600}
+html:is([lang=zh-CN],[lang=zh-Hant]) h2{line-height:1.24;letter-spacing:-.012em;font-weight:600}
 h3{font-size:19px;line-height:1.4;letter-spacing:-.01em;font-weight:600}
 .kicker{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:18px;letter-spacing:.005em}
 .lead{font-size:18px;line-height:1.7;color:var(--muted);margin-top:22px;max-width:34em;text-wrap:pretty}
-html[lang=zh-CN] .lead{line-height:1.85;max-width:30em}
+html:is([lang=zh-CN],[lang=zh-Hant]) .lead{line-height:1.85;max-width:30em}
 .note{font-size:14px;line-height:1.8;color:var(--muted);margin-top:22px;padding-top:20px;border-top:1px solid var(--line);max-width:34em}
 .caption{font-size:12px;line-height:1.7;color:var(--faint);margin-top:14px}
 kbd{font:500 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
@@ -114,10 +114,10 @@ kbd{font:500 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
 .eyebrow{font-size:14px;font-weight:550;color:var(--muted);margin-bottom:22px}
 .hero h1{font-size:clamp(48px,5.2vw,74px);line-height:1.04;letter-spacing:-.024em}
 html[lang=en] .hero{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
-html[lang=zh-CN] .hero h1{font-size:clamp(54px,6.4vw,92px)}
-html[lang=zh-CN] .hero h1{line-height:1.14;letter-spacing:-.02em;font-weight:650}
+html:is([lang=zh-CN],[lang=zh-Hant]) .hero h1{font-size:clamp(54px,6.4vw,92px)}
+html:is([lang=zh-CN],[lang=zh-Hant]) .hero h1{line-height:1.14;letter-spacing:-.02em;font-weight:650}
 .hero-intro{font-size:19px;line-height:1.7;color:var(--muted);margin-top:28px;max-width:30em}
-html[lang=zh-CN] .hero-intro{line-height:1.85}
+html:is([lang=zh-CN],[lang=zh-Hant]) .hero-intro{line-height:1.85}
 .actions{display:flex;align-items:center;gap:26px;margin-top:36px;flex-wrap:wrap}
 .facts{display:flex;flex-wrap:wrap;row-gap:6px;margin-top:44px;font-size:13px;color:var(--faint)}
 .facts li+li::before{content:"·";margin-inline:10px;opacity:.7}
@@ -229,7 +229,7 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .story-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:88px;align-items:start}
 .story-head{position:sticky;top:112px}
 .story h2{font-family:var(--serif);font-weight:500;letter-spacing:-.02em;font-size:clamp(36px,3.8vw,52px);line-height:1.12}
-html[lang=zh-CN] .story h2{letter-spacing:0;line-height:1.26}
+html:is([lang=zh-CN],[lang=zh-Hant]) .story h2{letter-spacing:0;line-height:1.26}
 .story .kicker{color:var(--muted);font:500 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase}
 
 /* The doorway: the essay's own cover and chapter list, one source for both pages. */
@@ -257,7 +257,7 @@ html[lang=zh-CN] .story h2{letter-spacing:0;line-height:1.26}
 .today{text-align:center;padding-bottom:40px}
 .today h2{margin-inline:auto;max-width:18em}
 .today .lead{margin-inline:auto;max-width:38em}
-html[lang=zh-CN] .today .lead{max-width:34em}
+html:is([lang=zh-CN],[lang=zh-Hant]) .today .lead{max-width:34em}
 
 /* Features */
 .feature{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:72px;align-items:center;padding-block:96px}
@@ -423,6 +423,21 @@ summary::-webkit-details-marker{display:none}
 details[open] .plus{transform:rotate(45deg)}
 details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px;max-width:40em}
 
+/* Privacy page (scripts/privacy.mjs): one group per heading, one disclosure row per signal. */
+.privacy-page h1{font-size:clamp(34px,4.1vw,54px);line-height:1.24;letter-spacing:-.012em;font-weight:600}
+.privacy-group{margin-top:88px}
+.privacy-group h2{font-size:clamp(26px,2.6vw,32px)}
+.privacy-group>.lead{margin-top:14px}
+.privacy-group>.lead+.privacy-row,.privacy-group>h2+.privacy-row{margin-top:28px;border-top:1px solid var(--line)}
+.privacy-row{border-bottom:1px solid var(--line)}
+.privacy-row summary{position:relative;display:grid;gap:4px;justify-content:start;padding-right:36px}
+.privacy-row summary span{font-size:14px;font-weight:400;line-height:1.6;color:var(--muted)}
+.privacy-row summary::after{content:"";position:absolute;right:4px;top:50%;width:8px;height:8px;border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);transform:translateY(-75%) rotate(45deg);transition:transform .2s var(--ease-out)}
+.privacy-row[open] summary::after{transform:translateY(-25%) rotate(225deg)}
+.privacy-row dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 48px;margin:0;padding:4px 0 28px}
+.privacy-row dt{font-size:13px;font-weight:600;color:var(--muted)}
+.privacy-row dd{margin:4px 0 0;font-size:15px;line-height:1.75;color:var(--ink);max-width:34em}
+
 /* Closing */
 .closing{text-align:center;padding-top:112px;padding-bottom:144px;display:flex;flex-direction:column;align-items:center}
 .closing img{margin-bottom:28px;filter:drop-shadow(0 18px 24px var(--shadow))}
@@ -465,7 +480,7 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
   .header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
   .panel{background:var(--win)}
 }
-@media(prefers-contrast:more){:root{--line:#9aa0aa;--hair:rgba(0,0,0,.35);--muted:#3e424a}}
+@media(prefers-contrast:more){:root{--line:#9aa0aa;--hair:rgba(0,0,0,.35);--muted:#3e424a;--faint:#4c5057}}
 
 /* Layout */
 @media(max-width:1100px){
@@ -544,6 +559,8 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
   .keys{min-width:128px}
   .keys kbd{min-width:32px;height:32px;padding:0 7px;font-size:12px}
   summary{font-size:16px}
+  .privacy-group{margin-top:64px}
+  .privacy-row dl{grid-template-columns:1fr;gap:16px}
   .closing{padding-block:88px 104px}
   .footer{flex-direction:column;align-items:flex-start;gap:24px}
 }
@@ -566,7 +583,9 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .teach-pad{display:grid;place-items:center;container-type:inline-size}
 .teach-screen{background:none}
 .tpad{position:relative;width:43%;aspect-ratio:1.31;border-radius:10.5%/13.8%;box-shadow:inset 0 0 0 max(1.5px,.86cqw) var(--teach-pad-edge);container-type:inline-size;overflow:hidden}
-.tdot,.tripple,.ttrail{position:absolute;left:0;top:0;pointer-events:none;opacity:0;will-change:transform,opacity}
+.tdot,.tripple,.ttrail{position:absolute;left:0;top:0;pointer-events:none;opacity:0}
+/* Layer hints only while a lesson loops (teach.js toggles .is-playing); dropped when it stops. */
+.teach.is-playing :is(.tdot,.tripple,.ttrail,.tptr){will-change:transform,opacity}
 .tdot{--press:0;width:13.4cqw;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:rgb(26 89 184 / calc(.2 + .46 * var(--press)));box-shadow:inset 0 0 0 1.5cqw rgb(26 89 184 / calc(.85 - .25 * var(--press)));z-index:2}
 .tripple{width:13.4cqw;aspect-ratio:1;border-radius:50%;box-shadow:inset 0 0 0 1.2cqw rgb(26 89 184 / .8)}
 .ttrail{width:30cqw;height:11.6cqw;border-radius:6cqw;transform-origin:0 0;background:linear-gradient(90deg,rgb(26 89 184 / .33),rgb(26 89 184 / 0));z-index:1}
@@ -578,26 +597,35 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .tmenu span:first-child i:nth-child(3),.tmenu span:first-child i:nth-child(4){width:3.6cqw}
 .tmenu span:last-child i{width:1.9cqh}.tmenu span:last-child i:last-child{width:5cqw}
 .is-notch-scene .tmenu{height:8.6cqh}
-.twin,.tfly{position:absolute;border-radius:1cqw;background:var(--teach-win);overflow:hidden;box-shadow:0 .6cqw 2cqw -.6cqw rgba(0,40,100,.28);z-index:2;display:flex;flex-direction:column}
-.twin.is-docked{box-shadow:0 1cqw 3.6cqw -.6cqw rgba(0,30,90,.45)}
+/* The little window never changes its layout size: .twin / .tfly fill the screen and teach.js sets
+   --x/--y/--w/--h (percent of the screen) each frame. The box moves by transform, its visible size is
+   a clip-path on .twin-clip, and the parts whose place depends on the size (sidebar, canvas, circle)
+   are shifted and scaled to where the old sized layout put them. The shadow is a drop-shadow on the
+   unclipped box, so it follows the clip. */
+.twin,.tfly{--x:22;--y:17;--w:56;--h:58;position:absolute;left:0;top:0;width:100%;height:100%;z-index:2;pointer-events:none;transform:translate(calc(var(--x) * 1%),calc(var(--y) * 1%));filter:drop-shadow(0 .6cqw 1.3cqw rgba(0,40,100,.22))}
+.twin-clip{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--teach-win);clip-path:inset(0 calc((100 - var(--w)) * 1cqw) calc((100 - var(--h)) * 1cqh) 0 round 1cqw)}
+.twin.is-docked{filter:drop-shadow(0 1cqw 2.6cqw rgba(0,30,90,.38))}
 .twin-bar{flex:none;height:5.4cqh;background:var(--teach-strip)}
-.twin.is-strip{box-shadow:0 .4cqw 1.2cqw -.4cqw rgba(0,40,100,.3)}
+.twin.is-strip{filter:drop-shadow(0 .4cqw .8cqw rgba(0,40,100,.24))}
 .twin-body{flex:1;display:flex;gap:2cqw;padding:2.4cqh 2cqw;min-height:0}
-.tside{display:grid;align-content:start;gap:1.8cqh;flex:none;width:12%}
+.tside{display:grid;align-content:start;gap:1.8cqh;flex:none;width:12%;transform-origin:0 0;transform:scale(calc((var(--w) - 4) / 96))}
 .tside i{display:block;aspect-ratio:1.1;border-radius:.5cqw;background:var(--teach-strip);opacity:.9}
-.tcanvas{flex:1;display:grid;place-items:center;border-radius:.6cqw;background:var(--teach-canvas);min-height:0;overflow:hidden}
-.tcanvas i{width:min(40%,26cqh);aspect-ratio:1;border-radius:50%;background:linear-gradient(#0bb6ff,#0a6cf0)}
+.tcanvas{flex:1;display:grid;place-items:center;border-radius:.6cqw;background:var(--teach-canvas);min-height:0;overflow:hidden;transform:translateX(calc(.12 * (var(--w) - 100) * 1cqw));clip-path:inset(0 calc(.88 * (100 - var(--w)) * 1cqw) calc((100 - var(--h)) * 1cqh) 0 round .6cqw)}
+/* 26cqh is 16.25cqw on the 1.6 screen; the circle is min(40% of the canvas, 26cqh) as before. */
+.tcanvas i{transform:translate(calc(-.44 * (100 - var(--w)) * 1cqw),calc((var(--h) - 100) / 2 * 1cqh)) scale(calc(min(.4 * (.88 * (var(--w) - 4) - 2), 16.25) / 16.25));width:min(40%,26cqh);aspect-ratio:1;border-radius:50%;background:linear-gradient(#0bb6ff,#0a6cf0)}
 .tfly{z-index:5;opacity:0}
-.tnotch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:17%;height:8.6%;background:#000;border-radius:0 0 2cqw 2cqw;z-index:6;display:none;align-items:center;justify-content:space-between;padding:0 1.6cqw;overflow:hidden}
-.is-notch-scene .tnotch{display:flex}
-.tnotch-icon{height:58%;aspect-ratio:1;border-radius:22%;background:linear-gradient(#0bb6ff,#0a6cf0);opacity:var(--compact,0);transform:scale(calc(1 + var(--pull,0) * .6));transform-origin:50% 0}
-.tnotch-count{font:600 3.9cqh/1 -apple-system,BlinkMacSystemFont,sans-serif;color:#fff;opacity:var(--compact,0)}
+/* Same idea for the notch: a fixed 60% × 40% box, --nw/--nh (percent of the screen) clip it to the current
+   shape, and the icon and count are placed by transform where the old flex layout had them. */
+.tnotch{--nw:17;--nh:8.6;position:absolute;top:0;left:50%;width:60%;height:40%;translate:-50% 0;background:#000;z-index:6;display:none;overflow:hidden;clip-path:inset(0 calc((60 - var(--nw)) / 2 * 1cqw) calc((40 - var(--nh)) * 1cqh) round 0 0 2cqw 2cqw)}
+.is-notch-scene .tnotch{display:block}
+.tnotch-icon{position:absolute;left:50%;top:0;height:calc(.58 * 8.6cqh);aspect-ratio:1;border-radius:22%;background:linear-gradient(#0bb6ff,#0a6cf0);opacity:var(--compact,0);transform-origin:0 0;--m:calc(1 + var(--pull,0) * .6);transform:translate(calc((1.6 - var(--nw) / 2) * 1cqw + .29 * var(--nh) * (1 - var(--m)) * 1cqh),calc(.21 * var(--nh) * 1cqh)) scale(calc(var(--nh) / 8.6 * var(--m)))}
+.tnotch-count{position:absolute;left:50%;top:0;font:600 3.9cqh/1 -apple-system,BlinkMacSystemFont,sans-serif;color:#fff;opacity:var(--compact,0);transform:translate(calc((var(--nw) / 2 - 1.6) * 1cqw - 100%),calc((var(--nh) - 3.9) / 2 * 1cqh))}
 .thandle{position:absolute;left:.7cqw;top:40cqh;width:1.1cqw;height:15cqh;border-radius:1cqw;background:rgba(255,255,255,.85);box-shadow:0 .3cqw 1cqw rgba(0,0,0,.25);opacity:0;z-index:3}
 .tdock{position:absolute;left:50%;transform:translateX(-50%);top:89.4cqh;height:7.4cqh;display:flex;align-items:center;gap:.6cqw;padding:0 .9cqw;border-radius:1.8cqh;background:var(--teach-dock);box-shadow:inset 0 0 0 .1cqw rgba(255,255,255,.35);z-index:1}
 .tdock i{width:4.9cqh;aspect-ratio:1;border-radius:24%;background:#1a8cff}
 .tdock i:nth-child(2){background:#ff9f0a}.tdock i:nth-child(3){background:#ff375f}.tdock i:nth-child(4){background:#30d158}.tdock i:nth-child(5){background:#ffd60a}.tdock i:nth-child(6){background:#fff}.tdock i:nth-child(7){background:#64d2ff}.tdock i:nth-child(8){background:#7d7aff}.tdock i:nth-child(10){background:#636366}.tdock i:nth-child(11){background:#30d158}.tdock i:nth-child(12){background:#aeaeb2}
 .tdock b{width:.15cqw;height:4.4cqh;background:rgba(255,255,255,.5)}
-.tptr{position:absolute;width:2.5cqw;left:0;top:0;opacity:0;z-index:7;pointer-events:none;will-change:transform,opacity}
+.tptr{position:absolute;width:2.5cqw;left:0;top:0;opacity:0;z-index:7;pointer-events:none}
 .tptr path{fill:#111;stroke:#fff;stroke-width:1.3;stroke-linejoin:round}
 .teach-tabs{position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin-top:28px;padding:3px;border-radius:11px;background:var(--chip)}
 .teach-tabs-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px) / 3);border-radius:8px;background:var(--accent);box-shadow:0 1px 3px rgba(20,40,110,.25);transform:translateX(calc(var(--index,0) * 100%));transition:transform .38s var(--ease-out)}
@@ -628,7 +656,9 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .stage-slide{aspect-ratio:1.36}
 .slide-back{left:30%;top:13%;width:62%}
 .slide-back h3{font-size:4.3cqw}
-.slide-win{left:1.4%;top:calc(4.4cqw + 1.6%);bottom:2.4%;width:34%;display:flex;flex-direction:column;z-index:3;will-change:transform;--win-shadow:drop-shadow(0 0 .5px var(--win-edge)) drop-shadow(0 calc(10 * var(--pt)) calc(22 * var(--pt)) var(--win-drop))}
+.slide-win{left:1.4%;top:calc(4.4cqw + 1.6%);bottom:2.4%;width:34%;display:flex;flex-direction:column;z-index:3;--win-shadow:drop-shadow(0 0 .5px var(--win-edge)) drop-shadow(0 calc(10 * var(--pt)) calc(22 * var(--pt)) var(--win-drop))}
+/* Only while it is dragged or settling (app.js). */
+.slide-win.is-moving{will-change:transform}
 .slide-win .win-bar{cursor:grab;touch-action:none}
 .slide-win.is-dragging .win-bar{cursor:grabbing}
 .slide-win .win-body{flex:1;padding:3cqw 2.8cqw}
@@ -652,9 +682,13 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 .notch-term p:first-child{color:#8fd18f}
 .notch-caret{width:1cqw;height:2.2cqw;background:#d7dbe3;animation:notch-caret 1.1s steps(1) infinite}
 @keyframes notch-caret{50%{opacity:0}}
-.island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:14.5cqw;height:5.4cqw;background:#000;border-radius:0 0 1.75cqw 1.75cqw;contain:layout paint;overflow:hidden;z-index:6;outline:none;box-shadow:0 0 0 .5px rgba(255,255,255,.08)}
-.island:focus-visible{box-shadow:0 0 0 2px var(--accent)}
-.island>div{position:absolute;inset:0;opacity:0;transition:opacity .16s var(--ease-out);pointer-events:none}
+/* The island's box never changes size: it is laid out once at its largest, and island.js draws the
+   current shape each frame with clip-path (which also limits where it can be hovered). Each mode's
+   content box has that mode's size and is moved by transform to where the edges put it. */
+.island-wrap{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none}
+.island{position:relative;width:60cqw;height:30cqw;background:#000;contain:layout paint;overflow:hidden;outline:none;pointer-events:auto;clip-path:inset(0 22.75cqw 24.6cqw round 0 0 1.75cqw 1.75cqw)}
+.island-wrap:has(.island:focus-visible){filter:drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 1px var(--accent)) drop-shadow(0 0 .5px var(--accent))}
+.island>div{position:absolute;top:0;left:50%;transform:translateX(-50%);opacity:0;transition:opacity .16s var(--ease-out);pointer-events:none}
 .island[data-mode=compact] .island-compact,.island[data-mode=alert] .island-alert,.island[data-mode=shelf] .island-shelf{opacity:1;transition-duration:.24s;transition-delay:.08s;pointer-events:auto}
 .island-icon{display:block;width:3.4cqw;aspect-ratio:1;border-radius:24%;background:linear-gradient(160deg,#3a3d45,#15161a);box-shadow:inset 0 0 0 .12cqw rgba(255,255,255,.18);position:relative}
 .island-icon::after{content:">_";position:absolute;inset:0;display:grid;place-items:center;font:600 1.3cqw ui-monospace,Menlo,monospace;color:#9be29b}

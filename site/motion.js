@@ -68,17 +68,56 @@
     return () => cancelAnimationFrame(frame);
   }
 
-  // 收起内容的高度。open 高度记在元素上，弹簧是 settle（尺寸，不回弹）。
-  function roll(el, folded) {
-    if (!el) return;
-    const measured = el.getBoundingClientRect().height;
-    if (!el.dataset.openHeight && measured > 1) el.dataset.openHeight = String(measured);
-    const from = measured;
-    const to = folded ? 0 : Number(el.dataset.openHeight || measured);
-    el.style.height = `${from}px`;
-    return play('settle', p => { el.style.height = `${from + (to - from) * p}px`; }, () => {
-      el.style.height = folded ? '0px' : '';
-    });
+  // 收起 / 展开一块内容。弹簧是 settle（尺寸，不回弹）。
+  // commit()：调用方在这里切换收起状态的 class；roll 在切换前后各量一次高度（只在开始时量，不缓存，
+  // 窗口改过尺寸也准）。同一个元素上一段还没走完就再点，上一段被取消，从它当下露出的高度接着走。
+  //
+  // 默认（窗口绝对定位、不推动别的内容）：版面在动画期间钉在两种高度里较大的那个，只每帧改 clip-path
+  // 露出多少，结束时才把版面交给 CSS。opts.clip 是被裁的元素（默认 el 本身），opts.round 是被裁形状的
+  // 圆角，opts.edge(cut) 每帧收到被裁掉的像素数，给需要跟着底边走的装饰（比如窗口底边框）。
+  // opts.layout：窗口在文档流里、它的高度会推动下面整页内容（往事页 02、05）。这种“下面的内容跟着
+  // 滑动”本身就是版面变化，用 transform 做不出来，所以这两处有意保留逐帧改 height。
+  const rolls = new WeakMap();
+  function roll(el, folded, opts = {}) {
+    if (!el) { opts.commit?.(); return () => {}; }
+    const prev = rolls.get(el);
+    prev?.cancel();
+    const clipEl = opts.clip || el;
+    // 读：上一段停下时露出的高度（没有上一段就是现在的高度）。
+    const from = prev ? prev.shown : el.getBoundingClientRect().height;
+    el.style.height = '';
+    opts.commit?.();
+    // 读：切换之后 CSS 给的高度（展开时就是展开后的高度；收起时是 0）。
+    const to = el.getBoundingClientRect().height;
+    const state = { shown: from, cancel: () => {} };
+    rolls.set(el, state);
+    const finish = () => {
+      if (rolls.get(el) !== state) return;
+      rolls.delete(el);
+      el.style.height = '';
+      clipEl.style.clipPath = '';
+      opts.edge?.(null);
+    };
+    if (opts.layout) {
+      el.style.height = `${from}px`;
+      const stop = play('settle', p => { state.shown = from + (to - from) * p; el.style.height = `${state.shown}px`; }, finish);
+      state.cancel = () => { stop(); };
+      return state.cancel;
+    }
+    const pinned = Math.max(from, to);
+    el.style.height = `${pinned}px`;
+    const round = opts.round ? ` round ${opts.round}` : '';
+    const draw = shown => {
+      state.shown = shown;
+      // Whole pixels, as the old height animation landed on: a fractional cut smears the bottom edge.
+      const cut = Math.max(0, Math.round(pinned - shown));
+      clipEl.style.clipPath = opts.clipPath ? opts.clipPath(cut) : `inset(0 0 ${cut.toFixed(2)}px 0${round})`;
+      opts.edge?.(cut);
+    };
+    draw(from);
+    const stop = play('settle', p => draw(from + (to - from) * p), finish);
+    state.cancel = () => { stop(); };
+    return state.cancel;
   }
 
   // 插图里 1pt 占多少 cqw。没写 --pt 时按 Air 15 默认模式：100cqw = 1710pt。
