@@ -283,8 +283,11 @@ case "$profile" in
     run_item build-release 3600 bash -c 'cd prototype && ./build.sh --release'
     run_item build-release-intel 3600 bash -c 'cd prototype && WINDOWSHADE_ARCH=x86_64 ./build.sh --release'
     # zip 由 docs/DEVELOPMENT.md 发布流程第 3 步从两个产物各打一个（公证之后）；这里只核它们。
+    # 这两个 zip 是手工另打的，同名的旧 zip 会让 release-gate 照样通过：先核包里的 CFBundleVersion 和源码树一致。
+    run_item zip-build-check 60 bash scripts/check-zip-build.sh "prototype/dist/WindowShade-v${version}.zip"
     run_item release-gate 600 bash scripts/release-gate.sh --previous "$previous" \
       "prototype/dist/WindowShade-v${version}.zip"
+    run_item zip-build-check-intel 60 bash scripts/check-zip-build.sh "prototype/dist/WindowShade-v${version}-intel.zip"
     run_item release-gate-intel 600 bash scripts/release-gate.sh --previous "${previous_intel:-$previous}" \
       "prototype/dist/WindowShade-v${version}-intel.zip"
     ;;
