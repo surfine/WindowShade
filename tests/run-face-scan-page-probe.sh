@@ -4,8 +4,17 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT/prototype"
-WINDOWSHADE_CODESIGN_IDENTITY="${WINDOWSHADE_CODESIGN_IDENTITY:-Apple Development: openkams@gmail.com (G3TN2MBQ2Q)}" \
-  ./build.sh --stage
+# 签名身份：先看环境变量，再读 prototype/local-codesign.env（不入 Git），规则和 build.sh 相同。
+if [ -z "${WINDOWSHADE_CODESIGN_IDENTITY:-}" ] && [ -f local-codesign.env ]; then
+  # shellcheck disable=SC1091
+  source local-codesign.env
+fi
+if [ -z "${WINDOWSHADE_CODESIGN_IDENTITY:-}" ]; then
+  echo "ERROR: 未提供签名身份。请设置 WINDOWSHADE_CODESIGN_IDENTITY，或创建 prototype/local-codesign.env（不提交进 Git）。" >&2
+  exit 1
+fi
+export WINDOWSHADE_CODESIGN_IDENTITY
+./build.sh --stage
 APP="$ROOT/.build/duo-validation/WindowShade.app"
 if pgrep -x WindowShade >/dev/null 2>&1; then
   echo "another WindowShade is running; skip the probe" >&2

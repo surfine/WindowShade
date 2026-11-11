@@ -5,6 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 fail() { echo "FAIL $*" >&2; exit 1; }
+. tests/support/rg-none.sh
 OUT=.build/lock-screen-exposure-tests
 mkdir -p "$OUT"
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
@@ -16,8 +17,8 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
 
 # 静态门。
 [ ! -e prototype/App/FaceScanStatusController.swift ] || fail "FaceScanStatusController.swift still exists"
-! rg -n "FaceScanStatusController|FaceScanStatusView|faceScanStatus" prototype -g '*.swift' || fail "old floating indicator still referenced"
-! rg -n "level *= *\.floating|desktop: false\)" prototype/App/NotchFaceRecognition.swift prototype/App/FaceScan*.swift \
+rg_none -n "FaceScanStatusController|FaceScanStatusView|faceScanStatus" prototype -g '*.swift' || fail "old floating indicator still referenced"
+rg_none -n "level *= *\.floating|desktop: false\)" prototype/App/NotchFaceRecognition.swift prototype/App/FaceScan*.swift \
     prototype/App/FaceFill*.swift prototype/App/FaceEnrollmentHost.swift || fail "a face window is still .floating"
 rg -q "bridge.attach\(panel\)" prototype/App/NotchFaceRecognition.swift || fail "lock layer does not go through LockSpaceBridge"
 rg -q "acquireLockScreen\(\.faceRecognition" prototype/App/NotchFaceRecognition.swift || fail "lock layer does not take the lock-screen lease"
@@ -25,6 +26,6 @@ rg -q "case \.authorization, \.agentReview, \.faceRecognition: return \.authoriz
   || fail "faceRecognition is not on the authorization layer"
 rg -q "faceRecognition.show\(phase\)" prototype/App/FaceScanExperiment.swift || fail "scan phases do not reach the notch host"
 # D11 代填这一步不碰：认你那一层不输入任何东西。
-! rg -n "CGEvent|keyboardSetUnicodeString|postToPid|SecItemCopyMatching|LAContext" prototype/App/NotchFaceRecognition.swift \
+rg_none -n "CGEvent|keyboardSetUnicodeString|postToPid|SecItemCopyMatching|LAContext" prototype/App/NotchFaceRecognition.swift \
   prototype/Core/LockScreenExposure.swift || fail "recognise layer touches input or secrets"
 echo "PASS lock-screen-exposure static gates"

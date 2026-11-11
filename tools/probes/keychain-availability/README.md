@@ -19,7 +19,7 @@
 |---|---|---|---|---|---|
 | unsigned | 去掉签名后 `code object is not signed at all` | 未到达 | 未到达 | 未到达 | 进程在第一次钥匙串调用前被系统 SIGKILL（exit 137），没有 OSStatus。这是“不能运行”，不是钥匙串结论。 |
 | adhoc | `codesign --sign -` | `-34018` errSecMissingEntitlement | 原始查询 `-25300` errSecItemNotFound，store 返回空 | `-34018` | 数据保护钥匙串需要 entitlement，ad-hoc 不给。 |
-| developer | Apple Development（G3TN2MBQ2Q，Team FVGLY6W6S4），无 entitlements | `-34018` errSecMissingEntitlement | 同上，返回空 | `-34018` | 只签名不够：没有 keychain-access-groups 和描述文件，同样存不了。 |
+| developer | Apple Development 开发证书，无 entitlements | `-34018` errSecMissingEntitlement | 同上，返回空 | `-34018` | 只签名不够：没有 keychain-access-groups 和描述文件，同样存不了。 |
 
 逐行原始输出可由 `run.sh` 重现；`#` 开头的行是模式与服务名。
 

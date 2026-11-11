@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 fail() { echo "FAIL $*" >&2; exit 1; }
+. tests/support/rg-none.sh
 OUT=.build/companion-lock-verify-tests
 mkdir -p "$OUT"
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
@@ -14,6 +15,6 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
 rg -q "private\(set\) var lockVerifyEnabled = false" prototype/App/WS2RemoteHost.swift || fail "lock verify is not off by default"
 rg -q "if lockVerifyEnabled \{ holdForLockVerify\(\) \} else \{ closeAll\(silently: true\) \}" prototype/App/WS2RemoteHost.swift \
   || fail "lock no longer closes everything when lock verify is off"
-! rg -n 'record\("lock-verify.*\\\((peer|identifier|name|content|plain|fields|method)' prototype/App/WS2RemoteHost.swift \
+rg_none -n 'record\("lock-verify.*\\\((peer|identifier|name|content|plain|fields|method)' prototype/App/WS2RemoteHost.swift \
   || fail "a lock-verify log line interpolates device or message content"
 echo "PASS companion-lock-verify static gates"
