@@ -5,6 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 fail() { echo "FAIL $*" >&2; exit 1; }
+. tests/support/rg-none.sh
 OUT=.build/face-autofill-tests
 mkdir -p "$OUT"
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
@@ -21,7 +22,7 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
 # 代填打字用 keyboardSetUnicodeString；别处已有的这种调用（如果有）不在这份名单里就失败。
 sites=$(rg -l "keyboardSetUnicodeString" prototype -g '*.swift' | sort | tr '\n' ' ' || true)
 [ "$sites" = "prototype/App/LockScreenPasswordEntry.swift " ] || fail "unicode keystroke posting outside LockScreenPasswordEntry.swift: $sites"
-! rg -n "CGEvent|keyboardSetUnicodeString|postToPid|SecItemCopyMatching|LAContext" prototype/App/NotchFaceRecognition.swift \
+rg_none -n "CGEvent|keyboardSetUnicodeString|postToPid|SecItemCopyMatching|LAContext" prototype/App/NotchFaceRecognition.swift \
   prototype/Core/LockScreenExposure.swift prototype/Core/FaceAutofill.swift || fail "recognise layer or gate touches input or secrets"
 # 2) 生物识别保护的钥匙串项：biometryCurrentSet + 仅本机。
 rg -q "\.biometryCurrentSet" prototype/App/UnlockPasswordKeychainStore.swift || fail "password item is not biometryCurrentSet"
@@ -29,7 +30,7 @@ rg -q "kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly" prototype/App/UnlockPass
   || fail "password item is not device-only"
 rg -q "kSecAttrSynchronizable as String: false" prototype/App/UnlockPasswordKeychainStore.swift || fail "password item may sync"
 # 3) 日志里不出现密码：代填相关文件的 wlog/log 行不插值 secret/password/bytes。
-! rg -n "(wlog|log)\(.*\\\\\((secret|password|bytes|phrase|heard)" prototype/App/FaceAutofillController.swift \
+rg_none -n "(wlog|log)\(.*\\\\\((secret|password|bytes|phrase|heard)" prototype/App/FaceAutofillController.swift \
   prototype/App/UnlockPasswordKeychainStore.swift prototype/App/LockScreenPasswordEntry.swift \
   prototype/App/FaceAutofillSettings.swift || fail "a log line interpolates a secret"
 # 4) 占位的说话人比对永远失败。

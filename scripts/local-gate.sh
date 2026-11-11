@@ -15,7 +15,8 @@
 #   summary.json  机器可读（提交、脏工作区、工具链、逐项耗时与退出码）
 #   logs/         每项完整输出 + .status
 #
-# 退出码：0 全过；1 有失败；2 参数错；3 环境不满足。
+# 退出码：0 全过（含跳过）；1 有失败；2 参数错；3 环境不满足。
+# 单项退出 78 表示“本机不能跑”，记为 skip：会打印、会计入 summary.json 的 skipped，但不算失败。
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
@@ -62,12 +63,16 @@ started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 started_epoch=$(date +%s)
 
 failures=0
+skips=0
 
 say() { printf '%s\n' "$*"; }
 
 record() { # name rc seconds log
   printf '%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$4" >>"$results"
-  if [ "$2" -ne 0 ]; then
+  if [ "$2" -eq 78 ]; then
+    skips=$((skips + 1))
+    say "skip  $1  exit=78  ${3}s  ($4)"
+  elif [ "$2" -ne 0 ]; then
     failures=$((failures + 1))
     say "FAIL  $1  exit=$2  ${3}s  ($4)"
   else
@@ -172,8 +177,11 @@ run_units() {
     while IFS= read -r script; do
       name="$(basename "$script" .sh)"
       st="$dir/logs/$name.status"
-      [ -f "$st" ] || continue
-      read -r rc secs <"$st"
+      if [ -f "$st" ]; then
+        read -r rc secs <"$st"
+      else
+        rc=255; secs=0   # 列在清单里却没有状态文件：没跑成，按失败记，不能悄悄丢掉
+      fi
       record "$name" "$rc" "$secs" "$dir/logs/$name.log"
     done <"$dir/unit-parallel.txt"
   fi
@@ -229,7 +237,8 @@ summary = {
     "sdk": sh("xcrun --show-sdk-version --sdk macosx"),
     "speaker_model": os.path.isdir("../WindowShade-models/speaker/SpeakerEmbedding.mlpackage"),
     "items": items,
-    "failures": [i for i in items if i["exit"] != 0],
+    "skipped": [i for i in items if i["exit"] == 78],
+    "failures": [i for i in items if i["exit"] not in (0, 78)],
 }
 with open(os.path.join(os.environ["DIR"], "summary.json"), "w") as f:
     json.dump(summary, f, ensure_ascii=False, indent=2)
@@ -251,6 +260,7 @@ case "$profile" in
     ;;
   check)
     run_item build-check 1800 bash -c 'cd prototype && ./build.sh --check'
+    run_item readme-status 120 python3 scripts/readme-status.py --check
     ;;
   unit)
     run_units
@@ -279,6 +289,7 @@ case "$profile" in
     ;;
   all)
     run_item build-check 1800 bash -c 'cd prototype && ./build.sh --check'
+    run_item readme-status 120 python3 scripts/readme-status.py --check
     run_units
     run_item appkit-all 1800 bash tests/run-appkit-tests.sh all
     ;;
@@ -286,7 +297,7 @@ esac
 
 write_summary
 if [ "$failures" -ne 0 ]; then
-  say "失败 $failures 项"
+  say "失败 $failures 项，跳过 $skips 项"
   exit 1
 fi
-say "全部通过"
+say "全部通过（跳过 $skips 项）"

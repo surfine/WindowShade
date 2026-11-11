@@ -9,13 +9,15 @@ status="$3"
 shift 3
 
 start=$(date +%s)
-"$@" >"$log" 2>&1 &
+# 命令放进自己的进程组（perl setpgrp 后 exec，pid 不变），超时时整组一起杀，
+# 否则只杀掉 bash，swiftc 和测试二进制会继续跑。macOS 没有 setsid，perl 是系统自带的。
+perl -e 'setpgrp(0, 0) or die "setpgrp: $!"; exec @ARGV or die "exec: $!"' -- "$@" >"$log" 2>&1 &
 pid=$!
 (
   sleep "$timeout_s"
-  kill -TERM "$pid" 2>/dev/null
+  kill -TERM -- "-$pid" 2>/dev/null
   sleep 5
-  kill -KILL "$pid" 2>/dev/null
+  kill -KILL -- "-$pid" 2>/dev/null
 ) >/dev/null 2>&1 &
 watcher=$!
 

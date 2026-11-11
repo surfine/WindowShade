@@ -4,6 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 fail() { echo "FAIL $*" >&2; exit 1; }
+. tests/support/rg-none.sh
 OUT=.build/face-threshold-calibration-tests
 mkdir -p "$OUT"
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
@@ -19,9 +20,9 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
 # 静态门。
 rg -q "kSecAttrSynchronizable as String: false" prototype/App/FaceThresholdCalibrationStore.swift || fail "calibration item may sync"
 rg -q "kSecAttrAccessibleWhenUnlockedThisDeviceOnly" prototype/App/FaceThresholdCalibrationStore.swift || fail "calibration item is not device-only"
-! rg -n "UserDefaults" prototype/App/FaceThresholdCalibrationStore.swift prototype/Core/FaceThresholdCalibration.swift \
+rg_none -n "UserDefaults" prototype/App/FaceThresholdCalibrationStore.swift prototype/Core/FaceThresholdCalibration.swift \
   || fail "calibration must not fall back to preferences"
 # 录制只存特征数字：录制文件里没有任何图像类型。
-! rg -n "CGImage|CIContext|pngData|tiffRepresentation" prototype/App/FaceCalibrationRecorder.swift \
+rg_none -n "CGImage|CIContext|pngData|tiffRepresentation" prototype/App/FaceCalibrationRecorder.swift \
   || fail "recorder touches image output"
 echo "PASS face-threshold-calibration static gates"
