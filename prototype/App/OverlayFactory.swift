@@ -103,14 +103,6 @@ extension AppDelegate {
         iv.onMoveEnded = { [weak self] frame in
             self?.noteUserMovedOverlay(id: id, frame: frame)
         }
-        if !buttons.isEmpty {                                  // 在真灯位置盖透明命中区
-            let union = buttons.dropFirst().reduce(buttons[0].0) { $0.union($1.0) }
-            let tlFrame = union.insetBy(dx: -4, dy: -4)
-            let local = buttons.map { ($0.0.offsetBy(dx: -tlFrame.minX, dy: -tlFrame.minY), $0.1) }
-            let tl = TrafficLightsView(frame: tlFrame, lights: local)
-            tl.onAction = { [weak self] action in self?.handleTrafficLight(action, id) }
-            iv.addSubview(tl)
-        }
         overlay.contentView = iv
         overlay.invalidateShadow()                 // 阴影跟随（已镜像的）圆角轮廓
         // 截图条的画面自带窗口圆角；系统方角阴影会在透明角落透出一块方形底，

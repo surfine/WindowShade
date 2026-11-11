@@ -27,7 +27,6 @@ import Cocoa
         var sessionWaiting: () -> Bool
     }
 
-    static let recognizedHold: TimeInterval = MotionHold.faceRecognizedSeconds
     static let outcomeHold: TimeInterval = MotionHold.faceOutcomeSeconds
     /// 认出脸后那一行露多久（仍锁着时）。到点收回，下次唤醒、碰一下再认。
     static let exposureHold: TimeInterval = 30
@@ -608,14 +607,9 @@ import Cocoa
     /// 下巴里此刻写的那一句（换成露出那一行以后就是 nil）。
     var probeSentence: String? { chinShown && !showingExposure ? sentence.stringValue : nil }
     var probeChinShown: Bool { chinShown }
-    var probeShowingExposure: Bool { showingExposure }
-    var probeRowItemCount: Int { row.arrangedSubviews.count }
     var probeRingSpinning: Bool { ring.opacity > 0 && ring.animation(forKey: "spin") != nil }
     var probeCheckVisible: Bool { check.alphaValue > 0 || current?.leftEar == .check }
-    var probeWindowVisible: Bool { window?.isVisible == true }
     var probeIndicator: FaceRecognitionIndicator? { current }
-    /// 这一层画的最高点到窗口顶边：0 才是贴着刘海；最低点：刘海加下巴，不再往下。
-    var probeIslandBounds: CGRect { island.path?.boundingBoxOfPath ?? .zero }
 }
 
 /// 暂停时的那一小条进度（静止）。

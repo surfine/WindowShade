@@ -656,42 +656,6 @@ final class TitleStripView: NSImageView {
     }
 }
 
-// 盖在真交通灯上的透明命中区。
-// 视觉完全来自系统真实渲染后的截图；这里只负责把点击转发给真窗口。
-final class TrafficLightsView: NSView {
-    private let lights: [(CGRect, TrafficAction)]
-    var onAction: ((TrafficAction) -> Void)?
-    private var pressedAction: TrafficAction?
-
-    init(frame: NSRect, lights: [(CGRect, TrafficAction)]) {
-        self.lights = lights
-        super.init(frame: frame)
-        // 只是盖在真交通灯上的透明命中区，VoiceOver 读到的是源窗口自己的按钮。
-        setAccessibilityElement(false)
-    }
-    required init?(coder: NSCoder) { fatalError() }
-
-    private func action(at point: NSPoint) -> TrafficAction? {
-        lights.first(where: { $0.0.contains(point) })?.1
-    }
-
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        action(at: point) == nil ? nil : self
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        pressedAction = action(at: convert(event.locationInWindow, from: nil))
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        defer { pressedAction = nil }
-        let p = convert(event.locationInWindow, from: nil)
-        if let pressed = pressedAction, action(at: p) == pressed {
-            onAction?(pressed)
-        }
-    }
-}
-
 /// A custom-drawn classic strip still exposes each control as a real button to
 /// VoiceOver and Full Keyboard Access. Custom actions on the parent remain as a
 /// rotor-friendly fallback, while these children provide separate focus targets.

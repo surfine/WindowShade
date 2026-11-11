@@ -41,8 +41,6 @@ enum Motion {
         static let level: TimeInterval = MotionHold.levelSeconds
         /// 长按多久算长按：刘海和标题栏窗口菜单共用。0.5 秒。
         static let longPress: TimeInterval = MotionHold.longPressSeconds
-        /// 拖着窗口或文件在落点区里停多久才亮起落点（快速划过不亮）。0.15 秒。
-        static let dropDwell: TimeInterval = MotionHold.dropDwellSeconds
         /// 手势提交后同一扇窗的冷却（反方向不受限）。0.6 秒。
         static let commitCooldown: TimeInterval = MotionHold.commitCooldownSeconds
     }

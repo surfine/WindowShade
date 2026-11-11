@@ -292,7 +292,6 @@ final class WS2PureSRP: WS2SRPPrimitive {
     private(set) var diagnosticKey: [UInt8] = []
     private(set) var diagnosticS: [UInt8] = []
 
-    func debugVerifier() -> WS2SRPBig { verifier }
 
     /// 官方向量与交叉验证的只读观察口；返回副本，不参与协议。
     var _verifierForTesting: () -> [UInt8] { { [verifier] in verifier.bigEndian384 } }

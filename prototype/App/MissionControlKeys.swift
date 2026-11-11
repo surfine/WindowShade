@@ -5,7 +5,7 @@
 
 import Cocoa
 
-/// 按 Ctrl+W 之后真正动手的那一层（主线程）。
+/// 按 ⌘W 之后真正动手的那一层（主线程）。
 @MainActor
 enum MissionControlActions {
     enum Kind {

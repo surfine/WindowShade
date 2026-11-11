@@ -122,7 +122,6 @@ enum WS2CarPlayReceiverWire {
     // MARK: 本机 → 接收器的 JSON 控制消息
 
     static func keyframeJSON() -> String { #"{"type":"keyframe"}"# }
-    static func pingJSON() -> String { #"{"type":"ping"}"# }
     static func siriJSON() -> String { #"{"type":"siri"}"# }
 
     /// 播放控制：3 播放/暂停，4 下一首，5 上一首。

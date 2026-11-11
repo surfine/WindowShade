@@ -1454,10 +1454,6 @@ extension AppDelegate {
             if !hasScreenRecordingPermission() { _ = CGRequestScreenCaptureAccess() }
             openScreenRecordingPrivacySettings()
         }
-        onboardingPermissionStack = nil
-        onboardingProgressLabel = nil
-        onboardingDoneButton = nil
-        onboardingCaption = nil
         let window: NSWindow
         if let existing = onboardingWindow {
             window = existing

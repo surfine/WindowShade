@@ -217,8 +217,6 @@ final class TrackpadGestureController {
 
     /// 诊断：最近一次执行的动作与窗口。
     private(set) var lastPerformed: (action: GestureAction, windowID: CGWindowID)?
-    /// 诊断：当前手势是否已确认在标题栏/卷帘条上。
-    var sessionVerified: Bool? { session.map(\.verified) }
     /// 两指手势还没结束、甩出去的窗口还在滑：这时主线程上别做慢事（见 ScreenBezel.swift 第一次读 bezelPath）。
     /// 拖标题栏看按没按着鼠标就够了，不看 flickDrag：漏了“松开”时它会一直留到下次按下。
     var isTracking: Bool {

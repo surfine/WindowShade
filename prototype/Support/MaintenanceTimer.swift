@@ -12,7 +12,7 @@ final class MaintenanceTimer: @unchecked Sendable {
     private let identifier: String
     private let interval: TimeInterval
     private let tolerance: TimeInterval
-    /// 规格 M3：新代码不新增 NSLock；部署目标 14 用不了 Mutex，用 OSAllocatedUnfairLock（同 EventTapHealth）。
+    /// 规格 M3：新代码不新增 NSLock。写这里时部署目标还是 14、用不了 Mutex，所以用 OSAllocatedUnfairLock（同 EventTapHealth）；现在目标是 15，新代码用 Mutex。
     private let scheduler = OSAllocatedUnfairLock<NSBackgroundActivityScheduler?>(uncheckedState: nil)
 
     init(name: String, interval: TimeInterval, tolerance: TimeInterval) {

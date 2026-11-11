@@ -191,7 +191,6 @@ final class WindowStateHub {
     var isEventDriven: Bool { mode == .events }
     var watchedWindowIDs: [CGWindowID] { tokensByWindow.keys.sorted() }
     var hasWatchdog: Bool { watchdog != nil }
-    var currentWatchdogInterval: TimeInterval? { watchdog == nil ? nil : watchdogPeriod }
 
     init(source: WindowEventSource? = SkyLightWindowNotifier.shared,
          describe: @escaping Describe = WindowStateHub.describeWindows,

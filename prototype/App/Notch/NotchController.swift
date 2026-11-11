@@ -398,8 +398,6 @@ final class NotchController {
 
     var isAvailable: Bool { !panels.isEmpty }
     var tuckedCount: Int { tucked.count }
-    /// 现在收在刘海里的窗口（含别的入口收进来的）。番茄钟按前后差算出“这一轮收了哪些”。
-    var tuckedWindowIDs: [CGWindowID] { tucked.map(\.id) }
     /// 每次真的收进来就加一：作为窗口状态的 revision，供所有权收据比对。
     private(set) var tuckRevision: UInt64 = 0
     func tuckedPID(of id: CGWindowID) -> pid_t? { tucked.first { $0.id == id }?.pid }

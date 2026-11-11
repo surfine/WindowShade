@@ -146,7 +146,6 @@ final class WS2InputController {
         }
     }
 
-    var middleAvailable: Bool { InputFeatureGate.middleDragMayInstall(switchOn: true) }
     var touchAvailable: Bool {
         InputFeatureGate.touchMayInstall(qualification: nil, build: "", architecture: "", sourceDigest: "", switchOn: true)
     }

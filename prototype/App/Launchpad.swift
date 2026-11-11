@@ -156,12 +156,6 @@ enum AppCatalog {
     }
 }
 
-/// 启动台的开关。
-enum Launchpad {
-    /// 背景 veil 换成系统玻璃（NSGlassEffectView，macOS 26+）的小样开关；默认关，等看过再决定。
-    @MainActor static var systemGlassBackdrop = false
-}
-
 // MARK: - 面板
 
 @MainActor

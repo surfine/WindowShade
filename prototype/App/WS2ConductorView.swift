@@ -22,7 +22,6 @@ import Cocoa
     var canOpenDiff = false
     // 宿主必须在租约撤销时先置 false 再移除视图。
     var inputIsCurrent: (() -> Bool) = { false }
-    var editedDraft: String { draftText.string }
     private(set) var presentation = ConductorPresentation()
 
     private let stack = NSStackView()

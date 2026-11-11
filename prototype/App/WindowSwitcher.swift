@@ -210,7 +210,6 @@ final class WindowSwitcher {
 
     // MARK: 搜索
 
-    var queryForProbe: String? { query.isSearching ? query.text : nil }
 
     private func beginSearch() {
         guard isOpen else { return }

@@ -18,8 +18,6 @@ final class WS2SilentPrivacyCoverController {
         var coveredIDs: [CGDirectDisplayID]
         var unknownDisplayCount: Int
 
-        var requestedScreenCount: Int { expected.count }
-        var visibleOverlayCount: Int { coveredIDs.count }
         var overlayCreated: Bool { !coveredIDs.isEmpty }
         var allScreensCovered: Bool {
             !expected.isEmpty

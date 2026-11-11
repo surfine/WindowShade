@@ -365,8 +365,7 @@ enum MotionHold {
     static let timerDoneDuration: UInt64 = 10 * WS2.Duration.second
     /// 核准卡回执（允许 / 不允许之后停一下）。0.8 秒。
     static let receiptDuration: UInt64 = 800 * WS2.Duration.millisecond
-    /// 认你指示：认出打勾停 1.2 秒；没认出、三次用完的结论停 2.2 秒。
-    static let faceRecognizedSeconds: TimeInterval = 1.2
+    /// 认你指示：没认出、三次用完的结论停 2.2 秒。
     static let faceOutcomeSeconds: TimeInterval = 2.2
     /// 认你没认出、请用密码那两句（同 alert.hold）。2.6 秒。
     static let faceNoticeSeconds: TimeInterval = alertSeconds

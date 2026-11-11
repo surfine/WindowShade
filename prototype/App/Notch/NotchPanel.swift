@@ -449,9 +449,6 @@ final class NotchPanel: NSPanel {
     /// 现在有没有东西能往下拉出来（收进刘海的窗、收在屏幕边的侧拉）。
     var canPull: (() -> Bool)?
     private(set) var isExpanded = false
-    /// 指针刚停上来、还没展开：岛先往外长一点点，告诉人“这里能展开”（WWDC18：顺着手势方向给提示、别等计时器）。
-    /// 系统的 » 在（图标太多被藏起来）：悬停只认点击。量菜单栏的人（LA-0 / NotchWatch）知道了再设；没人设就当不在。
-    var menuBarOverflowShown = false
     /// 两指往下拉了多少（点）。
     private var pulled: CGFloat = 0
     /// 两指往上推了多少（点，向上为正）。推过 NotchPushUp.commitTravel 岛上出现“松手全部收进刘海”。

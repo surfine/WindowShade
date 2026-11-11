@@ -14,7 +14,6 @@ import Darwin
 import ServiceManagement
 
 let titleBarHeight: CGFloat = 28
-let classicTitleBarHeight: CGFloat = 24
 let proxyTitleBarHeight: CGFloat = 34
 let quickLookOriginalTitleBarHeight: CGFloat = 38
 let standardTitleBarMaxCropHeight: CGFloat = 64
@@ -256,10 +255,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 上一次看到的显示器与各屏可用区域，用来分辨"真的换了屏"和"只是菜单栏、Dock 变了"。
     var lastDisplayLayout = DisplayLayout(screens: [])
     var lastVisibleFrames: [CGRect] = []
-    weak var onboardingPermissionStack: NSStackView?
-    weak var onboardingProgressLabel: NSTextField?
-    weak var onboardingDoneButton: NSButton?
-    weak var onboardingCaption: NSTextField?
     var onboardingRefreshTimer: Timer?
     /// 这一次启动之前这台 Mac 就跑过 WindowShade（启动第一步认，见 applicationDidFinishLaunching）。
     var launchIsUpgrade = false
@@ -269,7 +264,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var permissionsAgainShownThisLaunch = false
     /// “这一版新开了这几样”窗口（1.0.18）。
     var whatsNewWindow: WhatsNew1018Window?
-    let onboardingContentWidth: CGFloat = 452
     var suppressUnshadeSounds = false
     var ownsGlobalInput = true
     var pendingTitlebarTripleClick: PendingTitlebarTripleClick?
