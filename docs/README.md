@@ -29,6 +29,7 @@ Feature notes, design rules and release notes. Most of these are written in Chin
 - [testing.md](testing.md) — 测试分层、每层什么时候跑 / test layers and when to run them.
 - [fix-process.md](fix-process.md) — 修缺陷的顺序与等待 / how to work a defect.
 - [known-failures.md](known-failures.md) — 已知失败与已知限制 / known failures and limitations.
+- [decisions-2026-11-10.md](decisions-2026-11-10.md) — 1.0.21.1 的六个判断题与结论 / six judgement calls made for 1.0.21.1.
 - [copy-guide.md](copy-guide.md) — 文案规则与固定词汇表 / copy rules and vocabulary.
 - [design-system.md](design-system.md)、[design-grammar.md](design-grammar.md)、[design-v1.md](design-v1.md) — 设计令牌与文法 / design tokens and rules.
 - [computer-use-qa.md](computer-use-qa.md) — 原生界面验收手册 / UI acceptance.

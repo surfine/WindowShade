@@ -6,7 +6,7 @@
 
 2026-10-17。范围：Apple silicon 上四个场景——收起／展开、窗口浏览打开、看一眼、刘海空闲。
 方法：只读代码，按 `rg` 找计时器、显示链接、主线程上的 AX／CGWindowList 调用、图像转换和 Metal 管线创建，再顺着调用链读上下文。
-**这份清单里的毫秒数全是估计**，来源分三种，每条都标了：【注】代码或文档里已有的实测说明；【推】我按调用类型与 [performance.md](performance.md) 的量级表推的；【无】没有任何数字，只是结构上可疑。
+**这份清单里的毫秒数全是估计**，来源分三种，每条都标了：【注】代码或文档里已有的实测说明；【推】我按调用类型与 [performance.md](../../performance.md) 的量级表推的；【无】没有任何数字，只是结构上可疑。
 没有改任何产品代码。哪条值得动，等 `scripts/perf-report.sh` 跑出的 `--hitch` 数字和下面的"怎么确认"一起定，再改；Pareto 规则：只改有前后数字、行为不变的地方。
 
 ## 怎么读 `--hitch`
@@ -23,7 +23,7 @@
 | H2 | 收起 | 背景快速合成在 `@MainActor` 里同步跑：全量 `CGWindowListCopyWindowInfo` ＋ `CGWindowListCreateImageFromArray`（整窗大小，Retina） | `Effects/WindowFoldEffects.swift:174`（函数）、`:197`（调用）；实现 `Capture/FastCapture.swift:52-73` | 20–60 ms，随窗口像素数涨 | 【注】`FastCapture.swift:4` 与 `WindowFoldEffects.swift:195` 自述"几十毫秒" | 中：搬到后台队列即可，`ShadeController.fastWindowCapture` 已有现成做法（`:851`，`pixelAnalysisQueue`） |
 | H3 | 窗口浏览 | 每个 App 的发现结果回来都整面板重算：`finishMetadataJob` → `refreshPanel()`，没有合并 | `WindowBrowser/WindowBrowserController.swift:1276`（`refreshPanel()` 调用在其函数体内）、`:1387` | 开面板后第一秒内 N 次（N＝常规 App 数，常见 15–40）整面板布局＋`contentView.update`；单次 1–5 ms | 【推】；文档里 [window-browser-performance.md](window-browser-performance.md) 量过"暖刷新"单次，但没量过 N 次叠加 | 低：合并到每帧一次（或 16 ms 内一次）不改结果，只改时机 |
 | H4 | 看一眼 | 出现时在主线程同步做 `FastCapture.composite`（取消隐藏路径要先截背景） | `App/Glance.swift:691` | 20–60 ms | 【注】同 H2 的自述；这里用的是卡片区域，比整窗小，估计偏下限 | 中：背景必须在取消隐藏**之前**取到，顺序不能乱，可以先后台取、取到再 show |
-| H5 | 收起／展开 | 隐藏策略在主线程做多次 AX：`fallbackHide` 里 `appCurrentUserWindowCount`＋`appWindowCount`（各一次 `kAXWindowsAttribute`，事务备忘 `Window/AppWindows.swift:73-85` 内只有第一次真问），`axOffscreenHide` 最多 4 轮"写位置＋读位置" | `App/FoldTransaction.swift:759-761,640-657`；`Window/AppWindows.swift:73` | 目标空闲时 20–25 ms（首次枚举）＋每轮 0.2 ms；目标忙时每次 ≈19 ms，最坏被 2 s 超时托住（`WindowShade.swift:367`） | 【注】[performance.md](performance.md) 表里 `kAXWindowsAttribute` 18–25 ms、忙时单读 ≈19 ms | 中：已有 `AXStallBreaker`、`timedRead`；真收益在"忙目标"，空闲目标已被备忘压住 |
+| H5 | 收起／展开 | 隐藏策略在主线程做多次 AX：`fallbackHide` 里 `appCurrentUserWindowCount`＋`appWindowCount`（各一次 `kAXWindowsAttribute`，事务备忘 `Window/AppWindows.swift:73-85` 内只有第一次真问），`axOffscreenHide` 最多 4 轮"写位置＋读位置" | `App/FoldTransaction.swift:759-761,640-657`；`Window/AppWindows.swift:73` | 目标空闲时 20–25 ms（首次枚举）＋每轮 0.2 ms；目标忙时每次 ≈19 ms，最坏被 2 s 超时托住（`WindowShade.swift:367`） | 【注】[performance.md](../../performance.md) 表里 `kAXWindowsAttribute` 18–25 ms、忙时单读 ≈19 ms | 中：已有 `AXStallBreaker`、`timedRead`；真收益在"忙目标"，空闲目标已被备忘压住 |
 | H6 | 收起（冷） | 第一次收起时在主线程同步创建 Metal 设备、库和三条管线 | `Effects/FoldGPU.swift:79`（`objects()`）、`:125-136`；预热 `:96`、触发 `Effects/DuoController.swift:96`（启动后 4 秒，仅在效果开着时） | 冷启动首次 100–400 ms；预热后为 0 | 【注】`EffectSession.swift:71-74` 注释写"首次收起含 GPU 共享对象创建"；数字【无】 | 低：已有预热；风险点是"启动 4 秒内就收起"或"效果当时关着、后来才开" |
 | H7 | 刘海空闲 | `syncTimer` 每 2 秒一次（容差 0.5 s），永久存在；内部 `leases.tick()`、`syncWatchers()`，有收起窗口时还 `refresh()` | `App/Notch.swift:318-326` | 每次 <0.2 ms，但是 0.5 次/秒的固定唤醒 | 【推】 | 低：可在 `owner.shaded` 为空且没有 lease 时停掉，事件来了再起；但要确认 `leases.tick()` 的到期结算不能停 |
 | H8 | 刘海空闲（有音乐播放器） | 活动轮询在进度档每 2 秒一次，每次主线程先扫 `NSWorkspace.shared.runningApplications`（两处）再切 worker | `App/NotchActivitySources.swift:253-256,284`；档位 `App/NotchActivityPollPolicy.swift:20-26` | 每次主线程 0.2–1 ms；整体约 0.5 次/秒唤醒 | 【推】；`:283` 的注释自己写过"列系统音频进程每 2 秒约占一个核的 1.7%"，说明这里的成本有过先例 | 低：推送流健康时已不问脚本（`:266-270`），所以主要是 `runningApplications` 那两次；可改为缓存＋`NSWorkspace` 通知失效 |

@@ -7,10 +7,10 @@
 |---|---|---|---|---|---|---|
 | `run-part6-readiness.sh` 返回 2 | 本机，任意构建 | `bash tests/run-part6-readiness.sh` | 2026-11-02 | 预期 BLOCKED：真机与设备证据未补齐；不是回归 | 2026-11-02 | `readiness.py` |
 | 虚拟机 `browser-more` 偶发超时 | wsqa-manual（macOS 26，2–4 核） | 跑 `tests/vm/run-core-probes.sh`，其中一组在不同步骤等满 5 秒 | 2026-10-16 | 重跑一次；仍失败记 `inconclusive`，不判回归 | 2026-11-02 | `run-core-probes.sh` |
-| 页面探针写死开发证书 | 其余机器 | 6 个 `*page-probe.sh` 默认 `Apple Development: openkams@gmail.com (G3TN2MBQ2Q)` | 2026-11-02 | 用 `WINDOWSHADE_CODESIGN_IDENTITY` 覆盖；没有该证书的机器跑不了 | 2026-11-02 | `run-*-page-probe.sh` |
+| 页面探针写死开发证书 | 其余机器 | 6 支探针脚本（`run-{conductor-claude-page,face-enrollment-page,face-scan-page,hook-approval-page,face-fill-light,session-peek}-probe.sh`）默认 `Apple Development: openkams@gmail.com (G3TN2MBQ2Q)` | 2026-11-02 | 用 `WINDOWSHADE_CODESIGN_IDENTITY` 覆盖；没有该证书的机器跑不了 | 2026-11-02 | `run-*-page-probe.sh` |
 | 更新自检与 `Duo.metallib` 耦合 | 任意构建 | `UpdaterLaunch.selfCheck` 要求 bundle 里有 `Duo.metallib` | 2026-11-02 | 资源还在，暂不触发；若清理 Metal 效果，必须同步改自检，否则每次更新被否决 | 2026-11-02 | `run-update-integration.sh` |
 | 声纹模型缺失时产物不同 | 干净检出、没有 `../WindowShade-models` | `build.sh --check` 跳过 `SpeakerEmbedding.mlpackage` | 2026-11-02 | 不阻塞编译；发版前必须确认包内有 `SpeakerEmbedding.mlmodelc` | 2026-11-02 | `build.sh` / 发布关 |
-| AppKit 套件依赖 `rg` | 干净 macOS | 没有 `rg` 时套件发现为空 | 2026-11-02 | 预检会提示；装 `ripgrep` 后重跑 | 2026-11-02 | `run-appkit-tests.sh` |
+| AppKit 套件依赖 `rg` | 干净 macOS | 没有 `rg` 时源文件清单为空，编译失败 | 2026-11-02 | 预检会提示；装 `ripgrep` 后重跑 | 2026-11-02 | `run-appkit-tests.sh` |
 | 1.0.20 未跑虚拟机回归 | 发布机 | `tests/vm/run-core-probes.sh` 未在 wsqa-15 / wsqa-manual 上执行 | 2026-11-02 | 1.0.20 按发布决定跳过；**1.0.21.1 补跑：wsqa-manual（macOS 26）六组 suite 全过（2026-11-10）**；wsqa-15（macOS 15）同日**没能跑成**——图形会话锁屏，六组一起报 `posErr=-25205`（夹具窗口拿不到位置），不是代码回归，见 [testing.md](testing.md) L4 的锁屏前置；下次解锁后补跑 | 2026-11-10 | `tests/vm/run-core-probes.sh` |
 | 跨桌面携带依赖 SkyLight 内部符号 | 任意构建 | `SLSPerformAsynchronousBridgedWindowManagementOperation` 或 `SLSBridgedMoveWindowsToManagedSpaceOperation` 缺失 | 2026-11-02 | 静默回退到“窗口留在原桌面”，日志 `method=fallback`；每个 macOS 大版本复核一次 | 2026-11-02 | `run-bridged-space-move-tests.sh` |
 | `release-gate.sh` 默认联网取上一版 | 离线 | 不传 `--previous` 时调用 `gh release download` | 2026-11-02 | 离线门禁显式传 `--previous <zip>`；`local-gate.sh release` 已强制 | 2026-11-02 | `scripts/release-gate.sh` |

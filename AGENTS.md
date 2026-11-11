@@ -57,7 +57,9 @@ Load the named skill before starting the task, not after.
 
 ## Repo rules
 
-`site/` is plain HTML/CSS/JS — no framework, no bundler. `Topit/` is the Xcode
-project; build verification is `xcodebuild` against the scheme in
-`Topit.xcodeproj`. Do not commit rendered media from `promo/`, `film/` or
-`video/`.
+`site/` is plain HTML/CSS/JS — no framework, no bundler. The app lives in
+`prototype/` and is built by `prototype/build.sh`, not an Xcode project; build
+verification is `scripts/local-gate.sh check` (it runs `./build.sh --check`),
+and `docs/testing.md` says which test layer a change needs. `Topit/` is a
+git-ignored local reference clone of another app, not this project. `promo/`,
+`film/` and `video/` are git-ignored; do not commit rendered media from them.

@@ -35,7 +35,7 @@
 
 ## 交接
 
-[主手册](computer-use-qa.md) 和 [工具入口](../tools/computer-use-qa/README.md) 是维护入口。六个公开基础命令另加 observe/act，均支持 --help。所有原始证据与运行报告保存在外置 QA 盘，不向仓库塞图片与二进制。
+[主手册](../../computer-use-qa.md) 和 [工具入口](../../../tools/computer-use-qa/README.md) 是维护入口。六个公开基础命令另加 observe/act，均支持 --help。所有原始证据与运行报告保存在外置 QA 盘，不向仓库塞图片与二进制。
 
 DeepSeek 负责传输层和离线测试初稿；主模型修正实际接口与验收边界、独立增加反例测试，并完成实机视觉复核。第二次委派达到轮次上限，后续测试与修正由主模型接手，未采信其完成声明。
 

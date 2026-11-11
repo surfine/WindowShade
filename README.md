@@ -11,7 +11,7 @@ A free, open-source window utility for Mac.
 
 <!-- status:start -->
 
-**Current release: 1.0.21** · build 21 · 2026-11-09 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.21)
+**Current release: 1.0.21** · build 20261110.01 · 2026-11-10 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.21.1)
 
 <!-- status:end -->
 
@@ -49,7 +49,7 @@ Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releas
 
 - **Needs macOS 15 or later.** Apple Silicon is the main build.
 - **Intel Macs (experimental, from 1.0.21).** Releases also has a separate ZIP whose name ends in `-intel.zip`. It has not been tried on a real Intel Mac, only in a Rosetta smoke test, so expect rough edges. Face unlock, voiceprint and the lid-close desktop effect are off and hidden on Intel; pinned previews, Picture in Picture and everything else work the same. The Intel build updates from its own feed, so it is never offered the Apple Silicon ZIP, and Apple Silicon Macs are never offered the Intel one. If something goes wrong, please [open an issue](https://github.com/surfine/WindowShade/issues/new).
-- **1.0.21 download (decimal MB):** 22.39 MB ZIP, or a 23.46 MB DMG for a first install. The experimental Intel ZIP is 11.12 MB.
+- **1.0.21 download (decimal MB):** 22.49 MB ZIP, or a 23.54 MB DMG for a first install. The experimental Intel ZIP is 11.24 MB.
 - **Notarized by Apple.** macOS checks it on first launch, so there’s nothing to override.
 - **Updating from 1.0.16 or earlier:** download this one by hand, then reopen Accessibility (and Screen Recording, if you had turned it on) in System Settings → Privacy & Security. From here on, updates install from the menu.
 - **With Homebrew:** `brew install --cask surfine/tap/windowshade`.
@@ -65,13 +65,13 @@ Get the latest DMG from [Releases](https://github.com/surfine/WindowShade/releas
 
 **Carry and pin.** Press `⌃⌘G` to carry the current window to every desktop: it stays where it is, and its bar appears in the top-right corner of your other desktops. Rest on the bar for a live picture — if the window is hidden or minimized, a labelled snapshot appears instead — and click it to go there; press `⌃⌘G` again to put it down. Press `⌃⌘P` to pin a window, so it stays uncovered while you switch to anything else; the menu bar lists every pinned window and can unpin them all at once.
 
-**Window browsing.** Rest the pointer on an app’s icon in the Dock and every window that app has open is listed, each with a picture and a title. The panel is for looking: a window changes only when you press a button on its card; Space gives a large preview without bringing the window forward; placement shows where the window will go and moves it only when you agree, and you can undo afterwards. You can also open it from Choose window… in the menu bar, or with a hot key you set — the Dock entry is off by default. The panel is temporary: it does not replace the Dock or take over Command-Tab. Details are in the [window browsing notes](docs/window-browser.md).
+**Window browsing.** Rest the pointer on an app’s icon in the Dock and every window that app has open is listed, each with a picture and a title. The panel is for looking: a window changes only when you press a button on its card; Space gives a large preview without bringing the window forward; placement shows where the window will go and moves it only when you agree, and you can undo afterwards. You can also open it from Choose window… in the menu bar, or with a hot key you set — the Dock entry is on by default and can be switched off in Settings. The panel is temporary: it does not replace the Dock or take over Command-Tab. Details are in the [window browsing notes](docs/window-browser.md).
 
 **Launchpad.** Record a shortcut (for example `⌃⌘L`) to open the Home grid: every app, with the App Library on the last page. Drag an icon to a screen edge for Slide Over, with a split handle. It opens even when the notch is off. Details are in the [Launchpad notes](docs/launchpad.md).
 
-**More layouts and actions.** Magic Tiling, the scroll strip, Picture in Picture (a window shrinks to a live picture that floats in a screen corner), `⌥`-Tab to switch by window, and Dock click-to-hide (off by default; turn it on in Settings). Settings → Shortcuts can bring Rectangle’s key set over in one click.
+**More layouts and actions.** Magic Tiling, the scroll strip, Picture in Picture (a window shrinks to a live picture that floats in a screen corner), `⌥`-Tab to switch by window, and Dock click-to-hide (on by default, off for people who said they come from Windows or iPad; there is a switch in Settings). Settings → Shortcuts can bring Rectangle’s key set over in one click.
 
-**The notch (off by default; turn it on in Settings).** Once on, it brings live activities, the file shelf, accessory battery notices, the volume/brightness display and “Move this app aside”, each with its own switch. For a careful action such as turning off automatic update checks, the notch opens around the system fingerprint prompt so you confirm with Touch ID; it does not unlock macOS. [Details](docs/touch-id-island.md)
+**The notch (on by default; you can turn it off in Settings).** It brings live activities, the file shelf, accessory battery notices, the volume/brightness display and “Move this app aside”, each with its own switch. For a careful action such as turning off automatic update checks, the notch opens around the system fingerprint prompt so you confirm with Touch ID; it does not unlock macOS. [Details](docs/touch-id-island.md)
 
 **Interface language.** Settings → Advanced → Interface language: follow the system, 简体中文, 繁體中文 or English. It takes effect immediately, no restart. English covers the whole Settings window and the notch sentences; menus, Window Browser, privacy and a few more are still being translated.
 
@@ -136,12 +136,12 @@ A few more are still experimental or device-limited: face scanning, presence loc
 
 ## Build and contribute
 
-Requires macOS 15+, Xcode command line tools with the Metal compiler, and an Apple Development signing certificate.
+Requires macOS 15+, the full Xcode app with its Metal toolchain (the command line tools alone cannot build it), and an Apple Development signing certificate.
 
 ```sh
 git clone https://github.com/surfine/WindowShade.git
 cd WindowShade/prototype
-./build.sh --check   # Swift type checking and Metal compilation
+./build.sh --check   # optimized compile and link, plus localization, privacy and copy checks
 ./build.sh           # build and sign with your configured identity
 open WindowShade.app
 ```
