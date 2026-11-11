@@ -531,7 +531,7 @@ if [ "$stage_only" = "1" ]; then
     fi
   done
   if [ "$(plutil -extract SUPublicEDKey raw -o - "$APP/Contents/Info.plist")" != "$EXPECTED_ED_KEY" ]; then
-    echo "ERROR: SUPublicEDKey 和记下的公钥不同；换密钥要单独发一版，见 docs/update.md。" >&2
+    echo "ERROR: SUPublicEDKey 和记下的公钥不同；换密钥要单独发一版，见 docs/DEVELOPMENT.md。" >&2
     exit 1
   fi
   # 更新器的入口要由 main.swift / WindowShade.swift 接上（见 App/UpdaterLaunch.swift、App/Updater.swift 头部注释）。

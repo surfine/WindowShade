@@ -7,6 +7,7 @@
 - macOS 15 或更新版本（构建目标是 macOS 15，见下面的支持政策）
 - 完整 Xcode（`xcodebuild`、`appintentsmetadataprocessor`、`xcstringstool`、Metal 工具链；只有 Command Line Tools 编不了）
 - `ripgrep`（`rg`，AppKit 套件用它发现源文件）
+- Python 的 `jsonschema`（`tests/run-part6-wire-tests.sh` 用它核对钉住的 Codex app-server schema；缺了脚本以退出码 1 失败，不再跳过）。Homebrew 的 Python 不让 `pip install --user`（PEP 668），在仓库里建一个门禁 venv：`python3 -m venv .build/gate-venv && .build/gate-venv/bin/pip install jsonschema`。脚本会自动用 `.build/gate-venv`；venv 在别处时设 `WINDOWSHADE_GATE_PYTHON` 指向它的 `python3`
 - 用于签名的 Apple Development 证书（构建脚本强制要求，拒绝 ad-hoc 签名）
 
 ## 支持的系统版本
@@ -15,7 +16,7 @@
 现在是 macOS 15、26、27；下一个 macOS 的测试版尽力而为、不承诺。每年 9 月新版 macOS 正式推出时往前滚一版
 （2027 年 9 月起最低是 26）。
 
-- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
+- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](archive/2026-11-11/releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
 - **从 1.0.17 起最低 macOS 15**：`build.sh` 的构建目标与 `prototype/Info.plist` 的 `LSMinimumSystemVersion` 已经改好；
   发 1.0.17 时那一项 appcast 的 `minimumSystemVersion` 写 `15.0.0`（旧项保持 `14.0.0`，留在 14 的人停在 1.0.16），
   README（三份）、官网与宣传片里的「macOS 14 及以上」在 1.0.17 发布时一起改，**不要提前改**（会把 1.0.16 说错）。
@@ -42,11 +43,11 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 ### 第一个 Developer ID 版（1.0.17）
 
 1.0.16 及以前是开发证书签的（Team `FVGLY6W6S4`），Developer ID 的 Team 是 `DQ45KFVHJ8`，DR 一定不同，所以 1.0.17 是
-[docs/update.md](update.md) 里的「换证书的一版」：appcast 那一项标 `sparkle:informationalUpdate` 配 `belowVersion=17`
+「换证书的一版」（见 [docs/update.md](update.md) 的“签名与公证”）：appcast 那一项标 `sparkle:informationalUpdate` 配 `belowVersion=17`
 （1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
 用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
 同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
-**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](releases/v1.0.17-release-gate.md)。
+**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](archive/2026-11-11/releases/v1.0.17-release-gate.md)。
 
 ### 默认值翻开与 DMG（1.0.18）
 
@@ -282,7 +283,7 @@ cd prototype
   `WINDOWSHADE_SDK_HAS_GLASS`。旧 SDK 构建时玻璃分支不参与编译，运行时再用
   `#available(macOS 26.0, *)` 决定是否启用；玻璃实现单独放在
   `prototype/WindowBrowser/WindowBrowserMaterial.swift` 的
-  `WindowBrowserGlassBackdrop` 里。
+  `WindowBrowserGlassSurface` 里。
 
 - 性能对照脚本（同机、同数据、基线 worktree）：
 
@@ -322,9 +323,6 @@ cd prototype
   拖拽或需要保持指针位置的操作。
 
 用户向说明（入口、权限、兼容限制）见 [docs/window-browser.md](window-browser.md)。
-
-需要外部/更高智能模型复检时，用 复检交接与提示词：里面是
-可直接粘贴的评审提示词、按任务书逐条列出的需求与状态、已知缺口、冲突消解记录和复检命令。
 
 动手优化这一带之前先读 [docs/performance.md](performance.md)：那里记了
 实测的调用成本量级、已走通的手法、以及已经证伪的方向（比如用 SkyLight
@@ -411,7 +409,7 @@ cd prototype
    第一次发 Intel 版时 release 里还没有上一个 `-intel.zip`，脚本退回 arm64 的上一版（DR 与架构无关）。下面保留手工核对步骤，脚本失败时按它逐项查：
    1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
    2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
-   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
+   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="<上一版 DR>"` 通过。不同就只能走“换证书的一版”（见上文“第一个 Developer ID 版（1.0.17）”和 docs/update.md）。
    4. `WindowShade.app/Contents/MacOS/WindowShade --self-check` 返回 0，输出里有这次的 build 号（`build=N`），1 秒左右返回。
    5. `CFBundleVersion` 大于上一版（`bash scripts/check-release-version.sh` PASS）。
    6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。
@@ -419,7 +417,7 @@ cd prototype
       Intel zip ↔ `appcast-intel.xml`，包是 `x86_64`、条目**没有** `hardwareRequirements`。
       7a. 清单条目 enclosure 指向的文件名就是这个 zip（两份清单不能指到对方的包）。
       7b. 清单 enclosure 的 length 等于 zip 的实际字节数。
-      7c. 换证书的一版要在清单条目里标 `informationalUpdate`（docs/update.md）。
+      7c. 换证书的一版要在清单条目里标 `informationalUpdate`（见 docs/update.md 的“签名与公证”）。
    8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
    9. 上一版读得懂这一版的状态：新版 `--self-check --write-sample-state <目录>`，上一版 `--self-check --read-state <目录>` 返回 0。
       第一个带更新器的版本没有“上一版”，跳过；从第二个起必做。
@@ -450,7 +448,7 @@ cd prototype
    `releases/latest/download/appcast-intel.xml`，见 `UpdateLinks.fallbackFeed`）。第一次发 Intel 版时 `appcast-intel.xml` 还不存在，由这一步新建（`<channel>` 头照 `appcast.xml`，再整个签名）。
    两份清单的 build 号共用一个序列（`check-release-version.sh` 取两份里最大的比）。
    arm64：`sign_update dist/WindowShade-v${VERSION}.zip` 得到 `sparkle:edSignature` 和
-   `length`，在 `site/public/appcast.xml` 加一条（保留最近三条，写法见 docs/update.md“发布流程”里的条目样子），改动说明取
+   `length`，在 `site/public/appcast.xml` 加一条（保留最近三条，条目写法照 `site/public/appcast.xml` 里最近的一条），改动说明取
    `docs/releases/v<版本>.md` 开头最多三行；再给整个清单签名，`npm run deploy`，最后 `curl` 一次线上的清单。
    先上传包、后发清单，反过来他会先看到新版本却下载不到。
 7. **先走测试频道**：条目先带 `<sparkle:channel>beta</sparkle:channel>` 发一次。Aaron 自己
@@ -506,7 +504,7 @@ cd prototype
 
 1. 同一个账号下申请新的 Apple Development 证书。钥匙串里两张同名证书会让 `codesign` 报身份不唯一，
    `WINDOWSHADE_CODESIGN_IDENTITY` 改用新证书的 SHA-1。
-2. `--stage` 后跑发布关。DR 逐字相同就照常发；不同就按 docs/update.md 的“换证书的一版”发（清单 `informationalUpdate` 配 `belowVersion`，
+2. `--stage` 后跑发布关。DR 逐字相同就照常发；不同就按“换证书的一版”发（做法同上文“第一个 Developer ID 版（1.0.17）”，见 docs/update.md；清单 `informationalUpdate` 配 `belowVersion`，
    发布说明写明要手动安装、重新授权）。
 3. 确认新证书发的第一版在测试账户上授权还在，再删旧证书。
 
@@ -518,7 +516,7 @@ cd prototype
    `build.sh` 的注释和本节的版本号一起改。
 3. 读发布说明，留意安装器、缓存目录（`~/Library/Caches/<bundle id>/org.sparkle-project.Sparkle/Installation/`，关靠它找解开的 App）、
    续装和取消流程、`<bundle id>-sparkle-updater` 这个 launchd 标签有没有变。
-4. 跑 `tests/run-update-tests.sh`，再在发布机上把 docs/update.md“验收”里的集成测试走一遍。关找不到解开的 App 时结果是“不装”，
+4. 跑 `tests/run-update-tests.sh`，再在发布机上跑 `tests/run-update-integration.sh`。关找不到解开的 App 时结果是“不装”，
    这样发出去就等于没法更新，所以不过不发。
 
 ### Computer Use 原生界面验收

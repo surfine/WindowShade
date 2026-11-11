@@ -7,7 +7,7 @@
 # 一处例外要说清楚：看护换回成功后会按路径把装好的那一版打开一次，而 App 没有 --store 参数，
 # 所以那一份读的是你自己的 ~/Library/Application Support/WindowShade——它只会做产品本来也会做的事
 # （没有任何更新记录时，清掉一份超过 7 天的过期备份），不会写别的。
-# 不跑 Sparkle（那一步要 Sparkle 发布包里的 sign_update / generate_appcast，见 docs/update.md）。
+# 不跑 Sparkle（那一步要 Sparkle 发布包里的 sign_update / generate_appcast，见 docs/DEVELOPMENT.md 的发布流程）。
 #
 # 验三件事：
 #   1. 自检：WindowShade --self-check 返回 build=<n> ok；

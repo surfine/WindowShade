@@ -2226,13 +2226,13 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
 | `cd prototype && ./build.sh --check` | 类型检查通过，未签名、未改 bundle |
 | `./build.sh --stage`（隔离 bundle） | 构建 + 签名成功，未停止正在运行的应用 |
 | `… --window-browser-shots .build/window-browser-shots` | 11 张生产组件截图 + `manifest.txt` |
-| `/tmp/run-perf.sh`（基线 worktree 对照） | 见 `docs/window-browser-performance.md` |
+| `/tmp/run-perf.sh`（基线 worktree 对照） | 见 `docs/window-browser-performance.md`（私有库） |
 | `… --window-browser-catalog-probe`（隔离 bundle，只读） | apps=15 windows=0：新构建没有 TCC 授权，实机 AX 未验证 |
 
 ### 仍未验证
 
 - 实机 Dock 悬停、真实焦点、真实折叠/展开/排布（需要辅助功能与屏幕录制授权的
-  新构建，必须由用户执行；步骤见 `docs/window-browser-visual-qa.md`）。
+  新构建，必须由用户执行；步骤见 `docs/window-browser-visual-qa.md`（私有库））。
 - 真实玻璃折射的整窗截图、多显示器/混合缩放与 120 Hz 实机、WindowServer 与能耗
   采样、长时间会话的进程 footprint。
 
@@ -2252,7 +2252,7 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
   失败状态与释放，约 17 帧循环）。真实 Dock 悬停、跨图标切换、斜移、折叠再展开、
   失败重试的录像仍需要辅助功能与屏幕录制授权，未运行。
 
-- 覆盖对照：新增 `docs/window-browser-test-coverage.md`，逐条列出 T01–T60 对应的
+- 覆盖对照：新增 `docs/window-browser-test-coverage.md`（私有库），逐条列出 T01–T60 对应的
   生产逻辑断言与仍未自动化的证据缺口。
 - 只读探针在本轮改版后的隔离构建上复跑：`--window-browser-hover-probe` 在无 AX 授权
   时不产出目标并干净停止；`--window-browser-thumbnail-probe` 在无录屏授权时
@@ -2312,7 +2312,7 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
   thumbnailBytes=0`、`settingsRestored=true`。
 
 仍未验证的项目与 1.0.13 相同（真实斜向悬停、真实键盘焦点、真实折叠与排布、玻璃折射整窗
-截图、1x 与多显示器 / 120 Hz、能耗与长会话内存），已写入 `window-browser-visual-qa.md`
+截图、1x 与多显示器 / 120 Hz、能耗与长会话内存），已写入 `window-browser-visual-qa.md`（私有库）
 与 `releases/v1.0.14.md`。
 
 补充（同一版本重新发布）：设置页截图入口改成整窗截图（侧栏材质进入归档图）后，按
@@ -2338,7 +2338,7 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
   数据每次渲染出不同画面；换成 FNV-1a 后两次渲染逐字节一致，归档图可以逐像素比较。
   fixture 的窗口画面也补上了窗口圆角，不再是直角。
 - **验证**：窗口浏览 594 项断言、纸质与双屏测试、五页设置外观检查（侧栏 alpha 1.000）、
-  `classic-strip-palette PASS`、`--window-browser-idle-probe` 干净；`docs/visual-qa/**`
+  `classic-strip-palette PASS`、`--window-browser-idle-probe` 干净；`docs/visual-qa/**`（私有库）
   全部重新生成。离屏 `cacheDisplay` 会把图层蒙版按 1x 光栅化，归档图上量到的弧长比实际
   小约 20%（已用独立实验确认），因此数值以代码值与调试打印 `panelRadius=13.0` 为准。
 
@@ -2366,7 +2366,7 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 - **验证**：窗口浏览 604 → **605 项断言**（新增圆角/页脚/标题行数与“面板贴合内容”、
   “状态行只让面板长出一条页脚”的断言）、纸质与双屏测试、五页设置外观检查、
   标准菜单对照、`--window-browser-shots`（`classic-strip-palette PASS`）全部通过；
-  `docs/visual-qa/**` 重新生成。
+  `docs/visual-qa/**`（私有库） 重新生成。
 
 ## 2026-09-18：液态玻璃的分层纪律
 
@@ -2388,7 +2388,7 @@ Liquid Glass 的理解。于是回到 HIG 原文（`apple-design` 语料里的�
 - **真实观感证据**：离屏渲染看不到玻璃，单窗口截图只有窗口自己的表面，所以给截图探针加了
   确定性对照板（`WINDOWSHADE_GLASS_RIG=1`，440×380 的渐变+细字+明暗分区）与
   `WINDOWSHADE_SHOTS_HOLD`，用系统截屏抓真实合成结果：
-  `docs/visual-qa/system-appearance/liquid-glass-panel.png`（同一帧里还有系统 Dock 作对照）。
+  `docs/visual-qa/system-appearance/liquid-glass-panel.png`（私有库）（同一帧里还有系统 Dock 作对照）。
 - **断言**：面板只有一个玻璃表面、控制层无玻璃、单层时不创建容器、玻璃面板下卡片用内容层
   材质（纸面与旧系统仍为实色）；窗口浏览检查 605 → **608 项**，全部通过；纸质、双屏、
   五页设置外观检查、标准菜单对照、`classic-strip-palette PASS` 一并复跑。
@@ -2470,7 +2470,7 @@ bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔
 
 ## 2026-09-19：按复检设计稿落地（已合入 main，第四次重新发布 1.0.14）
 
-依据 `docs/design-proposal-claude.md`，修复复检列出的 R1–R18（R19 文档已同步，R20 性能未复测）：
+依据 `docs/design-proposal-claude.md`（私有库），修复复检列出的 R1–R18（R19 文档已同步，R20 性能未复测）：
 
 | 项 | 改动 |
 | --- | --- |
@@ -2481,7 +2481,7 @@ bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔
 | 正确性 | 截图服务回调不在锁内执行、计数全在锁内；控制器释放后目标解析仍回调；旧实时预览租约失败不再给新选中项报错；排布预览计时器绑定令牌、清页脚，描边内缩 + 连续曲率 + 随外观刷新 |
 | 文案 | 画面区原因只写原因（“需要屏幕录制权限”“画面暂不可用”等） |
 
-验证：`tests/run-window-browser-tests.sh` **627 项**通过（新增 16 项：跟踪区域、列表不溢出与行距、翻页、Dock 无选中环、三列、预览令牌、服务回调重入、单层玻璃与 contentView）；`run-paper-tests.sh`、`run-duo-tests.sh`、`build.sh --check` 通过；`build.sh --stage` 后重新生成 `docs/visual-qa/window-browser/*.png`。
+验证：`tests/run-window-browser-tests.sh` **627 项**通过（新增 16 项：跟踪区域、列表不溢出与行距、翻页、Dock 无选中环、三列、预览令牌、服务回调重入、单层玻璃与 contentView）；`run-paper-tests.sh`、`run-duo-tests.sh`、`build.sh --check` 通过；`build.sh --stage` 后重新生成 `docs/visual-qa/window-browser/*.png`（私有库）。
 
 同日补齐：Tab 键视图循环（搜索框 → 列表/网格 → 显示方式）；操作按钮悬停/按下底（6 pt 圆角系统填充）；
 动作执行中操作条前方显示转圈；搜索无结果时列表区显示“没有匹配的窗口”；缺少屏幕录制权限时页脚
@@ -2490,9 +2490,9 @@ bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔
 主显示器高度（多显示器时原来算错）。断言增至 **638 项**。
 
 性能：同一会话与 `a1a0a01` 交替 6 轮取中位数，冷启动与暖刷新持平，暖刷新 p95 ≤ 2.9 ms
-（见 `docs/window-browser-performance.md`）。第一版曾把暖刷新 p95 推到 4.7–6.6 ms，已查明并修掉。
+（见 `docs/window-browser-performance.md`（私有库））。第一版曾把暖刷新 p95 推到 4.7–6.6 ms，已查明并修掉。
 
-实机检查（详见 `docs/window-browser-visual-qa.md`“设计稿落地后的实机检查”）：真实合成的玻璃截图
+实机检查（详见 `docs/window-browser-visual-qa.md`（私有库）“设计稿落地后的实机检查”）：真实合成的玻璃截图
 已重拍；玻璃路径未见重复阴影；非 key 面板里 `.activeAlways` 收到真实指针的进入/离开而旧写法 0 次；
 第一次点击经窗口派发直达卡片；非 key 面板上 `.followsWindowActiveState` 实测恒为灰色非激活外观。
 

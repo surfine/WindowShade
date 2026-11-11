@@ -8,7 +8,7 @@
 #   按文件名认架构（-intel.zip 是 Intel），再核 lipo -archs 和文件名一致；第 7 步按各自的清单核：
 #   arm64 清单的条目 hardwareRequirements 是 arm64、包是 arm64；Intel 清单的条目没有 hardwareRequirements、包是 x86_64。
 #   Intel 包的上一版：优先取 release 里上一个 -intel.zip；第一次发 Intel 版时没有，就退回 arm64 的上一版（DR 与架构无关，第 9 步照样能读状态）。
-#   --cert-change <Team ID>：换证书的那一版（docs/update.md）。第 3 步不比「DR 与上一版逐字相同」，改核
+#   --cert-change <Team ID>：换证书的那一版（docs/update.md“签名与公证”）。第 3 步不比「DR 与上一版逐字相同」，改核
 #   「Developer ID 签名、Team 是这个」；清单那一项还要是 informationalUpdate。
 #   --dmg <路径>：另检查首次安装用的 DMG（第 12 项）：已签名公证并钉票据、挂载后恰好一个 .app 加一个指向 /Applications 的链接、
 #   app 过 codesign --deep --strict、CFBundleVersion 与 zip 里的相同。不给就不查（DMG 不走 Sparkle）。
@@ -83,7 +83,7 @@ if [ -n "$CERT_TEAM" ]; then
     && pass "3 换证书的一版：${AUTH}，Team $TEAM" || fail "3 换证书的一版要 Developer ID、Team ${CERT_TEAM}，实际 $AUTH / $TEAM"
 else
   codesign --verify -R="$PREV_DR" "$APP" 2>/dev/null && pass "3 新版满足上一版的 DR" \
-    || fail "3 新版不满足上一版的 DR（换证书要加 --cert-change <Team>，见 docs/update.md）"
+    || fail "3 新版不满足上一版的 DR（换证书要加 --cert-change <Team>，见 docs/update.md“签名与公证”）"
 fi
 
 # 4. --self-check 返回 0 且带这次的 build 号
@@ -134,7 +134,7 @@ else
   [ "$size" = "$c_len" ] && pass "7b 清单里的包大小 $c_len 就是这个 zip" || fail "7b 清单里的包大小 $c_len ≠ zip ${size}（换包后要重签清单）"
   if [ -n "$CERT_TEAM" ]; then
     [ "$c_info" = "informational" ] && pass "7c 换证书的一版在清单里是 informationalUpdate" \
-      || fail "7c 换证书的一版要在清单里标 sparkle:informationalUpdate（docs/update.md）"
+      || fail "7c 换证书的一版要在清单里标 sparkle:informationalUpdate（docs/update.md“签名与公证”）"
   fi
 fi
 

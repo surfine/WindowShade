@@ -46,5 +46,5 @@ Feature notes, design rules and release notes. Most of these are written in Chin
 
 ## Releases / 发布
 
-- [releases/](releases/) — 每版发布说明与发布关 runbook / release notes and release runbooks.
+- [releases/](releases/) — 每版发布说明（已发布版本的发布关 runbook 在 [archive/2026-11-11/releases/](archive/2026-11-11/releases/)）/ release notes; old release runbooks are archived.
 - [third-party-lock-overlay.txt](third-party-lock-overlay.txt) — 锁屏层的第三方许可 / third-party license.

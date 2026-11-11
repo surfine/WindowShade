@@ -16,13 +16,13 @@ Release 一并完成，本机应用用同一签名身份原地替换。版本历
 | 改动 | 位置 | 证据 |
 | --- | --- | --- |
 | 新增全应用 `SystemAppearancePolicy`（材质、边线、薄纱、阴影、动画、字号） | `prototype/Overlay/SystemAppearance.swift` | `tests/run-paper-tests.sh` 策略断言 |
-| 卷帘条、悬停缩略图、置顶预览、代理标题栏、引导页背景、窗口浏览面板统一走该策略 | `Overlay/*`、`PinnedPreviewPanel.swift`、`App/OverlayFactory.swift`、`App/Preferences.swift` | 材质接线断言 + `docs/visual-qa/system-appearance/*.png` |
+| 卷帘条、悬停缩略图、置顶预览、代理标题栏、引导页背景、窗口浏览面板统一走该策略 | `Overlay/*`、`PinnedPreviewPanel.swift`、`App/OverlayFactory.swift`、`App/Preferences.swift` | 材质接线断言 + `docs/visual-qa/system-appearance/*.png`（私有库） |
 | 减少透明度 / 提高对比度 / 减少动态效果 / 浅深色变化时刷新已打开表面 | `WindowShade.swift` 的外观观察者 | `classic-strip-palette PASS`、设置页外观检查 |
-| 液态玻璃只保留一层（面板容器），控制层不再叠玻璃；卡片/列表行改用内容层标准材质 `NSVisualEffectView(.contentBackground/.withinWindow)` | `WindowBrowserMaterial.swift`、`WindowBrowserViews.swift` | 单层玻璃、控制层无玻璃、卡片材质与容器不创建的断言；真实屏幕截图 `docs/visual-qa/system-appearance/liquid-glass-panel.png` |
+| 液态玻璃只保留一层（面板容器），控制层不再叠玻璃；卡片/列表行改用内容层标准材质 `NSVisualEffectView(.contentBackground/.withinWindow)` | `WindowBrowserMaterial.swift`、`WindowBrowserViews.swift` | 单层玻璃、控制层无玻璃、卡片材质与容器不创建的断言；真实屏幕截图 `docs/visual-qa/system-appearance/liquid-glass-panel.png`（私有库） |
 | 窗口浏览面板 100–120 ms 淡出，遵守减少动态效果 | `WindowBrowserPanel.swift`、`WindowBrowserController.swift` | 代码路径 + 设置页外观检查 |
 | 首次显示只做一次整面板刷新（首次说明只改页脚文本） | `WindowBrowserController.swift` | 代码路径（Dock 与键盘两条入口都已合并） |
 | 左/右 Dock 的网格列数上限收紧到两列、面板 ≤640 pt | `WindowBrowserGeometry.swift` | 几何断言（side Dock ≤2 列、bottom Dock 仍 3 列） |
-| 圆角统一到一份刻度：窗口级 13 pt（本机实测 macOS 27 窗口）、卡片 12、控件 6，嵌套按“外圆角 − 间距”同心，图层一律连续曲率；经典卷帘条改为“上两角圆、下边缘直切” | `Overlay/SystemAppearance.swift`（`SystemCornerRadius` / `SystemCornerPath`）、`WindowBrowserGeometry.swift`、`ShadeStrip.swift`、`PaperSurfaceStyle.swift`、`PinnedPreviewPanel.swift`、`PreviewSurfaces.swift`、`Preferences.swift` | `tests/run-paper-tests.sh` 与 `tests/run-window-browser-tests.sh` 的刻度/同心/路径断言 + `docs/visual-qa/**` 重新生成的截图 |
+| 圆角统一到一份刻度：窗口级 13 pt（本机实测 macOS 27 窗口）、卡片 12、控件 6，嵌套按“外圆角 − 间距”同心，图层一律连续曲率；经典卷帘条改为“上两角圆、下边缘直切” | `Overlay/SystemAppearance.swift`（`SystemCornerRadius` / `SystemCornerPath`）、`WindowBrowserGeometry.swift`、`ShadeStrip.swift`、`PaperSurfaceStyle.swift`、`PinnedPreviewPanel.swift`、`PreviewSurfaces.swift`、`Preferences.swift` | `tests/run-paper-tests.sh` 与 `tests/run-window-browser-tests.sh` 的刻度/同心/路径断言 + `docs/visual-qa/**`（私有库） 重新生成的截图 |
 
 ## 2. 修掉的三类真实缺陷
 
@@ -94,7 +94,7 @@ bash scripts/check-standard-menu.sh       # 关于面板 + ⌘V 对照全部 PAS
 ## 7. 未验证与已知限制
 
 - 实机悬停/焦点/折叠/排布、玻璃折射整窗截图、1x、多显示器与 120 Hz、能耗与长会话
-  footprint 仍需要在授权构建与额外硬件上手工验证（步骤见 `window-browser-visual-qa.md`）。
+  footprint 仍需要在授权构建与额外硬件上手工验证（步骤见 `window-browser-visual-qa.md`（私有库））。
 - 快速单窗预览仍依赖 Apple 已弃用的 `CGWindowListCreateImage`：当前可用，符号被移除时
   会记录一次并退回代理标题栏/无预览；未来某版应切到 SCK。
 - 卷帘条拖拽没有加入“吸附回原位”：这个手势没有对应的系统惯例，且应用已经提供显式
@@ -118,4 +118,4 @@ cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (<CE
 ```
 
 发版前的完整验证结果见 §6；替换后的实机只读探针数字见
-[`docs/window-browser-progress.md`](archive/2026-11-04/window-browser-progress.md) 的 1.0.14 段落。
+[`archive/2026-11-04/window-browser-progress.md`](archive/2026-11-04/window-browser-progress.md) 的 1.0.14 段落。

@@ -8,7 +8,7 @@
 
 - 设计稿（可交互）：[手边的每一样](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)；遥控器上遥控与指挥怎么合成一件事：iPhone 上的遥控器（2026-10-08 定稿）
 - 早期给模型的提示词已随交接材料归档，不再维护。
-- 相关：[gestures.md](gestures.md)（已有的标题栏手势）、conductor-v2.md（指挥模式）、[device-battery.md](device-battery.md)、[privacy-page.md](privacy-page.md)
+- 相关：[gestures.md](gestures.md)（已有的标题栏手势）、conductor-v2.md（私有库）（指挥模式）、[device-battery.md](device-battery.md)、[privacy-page.md](privacy-page.md)
 
 ## 一句话
 
@@ -150,7 +150,7 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 
 ### iPhone 控制中心里的遥控器
 
-同上表的层和键的意思；按键少一个环，往下滑、左右滑、往上滑都在触控区上做。键位见 iPhone 上的遥控器 与 conductor-v2.md。协议层改为**优先用 Swift**：
+同上表的层和键的意思；按键少一个环，往下滑、左右滑、往上滑都在触控区上做。键位见 iPhone 上的遥控器 与 conductor-v2.md（私有库）。协议层改为**优先用 Swift**：
 配对、加密、OPACK、TLV8、文字输入会话用 itsytv-core 的零件（MIT）从客户端反过来写服务端，atv-core 只当参考。这样不再需要 Rust 工具链。
 
 ### PS5 手柄（DualSense）

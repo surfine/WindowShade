@@ -18,12 +18,12 @@
 
 ## 实际运行记录
 
-- [20261009T173952-939c09b4](</Volumes/TiPlus 7100/WindowShade-QA/evidence/computer-use-qa/20261009T173952-939c09b4/report-1791541852533221000.md>)：fold-companion=fail、restore=pass；cleanup=pass。
-- [20261009T175511-f5cb6b23](</Volumes/TiPlus 7100/WindowShade-QA/evidence/computer-use-qa/20261009T175511-f5cb6b23/report-1791541852971869000.md>)：fold-companion=blocked；cleanup=pass。
-- [20261009T180056-38310eec](</Volumes/TiPlus 7100/WindowShade-QA/evidence/computer-use-qa/20261009T180056-38310eec/report-1791541853339932000.md>)：fold-companion=pass、peek-static=blocked；cleanup=pass。
-- [20261009T180537-8b806344](</Volumes/TiPlus 7100/WindowShade-QA/evidence/computer-use-qa/20261009T180537-8b806344/report-1791541853738987000.md>)：fold-companion=pass、peek-static=pass、peek-cancel=pass、restore=pass；cleanup=pass。
-- [20261009T181007-61ccb18b](</Volumes/TiPlus 7100/WindowShade-QA/evidence/computer-use-qa/20261009T181007-61ccb18b/report-1791541854073982000.md>)：peek-live=blocked；cleanup=pass。
-- [20261009T181327-fa8395b9](</Volumes/TiPlus 7100/WindowShade-QA/evidence/computer-use-qa/20261009T181327-fa8395b9/report-1791541854364794000.md>)：fold-companion=pass、peek-live=inconclusive、restore=pass、observation-failure=pass；cleanup=pass。
+- 20261009T173952-939c09b4（报告 report-1791541852533221000.md，在外置 QA 盘上）：fold-companion=fail、restore=pass；cleanup=pass。
+- 20261009T175511-f5cb6b23（报告 report-1791541852971869000.md，在外置 QA 盘上）：fold-companion=blocked；cleanup=pass。
+- 20261009T180056-38310eec（报告 report-1791541853339932000.md，在外置 QA 盘上）：fold-companion=pass、peek-static=blocked；cleanup=pass。
+- 20261009T180537-8b806344（报告 report-1791541853738987000.md，在外置 QA 盘上）：fold-companion=pass、peek-static=pass、peek-cancel=pass、restore=pass；cleanup=pass。
+- 20261009T181007-61ccb18b（报告 report-1791541854073982000.md，在外置 QA 盘上）：peek-live=blocked；cleanup=pass。
+- 20261009T181327-fa8395b9（报告 report-1791541854364794000.md，在外置 QA 盘上）：fold-companion=pass、peek-live=inconclusive、restore=pass、observation-failure=pass；cleanup=pass。
 
 ## 缺陷与边界
 
