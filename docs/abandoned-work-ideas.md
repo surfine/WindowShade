@@ -65,7 +65,7 @@
 
 ## 没有提交、已经丢失的部分
 
-- `tests/e3/`：`press-toggle.swift`、`drive.sh`、`run-one.sh`，一个“合成按下 → 切开关 → 单次跑”的 UI 探针。没有提交过，随 `claude/wf-ui` worktree 删除；上面保留了它的思路，需要时按这个结构重写。
+- `tests/e3/`：`press-toggle.swift`、`drive.sh`、`run-one.sh`，一个“合成按下 → 切开关 → 单次跑”的 UI 探针。`press-toggle.swift`、`run-one.sh` 和后来补的 `run-summarize-tests.sh`、`summarize.py` 现在都已提交在 `tests/e3/`（`drive.sh` 没有提交过，随 `claude/wf-ui` worktree 删除）；上面保留了它的思路。
 - 5 个 worktree 的未提交改动：presence lock intent bridge、alert sound、promo 渲染产物。对应功能已在 1.0.19 或私有 `promo/` 里；未提交的增量本身没有保留。
 - 1.0.17 / 1.0.18 宣传片成片：已发布到 Bilibili / YouTube，源工程在私有仓库。
 

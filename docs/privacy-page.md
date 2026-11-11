@@ -4,7 +4,7 @@
 Newlearner 这样的人推荐一个要辅助功能和屏幕录制的工具之前，最想看的就是这一页；它也满足 v4 规格“按用途申请、数据不出本机”的要求。
 
 - 设计稿（可交互）：[WindowShade 读到的](https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA)
-- 来由：integration-loupe-glance.md 第二步
+- 来由：integration-loupe-glance.md（私有库） 第二步
 - 刷脸解锁上线后要加的几行：照 [face-unlock.md](face-unlock.md)
 
 ## 长什么样

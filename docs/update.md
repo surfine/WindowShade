@@ -391,7 +391,7 @@ Sparkle 调用 `showReadyToInstallAndRelaunch:`（或续装时进入上一节）
 
 点“跳过”后不再追问。定时检查照常，有新版本时菜单那一项照样变成“更新到 1.0.17…”，点开后落到“先把 WindowShade 移到‘应用程序’文件夹……”，
 按钮同样是“移到‘应用程序’”。不在“应用程序”里不会变成永远不出声。
-这合 direction.md 的“点提示就替他做成那一下”。不接 LetsMove 库，只借它的流程（[PFMoveApplication.m](https://github.com/potionfactory/LetsMove/blob/master/PFMoveApplication.m)）。
+这合 lost-notes.md（原 direction.md） 的“点提示就替他做成那一下”。不接 LetsMove 库，只借它的流程（[PFMoveApplication.m](https://github.com/potionfactory/LetsMove/blob/master/PFMoveApplication.m)）。
 
 ### 授权那一步和更新怎么接
 
@@ -793,7 +793,7 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
   靠这几样压低概率：发布关试跑发出去的 zip、安装前在他的 Mac 上再试跑一次、编译目标 14.0 由编译器查 API 版本、测试频道、分批推送。
 - **看护和 Sparkle 安装器一起被杀**：两者都是 `SMJobSubmit` 提交的，macOS 27 关掉后台活动时可能一起被杀。交换是原子的，`/Applications` 里总有一版，
   但没人重开，他会看到 App 消失，要自己再打开。看护显示菜单栏图标是为了算“看得见”，能不能躲过要实测。
-  没选 `SMAppService.agent`：它能活过注销和掉电，但会出“已添加后台项目”通知，和 direction.md 的“只在卡住时开口”冲突。
+  没选 `SMAppService.agent`：它能活过注销和掉电，但会出“已添加后台项目”通知，和 lost-notes.md（原 direction.md） 的“只在卡住时开口”冲突。
 - **依赖 Sparkle 的内部缓存目录和续装、取消流程**：锁定版本，升级跑集成测试，找不到就不装。
 - **`SMJobSubmit` 已被 Apple 标为弃用**（[文档](https://developer.apple.com/documentation/servicemanagement/smjobsubmit(_:_:_:_:))）：Sparkle 至今靠它，我们和它同进退。
 - **DR 只能间接证明授权不丢**：授权数据库里存的要求读不到，见“核实过的事实”。

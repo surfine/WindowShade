@@ -261,6 +261,7 @@ case "$profile" in
   check)
     run_item build-check 1800 bash -c 'cd prototype && ./build.sh --check'
     run_item readme-status 120 python3 scripts/readme-status.py --check
+    run_item doc-links 120 python3 scripts/check-doc-links.py --all-docs
     ;;
   unit)
     run_units
@@ -290,6 +291,7 @@ case "$profile" in
   all)
     run_item build-check 1800 bash -c 'cd prototype && ./build.sh --check'
     run_item readme-status 120 python3 scripts/readme-status.py --check
+    run_item doc-links 120 python3 scripts/check-doc-links.py --all-docs
     run_units
     run_item appkit-all 1800 bash tests/run-appkit-tests.sh all
     ;;

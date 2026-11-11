@@ -2,7 +2,7 @@
 
 > 2026-09-29 定稿，尚未实现。这份文件规定四件事：界面怎么贴合硬件，各个表面取哪些数值，各个表面怎么动，
 > 怎样才算做到了 Apple 的水准。产品方向以 lost-notes.md（原 direction.md） 为准；参加 Swift Student Challenge 是“入戏”用的品味标准，
-> 见 ssc.md。面向用户的文字一律按 [copy-guide.md](copy-guide.md) 写。
+> 见 ssc.md（私有库）。面向用户的文字一律按 [copy-guide.md](copy-guide.md) 写。
 >
 > 文中的“岛”“肩”“硬件层”“隐形刘海”是给开发看的内部叫法，不进界面。“下巴”按 copy-guide 只在说明里用。
 >
@@ -32,7 +32,7 @@
 
 ## 1. Apple 的价值观与 Liquid Glass 初衷
 
-从 ssc.md §4 压缩成六条设计原则。它们和 §2 的十二条一起用：十二条讲“怎么做得像 Apple”，这六条讲“做什么、不做什么”。
+从 ssc.md（私有库） §4 压缩成六条设计原则。它们和 §2 的十二条一起用：十二条讲“怎么做得像 Apple”，这六条讲“做什么、不做什么”。
 §5 的每个组件都有一行“价值观”，写明它怎么满足这六条；满足不了的，写进 §6 当差距。
 
 | # | 原则 | 出处 | 在 WindowShade 里 |
@@ -40,7 +40,7 @@
 | V1 | **一眼就熟悉。** 更有表现力，但不丢掉用户已经熟悉的东西 | Apple Newsroom 2025-06-09（新设计发布稿）；Adopting Liquid Glass | Mac 已经有的做法优先。新东西从刘海长出来，长得像系统的一部分，不另起窗口。从 iPad、Windows、niri 搬来的行为不当默认（§8 问题 4）。不借用 Apple 的功能名和口号（Apple 商标准则） |
 | V2 | **内容优先。** 界面退后，让内容突出 | WWDC25 219；HIG Materials | 内容层（窗口画面、缩略图）不加材质。顺利时刘海一声不吐（lost-notes.md（原 direction.md））。浮层用完就走，停稳后不压在内容上 |
 | V3 | **玻璃只在控件层，不叠玻璃。** 玻璃是浮在内容上的导航和控件那一层 | WWDC25 219；HIG Materials | 分三层：硬件层纯黑、浮层用系统玻璃、内容层不加材质（§4.2）。浮层里再分块，用填充、透明度、分隔线，不再套一层玻璃 |
-| V4 | **用系统玻璃，不自己仿。** 光学质感和流动感说的是系统材质本身 | Adopting Liquid Glass；WWDC25 310；ssc.md §4 | macOS 26+ 用 `NSGlassEffectView` / `NSGlassEffectContainerView`，14/15 用 `NSVisualEffectView`。不手画高光、折射和灰色“玻璃”。刘海是硬件层，永远不是玻璃 |
+| V4 | **用系统玻璃，不自己仿。** 光学质感和流动感说的是系统材质本身 | Adopting Liquid Glass；WWDC25 310；ssc.md（私有库） §4 | macOS 26+ 用 `NSGlassEffectView` / `NSGlassEffectContainerView`，14/15 用 `NSVisualEffectView`。不手画高光、折射和灰色“玻璃”。刘海是硬件层，永远不是玻璃 |
 | V5 | **无障碍从第一行开始。** 为所有人设计，不是事后补 | apple.com/accessibility；HIG Accessibility；HIG Gestures | 每个表面都处理减少动态效果、减少透明度、增强对比度，并有 VoiceOver 名称（§4.9）。每个手势都有菜单或快捷键可以代替。少造新手势。状态不只靠颜色区分 |
 | V6 | **Apple 式文案。** 清楚、能少就少、少说“我们” | HIG Writing；Apple Style Guide；copy-guide.md | 一个东西一个名字。组合键符号 ⌃⌘⌥ 第一次出现时说明是哪个键。按设备描述手势（触控板说“两指”）。不替 Apple 的硬件下定义：对外不说“刘海是 Mac 的新入口”，候选说法如“卡住时，刘海帮你一把”，由 Aaron 挑 |
 
@@ -604,7 +604,7 @@ Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。
 
 - 舞台天圆地方；刘海带肩，按一台参照机型的真实比例画（例如 MacBook Air 15″：刘海占屏宽 10.8%，高宽比 0.18）。比例数字只写在代码注释里；页面和图片的替代文字最多写“按 15 英寸 MacBook Air 的比例画”（copy-guide 第 1、5 条：几何和比例数字不进用户文字）。
 - 现在刘海画大了（site/style.css:582 的 `.tnotch` 宽 17%；646 的 `.island` 高宽比约 0.37），没有肩（site/island.js:36–41；promo/）。
-- **价值观**：V1 画出来的 Mac 要和用户手里的一样。V6 宣传语不替 Apple 的硬件下定义，不模仿 Apple 的口号（ssc.md §4），候选由 Aaron 挑。
+- **价值观**：V1 画出来的 Mac 要和用户手里的一样。V6 宣传语不替 Apple 的硬件下定义，不模仿 Apple 的口号（ssc.md（私有库） §4），候选由 Aaron 挑。
 
 ### 5.14 讲解带（App/SettingsExplainerView.swift、Core/ExplainerScript.swift，1.0.18）
 

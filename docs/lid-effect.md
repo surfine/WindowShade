@@ -31,7 +31,7 @@
 
 ## 还没定、做的时候要回来问的
 
-- 合上 / 展开动画的时长和曲线：先按 motion-lost-notes.md（原 direction.md） 的令牌挑（候选 `settle` 0.56s），做出小样再给 Aaron 看。
+- 合上 / 展开动画的时长和曲线：先按 lost-notes.md（原 motion-direction.md） 的令牌挑（候选 `settle` 0.56s），做出小样再给 Aaron 看。
 - 屏熄时收面板那一下（orderOut 在系统重排显示器时等 110–480ms）能不能挪开，先量再说，不在这一版里硬改。
 
 ## 第二次拍板（2026-10-01 傍晚，推翻“一次性动画”）

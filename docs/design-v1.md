@@ -134,7 +134,7 @@ VoiceOver 焦点移到卡片/行（见上文）之后，VO-Space 的“按下”
 
 - 单元断言：切到深色后行背景亮度 < 0.5（修复前为 1.000），切回浅色 > 0.6。
 - 真实像素：`--window-browser-shots` 的列表页在浅色面板下重新变为浅色行，
-  归档图 `docs/visual-qa/window-browser/keyboard-list-eight.png` 已更新。
+  归档图 `docs/visual-qa/window-browser/keyboard-list-eight.png`（私有库） 已更新。
 
 ## 每个表面都能说明自己是哪个窗口（1.0.13 之后）
 
@@ -178,14 +178,14 @@ VoiceOver 焦点移到卡片/行（见上文）之后，VO-Space 的“按下”
 
 - `classic-strip-palette PASS`：在浅色下创建 → 切到深色 → `refreshPalette()`，
   与“直接在深色下创建”的纸面/文字/控件颜色逐项一致（亮度差 < 0.02）。
-- 样例图：`docs/visual-qa/system-appearance/classic-strip-{normal,contrast,dark}.png`
+- 样例图：`docs/visual-qa/system-appearance/classic-strip-{normal,contrast,dark}.png`（私有库）
   分别对应普通、提高对比度与深色外观。
 
 ## 设置窗口截图与动态颜色（1.0.13 之后）
 
 新增 `--settings-shots [输出目录]`：用生产设置窗口渲染每一页（浅色/深色），
 不需要屏幕录制权限，结果写到 `.build/settings-shots/`（示例归档在
-`docs/visual-qa/settings/`）。默认走 `CGWindowListCreateImage` 抓自己这扇窗，因此
+`docs/visual-qa/settings/`（私有库））。默认走 `CGWindowListCreateImage` 抓自己这扇窗，因此
 系统侧栏材质（浅色 242 / 深色 45）也在图内；只有整窗截图拿不到结果时才退回
 `cacheDisplay` 离屏渲染，那时侧栏区域会是透明块。效果页的 Metal 预览画布在两条
 路径里都是以生产视图渲染的，需要交互录制时仍用 `--duo-design-preview`。
@@ -242,7 +242,7 @@ VoiceOver 焦点移到卡片/行（见上文）之后，VO-Space 的“按下”
 - 玻璃与材质的边界保持一致：只有窗口浏览面板本身是一层公开的 `NSGlassEffectView`
   （后续改为面板根视图，界面在其 contentView 内），内容与预览表面不叠玻璃与折射。
 
-真实像素对照（`--window-browser-shots` 渲染生产视图，`docs/visual-qa/system-appearance/`）：
+真实像素对照（`--window-browser-shots` 渲染生产视图，`docs/visual-qa/system-appearance/`（私有库））：
 
 | 样例 | 说明 |
 | --- | --- |
@@ -344,11 +344,11 @@ Liquid Glass 指南，Apple 最后更新 2025-12-16），只按写明的规则�
 
 ## 玻璃挂载与内容层（1.0.14 复检之后）
 
-依据 `docs/design-proposal-claude.md` 落地，替代上面“液态玻璃分层纪律”里两处做法：
+依据 `docs/design-proposal-claude.md`（私有库） 落地，替代上面“液态玻璃分层纪律”里两处做法：
 
 - **内容进玻璃的 contentView。** AppKit 头文件：`NSGlassEffectView` “only guarantees the
   `contentView` will be placed inside the glass effect”。以前玻璃是内容的兄弟视图（被包在
-  `WindowBrowserGlassBackdrop` 里、宿主还裁切了玻璃边缘）；现在材质宿主的 `contentHost`
+  `WindowBrowserGlassSurface` 里、宿主还裁切了玻璃边缘）；现在材质宿主的 `contentHost`
   就是 `NSGlassEffectView.contentView`，页眉、搜索框、列表、详情、页脚都在里面，宿主不裁切。
 - **卡片不再叠材质视图。** 《Adopting Liquid Glass》要求审查 popover 背景、去掉自加的
   visual effect view；以前每张卡片/每行/详情都有一个 `.contentBackground` 材质，把玻璃盖成

@@ -132,7 +132,7 @@ macOS 27 上拖动卡顿）直接当我们的验收用例，见竞品底稿。
 - **位置用公开接口：** `NSScreen.safeAreaInsets`、`auxiliaryTopLeftArea`、`auxiliaryTopRightArea`。
   面板放在菜单栏之上一层，每张桌面、全屏 App 上都在。
 - **形状照硬件（2026-09-29）。** 刘海的底角和肩（刘海竖边和屏幕顶边相接处那段往外弯的曲线）先读系统私有的 `NSScreen.bezelPath`，
-  带守卫和校验，不过就按原生面板像素查机型表，都没有就照原来画（底角 10 / 12、没有肩），详见 hardware-fit.md。
+  带守卫和校验，不过就按原生面板像素查机型表，都没有就照原来画（底角 10 / 12、没有肩），详见 hardware-fit.md（私有库）。
   岛贴着刘海时底角就是刘海自己的底角；比刘海宽时在两个上角画出肩，看起来是刘海自己长宽了。肩在单独一层不接指针的窗口里，
   菜单栏照常能点；紧凑样式的肩从两侧那一段里扣，外沿不比原来宽，扣完不够 26 点就不画，指针停上来时整个往外挪 5 点、肩跟着走；
   落点、提醒、展开不画肩。只有带刘海的屏才去读形状，没有刘海的 Mac 不读。
@@ -216,7 +216,7 @@ WWDC25「Meet Liquid Glass」、WWDC23「Animate with springs」，以及 iOS 18
 不展开，看日志里的 `yields to the system` 和 `NotchController.lastAlertYieldForProbe`；`--quiet-defaults`（只读）打印每块屏上
 提醒要盖的那一段有没有系统的东西，以及问到了但不算的 Apple 的东西（带角色和窗口层级）。
 形状：`bash tests/run-display-shape-tests.sh`（纯计算）和 `--notch-shape` 探针（岛和肩贴不贴硬件、不知道形状时和原来逐一相等），
-亲眼校准用 `--notch-calibrate`，见 hardware-fit.md。
+亲眼校准用 `--notch-calibrate`，见 hardware-fit.md（私有库）。
 
 别的桌面上的窗口：`bash tests/run-elsewhere-windows-tests.sh`（挑哪几扇、编号、画面位置），和
 `bash tests/run-glance-probe.sh --elsewhere --other-space`（临时 App 自己挪到另一张桌面，不切你的桌面：那一排列出它、写对桌面、
