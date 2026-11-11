@@ -16,7 +16,7 @@ const escape = (s) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').repla
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(path.join(root, 'public'), dist, { recursive: true });
-for (const name of ['style.css', 'motion.js', 'app.js', 'teach.js', 'island.js', 'launchpad.js', 'launchpad.css', 'history.css', 'history.js', 'era.css']) await cp(path.join(root, name), path.join(dist, name));
+for (const name of ['style.css', 'theme.js', 'motion.js', 'app.js', 'teach.js', 'island.js', 'launchpad.js', 'launchpad.css', 'history.css', 'history.js', 'era.css']) await cp(path.join(root, name), path.join(dist, name));
 const arrow = (d) => `<svg class="glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="${{
   out: 'M5 11 11 5M6.5 5H11v4.5',
   down: 'M8 3.5v9M4 8.5l4 4 4-4',
@@ -53,7 +53,7 @@ function page(c) {
 <title>${c.title}</title>
 ${shareMeta({ origin, path: c.path, title: c.title, description: c.description, image: en ? '/media/og-en.jpg' : '/media/og.jpg', imageAlt: c.shareAlt, lang: c.lang })}
 <link rel="alternate" hreflang="zh-CN" href="${origin}/"><link rel="alternate" hreflang="zh-Hant" href="${origin}/tw/"><link rel="alternate" hreflang="en" href="${origin}/en/"><link rel="alternate" hreflang="x-default" href="${origin}/">
-<script src="/motion.js" defer></script><script src="/app.js" defer></script><script src="/teach.js" defer></script><script src="/island.js" defer></script><script src="/launchpad.js" defer></script><link rel="stylesheet" href="/launchpad.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/history.css"><link rel="stylesheet" href="/era.css">
+<script src="/theme.js" defer></script><script src="/motion.js" defer></script><script src="/app.js" defer></script><script src="/teach.js" defer></script><script src="/island.js" defer></script><script src="/launchpad.js" defer></script><link rel="stylesheet" href="/launchpad.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/history.css"><link rel="stylesheet" href="/era.css">
 </head>
 <body class="home">
 ${shareFallback}<a class="skip" href="#main">${c.skip}</a>
@@ -153,9 +153,9 @@ await mkdir(path.join(dist, 'privacy'), { recursive: true });
 await writeFile(path.join(dist, 'privacy/index.html'), `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>权限与隐私 · WindowShade</title>
 ${shareMeta({ origin, path: '/privacy/', title: '权限与隐私 · WindowShade', description: 'WindowShade 读到的每一样都列在这里。', image: '/media/og.jpg', imageAlt: copy.zh.shareAlt, en: false })}
-<script src="/motion.js" defer></script><link rel="stylesheet" href="/style.css"></head>
+<script src="/theme.js" defer></script><link rel="stylesheet" href="/style.css"></head>
 <body>${shareFallback}${siteHeader('zh-CN', 'privacy')}${privacyMain()}${siteFooter('zh-CN')}</body></html>`);
-await writeFile(path.join(dist, '404.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WindowShade · 404</title><link rel="stylesheet" href="/style.css"><main class="closing wrap section"><img src="/media/icon.png" width="72" height="72" alt=""><h1>这一页，暂时不在这里。</h1><p>This page has wandered off.</p><a class="button primary" href="/">回到首页 / Home</a></main></html>`);
+await writeFile(path.join(dist, '404.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WindowShade · 404</title><script src="/theme.js" defer></script><link rel="stylesheet" href="/style.css"><main class="closing wrap section"><img src="/media/icon.png" width="72" height="72" alt=""><h1>这一页，暂时不在这里。</h1><p>This page has wandered off.</p><a class="button primary" href="/">回到首页 / Home</a></main></html>`);
 await writeFile(path.join(dist, twTablePath), twTableSource);
 await writeFile(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);
 await writeFile(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/en/</loc></url><url><loc>${origin}/tw/</loc></url><url><loc>${origin}/history/</loc></url><url><loc>${origin}/en/history/</loc></url><url><loc>${origin}/tw/history/</loc></url><url><loc>${origin}/privacy/</loc></url></urlset>`);

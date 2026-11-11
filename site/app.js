@@ -2,29 +2,7 @@ const root = document.documentElement;
 root.classList.add('js');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
-
-// Theme: follow the system unless the reader picked one.
-const darkPreference = matchMedia('(prefers-color-scheme: dark)');
-let manualTheme = null;
-try { manualTheme = localStorage.getItem('windowshade-theme'); } catch {}
-if (manualTheme === 'light' || manualTheme === 'dark') root.dataset.theme = manualTheme;
-function syncTheme() {
-  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : darkPreference.matches;
-  document.querySelector('.theme')?.setAttribute('aria-pressed', String(dark));
-}
-syncTheme();
-darkPreference.addEventListener('change', syncTheme);
-document.querySelector('.theme')?.addEventListener('click', () => {
-  const dark = root.dataset.theme ? root.dataset.theme === 'dark' : darkPreference.matches;
-  root.dataset.theme = dark ? 'light' : 'dark';
-  try { localStorage.setItem('windowshade-theme', root.dataset.theme); } catch {}
-  syncTheme();
-});
-
-// The header hairline appears only once content scrolls under it.
-const syncScrolled = () => root.toggleAttribute('data-scrolled', scrollY > 4);
-syncScrolled();
-addEventListener('scroll', syncScrolled, { passive: true });
+// Theme and the header hairline live in theme.js, shared with every page.
 
 // Below-the-fold blocks settle in once. Anything already on screen is shown as-is.
 if ('IntersectionObserver' in window && document.body.classList.contains('home')) {

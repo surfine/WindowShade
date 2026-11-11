@@ -71,11 +71,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var
 /* Type. Latin display type tracks tighter as it grows; CJK keeps its full-width boxes. */
 h1,h2{font-weight:650;text-wrap:balance}
 h2{font-size:clamp(34px,4.1vw,54px);line-height:1.1;letter-spacing:-.018em}
-html[lang=zh-CN] h2{line-height:1.24;letter-spacing:-.012em;font-weight:600}
+html:is([lang=zh-CN],[lang=zh-Hant]) h2{line-height:1.24;letter-spacing:-.012em;font-weight:600}
 h3{font-size:19px;line-height:1.4;letter-spacing:-.01em;font-weight:600}
 .kicker{font-size:14px;font-weight:600;color:var(--accent);margin-bottom:18px;letter-spacing:.005em}
 .lead{font-size:18px;line-height:1.7;color:var(--muted);margin-top:22px;max-width:34em;text-wrap:pretty}
-html[lang=zh-CN] .lead{line-height:1.85;max-width:30em}
+html:is([lang=zh-CN],[lang=zh-Hant]) .lead{line-height:1.85;max-width:30em}
 .note{font-size:14px;line-height:1.8;color:var(--muted);margin-top:22px;padding-top:20px;border-top:1px solid var(--line);max-width:34em}
 .caption{font-size:12px;line-height:1.7;color:var(--faint);margin-top:14px}
 kbd{font:500 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
@@ -114,10 +114,10 @@ kbd{font:500 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif}
 .eyebrow{font-size:14px;font-weight:550;color:var(--muted);margin-bottom:22px}
 .hero h1{font-size:clamp(48px,5.2vw,74px);line-height:1.04;letter-spacing:-.024em}
 html[lang=en] .hero{grid-template-columns:minmax(0,1fr) minmax(0,1.08fr)}
-html[lang=zh-CN] .hero h1{font-size:clamp(54px,6.4vw,92px)}
-html[lang=zh-CN] .hero h1{line-height:1.14;letter-spacing:-.02em;font-weight:650}
+html:is([lang=zh-CN],[lang=zh-Hant]) .hero h1{font-size:clamp(54px,6.4vw,92px)}
+html:is([lang=zh-CN],[lang=zh-Hant]) .hero h1{line-height:1.14;letter-spacing:-.02em;font-weight:650}
 .hero-intro{font-size:19px;line-height:1.7;color:var(--muted);margin-top:28px;max-width:30em}
-html[lang=zh-CN] .hero-intro{line-height:1.85}
+html:is([lang=zh-CN],[lang=zh-Hant]) .hero-intro{line-height:1.85}
 .actions{display:flex;align-items:center;gap:26px;margin-top:36px;flex-wrap:wrap}
 .facts{display:flex;flex-wrap:wrap;row-gap:6px;margin-top:44px;font-size:13px;color:var(--faint)}
 .facts li+li::before{content:"·";margin-inline:10px;opacity:.7}
@@ -229,7 +229,7 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .story-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:88px;align-items:start}
 .story-head{position:sticky;top:112px}
 .story h2{font-family:var(--serif);font-weight:500;letter-spacing:-.02em;font-size:clamp(36px,3.8vw,52px);line-height:1.12}
-html[lang=zh-CN] .story h2{letter-spacing:0;line-height:1.26}
+html:is([lang=zh-CN],[lang=zh-Hant]) .story h2{letter-spacing:0;line-height:1.26}
 .story .kicker{color:var(--muted);font:500 12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase}
 
 /* The doorway: the essay's own cover and chapter list, one source for both pages. */
@@ -257,7 +257,7 @@ html[lang=zh-CN] .story h2{letter-spacing:0;line-height:1.26}
 .today{text-align:center;padding-bottom:40px}
 .today h2{margin-inline:auto;max-width:18em}
 .today .lead{margin-inline:auto;max-width:38em}
-html[lang=zh-CN] .today .lead{max-width:34em}
+html:is([lang=zh-CN],[lang=zh-Hant]) .today .lead{max-width:34em}
 
 /* Features */
 .feature{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);gap:72px;align-items:center;padding-block:96px}
@@ -423,6 +423,21 @@ summary::-webkit-details-marker{display:none}
 details[open] .plus{transform:rotate(45deg)}
 details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px;max-width:40em}
 
+/* Privacy page (scripts/privacy.mjs): one group per heading, one disclosure row per signal. */
+.privacy-page h1{font-size:clamp(34px,4.1vw,54px);line-height:1.24;letter-spacing:-.012em;font-weight:600}
+.privacy-group{margin-top:88px}
+.privacy-group h2{font-size:clamp(26px,2.6vw,32px)}
+.privacy-group>.lead{margin-top:14px}
+.privacy-group>.lead+.privacy-row,.privacy-group>h2+.privacy-row{margin-top:28px;border-top:1px solid var(--line)}
+.privacy-row{border-bottom:1px solid var(--line)}
+.privacy-row summary{position:relative;display:grid;gap:4px;justify-content:start;padding-right:36px}
+.privacy-row summary span{font-size:14px;font-weight:400;line-height:1.6;color:var(--muted)}
+.privacy-row summary::after{content:"";position:absolute;right:4px;top:50%;width:8px;height:8px;border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);transform:translateY(-75%) rotate(45deg);transition:transform .2s var(--ease-out)}
+.privacy-row[open] summary::after{transform:translateY(-25%) rotate(225deg)}
+.privacy-row dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 48px;margin:0;padding:4px 0 28px}
+.privacy-row dt{font-size:13px;font-weight:600;color:var(--muted)}
+.privacy-row dd{margin:4px 0 0;font-size:15px;line-height:1.75;color:var(--ink);max-width:34em}
+
 /* Closing */
 .closing{text-align:center;padding-top:112px;padding-bottom:144px;display:flex;flex-direction:column;align-items:center}
 .closing img{margin-bottom:28px;filter:drop-shadow(0 18px 24px var(--shadow))}
@@ -544,6 +559,8 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
   .keys{min-width:128px}
   .keys kbd{min-width:32px;height:32px;padding:0 7px;font-size:12px}
   summary{font-size:16px}
+  .privacy-group{margin-top:64px}
+  .privacy-row dl{grid-template-columns:1fr;gap:16px}
   .closing{padding-block:88px 104px}
   .footer{flex-direction:column;align-items:flex-start;gap:24px}
 }

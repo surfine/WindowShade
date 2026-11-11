@@ -15,7 +15,12 @@
  window.addEventListener('resize',alignEraPixels);
  const pixelResize=new ResizeObserver(alignEraPixels);
  pixelSurfaces.forEach(surface=>pixelResize.observe(surface));
- const t = (zh, eng) => en ? eng : (tw ? (tw[zh] || zh) : zh);
+ // zh is a fixed lookup key; {name} placeholders are filled after the lookup, so strings with
+ // variable parts still find their Traditional entry (tools/localize/site-zh-hant.py extracts them).
+ const t = (zh, eng, vars) => {
+  const text = en ? eng : (tw ? (tw[zh] || zh) : zh);
+  return vars ? text.replace(/\{(\w+)\}/g, (_, key) => String(vars[key])) : text;
+ };
  const $ = id => document.getElementById(id);
  // Touch browsers do not reliably send dblclick (iOS Safari least of all): count two quick taps
  // in the same spot ourselves. Mouse users keep the native dblclick.
@@ -87,7 +92,7 @@
   const {count, modifiers}=getPreference();
   const names={meta:'⌘',alt:'Option',ctrl:'Control'};
   return count===0?t('已关闭。点击标题栏不会收起。','Off. Title-bar clicks will not collapse the window.'):
-   t(`当前：${modifiers.length ? '按住 '+modifiers.map(k=>names[k]).join(' + ')+'，':''}连续点击 ${count} 次。`,`Current: ${modifiers.length ? 'hold '+modifiers.map(k=>names[k]).join(' + ')+' and ':''}click ${count} times in succession.`);
+   t('当前：{hold}连续点击 {count} 次。','Current: {hold}click {count} times in succession.',{count,hold:modifiers.length?t('按住 {keys}，','hold {keys} and ',{keys:modifiers.map(k=>names[k]).join(' + ')}):''});
  }
  function toggleGesture() {
   gestureFolded=!gestureFolded;
@@ -108,7 +113,7 @@
   if(!modifiers.every(m=>e[`${m}Key`])){clickCount=0;$('gesture-status').textContent=preferenceMessage();return;}
   clearTimeout(clickTimer);clickCount++;
   if(clickCount>=count){clickCount=0;toggleGesture();return;}
-  $('gesture-status').textContent=t(`已点 ${clickCount} / ${count} 次……`,`${clickCount} / ${count} clicks…`);
+  $('gesture-status').textContent=t('已点 {done} / {count} 次……','{done} / {count} clicks…',{done:clickCount,count});
   clickTimer=setTimeout(()=>{clickCount=0;$('gesture-status').textContent=t('次数不对，没收起。','Wrong count, so nothing happened. ')+preferenceMessage();},650);
  });
  $('gesture-simulate').addEventListener('click',()=>{clearTimeout(clickTimer);clickCount=0;if(getPreference().count)toggleGesture();else $('gesture-status').textContent=preferenceMessage();});
@@ -192,14 +197,14 @@
   $('machine-external').href=`https://infinitemac.org/${m.year}/${encodeURIComponent(m.name)}`;
   $('machine-tasks').replaceChildren(...m.tasks.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
   $('machine-done').checked=done.has(current);
-  $('machine-status').textContent=t('选了 '+m.name+'。点“开机”才会加载。',m.name+' selected. Nothing loads until you boot it.');
+  $('machine-status').textContent=t('选了 {name}。点“开机”才会加载。','{name} selected. Nothing loads until you boot it.',{name:m.name});
  }));
  $('machine-done').addEventListener('change',e=>{if(e.target.checked)done.add(current);else done.delete(current);});
  $('machine-start').addEventListener('click',()=>{
   if(iframe)return;
   const m=machines[current],url=new URL('https://infinitemac.org/embed');
   url.searchParams.set('disk',m.name);url.searchParams.set('auto_pause','true');url.searchParams.set('library','false');url.searchParams.set('screenSize','640x480');
-  iframe=document.createElement('iframe');iframe.src=url.href;iframe.title=t(`可交互的 ${m.name} 旧系统`, `Interactive ${m.name} system`);iframe.allow='cross-origin-isolated';
+  iframe=document.createElement('iframe');iframe.src=url.href;iframe.title=t('可交互的 {name} 旧系统','Interactive {name} system',{name:m.name});iframe.allow='cross-origin-isolated';
   $('machine-screen').append(iframe);$('machine-placeholder').hidden=true;$('machine-stop').hidden=false;$('power-light').classList.add('on');
   $('machine-status').textContent=t('正在加载，旧 Mac 开机要一会儿。等不及可以在独立页面打开。','Loading. An old Mac takes a moment to boot; you can also open it on its own page.');
   loadTimer=setTimeout(()=>{$('machine-status').textContent=t(loaded?'已经在跑了。还没看到桌面的话再等等，或者在独立页面打开。':'旧系统还没反应。可以关机重试，或者在独立页面打开。',loaded?'The machine has begun running. If the desktop is not ready, give it more time or open it separately.':'No startup signal received yet. Close and retry, or open the system separately.');},45000);
