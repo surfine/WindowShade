@@ -13,7 +13,8 @@ cat > "$BUILD/Info.plist" <<'PLIST'
 PLIST
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   -module-cache-path "$BUILD/module-cache" \
-  prototype/Core/GazeAttention.swift prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift \
+  prototype/Core/GazeAttention.swift prototype/Core/WSL10n.swift prototype/Core/PrivacyPaneName.swift prototype/Core/FeatureCatalog.swift prototype/Core/PlatformSupport.swift \
+  prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift prototype/App/FaceVisionFallback.swift \
   prototype/Core/WS2SilentCatalog.swift prototype/Core/WS2SilentPhrases.swift prototype/Core/WS2MouthTemplates.swift \
   tools/probes/MouthRecordingProbe.swift -framework AVFoundation -framework Vision -framework CoreVideo \
   -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$BUILD/Info.plist" \

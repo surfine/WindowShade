@@ -10,6 +10,6 @@ swiftc -parse-as-library -swift-version 5 -O -o "$BUILD/face-calibration" \
   "$ROOT/tools/face-calibration/FaceCalibration.swift" \
   "$ROOT/prototype/App/FaceEmbedder.swift" "$ROOT/prototype/App/VisionFaceEmbedder.swift" "$ROOT/prototype/App/FaceEmbedderBackends.swift" \
   "$ROOT/prototype/Core/FaceScanGuard.swift" "$ROOT/prototype/Core/SessionLockState.swift" \
-  "$ROOT/prototype/Core/FaceTemplateSet.swift" "$ROOT/prototype/Core/FaceThresholdCalibration.swift" \
+  "$ROOT/prototype/Core/FaceTemplateSet.swift" "$ROOT/prototype/Core/FaceThresholdCalibration.swift" "$ROOT/prototype/Core/GazeAttention.swift" \
   -framework Foundation -framework Accelerate -framework AVFoundation -framework CoreImage -framework CoreVideo -framework ImageIO -framework Vision
 exec "$BUILD/face-calibration" "$@"

@@ -2,16 +2,16 @@
 
 这五个程序为新交付源码。此环境是 Linux，没有编译 macOS SDK、没有连接硬件，也没有生成设备通过记录。默认运行不会保存密码、抓取人脸或打开输入接管。不要把探针复制到 App 的源码收集目录。Swift 5 语言模式用于单独 CLI，不能据此宣布 App 的 Swift 6 并发检查通过。
 
-|编号|命令（在本包根目录）|操作|输出与下一步|
+|编号|命令（在仓库根目录）|操作|输出与下一步|
 |---|---|---|---|
-|P-BLE|`bash probes/run-probe.sh BLEReadProbe`|给终端蓝牙权限，带着候选设备停留45秒；只记录发现|没有目标：不能选；发现不等于可读。记录 local identifier 仅用于下一次本机筛选，不提交公开仓库|
-|P-BLE-read|`bash probes/run-probe.sh BLEReadProbe --target UUID --service UUID --characteristic UUID`|先用只指定target的同一程序枚举服务和特征，再把真实UUID填入；走开、关闭蓝牙、返回各跑一次|必须同时有read_requested与read_response_byte_count。退出0只证明一次读回；2不确定。读回不证明身份，仍不允许自动解锁|
-|P-BLE-battery|`bash probes/run-probe.sh BLEReadProbe --role central --operation battery [--target UUID] [--notify 秒]`；不碰硬件的自检：`--self-test`|先在系统里让 iPhone 与这台 Mac 保持蓝牙连接。只取系统已连上、带电量服务 0x180F 的设备，不扫描、不广播；读一次电量 0x2A19 和型号 0x2A24，`--notify` 最多听 30 秒，然后断开|输出 `battery_percent`（0..100，其余记 unknown）、`model_number`、`no_connected_peripheral`。设备标识只以本次运行的加盐哈希 token 出现。读回不证明身份，不进解锁；App 侧代码等真机证据再写。解析测试：`bash tests/run-ble-battery-parsing-tests.sh`|
-|P-HID|`bash probes/run-probe.sh RemoteHIDProbe VENDOR_DECIMAL PRODUCT_DECIMAL`|从系统设备列表确认目标VID/PID。依次单按中心/方向/返回、长按、触面左上右下、按麦克风。30秒；不按其他键|不同usage/cookie才可定映射。同一变化只代表一维，不能编出二维坐标；无麦克风数据就把microphone能力关掉。输出不含键盘usage page7|
-|P-WHEEL|`bash probes/run-probe.sh WheelAssociationProbe`|只枚举本机鼠标／指针的 VID/PID，不装事件 tap|退出 0 只表示列到了设备。**不能**据此打开平滑滚动。逐事件关联仍缺（D14）|
-|P-MT|`bash probes/run-probe.sh MultitouchSymbolProbe`|保持原系统手势设置，不注册回调|退出3和STOP_ABI_UNVERIFIED是预期的未准入结果。本探针只覆盖符号存在，**没有解决MTTouch布局**。必须由持有确切ABI头文件与目标版本记录的主模型继续，不能让DeepSeek猜stride|
-|P-ID|`bash probes/run-probe.sh IdentityBoundaryProbe --authenticate`|Aaron亲自操作系统生物识别提示；成功、取消、不可用各记录|OS_BIOMETRICS_SUCCESS只证明这次LAContext身份验证。不证明摄像头认识Aaron，不解锁锁屏。模型另用`--model 文件 固定SHA256`；散列匹配也不证明活体与误识率|
-|P-LOCK|`bash probes/run-probe.sh LockStateProbe`|60秒内用Apple菜单手动锁定再手动解锁，另做用户切换、睡眠恢复。不要远程输入密码|private key缺失记unknown而非false。真实操作与字段不一致时后端不可用。该只读探针**没有提供生产锁屏命令**|
+|P-BLE|`bash tools/probes/run-probe.sh BLEReadProbe`|给终端蓝牙权限，带着候选设备停留45秒；只记录发现|没有目标：不能选；发现不等于可读。记录 local identifier 仅用于下一次本机筛选，不提交公开仓库|
+|P-BLE-read|`bash tools/probes/run-probe.sh BLEReadProbe --target UUID --service UUID --characteristic UUID`|先用只指定target的同一程序枚举服务和特征，再把真实UUID填入；走开、关闭蓝牙、返回各跑一次|必须同时有read_requested与read_response_byte_count。退出0只证明一次读回；2不确定。读回不证明身份，仍不允许自动解锁|
+|P-BLE-battery|`bash tools/probes/run-probe.sh BLEReadProbe --role central --operation battery [--target UUID] [--notify 秒]`；不碰硬件的自检：`--self-test`|先在系统里让 iPhone 与这台 Mac 保持蓝牙连接。只取系统已连上、带电量服务 0x180F 的设备，不扫描、不广播；读一次电量 0x2A19 和型号 0x2A24，`--notify` 最多听 30 秒，然后断开|输出 `battery_percent`（0..100，其余记 unknown）、`model_number`、`no_connected_peripheral`。设备标识只以本次运行的加盐哈希 token 出现。读回不证明身份，不进解锁；App 侧代码等真机证据再写。解析测试：`bash tests/run-ble-battery-parsing-tests.sh`|
+|P-HID|`bash tools/probes/run-probe.sh RemoteHIDProbe VENDOR_DECIMAL PRODUCT_DECIMAL`|从系统设备列表确认目标VID/PID。依次单按中心/方向/返回、长按、触面左上右下、按麦克风。30秒；不按其他键|不同usage/cookie才可定映射。同一变化只代表一维，不能编出二维坐标；无麦克风数据就把microphone能力关掉。输出不含键盘usage page7|
+|P-WHEEL|`bash tools/probes/run-probe.sh WheelAssociationProbe`|只枚举本机鼠标／指针的 VID/PID，不装事件 tap|退出 0 只表示列到了设备。**不能**据此打开平滑滚动。逐事件关联仍缺（D14）|
+|P-MT|`bash tools/probes/run-probe.sh MultitouchSymbolProbe`|保持原系统手势设置，不注册回调|退出3和STOP_ABI_UNVERIFIED是预期的未准入结果。本探针只覆盖符号存在，**没有解决MTTouch布局**。必须由持有确切ABI头文件与目标版本记录的主模型继续，不能让DeepSeek猜stride|
+|P-ID|`bash tools/probes/run-probe.sh IdentityBoundaryProbe --authenticate`|Aaron亲自操作系统生物识别提示；成功、取消、不可用各记录|OS_BIOMETRICS_SUCCESS只证明这次LAContext身份验证。不证明摄像头认识Aaron，不解锁锁屏。模型另用`--model 文件 固定SHA256`；散列匹配也不证明活体与误识率|
+|P-LOCK|`bash tools/probes/run-probe.sh LockStateProbe`|60秒内用Apple菜单手动锁定再手动解锁，另做用户切换、睡眠恢复。不要远程输入密码|private key缺失记unknown而非false。真实操作与字段不一致时后端不可用。该只读探针**没有提供生产锁屏命令**|
 |P-HABIT|`bash tools/probes/run-probe.sh HabitSignalProbe [--seconds 6]`；现场 `--live 60`|无交互部分只看能不能装上 Dock 的辅助功能观察、会话监听，旁听调度中心开合通知；`--live` 时 Aaron 三指上滑瞥一眼调度中心、按 🌐H、点 Dock、往上大幅滑动页面|iPad 习惯规则 i2/i5/i18 的信号。打印 SIGNAL（available / unavailable / pending-device）和 EVENT（时间戳 + 键码或名字，不记按了什么字）。拿不到信号的规则不做；pending-device 的规则留在 needsDeviceCheck 门后|
 |P-FACE-FP|`bash tools/probes/run-probe.sh FaceFeaturePrintProbe [--backend vision\|arcface] [--frames 10] [--compare 40] [--camera UNIQUE_ID]`；不开相机的自检：`--self-test`|终端第一次会弹相机授权，Aaron 亲自点允许。见下面“刷脸阈值标定”的步骤|只打印余弦汇总（n/min/p5/median/p95/max）、当前阈值下的通过率和建议阈值；不存图像、不打印向量、不写文件。建议阈值只来自这一次的人和光线，改 `FaceScanModelProfile.table` 前至少要有两个不同的人、两种光线|
 |P-HEAD-X|`bash tools/probes/head-motion-crosscheck/run.sh [--rounds 3]`；只编译：`--check`|戴 AirPods 正对相机，按提示向自己的左、右转头再回正；第一次弹相机和“动作与健身”授权，Aaron 亲自点允许|每次转头一行 JSON（两路符号、起转时差），汇总说 `FaceGestureTracker`、`WS2HeadMotionMath`、`HeadMotionCrossCheck.cameraToHeadSign` 是否反了。见 `head-motion-crosscheck/README.md`|

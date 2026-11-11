@@ -32,7 +32,7 @@ LABELS = {
 }
 
 
-def first_item(text: str) -> tuple[str, str, str]:
+def first_item(text: str) -> tuple[str, str, str, str]:
     match = re.search(r"<item>(.*?)</item>", text, re.S)
     if match is None:
         raise SystemExit(f"no <item> in {APPCAST}")
@@ -47,13 +47,16 @@ def first_item(text: str) -> tuple[str, str, str]:
     version = tag("sparkle:shortVersionString")
     build = tag("sparkle:version")
     published = email.utils.parsedate_to_datetime(tag("pubDate"))
-    return version, build, published.date().isoformat()
+    # The item's own <link> is the release page: a rebuilt version (1.0.21 build 20261110.01)
+    # ships under its own tag (v1.0.21.1), which the version string alone cannot tell.
+    link = re.search(r"<link>(.*?)</link>", block, re.S)
+    url = link.group(1).strip() if link else RELEASE_URL.format(version=version)
+    return version, build, published.date().isoformat(), url
 
 
-def status_line(name: str, version: str, build: str, date: str) -> str:
+def status_line(name: str, version: str, build: str, date: str, url: str) -> str:
     prefix, notes = LABELS[name]
     separator = ": " if name == "README.md" else "："
-    url = RELEASE_URL.format(version=version)
     return f"**{prefix}{separator}{version}** · build {build} · {date} · [{notes}]({url})"
 
 
@@ -76,11 +79,11 @@ def main() -> int:
     parser.add_argument("--check", action="store_true", help="report drift without writing")
     args = parser.parse_args()
 
-    version, build, date = first_item(APPCAST.read_text(encoding="utf-8"))
+    version, build, date, url = first_item(APPCAST.read_text(encoding="utf-8"))
     stale = 0
     for name in LABELS:
         path = ROOT / name
-        changed, updated = replace_block(path, status_line(name, version, build, date))
+        changed, updated = replace_block(path, status_line(name, version, build, date, url))
         if changed:
             stale += 1
             if args.check:

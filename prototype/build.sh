@@ -26,6 +26,12 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# 认不出的参数直接拒绝：以前拼错（比如 --chekc）会落到不带参数的那一路，做完整构建、签名并替换正在跑的 app。
+case "${1:-}" in
+  ""|--check|--stage|--release|--local-parallel) ;;
+  *) echo "build.sh: 未知参数 ${1}（可用：--check、--stage、--release、--local-parallel，或不带参数）" >&2; exit 2 ;;
+esac
+
 stage_only=0
 release=0
 if [ "${1:-}" = "--stage" ]; then stage_only=1; fi

@@ -14,6 +14,10 @@
 !/assets/windowshade-lid*.gif
 !/assets/dmg/
 !/assets/dmg/*.png
+!/assets/app-icon/
+/assets/app-icon/*
+!/assets/app-icon/WindowShade.icns
+!/assets/app-icon/windowshade-app-icon.png
 
 # Build outputs and packaged app bundles
 prototype/windowshade

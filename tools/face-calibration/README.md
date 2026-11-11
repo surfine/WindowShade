@@ -5,7 +5,7 @@
 
 1. 他人脸：官方脚本 `download_ffhq.py --thumbs` 下载到 `WindowShade-models/ffhq/thumbnails128x128/`。
 2. 嵌入：`tools/face-calibration/run.sh embed`（和 App 同一条检测、对齐、Vision 特征管线）→ `calibration/ffhq-embeddings.{f32,json}`。
-3. 本人样本（你来录）：`WindowShade.app/Contents/MacOS/windowshade --face-calibrate-record`，点“开始”，约 60 秒。只存特征数字，写到 `calibration/genuine.json`（0600）。
+3. 本人样本（你来录）：`WindowShade.app/Contents/MacOS/WindowShade --face-calibrate-record`，点“开始”，约 60 秒。只存特征数字，写到 `calibration/genuine.json`（0600）。
 4. 标定：`tools/face-calibration/run.sh calibrate` → `calibration/calibration-report.{json,md}` 和 `calibration.json`（没有本人样本时是 `calibration.provisional.json`，别导入）。
 5. 导入：`windowshade --face-calibration-import calibration/calibration.json`（存进钥匙串；需要签名构建）。
 6. 自检（不要图片、不开相机）：`tools/face-calibration/run.sh self-test`；数学部分的单元测试是 `tests/run-face-threshold-calibration-tests.sh`。

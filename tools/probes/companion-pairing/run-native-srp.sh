@@ -17,6 +17,6 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   -module-cache-path "$OUT/module-cache" -I "$BASE" \
   prototype/Core/PairingTLV.swift prototype/Core/PairingAttemptWindow.swift \
   prototype/Support/WS2PeerRepository.swift prototype/Support/WS2PairSetupServer.swift \
-  prototype/Support/WS2PairSetupCrypto.swift "$BASE/WS2NativeSRPPrimitive.swift" "$BASE/SRPProbe.swift" \
+  prototype/Support/WS2PureSRP.swift prototype/Support/WS2PairSetupCrypto.swift "$BASE/WS2NativeSRPPrimitive.swift" "$BASE/SRPProbe.swift" \
   "$OUT/WSNativeSRP.o" -L"$OPENSSL_PREFIX/lib" -lcrypto -o "$OUT/srp-probe"
 echo "Compiled isolated Swift adapter against existing protocols: $OUT/srp-probe (NOT DISTRIBUTABLE)"

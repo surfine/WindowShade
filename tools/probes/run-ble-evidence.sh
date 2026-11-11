@@ -11,7 +11,7 @@ cat > "$OUT/ble-Info.plist" <<'PLIST'
 <key>NSBluetoothAlwaysUsageDescription</key><string>仅在本次指定设备实验中，验证蓝牙连接和受保护服务；不读取通知内容。</string>
 </dict></plist>
 PLIST
-swiftc -module-cache-path "$OUT/module-cache" -parse-as-library tools/probes/BLEReadProbe.swift \
+swiftc -module-cache-path "$OUT/module-cache" -parse-as-library tools/probes/BLEReadProbe.swift tools/probes/BLEBatteryParsing.swift \
  -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __info_plist -Xlinker "$OUT/ble-Info.plist" -o "$OUT/ble-probe"
 if [[ "${1:-}" == --check ]]; then echo 'BLE probe compiled, radio not started'; exit 0; fi
 exec "$OUT/ble-probe" "$@"
