@@ -352,7 +352,7 @@ Dock 图标上往下滑最小化、往上滑恢复、捏合退出，见 [少数�
 而且每扇都不窄于 240 点的那一格；只有两扇拼满一块屏时，推到边上才让一扇进侧拉。四角时竖缝和横缝在正中交叉，
 两根把手各自挪到较长那一段的中点，不叠在一起。
 
-**数字。** 松手时推算的落点离屏幕边不到 90 点，那一扇就让开（`SplitLayout.dismissGutter` / `SeamLayout.dismissGutter`）。
+**数字。** 松手时推算的落点离屏幕边不到 90 点，那一扇就让开（`SeamLayout.dismissGutter`）。
 90 是 iPadOS 27.2（24B119）SpringBoard `SBMedusaSettings` 的 `windowSplitViewDismissalGutterWidth` 出厂值，
 不是按整块屏宽的比例算的：窄屏上比原来的 15% 更容易让开，宽屏上更难。把手的可抓范围 44×128 来自
 `+[SBSplitViewHandleNubView nubHitTestSize]`；看得见的那根胶囊仍是 6×56，悬停时 8×72。
