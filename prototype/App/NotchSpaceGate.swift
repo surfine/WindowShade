@@ -136,14 +136,6 @@ final class NotchSpaceGate {
         recompute()
     }
 
-    func stop() {
-        guard started else { return }
-        started = false
-        for item in observers { item.center.removeObserver(item.token) }
-        observers = []
-        settle?.cancel(); settle = nil
-    }
-
     /// 通知一到先算一次，再在系统动画落定后复核一次（一次性，不循环）。
     private func eventArrived() {
         recompute()

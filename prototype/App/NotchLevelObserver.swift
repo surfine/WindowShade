@@ -15,10 +15,7 @@ import Darwin
 
 @MainActor
 final class NotchLevelObserver {
-    var onVolume: ((Double) -> Void)?
-    var onBrightness: ((Double) -> Void)?
-    /// 带上静音、声音从哪出、到头没有的完整一下（刘海的 presentLevel(muted:output:edge:)）。接上之后优先走它，
-    /// 上面两个只是没接它时的退路。
+    /// 带上静音、声音从哪出、到头没有的完整一下（刘海的 presentLevel(muted:output:edge:)）。
     var onPresent: ((NotchLevelKind, _ value: Double, _ muted: Bool, _ output: NotchLevelEars.Output,
                      _ edge: NotchLevelStep.Edge?) -> Void)?
     /// 音量这一下先问大卡：大卡开着就由它接（控制那一行换成音量条），返回 true，两耳不出；没接或返回 false 走原来的两耳。
@@ -62,8 +59,6 @@ final class NotchLevelObserver {
     private var cachedForeignHUD = false
     private var tapObservers: [(center: NotificationCenter, token: NSObjectProtocol)] = []
     private var lockRecheck: DispatchWorkItem?
-    /// 键盘灯的画面（LV3 接上）。没接时键盘灯键一律交给系统：拦了没处画就等于按了没反应。
-    var onKeyboardLight: ((Double) -> Void)?
 
     private lazy var onDefaultDevice: AudioObjectPropertyListenerBlock = { [weak self] _, _ in
         MainActor.assumeIsolated {
@@ -129,26 +124,6 @@ final class NotchLevelObserver {
         installTapIfAllowed()
     }
 
-    func stop() {
-        guard started else { return }
-        detachVolume()
-        var defaultAddress = Self.defaultDeviceAddress
-        AudioObjectRemovePropertyListenerBlock(
-            AudioObjectID(kAudioObjectSystemObject), &defaultAddress, DispatchQueue.main, onDefaultDevice)
-        if let globalKeys { NSEvent.removeMonitor(globalKeys) }
-        if let localKeys { NSEvent.removeMonitor(localKeys) }
-        globalKeys = nil; localKeys = nil
-        removeTap()
-        if let settingToken { NotificationCenter.default.removeObserver(settingToken) }
-        if let accessibilityToken { DistributedNotificationCenter.default().removeObserver(accessibilityToken) }
-        settingToken = nil; accessibilityToken = nil
-        accessibilityRecheck?.cancel(); accessibilityRecheck = nil
-        brightnessTimer?.invalidate()
-        brightnessTimer = nil
-        muteRead?.cancel(); muteRead = nil
-        started = false
-    }
-
     // MARK: 按键
 
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
@@ -204,19 +179,11 @@ final class NotchLevelObserver {
             missionControl: spaceGate?.missionControlFact() == .yes)
     }
 
-    /// 发给刘海的一下。设置里关了就不出声；没接 onPresent 时退回只带数值的老出口。
+    /// 发给刘海的一下。设置里关了就不出声。
     private func emit(_ kind: NotchLevelKind, value: Double, muted: Bool = false, edge: NotchLevelStep.Edge? = nil) {
         guard settingEnabled else { return }
         if kind == .volume, onCardVolume?(value, muted) == true { return }
-        if let onPresent {
-            onPresent(kind, value, muted, output, edge)
-            return
-        }
-        switch kind {
-        case .volume: onVolume?(value)
-        case .brightness: onBrightness?(value)
-        case .keyboardLight: onKeyboardLight?(value)
-        }
+        onPresent?(kind, value, muted, output, edge)
     }
 
     private static func bool(_ fact: NotchSpaceFact) -> Bool? {
@@ -301,7 +268,6 @@ final class NotchLevelObserver {
         tap = port
         tapSource = source
         EventTapHealth.shared.register(port, label: "volume-brightness-keys")
-        systemPort.wantsKeyboardLight = onKeyboardLight != nil
         control.onLevel = { [weak self] kind, reading, result in self?.wrote(kind, reading, edge: result.edge) }
         observeTapFacts()
         refreshTapFacts()
@@ -375,7 +341,8 @@ final class NotchLevelObserver {
         let panel = notch?.notchPanelForProbe
         input.authorizationRelease = notch?.authentication.isPresenting == true || panel?.isAuthenticating == true
         input.gestureInFlight = panel.map { $0.dropState != .none } ?? false
-        if key.kind == .keyboardLight, onKeyboardLight == nil { input.deviceAdjustable = false }
+        // 键盘灯没有画面可接：键盘灯键一律交给系统，拦了没处画就等于按了没反应。
+        if key.kind == .keyboardLight { input.deviceAdjustable = false }
         return input
     }
 
