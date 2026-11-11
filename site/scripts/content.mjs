@@ -234,7 +234,7 @@ export const copy = {
 
     endTitle: '下次窗口挤成一团，<br>先别急着关。',
     endBody: 'macOS 15 及以上；Apple Silicon，Intel 为实验版；免费，MIT 开源',
-    footer: '收起窗口，留下位置。这个小动作九十年代就有了。',
+    footer: '收起窗口，留下位置。一个从九十年代走来的小动作。',
   },
 
   en: {
@@ -438,7 +438,7 @@ export const copy = {
 
     faqTitle: 'Before you download',
     faqs: [
-      ['Will it work on my Mac?', 'You need macOS 15 or later. Apple Silicon uses the main download. From 1.0.21, Intel has its own experimental package. It has only had a basic test under Rosetta, not on a real Intel Mac. Face unlock, voiceprint and the lid effect are off on Intel. If you’re still on macOS 14, stay on 1.0.16. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
+      ['Will it work on my Mac?', 'You need macOS 15 or later. Apple Silicon uses the main download. From 1.0.21, Intel has its own experimental package. It has only had a basic test under Rosetta, not on a real Intel Mac. Face unlock, voiceprint and the lid effect are off on Intel. If you’re still on macOS 14, stay on 1.0.16. Rolling up, Glance and the title-bar gestures don’t need any special hardware. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
       ['What permissions does it need?', 'Two: one required, one optional. Accessibility (required): finding, moving and restoring windows. Screen Recording (optional): turn it on to see live window pictures in Glance, in window browsing and in pinned previews; leave it off and WindowShade still works, with previews showing icons and titles instead. “Screen Recording” is just the name the system gives that permission. Nothing leaves your Mac. If Accessibility gets turned off while the app is running, it tells you.'],
       ['Do glances and gestures move my windows?', 'A glance never does. A gesture moves a window only when you let go with the panel’s track full; pull back to cancel.'],
       ['Can I use the notch without a notch?', 'Yes. On an external display there’s an invisible notch in the middle of the menu bar: it stays out of sight until a window is tucked into it, and flicking toward it works the same.'],
@@ -454,7 +454,7 @@ export const copy = {
 
     endTitle: 'Next time windows pile up,<br>don’t close them just yet.',
     endBody: 'macOS 15 or later; Apple Silicon, Intel experimental; free and MIT licensed',
-    footer: 'Roll it up, keep its place. The gesture dates back to the ’90s.',
+    footer: 'Roll it up, keep its place. A small gesture, carried over from the ’90s.',
   },
 };
 
