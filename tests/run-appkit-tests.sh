@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 TEST_NAME="${1:-SettingsNavigationTests}"
 case "$TEST_NAME" in
-  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests|NotchActivityViewTests|NotchAuthenticationTests|NotchLeaseHostTests|CountdownTimerCardTests|NowPlayingCardViewTests|CalendarCardTests|MenuBarObstructionTests|InterfaceLanguageSwitchTests) ;;
+  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests|NotchActivityViewTests|NotchAuthenticationTests|NotchLeaseHostTests|CountdownTimerCardTests|NowPlayingCardViewTests|CalendarCardTests|MenuBarObstructionTests|InterfaceLanguageSwitchTests|FileShelfCardViewTests) ;;
   *) echo "Unknown AppKit test: $TEST_NAME" >&2; exit 2 ;;
 esac
 mkdir -p .build/appkit-tests
@@ -23,7 +23,7 @@ while IFS= read -r source; do
 done < <(rg --files prototype -g '*.swift' -g '!main.swift' -g '!*.app/**' | sort)
 TEST_SOURCE=()
 if [ "$TEST_NAME" = all ]; then
-  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests NotchActivityViewTests NotchAuthenticationTests NotchLeaseHostTests CountdownTimerCardTests NowPlayingCardViewTests CalendarCardTests MenuBarObstructionTests InterfaceLanguageSwitchTests)
+  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests NotchActivityViewTests NotchAuthenticationTests NotchLeaseHostTests CountdownTimerCardTests NowPlayingCardViewTests CalendarCardTests MenuBarObstructionTests InterfaceLanguageSwitchTests FileShelfCardViewTests)
 else
   TESTS=("$TEST_NAME")
 fi
@@ -62,6 +62,7 @@ import Cocoa
     case "CalendarCardTests": await CalendarCardTests.main()
     case "MenuBarObstructionTests": MenuBarObstructionTests.main()
     case "InterfaceLanguageSwitchTests": await InterfaceLanguageSwitchTests.main()
+    case "FileShelfCardViewTests": await FileShelfCardViewTests.main()
     default: preconditionFailure("Choose an AppKit test suite")
     }
   }

@@ -11,8 +11,8 @@
 | 层 | 测什么 | 命令 | 预算 | 何时跑 |
 |---|---|---|---|---|
 | L0 编译与静态检查 | Swift 6 严格并发、warnings-as-errors、本地化键、隐私登记、文案禁词 | `scripts/local-gate.sh check` | 约 5 分钟 | 每次推送前 |
-| L1 单元 | 状态机、几何、解析、策略；285 个脚本（排除表 25 条后 260 个进门禁；已完结轮次的证据快照在 tests/archive/，不参与自动发现） | `scripts/local-gate.sh unit --jobs 6` | 5–8 分钟 | 每次推送前；改动集中时用 `--only <关键字>` |
-| L2 AppKit 离屏 | 设置、经典卷帘条、收起动画、看一眼生命周期、菜单栏遮挡等 13 个套件 | `scripts/local-gate.sh appkit` | 1–3 分钟 | 改窗口、覆盖层、设置界面时 |
+| L1 单元 | 状态机、几何、解析、策略；284 个脚本（排除表 25 条后 259 个进门禁；已完结轮次的证据快照在 tests/archive/，不参与自动发现） | `scripts/local-gate.sh unit --jobs 6` | 5–8 分钟 | 每次推送前；改动集中时用 `--only <关键字>` |
+| L2 AppKit 离屏 | 设置、经典卷帘条、收起动画、看一眼生命周期、菜单栏遮挡、文件架卡画面等 14 个套件 | `scripts/local-gate.sh appkit` | 1–3 分钟 | 改窗口、覆盖层、设置界面时 |
 | L3 签名探针 | 真机上的收起计时、恢复守卫、标题栏手势、原生标签页、窗口外框 | `cd prototype && ./build.sh --stage`，再 `bash tests/run-glance-probe.sh …` 等 | 5–15 分钟 | 改窗口行为、手势、恢复逻辑时 |
 | L4 虚拟机 | 另外两个支持版本上的核心探针：收起计时、恢复守卫、不可最小化、孤儿条、窗口列表 | `tests/vm/run-core-probes.sh lume@<地址>` | 10–90 分钟 | 每周一次、发版前 |
 | L5 发布关 | 版本号、Developer ID 签名、公证、包内容与上一版 DR | `scripts/local-gate.sh release --previous <zip>` | 20–40 分钟 | 每次发布 |
@@ -45,6 +45,8 @@
 
 `tests/run-appkit-tests.sh all` 一次编译，按套件分别起进程。它依赖 `rg`（ripgrep）；
 没有 `rg` 时源文件清单为空、编译直接失败，属于环境问题，不是代码回归。
+套件 `NotchActivityViewTests` 要读 `.build/duo-metal/Duo.metallib`，这个文件由 `build.sh --check` 或 `tests/run-duo-tests.sh` 生成；
+全新检出（或新 worktree）里先跑其中一个，否则报 `MTLLibraryErrorDomain … library not found`，同样是环境问题。
 
 ## L3：签名探针
 

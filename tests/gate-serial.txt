@@ -4,7 +4,6 @@ run-claude-conductor-tests.sh
 run-claude-session-tests.sh
 run-conductor-owned-flow-tests.sh
 run-duplex-process-tests.sh
-run-file-shelf-card-view-tests.sh
 run-owned-codex-controller.sh
 run-owned-codex-phase1.sh
 run-part5-process-tests.sh
