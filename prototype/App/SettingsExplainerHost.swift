@@ -407,10 +407,12 @@ enum PointingDevices {
         defer { IOObjectRelease(iterator) }
         var service = IOIteratorNext(iterator)
         while service != 0 {
-            defer { IOObjectRelease(service) }
+            // 放掉的是这一轮看过的那个：defer 在作用域末尾才跑，直接放 service 会放到下一个。
+            let current = service
+            defer { IOObjectRelease(current) }
             // 妙控鼠标也是多点触控设备；触控板才有这一项，或产品名里带 Trackpad。
             func property(_ key: String) -> CFTypeRef? {
-                IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
+                IORegistryEntryCreateCFProperty(current, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
             }
             if property("TrackpadThreeFingerDrag") != nil { return true }
             if let product = property("Product") as? String, product.contains("Trackpad") { return true }

@@ -106,9 +106,9 @@ final class PermissionDragHelper: NSObject {
     private func watchAppearanceIfNeeded() {
         guard !watchingAppearance else { return }
         watchingAppearance = true
-        NotificationCenter.default.addObserver(self, selector: #selector(appearanceChanged),
-                                               name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
-                                               object: NSWorkspace.shared)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(appearanceChanged),
+                                                          name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+                                                          object: nil)
     }
 
     private func makePanel() -> NSPanel {

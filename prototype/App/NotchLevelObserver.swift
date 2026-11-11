@@ -359,7 +359,8 @@ final class NotchLevelObserver {
         input.versionVerified = versionVerified
         input.foreignHUDRunning = cachedForeignHUD
         input.locked = cachedLocked
-        input.settingEnabled = settingEnabled
+        // 刘海整个关了（模块或「用刘海收纳窗口」）就没有地方画两耳：不拦，系统的提示照出。
+        input.settingEnabled = settingEnabled && NotchController.isEnabled && FeatureCatalog.isEnabled(.notch)
         input.useSystemPopups = useSystemPopups
         // 全屏桌面、调度中心：走判定表。全屏而且面板在这张桌面上确认过看得见才可能拦；查不到按看不见（不拦）。
         if let spaceGate, let display = pointerDisplay() {

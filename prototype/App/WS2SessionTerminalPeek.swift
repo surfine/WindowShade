@@ -66,6 +66,7 @@ import ScreenCaptureKit
         let caption = NSTextField(labelWithString: WSL10n.text("agent.peek.caption", zh: "会话的终端 · 看一眼"))
         caption.font = .systemFont(ofSize: 11, weight: .medium)
         caption.textColor = .white
+        caption.wantsLayer = true
         caption.layer?.cornerRadius = 6
         caption.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.45).cgColor
         caption.alignment = .center

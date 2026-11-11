@@ -405,7 +405,7 @@ enum FileShelfCellArt {
 @MainActor
 final class FileShelfDragSource: NSObject, NSDraggingSource {
     /// 标记：这是从文件架里拖出来的（落点小岛那一侧认它）。
-    static let markerType = NSPasteboard.PasteboardType("me.aaronlau.windowshade.fileshelf-drag")
+    static let markerType = NSPasteboard.PasteboardType(FileDragKind.fileShelfSourceType)
 
     private let rowIDs: [UUID]
     private let onFinish: ([UUID], FileShelfDrag.Operation?) -> Void

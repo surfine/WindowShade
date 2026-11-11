@@ -100,9 +100,11 @@ import QuartzCore
         configure(pause,model.phase == .idle || model.isPaused ? "play.fill" : "pause.fill",action,#selector(pauseAction))
         skip.isEnabled = model.phase != .idle; end.isEnabled = model.phase != .idle
         for button in [skip,end] { button.alphaValue = button.isEnabled ? 1 : 0.4 }
-        breath.removeAllAnimations()
         breath.fillColor = NSColor.clear.cgColor; breath.lineWidth = 3; breath.strokeColor = Self.restGreen.cgColor
-        if FocusBreath.breathes(phase:model.phase,reduceMotion:NSWorkspace.shared.accessibilityDisplayShouldReduceMotion),window != nil {
+        // render 每秒都会来一次（倒数在走）：呼吸已经在转就不动它，否则 5.5 秒的一圈每秒被掐掉重来。
+        let breathes = FocusBreath.breathes(phase:model.phase,reduceMotion:NSWorkspace.shared.accessibilityDisplayShouldReduceMotion) && window != nil
+        if !breathes { breath.removeAllAnimations() }
+        if breathes, breath.animation(forKey:"breathScale") == nil {
             let r = FocusBreath.breathFrameRate
             let range = CAFrameRateRange(minimum:r.minimum,maximum:r.maximum,preferred:r.preferred)
             // 周期 5.5 秒 = 来回各 2.75 秒。

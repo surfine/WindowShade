@@ -108,6 +108,7 @@ final class WindowCatalog {
             bundleIdentifierByKey.removeValue(forKey: key)
             appNameByKey.removeValue(forKey: key)
             revisionByKey.removeValue(forKey: key)
+            revisionSignatureByKey.removeValue(forKey: key)
         }
         refreshPendingPIDs.remove(pid)
         return publish()
@@ -124,6 +125,7 @@ final class WindowCatalog {
         bundleIdentifierByKey.removeValue(forKey: key)
         appNameByKey.removeValue(forKey: key)
         revisionByKey.removeValue(forKey: key)
+        revisionSignatureByKey.removeValue(forKey: key)
         return publish()
     }
 
@@ -134,6 +136,7 @@ final class WindowCatalog {
         bundleIdentifierByKey.removeAll()
         appNameByKey.removeAll()
         revisionByKey.removeAll()
+        revisionSignatureByKey.removeAll()
         refreshPendingPIDs.removeAll()
     }
 

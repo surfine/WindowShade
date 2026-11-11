@@ -511,7 +511,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         // 约 8~10fps 的子集：15fps 源隔帧投（≈8fps），30fps 源每 3 帧投（10fps）。
         let mirrorDivisor: UInt32 = fps >= 30 ? 3 : (fps >= 15 ? 2 : 1)
         let deliverMain = true
-        let deliverMirror = mirrorLayer != nil && mirrorFrameIndex % mirrorDivisor == 1
+        // 除数为 1（低于 15fps 的源，如低电量档的 10fps）时每帧都投：x % 1 恒为 0，不能再和 1 比。
+        let deliverMirror = mirrorLayer != nil && (mirrorDivisor == 1 || mirrorFrameIndex % mirrorDivisor == 1)
         guard deliverMain || deliverMirror else { return }
         let carriesPixels = CMSampleBufferGetImageBuffer(sampleBuffer) != nil
         stateLock.lock()
