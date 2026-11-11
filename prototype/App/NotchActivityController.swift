@@ -285,6 +285,14 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         if shelfCount > 0 { syncShelf() }
     }
 
+    /// 刘海整个关掉：没有面板可画，音乐轮询、正在播放的流、下载与拷贝监看都停下；再打开时重新起来。
+    /// 走和锁屏、睡眠同一套暂停理由，所以关着刘海时解锁或睡醒也不会把来源拉起来。
+    func setNotchOff(_ off: Bool) {
+        let reason = "notch-off"
+        if off { if !suspensions.contains(reason) { suspend(reason) } }
+        else if suspensions.contains(reason) { resume(reason) }
+    }
+
     private func suspend(_ reason: String) {
         // 锁上的那一刻记下正在播放在放还是停着（不记歌名）：锁屏上认出脸之后那一行用（决定 68）。来源随即停下。
         if reason == "lock", !suspended { lockedPlayback = LockScreenExposure.playback(from: store.visible) }

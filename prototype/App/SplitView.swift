@@ -162,6 +162,11 @@ final class SplitViewController {
         distributedObservers.removeAll()
         scanGeneration += 1
         scanInFlight = false
+        // 把手也收掉：模块关了以后没人再盯这些窗口，留在屏幕上的把手会越来越不准。
+        // 不走 show([])——它在「有变没」时会重新排定时器。
+        drag = nil
+        seams = []
+        for divider in dividers { divider.hide() }
     }
 
     /// 锁屏、屏幕睡眠、会话切走：停掉定时器，作废在途的结果。

@@ -265,6 +265,10 @@ final class TrackpadGestureController {
             globalMonitor = nil
             localMonitor = nil
             flickMonitor = nil
+            // 用力按看一眼和别的手势同开同关：以前关掉手势后这个监听还留着。
+            if let monitor = pressureMonitor { NSEvent.removeMonitor(monitor) }
+            pressureMonitor = nil
+            forcePeek = nil
             dropFlickDrag()
             cancel(reason: "setting-off")
         }

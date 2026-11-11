@@ -486,8 +486,10 @@ final class NotchController {
         installedLayout = DisplayLayout.current()
         guard Self.isEnabled else {
             teardownPanels()
+            activities.setNotchOff(true)
             return
         }
+        activities.setNotchOff(false)
         activities.configure()
         activities.countdown.attach(leases: leases)
         activities.nowPlayingCard.attach(leases: leases)
