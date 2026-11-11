@@ -75,17 +75,18 @@ const icon = (key) => icons[key];
 const cell = (key, label, info) => `<li class="lp-slot"><button type="button" class="lp-app" data-lp-app="${key}" aria-label="${label}"${info ? ` title="${info}"` : ''}><span class="lp-ico lp-ico-${key}">${icon(key)}</span><span class="lp-name">${label}</span></button></li>`;
 const big = (i, j) => outline('<rect x="6" y="6" width="20" height="20" rx="5"/>');
 const small = (i, j) => outline('<rect x="7" y="7" width="18" height="18" rx="5"/>');
-const group = (name, apps, hint, i) => `<li class="lp-group"><button type="button" class="lp-group-btn" data-lp-group="${i}" aria-label="${name}：${hint}"><span class="lp-group-head">${name}</span><span class="lp-group-apps">${apps.slice(0, 3).map((_, j) => `<span class="lp-ico lp-ico-g${i}-${j}">${big(i, j)}</span>`).join('')}</span><span class="lp-group-cluster" aria-hidden="true">${apps.slice(3).map((_, j) => `<i class="lp-ico lp-ico-g${i}-c${j}">${small(i, j)}</i>`).join('')}</span><span class="lp-group-label">${apps.join(' · ')}</span></button></li>`;
+const group = (name, apps, hint, i, sep) => `<li class="lp-group"><button type="button" class="lp-group-btn" data-lp-group="${i}" aria-label="${name}：${hint}"><span class="lp-group-head">${name}</span><span class="lp-group-apps">${apps.slice(0, 3).map((_, j) => `<span class="lp-ico lp-ico-g${i}-${j}">${big(i, j)}</span>`).join('')}</span><span class="lp-group-cluster" aria-hidden="true">${apps.slice(3).map((_, j) => `<i class="lp-ico lp-ico-g${i}-c${j}">${small(i, j)}</i>`).join('')}</span><span class="lp-group-label">${apps.join(sep)}</span></button></li>`;
 
 export function launchpadSection(lang) {
   const c = t[lang === 'en' ? 'en' : 'zh'];
+  const sep = lang === 'en' ? ', ' : '、';
   const home = `<ul class="lp-grid" id="lp-home" data-lp-pane="home" aria-label="${c.home}">${['mail', 'notes', 'calendar', 'photos', 'reference', 'tools'].map(key => cell(key, c.apps[key], key === 'tools' ? '' : c.openIn)).join('')}</ul>`;
-  const library = `<ul class="lp-library" id="lp-library" data-lp-pane="library" aria-label="${c.library}" hidden>${c.groups.map(([name, apps], i) => group(name, apps, c.groupHint, i)).join('')}</ul>`;
+  const library = `<ul class="lp-library" id="lp-library" data-lp-pane="library" aria-label="${c.library}" hidden>${c.groups.map(([name, apps], i) => group(name, apps, c.groupHint, i, sep)).join('')}</ul>`;
   return `<section class="feature wrap" id="launchpad">
-<div class="feature-copy"><p class="kicker">${c.kicker}</p><h2>${c.title}</h2><p class="lead">${c.lead}</p><ul class="points">${c.points.map(([title, detail]) => `<li><strong>${title}</strong><span>${detail}</span></li>`).join('')}</ul><p class="note">${c.note}</p></div>
+<div class="feature-copy"><h2>${c.title}</h2><p class="lead">${c.lead}</p><ul class="points">${c.points.map(([title, detail]) => `<li><strong>${title}</strong><span>${detail}</span></li>`).join('')}</ul><p class="note">${c.note}</p></div>
 <div class="feature-demo">
 <div class="lp-demo" data-lp-demo
-  data-close="${c.close}" data-window="${c.openIn}" data-folder="${c.folder}" data-folder-items="${Object.values(c.folderItems).join(' · ')}" data-home="${c.home}" data-library="${c.library}">
+  data-close="${c.close}" data-window="${c.openIn}" data-folder="${c.folder}" data-folder-items="${Object.values(c.folderItems).join(sep)}" data-home="${c.home}" data-library="${c.library}">
 <div class="lp-tabs" role="group" aria-label="${c.tabLabel}"><button type="button" class="lp-tab" data-lp-tab="home" aria-pressed="true" aria-controls="lp-home">${c.tabHome}</button><button type="button" class="lp-tab" data-lp-tab="library" aria-pressed="false" aria-controls="lp-library">${c.tabLibrary}</button></div>
 <div class="lp-stage">
 ${home}
