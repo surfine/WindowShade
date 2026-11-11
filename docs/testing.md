@@ -33,6 +33,7 @@
 签名构建、真实窗口或预期非零的脚本。默认 4 路并行，每项硬超时 300 秒。
 
 - 脚本退出 78 表示“本机不能跑”（缺 codex、不是 macOS 等）：门禁记为 skip，打印并计入 `summary.json` 的 `skipped`，不算失败，但末行会写出跳过数，不会悄悄过去。
+- `tests/run-part6-wire-tests.sh` 需要 Python 的 `jsonschema`（门禁 venv 的建法见 [DEVELOPMENT.md](DEVELOPMENT.md) 的环境要求）；没有它脚本以退出码 1 失败，不会静默跳过。
 - 想只跑相关的：`scripts/local-gate.sh unit --only fold`。
 - 想知道会跑什么、排除了什么：`scripts/local-gate.sh list`。
 - 新增测试脚本如果要进日常门禁，**不要**加进排除表；如果它会弹窗、改用户窗口或需要授权，必须加进排除表并写原因。

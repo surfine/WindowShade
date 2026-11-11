@@ -7,6 +7,7 @@
 - macOS 15 或更新版本（构建目标是 macOS 15，见下面的支持政策）
 - 完整 Xcode（`xcodebuild`、`appintentsmetadataprocessor`、`xcstringstool`、Metal 工具链；只有 Command Line Tools 编不了）
 - `ripgrep`（`rg`，AppKit 套件用它发现源文件）
+- Python 的 `jsonschema`（`tests/run-part6-wire-tests.sh` 用它核对钉住的 Codex app-server schema；缺了脚本以退出码 1 失败，不再跳过）。Homebrew 的 Python 不让 `pip install --user`（PEP 668），在仓库里建一个门禁 venv：`python3 -m venv .build/gate-venv && .build/gate-venv/bin/pip install jsonschema`。脚本会自动用 `.build/gate-venv`；venv 在别处时设 `WINDOWSHADE_GATE_PYTHON` 指向它的 `python3`
 - 用于签名的 Apple Development 证书（构建脚本强制要求，拒绝 ad-hoc 签名）
 
 ## 支持的系统版本
