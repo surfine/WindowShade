@@ -15,7 +15,7 @@
 现在是 macOS 15、26、27；下一个 macOS 的测试版尽力而为、不承诺。每年 9 月新版 macOS 正式推出时往前滚一版
 （2027 年 9 月起最低是 26）。
 
-- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
+- **1.0.16 仍是 macOS 14**：它的候选包按 [发布关 runbook](archive/2026-11-11/releases/v1.0.16-release-gate.md) 用固定快照构建，不受这里影响。
 - **从 1.0.17 起最低 macOS 15**：`build.sh` 的构建目标与 `prototype/Info.plist` 的 `LSMinimumSystemVersion` 已经改好；
   发 1.0.17 时那一项 appcast 的 `minimumSystemVersion` 写 `15.0.0`（旧项保持 `14.0.0`，留在 14 的人停在 1.0.16），
   README（三份）、官网与宣传片里的「macOS 14 及以上」在 1.0.17 发布时一起改，**不要提前改**（会把 1.0.16 说错）。
@@ -46,7 +46,7 @@ tests/vm/run-core-probes.sh lume@<虚拟机地址>
 （1.0.16 只提示、手动下载一次）；发布关第 3 步的「DR 与上一版逐字相同」这一版改为核对「Developer ID、Team 是 DQ45KFVHJ8」；
 用户要重新给一次辅助功能与屏幕录制。之后各版回到「DR 与上一版逐字相同」。
 同一版要一起改、不要提前改：三份 README 与官网里「安装包还没公证 / 第一次打开会被拦」那句删掉，「macOS 14 及以上」改 15。
-**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](releases/v1.0.17-release-gate.md)。
+**2026-10-17 候选源码已改好**（版本号 1.0.17／17、appcast 条目已并入 site/public/appcast.xml、三份 README 与官网；合入 main 与部署站点都要等 1.0.17 的包上传之后）；剩下的步骤见 [1.0.17 发布关 runbook](archive/2026-11-11/releases/v1.0.17-release-gate.md)。
 
 ### 默认值翻开与 DMG（1.0.18）
 

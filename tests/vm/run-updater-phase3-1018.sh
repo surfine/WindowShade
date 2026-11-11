@@ -58,7 +58,7 @@ import re, sys
 dest, zip_url, zip_len, zip_sig = sys.argv[1:5]
 live = open('site/public/appcast.xml', encoding='utf-8').read()
 body = live[:live.index('<!-- sparkle-signatures')]
-draft = open('docs/releases/appcast-item-1.0.18.xml', encoding='utf-8').read()
+draft = open('docs/archive/2026-11-11/releases/appcast-item-1.0.18.xml', encoding='utf-8').read()
 item = re.search(r'<item>\s*<title>.*?</item>', draft, re.S).group(0)
 item = re.sub(r'url="[^"]*"', 'url="%s"' % zip_url, item, count=1)
 item = re.sub(r'length="[^"]*"', 'length="%s"' % zip_len, item, count=1)
