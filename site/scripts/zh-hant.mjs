@@ -30,5 +30,8 @@ export function translateHtml(html) {
   return html.replace(phraseRe, (match) => table[match] ?? match);
 }
 
-/** 注入给 history.js 的繁体对照表（客户端按原文查表）。 */
-export const twScript = `<script>window.WS_TW = ${JSON.stringify(table)};</script>`;
+/** 给 history.js 的繁体对照表（客户端按原文查表）。
+ * 站点的 CSP 是 script-src 'self'，行内脚本会被拦掉，所以表写成同源的外部文件再引用。 */
+export const twTablePath = '/tw-table.js';
+export const twTableSource = `window.WS_TW = ${JSON.stringify(table)};\n`;
+export const twScript = `<script src="${twTablePath}"></script>`;
