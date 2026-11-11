@@ -36,19 +36,6 @@ final class PinchEventTap: @unchecked Sendable {
     /// 只在监听线程上读写：上一次查过的设备对象和它的编号，同一块板的帧不再重复去查。
     private var cachedDevice: AnyObject?
     private var cachedDeviceKey: UInt64 = 0
-    /// 诊断：头 300 个手势类事件各是什么类型（查触摸流为什么没来）。
-    private var typeCounts: [UInt: Int] = [:]
-    private var typeSeen = 0
-    fileprivate func noteType(_ raw: UInt, subtype: Int64) {
-        guard typeSeen < 300 else { return }
-        typeCounts[raw * 1000 + UInt(max(0, min(999, subtype))), default: 0] += 1
-        typeSeen += 1
-        if typeSeen == 300 {
-            let summary = typeCounts.sorted { $0.key < $1.key }.map { "type\($0.key / 1000)/sub\($0.key % 1000)×\($0.value)" }.joined(separator: " ")
-            DispatchQueue.main.async { wlog("gesture: tap event kinds \(summary)") }
-        }
-    }
-
     /// 已经在跑返回 true；没有辅助功能授权时建不起来，返回 false。
     func start() -> Bool {
         lock.lock()
@@ -188,7 +175,6 @@ private func pinchTapCallback(proxy: CGEventTapProxy, type: CGEventType, event: 
         return Unmanaged.passUnretained(event)
     }
     if type.rawValue == 29, let gesture = NSEvent(cgEvent: event) {
-        tap.noteType(gesture.type.rawValue, subtype: event.getIntegerValueField(CGEventField(rawValue: 110)!))
         if gesture.type == .magnify {
             tap.deliver(gesture.phase, gesture.magnification, event.location)
         } else if gesture.type == .smartMagnify {

@@ -39,4 +39,4 @@ P-MT、P-ID与P-LOCK是边界探针，不是完成所有私有API、活体识别
 
 ## 帧节奏探针（MO-07）
 
-`WindowShade --frame-rhythm-probe [--runs N] [--out path.json]`：用显示链接记录展开、收起、对勾、倒数换字（各 N 次，默认 10）和展开途中每 50 ms 反向打断的帧间隔，输出 JSON 与一行摘要；退出码 0 = 全部过线，1 = 有场景未过线。纯计算在 `prototype/Core/FrameRhythmAnalysis.swift`，测试 `bash tests/run-frame-rhythm-tests.sh`。当前采样对象是探针自己的小窗口图层（真实令牌，来源标 `token-layer`），接进真实刘海面板待 MO-02。入口需在 `main.swift` 加 `if FrameRhythmProbe.isRequested { ... await FrameRhythmProbe.run() }`。
+帧间隔、阈值线穿越与打断连续性的纯计算在 `prototype/Core/FrameRhythmAnalysis.swift`，测试 `bash tests/run-frame-rhythm-tests.sh`。原先的显示链接采样入口 `--frame-rhythm-probe`（`FrameRhythmProbe.swift`）从未接进 `main.swift`，已删除；要再测真实刘海面板的帧节奏时（MO-02）重新接一个采样入口，把时间戳喂给上面的计算。

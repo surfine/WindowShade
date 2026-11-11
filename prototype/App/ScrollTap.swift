@@ -8,7 +8,6 @@ final class ScrollTap: @unchecked Sendable {
     private var driver = HookDriver()
     private var port: CFMachPort?
     private var source: CFRunLoopSource?
-    private var thread: Thread?
     private var threadRunLoop: CFRunLoop?
     private var session = ScrollSession()
     private var request = ScrollSession.Request(smooth: nil, invertMouse: false, fine: false, sideButtons: false, foregroundExcluded: false)
@@ -132,7 +131,6 @@ final class ScrollTap: @unchecked Sendable {
         thread.name = "WindowShade.ScrollTap"
         thread.qualityOfService = .userInteractive
         thread.stackSize = 512 * 1024
-        self.thread = thread
         thread.start()
         return true
     }
@@ -144,7 +142,6 @@ final class ScrollTap: @unchecked Sendable {
             let current = port
             port = nil
             source = nil
-            thread = nil
             session.cancel()
             frames.reset()
             return current

@@ -187,8 +187,6 @@ final class CountdownTimerHost {
     var isActive: Bool { model.isActive }
 
     func start(minutes: Int) { handle(.start(minutes: minutes)) }
-    func pause() { handle(.pause) }
-    func resume() { handle(.resume) }
     func togglePause() { handle(model.state == .paused ? .resume : .pause) }
     func end() { handle(.end) }
     /// “再来一个”：同样的分钟数再开一个（正在超时的先结束）。

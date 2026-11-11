@@ -49,7 +49,6 @@ final class CarPlaySurfaceController {
     private var decoder: WS2CarPlayVideoDecoder?
     private var liveVideoStarted = false
     private var phoneName: String?
-    private var touchDown = false
     /// live 模式下把输入转成接收器消息；视图只管事件，语义在这里。
     private var input: CarPlaySurfaceInput?
 
@@ -71,7 +70,6 @@ final class CarPlaySurfaceController {
         hasStarted = false
         liveVideoStarted = false
         phoneName = nil
-        touchDown = false
 
         let panel = CarPlaySurfacePanel(screen: screen)
         panel.onExit = { [weak self] in self?.exit() }
@@ -147,7 +145,6 @@ final class CarPlaySurfaceController {
 
     private func receiverLost(failed: Bool) {
         guard isShowing, let started = ticket else { return }
-        touchDown = false
         switch session.ended(started, failed: failed, at: now) {
         case .retry(_, let after):
             timer = Timer.scheduledTimer(withTimeInterval: after, repeats: false) { [weak self] _ in
@@ -178,7 +175,6 @@ final class CarPlaySurfaceController {
         guard let client, session.isReceiverLive, session.state == .ready else { return }
         switch action {
         case .touch(let x, let y, let down):
-            touchDown = down
             client.sendTouch([.init(id: 0, x: x, y: y, down: down)])
         case .knob(let select, let home, let back, let x, let y):
             client.sendKnob(select: select, home: home, back: back, x: x, y: y)

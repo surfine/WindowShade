@@ -1471,9 +1471,6 @@ final class SlideOverMirrorView: NSView {
     private let hintLayer = CATextLayer()
     private var downAt: NSPoint?
     private var samples: [FlickSample] = []
-    /// 往屏幕边外平移了多少（点）。
-    private var shift: CGFloat = 0
-
     init(frame: NSRect, videoLayer: AVSampleBufferDisplayLayer) {
         self.videoLayer = videoLayer
         super.init(frame: frame)
@@ -1535,7 +1532,6 @@ final class SlideOverMirrorView: NSView {
 
     /// 不带动画地平移（手拖时一比一）。
     func setShift(_ value: CGFloat) {
-        shift = value
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         holder.removeAnimation(forKey: "slide")
@@ -1557,7 +1553,6 @@ final class SlideOverMirrorView: NSView {
         spring.fromValue = from * sign
         spring.toValue = value * sign
         spring.initialVelocity = !reduced && abs(distance) > 1 ? max(-40, min(40, velocity / distance)) : 0
-        shift = value
         holder.setValue(value * sign, forKeyPath: "transform.translation.x")
         holder.add(spring, forKey: "slide")
         CATransaction.commit()

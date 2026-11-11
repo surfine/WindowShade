@@ -3094,13 +3094,6 @@
     },
     {
       "path": "prototype/App/GapProbesSupport.swift",
-      "line": 39,
-      "symbol": "AXUIElementCopyAttributeValue",
-      "source": "guard AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &bar) == .success, let bar,",
-      "signal": "window-ax"
-    },
-    {
-      "path": "prototype/App/GapProbesSupport.swift",
       "line": 66,
       "symbol": "SLSMainConnectionID",
       "source": "let mainSym = dlsym(handle, \"SLSMainConnectionID\"),",
@@ -4918,13 +4911,6 @@
       "symbol": "LAContext",
       "source": "let context = LAContext()",
       "signal": "face-identity"
-    },
-    {
-      "path": "prototype/App/GapProbesRecovery.swift",
-      "line": 216,
-      "symbol": "RecoveryJournal",
-      "source": "&& self.gapRecoveryRecords(mentioning: self.id).contains(\"RecoveryJournal.plist\")",
-      "signal": "recovery"
     },
     {
       "path": "prototype/App/FaceAutofillSettings.swift",

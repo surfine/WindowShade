@@ -17,14 +17,8 @@ extension AppDelegate {
         var preferredDisplayID: CGDirectDisplayID? = nil
     }
 
-    struct JournalAlphaRestore {
-        let id: CGWindowID
-        let targetAlpha: Float
-    }
-
     struct JournalRescueResult {
         var actions: [OffscreenRescueAction] = []
-        var alphaRestores: [JournalAlphaRestore] = []
         // preparing intent 且窗口当前可见：事务没有真正走到隐藏，无需救援，
         // 可以直接清理这条 intent（安全，因为窗口本身完好可见）。
         var resolvedIDs: Set<CGWindowID> = []
@@ -74,8 +68,7 @@ extension AppDelegate {
                 guard let entry = entries.first(where: { entry in
                     guard let id = journalID(entry),
                           !result.resolvedIDs.contains(id),
-                          !result.actions.contains(where: { $0.id == id }),
-                          !result.alphaRestores.contains(where: { $0.id == id }) else { return false }
+                          !result.actions.contains(where: { $0.id == id }) else { return false }
                     return journalMatches(entry, app: app, win: win)
                 }), let id = journalID(entry) else { continue }
 
@@ -140,11 +133,6 @@ extension AppDelegate {
         }
         return abs(pos.x - action.target.x) <= 2 && abs(pos.y - action.target.y) <= 2 &&
             abs(size.width - action.size.width) <= 2 && abs(size.height - action.size.height) <= 2
-    }
-
-    func alphaRestoreVerified(_ restore: JournalAlphaRestore) -> Bool {
-        guard let current = PrivateSLSWindowMover.shared.windowAlpha(id: restore.id) else { return false }
-        return current >= 0.5 || abs(current - restore.targetAlpha) <= 0.15
     }
 
     func pruneRescuedJournalEntries(rescuedIDs: Set<CGWindowID>) {
@@ -247,7 +235,7 @@ extension AppDelegate {
             var result = JournalRescueResult()
             // nonisolated 扫描：可从救援队列碰 self，不会踩 MainActor 执行期断言。
             self.collectJournalRescueActions(entries: journalEntries, targetTopLeft: targetTopLeft, into: &result)
-            var rescued = result.actions.count + result.alphaRestores.count
+            var rescued = result.actions.count
             if rescued == 0 {
                 rescued += self.collectParkedWindowRescueActions(targetTopLeft: targetTopLeft,
                                                                 into: &result.actions)
@@ -265,7 +253,6 @@ extension AppDelegate {
                 self.pruneShadeJournal(reason: "rescue")
                 // 先恢复、逐条验证，再清理：验证失败的 entry 保留，下一轮重试。
                 self.applyRescueBatch(result.actions, from: 0,
-                                      alphaRestores: result.alphaRestores,
                                       verifiedSoFar: result.resolvedIDs,
                                       rescued: rescued, silent: silent, announceRestored: announceRestored, finish: finish)
             }
@@ -274,9 +261,8 @@ extension AppDelegate {
 
     /// 写回一批：按单调时钟花满 1.5 秒就停，剩下的用 DispatchQueue.main.async 接着做，
     /// 每批同样 1.5 秒，主线程不会被一长串窗口一口气占住。每批结束都按已验证的 id 清理 journal
-    /// （只删验证过的，没轮到的条目原样保留）；最后一批做完 alpha 恢复再收尾。
+    /// （只删验证过的，没轮到的条目原样保留）；最后一批做完再收尾。
     func applyRescueBatch(_ actions: [OffscreenRescueAction], from start: Int,
-                          alphaRestores: [JournalAlphaRestore],
                           verifiedSoFar: Set<CGWindowID>, rescued: Int, silent: Bool, announceRestored: Bool = false,
                           finish: @escaping @Sendable (String?) -> Void) {
         var verifiedIDs = verifiedSoFar
@@ -297,21 +283,12 @@ extension AppDelegate {
                         finish(nil)
                         return
                     }
-                    self.applyRescueBatch(actions, from: next, alphaRestores: alphaRestores,
+                    self.applyRescueBatch(actions, from: next,
                                           verifiedSoFar: carriedIDs, rescued: rescued,
                                           silent: silent, announceRestored: announceRestored, finish: finish)
                 }
             }
             return
-        }
-        for restore in alphaRestores {
-            if PrivateSLSWindowMover.shared.setAlpha(id: restore.id, alpha: restore.targetAlpha),
-               alphaRestoreVerified(restore) {
-                verifiedIDs.insert(restore.id)
-                wlog("journal: alpha rescue verified id=\(restore.id)")
-            } else {
-                wlog("journal: alpha rescue unverified, keep entry for retry id=\(restore.id)")
-            }
         }
         pruneRescuedJournalEntries(rescuedIDs: verifiedIDs)
         wlog("rescueOffscreenWindows: rescued=\(rescued)")

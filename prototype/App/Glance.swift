@@ -57,15 +57,6 @@ protocol GlanceElsewhereSource: AnyObject {
 /// 探针与日志读的数字：从指针决定打开到画面出现、到第一帧实时画面各用了多久。
 struct GlanceDiagnostics {
     var opens = 0
-    var closes = 0
-    var discards = 0
-    var lastID: CGWindowID = 0
-    var lastLiveExpected = false
-    var lastPreparedAt: TimeInterval?
-    var lastOpenRequestedAt: TimeInterval?
-    var lastShownAt: TimeInterval?
-    var lastFirstFrameAt: TimeInterval?
-    var lastPanelFrame: NSRect = .zero
     var lastShowedStaleNotice = false
 }
 
@@ -644,7 +635,6 @@ final class GlanceController {
         guard let session = sessions[id] else { return }
         switch session.stage {
         case .preparing:
-            diagnostics.discards += 1
             finish(session, reason: "discard")
         case .shown:
             // 卷上途中被指针拉回来、随后又没停够就离开：照常收回。
@@ -695,7 +685,6 @@ final class GlanceController {
         panel.contentView = content
         session.panel = panel
         session.content = content
-        diagnostics.lastPanelFrame = target.panel
         refreshLiveState(session, now: now)
         if session.viaUnhide {
             // 卷下（或从缩略图长大）要多久，卡片才整张盖住原处。
@@ -737,12 +726,6 @@ final class GlanceController {
                 : Motion.Spring.calm.response
         }
         diagnostics.opens += 1
-        diagnostics.lastID = session.id
-        diagnostics.lastLiveExpected = session.liveExpected
-        diagnostics.lastPreparedAt = session.preparedAt
-        diagnostics.lastOpenRequestedAt = session.openRequestedAt
-        diagnostics.lastShownAt = now
-        diagnostics.lastFirstFrameAt = session.firstFrameAt
         diagnostics.lastShowedStaleNotice = !session.liveExpected || session.captureFailed
         let prepared = Int((now - session.preparedAt) * 1000)
         let asked = Int((now - (session.openRequestedAt ?? now)) * 1000)
@@ -768,7 +751,6 @@ final class GlanceController {
             finish(session, reason: "close-before-show")
         case .shown:
             session.stage = .closing
-            diagnostics.closes += 1
             guard let content = session.content else {
                 finish(session, reason: "close")
                 return
@@ -967,7 +949,6 @@ final class GlanceController {
         guard !session.hasLiveFrame, let capture = session.capture,
               capture.pixelFrameCount > 0 else { return }
         session.firstFrameAt = now
-        diagnostics.lastFirstFrameAt = now
         session.content?.setLive(true)
     }
 

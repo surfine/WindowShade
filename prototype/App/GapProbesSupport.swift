@@ -34,37 +34,6 @@ extension GlanceProbe {
     return NSScreen.screens.map { cocoa.intersection($0.visibleFrame).width }.max() ?? 0
   }
 
-  /// 窗口此刻的不透明度（WindowServer 读的，不经过那个 App）。
-  func gapAlpha(_ id: CGWindowID) -> Double {
-    (cgWindowInfo(id)?[kCGWindowAlpha as String] as? Double) ?? 1
-  }
-
-  /// 按临时 App 菜单栏里的一项（例如“文件 › 新建窗口”）：辅助功能按菜单项，不发键盘事件。
-  func gapPressMenuItem(pid: pid_t, menu: String, item: String) -> Bool {
-    let app = AXUIElementCreateApplication(pid)
-    var bar: CFTypeRef?
-    guard AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &bar) == .success, let bar,
-          CFGetTypeID(bar) == AXUIElementGetTypeID() else { return false }
-    for top in axChildren(bar as! AXUIElement) where axTitle(top) == menu {
-      for list in axChildren(top) {
-        for entry in axChildren(list) where axTitle(entry) == item {
-          return AXUIElementPerformAction(entry, kAXPressAction as CFString) == .success
-        }
-      }
-    }
-    return false
-  }
-
-  /// 除了本进程以外还在跑的 WindowShade（日常用的那一份、别的构建）。
-  func gapOtherWindowShadeCopies() -> [(pid: pid_t, path: String)] {
-    let me = getpid()
-    let bundleID = Bundle.main.bundleIdentifier
-    return NSWorkspace.shared.runningApplications.filter { app in
-      app.processIdentifier != me && !app.isTerminated
-        && ((bundleID != nil && app.bundleIdentifier == bundleID) || app.executableURL?.lastPathComponent == "WindowShade")
-    }.map { ($0.processIdentifier, $0.bundleURL?.path ?? "?") }
-  }
-
   /// 这块屏所在那一组里的普通桌面（不含全屏 App 的桌面）。系统设置里“显示器具有单独的空间”关掉时，所有屏共用一组。
   /// 私有接口读不到时返回空。
   func gapDesktops(on display: CGDirectDisplayID) -> [UInt64] {
