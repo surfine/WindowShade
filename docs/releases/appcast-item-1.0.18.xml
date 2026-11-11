@@ -12,7 +12,7 @@
       <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
       <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
       <!-- 1.0.16 及以前是开发证书签的（Team FVGLY6W6S4），1.0.17 起是 Developer ID（Team DQ45KFVHJ8）；
-           build 17 以下仍只弹提示并给下载页（docs/update.md「换证书的一版」），17 及以上一键更新。 -->
+           build 17 以下仍只弹提示并给下载页（docs/update.md“签名与公证”），17 及以上一键更新。 -->
       <sparkle:informationalUpdate>
         <sparkle:belowVersion>17</sparkle:belowVersion>
       </sparkle:informationalUpdate>
