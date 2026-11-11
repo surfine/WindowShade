@@ -94,8 +94,6 @@ enum FeatureCatalog {
                 .init(key: "WindowShade.Input.SmoothScroll", defaultWhenUnset: false),
                 .init(key: "WindowShade.Input.SideButtons", defaultWhenUnset: false),
                 .init(key: "WindowShade.Input.MiddleFold", defaultWhenUnset: false),
-                .init(key: "WindowShade.Input.ThreeFingerTap", defaultWhenUnset: false),
-                .init(key: "WindowShade.Input.FourFingerTap", defaultWhenUnset: false),
             ]),
         FeatureDefinition(
             module: .securityExtras,

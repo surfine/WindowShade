@@ -7,14 +7,6 @@ extension AppDelegate {
         let (root, stack) = inputPageRoot()
         stack.addArrangedSubview(inputCaption(WSL10n.text("settings.input.caption", zh: "滚动和按键默认不改。")))
         let rows = [
-            inputRow(name: WSL10n.setting("settings.input.smooth.name", zh: "平滑滚动"),
-                     subtitle: inputState(inputController.scrollStatus(prefersChange: prefs.smooth != nil)),
-                     detail: WSL10n.setting("settings.input.smooth.detail", zh: "打开之后，滚轮的一格会变成一段连续滚动。现在还不能确认事件来自哪只鼠标，所以先不改。"),
-                     symbol: nil, control: smoothPopup(prefs)),
-            inputRow(name: WSL10n.setting("settings.input.mouseDirection.name", zh: "鼠标滚动方向"),
-                     subtitle: mouseDirectionSubtitle(prefs),
-                     detail: WSL10n.setting("settings.input.mouseDirection.detail", zh: "只准备改鼠标的滚动。还不能确认事件来自哪只鼠标时，先不改。"),
-                     symbol: nil, control: inputSwitch(on: prefs.mouseInvert, enabled: true, action: #selector(prefInputMouseDirection(_:)), name: WSL10n.text("settings.input.mouseDirection.name", zh: "鼠标滚动方向"))),
             inputRow(name: WSL10n.setting("settings.input.trackpadDirection.name", zh: "触控板滚动方向"),
                      subtitle: prefs.trackpadInvert
                         ? WSL10n.setting("settings.input.trackpadDirection.pending", zh: "触控板的滚动先不改")
@@ -35,14 +27,6 @@ extension AppDelegate {
                                                                     decision: inputController.scrollDecision)),
                      detail: WSL10n.setting("settings.input.sideButtons.detail", zh: "侧键 4、5 准备用作这个 App 的后退和前进。要和平滑滚动或鼠标滚动方向一起开。"),
                      symbol: nil, control: inputSwitch(on: prefs.sideButtons, enabled: true, action: #selector(prefInputSide(_:)), name: WSL10n.text("settings.input.sideButtons.name", zh: "侧键后退、前进"))),
-            inputRow(name: WSL10n.setting("settings.input.threeFinger.name", zh: "三指轻点是中键"),
-                     subtitle: WSL10n.setting("settings.input.notChecked", zh: "还没核对，先不用"),
-                     detail: WSL10n.setting("settings.input.threeFinger.detail", zh: "三指轻点还没核对，先不能开。"),
-                     symbol: nil, control: inputSwitch(on: false, enabled: inputController.touchAvailable, action: nil, name: WSL10n.text("settings.input.threeFinger.name", zh: "三指轻点是中键"))),
-            inputRow(name: WSL10n.setting("settings.input.fourFinger.name", zh: "四指轻点打开看不见的窗口"),
-                     subtitle: WSL10n.setting("settings.input.notChecked", zh: "还没核对，先不用"),
-                     detail: WSL10n.setting("settings.input.fourFinger.detail", zh: "四指轻点还没核对，先不能开。"),
-                     symbol: "macwindow.on.rectangle", control: inputSwitch(on: false, enabled: inputController.touchAvailable, action: nil, name: WSL10n.text("settings.input.fourFinger.name", zh: "四指轻点打开看不见的窗口"))),
             inputRow(name: WSL10n.setting("settings.input.exceptions.name", zh: "例外的 App"),
                      subtitle: prefs.exceptions.isEmpty
                         ? WSL10n.setting("settings.input.exceptions.empty", zh: "还没有例外")
@@ -160,23 +144,6 @@ extension AppDelegate {
         }
     }
 
-    @objc func prefInputSmooth(_ sender: NSPopUpButton) {
-        var prefs = WS2InputPreferences.load(from: .standard)
-        switch sender.indexOfSelectedItem {
-        case 1: prefs.smooth = .light
-        case 2: prefs.smooth = .medium
-        case 3: prefs.smooth = .trackpadLike
-        default: prefs.smooth = nil
-        }
-        WS2InputPreferences.save(prefs, to: .standard)
-        inputController.apply()
-        refreshPreferencesWindowIfOpen()
-    }
-
-    @objc func prefInputMouseDirection(_ sender: NSSwitch) {
-        updateInput { $0.mouseInvert = sender.state == .on }
-    }
-
     @objc func prefInputTrackpadDirection(_ sender: NSSwitch) {
         updateInput { $0.trackpadInvert = sender.state == .on }
     }
@@ -256,11 +223,6 @@ extension AppDelegate {
         refreshPreferencesWindowIfOpen()
     }
 
-    private func mouseDirectionSubtitle(_ prefs: WS2InputPreferences.Value) -> SettingsText {
-        guard prefs.mouseInvert else { return WSL10n.setting("settings.input.sameAsSystem", zh: "跟系统一样") }
-        return inputState(inputController.scrollStatus(prefersChange: true))
-    }
-
     func middleSubtitle(_ prefs: WS2InputPreferences.Value) -> SettingsText {
         if inputController.middleTap.waitingForAccessibility, !AXIsProcessTrusted() { return WSL10n.setting("settings.input.middleFold.needAccessibility", zh: "需要先允许辅助功能") }
         if inputController.middleTap.systemStopped { return WSL10n.setting("settings.input.middleFold.systemStopped", zh: "被系统停掉了，先关掉再开") }
@@ -294,26 +256,6 @@ extension AppDelegate {
             wlog("settings.input: unmapped scroll status phrase=\(phrase)")
             return SettingsText(key: "settings.input.status.unmapped", zh: phrase)
         }
-    }
-
-    private func smoothPopup(_ prefs: WS2InputPreferences.Value) -> NSPopUpButton {
-        let popup = NSPopUpButton()
-        popup.addItems(withTitles: [
-            WSL10n.text("settings.input.smooth.off", zh: "关"),
-            WSL10n.text("settings.input.smooth.light", zh: "轻"),
-            WSL10n.text("settings.input.smooth.medium", zh: "中"),
-            WSL10n.text("settings.input.smooth.trackpadLike", zh: "像触控板"),
-        ])
-        switch prefs.smooth {
-        case .light: popup.selectItem(at: 1)
-        case .medium: popup.selectItem(at: 2)
-        case .trackpadLike: popup.selectItem(at: 3)
-        case nil: popup.selectItem(at: 0)
-        }
-        popup.target = self
-        popup.action = #selector(prefInputSmooth(_:))
-        popup.setAccessibilityLabel(WSL10n.text("settings.input.smooth.name", zh: "平滑滚动"))
-        return popup
     }
 
     func inputSwitch(on: Bool, enabled: Bool, action: Selector?, name: String) -> NSSwitch {

@@ -1771,7 +1771,7 @@ extension AppDelegate {
 
     /// 「手势」页（规格 R16）：十条手指、中键、拖动触发的设置按用户在做的事分四组。
     /// 行、键、动作、默认值都沿用原来的；只多一行「手指」，标题栏手势下多一张只读对照表。
-    /// 三指、四指轻点还没核对，留在「鼠标与触控板」，核对完再露出。
+    /// 三指、四指轻点的开关已从界面移出（没有可用的事件来源），核对完再加回来。
     func makeGestureSettingsPage() -> NSView {
         inputController.apply()
         let prefs = inputController.preferences

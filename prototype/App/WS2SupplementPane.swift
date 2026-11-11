@@ -29,8 +29,6 @@ import Cocoa
         for (title, reason) in [
             (WSL10n.text("settings.shade.supplement.gateConductor", zh: "指挥模式"),
              WSL10n.text("settings.shade.supplement.gateConductorWhy", zh: "需要已核准的输入设备和助手连接")),
-            (WSL10n.text("settings.shade.supplement.gateScroll", zh: "平滑滚动"),
-             WSL10n.text("settings.shade.supplement.gateScrollWhy", zh: "需要确认每条事件的设备来源")),
             (WSL10n.text("settings.shade.supplement.gateRemote", zh: "Siri 遥控器"),
              WSL10n.text("settings.shade.supplement.gateRemoteWhy", zh: "需要通过当前设备的按钮与触点探针")),
             (WSL10n.text("settings.shade.supplement.gatePresence", zh: "在场检测"),

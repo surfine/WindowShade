@@ -175,7 +175,7 @@ enum WS2Preview {
 
   /// 已经开着的 WindowShade 2 开关。开着的那一页或那一行照样露出来，好让人能关掉。
   struct Live: Equatable, Sendable {
-    /// 鼠标与触控板页里任何一项改过（平滑滚动、滚动方向、⌥ 精细、侧键、三指／四指轻点）。
+    /// 鼠标与触控板页里任何一项改过（滚动方向、⌥ 精细、侧键；平滑滚动与三指／四指轻点的开关已移出界面，键仍读）。
     var pointer = false
     /// 遥控模式或某台手柄的「控制这台 Mac」开着。
     var remote = false

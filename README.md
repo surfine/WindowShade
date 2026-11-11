@@ -130,7 +130,7 @@ What comes next is **WindowShade 2**: your Mac’s windows taking direction, and
 - **Conductor mode and coding sessions** — the state and approvals of several coding sessions in one place.
 - **Remote control** — drive this Mac from an iPhone or similar device, including mute control.
 - **CarPlay reception** — put the iPhone’s picture on the whole screen.
-- **Mouse and trackpad** — finer settings such as smooth scrolling, side buttons and three- or four-finger taps.
+- **Mouse and trackpad** — finer settings such as side buttons.
 
 A few more are still experimental or device-limited: face scanning, presence locking, remote control and CarPlay. None of this claims macOS face unlock or complete CarPlay reception.
 
