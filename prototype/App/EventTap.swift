@@ -8,7 +8,7 @@ extension AppDelegate {
     func registerHotKey() {
         installHotKeyHandler()
         // 新装还是升级：启动第一步已经认过、存下了（见 GlobalShortcuts.swift 的 InstallHistory），这里只读出来记一笔。
-        // 新装的 ⌃⌘ 一个都不占，升级上来的照他原来在用的。
+        // ⌃⌘ 那一组照这次安装出厂带的：1.0.16–1.0.21 新装的不占，其余（升级上来的、1.0.22 起新装的）带着。
         let history = GlobalShortcutSettings.history
         wlog("hotkey: install history=\(history) factory ⌃⌘ shortcuts \(history.hadFactoryShortcuts ? "kept" : "off")")
         registerGlobalShortcuts()

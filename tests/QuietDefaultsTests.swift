@@ -83,13 +83,20 @@ struct QuietDefaultsTests {
     static func installHistory() {
         withDefaults { defaults in
             // 启动第一步就认：这时新装的偏好里什么都没有。
-            expect(InstallHistory.detect(in: defaults) == .fresh, "a brand-new install (nothing written yet) is fresh")
-            expect(InstallHistory.settled(in: defaults) == .fresh, "settling a fresh install says fresh")
+            expect(InstallHistory.detect(in: defaults) == .freshKeyed, "a brand-new install (nothing written yet) is a new install with the factory keys (1.0.22 on)")
+            expect(InstallHistory.settled(in: defaults) == .freshKeyed && InstallHistory.freshKeyed.isFresh,
+                   "settling a new install says so, and it still counts as fresh for onboarding and feature defaults")
             // 认过之后，这一次启动写下声音迁移版本号、欢迎窗口关了写下“看过了”、答了来处：还是新装，下一次启动也不变。
             defaults.set(2, forKey: "ShadeSoundMigrationVersion")
             defaults.set(true, forKey: "ShadeOnboardingShown")
             defaults.set("windows", forKey: "SwitcherOrigin")
-            expect(InstallHistory.settled(in: defaults) == .fresh, "once settled, what this launch writes does not turn it into an upgrade")
+            expect(InstallHistory.settled(in: defaults) == .freshKeyed, "once settled, what this launch writes does not turn it into an upgrade")
+        }
+        // 1.0.16–1.0.21 装上的：那时存下的是 0（.fresh）。升级到 1.0.22 不能突然多出一组快捷键。
+        withDefaults({ $0.set(InstallHistory.fresh.rawValue, forKey: InstallHistory.defaultsKey) }) { defaults in
+            expect(InstallHistory.settled(in: defaults) == .fresh && InstallHistory.fresh.isFresh && !InstallHistory.fresh.hadFactoryShortcuts,
+                   "an install recorded as fresh before 1.0.22 stays fresh and keyless")
+            expect(!InstallHistory.shipped.isFresh && !InstallHistory.preview.isFresh, "upgrades are not fresh")
         }
         // 1.0.15 用过、欢迎窗口点红色按钮关掉、从没改过设置、升级时没有收着的窗口：只剩每次启动都写的那个键。
         withDefaults({ $0.set(2, forKey: "ShadeSoundMigrationVersion") }) { defaults in
@@ -123,7 +130,28 @@ struct QuietDefaultsTests {
     // MARK: ⌃⌘ 快捷键
 
     static func shortcuts() {
-        withDefaults { _ in
+        // 1.0.22 起新装的：出厂带 1.0.15 那一组和 ⌃⌘1…9，别的（计时器、1.0.16 测试版那几个）不占。
+        withDefaults { defaults in
+            expect(GlobalShortcut.allCases.allSatisfy { GlobalShortcutSettings.hotKey(for: $0) == shipped[$0] },
+                   "a new install from 1.0.22 on ships with exactly ⌃⌘C / 0 / P / G / arrows")
+            expect(GlobalShortcutSettings.numberedExpandEnabled, "and with ⌃⌘1…9")
+            expect(previewOnly.keys.allSatisfy { GlobalShortcutSettings.hotKey(for: $0) == nil }
+                    && GlobalShortcutSettings.hotKey(for: .countdownTimer) == nil,
+                   "it does not take the 1.0.16-preview keys or the timer's")
+            expect(GlobalShortcutSettings.isAllDefault && defaults.object(forKey: "GlobalShortcut.toggleShade") == nil,
+                   "untouched counts as the defaults and nothing is copied into the per-shortcut settings")
+            GlobalShortcutSettings.setHotKey(nil, for: .leftHalf)
+            GlobalShortcutSettings.numberedExpandEnabled = false
+            expect(GlobalShortcutSettings.hotKey(for: .leftHalf) == nil && !GlobalShortcutSettings.numberedExpandEnabled,
+                   "a new install can clear them")
+            GlobalShortcutSettings.resetAll()
+            expect(GlobalShortcut.allCases.allSatisfy { GlobalShortcutSettings.hotKey(for: $0) == shipped[$0] }
+                    && GlobalShortcutSettings.numberedExpandEnabled,
+                   "restore defaults brings the factory set back")
+        }
+
+        // 1.0.16–1.0.21 装上、存成 .fresh 的：一个都不占，照旧。
+        withDefaults({ $0.set(InstallHistory.fresh.rawValue, forKey: InstallHistory.defaultsKey) }) { _ in
             expect(GlobalShortcut.allCases.allSatisfy { GlobalShortcutSettings.hotKey(for: $0) == nil },
                    "a new install occupies no shortcut at all, the timer included")
             expect(GlobalShortcutSettings.countdownHotKey == countdownDefault,

@@ -1,6 +1,7 @@
 // 应用自己的全局快捷键：每个动作一条可改、可关的组合。
-// 1.0.16 起新装的一个都不占（docs/lost-notes.md（原 direction.md）“少做”：⌃⌘ 那一组要的人自己在设置里录）；从以前的版本升级上来的，
-// 没改过的那几个照他原来在用的（新装还是升级见文件末尾的 InstallHistory）。
+// 1.0.16–1.0.21 新装的一个都不占（docs/lost-notes.md（原 direction.md）“少做”）；1.0.22 起新装的重新带上 ⌃⌘C、0、P、G、
+// 四个方向键和 ⌃⌘1…9（Aaron 2026-11-11 拍板）；从以前的版本升级上来的，没改过的那几个照他原来在用的。
+// 属于哪一种见文件末尾的 InstallHistory：已经认过的安装不会因为升级而换一套。
 // 窗口浏览的快捷键仍存在 WindowBrowserSettings 里（默认不注册），这里只统一读写与查冲突。
 
 import Cocoa
@@ -171,8 +172,9 @@ enum GlobalShortcut: String, CaseIterable {
     /// 设置页与冲突提示里的名字。
     var title: String { titleText.shown }
 
-    /// 各版本出厂就占着的组合：新装的一个都不占；1.0.15 及以前是 ⌃⌘C、0、P、G 和四个方向键；
-    /// 1.0.16 测试版另占 ⌃⌘S、L、M、N、H。只用来让升级上来的人照原样用下去，不再给新装的。
+    /// 各版本出厂就占着的组合：1.0.15 及以前是 ⌃⌘C、0、P、G 和四个方向键；1.0.16 测试版另占 ⌃⌘S、L、M、N、H。
+    /// 1.0.16–1.0.21 新装的一个都不占（.fresh）；1.0.22 起新装的重新带上 1.0.15 那一组（.freshKeyed，
+    /// Aaron 2026-11-11 拍板：官网和 README 列的那几组要人人能按）。已经记成 .fresh 的安装不跟着变。
     func factoryHotKey(for history: InstallHistory) -> HotKey? {
         // 计时器是新功能，1.0.15 及以前没有它，所以新装和升级都不占键；⌃⌥T 只在设置里手动启用。
         guard history.hadFactoryShortcuts else { return nil }
@@ -221,7 +223,7 @@ enum GlobalShortcutSettings {
     /// 这台 Mac 从哪一版用起（启动第一步认一次、存下来，见下面的 InstallHistory）：决定没动过的快捷键是什么。
     static var history: InstallHistory { InstallHistory.settled(in: defaults) }
 
-    /// 没动过时的组合：新装的一个都不占；升级上来的照他原来在用的出厂组合。
+    /// 没动过时的组合：这次安装出厂带的那一套（见 InstallHistory；1.0.16–1.0.21 新装的是空的）。
     static func defaultHotKey(for shortcut: GlobalShortcut) -> HotKey? {
         shortcut == .windowBrowser ? nil : shortcut.factoryHotKey(for: history)
     }
@@ -250,7 +252,7 @@ enum GlobalShortcutSettings {
         }
     }
 
-    /// ⌃⌘1…9 没动过时开不开：和别的 ⌃⌘ 组合一样，新装的不占，升级上来的照旧开着。
+    /// ⌃⌘1…9 没动过时开不开：和别的 ⌃⌘ 组合一样，跟着这次安装出厂带不带那一组（见 InstallHistory）。
     static var numberedExpandDefault: Bool { history.hadFactoryShortcuts }
 
     static var numberedExpandEnabled: Bool {
@@ -327,6 +329,9 @@ enum InstallHistory: Int, Sendable {
     case shipped = 1
     /// 用过 1.0.16 的测试版：那一版又多占了 ⌃⌘S、L、M、N、H，“让开这个 App”也默认开着。
     case preview = 2
+    /// 1.0.22 起新装的：别的默认值照新装走，只有 ⌃⌘ 那一组（C、0、P、G、四个方向键）和 ⌃⌘1…9 出厂带着。
+    /// 单独一个值，是为了不动 1.0.16–1.0.21 装上、已经存成 .fresh 的人：他们那几个组合可能早就给了别的 App。
+    case freshKeyed = 3
 
     static let defaultsKey = "InstallHistory"
 
@@ -347,7 +352,7 @@ enum InstallHistory: Int, Sendable {
         if defaults.object(forKey: previewMarker) != nil { return .preview }
         if shippedMarkers.contains(where: { defaults.object(forKey: $0) != nil }) { return .shipped }
         if defaults.dictionaryRepresentation().keys.contains(where: { $0.hasPrefix(shippedPrefix) }) { return .shipped }
-        return .fresh
+        return .freshKeyed
     }
 
     /// 认过就照存的；没认过就现在认、存下来。存了认不出的值（以后的版本写的）当新装。
@@ -359,6 +364,8 @@ enum InstallHistory: Int, Sendable {
         return found
     }
 
-    /// 以前就有 ⌃⌘ 那一组出厂组合的安装。
+    /// 出厂带 ⌃⌘ 那一组组合的安装：升级上来的，和 1.0.22 起新装的。
     var hadFactoryShortcuts: Bool { self != .fresh }
+    /// 新装的（不是从以前的版本升级上来的）：引导、功能默认值照新装走。带不带出厂组合是另一回事。
+    var isFresh: Bool { self == .fresh || self == .freshKeyed }
 }

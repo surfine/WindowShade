@@ -366,8 +366,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 这一次启动之前就跑过 WindowShade 没有（1.0.16 起第一次启动就存下 InstallHistory；更早的认得出是 .shipped）。
         // 引导据此分新装 A1 和升级 U1 / N1，不靠更新日志，手动下载装上来的也认得出。
         let hadInstallRecord = UserDefaults.standard.object(forKey: InstallHistory.defaultsKey) != nil
-        launchIsUpgrade = InstallHistory.settled(in: .standard) != .fresh || hadInstallRecord
-        InstallFeatureDefaults.seedIfNeeded(freshInstall: InstallHistory.settled(in: .standard) == .fresh)
+        launchIsUpgrade = !InstallHistory.settled(in: .standard).isFresh || hadInstallRecord
+        InstallFeatureDefaults.seedIfNeeded(freshInstall: InstallHistory.settled(in: .standard).isFresh)
         // 量耗电等场合另开一份：刘海不播报、不教，也不把"教过"写进设置。
         if CommandLine.arguments.contains("--no-teach") { NotchController.probeSilence = true }
         // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
@@ -775,7 +775,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         onboardingWindow?.orderOut(nil)
         onboardingDidEnd()
         // 新装看完引导后给一次“挑功能”：打开设置的功能页；之后不再自动弹。
-        if InstallHistory.settled(in: .standard) == .fresh,
+        if InstallHistory.settled(in: .standard).isFresh,
            !UserDefaults.standard.bool(forKey: InstallFeatureDefaults.pickerShownKey) {
             UserDefaults.standard.set(true, forKey: InstallFeatureDefaults.pickerShownKey)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
