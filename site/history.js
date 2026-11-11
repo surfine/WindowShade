@@ -4,16 +4,19 @@
  // 繁体（第39批）：文案表由构建时注入 window.WS_TW（src 与 site/scripts/zh-hant.json 同源）。
  const tw = lang === 'zh-Hant' ? (window.WS_TW || {}) : null;
  const pixelSurfaces=[...document.querySelectorAll('.titlebar-archive,.retro-panel,.gesture-window,.platinum-window')];
+ // Snap each period surface to whole pixels. All writes, then all reads, then all writes: one layout
+ // for the lot instead of one per surface; resize and ResizeObserver both land on the next frame.
+ let pixelFrame=0;
  function alignEraPixels() {
-  for (const surface of pixelSurfaces) {
-   surface.style.setProperty('--era-pixel-offset','0px');
-   const y=surface.getBoundingClientRect().top+window.scrollY;
-   surface.style.setProperty('--era-pixel-offset', `${Math.round(y)-y}px`);
-  }
+  pixelFrame=0;
+  for (const surface of pixelSurfaces) surface.style.setProperty('--era-pixel-offset','0px');
+  const ys=pixelSurfaces.map(surface=>surface.getBoundingClientRect().top+window.scrollY);
+  pixelSurfaces.forEach((surface,i)=>surface.style.setProperty('--era-pixel-offset', `${Math.round(ys[i])-ys[i]}px`));
  }
- document.fonts.ready.then(alignEraPixels);
- window.addEventListener('resize',alignEraPixels);
- const pixelResize=new ResizeObserver(alignEraPixels);
+ const scheduleEraPixels=()=>{ if(!pixelFrame) pixelFrame=requestAnimationFrame(alignEraPixels); };
+ document.fonts.ready.then(scheduleEraPixels);
+ window.addEventListener('resize',scheduleEraPixels);
+ const pixelResize=new ResizeObserver(scheduleEraPixels);
  pixelSurfaces.forEach(surface=>pixelResize.observe(surface));
  // zh is a fixed lookup key; {name} placeholders are filled after the lookup, so strings with
  // variable parts still find their Traditional entry (tools/localize/site-zh-hant.py extracts them).
@@ -50,24 +53,79 @@
   $('dock-target').hidden = mode !== 'minimize';
   $('space-result').textContent = spaceText[mode];
  }
+ // Overview moves both windows to new places at a new size. The layout jumps to the overview
+ // arrangement once, measured at the start; every frame after that is a transform that puts each
+ // window where the old top/left/width/scale interpolation had it (children are counter-scaled so
+ // text never stretches when the width changes more than the height).
+ const overviewEls = () => [$('space-window'), $('space-desk').querySelector('.space-draft')];
+ let overviewGeo = null;
+ function clearOverview() {
+  if (!overviewGeo) return;
+  for (const el of overviewEls()) { el.style.transform = ''; el.style.transformOrigin = ''; for (const child of el.children) { child.style.transform = ''; child.style.transformOrigin = ''; } }
+  overviewGeo = null;
+ }
+ function measureOverview(desk) {
+  const els = overviewEls();
+  const keep = desk.dataset.mode;
+  const box = el => ({ l: el.offsetLeft, t: el.offsetTop, w: el.offsetWidth, h: el.offsetHeight });
+  desk.dataset.mode = 'open';
+  const from = els.map(box);
+  desk.dataset.mode = 'overview';
+  const to = els.map(box);
+  const pose = els.map((el, i) => {
+   const style = getComputedStyle(el);
+   const m = style.transform.match(/matrix\(([^,]+)/);
+   const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
+   return { s: m ? parseFloat(m[1]) : 1, fx: ox / to[i].w, fy: oy / to[i].h };
+  });
+  desk.dataset.mode = keep;
+  return { els, from, to, pose };
+ }
+ function drawOverview(p) {
+  const { els, from, to, pose } = overviewGeo;
+  const lerp = (a, b) => a + (b - a) * p;
+  els.forEach((el, i) => {
+   const a = from[i], b = to[i], { s: s1, fx, fy } = pose[i];
+   const w = lerp(a.w, b.w), h = lerp(a.h, b.h), s = lerp(1, s1);
+   const x = lerp(a.l, b.l) + (1 - s) * fx * w, y = lerp(a.t, b.t) + (1 - s) * fy * h;
+   const sx = (s * w) / b.w, sy = (s * h) / b.h;
+   el.style.transformOrigin = '0 0';
+   el.style.transform = `translate(${(x - b.l).toFixed(2)}px,${(y - b.t).toFixed(2)}px) scale(${sx.toFixed(5)},${sy.toFixed(5)})`;
+   const counter = Math.abs(sx - sy) > 1e-4 ? `scaleX(${(sy / sx).toFixed(5)})` : '';
+   for (const child of el.children) { child.style.transformOrigin = counter ? '0 0' : ''; child.style.transform = counter; }
+  });
+ }
  function arrange(mode) {
   const desk = $('space-desk');
   const content = $('space-content');
   const prev = desk.dataset.mode || 'open';
   stopMove();
-  if (content && window.WSMotion && (prev === 'shade') !== (mode === 'shade')) WSMotion.roll(content, mode === 'shade');
+  clearOverview();
+  // The contents roll on their own switch (data-shade), so the roll can measure before and after it.
+  const shade = mode === 'shade';
+  if (desk.hasAttribute('data-shade') !== shade) {
+   const commitShade = () => desk.toggleAttribute('data-shade', shade);
+   if (content && window.WSMotion) WSMotion.roll(content, shade, { commit: commitShade, round: '0 0 14px 14px' });
+   else commitShade();
+  }
   const token = mode === 'minimize' || prev === 'minimize' ? 'glide' : 'calm';
   const setP = p => desk.style.setProperty('--p', String(p));
   const commit = next => { desk.dataset.mode = next; chrome(next); };
   if (!window.WSMotion || WSMotion.reduced() || prev === mode || (!posed(prev) && !posed(mode))) {
    setP(1); commit(mode); return;
   }
+  // p: how far into a posed mode (minimize: CSS transform via --p; overview: drawOverview).
+  const pose = (m, p) => { if (m === 'overview') drawOverview(p); else setP(p); };
+  const run = (m, a, b, done) => {
+   if (m === 'overview') { overviewGeo = measureOverview(desk); drawOverview(a); }
+   stopMove = WSMotion.play(token, q => pose(m, a + (b - a) * q), () => { if (m === 'overview') clearOverview(); done?.(); });
+  };
   const arrive = () => {
    if (!posed(mode)) { commit(mode); setP(1); return; }
-   setP(0); commit(mode); stopMove = WSMotion.play(token, setP);
+   setP(0); commit(mode); run(mode, 0, 1);
   };
-  if (posed(prev)) stopMove = WSMotion.play(token, p => setP(1 - p), arrive);
-  else { setP(0); commit(mode); stopMove = WSMotion.play(token, setP); }
+  if (posed(prev)) run(prev, 1, 0, arrive);
+  else { setP(0); commit(mode); run(mode, 0, 1); }
  }
  document.querySelectorAll('[data-arrange]').forEach(b => b.addEventListener('click', () => arrange(b.dataset.arrange)));
  $('space-reset').addEventListener('click', () => arrange('open'));
@@ -96,8 +154,9 @@
  }
  function toggleGesture() {
   gestureFolded=!gestureFolded;
-  if (window.WSMotion) WSMotion.roll($('gesture-content'), gestureFolded);
-  $('gesture-window').classList.toggle('folded',gestureFolded);
+  // In the page flow: the window's height moves everything below it, so this roll stays a height animation (see motion.js).
+  const commitGesture=()=>$('gesture-window').classList.toggle('folded',gestureFolded);
+  if (window.WSMotion) WSMotion.roll($('gesture-content'), gestureFolded, { layout: true, commit: commitGesture }); else commitGesture();
   $('gesture-bar').setAttribute('aria-expanded',String(!gestureFolded));
   $('gesture-content').setAttribute('aria-hidden',String(gestureFolded));
   $('gesture-status').textContent=t(gestureFolded?'收起了。用同样的次数再点一遍，就能展开。':'展开了，还在原来的位置。',gestureFolded?'Rolled up. Click the same number of times to unroll.':'Unrolled, in the same place.');
@@ -121,26 +180,35 @@
  let platinumFolded=false,drag=null,dragMoved=false;
  const platinumSay=text=>{$('platinum-result').textContent=text;};
  const movedText=()=>t(platinumFolded?'挪好了。双击标题栏或点方框展开，看窗口在哪儿打开。':'窗口跟着标题栏一起移动。',platinumFolded?'Moved. Double-click the title bar or click the box, and see where the window opens.':'The window moves with its title bar.');
- let platinumX=null,platinumY=null;
+ let platinumX=null,platinumY=null,platinumBounds=null;
+ // Measured once per gesture (pointerdown, or a key press), never per pointermove.
+ function measurePlatinum(){
+  const desk=platinumDesk.getBoundingClientRect(),win=platinumWindow.getBoundingClientRect();
+  if(platinumX===null){platinumX=win.left-desk.left;platinumY=win.top-desk.top;}
+  platinumBounds={w:desk.width-win.width,h:desk.height-platinumBar.offsetHeight};
+ }
  function platinumOffset(){
-  if(platinumX===null){
-   const desk=platinumDesk.getBoundingClientRect(),win=platinumWindow.getBoundingClientRect();
-   platinumX=win.left-desk.left;platinumY=win.top-desk.top;
-  }
+  if(platinumX===null)measurePlatinum();
   return {x:platinumX,y:platinumY};
  }
- // The bar may travel past the lower edge, as a collapsed window could.
+ // The bar may travel past the lower edge, as a collapsed window could. Position is a transform
+ // (history.css turns --drag-x/--drag-y into translate), so dragging never re-lays out the desk.
  function placePlatinum(x,y){
-  const desk=platinumDesk.getBoundingClientRect(),win=platinumWindow.getBoundingClientRect();
   const limit=(value,max)=>Math.min(Math.max(value,0),Math.max(0,max));
-  platinumX=limit(x,desk.width-win.width);platinumY=limit(y,desk.height-platinumBar.offsetHeight);
+  platinumX=limit(x,platinumBounds.w);platinumY=limit(y,platinumBounds.h);
   platinumWindow.style.setProperty('--drag-x',`${Math.round(platinumX)}px`);
   platinumWindow.style.setProperty('--drag-y',`${Math.round(platinumY)}px`);
  }
  function togglePlatinum(){
   platinumFolded=!platinumFolded;
-  if (window.WSMotion) WSMotion.roll($('platinum-content'), platinumFolded);
-  platinumWindow.classList.toggle('folded',platinumFolded);
+  // The window is positioned on its desk, so nothing else moves: clip the whole window (frame included)
+  // and carry its bottom edge up with the cut, instead of animating the contents' height.
+  const commitPlatinum=()=>platinumWindow.classList.toggle('folded',platinumFolded);
+  if (window.WSMotion) WSMotion.roll($('platinum-content'), platinumFolded, {
+   commit: commitPlatinum, clip: platinumWindow,
+   clipPath: cut => `inset(-3px -3px ${(cut - 1).toFixed(2)}px -3px)`,
+   edge: cut => { platinumWindow.classList.toggle('is-rolling', cut !== null); platinumWindow.style.setProperty('--cut', cut === null ? '' : `${cut.toFixed(2)}px`); },
+  }); else commitPlatinum();
   $('platinum-collapse').setAttribute('aria-expanded',String(!platinumFolded));
   $('platinum-content').setAttribute('aria-hidden',String(platinumFolded));
   platinumSay(t(platinumFolded?'只剩标题栏了。拖到别处，再双击或点方框展开。':'窗口在标题栏现在的位置展开了。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then double-click it or click the box.':'The contents open where the title bar now is.'));
@@ -151,7 +219,7 @@
  onDoubleTap(platinumBar,togglePlatinum,()=>dragMoved);
  platinumBar.addEventListener('pointerdown',e=>{
   if(e.target.closest('button'))return;
-  const at=platinumOffset();
+  measurePlatinum();const at=platinumOffset();
   drag={id:e.pointerId,x:e.clientX-at.x,y:e.clientY-at.y,sx:e.clientX,sy:e.clientY};dragMoved=false;
   platinumBar.setPointerCapture(e.pointerId);platinumWindow.classList.add('dragging');e.preventDefault();
  });
@@ -165,10 +233,10 @@
   const step={ArrowLeft:[-12,0],ArrowRight:[12,0],ArrowUp:[0,-12],ArrowDown:[0,12]}[e.key];
   if(!step)return;
   e.preventDefault();
-  const at=platinumOffset();placePlatinum(at.x+step[0],at.y+step[1]);platinumSay(movedText());
+  measurePlatinum();const at=platinumOffset();placePlatinum(at.x+step[0],at.y+step[1]);platinumSay(movedText());
  });
  let stickyFolded=false;
- function toggleSticky(){stickyFolded=!stickyFolded;if (window.WSMotion) WSMotion.roll($('sticky-content'), stickyFolded);$('sticky-note').classList.toggle('folded',stickyFolded);$('sticky-bar').setAttribute('aria-expanded',String(!stickyFolded));$('sticky-content').setAttribute('aria-hidden',String(stickyFolded));$('sticky-toggle').textContent=t(stickyFolded?'展开这张便笺 ↕':'试着收起这张便笺 ↕',stickyFolded?'Expand this note ↕':'Collapse this note ↕');}
+ function toggleSticky(){stickyFolded=!stickyFolded;const commitSticky=()=>$('sticky-note').classList.toggle('folded',stickyFolded);if (window.WSMotion) WSMotion.roll($('sticky-content'), stickyFolded, { layout: true, commit: commitSticky }); else commitSticky();$('sticky-bar').setAttribute('aria-expanded',String(!stickyFolded));$('sticky-content').setAttribute('aria-hidden',String(stickyFolded));$('sticky-toggle').textContent=t(stickyFolded?'展开这张便笺 ↕':'试着收起这张便笺 ↕',stickyFolded?'Expand this note ↕':'Collapse this note ↕');}
  $('sticky-toggle').addEventListener('click',toggleSticky);
  $('sticky-bar').addEventListener('dblclick',toggleSticky);
  onDoubleTap($('sticky-bar'),toggleSticky);

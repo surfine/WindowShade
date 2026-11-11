@@ -333,11 +333,12 @@
   const ptr = screen.querySelector('.tptr');
   const notch = screen.querySelector('.tnotch');
   const handle = screen.querySelector('.thandle');
-  const pct = v => `${v.toFixed(3)}%`;
-  const place = (el, r) => { el.style.left = pct(r.x); el.style.top = pct(r.y); el.style.width = pct(r.w); el.style.height = pct(r.h); };
+  // The little window and the notch never change layout size: these custom properties only feed
+  // transforms and clip-paths in style.css (.twin, .twin-clip, .tcanvas, .tnotch).
+  const num = v => v.toFixed(3);
+  const place = (el, r) => { el.style.setProperty('--x', num(r.x)); el.style.setProperty('--y', num(r.y)); el.style.setProperty('--w', num(r.w)); el.style.setProperty('--h', num(r.h)); };
   // Sizes are cached, not read every frame: fingertips, tails, ripples and the pointer move by
-  // transform only (composited). The little window and the notch change size, so they keep
-  // left/top/width/height, but the screen is a size container, so that layout stays inside it.
+  // transform only (composited).
   let padW = 1, padH = 1, scrW = 1, scrH = 1;
   const sizes = new ResizeObserver(() => { padW = pad.clientWidth || 1; padH = pad.clientHeight || 1; scrW = screen.clientWidth || 1; scrH = screen.clientHeight || 1;
     // Fired after setup, so the lesson state below exists: redraw the paused frame at the new size.
@@ -382,8 +383,8 @@
     ptr.style.opacity = f.ptr ? fade.toFixed(3) : '0';
     if (f.ptr) ptr.style.transform = at(f.ptr.x, f.ptr.y, scrW, scrH);
     const n = f.notch ?? REST;
-    notch.style.width = pct(n.w);
-    notch.style.height = pct(n.h);
+    notch.style.setProperty('--nw', num(n.w));
+    notch.style.setProperty('--nh', num(n.h));
     notch.style.setProperty('--compact', clamp01(n.compact ?? 0).toFixed(3));
     notch.style.setProperty('--pull', (n.pull ?? 0).toFixed(3));
     handle.style.opacity = (f.handle ?? 0).toFixed(3);
@@ -480,6 +481,7 @@
     const want = visible && !document.hidden && !reduce.matches && !frozen;
     if (want === running) return;
     running = want;
+    root.classList.toggle('is-playing', running);
     if (running) { started = performance.now(); raf = requestAnimationFrame(tick); }
     else { cancelAnimationFrame(raf); if (reduce.matches) still(current); }
   }
@@ -495,6 +497,7 @@
   root.freezeAt = (id, t) => {
     frozen = true;
     running = false;
+    root.classList.remove('is-playing');
     cancelAnimationFrame(raf);
     const tab = lists.findIndex(list => list.querySelector(`[data-teach-row="${id}"]`));
     showTab(tab, { row: id, user: true });

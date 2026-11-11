@@ -247,6 +247,7 @@ if (laptop && lidRange && lidPlay) {
     frost: { focal: 2.0, defocus: .16, dim: 19, base: .018, angle: .65 },
   };
   const glass = laptop.querySelector('.glass');
+  let glassW = 0, glassH = 0;
   // Blur grows toward the top: three blurred copies of the page, each faded in over one band.
   for (const layer of laptop.querySelectorAll('.depth > i')) layer.append(laptop.querySelector('.page').cloneNode(true));
   function fold(amount) {
@@ -259,8 +260,9 @@ if (laptop && lidRange && lidPlay) {
       g[5] * g[6] - g[3] * g[8], g[0] * g[8] - g[2] * g[6], g[2] * g[3] - g[0] * g[5],
       g[3] * g[7] - g[4] * g[6], g[1] * g[6] - g[0] * g[7], g[0] * g[4] - g[1] * g[3],
     ].map(x => x / m0(g));
-    // Same map in CSS pixels of the glass (origin top-left).
-    const w = glass.clientWidth, h = glass.clientHeight;
+    // Same map in CSS pixels of the glass (origin top-left). Its size comes from the ResizeObserver
+    // below, never read here: fold() runs every frame.
+    const w = glassW, h = glassH;
     if (!w || !h) return;
     laptop.classList.toggle('is-folding', amount > 0);
     const n = x => +x.toFixed(6);
@@ -273,7 +275,10 @@ if (laptop && lidRange && lidPlay) {
     laptop.style.setProperty('--shade-hinge', Math.min(1, o.dim * radius(0)).toFixed(3));
   }
   const m0 = g => g[0] * (g[4] * g[8] - g[5] * g[7]) - g[1] * (g[3] * g[8] - g[5] * g[6]) + g[2] * (g[3] * g[7] - g[4] * g[6]);
-  new ResizeObserver(() => fold(Math.min(1, Math.max(0, e)))).observe(glass);
+  new ResizeObserver(([entry]) => {
+    glassW = entry.contentRect.width; glassH = entry.contentRect.height;
+    fold(Math.min(1, Math.max(0, e)));
+  }).observe(glass);
   const wake = () => { if (!frame) { last = 0; frame = requestAnimationFrame(tick); } };
   let lidTouched = false;
   lidRange.addEventListener('input', () => { lidTouched = true; playing = null; lid = lidRange.valueAsNumber / 100; wake(); });
@@ -311,7 +316,12 @@ if (slideDesk) {
   const toggle = document.querySelector('#slide-toggle');
   const stateText = document.querySelector('#slide-state');
   let x = 0, tucked = false, anim = 0;
-  const tuckedX = () => -(win.offsetLeft + win.offsetWidth - slideDesk.clientWidth * 0.006);
+  // Where the tucked window rests, measured when the desk or window changes size (ResizeObserver),
+  // not on every pointermove.
+  let tuckedAt = 0;
+  const tuckedX = () => tuckedAt;
+  // will-change only while the window is moving (drag or settle), then handed back.
+  const moving = on => win.classList.toggle('is-moving', on);
   const rubber = (d, limit) => (d * limit * 0.55) / (limit + 0.55 * d);
   const setX = v => { x = v; win.style.transform = `translateX(${v.toFixed(2)}px)`; };
   function settle(nextTucked, velocity = 0) {
@@ -322,7 +332,8 @@ if (slideDesk) {
     stateText.textContent = tucked ? stateText.dataset.tucked : stateText.dataset.docked;
     const from = x, to = tucked ? tuckedX() : 0;
     cancelAnimationFrame(anim);
-    if (reduceMotion.matches || Math.abs(to - from) < 0.5) { setX(to); return; }
+    if (reduceMotion.matches || Math.abs(to - from) < 0.5) { setX(to); moving(false); return; }
+    moving(true);
     // glide：位置带着松手速度。停在残差里，不切在 1.1 秒。
     const [response, zeta] = WSMotion.named('glide');
     const v0 = velocity / (to - from);
@@ -331,7 +342,7 @@ if (slideDesk) {
       const t = (now - start) / 1000;
       const p = WSMotion.progress(t, response, zeta, v0);
       setX(from + (to - from) * p);
-      if (Math.abs(1 - p) > 0.004 && t < 1.6) anim = requestAnimationFrame(step); else setX(to);
+      if (Math.abs(1 - p) > 0.004 && t < 1.6) anim = requestAnimationFrame(step); else { anim = 0; setX(to); moving(false); }
     };
     anim = requestAnimationFrame(step);
   }
@@ -344,6 +355,7 @@ if (slideDesk) {
     bar.setPointerCapture(e.pointerId);
     drag = { start: e.clientX, from: x, samples: [[e.timeStamp, x]] };
     win.classList.add('is-dragging');
+    moving(true);
   });
   bar.addEventListener('pointermove', e => {
     if (!drag) return;
@@ -365,7 +377,13 @@ if (slideDesk) {
   };
   bar.addEventListener('pointerup', release);
   bar.addEventListener('pointercancel', release);
-  addEventListener('resize', () => { if (tucked) setX(tuckedX()); });
+  const measureTuck = () => {
+    tuckedAt = -(win.offsetLeft + win.offsetWidth - slideDesk.clientWidth * 0.006);
+    if (tucked && !anim && !drag) setX(tuckedAt);
+  };
+  const tuckSize = new ResizeObserver(measureTuck);
+  tuckSize.observe(slideDesk); tuckSize.observe(win);
+  measureTuck();
 }
 
 const glanceDesk = document.querySelector('.stage-glance');

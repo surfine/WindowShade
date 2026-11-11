@@ -88,11 +88,12 @@ html:is([lang=zh-CN],[lang=zh-Hant]) .prose p{font-size:17px;line-height:2}
 .space-content>span{font:500 10.5px ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.15em;opacity:.75}
 .space-content h3{font:500 38px/1.22 var(--serif);margin:18px 0 16px}
 .space-content p{font-size:13px;opacity:.8}
-.space-desk[data-mode=shade] .space-content{height:0;padding-block:0;opacity:0}
+.space-desk[data-shade] .space-content{height:0;padding-block:0;opacity:0}
 .space-desk[data-mode=shade] .today-bar{border-radius:14px;box-shadow:none;transition-delay:0s}
 .space-desk[data-mode=minimize] .space-window{transform:translate(calc(52% * var(--p, 1)), calc(100% * var(--p, 1))) scale(calc(1 - .92 * var(--p, 1)));opacity:calc(1 - var(--p, 1));pointer-events:none}
-.space-desk[data-mode=overview] .space-window{top:calc(15% + 12% * var(--p, 1));left:calc(12% - 8% * var(--p, 1));width:calc(52% - 6% * var(--p, 1));transform:scale(calc(1 - .13 * var(--p, 1)))}
-.space-desk[data-mode=overview] .space-draft{top:calc(21% + 3% * var(--p, 1));left:calc(37% + 16% * var(--p, 1));width:calc(50% - 7% * var(--p, 1));transform:scale(calc(1 - .13 * var(--p, 1)))}
+/* Overview's resting arrangement. The travel into and out of it is a transform per frame (history.js drawOverview). */
+.space-desk[data-mode=overview] .space-window{top:27%;left:4%;width:46%;transform:scale(.87)}
+.space-desk[data-mode=overview] .space-draft{top:24%;left:53%;width:43%;transform:scale(.87)}
 .dock-target{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:14px;background:var(--menubar);-webkit-backdrop-filter:blur(18px) saturate(160%);backdrop-filter:blur(18px) saturate(160%);box-shadow:0 0 0 .5px var(--hair),0 10px 24px -10px var(--shadow);color:var(--win-ink);font-size:13px;font-weight:550;z-index:4;transition:transform .16s var(--ease-out)}
 .dock-target:active{transform:translateX(-50%) scale(.97)}
 .choice-row{display:flex;flex-wrap:wrap;gap:8px;padding:18px 22px 0}
@@ -124,7 +125,10 @@ html:is([lang=zh-CN],[lang=zh-Hant]) .history-page :is(.classic-bar,.classic-bar
 
 /* 03 · Mac OS 8 */
 .platinum-desk{height:340px;position:relative;overflow:hidden}
-.platinum-window{width:62%;max-width:480px;position:absolute;left:var(--drag-x,40px);top:var(--drag-y,40px);box-shadow:2px 2px 0 rgba(20,20,60,.4)}
+.platinum-window{width:62%;max-width:480px;position:absolute;left:40px;top:40px;transform:translate(calc(var(--drag-x,40px) - 40px),calc(var(--drag-y,40px) - 40px));box-shadow:2px 2px 0 rgba(20,20,60,.4)}
+/* While it rolls, the window is clipped from below (history.js) and this strip is its bottom frame, carried up with the cut. */
+.platinum-window::after{content:"";position:absolute;left:-1px;right:-1px;bottom:-1px;height:2px;border:1px solid #000;border-top:0;background:#dadada;box-shadow:1px 1px #000;transform:translateY(calc(-1 * var(--cut,0px)));display:none;pointer-events:none}
+.platinum-window.is-rolling::after{display:block}
 .platinum-window .platinum-bar{cursor:grab;touch-action:none;height:35px}
 .platinum-window.dragging .platinum-bar{cursor:grabbing}
 .platinum-window .platinum-bar:focus-visible{outline:2px solid #fff;outline-offset:2px}
@@ -288,8 +292,8 @@ html:is([lang=zh-CN],[lang=zh-Hant]) .ending p{font-size:24px;line-height:1.9}
   .space-draft h3{font-size:22px}
   .space-draft p{font-size:12px}
   .space-draft .ink-lines{height:36px;margin-top:14px}
-  .space-desk[data-mode=overview] .space-window{width:calc(74% - 2% * var(--p, 1));left:calc(6% - 1% * var(--p, 1));top:calc(16% + 8% * var(--p, 1));transform:scale(calc(1 - .42 * var(--p, 1)));transform-origin:left top}
-  .space-desk[data-mode=overview] .space-draft{width:72%;left:calc(22% + 29% * var(--p, 1));top:24%;transform:scale(calc(1 - .38 * var(--p, 1)));transform-origin:left top}
+  .space-desk[data-mode=overview] .space-window{width:72%;left:5%;top:24%;transform:scale(.58);transform-origin:left top}
+  .space-desk[data-mode=overview] .space-draft{width:72%;left:51%;top:24%;transform:scale(.62);transform-origin:left top}
   .space-desk[data-mode=minimize] .space-window{transform:translate(calc(10% * var(--p, 1)), calc(85% * var(--p, 1))) scale(calc(1 - .92 * var(--p, 1)))}
   .dock-target{bottom:22px;font-size:12px;min-height:40px;padding:0 14px}
   .choice-row{padding:14px 16px 0;gap:6px}
@@ -300,7 +304,7 @@ html:is([lang=zh-CN],[lang=zh-Hant]) .ending p{font-size:24px;line-height:1.9}
   .gesture-status{min-height:0;margin-top:14px}
   .gesture-window #gesture-content{height:150px}
   .platinum-desk{height:270px}
-  .platinum-window{width:80%;left:var(--drag-x,16px);top:var(--drag-y,28px)}
+  .platinum-window{width:80%;left:16px;top:28px;transform:translate(calc(var(--drag-x,16px) - 16px),calc(var(--drag-y,28px) - 28px))}
   .platinum-window .platinum-bar{height:32px}
   .platinum-window #platinum-content{height:170px;padding:20px}
   .platinum-window p{font-size:13px}

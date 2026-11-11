@@ -77,11 +77,27 @@
     // +700 / +300 pt/s 踢在 calm 上。pt 换成这张插图的 cqw。
     return { w: WSMotion.kick(t, 700 * pt), h: WSMotion.kick(t, 300 * pt) };
   }
+  // The island's layout box is fixed at BOX (style.css); a frame only changes its clip-path and
+  // the content boxes' transforms, never a size. Each content box is its own mode's size, and is
+  // shifted to where that mode's flex alignment would put it inside the current shape: compact
+  // hugs both sides (centred vertically), the alert sits bottom-left, the shelf bottom-centre.
+  const BOX = { w: 60, h: 30 };
+  const boxes = { compact, alert: alertBox, shelf };
+  for (const [key, el] of Object.entries(boxes)) { el.style.width = `${shapes[key].w}cqw`; el.style.height = `${shapes[key].h}cqw`; }
+  const compactIcon = compact.querySelector('.island-icon');
+  const compactSide = compact.querySelector('.island-side');
+  const cq = v => `${v.toFixed(3)}cqw`;
   function draw() {
     const bump = swell();
-    island.style.width = `${(shape.w.value + bump.w).toFixed(3)}cqw`;
-    island.style.height = `${(shape.h.value + bump.h).toFixed(3)}cqw`;
-    island.style.borderBottomLeftRadius = island.style.borderBottomRightRadius = `${Math.max(0, shape.r.value).toFixed(3)}cqw`;
+    const w = shape.w.value + bump.w, h = shape.h.value + bump.h, r = Math.max(0, shape.r.value);
+    const side = (BOX.w - w) / 2;
+    island.style.clipPath = `inset(0 ${cq(side)} ${cq(BOX.h - h)} ${cq(side)} round 0 0 ${cq(r)} ${cq(r)})`;
+    const { compact: C, alert: A, shelf: S } = shapes;
+    compact.style.transform = `translate(-50%,${cq((h - C.h) / 2)})`;
+    compactIcon.style.transform = `translateX(${cq((w - C.w) / 2)})`;
+    compactSide.style.transform = `translateX(${cq((C.w - w) / 2)})`;
+    alertBox.style.transform = `translate(calc(-50% + ${cq((w - A.w) / 2)}),${cq(h - A.h)})`;
+    shelf.style.transform = `translate(-50%,${cq(h - S.h)})`;
   }
 
   function tick(now) {
