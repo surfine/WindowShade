@@ -109,6 +109,9 @@
   // ---- 收进刘海：前面那扇窗缩小、飞进刘海（被刘海挡住），刘海鼓一下，两边露出图标和个数 ----
   let flight = 0;
   let flightPose = null;
+  // Reduce Motion fades the window out on a timer instead of flying it; release() must cancel it,
+  // or pressing 放回 within those 250 ms would still hide the window after it came back.
+  let fadeTimer = 0;
   function placeFront(p) {
     if (!flightPose) return;
     const { dx, dy, scale } = flightPose;
@@ -135,7 +138,8 @@
     };
     cancelAnimationFrame(flight);
     // 减少动态效果：不飞，原处淡出（reduced 0.25 s），刘海随后直接换样子。
-    if (reduce.matches) { front.classList.add('is-fading'); setTimeout(() => { front.classList.remove('is-fading'); done(); }, 250); }
+    clearTimeout(fadeTimer);
+    if (reduce.matches) { front.classList.add('is-fading'); fadeTimer = setTimeout(() => { fadeTimer = 0; front.classList.remove('is-fading'); done(); }, 250); }
     else {
       // 飞进刘海：settle，终点是个口子，不回弹。
       const [response, zeta] = WSMotion.named('settle');
@@ -161,6 +165,8 @@
     front.hidden = false;
     front.classList.remove('is-leaving');
     cancelAnimationFrame(flight);
+    clearTimeout(fadeTimer); fadeTimer = 0;
+    front.classList.remove('is-fading');
     if (reduce.matches || !flightPose) {
       front.style.transform = ''; front.style.borderRadius = '';
       // 原处淡入。

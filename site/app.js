@@ -83,15 +83,21 @@ if (desk && reference && fold && bar && body && status) {
     desk.classList.add('is-rolling');
     rollSpring.to(to, { token: 'calm' });
   }
-  function setFolded(next, announce = true) {
+  // One place for everything that says whether the window is rolled up (button text, both
+  // aria-expanded values, the body's aria-hidden, the bar's label, the live status), shared by
+  // the click path and the scroll path.
+  function renderFolded(next, announce = true) {
     folded = next;
-    animateRoll(folded ? 1 : 0);
     fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold;
     fold.setAttribute('aria-expanded', String(!folded));
     bar.setAttribute('aria-expanded', String(!folded));
     bar.setAttribute('aria-label', `${bar.textContent.trim()}: ${folded ? fold.dataset.unfold : fold.dataset.fold}`);
     body.setAttribute('aria-hidden', String(folded));
     if (announce) status.textContent = folded ? status.dataset.folded : status.dataset.expanded;
+  }
+  function setFolded(next, announce = true) {
+    renderFolded(next, announce);
+    animateRoll(folded ? 1 : 0);
   }
   const toggle = () => { touched = true; setFolded(!folded); };
   fold.addEventListener('click', toggle);
@@ -183,7 +189,7 @@ if (desk && reference && fold && bar && body && status) {
   const home = (desk.getBoundingClientRect().top + scrollY + desk.offsetHeight / 2) / innerHeight;
   scrubbers.push({ el: desk, from: () => Math.min(.62, home) - .02, span: .3, off: () => touched, apply: p => {
     stopRoll();
-    if (!!folded !== p >= .5) { folded = p >= .5; fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold; bar.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-expanded', String(!folded)); }
+    if (folded !== p >= .5) renderFolded(p >= .5);
     if (rollSpring) rollSpring.snap(p); else setRoll(p);
   } });
 }

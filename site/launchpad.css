@@ -47,7 +47,7 @@
 .lp-close svg{width:18px;height:18px}
 .lp-close svg,.lp-ico svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @keyframes lp-pop{from{opacity:0;transform:translate(-50%,-50%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
-.feature-demo .lp-caption{margin-top:14px;font-size:12px;line-height:1.7;color:var(--faint,#8b9099)}
+.feature-demo .lp-caption{margin-top:14px;font-size:12px;line-height:1.7;color:var(--faint,#666b74)}
 @media(max-width:640px){.lp-stage{padding:70px 5% 5%;min-height:380px}.lp-tabs{top:10px}}
 @media(max-width:359px){.lp-tab{padding:0 12px;font-size:13px}.lp-stage{padding-inline:4%}}
 @media(prefers-reduced-motion:reduce){.lp-overlay{animation:none}.lp-tab,.lp-app,.lp-group-btn,.lp-close{transition:none}}
