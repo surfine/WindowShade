@@ -4,19 +4,6 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const finePointer = matchMedia('(hover: hover) and (pointer: fine)');
 // Theme and the header hairline live in theme.js, shared with every page.
 
-// Below-the-fold blocks settle in once. Anything already on screen is shown as-is.
-if ('IntersectionObserver' in window && document.body.classList.contains('home')) {
-  const targets = document.querySelectorAll('.section-head, .way-list, .story-head, .story-book, .today, .feature-copy, .feature-demo, .motion-heading, .lid-figure, .shortcut-list, .trust-copy, .questions, .closing');
-  const reveal = new IntersectionObserver(entries => {
-    for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add('is-in'); reveal.unobserve(entry.target); }
-  }, { rootMargin: '0px 0px -8% 0px' });
-  for (const el of targets) {
-    if (el.getBoundingClientRect().top < innerHeight) continue;
-    el.dataset.reveal = '';
-    reveal.observe(el);
-  }
-}
-
 // Scroll-linked animation, the way Apple's product pages do it: a demo's progress follows
 // where it sits on screen, so a reader scrolling on a phone drives it with their own finger
 // and can never miss it. Each scrubber maps its element's centre from `from` to `to`
