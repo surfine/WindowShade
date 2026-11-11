@@ -284,7 +284,7 @@ enum GlobalShortcutSettings {
         }
         if numberedExpandEnabled, candidate.modifiers == numberedModifiers,
            numberedKeyCodes.contains(candidate.keyCode) {
-            return "按编号展开已收起的窗口"
+            return WSL10n.text("gesture.keys.numbered", zh: "按编号展开已收起的窗口")
         }
         return nil
     }

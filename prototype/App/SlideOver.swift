@@ -1488,7 +1488,7 @@ final class SlideOverMirrorView: NSView {
         picture.addSublayer(iconLayer)
         videoLayer.videoGravity = .resizeAspect
         picture.addSublayer(videoLayer)
-        hintLayer.string = "点一下，回到它所在的桌面"
+        hintLayer.string = WSL10n.text("slideOver.hint.otherDesktop", zh: "点一下，回到它所在的桌面")
         hintLayer.font = NSFont.systemFont(ofSize: 12, weight: .medium)
         hintLayer.fontSize = 12
         hintLayer.foregroundColor = NSColor.white.cgColor

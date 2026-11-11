@@ -62,8 +62,8 @@ final class PiPView: NSView {
         selection.isHidden = true
         clip.addSublayer(selection)
         for (key, symbol, tip, size) in [("close", "xmark", WSL10n.text("pip.close", zh: "关掉画中画"), 12), ("return", "pip.exit", WSL10n.text("pip.back", zh: "回到原处"), 13),
-                                         ("up", "chevron.up", "上一页", 15), ("play", "playpause.fill", WSL10n.text("pip.playPause", zh: "播放 / 暂停"), 17),
-                                         ("down", "chevron.down", "下一页", 15), ("crop", "crop", WSL10n.text("pip.crop", zh: "只看一块"), 12)] {
+                                         ("up", "chevron.up", WSL10n.text("launchpad.previousPage", zh: "上一页"), 15), ("play", "playpause.fill", WSL10n.text("pip.playPause", zh: "播放 / 暂停"), 17),
+                                         ("down", "chevron.down", WSL10n.text("launchpad.nextPage", zh: "下一页"), 15), ("crop", "crop", WSL10n.text("pip.crop", zh: "只看一块"), 12)] {
             let button = NSButton(image: Self.symbol(symbol, size: CGFloat(size)), target: self, action: #selector(pressed(_:)))
             button.identifier = NSUserInterfaceItemIdentifier(key)
             button.isBordered = false

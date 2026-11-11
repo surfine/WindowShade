@@ -48745,6 +48745,52 @@
         }
       }
     },
+    "bystander.tuck.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Someone's watching"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有人在看"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有人在看"
+          }
+        }
+      }
+    },
+    "bystander.tuck.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private windows rolled up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私人窗口已收起"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私人視窗已收起"
+          }
+        }
+      }
+    },
     "settings.common.accessibility": {
       "extractionState": "manual",
       "localizations": {
@@ -64082,6 +64128,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "調整側拉視窗的大小"
+          }
+        }
+      }
+    },
+    "slideOver.hint.otherDesktop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to go to its desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点一下，回到它所在的桌面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下，回到它所在的桌面"
           }
         }
       }

@@ -79,8 +79,8 @@ extension WS2RemoteEffectPort {
     }
 
     enum Copy {
-        static let promptSoundOn = "提示音已开"
-        static let promptSoundOff = "提示音已关"
+        static var promptSoundOn: String { WSL10n.text("conductor.stage.unmuted", zh: "提示音已开") }
+        static var promptSoundOff: String { WSL10n.text("conductor.stage.muted", zh: "提示音已关") }
     }
 
     private(set) var layers = RemoteLayerHost()

@@ -39,7 +39,7 @@ final class PrivateAppListPanel: NSObject {
         panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 380, height: 440),
                         styleMask: [.titled, .closable], backing: .buffered, defer: true)
         super.init()
-        panel.title = Self.rowTitle
+        panel.title = WSL10n.text("settings.privateApps.rowTitle", zh: Self.rowTitle)
         panel.isReleasedWhenClosed = false
         panel.contentView = buildContent()
         observer = NotificationCenter.default.addObserver(
@@ -73,9 +73,9 @@ final class PrivateAppListPanel: NSObject {
     }
 
     private func buildContent() -> NSView {
-        let title = NSTextField(labelWithString: Self.rowTitle)
+        let title = NSTextField(labelWithString: WSL10n.text("settings.privateApps.rowTitle", zh: Self.rowTitle))
         title.font = .systemFont(ofSize: 15, weight: .semibold)
-        let hint = NSTextField(wrappingLabelWithString: Self.rowSubtitle)
+        let hint = NSTextField(wrappingLabelWithString: WSL10n.text("settings.privateApps.rowSubtitle", zh: Self.rowSubtitle))
         hint.textColor = .secondaryLabelColor
         hint.font = .systemFont(ofSize: 12)
 
