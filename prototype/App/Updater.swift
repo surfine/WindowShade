@@ -83,8 +83,6 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     private var pendingTerminate = false
     private var terminateSafetyToken = 0
     private var dismissWaiters: [() -> Void] = []
-    private var healthyTimer: Timer?
-    private var runTimeTimer: Timer?
     private weak var settingsStatusLabel: NSTextField?
     private weak var frequencyControl: NSSegmentedControl?
     private(set) var settingsStatus: String?
@@ -124,14 +122,12 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
             UpdateLaunch.markRunSeconds(UpdatePolicy.normalRunSeconds)
         }
         RunLoop.main.add(runTime, forMode: .common)
-        runTimeTimer = runTime
         guard let journal = store.loadJournal(), Self.awaitingHealthy.contains(journal.phase) else { return }
         // 启动完成、稳定运行 10 秒后做装后自查：过了写 healthy，不过写 abnormal 并退出（看护或下次启动换回）。
         let healthy = Timer(timeInterval: 10, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.markHealthyIfSelfCheckPasses() }
         }
         RunLoop.main.add(healthy, forMode: .common)
-        healthyTimer = healthy
     }
 
     /// 新版写 launched；看护补完关可能在新版起来后才把 started/gating 改成 approved（它只改这两种），两种都等 healthy。

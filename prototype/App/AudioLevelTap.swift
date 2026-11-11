@@ -132,13 +132,11 @@ protocol AudioLevelTapping: AnyObject {
 private final class AudioLevelSink: @unchecked Sendable {
     private var meter: AudioLevelMeter
     private var mono: [Float]
-    private let channels: Int
     private let deliver: @Sendable ([Double]) -> Void
 
-    init(sampleRate: Double, channels: Int, deliver: @escaping @Sendable ([Double]) -> Void) {
+    init(sampleRate: Double, deliver: @escaping @Sendable ([Double]) -> Void) {
         meter = AudioLevelMeter(sampleRate: sampleRate)
         mono = Array(repeating: 0, count: 4096)
-        self.channels = max(1, channels)
         self.deliver = deliver
     }
 
@@ -259,7 +257,7 @@ final class AudioProcessTap: AudioLevelTapping, @unchecked Sendable {
         guard AudioHardwareCreateAggregateDevice(aggregate as CFDictionary, &device) == noErr,
               device != AudioObjectID(kAudioObjectUnknown) else { return false }
         aggregateID = device
-        let sink = AudioLevelSink(sampleRate: format.mSampleRate, channels: Int(format.mChannelsPerFrame), deliver: deliver)
+        let sink = AudioLevelSink(sampleRate: format.mSampleRate, deliver: deliver)
         var proc: AudioDeviceIOProcID?
         guard AudioDeviceCreateIOProcIDWithBlock(&proc, device, io, { _, input, _, _, _ in sink.consume(input) }) == noErr,
               let proc else { return false }

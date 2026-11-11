@@ -5,8 +5,6 @@ import Cocoa
 final class WS2InputController {
     let scrollTap = ScrollTap()
     let middleTap = MiddleTitlebarTap()
-    private var remote = RemoteInputRouter()
-    private var routerClock = WS2.Instant(nanoseconds: 1)
     private(set) var preferences = WS2InputPreferences.Value.off
     private(set) var scrollDecision = ScrollInstallPolicy.Decision.hold(.off)
     /// iPhone 上的遥控器：遥控模式开着且宣告、监听都就绪时才是 true。
@@ -17,11 +15,6 @@ final class WS2InputController {
     private var remoteLock: WS2RemoteLockObserver?
     private(set) var middleListening = false
     private(set) var hooksPaused = false
-
-    private func tick() -> WS2.Instant {
-        routerClock = routerClock.adding(1)
-        return routerClock
-    }
 
     func apply() {
         dispatchPrecondition(condition: .onQueue(.main))
@@ -58,8 +51,6 @@ final class WS2InputController {
             && !middleTap.systemStopped
         middleListening = middleOn
         middleTap.apply(installing: middleOn)
-        // Siri 遥控器：没有核对过的静音映射，仍不创建它的监听。
-        _ = remote.setEnabled(false, at: tick())
         let conductor = WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store)
         remoteListening = applyRemote(on: prefs.remoteMode, conductor: conductor)
         // 手柄：有哪一台打开了才监听，全关就停（R09）。
@@ -120,7 +111,6 @@ final class WS2InputController {
         middleListening = false
         middleTap.apply(installing: false)
         remoteListening = false
-        _ = remote.setEnabled(false, at: tick())
         remoteHost?.setEnabled(remote: false, conductor: false)
         remoteLock?.invalidate(); remoteLock = nil
     }

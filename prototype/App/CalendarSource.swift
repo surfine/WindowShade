@@ -26,10 +26,8 @@ final class CalendarSource {
 
     /// 真的建过几次 store 适配器，测试看它。
     private(set) var adapterBuilds = 0
-    private(set) var reloads = 0
     private(set) var isRunning = false
     private(set) var events: [CalendarEventInput] = []
-    private(set) var nextWakeDate: Date?
 
     private let isAuthorized: () -> Bool
     private let makeAdapter: @MainActor () -> CalendarStoreAdapter
@@ -73,7 +71,7 @@ final class CalendarSource {
         cancelWake?(); cancelWake = nil
         stopObserving?(); stopObserving = nil
         adapter = nil
-        events = []; nextWakeDate = nil; lastSelection = nil
+        events = []; lastSelection = nil
         if wasRunning { onStopped?() }
     }
 
@@ -91,7 +89,6 @@ final class CalendarSource {
         guard isRunning, let adapter else { return }
         // 授权被收回：不再读，随即收掉（拒绝之后不追问，也不留任何界面）。
         guard isAuthorized() else { stop(); return }
-        reloads += 1
         let t = now()
         events = adapter.fetch(from: t.addingTimeInterval(-CalendarActivity.joinGrace),
                                to: t.addingTimeInterval(CalendarActivity.horizon))
@@ -109,7 +106,6 @@ final class CalendarSource {
         cancelWake?(); cancelWake = nil
         let cap = t.addingTimeInterval(Self.refetchCap)
         let wake = min(CalendarActivity.nextWake(from: events, now: t, lead: lead) ?? cap, cap)
-        nextWakeDate = wake
         cancelWake = scheduleWake(wake) { [weak self] in self?.reload() }
         if selection != lastSelection {
             lastSelection = selection

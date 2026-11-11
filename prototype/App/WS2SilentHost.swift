@@ -638,12 +638,11 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
                 view.removeFromSuperview()
             }
         }
-        var chips: [NSView] = slice.enumerated().map { offset, id in
+        var chips: [NSView] = slice.map { id in
             let chip = IslandChip(title: WS2SilentCopy.line(id) ?? id, symbol: Self.symbol(id), style: .glass)
             chip.target = self
             chip.action = #selector(tapCommand(_:))
             chip.identifier = NSUserInterfaceItemIdentifier(id)
-            _ = offset
             return chip
         }
         let more = IslandChip(title: WS2SilentCopy.saying("more"), symbol: "ellipsis", style: .glass)
@@ -660,11 +659,7 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
         case "launcher.open": return "square.grid.3x3"
         case "window.left": return "rectangle.lefthalf.inset.filled"
         case "window.right": return "rectangle.righthalf.inset.filled"
-        case "window.fill": return "rectangle.inset.filled"
-        case "window.collapse": return "rectangle.compress.vertical"
         case "window.glance": return "eye"
-        case "dictation.adopt": return "checkmark"
-        case "assistant.sendDraft": return "paperplane"
         default: return "circle"
         }
     }

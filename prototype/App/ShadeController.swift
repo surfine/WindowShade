@@ -505,7 +505,6 @@ extension AppDelegate {
             // App 卡住时不注册观察者：AXObserver 注册要它回四次消息。
             installStep("space-move")
             let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut) && !stalled
-            let observer: AXObserver? = nil
             // 台前调度下的最小化是「缩进侧条」的动画（规格 R19）：装好之后头一两秒，
             // 外框还是原尺寸或正在缩，既不在侧条带上、AXMinimized 也仍是 false——
             // 单看这一帧和「用户刚把它叫回来」一模一样。这段时间的判断权交给验证链，
@@ -524,7 +523,7 @@ extension AppDelegate {
                                    previewImage: previewImage ?? preparedImage.map { NSImage(cgImage: $0, size: size) },
                                    quickLookReopenURL: quickLookReopenURL,
                                    ignoreAppRevealUntil: Date().addingTimeInterval(revealGrace),
-                                   observer: observer,
+                                   observer: nil,
                                    announcesElsewhere: options.emitFoldFeedback)
             shaded[id] = state
             MainActor.assumeIsolated {

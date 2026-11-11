@@ -32,7 +32,7 @@ struct UpdaterWindowContent {
 }
 
 @MainActor
-final class UpdaterWindowController: NSObject, NSWindowDelegate {
+final class UpdaterWindowController: NSObject {
     private var panel: NSPanel?
     private var progressBar: NSProgressIndicator?
     private var actions: [() -> Void] = []
@@ -77,7 +77,6 @@ final class UpdaterWindowController: NSObject, NSWindowDelegate {
         panel.isReleasedWhenClosed = false
         panel.hidesOnDeactivate = false
         panel.level = .floating
-        panel.delegate = self
         return panel
     }
 
