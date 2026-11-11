@@ -62,7 +62,7 @@ import Cocoa
     /// 设置页用：当前连着的手柄。只看一眼，不装回调。
     func rows() -> [Row] {
         reconcile()
-        return ordered().map { Row(id: $0.id, name: $0.controller.vendorName ?? "游戏手柄",
+        return ordered().map { Row(id: $0.id, name: $0.controller.vendorName ?? WSL10n.text("conductor.pad.generic", zh: "游戏手柄"),
                                    access: access[$0.id] ?? .off, yielding: running && yielding,
                                    yieldingToPage: WS2GamepadHandlerSeats.shared.pageHolds($0.controller)) }
     }

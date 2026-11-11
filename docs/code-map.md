@@ -39,7 +39,7 @@
 
 ## 不在 prototype/ 里但常要动的
 
-- `tests/` — 在**仓库根**：`*.swift` 测试档加 `run-*.sh` runner（共 284 个），自制 `@main + expect` 模式；`build.sh` 门禁会跑其中几支。已完结轮次的证据快照归档在 `tests/archive/`（part7–10、h4-vision-eval），不参与自动发现。
+- `tests/` — 在**仓库根**：`*.swift` 测试档加 `run-*.sh` runner（共 283 个），自制 `@main + expect` 模式；`build.sh` 门禁会跑其中几支。已完结轮次的证据快照归档在 `tests/archive/`（part7–10、h4-vision-eval），不参与自动发现。
 - `tools/` — 探针、隐私登记表（`tools/privacy/registry.json`）、编程会话 hook（`tools/ws2-hook`）；已完结的一次性研究探针归档在 `tools/archive/`。
 - `site/` — 官网；隐私页由登记表生成并与 App 逐字对照。
 - `scripts/` — 发布前检查（如 `check-release-version.sh`）。

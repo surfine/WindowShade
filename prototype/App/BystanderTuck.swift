@@ -62,7 +62,8 @@ final class BystanderTuck {
     /// 刘海提醒：符号 eye，主句“有人在看”，副句“私人窗口已收起”。点一下全部放回。
     private func announce(owner: AppDelegate) {
         owner.notch.announceWhenFree(
-            key: "bystander.tuck", text: "有人在看", detail: "私人窗口已收起", tone: .info, symbol: "eye",
+            key: "bystander.tuck", text: WSL10n.text("bystander.tuck.title", zh: "有人在看"),
+            detail: WSL10n.text("bystander.tuck.detail", zh: "私人窗口已收起"), tone: .info, symbol: "eye",
             priority: 6, ttl: 5, hold: 4.5,
             onClick: { [weak self] in
                 MainActor.assumeIsolated {

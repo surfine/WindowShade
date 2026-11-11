@@ -1003,7 +1003,7 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
 
     private func name(of row: FileShelfRow) -> String {
         // 屏幕正在共享时，文件名不露：只写“文件”。
-        if redacted { return row.availability.label.map { "文件\n" + $0 } ?? WSL10n.text("fileDrag.file", zh: "文件") }
+        if redacted { return row.availability.label.map { WSL10n.text("fileDrag.file", zh: "文件") + "\n" + $0 } ?? WSL10n.text("fileDrag.file", zh: "文件") }
         let name = row.entry.name.map { $0.isNewline ? " " : String($0) }.joined()
         if let label = row.availability.label { return name + "\n" + label }
         return name

@@ -399,8 +399,8 @@ import Foundation
                     if method == "turn/completed",let id=p["turn"]?["id"]?.text,id==activeTurn {
                         let result=p["turn"]?["status"]?.text
                         switch result {
-                        case "completed":emit(.turnFinished(summary:"已完成"),turn:id);phase = .completed;status=WSL10n.text("owned.status.done", zh: "助手已完成")
-                        case "interrupted":emit(.failed(summary:"已停止"),turn:id);phase = .ready;status=WSL10n.text("owned.status.stopped", zh: "助手已停止")
+                        case "completed":emit(.turnFinished(summary:WSL10n.text("say.done", zh: "已完成")),turn:id);phase = .completed;status=WSL10n.text("owned.status.done", zh: "助手已完成")
+                        case "interrupted":emit(.failed(summary:WSL10n.text("conductor.stage.stopped", zh: "已停止")),turn:id);phase = .ready;status=WSL10n.text("owned.status.stopped", zh: "助手已停止")
                         case "failed":emit(.failed(summary:WSL10n.text("owned.status.failed", zh: "助手执行失败")),turn:id);phase = .failed;status=WSL10n.text("owned.status.failed", zh: "助手执行失败")
                         default:throw CodexWire.Failure.malformed
                         }

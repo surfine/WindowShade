@@ -48745,6 +48745,52 @@
         }
       }
     },
+    "bystander.tuck.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Someone's watching"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有人在看"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有人在看"
+          }
+        }
+      }
+    },
+    "bystander.tuck.detail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Private windows rolled up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私人窗口已收起"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "私人視窗已收起"
+          }
+        }
+      }
+    },
     "settings.common.accessibility": {
       "extractionState": "manual",
       "localizations": {
@@ -49803,52 +49849,6 @@
         }
       }
     },
-    "settings.input.fourFinger.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A four-finger tap hasn't been verified yet, so it can't be turned on."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "四指轻点还没核对，先不能开。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "四指輕點還沒核對，先不能開。"
-          }
-        }
-      }
-    },
-    "settings.input.fourFinger.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Four-finger tap opens hidden windows"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "四指轻点打开看不见的窗口"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "四指輕點開啟看不見的視窗"
-          }
-        }
-      }
-    },
     "settings.input.middleFold.detail": {
       "extractionState": "manual",
       "localizations": {
@@ -49964,75 +49964,6 @@
         }
       }
     },
-    "settings.input.mouseDirection.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only the mouse's scrolling is changed. While the app can't tell which mouse an event came from, nothing is changed."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只准备改鼠标的滚动。还不能确认事件来自哪只鼠标时，先不改。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "只准備改滑鼠的捲動。還不能確認事件來自哪隻滑鼠時，先不改。"
-          }
-        }
-      }
-    },
-    "settings.input.mouseDirection.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mouse scroll direction"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "鼠标滚动方向"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "滑鼠捲動方向"
-          }
-        }
-      }
-    },
-    "settings.input.notChecked": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Not checked yet — leave it off"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还没核对，先不用"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "還沒核對，先不用"
-          }
-        }
-      }
-    },
     "settings.input.sameAsSystem": {
       "extractionState": "manual",
       "localizations": {
@@ -50121,144 +50052,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "後退和前進"
-          }
-        }
-      }
-    },
-    "settings.input.smooth.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Once on, one notch of the wheel becomes a continuous scroll. The app can't yet tell which mouse an event came from, so it leaves scrolling alone for now."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开之后，滚轮的一格会变成一段连续滚动。现在还不能确认事件来自哪只鼠标，所以先不改。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "開啟之後，滾輪的一格會變成一段連續捲動。現在還不能確認事件來自哪隻滑鼠，所以先不改。"
-          }
-        }
-      }
-    },
-    "settings.input.smooth.light": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Light"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "轻"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "輕"
-          }
-        }
-      }
-    },
-    "settings.input.smooth.medium": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Medium"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "中"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "中"
-          }
-        }
-      }
-    },
-    "settings.input.smooth.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Smooth scrolling"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平滑滚动"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平滑捲動"
-          }
-        }
-      }
-    },
-    "settings.input.smooth.off": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Off"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "關"
-          }
-        }
-      }
-    },
-    "settings.input.smooth.trackpadLike": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Trackpad-like"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "像触控板"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "像觸控式軌跡板"
           }
         }
       }
@@ -50397,52 +50190,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "由 %@ 接管"
-          }
-        }
-      }
-    },
-    "settings.input.threeFinger.detail": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "A three-finger tap hasn't been verified yet, so it can't be turned on."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三指轻点还没核对，先不能开。"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三指輕點還沒核對，先不能開。"
-          }
-        }
-      }
-    },
-    "settings.input.threeFinger.name": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Three-finger tap is a middle click"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三指轻点是中键"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三指輕點是中鍵"
           }
         }
       }
@@ -58635,52 +58382,6 @@
         }
       }
     },
-    "settings.shade.supplement.gateScroll": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Smooth scrolling"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平滑滚动"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "平滑捲動"
-          }
-        }
-      }
-    },
-    "settings.shade.supplement.gateScrollWhy": {
-      "extractionState": "manual",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Needs device-origin confirmation for every event"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "需要确认每条事件的设备来源"
-          }
-        },
-        "zh-Hant": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "需要確認每條事件的裝置來源"
-          }
-        }
-      }
-    },
     "settings.shade.supplement.heading": {
       "extractionState": "manual",
       "localizations": {
@@ -64427,6 +64128,29 @@
           "stringUnit": {
             "state": "translated",
             "value": "調整側拉視窗的大小"
+          }
+        }
+      }
+    },
+    "slideOver.hint.otherDesktop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click to go to its desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点一下，回到它所在的桌面"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "點一下，回到它所在的桌面"
           }
         }
       }

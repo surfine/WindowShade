@@ -76,7 +76,7 @@ enum FileDragKind: Equatable, Sendable {
     /// 读屏念的：拿着什么。
     var spokenLabel: String {
         switch self {
-        case .files(let count, let hasFolder): return count == 1 ? (hasFolder ? WSL10n.text("fileDrag.oneFolder", zh: "一个文件夹") : WSL10n.text("fileDrag.oneFile", zh: "一个文件")) : "\(count) 个文件"
+        case .files(let count, let hasFolder): return count == 1 ? (hasFolder ? WSL10n.text("fileDrag.oneFolder", zh: "一个文件夹") : WSL10n.text("fileDrag.oneFile", zh: "一个文件")) : WSL10n.text("fileDrag.countFiles", zh: "%@ 个文件", String(count))
         case .text: return WSL10n.text("fileDrag.someText", zh: "一段文字")
         case .image: return WSL10n.text("fileDrag.oneImage", zh: "一张图片")
         case .link: return WSL10n.text("fileDrag.oneLink", zh: "一个链接")

@@ -313,13 +313,9 @@ import Cocoa
             ("快捷键", "command"),
             ("隐私", "lock.shield"),
             // 第34批补：此前这些行没有图标（鼠标与触控板、指挥、遥控、窗口浏览等页）。
-            ("平滑滚动", "scroll"),
-            ("鼠标滚动方向", "computermouse"),
             ("触控板滚动方向", "arrow.up.arrow.down"),
             ("精细", "arrow.up.arrow.down"),
             ("侧键", "rectangle.2.swap"),
-            ("三指轻点", "hand.tap"),
-            ("四指轻点", "hand.tap"),
             ("要避开的", "cursorarrow.and.square.on.square.dashed"),
             ("私人 App", "lock.shield"),
             ("指挥模式", "switch.2"),

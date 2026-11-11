@@ -94,11 +94,11 @@ struct SettingsNavigationTests {
           precondition(!texts.contains(name), "\(name) 已搬到手势页，不该还留在 \(section.title)")
         }
       }
+      // 三指／四指轻点、平滑滚动、鼠标滚动方向已按拍板移出界面（还没有可用的事件来源）：两页都不该出现。
       let pointerTexts = await labelsIn(.pointer)
-      precondition(pointerTexts.contains("三指轻点是中键") && pointerTexts.contains("四指轻点打开看不见的窗口"),
-                   "没核对的两行留在鼠标与触控板页")
-      precondition(!onGesture.contains("三指轻点是中键") && !onGesture.contains("四指轻点打开看不见的窗口"),
-                   "没核对的两行不进手势页")
+      for name in ["三指轻点是中键", "四指轻点打开看不见的窗口", "平滑滚动", "鼠标滚动方向"] {
+        precondition(!pointerTexts.contains(name) && !onGesture.contains(name), "\(name) 已移出界面")
+      }
       _ = await labelsIn(.gesture)
       await selectGestureSegment(0, in: root)
       GestureTableDisclosure.setExpandedForDiagnostics(false)
