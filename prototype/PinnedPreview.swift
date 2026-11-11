@@ -996,6 +996,11 @@ final class PinnedPreviewController {
                 wlog("pin-preview: capture started id=\(id) size=\(Int(frame.width))x\(Int(frame.height))")
                 completion?(.success(()))
             } catch {
+                // 启动期间这扇窗已经取消置顶、又重新置顶过：这次失败属于旧会话，不能把新会话停掉。
+                if let self, self.sessions[id] !== session {
+                    completion?(.failure(.targetChanged))
+                    return
+                }
                 let failure = error as? PinnedPreviewError ?? .noSCWindow
                 self?.notice(WSL10n.text("pin.failed", zh: "没能置顶这个窗口"),
                              "pin-preview: capture failed id=\(id) \(error.localizedDescription)")

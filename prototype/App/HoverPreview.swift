@@ -177,8 +177,11 @@ extension AppDelegate {
 
     func requestCachedPreview(_ id: CGWindowID, reason: String,
                                       completion: @escaping () -> Void) {
-        guard !previewCapturePendingIDs.contains(id),
-              let state = shaded[id] else { return }
+        guard let state = shaded[id] else { return }
+        guard !previewCapturePendingIDs.contains(id) else {
+            previewCaptureWaiters[id, default: []].append(completion)
+            return
+        }
         previewCapturePendingIDs.insert(id)
         wlog("preview-cache: capture request id=\(id) app=\(state.appName) reason=\(reason)")
         Task { @MainActor [weak self] in
@@ -192,6 +195,7 @@ extension AppDelegate {
                                                  size: state.originalSize,
                                                  maxPixelSize: hoverPreviewMaxPixelSize)
             self.previewCapturePendingIDs.remove(id)
+            let waiters = self.previewCaptureWaiters.removeValue(forKey: id) ?? []
             guard let image,
                   var latest = self.shaded[id] else {
                 wlog("preview-cache: capture unavailable id=\(id) reason=\(reason)")
@@ -200,6 +204,7 @@ extension AppDelegate {
             latest.previewImage = NSImage(cgImage: image, size: latest.originalSize)
             self.shaded[id] = latest
             completion()
+            for waiter in waiters { waiter() }
         }
     }
 

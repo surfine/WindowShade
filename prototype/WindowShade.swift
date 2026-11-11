@@ -219,6 +219,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // capturing/failed 为操作期瞬态，folded/restoring 为会话期状态。
     private var operationStates: [CGWindowID: WindowShadeState] = [:]
     var previewCapturePendingIDs: Set<CGWindowID> = []
+    /// 同一扇窗的截图还在路上时又来的请求：截好后一起回调（点一下看和菜单悬停会撞在一起）。
+    var previewCaptureWaiters: [CGWindowID: [() -> Void]] = [:]
     var hoverPreviewSuppressedUntil: [CGWindowID: Date] = [:]
     var statusNoticeWorkItem: DispatchWorkItem?
     /// 最近一次那句提醒的原文（quietNotice 写的）。刘海不在、或菜单栏标题随后被菜单重建

@@ -622,7 +622,8 @@ final class GlanceController {
                 wlog("glance: no capturable window id=\(id)")
                 return
             }
-            guard !session.cancelled else { return }
+            // rehide 会把 session.capture 换掉：这条流已经不归会话管，就别再开。
+            guard !session.cancelled, session.capture === capture else { return }
             let display = content.displays.first { $0.displayID == wantedDisplay }
             do {
                 try await capture.start(window: scWindow, display: display)
@@ -631,7 +632,7 @@ final class GlanceController {
                 wlog("glance: capture failed id=\(id) \(error.localizedDescription)")
                 return
             }
-            guard !session.cancelled, self.sessions[id] === session else {
+            guard !session.cancelled, self.sessions[id] === session, session.capture === capture else {
                 capture.stop()
                 return
             }
@@ -864,7 +865,9 @@ final class GlanceController {
             session.captureFailed = true
             wlog("glance: window did not come back under cover id=\(session.id)")
         }
-        if session.stage == .closing, let rehiddenAt = session.rehiddenAt,
+        // rehiddenAt 设成 .infinity 表示「卷上已经发起过」：不带 isFinite 的话，窗口藏回去以后
+        // 前半个条件一直成立，每个 tick 都重发一次卷上，动画被反复掐掉重来。
+        if session.stage == .closing, let rehiddenAt = session.rehiddenAt, rehiddenAt.isFinite,
            !windowIsOnScreenNow(session.id) || now - rehiddenAt > 0.4 {
             session.rehiddenAt = .infinity
             if let content = session.content {
