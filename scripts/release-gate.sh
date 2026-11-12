@@ -48,7 +48,9 @@ plist() { /usr/libexec/PlistBuddy -c "Print $2" "$1/Contents/Info.plist" 2>/dev/
 
 # 1. 上一版
 if [ -z "$PREV" ]; then
-  tag=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+  # 取标成 Latest 的那一个：仓库里还有不是 App 版本的 release（如 face-model-1 只放人脸模型）。
+  tag=$(gh release list --limit 30 --json tagName,isLatest -q '[.[] | select(.isLatest)][0].tagName')
+  [ -n "$tag" ] || { echo "FAIL 1 找不到标成 Latest 的 release" >&2; exit 1; }
   gh release download "$tag" -p '*.zip' -D "$work/prev-dl" >/dev/null
   if [ "$KIND" = "x86_64" ]; then
     PREV=$(ls "$work"/prev-dl/*-intel.zip 2>/dev/null | head -1 || true)
