@@ -208,7 +208,7 @@ export const copy = {
       ['⌃ ⌘ ←→↑↓', '左半屏、右半屏、变小一级、变大一级'],
     ],
     shortcutNotes: [
-      '新装时这几组一项都不预设。你可以在“设置 → 快捷键”里自己录，也可以一键换上 Rectangle 那一套。从 1.0.15 及以前升级上来的，保留上面这几组。',
+      '1.0.22 起新装的带上面这几组，从 1.0.15 及以前升级上来的也保留。1.0.16 到 1.0.21 之间装上的一项都没有，可以在“设置 → 快捷键”里自己录，也可以一键换上 Rectangle 那一套。',
       '另有 7 个动作，在“快捷指令”、聚焦搜索和 Siri 里都能用。比如收起或展开当前窗口、全部展开、置顶或取消置顶当前窗口。',
     ],
 
@@ -428,7 +428,7 @@ export const copy = {
       ['⌃ ⌘ ←→↑↓', 'Left half, right half, one size down, one size up'],
     ],
     shortcutNotes: [
-      'A new setup presets none of these. Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. Setups upgraded from 1.0.15 or earlier keep the ones above.',
+      'New setups from 1.0.22 on come with the ones above, and so do setups upgraded from 1.0.15 or earlier. Setups first installed with 1.0.16 to 1.0.21 have none; record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click.',
       'There are also 7 actions for Shortcuts, Spotlight and Siri, such as Roll Up or Unroll Front Window, Unroll All, and Pin or Unpin Front Window.',
     ],
 

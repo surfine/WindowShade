@@ -89,9 +89,9 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 ## Shortcuts
 
-Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.20 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
+Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. New setups from 1.0.22 on come with the combinations below, and so do setups upgraded from 1.0.15 or earlier. Setups first installed with 1.0.16 to 1.0.21 keep none of them; record them in Settings → Shortcuts. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
 
-| Shortcut (upgraded setups) | What it does |
+| Shortcut | What it does |
 | --- | --- |
 | `⌃⌘C` | Roll up or unroll the current window |
 | `⌃⌘P` | Pin or unpin the current window |
