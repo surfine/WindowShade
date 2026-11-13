@@ -1315,7 +1315,8 @@ extension GlanceProbe {
     NSRunningApplication(processIdentifier: pid)?.activate()
     try await wait("fixture frontmost", timeout: 3) { NSWorkspace.shared.frontmostApplication?.processIdentifier == pid }
     try await wait("fixture windows", timeout: 6) { appWindows(pid: pid).filter { axTitle($0).hasPrefix("卷轴") }.count == 4 }
-    let fixtureIDs = appWindows(pid: pid).compactMap { windowID(of: $0) }
+    let fixtureWindows = appWindows(pid: pid).compactMap { el in windowID(of: el).map { ($0, el) } }
+    let fixtureIDs = fixtureWindows.map(\.0)
 
     // 1. 刘海落点的左格：松手排到左半屏。
     if let screen = NotchController.notchScreen(), let rect = NotchController.notchRect(on: screen) {
@@ -1339,10 +1340,15 @@ extension GlanceProbe {
 
       // 2. 全部收进刘海，往下拉整批回来。
       let count = notch.tuckAll(on: screen)
-      let allAway = (try? await wait("all tucked", timeout: 8) { fixtureIDs.allSatisfy { notch.isTucked($0) && !windowIsOnScreenNow($0) } }) != nil
+      // 台前调度开着时收进刘海落到最小化，窗口缩成侧条卡片，CG 仍报在屏上：用 putAway 认卡片（同 --notch）。
+      let allAway = (try? await wait("all tucked", timeout: 8) {
+        fixtureWindows.allSatisfy { notch.isTucked($0.0) && self.putAway($0.0, element: $0.1) }
+      }) != nil
       try await Task.sleep(for: .milliseconds(800), clock: .suspending)
       notch.releaseLatest(reason: "probe")
-      let allBack = (try? await wait("all back", timeout: 8) { fixtureIDs.allSatisfy { !notch.isTucked($0) && windowIsOnScreenNow($0) } }) != nil
+      let allBack = (try? await wait("all back", timeout: 8) {
+        fixtureWindows.allSatisfy { !notch.isTucked($0.0) && windowIsOnScreenNow($0.0) && !self.putAway($0.0, element: $0.1) }
+      }) != nil
       print("\(count == fixtureIDs.count && allAway && allBack ? "PASS" : "FAIL") wins: pushing the notch up tucks every window on the screen (\(count)); pulling down brings the whole batch back")
       try await Task.sleep(for: .milliseconds(1200), clock: .suspending)
     } else {
