@@ -1960,8 +1960,9 @@ final class NotchPanel: NSPanel {
                     return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
                                               allCorners: true, fill: .black, border: 0))
                 }
-                return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
-                        IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
+                // 2026-11-13 Aaron：真刘海屏两侧放不下时不再往下长 8 点的下巴（比菜单栏低，像门牙挡住窗口内容）。
+                // 停在刘海本身；个数照旧在菜单栏图标旁边，正在播放在系统的控制中心里。
+                return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
             case .pill, .pending:
                 // 外接屏的 iOS 胶囊（11-04）。真刘海屏只有空位还没量到的那 0.35 秒会走到 .pending：先停在刘海本身，量到再长耳朵。
                 guard isVirtual else { return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0)) }
@@ -1986,14 +1987,15 @@ final class NotchPanel: NSPanel {
                         IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: height, preferred: capsuleCorner),
                                     allCorners: true, fill: .black, border: 0))
             case .chin:
-                // 刘海旁边被菜单或菜单栏图标占着：退回刘海下面的下巴，一个点一扇窗。
+                // 刘海旁边被菜单或菜单栏图标占着：隐形刘海退回菜单栏下的小下巴（一个点一扇窗）；真刘海停在刘海本身。
                 if isVirtual {
                     let rect = NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12)
                     return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
                                               allCorners: true, fill: .black, border: 0))
                 }
-                return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
-                        IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
+                // 2026-11-13 Aaron：真刘海屏两侧放不下时不再往下长 8 点的下巴（比菜单栏低，像门牙挡住窗口内容）。
+                // 停在刘海本身；个数照旧在菜单栏图标旁边，正在播放在系统的控制中心里。
+                return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
             case .pending:
                 break
             }
@@ -2119,7 +2121,7 @@ final class NotchPanel: NSPanel {
             return ears
         }()
         let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars || peekEars != nil
-        let chinShown = resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
+        let chinShown = isVirtual && resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
         let extra = resting ? trayExtra : 0
         // 音量亮度两耳不管紧凑退成了什么：左右各 76，一定是两侧的版式。
         let earShape: CompactShape = shelfEars || meter != nil ? .sides : shape

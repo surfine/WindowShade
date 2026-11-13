@@ -1963,7 +1963,8 @@ extension GlanceProbe {
       let grown = frame.width - rect.width
       // 紧凑两耳高同刘海、顶边贴屏幕顶（《两耳的岛》2026-11-05：不用 iOS 的 36.67）。
       return (grown >= 2 * NotchPanel.narrowestSide - 1.5 && grown <= 2 * NotchPanel.sideWidth + 1.5 && abs(frame.height - rect.height) <= 1.5,
-              abs(frame.width - rect.width) <= 1.5 && frame.height > rect.height + 4)
+              // 两边放不下：真刘海停在刘海本身，不再往下长下巴（2026-11-13）。
+              abs(frame.width - rect.width) <= 1.5 && abs(frame.height - rect.height) <= 1.5)
     }
     var steady = 0
     var last = notch.panelFrame

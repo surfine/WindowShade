@@ -124,15 +124,15 @@ extension GlanceProbe {
     } == true
     print("\(narrowOK ? "PASS" : "FAIL") notch-shape: with only 30 pt free there is no room for a shoulder, so the sides are today's 30 pt (\(narrow.map { "island \($0.island) \(describe($0.shoulders))" } ?? "did not settle"))")
 
-    // 一边只空 10 点：退回下巴（门槛不变），主体和刘海一样宽，肩和硬件的肩重合。
+    // 一边只空 10 点：门槛不变，但不再往下长下巴（2026-11-13 Aaron：比菜单栏低、像门牙）——停在刘海本身，肩和硬件的肩重合。
     let chin = try await settle({ panel.setCompact(fake, room: MenuBarRoom.Sides(leading: 10, trailing: 34)) },
-                                until: { near($0.width, rect.width) && $0.height > rect.height + 4 })
+                                until: { near($0.width, rect.width) && near($0.height, rect.height) })
     let chinOK = chin.map { c in
-      near(c.radius, curves.bottomRadius) && c.shoulders.map {
+      near(c.radius, curves.bottomRadius) && near(c.island.minY, rect.minY) && c.shoulders.map {
         $0.leading.scale == 1 && $0.trailing.scale == 1 && near($0.leading.corner.x, rect.minX) && near($0.trailing.corner.x, rect.maxX)
       } == true
     } == true
-    print("\(chinOK ? "PASS" : "FAIL") notch-shape: with one side taken it falls back to the chin, as wide as the notch, shoulders on the hardware ones (\(chin.map { "island \($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "did not settle"))")
+    print("\(chinOK ? "PASS" : "FAIL") notch-shape: with one side taken it stays the notch itself, nothing below the menu bar, shoulders on the hardware ones (\(chin.map { "island \($0.island) r\($0.radius) \(describe($0.shoulders))" } ?? "did not settle"))")
 
     // 展开一排（2026-11-05《两耳的岛》展开第 2 问 A）：顶边贴屏幕顶、把刘海包在里面，肩跟着卡片的两个上角（原 S3“展开不画肩”作废）。
     panel.setCompact(fake, room: full)
@@ -147,7 +147,7 @@ extension GlanceProbe {
 
     // 从下巴展开再收回：肩跟到卡片上角，收回下巴停稳后换回和硬件的肩重合。
     _ = try await settle({ panel.setCompact(fake, room: MenuBarRoom.Sides(leading: 10, trailing: 34)) },
-                         until: { near($0.width, rect.width) && $0.height > rect.height + 4 })
+                         until: { near($0.width, rect.width) && near($0.height, rect.height) })
     let grown = try await settle({ panel.expand(with: []) }, until: { $0.height > rect.height + 40 })
     let grownOK = grown?.shoulders.map { $0.leading.scale == 1 && $0.trailing.scale == 1 && !$0.resizing } == true
     panel.collapse()
