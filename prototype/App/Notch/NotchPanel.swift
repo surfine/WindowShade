@@ -815,6 +815,12 @@ final class NotchPanel: NSPanel {
         cancelAuthentication?()
     }
 
+    /// 这块屏现在有没有菜单栏：自动隐藏、或「显示器有单独的空间」关着时副屏上没有，visibleFrame 的顶就是屏幕顶。
+    private var screenHasMenuBar: Bool {
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }) else { return true }
+        return screen.visibleFrame.maxY < screen.frame.maxY - 1
+    }
+
     /// 肩那层窗口跟着刘海和硬件形状走：盖住这块屏最上面一窄条；不知道形状、隐形刘海就不要它。
     private func refitShoulders() {
         guard !isVirtual, let curves = hardware,
@@ -1050,6 +1056,8 @@ final class NotchPanel: NSPanel {
 
     private enum CompactShape { case sides, pill, chin, pending }
     private var compactShape: CompactShape {
+        // 这块屏上没有菜单栏（visibleFrame 顶到屏幕顶）：没有东西可撞，不量空位，直接画胶囊（第 120 条）。
+        if isVirtual, !screenHasMenuBar { return .pill }
         guard let room else { return roomWaitOver ? .chin : .pending }
         if isVirtual { return room.leading >= 39 && room.trailing >= 39 ? .pill : .chin }
         // 2026-11-05（Aaron 推翻 11-04 的“从刘海下沿垂下”，《两耳的岛》）：回到刘海左右两耳，放不下 26 退回下巴（bab193b0^ 原样）。
@@ -1956,9 +1964,10 @@ final class NotchPanel: NSPanel {
                         IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .chin:
                 if isVirtual {
-                    let rect = NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12)
-                    return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
-                                              allCorners: true, fill: .black, border: 0))
+                    // 外接屏放不下胶囊：HIG 的最小圆（36.67），不再画 72×12 的扁条（第 120 条）。
+                    let d = IslandMetrics.iosMinimalDiameter
+                    let rect = islandFrame(width: d, height: d, hanging: false)
+                    return (rect, IslandStyle(cornerRadius: d / 2, allCorners: true, fill: .black, border: 0))
                 }
                 // 2026-11-13 Aaron：真刘海屏两侧放不下时不再往下长 8 点的下巴（比菜单栏低，像门牙挡住窗口内容）。
                 // 停在刘海本身；个数照旧在菜单栏图标旁边，正在播放在系统的控制中心里。
@@ -1989,9 +1998,10 @@ final class NotchPanel: NSPanel {
             case .chin:
                 // 刘海旁边被菜单或菜单栏图标占着：隐形刘海退回菜单栏下的小下巴（一个点一扇窗）；真刘海停在刘海本身。
                 if isVirtual {
-                    let rect = NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12)
-                    return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
-                                              allCorners: true, fill: .black, border: 0))
+                    // 外接屏放不下胶囊：HIG 的最小圆（36.67），不再画 72×12 的扁条（第 120 条）。
+                    let d = IslandMetrics.iosMinimalDiameter
+                    let rect = islandFrame(width: d, height: d, hanging: false)
+                    return (rect, IslandStyle(cornerRadius: d / 2, allCorners: true, fill: .black, border: 0))
                 }
                 // 2026-11-13 Aaron：真刘海屏两侧放不下时不再往下长 8 点的下巴（比菜单栏低，像门牙挡住窗口内容）。
                 // 停在刘海本身；个数照旧在菜单栏图标旁边，正在播放在系统的控制中心里。
@@ -2120,8 +2130,9 @@ final class NotchPanel: NSPanel {
                   shape == .sides, let ears = displayCompact(peeking: true), ears.music != nil else { return nil }
             return ears
         }()
-        let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars || peekEars != nil
-        let chinShown = isVirtual && resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
+        // 放不下（.chin）时两耳的内容不再硬塞：真刘海停在刘海本身（看不见），外接屏是最小圆，只画点（第 118、120 条）。
+        let compactShown = (resting && visual != nil && shape != .chin) || shelfEars || peekEars != nil
+        let chinShown = isVirtual && resting && meter == nil && visual != nil && shape == .chin
         let extra = resting ? trayExtra : 0
         // 音量亮度两耳不管紧凑退成了什么：左右各 76，一定是两侧的版式。
         let earShape: CompactShape = shelfEars || meter != nil ? .sides : shape
@@ -2134,9 +2145,10 @@ final class NotchPanel: NSPanel {
         let earBody = peekFit?.body ?? target.compactSide
         var content = NotchCanvasView.Content(
             tiles: isExpanded ? tiles : [],
-            dots: chinShown ? (compact?.count ?? 0) : 0,
+            // 一扇窗一个点（最多五个）；只有实时活动、没有收起的窗口时画一个点，告诉人「这里有东西，长按看」。
+            dots: chinShown ? max(compact?.count ?? 0, 1) : 0,
             dotsChanged: chinShown && (compact?.changed ?? false),
-            dotsY: isVirtual ? 4 : 2.5 + extra,
+            dotsY: isVirtual ? IslandMetrics.iosMinimalDiameter / 2 - 2 : 2.5 + extra,
             compact: compactShown ? earCompact : nil,
             compactSlots: compactShown
                 ? compactSlots(in: rect.size, shape: earShape, side: earBody, anchorToNotch: shelfEars, content: earBoxes)

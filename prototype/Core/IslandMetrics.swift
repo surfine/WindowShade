@@ -17,6 +17,9 @@ enum IslandMetrics {
     static let iosCompactWidth: CGFloat = 126
     /// 外接屏紧凑胶囊高（iOS：37.33）。
     static let iosCompactHeight: CGFloat = 37.33
+    /// 外接屏放不下胶囊时退成的最小圆（HIG Live Activities 的 minimal：36.67 见方的圆）。
+    /// 取代 72×12 的小下巴（AARON-DECISIONS 第 120 条，2026-11-13）。
+    static let iosMinimalDiameter: CGFloat = 36.67
     /// 外接屏展开宽（iOS：371）。刘海屏用 `expandedWidth` 408。
     static let iosExpandedWidth: CGFloat = 371
     /// 展开岛高（iOS：160）。
