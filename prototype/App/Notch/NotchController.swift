@@ -1043,6 +1043,9 @@ final class NotchController {
                     frame.origin.x += want.x - now.x
                     frame.origin.y -= want.y - now.y
                     overlay.setFrameOrigin(frame.origin)
+                    // 这是有意挪回拖动起点，不是台前调度偷挪：把「卷帘条的家」一起改过来，否则展开时
+                    // FoldExit 会信落点那个旧家，窗口回到甩到的地方（a4a5490b 起，1.0.21.1 带出去了）。
+                    owner.overlayHomeFrames[id] = overlay.frame
                 }
             }
             if let first = seen, attempts - first > 60 { return }
