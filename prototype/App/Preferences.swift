@@ -467,7 +467,9 @@ extension AppDelegate {
                                  explainer: ExplainerRow.Advanced.originGuess),
         ] + faceRows + autofillRows + [
             makePresenceLockRow(),
-            makePresenceDeviceRow(),
+            NotificationReloadHost(name: WS2BluetoothAuthorizationRequest.didChange) { [weak self] in
+                self?.makePresenceDeviceRow() ?? NSView()
+            },
             NotificationReloadHost(name: PrivateAppList.didChange) { [weak self] in self?.makeBystanderToggleRow() ?? NSView() },
         ])
     }
@@ -681,12 +683,34 @@ extension AppDelegate {
         if !authorized || devices.isEmpty {
             popup.isEnabled = false
         }
+        let name = WSL10n.text("settings.privacy.presenceDevice.name", zh: "随身设备")
+        // 没决定过：按钮向系统要授权（弹系统框）；拒绝过：系统不会再弹，按钮直接打开系统设置的蓝牙隐私页。
+        if !authorized {
+            let undecided = WS2BluetoothPresenceChoice.authorization == .notDetermined
+            let button = NSButton(title: undecided ? WSL10n.text("settings.privacy.presenceDevice.allow", zh: "允许蓝牙…")
+                                                   : WSL10n.text("settings.privacy.presenceDevice.openSettings", zh: "打开系统设置…"),
+                                  target: self, action: #selector(prefAllowPresenceBluetooth(_:)))
+            button.bezelStyle = .rounded
+            button.controlSize = .small
+            let subtitle = undecided
+                ? WSL10n.text("settings.privacy.presenceDevice.askBluetooth", zh: "要先允许 WindowShade 使用蓝牙，才能列出配对过的设备")
+                : WSL10n.text("settings.privacy.presenceDevice.needBluetooth", zh: "先在系统设置 → 隐私与安全性 → 蓝牙里允许 WindowShade")
+            return makeUnifiedControlRow(name: name, subtitle: subtitle, control: button)
+        }
         let subtitle: String
-        if !authorized { subtitle = WSL10n.text("settings.privacy.presenceDevice.needBluetooth", zh: "先在系统设置 → 隐私与安全性 → 蓝牙里允许 WindowShade") }
-        else if devices.isEmpty { subtitle = WSL10n.text("settings.privacy.presenceDevice.noPaired", zh: "这台 Mac 还没有配对过的蓝牙设备") }
+        if devices.isEmpty { subtitle = WSL10n.text("settings.privacy.presenceDevice.noPaired", zh: "这台 Mac 还没有配对过的蓝牙设备") }
         else { subtitle = WSL10n.text("settings.privacy.presenceDevice.pick", zh: "从配对过的设备里选一台") }
-        return makeUnifiedControlRow(name: WSL10n.text("settings.privacy.presenceDevice.name", zh: "随身设备"), subtitle: subtitle,
-                                     control: popup)
+        return makeUnifiedControlRow(name: name, subtitle: subtitle, control: popup)
+    }
+
+    @objc func prefAllowPresenceBluetooth(_ sender: NSButton) {
+        MainActor.assumeIsolated {
+            if WS2BluetoothPresenceChoice.authorization == .notDetermined {
+                WS2BluetoothAuthorizationRequest.shared.request(from: sender.window)
+            } else {
+                openPrivacySettings("Privacy_Bluetooth")
+            }
+        }
     }
 
     @objc func prefOpenPrivateApps(_ sender: NSButton) {

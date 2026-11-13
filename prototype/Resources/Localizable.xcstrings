@@ -72480,6 +72480,75 @@
           }
         }
       }
+    },
+    "settings.privacy.presenceDevice.allow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Bluetooth…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许蓝牙…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允許藍牙…"
+          }
+        }
+      }
+    },
+    "settings.privacy.presenceDevice.openSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开系统设置…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打開系統設定…"
+          }
+        }
+      }
+    },
+    "settings.privacy.presenceDevice.askBluetooth": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Bluetooth so WindowShade can list your paired devices"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要先允许 WindowShade 使用蓝牙，才能列出配对过的设备"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要先允許 WindowShade 使用藍牙，才能列出配對過的裝置"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

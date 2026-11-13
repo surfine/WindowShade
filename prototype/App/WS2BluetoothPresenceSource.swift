@@ -1,6 +1,8 @@
+import AppKit
 import CoreBluetooth
 import Foundation
 import IOBluetooth
+import os
 
 // 离开就锁的蓝牙在场来源（App 侧）。IOBluetooth 桥，事件驱动、没有周期轮询：
 // - 按用户选的地址在已配对列表里找那台设备；
@@ -28,9 +30,9 @@ enum WS2BluetoothPresenceChoice {
 
     /// 蓝牙授权状态（查询本身不触发弹窗）。设置页只在 allowedAlways 时才碰 IOBluetooth——
     /// 未授权就调 pairedDevices() 会被 TCC 直接杀进程（真机验收 2026-10-11 实证）。
-    static var bluetoothAuthorized: Bool {
-        CBCentralManager().authorization == .allowedAlways
-    }
+    /// 读的是 CBManager 的类属性：不建管理器，所以不会顺手弹系统框；要授权走 WS2BluetoothAuthorizationRequest。
+    static var authorization: CBManagerAuthorization { CBManager.authorization }
+    static var bluetoothAuthorized: Bool { authorization == .allowedAlways }
 
     /// 已配对设备清单（地址大写冒号 + 名字），给设置里的选择器用。未授权返回 nil（调用方显示引导）。
     static func pairedDevices() -> [(address: String, name: String)]? {
@@ -40,6 +42,57 @@ enum WS2BluetoothPresenceChoice {
             guard let address = WS2BluetoothPresenceModel.normalize(device.addressString) else { return nil }
             return (address, device.name ?? "")
         }.sorted { $0.name < $1.name }
+    }
+}
+
+/// 向系统要一次蓝牙授权。以前只查不要：没决定过的人在系统设置的蓝牙列表里根本找不到 WindowShade，
+/// 离开就锁打不开（2026-11-13 真机发现）。只在用户在设置里按「允许蓝牙…」时调用；系统弹窗用 Info.plist 的
+/// NSBluetoothAlwaysUsageDescription。管理器要留到状态回来，否则弹窗还没出现它就被释放了。结果出来后发 didChange。
+@MainActor final class WS2BluetoothAuthorizationRequest: NSObject, CBCentralManagerDelegate {
+    static let shared = WS2BluetoothAuthorizationRequest()
+    static let didChange = Notification.Name("WindowShade.bluetoothAuthorizationDidChange")
+    nonisolated private static let log = Logger(subsystem: "com.windowshade.prototype", category: "presence")
+    private var manager: CBCentralManager?
+    private var activeObserver: NSObjectProtocol?
+    /// 按「允许蓝牙…」的那扇设置窗口。系统框是别的进程弹的，按完焦点交回之前最前面的 App，
+    /// 菜单栏 App 的设置窗口就被压到后面（11-13 真机）；有结果时把它叫回最前。
+    private weak var returnWindow: NSWindow?
+
+    func request(from window: NSWindow? = nil) {
+        returnWindow = window
+        guard WS2BluetoothPresenceChoice.authorization == .notDetermined, manager == nil else {
+            NotificationCenter.default.post(name: Self.didChange, object: nil)
+            return
+        }
+        manager = CBCentralManager(delegate: self, queue: .main)
+        // 系统框是别的进程弹的：按完「允许」焦点回到我们这边。状态回调不一定在那一刻到（11-13 真机：
+        // 设置那一列没自己换成选择器），所以回到前台时也查一次。
+        activeObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.settleIfDecided() }
+        }
+    }
+
+    nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        Self.log.info("bluetooth central state \(central.state.rawValue, privacy: .public)")
+        MainActor.assumeIsolated { settleIfDecided() }
+    }
+
+    private func settleIfDecided() {
+        guard manager != nil, WS2BluetoothPresenceChoice.authorization != .notDetermined else { return }
+        manager = nil
+        if let activeObserver { NotificationCenter.default.removeObserver(activeObserver) }
+        activeObserver = nil
+        NotificationCenter.default.post(name: Self.didChange, object: nil)
+        Self.log.info("bluetooth authorization decided: \(WS2BluetoothPresenceChoice.authorization.rawValue, privacy: .public) window=\(self.returnWindow != nil, privacy: .public) active=\(NSApp.isActive, privacy: .public)")
+        if let window = returnWindow {
+            // macOS 14 起协作式激活：背景 App 自己 activate() 会被系统拒绝。orderFrontRegardless 不需要先成为
+            // 前台就能把窗口叠到别的 App 上面；再请求一次激活，让键盘焦点也回来（被拒也不影响窗口在前）。
+            window.orderFrontRegardless()
+            window.makeKey()
+            NSApp.activate()
+        }
+        returnWindow = nil
     }
 }
 
