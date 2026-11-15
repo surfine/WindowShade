@@ -5,7 +5,11 @@
 
 ## 候选（未发布）
 
-（暂无）
+| Tag | 主题 |
+| --- | --- |
+| v1.0.22 | 1.0.22 候选（build `20261115.01`）：刘海边界的四处修正、标题栏目标统一、蓝牙授权、四个假开关下架、新装带回快捷键，外加一个默认关的内屏遮罩实验。见 [v1.0.22.md](v1.0.22.md) |
+
+发布当天还要做（有意没有提前改）：`release/1.0.22-docs` 的三份 README 与官网快捷键说法合进 main 并部署官网；`site/public/appcast.xml` 加条目；`CHANGELOG.md` 补一行；`scripts/local-gate.sh release --previous <上一版 zip>` 过发布关；真机手验见 `docs/known-failures.md` 与交接文件。
 
 ## 已发布
 
