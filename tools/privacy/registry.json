@@ -8054,6 +8054,34 @@
       "symbol": "SLSRemoveNotifyProc",
       "source": "let removeGlobal = dlsym(handle, \"SLSRemoveNotifyProc\")",
       "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/App/BuiltInCurtain.swift",
+      "line": 15,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.bool(forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/BuiltInCurtain.swift",
+      "line": 16,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/BuiltInCurtain.swift",
+      "line": 33,
+      "symbol": "NSEvent.addGlobalMonitorForEvents",
+      "source": "if let global = NSEvent.addGlobalMonitorForEvents(matching: mask, handler: { [weak self] _ in",
+      "signal": "key-position"
+    },
+    {
+      "path": "prototype/App/BuiltInCurtain.swift",
+      "line": 36,
+      "symbol": "NSEvent.addLocalMonitorForEvents",
+      "source": "if let local = NSEvent.addLocalMonitorForEvents(matching: mask, handler: { [weak self] event in",
+      "signal": "key-position"
     }
   ],
   "groups": [

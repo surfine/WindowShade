@@ -339,6 +339,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var pip = MainActor.assumeIsolated { PictureInPictureController(owner: self) }
     /// 调度中心里按 ⌘W 关窗、⌘Q 退出 App（见 MissionControlKeys.swift）。
     lazy var missionControlKeys = MissionControlKeys()
+    /// 指针离开内屏就遮住（实验，默认关）。
+    let builtInCurtain = BuiltInCurtain()
     let inputController = WS2InputController()
     lazy var pinnedPreviewController = PinnedPreviewController(
         notice: { [weak self] message, log in
@@ -415,6 +417,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             notch.onShelfFocusKind = { [weak self] kind in self?.inputController.remoteHostForSettings?.layerEffects?.focusChanged(kind) }
             SlideOverRecovery.recoverAbandoned()
             if FeatureCatalog.isEnabled(.notch) { notch.install() }
+            builtInCurtain.apply()
         }
         // 番茄钟的唯一宿主：在这里点一次，让观察者和唯一 FocusTimerHost 建起来。
         MainActor.assumeIsolated { _ = ws2Runtime }

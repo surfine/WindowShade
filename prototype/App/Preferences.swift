@@ -461,6 +461,9 @@ extension AppDelegate {
                                  subtitle: WSL10n.setting("settings.shade.copyProgress.sub", zh: "Finder 拷贝时在刘海上显示拷到哪了"),
                                  isOn: CopyProgressSource.isEnabled, action: #selector(prefToggleCopyProgress(_:)),
                                  explainer: ExplainerRow.Advanced.copyProgress),
+            makeUnifiedToggleRow(name: WSL10n.text("settings.privacy.builtInCurtain.name", zh: "指针离开内屏就遮住"),
+                                 subtitle: WSL10n.text("settings.privacy.builtInCurtain.sub", zh: "接着外接屏时，MacBook 屏幕盖上黑色，指针回来就揭开"),
+                                 isOn: BuiltInCurtain.isEnabled, action: #selector(prefToggleBuiltInCurtain(_:))),
             makeUnifiedToggleRow(name: WSL10n.setting("settings.shade.originGuess.name", zh: "猜你从哪来"),
                                  subtitle: WSL10n.setting("settings.shade.originGuess.sub", zh: "按出别的系统的习惯时问一次"),
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:)),
@@ -1282,6 +1285,11 @@ extension AppDelegate {
     }
     @objc func prefToggleNotchAlerts(_ sender: NSSwitch) {
         MainActor.assumeIsolated { notch.setAlertsEnabled(sender.state == .on) }
+    }
+
+    @objc func prefToggleBuiltInCurtain(_ sender: NSSwitch) {
+        BuiltInCurtain.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { builtInCurtain.apply() }
     }
 
     @objc func prefToggleAwaySummary(_ sender: NSSwitch) {

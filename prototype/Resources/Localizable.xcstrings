@@ -72549,6 +72549,52 @@
           }
         }
       }
+    },
+    "settings.privacy.builtInCurtain.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cover the MacBook screen when the pointer leaves"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指针离开内屏就遮住"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指標離開內建螢幕就遮住"
+          }
+        }
+      }
+    },
+    "settings.privacy.builtInCurtain.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "With an external display, the MacBook screen turns black until the pointer comes back"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接着外接屏时，MacBook 屏幕盖上黑色，指针回来就揭开"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接著外接螢幕時，MacBook 螢幕蓋上黑色，指標回來就揭開"
+          }
+        }
+      }
     }
   },
   "version": "1.0"
