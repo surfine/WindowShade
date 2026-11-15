@@ -127,7 +127,10 @@ import Cocoa
                "两耳等宽（以刘海为中心），每只 26…52.33（实际 \(side)）")
         twoEars.setCompact(nil, room: MenuBarRoom.Sides(leading: 20, trailing: 200))
         let chin = twoEars.shapeForProbe!.island
-        expect(abs(chin.width - realNotch.width) < 0.01 && chin.minY < realNotch.minY, "一边放不下 26：退回刘海下面的下巴")
+        // 2026-11-13 Aaron：真刘海屏两侧放不下时不再往下长 8 点的下巴（比菜单栏低、像门牙挡住窗口内容），
+        // 停在刘海本身；隐形刘海（外接屏）的小下巴不变，由 LA3 那组档位测试看着。
+        expect(abs(chin.width - realNotch.width) < 0.01 && abs(chin.minY - realNotch.minY) < 0.01
+               && abs(chin.height - realNotch.height) < 0.01, "一边放不下 26：停在刘海本身，不长下巴")
         twoEars.expand(with: [])
         let card = twoEars.shapeForProbe!.island
         expect(abs(card.maxY - realNotch.maxY) < 0.01 && card.minX <= realNotch.minX && card.maxX >= realNotch.maxX,
