@@ -4,6 +4,7 @@ One line per release. Full notes, downloads and checksums are on [GitHub Release
 
 | Version | Date | Highlights |
 | --- | --- | --- |
+| [1.0.22](docs/releases/v1.0.22.md) | 2026-11-16 | Notch edges settled, one title-bar target rule, Bluetooth permission, four dead switches gone, shortcuts for new setups. / 刘海边界收拾干净、标题栏目标统一、蓝牙授权、四个假开关下架、新装带回快捷键。 |
 | [1.0.21, build 20261110.01](docs/releases/v1.0.21.1.md) | 2026-11-10 | Second 1.0.21 package, now on the public channel: three Stage Manager edge cases, folding a stalled app, split handles follow the system half-screen. / 1.0.21 的第二个包，对所有人可见：台前调度三处边界、卡住 App 的收起、分屏认系统半屏。 |
 | [1.0.21](docs/releases/v1.0.21.md) | 2026-11-09 | First experimental Intel build; the notch's springs and expanded shape match the macOS 27.3 system island. Beta channel only. / 首个 Intel 实验版；刘海的弹簧与展开几何对齐 macOS 27.3 系统灵动岛。只走测试频道。 |
 | [1.0.20](docs/releases/v1.0.20.md) | 2026-11-02 | A Features page with eight real switches, seeded from what you already use; window fixes for macOS 26 double-click, fold flash and corner parking. / 功能页与 8 个真开关，升级保持原样；修好 macOS 26 双击缩放、收起闪屏与角落停车。 |
