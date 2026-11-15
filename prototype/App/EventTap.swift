@@ -349,6 +349,11 @@ extension AppDelegate {
         var pid: pid_t = 0
         AXUIElementGetPid(win, &pid)
         if isStickies(pid: pid) { return nil }
+        // 非一般 App 的非第 0 层或非标准窗口不抢标题栏双击（HomePlay 放大的影片窗、桌宠等）。
+        guard isTitlebarTargetWindow(win, id: id, pid: pid) else {
+            wlog("titlebar-double-click: refused auxiliary window id=\(id) pid=\(pid)")
+            return nil
+        }
         let barH = titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
         guard point.y >= pos.y, point.y <= pos.y + barH,
               point.x >= pos.x, point.x <= pos.x + size.width else { return nil }

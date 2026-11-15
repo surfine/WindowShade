@@ -81,6 +81,14 @@ extension AppDelegate {
         if shaded[id] != nil {
             unshade(id)
         } else {
+            // 收起捷径也遵守标题栏目标的同一条规则：非一般 App 的非第 0 层或非标准窗口
+            // 不收起（桌宠、放大的影片窗、浮动设置面板），否则会把整个辅助 App 藏起来。
+            // 展开已在上面处理，不受这条限制。
+            guard isTitlebarTargetWindow(win, id: id, pid: pid) else {
+                quietNotice(WSL10n.text("notice.shade.cannotRoll", zh: "这个窗口不能收起"), kind: .problem,
+                            log: "toggle: reject auxiliary window id=\(id) pid=\(pid)")
+                return
+            }
             let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
             shade(win, id, options: options)
             MainActor.assumeIsolated { gestures.noteStep(.shade, id: id) }

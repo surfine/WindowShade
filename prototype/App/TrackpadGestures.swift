@@ -670,6 +670,9 @@ final class TrackpadGestureController {
         var pid: pid_t = 0
         AXUIElementGetPid(win, &pid)
         if isStickies(pid: pid) { return .rejected("outside title bar") }
+        // 非一般 App 的非第 0 层或非标准窗口不抢标题栏手势（HomePlay 桌宠关掉置顶后在第 0 层）。
+        // targetWindow 已经确认过普通窗口层；这里把同一份判定接到手势路径上，避免两边同时反应。
+        guard isTitlebarTargetWindow(win, id: id, pid: pid) else { return .rejected("auxiliary app window") }
         return .window(win, pos: pos, size: size, pid: pid,
                        appOwnsHorizontal: GestureOwnership.appOwnsHorizontal(chain))
     }

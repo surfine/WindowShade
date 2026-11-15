@@ -16,13 +16,30 @@ func pointMayLieInTitlebarBand(_ point: CGPoint) -> Bool {
 
 /// 纯判定：给一份在屏窗口快照，判断点击点是否可能落在某窗口的标题栏带内。
 /// `bandHeight` 默认 300pt（tap 预过滤，宁可放过）；预热用窗口真实的带高。
+/// 非一般 App 的非第 0 层窗口在这里就排除（见 TitlebarTargetPolicy）；这里没有 AX
+/// 子角色，第 0 层的非标准窗口留给后面的 AX 判定，不在预筛里错杀。
 func pointMayLieInTitlebarBand(_ point: CGPoint, windows: [[String: Any]],
                                bandHeight: ((CGWindowID) -> CGFloat)? = nil) -> Bool {
     let maxTitlebarBand: CGFloat = 300
+    // 同一份快照里同一 App 通常有多扇窗：启动策略每次查询后按 pid 记着，不重复问。
+    var policies: [pid_t: NSApplication.ActivationPolicy] = [:]
     for info in windows {
         guard let bounds = cgWindowBounds(info) else { continue }
         let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
         guard alpha > 0, bounds.contains(point) else { continue }
+        if let pid = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
+           let layer = (info[kCGWindowLayer as String] as? NSNumber)?.int32Value {
+            let policy: NSApplication.ActivationPolicy
+            if let known = policies[pid] {
+                policy = known
+            } else {
+                policy = runningApp(pid: pid)?.activationPolicy ?? .regular
+                policies[pid] = policy
+            }
+            guard TitlebarTargetPolicy.isTitlebarTarget(activationPolicy: policy, layer: layer, subrole: nil) else {
+                continue
+            }
+        }
         var band = maxTitlebarBand
         if let bandHeight, let n = info[kCGWindowNumber as String] as? NSNumber {
             band = bandHeight(CGWindowID(n.uint32Value))
@@ -107,6 +124,11 @@ func titlebarContainsOffMain(point: CGPoint, in win: AXUIElement) -> (CGWindowID
     var pid: pid_t = 0
     AXUIElementGetPid(win, &pid)
     if isStickies(pid: pid) { return nil }
+    // 非一般 App 的非第 0 层或非标准窗口不抢标题栏双击（HomePlay 放大的影片窗、桌宠等）。
+    guard isTitlebarTargetWindow(win, id: id, pid: pid) else {
+        wlog("titlebar-double-click: refused auxiliary window id=\(id) pid=\(pid) off-main")
+        return nil
+    }
     let barH = ChromeHitHeightMirror.shared.cachedHitBarHeight(id: id, win: win, size: size)
         ?? measuredTitlebarHitHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
     guard point.y >= pos.y, point.y <= pos.y + barH,

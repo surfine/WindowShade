@@ -470,6 +470,17 @@ func axSubrole(_ e: AXUIElement) -> String? {
     return v as? String
 }
 
+/// 标题栏目标的统一入口：把判定需要的三样东西凑齐——拥有者的启动策略、
+/// WindowServer 的层级、AX 子角色——再交给纯函数 TitlebarTargetPolicy。
+/// 查不到启动策略时按一般 App 处理（保留旧行为）；查不到层级按第 0 层，
+/// 调用方（触控板手势）本来已经确认过普通窗口层。
+func isTitlebarTargetWindow(_ win: AXUIElement, id: CGWindowID, pid: pid_t) -> Bool {
+    TitlebarTargetPolicy.isTitlebarTarget(
+        activationPolicy: runningApp(pid: pid)?.activationPolicy ?? .regular,
+        layer: cgWindowLayer(id) ?? 0,
+        subrole: axSubrole(win))
+}
+
 // 从「点中的元素」往上找它所属的窗口
 func containingWindow(_ el: AXUIElement) -> AXUIElement? {
     if axRole(el) == (kAXWindowRole as String) { return el }
