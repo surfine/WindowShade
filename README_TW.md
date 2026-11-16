@@ -11,7 +11,7 @@
 
 <!-- status:start -->
 
-**目前版本：1.0.21** · build 20261110.01 · 2026-11-10 · [釋出說明](https://github.com/surfine/WindowShade/releases/tag/v1.0.21.1)
+**目前版本：1.0.22** · build 20261115.01 · 2026-11-16 · [釋出說明](https://github.com/surfine/WindowShade/releases/tag/v1.0.22)
 
 <!-- status:end -->
 

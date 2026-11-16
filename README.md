@@ -11,7 +11,7 @@ A free, open-source window utility for Mac.
 
 <!-- status:start -->
 
-**Current release: 1.0.21** · build 20261110.01 · 2026-11-10 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.21.1)
+**Current release: 1.0.22** · build 20261115.01 · 2026-11-16 · [Release notes](https://github.com/surfine/WindowShade/releases/tag/v1.0.22)
 
 <!-- status:end -->
 

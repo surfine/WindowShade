@@ -8,6 +8,20 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
     <language>zh-Hans</language>
 
     <item>
+      <title>1.0.22</title>
+      <pubDate>Mon, 16 Nov 2026 01:09:45 +0000</pubDate>
+      <sparkle:version>20261115.01</sparkle:version>
+      <sparkle:shortVersionString>1.0.22</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
+      <sparkle:informationalUpdate>
+        <sparkle:belowVersion>17</sparkle:belowVersion>
+      </sparkle:informationalUpdate>
+      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.22</link>
+      <description><![CDATA[Intel 实验版 1.0.22：跟 arm64 同一批修改，只在 Rosetta 冒烟与交叉编译上验过，没有真 Intel Mac 实测。需要 macOS 15 或更新版本。]]></description>
+      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.22/WindowShade-v1.0.22-intel.zip" length="11242004" type="application/octet-stream" sparkle:edSignature="2UiR1HFJkVuh7qnVR6jzAEgiQ4Zs0gC7SojrEi/52qUaJN/i0xmVweMXrQDf5bUelT4QcdOp/R2LYMht1W8GCg=="></enclosure>
+    </item>
+
+    <item>
       <title>1.0.21</title>
       <pubDate>Tue, 10 Nov 2026 05:00:00 +0000</pubDate>
       <sparkle:version>20261110.01</sparkle:version>
@@ -31,7 +45,8 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.21/WindowShade-v1.0.21-intel.zip" length="11116094" type="application/octet-stream" sparkle:edSignature="hrDMX0u1pOYCpB7lQvHL4ddNAdDI6GRJ9Inkebb/E9SEi6qLNdVSQoaRbxI0ffuUV5ZccYESv9Zi32IwqLmOCA=="></enclosure>
     </item>
   </channel>
-</rss><!-- sparkle-signatures:
-edSignature: q0JdhwD+G+YlEEHXRdsHWQxdF6McjWKL5+3HcSyCYs++d16q5339VJvHJJCX6IlLP3JJT3iXgz4oisbMXo7JDg==
-length: 2888
+</rss>
+<!-- sparkle-signatures:
+edSignature: qRfP/ljjNhbbjMCxaFCG4i0vJ9ocB/CGzkwGu47/vT/FoIOb0HawYotyLjOILI+07JChVeMIRMfsvbhyQ8/vAQ==
+length: 3905
 -->
