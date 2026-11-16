@@ -47,8 +47,8 @@ def first_item(text: str) -> tuple[str, str, str, str]:
     version = tag("sparkle:shortVersionString")
     build = tag("sparkle:version")
     published = email.utils.parsedate_to_datetime(tag("pubDate"))
-    # The item's own <link> is the release page: a rebuilt version (1.0.21 build 20261110.01)
-    # ships under its own tag (v1.0.21.1), which the version string alone cannot tell.
+    # The item's own <link> is the release page: a rebuilt package can ship under its
+    # own tag, which the version string alone cannot tell.
     link = re.search(r"<link>(.*?)</link>", block, re.S)
     url = link.group(1).strip() if link else RELEASE_URL.format(version=version)
     return version, build, published.date().isoformat(), url

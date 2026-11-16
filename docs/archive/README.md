@@ -9,4 +9,4 @@
 ## 目录
 
 - `2026-11-11/update-design-2026-09-29.md`：应用内更新的设计稿，被 [../update.md](../update.md) 取代。
-- `2026-11-11/releases/`：1.0.16–1.0.21.1 已发布版本的发布关 runbook、验收清单、计划和 appcast 草稿。`tests/vm/run-updater-phase3-1018.sh` 读其中的 `appcast-item-1.0.18.xml`，移动它时要同步改脚本。
+- `2026-11-11/releases/`：1.0.16–1.0.21 已发布版本的发布关 runbook、验收清单、计划和 appcast 草稿。`tests/vm/run-updater-phase3-1018.sh` 读其中的 `appcast-item-1.0.18.xml`，移动它时要同步改脚本。

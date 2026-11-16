@@ -356,7 +356,7 @@ cd prototype
    换包就升一个小版本。以前的“同一版本重新发布”一节作废。
    **`CFBundleVersion` 用日期制：`YYYYMMDD.NN`**（2026-11-10 起）。`NN` 是当天的第几个包，从 `01` 数；同一天要出第二个包就 `02`。
    它和 `CFBundleShortVersionString`（对外叫的 1.0.21）是两套东西：对外版本号说“这一版有什么”，build 号只回答“谁的包更新”。
-   实例子：2026-11-10 的第一个包是 `20261110.01`。Sparkle 按数字比大小，所以日期制永远大于旧的一位数 build（`21`、`22`）。
+   实例子：2026-12-01 的第一个包是 `20261201.01`。Sparkle 按数字比大小，所以日期制永远大于旧的一位数 build（`21`、`22`）。
    **只能用「数字与点」，不要用连字号**：2026-11-10 用 Sparkle 2.10.0 实测，`20261110-01` 和 `20261110-02`
    被 `SUStandardVersionComparator` 判成**同一个版本**，同一天发的第二个包，已装的人收不到（对照见
    `tests/run-build-version-tests.sh`，它把 `scripts/build-version-compare.py` 逐项对过 Sparkle 本体）。

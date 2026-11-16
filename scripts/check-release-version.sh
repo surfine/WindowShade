@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 build=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" prototype/Info.plist)
 # build 号只用「数字与点」（2026-11-10 起；点号是 Sparkle 认的，连字号不认，见 scripts/build-version-compare.py 的说明）。
 python3 -I scripts/build-version-compare.py "$build" "$build" >/dev/null \
-  || { echo "FAIL release-version: CFBundleVersion「${build}」不是「数字与点」（例如 20261110.01）" >&2; exit 1; }
+  || { echo "FAIL release-version: CFBundleVersion「${build}」不是「数字与点」（例如 20261201.01）" >&2; exit 1; }
 # Intel 实验版有自己的清单（site/public/appcast-intel.xml，从 1.0.21 起）；两份清单共用一个 build 号序列，取两份里最大的。
 # 占位条目（enclosure 的 url 以 TODO 开头，发布日才填）不算「已发过」。
 feeds=(site/public/appcast.xml)

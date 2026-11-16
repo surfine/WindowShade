@@ -18,7 +18,7 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <sparkle:belowVersion>17</sparkle:belowVersion>
       </sparkle:informationalUpdate>
       <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.22</link>
-      <description><![CDATA[刘海边界的几处毛病一起修了：真刘海两侧放不下时不再往下长一截挡住窗口内容，外接屏放不下时退成系统灵动岛那样的最小圆，甩进刘海的窗口拿出来回到拖动起点。台前调度下的三处边界也一并收进来：在别的桌面收起不把你带走、不能最小化的窗口换到另一侧停靠、副屏卷帘条被系统挪过仍回到原处。收起捷径和标题栏双击不再误伤桌宠、放大的影片窗这类浮动窗口；设置里四个永远开不起来的开关拿掉了，1.0.22 起新装的带上官网列的那几组快捷键。需要 macOS 15 或更新版本。]]></description>
+      <description><![CDATA[刘海边界的几处毛病一起修了：真刘海两侧放不下时不再往下长一截挡住窗口内容，外接屏放不下时退成系统灵动岛那样的最小圆，甩进刘海的窗口拿出来回到拖动起点。台前调度下的三处边界也修好了：在别的桌面收起不把你带走、不能最小化的窗口换到另一侧停靠、副屏卷帘条被系统挪过仍回到原处。收起捷径和标题栏双击不再误伤桌宠、放大的影片窗这类浮动窗口；设置里四个永远开不起来的开关拿掉了，1.0.22 起新装的带上官网列的那几组快捷键。需要 macOS 15 或更新版本。]]></description>
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.22/WindowShade-v1.0.22.zip" length="22492820" type="application/octet-stream" sparkle:edSignature="OgZWPqtxvrfrPGKRksjD/Enh7oOnxAftHq5Oz7VR6QvPP8P9pWRFUvU3lYjRi99KbbPeLtF4jBh5qCDfAS1aCw=="></enclosure>
     </item>
 
@@ -39,6 +39,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
   </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: sX6KYRmbyM8YxeG00BnroJVfpi6RaUQWonkGGHaJz6o6itgEnGkz6FBfYfcndNhSQqRarGMi2QPOoEcHDbIABg==
-length: 3382
+edSignature: BXBcSPezUAIi582JBx09g80P4Pxq2u2hAhHGFyZ0zrNZbYMwTaU1IUkM3BcYZylkxbw6Mk0vaRuCqIq+ndYQBQ==
+length: 3376
 -->

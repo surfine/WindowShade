@@ -38,7 +38,7 @@ def main() -> int:
             return 0
         for value in values:
             if not SHAPE.match(value):
-                print("build 号「" + value + "」不是「数字与点」（例如 20261110.01）。", file=sys.stderr)
+                print("build 号「" + value + "」不是「数字与点」（例如 20261201.01）。", file=sys.stderr)
                 return 2
         best = values[0]
         for value in values[1:]:
@@ -52,7 +52,7 @@ def main() -> int:
     a, b = args
     for value in (a, b):
         if not SHAPE.match(value):
-            print("build 号「" + value + "」不是「数字与点」（例如 20261110.01）。"
+            print("build 号「" + value + "」不是「数字与点」（例如 20261201.01）。"
                   "连字号会让 Sparkle 把同一天的包看成同一个版本。", file=sys.stderr)
             return 2
     print(compare(a, b))
