@@ -18,24 +18,10 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
         <sparkle:belowVersion>17</sparkle:belowVersion>
       </sparkle:informationalUpdate>
       <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.22</link>
-      <description><![CDATA[刘海边界的几处毛病一起修了：真刘海两侧放不下时不再往下长一截挡住窗口内容，外接屏放不下时退成系统灵动岛那样的最小圆，甩进刘海的窗口拿出来回到拖动起点。收起捷径和标题栏双击不再误伤桌宠、放大的影片窗这类浮动窗口；设置里四个永远开不起来的开关拿掉了，1.0.22 起新装的带上官网列的那几组快捷键。需要 macOS 15 或更新版本。]]></description>
+      <description><![CDATA[刘海边界的几处毛病一起修了：真刘海两侧放不下时不再往下长一截挡住窗口内容，外接屏放不下时退成系统灵动岛那样的最小圆，甩进刘海的窗口拿出来回到拖动起点。台前调度下的三处边界也一并收进来：在别的桌面收起不把你带走、不能最小化的窗口换到另一侧停靠、副屏卷帘条被系统挪过仍回到原处。收起捷径和标题栏双击不再误伤桌宠、放大的影片窗这类浮动窗口；设置里四个永远开不起来的开关拿掉了，1.0.22 起新装的带上官网列的那几组快捷键。需要 macOS 15 或更新版本。]]></description>
       <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.22/WindowShade-v1.0.22.zip" length="22492820" type="application/octet-stream" sparkle:edSignature="OgZWPqtxvrfrPGKRksjD/Enh7oOnxAftHq5Oz7VR6QvPP8P9pWRFUvU3lYjRi99KbbPeLtF4jBh5qCDfAS1aCw=="></enclosure>
     </item>
 
-    <item>
-      <title>1.0.21</title>
-      <pubDate>Tue, 10 Nov 2026 05:00:00 +0000</pubDate>
-      <sparkle:version>20261110.01</sparkle:version>
-      <sparkle:shortVersionString>1.0.21</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>
-      <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
-      <sparkle:informationalUpdate>
-        <sparkle:belowVersion>17</sparkle:belowVersion>
-      </sparkle:informationalUpdate>
-      <link>https://github.com/surfine/WindowShade/releases/tag/v1.0.21.1</link>
-      <description><![CDATA[台前调度下的三处边界修好了：在别的桌面收起窗口不会把你带走、不能最小化的窗口收起时换到另一侧停靠、副屏上的卷帘条被系统挪位后展开仍回到原处。另外，卡住的 App 只要窗口服务器能证明已经藏好，收起就算做成；分屏把手认得出系统自己的左右、上下半屏。需要 macOS 15 或更新版本。]]></description>
-      <enclosure url="https://github.com/surfine/WindowShade/releases/download/v1.0.21.1/WindowShade-v1.0.21.zip" length="22491314" type="application/octet-stream" sparkle:edSignature="QoMAvSMX6FdUGEqFjj5lKCN5VJpQGTF/YFVq5FEXvT0CUqUnmRywh6VuIKPVjgA2hHPLYOkDq9/iNEboPo3ECA=="></enclosure>
-    </item>
     <item>
       <title>1.0.21</title>
       <pubDate>Mon, 09 Nov 2026 00:56:00 +0000</pubDate>
@@ -53,6 +39,6 @@ IMPORTANT: This file was signed by Sparkle. Any modifications to this file requi
   </channel>
 </rss>
 <!-- sparkle-signatures:
-edSignature: GJYq98vmlkz8VExVPcIGP1X7GmtkiqmTJ4HRjTBB9/Qg467aBGZtSd7intq9AoVN9NVN6PldDARROpKzhLBOAg==
-length: 4511
+edSignature: sX6KYRmbyM8YxeG00BnroJVfpi6RaUQWonkGGHaJz6o6itgEnGkz6FBfYfcndNhSQqRarGMi2QPOoEcHDbIABg==
+length: 3382
 -->
