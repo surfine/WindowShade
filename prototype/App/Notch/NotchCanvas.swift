@@ -259,6 +259,11 @@ final class NotchCanvasView: NSView {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     var islandFrameForProbe: NSRect? { island.frame }
+
+    var islandIsAnimating: Bool {
+        if let keys = island.animationKeys(), !keys.isEmpty { return true }
+        return false
+    }
     var islandRadiusForProbe: CGFloat { island.cornerRadius }
     var isBare: Bool { island.opacity == 0 }
 
@@ -272,8 +277,11 @@ final class NotchCanvasView: NSView {
     }
 
     /// 岛此刻（含动画中）在屏幕上的外框。
+    /// 没有在飞的动画时读模型层：`shift()` 之后同一轮 runloop 里 `presentation()` 可能还是搬之前的旧值，
+    /// 先搬面板再取呈现层会读到 +16 的旧位置，容器因此多撑一格，岛再从偏移处滑回来（2026-11-16 量测：
+    /// settle 后 1 毫秒的 apply 读到的 now=(667,963)，模型层明明已经是 (651,947)）。
     func islandOnScreen(panelOrigin: NSPoint) -> NSRect? {
-        let frame = (island.presentation() ?? island).frame
+        let frame = islandIsAnimating ? (island.presentation() ?? island).frame : island.frame
         guard frame.width > 0 else { return nil }
         return frame.offsetBy(dx: panelOrigin.x, dy: panelOrigin.y)
     }
