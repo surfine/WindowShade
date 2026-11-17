@@ -7,15 +7,15 @@ enum NotchIslandGeometry {
     /// 岛的外框。
     /// - 有物理刘海的屏（2026-11-05《两耳的岛》，推翻 bab193b0 的“从刘海下沿垂下”）：顶边贴屏幕顶，把刘海包在里面
     ///   往两边、往下长；`hanging` 不看。
-    /// - 外接屏：紧凑胶囊悬在菜单栏中央，但顶边不高过屏幕顶（隐形刘海只有 24 或 33.5 高，胶囊 37.33，按中心对齐会顶出屏幕）；
-    ///   展开、提醒从菜单栏下沿往下长。
+    /// - 外接屏（2026-11-17，照系统 CenterHUD 的模型）：岛的锚线在屏幕顶下 7 点，所有形状都从这条线往下长。
+    ///   系统把岛上围着一块 59 × 34 的虚拟感测器画，感测器在菜单栏下方 7 点；没有菜单栏的屏就是离屏幕顶 7 点。
+    ///   `hanging` 在外接屏上不再改变位置——展开不是从「菜单栏下沿」长，而是把岛本身拉下来。
+    ///   依据：`docs/reverse-engineering/mac-island-platter.md` 与 27.3 beta 的 MenuBarAgent（26C5035r / 26C5047e）。
     static func islandFrame(notch: CGRect, width: CGFloat, height: CGFloat, virtual: Bool, hanging: Bool) -> CGRect {
         let x = notch.midX - width / 2
         guard virtual else { return CGRect(x: x, y: notch.maxY - height, width: width, height: height) }
-        if !hanging {
-            return CGRect(x: x, y: min(notch.midY - height / 2, notch.maxY - height), width: width, height: height)
-        }
-        return CGRect(x: x, y: notch.minY - height, width: width, height: height)
+        let anchor = notch.maxY - IslandMetrics.softwareSensorGap
+        return CGRect(x: x, y: anchor - height, width: width, height: height)
     }
 }
 

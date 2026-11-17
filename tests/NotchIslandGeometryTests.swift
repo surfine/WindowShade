@@ -12,17 +12,20 @@ struct NotchIslandGeometryTests {
         let virtualShort = CGRect(x: 1185, y: 1416, width: 190, height: 24)
         let pill: CGFloat = 37.33
 
-        t.section("NG-01", "外接屏的紧凑胶囊悬在菜单栏中央，顶边不顶出屏幕")
+        // 2026-11-17：外接屏改成系统 CenterHUD 的模型——虚拟感测器 59×34 在菜单栏下方 7 点，
+        // 所有形状都从这条锚线往下长，不再贴屏幕顶、也不再按「菜单栏下沿」分两套。
+        t.section("NG-01", "外接屏的岛锚在屏幕顶下 7 点（系统 CenterHUD 的感测器位置），不贴边")
         for slot in [virtualTall, virtualShort] {
             let frame = G.islandFrame(notch: slot, width: 126, height: pill, virtual: true, hanging: false)
-            t.expect(frame.maxY <= slot.maxY + 0.0001, "高 \(slot.height) 的隐形刘海：胶囊顶边 \(frame.maxY) ≤ 屏幕顶 \(slot.maxY)")
+            t.expect(abs(frame.maxY - (slot.maxY - IslandMetrics.softwareSensorGap)) < 0.0001,
+                     "高 \(slot.height) 的隐形刘海：顶边 = 屏幕顶 − 7 = \(slot.maxY - IslandMetrics.softwareSensorGap)（实际 \(frame.maxY)）")
             t.expect(abs(frame.midX - slot.midX) < 0.0001 && frame.height == pill, "横向居中、高不变")
         }
         let roomy = CGRect(x: 0, y: 0, width: 200, height: 60)
         let centred = G.islandFrame(notch: roomy, width: 126, height: pill, virtual: true, hanging: false)
-        t.expect(abs(centred.midY - roomy.midY) < 0.0001, "放得下时仍竖直居中在菜单栏里")
+        t.expect(abs(centred.maxY - (roomy.maxY - IslandMetrics.softwareSensorGap)) < 0.0001, "槽再高也从同一条锚线往下长，不再按槽居中")
         let alert = G.islandFrame(notch: virtualShort, width: 371, height: 84, virtual: true, hanging: true)
-        t.expect(alert.maxY == virtualShort.minY, "悬垂形状不受影响：顶边 = 隐形刘海下沿")
+        t.expect(abs(alert.maxY - (virtualShort.maxY - IslandMetrics.softwareSensorGap)) < 0.0001, "悬垂形状用同一条锚线（把岛拉下来，不是从菜单栏下沿长）")
 
         t.section("NG-03", "刘海屏（2026-11-05 推翻 bab193b0 的“从刘海下沿垂下”）：展开、提醒、一瞥顶边都贴屏幕顶，把刘海包在里面")
         let real = CGRect(x: 762.5, y: 1073.5, width: 185, height: 33.5)

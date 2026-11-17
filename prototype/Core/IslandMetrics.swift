@@ -20,6 +20,11 @@ enum IslandMetrics {
     /// 外接屏放不下胶囊时退成的最小圆（HIG Live Activities 的 minimal：36.67 见方的圆）。
     /// 取代 72×12 的小下巴（AARON-DECISIONS 第 120 条，2026-11-13）。
     static let iosMinimalDiameter: CGFloat = 36.67
+    /// 系统 CenterHUD 的虚拟感测器（27.3 MenuBarAgent 逆向：59 × 34，位在菜单栏下方 7 点）。
+    /// 外接屏照这个位置放岛；没有菜单栏的屏就是离屏幕顶 7 点。
+    static let softwareSensorWidth: CGFloat = 59
+    static let softwareSensorHeight: CGFloat = 34
+    static let softwareSensorGap: CGFloat = 7
     /// 外接屏展开宽（iOS：371）。刘海屏用 `expandedWidth` 408。
     static let iosExpandedWidth: CGFloat = 371
     /// 展开岛高（iOS：160）。
